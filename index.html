@@ -246,12 +246,18 @@ const firebaseConfig = {
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
 
-  // 1. THE GUARD: Redirect to main site if not logged in
-  auth.onAuthStateChanged((user) => {
+  firebase.auth().onAuthStateChanged((user) => {
     if (!user) {
-      window.location.replace("https://filings4u.com");
+        window.location.replace("https://filings4u.com");
+    } else if (!user.emailVerified) {
+        // Optional: Force them to verify before seeing data
+        alert("Please verify your email address to access the portal.");
+        auth.signOut().then(() => {
+            window.location.replace("https://filings4u.com");
+        });
     }
-  });
+});
+
 
   // 2. THE LOGOUT FUNCTION
   function handleLogout() {
