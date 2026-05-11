@@ -167,5 +167,67 @@
             doc.save(`Permit_${unitNum}.pdf`);
         };
     </script>
+
+    window.generateIftaPermit = function(clientName, dotNum, vin, unitNum) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 30); // 30-day temp validity
+
+    // 1. HEADER (State-Style Formatting)
+    doc.setFillColor(240, 240, 240);
+    doc.rect(0, 0, 210, 35, 'F');
+    doc.setTextColor(10, 31, 68);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("IFTA TEMPORARY OPERATING PERMIT", 105, 15, { align: "center" });
+    
+    doc.setFontSize(9);
+    doc.text("ILLINOIS DEPARTMENT OF REVENUE - MOTOR FUEL TAX SECTION", 105, 22, { align: "center" });
+    doc.text("ISSUED VIA FILINGS4U CERTIFIED COMPLIANCE PARTNER", 105, 27, { align: "center" });
+
+    // 2. CARRIER DATA
+    doc.setFontSize(10);
+    doc.text("CARRIER INFORMATION:", 20, 50);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Legal Name: ${clientName}`, 20, 58);
+    doc.text(`USDOT Number: ${dotNum}`, 20, 64);
+    doc.text(`Base Jurisdiction: Illinois`, 20, 70);
+
+    // 3. VEHICLE DATA (The "No-Call" precision)
+    doc.rect(20, 80, 170, 40);
+    doc.setFont("helvetica", "bold");
+    doc.text("AUTHORIZED VEHICLE DETAIL", 25, 88);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Unit Number: ${unitNum}`, 30, 98);
+    doc.text(`VIN (Full): ${vin}`, 30, 104);
+    doc.text(`Fuel Type: Diesel / GGE`, 30, 110);
+
+    // 4. VALIDITY (The Audit Trigger)
+    doc.setFillColor(254, 252, 232); // Warning Yellow
+    doc.rect(20, 130, 170, 20, 'F');
+    doc.setTextColor(133, 100, 4);
+    doc.text(`VALID UNTIL: ${expiry.toLocaleDateString()}`, 105, 142, { align: "center" });
+
+    // 5. LEGAL STAMP
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(1);
+    doc.rect(140, 160, 45, 45);
+    doc.setFontSize(7);
+    doc.setTextColor(16, 185, 129);
+    doc.text("ELECTRONICALLY", 162, 175, { align: "center" });
+    doc.text("VERIFIED", 162, 182, { align: "center" });
+    doc.text("IDOR-IFTA-SEC", 162, 189, { align: "center" });
+    doc.text(new Date().toISOString().split('T')[0], 162, 196, { align: "center" });
+
+    // 6. ASSET DISPOSAL NOTE
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(8);
+    doc.text("INSTRUCTIONS: Keep this permit in the cab until physical decals are affixed.", 20, 260);
+    doc.text("ASSET DISPOSAL: If this unit is sold, this permit must be voided in the filings4u portal.", 20, 265);
+
+    doc.save(`IFTA_TEMP_${unitNum}.pdf`);
+};
+
 </body>
 </html>
