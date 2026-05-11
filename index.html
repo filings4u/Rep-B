@@ -227,6 +227,50 @@
     .drop-zone { border: 2px dashed #cbd5e0; border-radius: 10px; padding: 30px; text-align: center; background: #f7fafc; cursor: pointer; }
 </style>
 
+<!-- Load Firebase SDKs -->
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
+
+<script>
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyA_45sXieC6fdfQstLQ2a21psXeOxhfdwo",
+  authDomain: "customer-portal-18728.firebaseapp.com",
+  projectId: "customer-portal-18728",
+  storageBucket: "customer-portal-18728.firebasestorage.app",
+  messagingSenderId: "117765841972",
+  appId: "1:117765841972:web:9746c4f3037270a7811661",
+  measurementId: "G-Q2L5R7LP6R"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // 1. THE GUARD: Redirect to main site if not logged in
+  auth.onAuthStateChanged((user) => {
+    if (!user) {
+      window.location.replace("https://filings4u.com");
+    }
+  });
+
+  // 2. THE LOGOUT FUNCTION
+  function handleLogout() {
+    auth.signOut().then(() => {
+      // After Firebase signs out, send them back to the marketing site
+      window.location.href = "https://filings4u.com";
+    }).catch((error) => {
+      console.error("Logout Error:", error);
+    });
+  }
+</script>
+
+
+
+
+
+
+
+
 </head>
 <body class="portal-body">
 
@@ -243,9 +287,11 @@
             <a href="#" class="nav-item"><span>💳</span> Billing & Orders</a>
             <a href="#" class="nav-item"><span>⚙️</span> Account Settings</a>
             
-        <div class="logout-container">
-            <a href="https://filings4u.com" class="logout-btn">Sign Out</a>
-        </div>
+       <div class="logout-container">
+    <!-- Note: href is now 'javascript:void(0)' and we added onclick -->
+    <a href="javascript:void(0)" onclick="handleLogout()" class="logout-btn">Sign Out</a>
+</div>
+
         </nav>
     </aside>
 
