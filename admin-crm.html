@@ -2,233 +2,170 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Digital Vault | filings4u Portal</title>
+    <title>Admin Command | filings4u Control</title>
+    <!-- Load jsPDF for the document generation -->
+    <script src="https://cloudflare.com"></script>
     <style>
-        /* CORE PORTAL CSS - BRAND SYNC */
+        :root { 
+            --admin-purple: #6366f1; 
+            --navy: #0a1f44; 
+            --emerald: #10b981; 
+            --white: #ffffff; 
+            --bg: #f1f5f9; 
+            --border: #e2e8f0; 
+            --danger: #ef4444;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        :root { --navy: #0a1f44; --emerald: #10b981; --white: #ffffff; --bg-light: #f4f7fa; --border: #e2e8f0; --text-gray: #64748b; }
-        body { font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif; background-color: var(--bg-light); color: var(--navy); display: flex; min-height: 100vh; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); display: flex; }
 
-        /* FIXED SIDEBAR SYSTEM */
-        .portal-sidebar { width: 260px; height: 100vh; background: white; border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; left: 0; top: 0; display: flex; flex-direction: column; z-index: 1000; }
-        .sidebar-logo { height: 35px; margin-bottom: 40px; object-fit: contain; display: block; }
-        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
-        .nav-item { display: flex; align-items: center; padding: 12px 15px; text-decoration: none; font-weight: 600; border-radius: 10px; color: var(--navy); font-size: 0.9rem; transition: 0.2s; }
-        .nav-item.active { background-color: var(--navy) !important; color: white !important; box-shadow: 0 8px 20px rgba(10, 31, 68, 0.3) !important; transform: translateY(-2px); }
-        .nav-item.active span { filter: brightness(0) invert(1); }
+        /* ADMIN-ONLY SIDEBAR */
+        .admin-sidebar { 
+            width: 280px; height: 100vh; background: var(--navy); padding: 40px 25px; 
+            position: fixed; color: white; display: flex; flex-direction: column; 
+        }
+        .admin-brand { font-size: 1.2rem; font-weight: 800; color: var(--emerald); margin-bottom: 40px; letter-spacing: 1px; }
+        .nav-item { 
+            display: flex; align-items: center; padding: 14px 18px; 
+            color: rgba(255,255,255,0.6); text-decoration: none; font-weight: 600; 
+            border-radius: 12px; margin-bottom: 8px; transition: 0.3s;
+        }
+        .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nav-item.active { background: var(--admin-purple); color: white; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
 
-        /* CONTENT AREA */
-        .portal-main { margin-left: 260px; flex-grow: 1; padding: 40px 50px; width: calc(100% - 260px); }
-        .vault-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+        /* MAIN DASHBOARD */
+        .main-content { margin-left: 280px; flex-grow: 1; padding: 50px; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         
-        /* FOLDER TABS */
-        .vault-category { margin-bottom: 50px; }
-        .category-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-gray); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        /* CLIENT TABLE */
+        .admin-card { background: white; border-radius: 20px; border: 1px solid var(--border); padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .client-table { width: 100%; border-collapse: collapse; }
+        .client-table th { text-align: left; padding: 15px; font-size: 0.7rem; text-transform: uppercase; color: var(--text-gray); border-bottom: 2px solid var(--bg); }
+        .client-table td { padding: 20px 15px; border-bottom: 1px solid var(--bg); font-size: 0.9rem; }
         
-        /* DOCUMENT CARDS */
-        .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .doc-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; gap: 15px; transition: 0.3s ease; position: relative; }
-        .doc-card:hover { border-color: var(--emerald); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(10,31,68,0.05); }
-        
-        .doc-icon { width: 50px; height: 50px; background: var(--bg-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
-        .doc-info { flex-grow: 1; }
-        .doc-info h4 { font-size: 0.85rem; margin-bottom: 4px; color: var(--navy); }
-        .doc-info p { font-size: 0.7rem; color: var(--text-gray); margin-bottom: 10px; }
-        
-        .btn-download { display: inline-block; padding: 6px 12px; background: var(--navy); color: white; text-decoration: none; border-radius: 6px; font-size: 0.7rem; font-weight: 700; transition: 0.2s; }
-        .btn-download:hover { background: var(--emerald); }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
+        .badge-purple { background: rgba(99, 102, 241, 0.1); color: var(--admin-purple); }
+        .badge-warning { background: #fffbeb; color: #92400e; }
 
-        .tag-stamped { font-size: 0.6rem; background: rgba(16, 185, 129, 0.1); color: var(--emerald); padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 5px; vertical-align: middle; }
+        .btn-purple { background: var(--admin-purple); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.8rem; }
+        .btn-outline { background: white; border: 1px solid var(--border); padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.75rem; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,31,68,0.85); z-index: 10000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 500px; padding: 40px; border-radius: 24px; }
     </style>
 </head>
 <body>
 
-    <aside class="portal-sidebar">
-        <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
-        <nav class="sidebar-nav">
-            <a href="portal-trucker.html" class="nav-item"><span>📊</span> Dashboard</a>
-            <a href="portal-vault.html" class="nav-item active"><span>📂</span> Digital Vault</a>
-            <a href="portal-ifta-master.html" class="nav-item"><span>⛽</span> IFTA Reporting</a>
-            <a href="portal-driver-files.html" class="nav-item"><span>📂</span> Driver Files</a>
-            <a href="portal-settings.html" class="nav-item"><span>⚙️</span> Settings</a>
+    <aside class="admin-sidebar">
+        <div class="admin-brand">filings4u ADMIN</div>
+        <nav>
+            <a href="admin-crm.html" class="nav-item active"><span>👥</span> Client CRM</a>
+            <a href="admin-billing.html" class="nav-item"><span>💳</span> Billing Oversight</a>
+            <a href="#" class="nav-item"><span>⛽</span> IFTA Filings</a>
+            <a href="#" class="nav-item"><span>📋</span> Decal Inventory (IFTA-2)</a>
+            <a href="#" class="nav-item"><span>🛡️</span> Safety Audit Review</a>
         </nav>
-        <div style="margin-top:auto; padding-top:20px; border-top:1px solid var(--border);"><a href="javascript:void(0)" onclick="handleLogout()" style="text-decoration:none; color:var(--navy); font-weight:700; font-size:0.85rem;">Sign Out</a></div>
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a href="../login.html" class="nav-item"><span>🔒</span> Secure Logout</a>
+        </div>
     </aside>
 
-    <main class="portal-main">
-        <header class="vault-header">
+    <main class="main-content">
+        <header class="header-flex">
             <div>
-                <h1>Compliance Vault</h1>
-                <p style="color: var(--text-gray);">Official stamped records and statutory authorizations.</p>
+                <h1>Client Infrastructure Manager</h1>
+                <p style="color: #64748b;">Managing 42 Active High-Volume Fleets</p>
             </div>
-            <div style="text-align: right; font-size: 0.8rem; color: var(--text-gray);">
-                Storage Used: <strong>14.2 MB / Unlimited</strong>
-            </div>
+            <button class="btn-purple">+ New Corporate Client</button>
         </header>
 
-        <!-- CATEGORY: CORPORATE FORMATION -->
-        <section class="vault-category">
-            <div class="category-title">🏢 Entity Formation Documents</div>
-            <div class="vault-grid">
-                <div class="doc-card">
-                    <div class="doc-icon">📜</div>
-                    <div class="doc-info">
-                        <h4>Articles of Org. <span class="tag-stamped">STAMPED</span></h4>
-                        <p>Filed: Jan 12, 2026<br>Format: PDF</p>
-                        <a href="#" class="btn-download">Download</a>
-                    </div>
-                </div>
-                <div class="doc-card">
-                    <div class="doc-icon">🆔</div>
-                    <div class="doc-info">
-                        <h4>IRS EIN Letter (CP 575)</h4>
-                        <p>Issued: Jan 14, 2026<br>Permanent Record</p>
-                        <a href="#" class="btn-download">Download</a>
-                    </div>
-                </div>
-                <div class="doc-card">
-                    <div class="doc-icon">⚖️</div>
-                    <div class="doc-info">
-                        <h4>Operating Agreement</h4>
-                        <p>Fully Executed<br>Custom Elite Version</p>
-                        <a href="#" class="btn-download">Download</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CATEGORY: TAX & IFTA -->
-        <section class="vault-category">
-            <div class="category-title">⛽ Tax & IFTA Filings</div>
-            <div class="vault-grid">
-                <div class="doc-card">
-                    <div class="doc-icon">🎫</div>
-                    <div class="doc-info">
-                        <h4>Q2 IFTA License (IL)</h4>
-                        <p>Issued: Apr 2026<br>Decals: #99281-220</p>
-                        <a href="#" class="btn-download">Download</a>
-                    </div>
-                </div>
-                <div class="doc-card">
-                    <div class="doc-icon">📑</div>
-                    <div class="doc-info">
-                        <h4>Form 2290 Receipt</h4>
-                        <p>Schedule 1 Stamped<br>VIN Validated</p>
-                        <a href="#" class="btn-download">Download</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CATEGORY: DOT & AUTHORITY -->
-        <section class="vault-category">
-            <div class="category-title">🚛 Operating Authority Records</div>
-            <div class="vault-grid">
-                <div class="doc-card">
-                    <div class="doc-icon">🛂</div>
-                    <div class="doc-info">
-                        <h4>DOT Authority Cert.</h4>
-                        <p>MC #104492 Active<br>Statutory Record</p>
-                        <a href="#" class="btn-download">Download</a>
-                    </div>
-                </div>
-                <div class="doc-card">
-                    <div class="doc-icon">⚖️</div>
-                    <div class="doc-info">
-                        <h4>BOC-3 Process Agents</h4>
-                        <p>Current Designation<br>All 50 States</p>
-                        <a href="#" class="btn-download">Download</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Example of a row in your Admin CRM table -->
-<tr>
-    <td><strong>Roseland Logistics LLC</strong></td>
-    <td>112</td>
-    <td>$560.00</td>
-    <td>$4,882.10</td>
-    <td><span class="status-paid">✓ PAID</span></td>
-    <td>
-        <button class="btn-refund" onclick="generateReceipt('Roseland Logistics LLC', '560.00', '112', 'INV-99201')">
-            Generate & Push Receipt
-        </button>
-    </td>
-</tr>
-
+        <div class="admin-card">
+            <table class="client-table">
+                <thead>
+                    <tr>
+                        <th>Company / Base</th>
+                        <th>Fleet Size</th>
+                        <th>Alerts</th>
+                        <th>Statutory Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- CLIENT 1 -->
+                    <tr>
+                        <td><strong>Roseland Logistics LLC</strong><br><small>Illinois (IL)</small></td>
+                        <td><span class="badge badge-purple">112 Units</span></td>
+                        <td><span class="badge badge-warning" onclick="triggerDecalOrder('Roseland')">⚠️ 3 Missing Decals</span></td>
+                        <td>
+                            <button class="btn-outline" onclick="openUpload('Roseland')">Push to Vault</button>
+                            <button class="btn-purple" onclick="generateIftaPermit('Roseland Logistics LLC', 'DOT399201', 'K8829102', 'Unit 102')">Issue Temp Permit</button>
+                        </td>
+                    </tr>
+                    <!-- CLIENT 2 -->
+                    <tr>
+                        <td><strong>Global Freight Group</strong><br><small>Texas (TX)</small></td>
+                        <td><span class="badge badge-purple">250 Units</span></td>
+                        <td><span class="badge" style="color:var(--emerald)">✓ Compliant</span></td>
+                        <td>
+                            <button class="btn-outline">Push to Vault</button>
+                            <button class="btn-purple">Audit Math</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 
+    <!-- ADMIN UPLOAD MODAL -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom:10px;">Push Document to Vault</h2>
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Document will be instantly visible to the client in their Digital Vault.</p>
+            
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-size:0.7rem; font-weight:800; margin-bottom:8px;">Document Category</label>
+                <select id="doc-cat" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border);">
+                    <option>IFTA Quarterly License</option>
+                    <option>Uniform Cab Card (IRP)</option>
+                    <option>Articles of Organization</option>
+                    <option>Statutory POA (Signed)</option>
+                </select>
+            </div>
+            
+            <input type="file" style="margin-bottom:25px;">
+            
+            <button class="btn-purple" style="width:100%; padding:15px;" onclick="closeModal()">Upload & Notify Client →</button>
+            <p style="text-align:center; margin-top:15px;"><a href="javascript:void(0)" onclick="closeModal()" style="color:#64748b; font-size:0.8rem;">Cancel</a></p>
+        </div>
+    </div>
+
     <script>
-        function handleLogout() {
-            if(confirm("Securely sign out and lock vault?")) {
-                window.location.href = "https://filings4u.com";
-            }
+        // MODAL LOGIC
+        function openUpload(name) { document.getElementById('uploadModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
+
+        // IFTA-2 DECAL ORDER TRIGGER
+        function triggerDecalOrder(client) {
+            alert(`AUTOMATED COMPLIANCE:\nGenerating Illinois IFTA-2 Form for ${client}.\n3 VINs without decals have been mapped to the form.`);
         }
 
-window.generateIftaPermit = function(clientName, dotNum, vin, unitNum) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + 30); // 30-day temp validity
-
-    // 1. HEADER (State-Style Formatting)
-    doc.setFillColor(240, 240, 240);
-    doc.rect(0, 0, 210, 35, 'F');
-    doc.setTextColor(10, 31, 68);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("IFTA TEMPORARY OPERATING PERMIT", 105, 15, { align: "center" });
-    
-    doc.setFontSize(9);
-    doc.text("ILLINOIS DEPARTMENT OF REVENUE - MOTOR FUEL TAX SECTION", 105, 22, { align: "center" });
-    doc.text("ISSUED VIA FILINGS4U CERTIFIED COMPLIANCE PARTNER", 105, 27, { align: "center" });
-
-    // 2. CARRIER DATA
-    doc.setFontSize(10);
-    doc.text("CARRIER INFORMATION:", 20, 50);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Legal Name: ${clientName}`, 20, 58);
-    doc.text(`USDOT Number: ${dotNum}`, 20, 64);
-    doc.text(`Base Jurisdiction: Illinois`, 20, 70);
-
-    // 3. VEHICLE DATA (The "No-Call" precision)
-    doc.rect(20, 80, 170, 40);
-    doc.setFont("helvetica", "bold");
-    doc.text("AUTHORIZED VEHICLE DETAIL", 25, 88);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Unit Number: ${unitNum}`, 30, 98);
-    doc.text(`VIN (Full): ${vin}`, 30, 104);
-    doc.text(`Fuel Type: Diesel / GGE`, 30, 110);
-
-    // 4. VALIDITY (The Audit Trigger)
-    doc.setFillColor(254, 252, 232); // Warning Yellow
-    doc.rect(20, 130, 170, 20, 'F');
-    doc.setTextColor(133, 100, 4);
-    doc.text(`VALID UNTIL: ${expiry.toLocaleDateString()}`, 105, 142, { align: "center" });
-
-    // 5. LEGAL STAMP
-    doc.setDrawColor(16, 185, 129);
-    doc.setLineWidth(1);
-    doc.rect(140, 160, 45, 45);
-    doc.setFontSize(7);
-    doc.setTextColor(16, 185, 129);
-    doc.text("ELECTRONICALLY", 162, 175, { align: "center" });
-    doc.text("VERIFIED", 162, 182, { align: "center" });
-    doc.text("IDOR-IFTA-SEC", 162, 189, { align: "center" });
-    doc.text(new Date().toISOString().split('T')[0], 162, 196, { align: "center" });
-
-    // 6. ASSET DISPOSAL NOTE
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(8);
-    doc.text("INSTRUCTIONS: Keep this permit in the cab until physical decals are affixed.", 20, 260);
-    doc.text("ASSET DISPOSAL: If this unit is sold, this permit must be voided in the filings4u portal.", 20, 265);
-
-    doc.save(`IFTA_TEMP_${unitNum}.pdf`);
-};
-
-
+        // IFTA PERMIT GENERATOR (jsPDF)
+        window.generateIftaPermit = function(clientName, dotNum, vin, unitNum) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFillColor(10, 31, 68);
+            doc.rect(0, 0, 210, 35, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.text("IFTA TEMPORARY PERMIT", 105, 20, { align: "center" });
+            doc.setTextColor(10, 31, 68);
+            doc.setFontSize(10);
+            doc.text(`Carrier: ${clientName}`, 20, 50);
+            doc.text(`DOT: ${dotNum}`, 20, 60);
+            doc.text(`Unit: ${unitNum} | VIN: ${vin}`, 20, 70);
+            doc.setDrawColor(16, 185, 129);
+            doc.rect(140, 140, 40, 40);
+            doc.text("VERIFIED", 150, 160);
+            doc.save(`Permit_${unitNum}.pdf`);
+        };
     </script>
 </body>
 </html>
