@@ -2,103 +2,155 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Command | filings4u Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Digital Vault | filings4u Portal</title>
     <style>
-        :root { --admin-purple: #6366f1; --navy: #0a1f44; --emerald: #10b981; --white: #ffffff; --bg: #f8fafc; --border: #e2e8f0; }
+        /* CORE PORTAL CSS - BRAND SYNC */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; }
+        :root { --navy: #0a1f44; --emerald: #10b981; --white: #ffffff; --bg-light: #f4f7fa; --border: #e2e8f0; --text-gray: #64748b; }
+        body { font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif; background-color: var(--bg-light); color: var(--navy); display: flex; min-height: 100vh; }
+
+        /* FIXED SIDEBAR SYSTEM */
+        .portal-sidebar { width: 260px; height: 100vh; background: white; border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; left: 0; top: 0; display: flex; flex-direction: column; z-index: 1000; }
+        .sidebar-logo { height: 35px; margin-bottom: 40px; object-fit: contain; display: block; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+        .nav-item { display: flex; align-items: center; padding: 12px 15px; text-decoration: none; font-weight: 600; border-radius: 10px; color: var(--navy); font-size: 0.9rem; transition: 0.2s; }
+        .nav-item.active { background-color: var(--navy) !important; color: white !important; box-shadow: 0 8px 20px rgba(10, 31, 68, 0.3) !important; transform: translateY(-2px); }
+        .nav-item.active span { filter: brightness(0) invert(1); }
+
+        /* CONTENT AREA */
+        .portal-main { margin-left: 260px; flex-grow: 1; padding: 40px 50px; width: calc(100% - 260px); }
+        .vault-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
         
-        /* ADMIN SIDEBAR (PURPLE THEME) */
-        .admin-sidebar { width: 260px; height: 100vh; background: var(--navy); padding: 30px 20px; position: fixed; color: white; }
-        .nav-item { display: block; padding: 12px 15px; color: rgba(255,255,255,0.7); text-decoration: none; font-weight: 600; border-radius: 8px; margin-bottom: 5px; }
-        .nav-item.active { background: var(--admin-purple); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
+        /* FOLDER TABS */
+        .vault-category { margin-bottom: 50px; }
+        .category-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-gray); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
         
-        .main-content { margin-left: 260px; flex-grow: 1; padding: 40px; }
-        .client-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
-        .client-table th { background: #f1f5f9; padding: 15px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--navy); }
-        .client-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        /* DOCUMENT CARDS */
+        .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .doc-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; gap: 15px; transition: 0.3s ease; position: relative; }
+        .doc-card:hover { border-color: var(--emerald); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(10,31,68,0.05); }
         
-        .btn-action { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 0.75rem; font-weight: 700; }
-        .btn-emerald { background: var(--emerald); color: white; border: none; }
-        .badge-units { background: var(--navy); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+        .doc-icon { width: 50px; height: 50px; background: var(--bg-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+        .doc-info { flex-grow: 1; }
+        .doc-info h4 { font-size: 0.85rem; margin-bottom: 4px; color: var(--navy); }
+        .doc-info p { font-size: 0.7rem; color: var(--text-gray); margin-bottom: 10px; }
+        
+        .btn-download { display: inline-block; padding: 6px 12px; background: var(--navy); color: white; text-decoration: none; border-radius: 6px; font-size: 0.7rem; font-weight: 700; transition: 0.2s; }
+        .btn-download:hover { background: var(--emerald); }
+
+        .tag-stamped { font-size: 0.6rem; background: rgba(16, 185, 129, 0.1); color: var(--emerald); padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 5px; vertical-align: middle; }
     </style>
 </head>
 <body>
 
-    <aside class="admin-sidebar">
-        <h2 style="margin-bottom: 30px; font-size: 1.2rem; color: var(--emerald);">filings4u ADMIN</h2>
-        <nav>
-            <a href="#" class="nav-item active">👥 Client CRM</a>
-            <a href="#" class="nav-item">⛽ IFTA Submissions</a>
-            <a href="#" class="nav-item">🛡️ Audit Reviews</a>
-            <a href="#" class="nav-item">💳 Payments & Billing</a>
-            <a href="#" class="nav-item">📂 Master Vault</a>
+    <aside class="portal-sidebar">
+        <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
+        <nav class="sidebar-nav">
+            <a href="portal-trucker.html" class="nav-item"><span>📊</span> Dashboard</a>
+            <a href="portal-vault.html" class="nav-item active"><span>📂</span> Digital Vault</a>
+            <a href="portal-ifta-master.html" class="nav-item"><span>⛽</span> IFTA Reporting</a>
+            <a href="portal-driver-files.html" class="nav-item"><span>📂</span> Driver Files</a>
+            <a href="portal-settings.html" class="nav-item"><span>⚙️</span> Settings</a>
         </nav>
+        <div style="margin-top:auto; padding-top:20px; border-top:1px solid var(--border);"><a href="javascript:void(0)" onclick="handleLogout()" style="text-decoration:none; color:var(--navy); font-weight:700; font-size:0.85rem;">Sign Out</a></div>
     </aside>
 
-    <main class="main-content">
-        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-            <h1>Client Management</h1>
-            <button class="btn-action btn-emerald">+ Manual Client Entry</button>
+    <main class="portal-main">
+        <header class="vault-header">
+            <div>
+                <h1>Compliance Vault</h1>
+                <p style="color: var(--text-gray);">Official stamped records and statutory authorizations.</p>
+            </div>
+            <div style="text-align: right; font-size: 0.8rem; color: var(--text-gray);">
+                Storage Used: <strong>14.2 MB / Unlimited</strong>
+            </div>
         </header>
 
-        <table class="client-table">
-            <thead>
-                <tr>
-                    <th>Company Name</th>
-                    <th>Base State</th>
-                    <th>Units</th>
-                    <th>POA Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Roseland Logistics LLC</strong><br><small>user@roseland.com</small></td>
-                    <td>Illinois</td>
-                    <td><span class="badge-units">112 Units</span></td>
-                    <td style="color: var(--emerald); font-weight: 800;">✓ SIGNED</td>
-                    <td>
-                        <button class="btn-action" onclick="openUpload('Roseland')">Upload Docs</button>
-                        <button class="btn-action" style="color:var(--danger)">Remove</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Blue Sky Brokerage</strong><br><small>ops@bluesky.com</small></td>
-                    <td>Texas</td>
-                    <td><span class="badge-units">Broker</span></td>
-                    <td style="color: var(--danger); font-weight: 800;">PENDING</td>
-                    <td>
-                        <button class="btn-action">Upload Docs</button>
-                        <button class="btn-action">Take Payment</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <!-- CATEGORY: CORPORATE FORMATION -->
+        <section class="vault-category">
+            <div class="category-title">🏢 Entity Formation Documents</div>
+            <div class="vault-grid">
+                <div class="doc-card">
+                    <div class="doc-icon">📜</div>
+                    <div class="doc-info">
+                        <h4>Articles of Org. <span class="tag-stamped">STAMPED</span></h4>
+                        <p>Filed: Jan 12, 2026<br>Format: PDF</p>
+                        <a href="#" class="btn-download">Download</a>
+                    </div>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">🆔</div>
+                    <div class="doc-info">
+                        <h4>IRS EIN Letter (CP 575)</h4>
+                        <p>Issued: Jan 14, 2026<br>Permanent Record</p>
+                        <a href="#" class="btn-download">Download</a>
+                    </div>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">⚖️</div>
+                    <div class="doc-info">
+                        <h4>Operating Agreement</h4>
+                        <p>Fully Executed<br>Custom Elite Version</p>
+                        <a href="#" class="btn-download">Download</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORY: TAX & IFTA -->
+        <section class="vault-category">
+            <div class="category-title">⛽ Tax & IFTA Filings</div>
+            <div class="vault-grid">
+                <div class="doc-card">
+                    <div class="doc-icon">🎫</div>
+                    <div class="doc-info">
+                        <h4>Q2 IFTA License (IL)</h4>
+                        <p>Issued: Apr 2026<br>Decals: #99281-220</p>
+                        <a href="#" class="btn-download">Download</a>
+                    </div>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">📑</div>
+                    <div class="doc-info">
+                        <h4>Form 2290 Receipt</h4>
+                        <p>Schedule 1 Stamped<br>VIN Validated</p>
+                        <a href="#" class="btn-download">Download</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORY: DOT & AUTHORITY -->
+        <section class="vault-category">
+            <div class="category-title">🚛 Operating Authority Records</div>
+            <div class="vault-grid">
+                <div class="doc-card">
+                    <div class="doc-icon">🛂</div>
+                    <div class="doc-info">
+                        <h4>DOT Authority Cert.</h4>
+                        <p>MC #104492 Active<br>Statutory Record</p>
+                        <a href="#" class="btn-download">Download</a>
+                    </div>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">⚖️</div>
+                    <div class="doc-info">
+                        <h4>BOC-3 Process Agents</h4>
+                        <p>Current Designation<br>All 50 States</p>
+                        <a href="#" class="btn-download">Download</a>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- ADMIN UPLOAD MODAL -->
-    <div id="admin-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:white; padding:40px; border-radius:20px; width:450px;">
-            <h3 id="modal-title">Upload to Client Vault</h3>
-            <p style="font-size:0.8rem; margin:10px 0 20px;">The document will be instantly visible in the user's portal.</p>
-            <input type="file" style="margin-bottom:20px; display:block;">
-            <select style="width:100%; padding:10px; margin-bottom:20px; border-radius:8px;">
-                <option>IFTA License (Current)</option>
-                <option>Uniform Cab Card</option>
-                <option>DOT Authority Certificate</option>
-                <option>BOC-3 Filing</option>
-            </select>
-            <button class="btn-emerald" style="width:100%; padding:12px; border-radius:8px;" onclick="closeModal()">Push to Client Portal →</button>
-        </div>
-    </div>
-
     <script>
-        function openUpload(name) {
-            document.getElementById('modal-title').innerText = "Upload to " + name;
-            document.getElementById('admin-modal').style.display = 'flex';
+        function handleLogout() {
+            if(confirm("Securely sign out and lock vault?")) {
+                window.location.href = "https://filings4u.com";
+            }
         }
-        function closeModal() { document.getElementById('admin-modal').style.display = 'none'; }
     </script>
 </body>
 </html>
