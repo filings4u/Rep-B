@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Analytics | filings4u Portal</title>
+    <style>
+        /* BASE STYLES */
+        :root {
+            --primary-blue: #0a1f44;
+            --white: #ffffff;
+            --bg-light: #f8f9fa;
+            --border-color: #e2e8f0;
+            --text-gray: #4a5568;
+            --danger-red: #e53e3e;
+            --success-green: #48bb78;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fcfcfc;
+            display: flex;
+        }
+
+        /* SIDEBAR STYLES */
+        .portal-sidebar {
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-light);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-header { margin-bottom: 40px; padding-left: 5px; }
+        .sidebar-logo { height: 45px; width: auto; }
+
+        .sidebar-nav { display: flex; flex-direction: column; height: 100%; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            color: var(--primary-blue);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .nav-item span { margin-right: 12px; }
+
+        .logout-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .logout-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        /* MAIN CONTENT AREA */
+        .portal-main {
+            margin-left: 280px; 
+            width: calc(100% - 280px);
+            padding: 50px 60px; 
+            box-sizing: border-box;
+        }
+
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .portal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .welcome-text h1 { margin: 0; color: var(--primary-blue); }
+        
+        .header-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .search-container { position: relative; }
+        .search-input {
+            padding: 10px 15px 10px 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 220px;
+            outline: none;
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .notification-wrapper {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.3rem;
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            background-color: var(--danger-red);
+            border: 2px solid var(--white);
+            border-radius: 50%;
+        }
+
+        .btn-primary-small {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ANALYTICS COMPONENTS */
+        .analytics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .analytics-card {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .metric-trend {
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .trend-up { color: var(--success-green); }
+
+        .data-table-card { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; font-size: 0.8rem; color: var(--text-gray); padding: 12px; border-bottom: 2px solid var(--bg-light); text-transform: uppercase; }
+        td { padding: 15px 12px; border-bottom: 1px solid var(--bg-light); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <!-- PORTAL SIDEBAR -->
+    <aside class="portal-sidebar">
+        <div class="sidebar-header">
+            <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
+        </div>
+        <nav class="sidebar-nav">
+            <a href="portal-dashboard.html" class="nav-item"><span>📊</span> Dashboard</a>
+            <a href="portal-analytics.html" class="nav-item active"><span>📈</span> Analytics</a>
+            <a href="portal-calendar.html" class="nav-item"><span>📅</span> Compliance</a>
+            <a href="portal-vault.html" class="nav-item"><span>📂</span> Vault</a>
+            <a href="portal-billing.html" class="nav-item"><span>💳</span> Billing</a>
+            
+            <div class="logout-container">
+                <a href="index.html" class="logout-btn">Sign Out</a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- MAIN PORTAL CONTENT -->
+    <main class="portal-main">
+        <div class="content-container">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Business Analytics</h1>
+                    <p>Growth and efficiency insights for <strong>Roseland Logistics LLC</strong></p>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" placeholder="Search data...">
+                    </div>
+                    <div class="notification-wrapper">
+                        <span>🔔</span>
+                        <div class="notification-dot"></div>
+                    </div>
+                    <button class="btn-primary-small">Export Report</button>
+                </div>
+            </header>
+
+            <!-- METRIC CARDS -->
+            <div class="analytics-row">
+                <div class="analytics-card">
+                    <small>Filing Efficiency</small>
+                    <h2 style="margin: 5px 0; color: var(--primary-blue);">94%</h2>
+                    <span class="metric-trend trend-up">↑ 4% vs last Q</span>
+                </div>
+                <div class="analytics-card">
+                    <small>Active Licenses</small>
+                    <h2 style="margin: 5px 0; color: var(--primary-blue);">12</h2>
+                    <span class="metric-trend">Steady Status</span>
+                </div>
+                <div class="analytics-card">
+                    <small>Compliance Spend</small>
+                    <h2 style="margin: 5px 0; color: var(--primary-blue);">$2,450</h2>
+                    <span class="metric-trend trend-up">↑ 12% YOY</span>
+                </div>
+            </div>
+
+            <!-- FILING HISTORY TABLE -->
+            <div class="analytics-card data-table-card">
+                <h3>Historical Filing Metrics</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Filing Type</th>
+                            <th>Cycle</th>
+                            <th>Processing Time</th>
+                            <th>Cost</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>IFTA Quarterly</strong></td>
+                            <td>Q1 2026</td>
+                            <td>2.5 Days</td>
+                            <td>$150.00</td>
+                            <td style="color: var(--success-green); font-weight: bold;">Optimized</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DE Franchise Tax</strong></td>
+                            <td>Annual 2026</td>
+                            <td>4.0 Days</td>
+                            <td>$400.00</td>
+                            <td style="color: var(--success-green); font-weight: bold;">Optimized</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

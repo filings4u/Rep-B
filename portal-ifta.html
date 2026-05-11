@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFTA Filing Center | filings4u Portal</title>
+    <style>
+        /* CORE RESETS */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root { 
+            --navy: #0a1f44; 
+            --emerald: #10b981; 
+            --white: #ffffff; 
+            --bg-light: #f4f7fa; 
+            --border: #e2e8f0; 
+            --text-gray: #64748b; 
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-light); 
+            color: var(--navy);
+            display: flex; 
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR FIX */
+        .portal-sidebar { 
+            width: 260px; height: 100vh; background: white; border-right: 1px solid var(--border); 
+            padding: 30px 20px; position: fixed; left: 0; top: 0; display: flex; flex-direction: column; z-index: 1000; 
+        }
+        .sidebar-logo { height: 35px; width: auto; object-fit: contain; margin-bottom: 40px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+        
+        .nav-item { 
+            display: flex; align-items: center; padding: 12px 15px; text-decoration: none; 
+            font-weight: 600; border-radius: 10px; color: var(--navy); font-size: 0.9rem; transition: 0.2s;
+        }
+        .nav-item span { margin-right: 12px; font-size: 1.1rem; }
+        .nav-item:hover { background: var(--bg-light); color: var(--emerald); }
+
+        /* THE NAVY ACTIVE CONTAINER */
+        .nav-item.active {
+            background-color: #0a1f44 !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(10, 31, 68, 0.3) !important;
+            transform: translateY(-2px);
+        }
+        .nav-item.active span { filter: brightness(0) invert(1); }
+
+        .logout-container { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
+        .logout-btn { 
+            text-decoration: none; background: var(--bg-light); color: var(--navy); display: block; 
+            text-align: center; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; border: 1px solid var(--border);
+        }
+
+        /* MAIN AREA */
+        .portal-main { margin-left: 260px; flex-grow: 1; padding: 40px 50px; width: calc(100% - 260px); }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        /* IFTA CARDS */
+        .ifta-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+        
+        /* MATH SUMMARY GRID */
+        .math-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: var(--navy); color: white; padding: 30px; border-radius: 16px; margin-bottom: 30px; }
+        .math-item small { display: block; opacity: 0.6; font-size: 0.7rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; }
+        .math-item h2 { font-size: 1.8rem; margin: 0; }
+
+        /* TABLE STYLES */
+        .ifta-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .ifta-table th { text-align: left; font-size: 0.7rem; text-transform: uppercase; color: var(--text-gray); padding: 12px; border-bottom: 2px solid var(--border); }
+        .ifta-table td { padding: 12px; border-bottom: 1px solid #f8f9fa; font-size: 0.9rem; }
+        .ifta-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; font-size: 0.9rem; }
+        
+        .badge-base { background: rgba(16, 185, 129, 0.1); color: var(--emerald); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; }
+        .btn-emerald { background: var(--emerald); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <aside class="portal-sidebar">
+        <div class="sidebar-header"><img src="images/logo.png" alt="filings4u" class="sidebar-logo"></div>
+        <nav class="sidebar-nav">
+            <a href="portal-trucker.html" class="nav-item"><span>📊</span> Fleet Dashboard</a>
+            <a href="portal-safety-audit.html" class="nav-item"><span>🛡️</span> Safety Audit Prep</a>
+            <a href="portal-driver-files.html" class="nav-item"><span>📂</span> Driver Files (DQ)</a>
+            <a href="portal-ifta.html" class="nav-item active"><span>⛽</span> IFTA Reporting</a>
+            <a href="portal-consortium.html" class="nav-item"><span>🧪</span> Drug & Alcohol</a>
+            <a href="portal-billing.html" class="nav-item"><span>💳</span> Billing & Invoices</a>
+            <a href="portal-add-driver.html" class="nav-item"><span>➕</span> Add New Driver</a>
+        </nav>
+        <div class="logout-container"><a href="index.html" class="logout-btn">Sign Out</a></div>
+    </aside>
+
+    <main class="portal-main">
+        <header class="header-flex">
+            <div>
+                <h1 style="font-size: 1.8rem;">Q2 IFTA Filing Center</h1>
+                <p style="color: var(--text-gray);">Base Jurisdiction: <strong>Illinois (IL)</strong> • 100+ Unit Logic</p>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-emerald" onclick="runMath()">Run Tax Math</button>
+                <button style="background:var(--navy); color:white; border:none; padding:12px 24px; border-radius:8px; font-weight:700; cursor:pointer;">Submit to IL SOS</button>
+            </div>
+        </header>
+
+        <!-- MATHEMATICAL SUMMARY CARD -->
+        <div class="math-grid">
+            <div class="math-item">
+                <small>Total Fleet Miles</small>
+                <h2 id="total-miles-display">0</h2>
+            </div>
+            <div class="math-item">
+                <small>Total Gallons</small>
+                <h2 id="total-gals-display">0.00</h2>
+            </div>
+            <div class="math-item">
+                <small>Weighted Fleet MPG</small>
+                <h2 id="fleet-mpg-display" style="color: var(--emerald);">0.00</h2>
+            </div>
+            <div class="math-item">
+                <small>Est. IL Tax Due</small>
+                <h2 id="tax-estimate" style="color: var(--emerald);">$0.00</h2>
+            </div>
+        </div>
+
+        <!-- DATA ENTRY GRID -->
+        <div class="ifta-card">
+            <h3 style="font-size: 1rem; margin-bottom: 20px;">Jurisdictional Data Entry</h3>
+            <table class="ifta-table">
+                <thead>
+                    <tr>
+                        <th>Jurisdiction</th>
+                        <th>Total Miles</th>
+                        <th>Tax-Paid Gallons</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ifta-rows">
+                    <!-- JS Populates -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const jurisdictions = ["IL","IN","WI","IA","MO","KY","MI","OH","PA","NY"]; 
+        const tbody = document.getElementById('ifta-rows');
+
+        jurisdictions.forEach(j => {
+            const isBase = j === "IL";
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${j}</strong> ${isBase ? '<span class="badge-base" style="margin-left:10px;">BASE</span>' : ''}</td>
+                    <td><input type="number" class="ifta-input mile-input" oninput="runMath()" placeholder="0"></td>
+                    <td><input type="number" class="ifta-input gal-input" oninput="runMath()" placeholder="0"></td>
+                    <td><small>${isBase ? 'IL Surcharge Active' : 'Standard Rate'}</small></td>
+                </tr>
+            `;
+        });
+
+        function runMath() {
+            let totalMiles = 0;
+            let totalGals = 0;
+            
+            document.querySelectorAll('.mile-input').forEach(i => totalMiles += Number(i.value) || 0);
+            document.querySelectorAll('.gal-input').forEach(i => totalGals += Number(i.value) || 0);
+            
+            const mpg = totalGals > 0 ? (totalMiles / totalGals).toFixed(2) : 0;
+            
+            document.getElementById('total-miles-display').innerText = totalMiles.toLocaleString();
+            document.getElementById('total-gals-display').innerText = totalGals.toFixed(2);
+            document.getElementById('fleet-mpg-display').innerText = mpg;
+
+            // Simple estimate for visual feedback
+            const estimatedTax = (totalMiles * 0.05).toFixed(2); // Example factor
+            document.getElementById('tax-estimate').innerText = '$' + estimatedTax;
+
+            // Audit Risk Trigger
+            if(mpg > 0 && mpg < 4.0) {
+                document.getElementById('fleet-mpg-display').style.color = "#e53e3e";
+            } else {
+                document.getElementById('fleet-mpg-display').style.color = "#10b981";
+            }
+        }
+    </script>
+</body>
+</html>
