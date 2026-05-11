@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Command | filings4u Control</title>
+    <style>
+        :root { --admin-purple: #6366f1; --navy: #0a1f44; --emerald: #10b981; --white: #ffffff; --bg: #f8fafc; --border: #e2e8f0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; }
+        
+        /* ADMIN SIDEBAR (PURPLE THEME) */
+        .admin-sidebar { width: 260px; height: 100vh; background: var(--navy); padding: 30px 20px; position: fixed; color: white; }
+        .nav-item { display: block; padding: 12px 15px; color: rgba(255,255,255,0.7); text-decoration: none; font-weight: 600; border-radius: 8px; margin-bottom: 5px; }
+        .nav-item.active { background: var(--admin-purple); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
+        
+        .main-content { margin-left: 260px; flex-grow: 1; padding: 40px; }
+        .client-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .client-table th { background: #f1f5f9; padding: 15px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--navy); }
+        .client-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        
+        .btn-action { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 0.75rem; font-weight: 700; }
+        .btn-emerald { background: var(--emerald); color: white; border: none; }
+        .badge-units { background: var(--navy); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+
+    <aside class="admin-sidebar">
+        <h2 style="margin-bottom: 30px; font-size: 1.2rem; color: var(--emerald);">filings4u ADMIN</h2>
+        <nav>
+            <a href="#" class="nav-item active">👥 Client CRM</a>
+            <a href="#" class="nav-item">⛽ IFTA Submissions</a>
+            <a href="#" class="nav-item">🛡️ Audit Reviews</a>
+            <a href="#" class="nav-item">💳 Payments & Billing</a>
+            <a href="#" class="nav-item">📂 Master Vault</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <h1>Client Management</h1>
+            <button class="btn-action btn-emerald">+ Manual Client Entry</button>
+        </header>
+
+        <table class="client-table">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Base State</th>
+                    <th>Units</th>
+                    <th>POA Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Roseland Logistics LLC</strong><br><small>user@roseland.com</small></td>
+                    <td>Illinois</td>
+                    <td><span class="badge-units">112 Units</span></td>
+                    <td style="color: var(--emerald); font-weight: 800;">✓ SIGNED</td>
+                    <td>
+                        <button class="btn-action" onclick="openUpload('Roseland')">Upload Docs</button>
+                        <button class="btn-action" style="color:var(--danger)">Remove</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Blue Sky Brokerage</strong><br><small>ops@bluesky.com</small></td>
+                    <td>Texas</td>
+                    <td><span class="badge-units">Broker</span></td>
+                    <td style="color: var(--danger); font-weight: 800;">PENDING</td>
+                    <td>
+                        <button class="btn-action">Upload Docs</button>
+                        <button class="btn-action">Take Payment</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <!-- ADMIN UPLOAD MODAL -->
+    <div id="admin-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; padding:40px; border-radius:20px; width:450px;">
+            <h3 id="modal-title">Upload to Client Vault</h3>
+            <p style="font-size:0.8rem; margin:10px 0 20px;">The document will be instantly visible in the user's portal.</p>
+            <input type="file" style="margin-bottom:20px; display:block;">
+            <select style="width:100%; padding:10px; margin-bottom:20px; border-radius:8px;">
+                <option>IFTA License (Current)</option>
+                <option>Uniform Cab Card</option>
+                <option>DOT Authority Certificate</option>
+                <option>BOC-3 Filing</option>
+            </select>
+            <button class="btn-emerald" style="width:100%; padding:12px; border-radius:8px;" onclick="closeModal()">Push to Client Portal →</button>
+        </div>
+    </div>
+
+    <script>
+        function openUpload(name) {
+            document.getElementById('modal-title').innerText = "Upload to " + name;
+            document.getElementById('admin-modal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('admin-modal').style.display = 'none'; }
+    </script>
+</body>
+</html>
