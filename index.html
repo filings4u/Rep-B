@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | filings4u Client Portal</title>
-    <!-- 1. External Scripts -->
+    <!-- External Scripts -->
     <script src="https://hcaptcha.com" async defer></script>
     <script src="https://jsdelivr.net"></script>
     
     <style>
-        /* PULLING FROM YOUR PORTAL STYLES */
         :root {
             --primary-blue: #0a1f44;
             --white: #ffffff;
@@ -20,78 +19,120 @@
             --success-green: #48bb78;
         }
 
-        body {
+        body, html {
             margin: 0;
+            height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .split-container {
             display: flex;
             height: 100vh;
-            background-color: var(--white);
+            width: 100%;
         }
 
-        /* BRAND SIDE (LEFT) */
-        .brand-side {
-            flex: 1.2;
-            background-color: var(--primary-blue);
-            color: var(--white);
+        /* LEFT SIDE: EQUAL IMAGE PANEL */
+        .image-side {
+            flex: 1;
+            background: linear-gradient(rgba(10, 31, 68, 0.6), rgba(10, 31, 68, 0.6)), 
+                        url('images/truck-bg.jpg'); /* Ensure this image path is correct */
+            background-size: cover;
+            background-position: center;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            padding: 80px;
-            position: relative;
-            overflow: hidden;
+            color: white;
+            padding: 60px;
+            box-sizing: border-box;
         }
 
-        /* Subtle truck-style background pattern or image can go here */
-        .brand-side::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url('images/truck-bg.jpg'); /* Optional background */
-            opacity: 0.1;
-            z-index: 0;
+        .image-content h1 {
+            font-size: 3rem;
+            line-height: 1.2;
+            margin-bottom: 20px;
         }
 
-        .brand-content { position: relative; z-index: 1; }
-        .brand-logo { height: 50px; margin-bottom: 40px; }
-        .brand-side h1 { font-size: 2.8rem; margin: 0 0 20px 0; line-height: 1.2; }
-        .brand-side p { font-size: 1.1rem; color: #cbd5e1; max-width: 450px; line-height: 1.6; }
+        .image-content p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 500px;
+        }
 
-        /* FORM SIDE (RIGHT) */
+        /* RIGHT SIDE: EQUAL FORM PANEL */
         .form-side {
             flex: 1;
+            background-color: var(--bg-light);
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 40px;
-            background-color: #fcfcfc;
+            box-sizing: border-box;
         }
 
-        .login-box { width: 100%; max-width: 400px; }
-        .login-box h2 { color: var(--primary-blue); font-size: 2rem; margin: 0 0 10px 0; }
-        .login-box p { color: var(--text-gray); margin-bottom: 35px; }
-
-        .form-group { margin-bottom: 20px; }
-        .form-group label { 
-            display: block; 
-            font-size: 0.75rem; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            color: var(--text-gray); 
-            margin-bottom: 8px; 
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--white);
+            padding: 50px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            text-align: center;
         }
-        .form-group input { 
-            width: 100%; 
-            padding: 14px 15px; 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            font-size: 1rem; 
+
+        .logo-container img {
+            height: 50px;
+            margin-bottom: 30px;
+        }
+
+        .login-card h2 {
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            margin: 0 0 10px 0;
+        }
+
+        .login-card p {
+            color: var(--text-gray);
+            margin-bottom: 35px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
         }
-        .form-group input:focus { border-color: var(--primary-blue); }
 
-        .error-msg { color: var(--danger-red); font-size: 0.85rem; margin-top: 5px; min-height: 1.2em; }
+        .form-group input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(10, 31, 68, 0.05);
+        }
+
+        .error-msg {
+            color: var(--danger-red);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            min-height: 1.2em;
+        }
 
         .btn-login {
             width: 100%;
@@ -106,56 +147,68 @@
             transition: opacity 0.2s;
             margin-top: 10px;
         }
-        .btn-login:hover { opacity: 0.9; }
 
+        .btn-login:hover {
+            opacity: 0.95;
+        }
+
+        /* Responsive: Stack on mobile */
         @media (max-width: 1024px) {
-            .brand-side { display: none; }
+            .split-container { flex-direction: column; }
+            .image-side { display: none; }
+            .form-side { height: 100vh; }
         }
     </style>
 </head>
 <body>
 
-    <section class="brand-side">
-        <div class="brand-content">
-            <img src="images/logo-white.png" alt="filings4u" class="brand-logo">
-            <h1>Compliance is <br>now effortless.</h1>
-            <p>Your centralized hub for permits, registrations, and registered agent services. Built specifically for transportation professionals.</p>
-        </div>
-    </section>
-
-    <section class="form-side">
-        <div class="login-box">
-            <h2>Welcome back</h2>
-            <p>Please enter your credentials to access your portal.</p>
-
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="email" placeholder="name@company.com" required>
-                    <div id="email-error" class="error-msg"></div>
-                </div>
-
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                    <div id="password-error" class="error-msg"></div>
-                </div>
-
-                <!-- hCaptcha Security -->
-                <div class="h-captcha" data-sitekey="961cfd8a-525a-4b60-9c0c-dd6c506e9fc4"></div>
-                <div id="captcha-error" class="error-msg"></div>
-
-                <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button>
-            </form>
-
-            <div style="margin-top: 30px; text-align: center; font-size: 0.9rem;">
-                <a href="forgot-password.html" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a>
+    <div class="split-container">
+        <!-- LEFT SIDE -->
+        <section class="image-side">
+            <div class="image-content">
+                <h1>Built for<br>Compliance.</h1>
+                <p>Manage your trucking authority, fleet permits, and filings in one secure, industry-leading platform.</p>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- RIGHT SIDE -->
+        <section class="form-side">
+            <div class="login-card">
+                <div class="logo-container">
+                    <img src="images/logo.png" alt="filings4u logo">
+                </div>
+                <h2>Portal Login</h2>
+                <p>Please enter your credentials to access your secure dashboard.</p>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="email" placeholder="name@company.com" required>
+                        <div id="email-error" class="error-msg"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                        <div id="password-error" class="error-msg"></div>
+                    </div>
+
+                    <!-- hCaptcha -->
+                    <div class="h-captcha" data-sitekey="961cfd8a-525a-4b60-9c0c-dd6c506e9fc4"></div>
+                    <div id="captcha-error" class="error-msg"></div>
+
+                    <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button>
+                </form>
+
+                <div style="margin-top: 25px; font-size: 0.9rem;">
+                    <a href="forgot-password.html" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                </div>
+            </div>
+        </section>
+    </div>
 
     <script>
-        // 1. Supabase Config
+        // Supabase Initialization
         const supabase = supabase.createClient('https://supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU');
 
         document.getElementById('loginForm').onsubmit = async (e) => {
@@ -165,7 +218,6 @@
             const password = document.getElementById('password').value;
             const captchaToken = hcaptcha.getResponse();
 
-            // Clear errors
             document.getElementById('password-error').innerText = '';
             document.getElementById('captcha-error').innerText = '';
 
@@ -177,7 +229,6 @@
             btn.innerText = "Authenticating...";
             btn.disabled = true;
 
-            // 2. Sign In
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
@@ -190,15 +241,12 @@
                 btn.disabled = false;
                 hcaptcha.reset();
             } else {
-                // 3. THE ROUTER: Send them to their specific dashboard
                 const purchaseType = data.user.user_metadata.purchase_type || 'general';
-                
                 const routes = {
                     'trucker': 'portal-trucker.html',
                     'broker': 'portal-broker.html',
                     'formation': 'portal-formation.html'
                 };
-
                 window.location.href = routes[purchaseType] || 'portal-dashboard.html';
             }
         };
