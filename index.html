@@ -4,294 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Client Portal | filings4u</title>
-  <style>
-    /* GLOBAL PORTAL STYLES - filings4u */
-    :root {
-        --primary-blue: #0a1f44;
-        --white: #ffffff;
-        --bg-light: #f8f9fa;
-        --border-color: #e2e8f0;
-        --text-gray: #4a5568;
-        --danger-red: #e53e3e;
-        --success-green: #48bb78;
-    }
-
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #fcfcfc;
-        display: flex;
-    }
-
-    /* SIDEBAR STYLES */
-    .portal-sidebar {
-        width: 260px;
-        height: 100vh;
-        background: var(--bg-light);
-        border-right: 1px solid var(--border-color);
-        padding: 20px;
-        position: fixed;
-        display: flex;
-        flex-direction: column;
-        z-index: 100;
-    }
-
-    .sidebar-header { 
-        margin-bottom: 40px; 
-        padding-left: 5px;
-    }
-
-    .sidebar-logo {
-        height: 45px;
-        width: auto;
-    }
-
-    .sidebar-nav { 
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .nav-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        text-decoration: none;
-        font-weight: 600;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        transition: all 0.3s ease;
-        color: var(--primary-blue);
-    }
-
-    .nav-item:hover, .nav-item.active {
-        background-color: var(--primary-blue);
-        color: var(--white);
-    }
-
-    .nav-item span { margin-right: 12px; }
-
-    /* SIGN OUT BUTTON */
-    .logout-container {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .logout-btn {
-        display: block;
-        text-align: center;
-        text-decoration: none;
-        background-color: var(--primary-blue);
-        color: var(--white);
-        padding: 12px;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: opacity 0.2s;
-    }
-
-    .logout-btn:hover { opacity: 0.9; }
-
-    /* MAIN CONTENT AREA & SPACING */
-    .portal-main {
-        margin-left: 280px; 
-        width: calc(100% - 280px);
-        padding: 50px 60px; 
-        box-sizing: border-box;
-    }
-
-    .content-container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    /* HEADER COMPONENTS */
-    .portal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 40px;
-    }
-
-    .welcome-text h1 { margin: 0; color: var(--primary-blue); }
-    .welcome-text p { margin: 5px 0; color: var(--text-gray); }
-
-    .header-actions {
-        display: flex;
-        gap: 20px;
-        align-items: center;
-    }
-
-    .search-container { position: relative; }
-
-    .search-input {
-        padding: 10px 15px 10px 35px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        width: 220px;
-        outline: none;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.9rem;
-        color: var(--text-gray);
-    }
-
-    .notification-wrapper {
-        position: relative;
-        cursor: pointer;
-        font-size: 1.3rem;
-    }
-
-    .notification-dot {
-        position: absolute;
-        top: -2px;
-        right: -2px;
-        width: 10px;
-        height: 10px;
-        background-color: var(--danger-red);
-        border: 2px solid var(--white);
-        border-radius: 50%;
-    }
-
-    .btn-primary-small {
-        background-color: var(--primary-blue);
-        color: var(--white);
-        border: none;
-        padding: 12px 24px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    /* CARDS & GRID */
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 25px;
-        margin-bottom: 40px;
-    }
-
-    .stat-card {
-        background: var(--white);
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-        border-color: var(--primary-blue);
-    }
-
-    .stat-card small { color: var(--text-gray); font-weight: 600; }
-    .stat-card h2 { margin: 10px 0 0; color: var(--primary-blue); font-size: 1.8rem; }
-
-    .portal-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 30px;
-    }
-
-    .portal-card {
-        background: var(--white);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    .portal-card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1rem; }
-
-    .status-badge.active {
-        background: #c6f6d5;
-        color: #22543d;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 700;
-    }
-
-    .compliance-list { list-style: none; padding: 0; margin: 0; }
-    .compliance-list-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f7f7f7; font-size: 0.9rem; }
-    .tag-success { color: var(--success-green); font-weight: bold; }
-
-    .drop-zone { border: 2px dashed #cbd5e0; border-radius: 10px; padding: 30px; text-align: center; background: #f7fafc; cursor: pointer; }
-</style>
-
-<!-- Load Firebase SDKs -->
-<script src="https://gstatic.com"></script>
-<script src="https://gstatic.com"></script>
-
-<script>
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyA_45sXieC6fdfQstLQ2a21psXeOxhfdwo",
-  authDomain: "customer-portal-18728.firebaseapp.com",
-  projectId: "customer-portal-18728",
-  storageBucket: "customer-portal-18728.firebasestorage.app",
-  messagingSenderId: "117765841972",
-  appId: "1:117765841972:web:9746c4f3037270a7811661",
-  measurementId: "G-Q2L5R7LP6R"
-};
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  firebase.auth().onAuthStateChanged((user) => {
-    if (!user) {
-        window.location.replace("https://filings4u.com");
-    } else if (!user.emailVerified) {
-        // Optional: Force them to verify before seeing data
-        alert("Please verify your email address to access the portal.");
-        auth.signOut().then(() => {
-            window.location.replace("https://filings4u.com");
-        });
-    }
-});
-
-
-  // 2. THE LOGOUT FUNCTION
-  function handleLogout() {
-    auth.signOut().then(() => {
-      // After Firebase signs out, send them back to the marketing site
-      window.location.href = "https://filings4u.com";
-    }).catch((error) => {
-      console.error("Logout Error:", error);
-    });
-
-    auth.onAuthStateChanged((user) => {
-    if (!user) {
-        // Not logged in at all
-        window.location.replace("https://filings4u.com");
-    } else if (!user.emailVerified) {
-        // Logged in but hasn't clicked the link in their inbox
-        window.location.replace("https://filings4u.com");
-    }
-    // If they are logged in AND verified, the page loads normally.
-});
-
-
-  }
-</script>
-
-
-
-
-
-
-
-
+    <!-- 1. ADD SUPABASE SDK -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        /* [KEEP ALL YOUR EXISTING CSS HERE] */
+        :root { --primary-blue: #0a1f44; --white: #ffffff; --bg-light: #f8f9fa; --border-color: #e2e8f0; --text-gray: #4a5568; --danger-red: #e53e3e; --success-green: #48bb78; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fcfcfc; display: flex; opacity: 0; transition: opacity 0.5s; }
+        /* ... existing styles ... */
+        .loading-overlay { position: fixed; inset: 0; background: white; z-index: 999; display: flex; align-items: center; justify-content: center; }
+    </style>
 </head>
 <body class="portal-body">
+    <!-- LOADING SCREEN -->
+    <div id="loader" class="loading-overlay">
+        <h2 style="color: var(--primary-blue)">Authenticating Secure Session...</h2>
+    </div>
 
     <!-- PORTAL SIDEBAR -->
     <aside class="portal-sidebar">
@@ -305,12 +32,9 @@ const firebaseConfig = {
             <a href="#" class="nav-item"><span>📂</span> Document Vault</a>
             <a href="#" class="nav-item"><span>💳</span> Billing & Orders</a>
             <a href="#" class="nav-item"><span>⚙️</span> Account Settings</a>
-            
-       <div class="logout-container">
-    <!-- Note: href is now 'javascript:void(0)' and we added onclick -->
-    <a href="javascript:void(0)" onclick="handleLogout()" class="logout-btn">Sign Out</a>
-</div>
-
+            <div class="logout-container">
+                <a href="javascript:void(0)" onclick="handleLogout()" class="logout-btn">Sign Out</a>
+            </div>
         </nav>
     </aside>
 
@@ -320,9 +44,9 @@ const firebaseConfig = {
             <header class="portal-header">
                 <div class="welcome-text">
                     <h1>Dashboard</h1>
-                    <p>Welcome back, <strong>Roseland Logistics LLC</strong></p>
+                    <!-- DYNAMIC NAME INJECTED HERE -->
+                    <p>Welcome back, <strong id="userName">Loading Account...</strong></p>
                 </div>
-                
                 <div class="header-actions">
                     <div class="search-container">
                         <span class="search-icon">🔍</span>
@@ -338,23 +62,24 @@ const firebaseConfig = {
 
             <!-- STATS ROW -->
             <div class="stats-row">
-                <div class="stat-card">
-                    <small>Total Filings</small>
-                    <h2>24</h2>
-                </div>
-                <div class="stat-card">
-                    <small>Active Permits</small>
-                    <h2>8</h2>
-                </div>
-                <div class="stat-card">
-                    <small>Pending Tasks</small>
-                    <h2 style="color: var(--danger-red);">3</h2>
-                </div>
-                <div class="stat-card">
-                    <small>Next Renewal</small>
-                    <h2>14d</h2>
-                </div>
+                <div class="stat-card"><small>Total Filings</small><h2>24</h2></div>
+                <div class="stat-card"><small>Active Permits</small><h2>8</h2></div>
+                <div class="stat-card"><small>Pending Tasks</small><h2 style="color: var(--danger-red);">3</h2></div>
+                <div class="stat-card"><small>Next Renewal</small><h2>14d</h2></div>
             </div>
+
+            <!-- GRID (KEEPING YOUR REMAINING HTML) -->
+            <div class="portal-grid">
+                <!-- ENTITY STANDING -->
+                <div class="portal-card">
+                    <h3>Entity Standing</h3>
+                    <div class="standing-indicator">
+                        <span class="status-badge active">Good Standing</span>
+                        <p id="companyLocation">Loading...</p>
+                    </div>
+                    <div style="background: #edf2f7; height: 8px; border-radius: 10px; margin: 15px 0 5px;"><div style="background: var(--success-green); height: 100%; width: 85%; border-radius: 10px;"></div></div>
+                    <small>85% Compliance Score</small>
+                </div>
 
             <div class="portal-grid">
                 <!-- ENTITY STANDING -->
@@ -435,6 +160,51 @@ const firebaseConfig = {
             </div>
         </div>
     </main>
+
+<script>
+        // 1. SUPABASE INITIALIZATION
+        const supabaseUrl = 'https://supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'; 
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 2. SECURITY CHECK: Ensure user is logged in
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (!session) {
+                console.log("No session found, redirecting to login...");
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // 3. FETCH PROFILE DATA
+            const { data: profile, error } = await supabaseClient
+                .from('profiles')
+                .select('company_name')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile) {
+                document.getElementById('userName').innerText = profile.company_name;
+                // Also pull from metadata if table sync is delayed
+            } else {
+                document.getElementById('userName').innerText = session.user.user_metadata.company_name || "Valued Client";
+            }
+
+            // Reveal Page
+            document.getElementById('loader').style.display = 'none';
+            document.body.style.opacity = '1';
+        }
+
+        // 4. LOGOUT LOGIC
+        async function handleLogout() {
+            const { error } = await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Run check on load
+        checkSession();
+    </script>
 
 </body>
 </html>
