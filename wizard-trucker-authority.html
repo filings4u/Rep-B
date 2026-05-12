@@ -4,112 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trucker Authority (MC#) Wizard | filings4u</title>
-    <link rel="stylesheet" href="assets/css/site-elite.css">
-    <style>
-        .wizard-card { max-width: 800px; margin: 40px auto; background: white; padding: 40px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--navy); margin-bottom: 6px; }
-        .form-group input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; box-sizing: border-box; }
-        .form-section { display: none; }
-        .form-section.active { display: block; }
-        .btn-main { background: var(--navy); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.3s; }
-    </style>
+    <link rel="stylesheet" href="assets/css/portal-wizard.css">
+   
 </head>
 <body style="background: var(--ice);">
 
-    <nav style="background: white; padding: 15px 8%; border-bottom: 1px solid var(--border);">
-        <img src="images/logo.png" style="height: 30px;">
-    </nav>
+<nav style="background: white; padding: 15px 8%; border-bottom: 1px solid var(--border);">
+    <img src="images/logo.png" style="height: 30px;">
+</nav>
 
-    <main class="wizard-card">
-        <form id="wizardForm">
-            <!-- STEP 1: IDENTITY -->
-            <div class="form-section active" id="s1">
-                <span class="hero-tag">Step 1: Driver Identity</span>
-                <h2>Owner & CDL Details</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group"><label>First Name*</label><input type="text" data-key="first_name" required></div>
-                    <div class="form-group"><label>Last Name*</label><input type="text" data-key="last_name" required></div>
-                </div>
-                <div class="form-group"><label>Personal Email (For Portal Access)*</label><input type="email" data-key="customer_email" required></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group"><label>CDL Number*</label><input type="text" data-key="cdl_number" required></div>
-                    <div class="form-group"><label>CDL State*</label><input type="text" data-key="cdl_state" required></div>
-                </div>
-                <button type="button" class="btn-main" onclick="next(2)">Continue to Equipment →</button>
+<!-- TRUCKER AUTHORITY WIZARD CONTENT -->
+<main class="portal-main">
+    <div class="content-container">
+        <header class="portal-header">
+            <div class="welcome-text">
+                <h1>Motor Authority Registration</h1>
+                <p>Registering with the <strong>FMCSA</strong></p>
             </div>
-
-            <!-- STEP 2: FLEET -->
-            <div class="form-section" id="s2">
-                <span class="hero-tag">Step 2: Equipment</span>
-                <h2>Fleet Infrastructure</h2>
-                <div class="form-group">
-                    <label>Company Name (Legal Entity)*</label>
-                    <input type="text" data-key="company_name" placeholder="e.g., Swift Trucking LLC" required>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group"><label>Power Units (Trucks)</label><input type="number" data-key="power_units" value="1"></div>
-                    <div class="form-group"><label>Trailers</label><input type="number" data-key="trailers" value="1"></div>
-                </div>
-                <div class="form-group">
-                    <label>Operation Type</label>
-                    <select data-key="op_type">
-                        <option value="interstate">Interstate (Across State Lines)</option>
-                        <option value="intrastate">Intrastate (Within One State)</option>
-                    </select>
-                </div>
-                <button type="button" class="btn-main" onclick="next(3)">Final Compliance →</button>
+            <!-- Progress Bar -->
+            <div class="wizard-progress" style="width: 100%; max-width: 400px; background: #edf2f7; height: 8px; border-radius: 10px; margin-top: 10px;">
+                <div id="progress-fill" style="background: var(--primary-blue); height: 100%; width: 20%; border-radius: 10px; transition: 0.3s;"></div>
             </div>
+        </header>
 
-            <!-- STEP 3: COMPLIANCE -->
-            <div class="form-section" id="s3">
-                <span class="hero-tag">Step 3: FMCSA Compliance</span>
-                <h2>Authority Filings</h2>
-                <div class="form-group">
-                    <label>Cargo Classification</label>
-                    <select data-key="cargo_type">
-                        <option>General Freight</option>
-                        <option>Refrigerated Food</option>
-                        <option>Log/Pole/Lumber</option>
-                        <option>Hazardous Materials</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>USDOT Number (If already assigned)</label>
-                    <input type="text" data-key="usdot_number" placeholder="Leave blank if new">
-                </div>
-                <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 20px;">
-                    By clicking Review Order, you authorize filings4u to act as your process agent for BOC-3 and MC# filings.
-                </p>
-                <button type="button" class="btn-main" onclick="finalizeWizard()">Review Order Summary →</button>
-            </div>
-        </form>
-    </main>
+        <div class="portal-card" id="wizard-step-container">
+            <form id="authority-wizard" action="order.html">
+                <!-- STEP 1: BUSINESS INFO -->
+                <section class="step" id="step-1">
+                    <h3>Step 1: Business Identity</h3>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Legal Business Name (Must match IRS)</label>
+                        <input type="text" class="search-input" style="width: 100%; border: 1px solid #ddd;" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>EIN or SSN</label>
+                        <input type="text" class="search-input" style="width: 100%; border: 1px solid #ddd;" placeholder="XX-XXXXXXX" required>
+                    </div>
+                    <button type="button" class="btn-primary-small" onclick="nextStep(2)">Continue</button>
+                </section>
 
-    <script>
-        // Navigation Logic
-        function next(n) {
-            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-            document.getElementById('s' + n).classList.add('active');
-            window.scrollTo(0,0);
-        }
+                <!-- STEP 2: OPERATION CLASSIFICATION (MCS-150) -->
+                <section class="step" id="step-2" style="display:none;">
+                    <h3>Step 2: Operation Details</h3>
+                    <p>Select your primary business operation:</p>
+                    <label style="display:block; margin-bottom: 10px;">
+                        <input type="radio" name="op_type" value="carrier"> Motor Carrier (Property)
+                    </label>
+                    <label style="display:block; margin-bottom: 10px;">
+                        <input type="radio" name="op_type" value="broker"> Broker
+                    </label>
+                    <button type="button" class="btn-primary-small" style="background: #a0aec0;" onclick="nextStep(1)">Back</button>
+                    <button type="button" class="btn-primary-small" onclick="nextStep(3)">Continue</button>
+                </section>
 
-        // Data Relay Logic
-        function finalizeWizard() {
-            const data = {};
-            // Collect all inputs with a data-key
-            document.querySelectorAll('[data-key]').forEach(input => {
-                data[input.getAttribute('data-key')] = input.value;
-            });
+                <!-- FINAL STEP: READY FOR PAYMENT -->
+                <section class="step" id="step-3" style="display:none;">
+                    <h3>Final Review</h3>
+                    <p>Everything looks good. Proceed to secure payment to file your MC Authority.</p>
+                    <button type="submit" class="btn-primary-small">Proceed to Order ($300.00)</button>
+                </section>
+            </form>
+        </div>
+    </div>
+</main>
 
-            // Set specific meta for this wizard
-            data['service_type'] = "Trucker Authority (MC#)";
-            data['price'] = 599; // Set your price here
+<script>
+function nextStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.style.display = 'none');
+    document.getElementById('step-' + step).style.display = 'block';
+    const progress = (step / 3) * 100;
+    document.getElementById('progress-fill').style.width = progress + '%';
+}
+</script>
 
-            // Save to session and move to order.html
-            sessionStorage.setItem('pendingOrder', JSON.stringify(data));
-            window.location.href = 'order.html';
-        }
-    </script>
 </body>
 </html>

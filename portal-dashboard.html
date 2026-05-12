@@ -386,5 +386,67 @@ if (!session) window.location.href = 'index.html';
         </div>
     </main>
 
+ <script>
+    // 1. DOWNLOAD: Gets a signed URL for an existing file in Supabase Storage
+    async function downloadUserDocument(filePath) {
+        const { data, error } = await supabase.storage
+            .from('compliance-documents')
+            .createSignedUrl(filePath, 60, { download: true });
+
+        if (data) {
+            window.location.href = data.signedUrl;
+        } else {
+            console.error('Download failed:', error.message);
+        }
+    }
+
+    // 2. GENERATE & SAVE: Triggers the Edge Function to create PDF and save to Storage
+    async function handleGenerateAndSavePDF(company, type) {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const { data, error } = await supabase.functions.invoke('generate-compliance-pdf', {
+            body: { 
+                action: 'generate-pdf',
+                companyName: company, 
+                filingType: type,
+                userId: user.id 
+            },
+        });
+
+        if (error) {
+            console.error('Generation Error:', error);
+            return;
+        }
+
+        alert("Document generated and saved to your vault.");
+        // data.path contains the storage path (e.g., "uuid/Form_2290_12345.pdf")
+        // You can now call downloadUserDocument(data.path) if you want to open it immediately
+        downloadUserDocument(data.path);
+    }
+
+    // 3. CHECKOUT: Triggers the Stripe payment session
+    async function startCheckout(email, company, service, price) {
+        const { data, error } = await supabase.functions.invoke('generate-compliance-pdf', {
+            body: { 
+                action: 'checkout',
+                email: email,
+                company_name: company,
+                service_type: service,
+                amount: price // price in cents, e.g., 5000 for $50.00
+            }
+        });
+
+        if (error) {
+            console.error('Stripe Error:', error);
+            return;
+        }
+
+        // Redirect or load Stripe Embedded UI using data.clientSecret
+        console.log("Stripe Client Secret received:", data.clientSecret);
+    }
+</script>
+
+
+
 </body>
 </html>
