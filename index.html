@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | filings4u Client Portal</title>
+    <script src="https://hcaptcha.com" async defer></script>
+    <script src="https://jsdelivr.net"></script>
+    <link rel="stylesheet" href="assets/css/site-elite.css">
+    <style>
+        /* Branded Split-Screen Styles */
+        body { margin: 0; display: flex; height: 100vh; font-family: 'Inter', sans-serif; background: #fff; }
+        .brand-side { 
+            flex: 1; background: #0a1f44; color: white; padding: 60px;
+            display: flex; flex-direction: column; justify-content: center;
+            background-image: linear-gradient(rgba(10, 31, 68, 0.8), rgba(10, 31, 68, 0.8)), url('images/truck-bg.jpg');
+            background-size: cover;
+        }
+        .form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .login-box { width: 100%; max-width: 400px; }
+        .error-msg { color: #ef4444; font-size: 0.8rem; margin-top: 5px; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+    <section class="brand-side">
+        <img src="images/logo-white.png" style="height: 40px; margin-bottom: 40px;" alt="filings4u">
+        <h1>Your Compliance, Simplified.</h1>
+        <p>Access your filings, permits, and documents in your dedicated industry portal.</p>
+    </section>
+
+    <section class="form-side">
+        <div class="login-box">
+            <h2 style="color: #0a1f44;">Sign In</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" required>
+                    <div id="email-error" class="error-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                    <div id="password-error" class="error-msg"></div>
+                </div>
+                <div class="h-captcha" data-sitekey="YOUR_HCAPTCHA_SITE_KEY"></div>
+                <button type="submit" class="btn-main" style="width: 100%; margin-top: 20px;">Enter Portal</button>
+            </form>
+        </div>
+    </section>
+
+    <script>
+        const supabase = supabase.createClient('https://supabase.co', 'YOUR_ANON_KEY');
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const captchaToken = hcaptcha.getResponse();
+
+            if (!captchaToken) { alert("Please complete the CAPTCHA"); return; }
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email, password, options: { captchaToken }
+            });
+
+            if (error) {
+                document.getElementById('password-error').innerText = error.message;
+            } else {
+                // ROUTING LOGIC BASED ON PURCHASE
+                const purchaseType = data.user.user_metadata.purchase_type;
+                
+                if (purchaseType === 'trucker') window.location.href = 'portal-trucker.html';
+                else if (purchaseType === 'broker') window.location.href = 'portal-broker.html';
+                else if (purchaseType === 'formation') window.location.href = 'portal-business-formation.html';
+                else window.location.href = 'portal-general.html';
+            }
+        };
+    </script>
+</body>
+</html>
