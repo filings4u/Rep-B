@@ -230,11 +230,11 @@ async function prepareOrder() {
         sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
         
         // FIXED REDIRECT ROUTING TO YOUR PORTAL CHECKOUT HUB
-        window.location.assign("https://portal.filings4u.com/order.html");
+        window.location.assign("order.html");
 
     } catch (err) {
         console.error("Pipeline failure. Executing fail-safe fallback routing: ", err);
-        window.location.assign("filings4u.com");
+        window.location.assign("https://filings4u.com");
     }
 }
 
