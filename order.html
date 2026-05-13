@@ -66,14 +66,27 @@
     const stripe = Stripe('pk_test_51TTy4u1hrjQxq47MgsMyTpdS4Aadnk4H63kILJaWbuUfppSySDt4Ijx9we7zkkCFEaeqzQ7C3k7Ql9HcSA5Urh3n00pEKGxNLE');
     const rawData = sessionStorage.getItem('pendingOrder');
 
-    if (!rawData) {
+        if (!rawData) {
         console.warn("Session data missing on initial execution trace.");
-        loadingMessage.innerHTML = "<div style='color:red; font-weight:700;'>Session data missing.</div><p>Returning to your configuration layout...</p>";
+        loadingMessage.innerHTML = "<div style='color:red; font-weight:700;'>Session Expired or Missing.</div><p>Returning to your configuration layout...</p>";
+        
         setTimeout(() => {
-            window.location.href = "filings4u.com";
-        }, 3000);
+            // 1. Dynamic Check: Look at where the browser came from
+            const previousPage = document.referrer;
+            
+            // 2. Validate that they came from a filings4u wizard page
+            if (previousPage && previousPage.includes('wizard-') && previousPage.includes('filings4u.com')) {
+                console.log("Dynamic routing activated. Returning user to: ", previousPage);
+                window.location.href = previousPage;
+            } else {
+                // 3. Fallback: Send them to the main portal dashboard area if history is missing
+                console.log("No valid referrer footprint found. Redirecting to core portal ecosystem.");
+                window.location.href = "https://filings4u.com";
+            }
+        }, 2500);
         return;
     }
+
 
     const orderData = JSON.parse(rawData);
     document.getElementById('display-company').innerText = orderData.company_name;
