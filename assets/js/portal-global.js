@@ -282,5 +282,3 @@ window.addEventListener('load', () => {
     // 4. Run pricing engine context evaluation
     updateSummary();
 });
-
-</script>
