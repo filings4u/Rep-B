@@ -1,6 +1,6 @@
 /* ============================================================
    FILINGS4U GLOBAL PORTAL ENGINE & STATE MANAGEMENT
-   Production Version 2.1 (Bug Fix for Loop & Navigation)
+   Production Version 2.2 (Consolidated Engine Initialization)
    ============================================================ */
 
 const TOTAL_STEPS = 8;
@@ -30,14 +30,12 @@ const PortalApp = {
                 return;
             }
             this.syncEntityContext();
-            
-            // Set initial dynamic labels without running structural validation loops
-            const label = document.getElementById('step-label');
-            if (label) label.innerText = `Step 1 of ${TOTAL_STEPS}`;
-            
         } catch (e) {
             console.error("Auth security check failed: ", e);
         }
+
+        // Run UI layout configuration safety checks
+        this.initWizardLayout();
     },
 
     // 2. ENTITY CONTEXT SWITCHER
@@ -105,6 +103,25 @@ const PortalApp = {
             const sb = document.getElementById('sidebar');
             if (sb) sb.classList.toggle('mobile-active');
         };
+    },
+
+    initWizardLayout() {
+        const activeSection = document.querySelector('.form-section.active');
+        if (!activeSection) {
+            const firstSection = document.getElementById('step-1');
+            if (firstSection) firstSection.classList.add('active');
+        }
+
+        const label = document.getElementById('step-label');
+        const activeSectionNow = document.querySelector('.form-section.active');
+        if (label && activeSectionNow) {
+            const stepNum = activeSectionNow.id.split('-')[1] || '1';
+            label.innerText = `Step ${stepNum} of ${TOTAL_STEPS}`;
+            
+            const bar = document.getElementById('progress-fill');
+            if (bar) bar.style.width = (parseInt(stepNum) / TOTAL_STEPS) * 100 + '%';
+        }
+        updateSummary();
     }
 };
 
@@ -116,7 +133,6 @@ function nextStep(step) {
     const currentSection = document.querySelector('.form-section.active');
     if (currentSection) {
         const currentStepNum = parseInt(currentSection.id.split('-')[1]);
-        // Only run validation if the user is trying to move FORWARD
         if (step > currentStepNum && !validateCurrentFields(currentSection)) return;
     }
     
@@ -124,11 +140,10 @@ function nextStep(step) {
     const target = document.getElementById('step-' + step);
     if (target) target.classList.add('active');
 
-    // Update Progress Bar UI
     const bar = document.getElementById('progress-fill');
     if (bar) {
         bar.style.width = (step / TOTAL_STEPS) * 100 + '%';
-        bar.style.backgroundColor = '#10b981'; // Emerald
+        bar.style.backgroundColor = '#10b981';
     }
     
     const label = document.getElementById('step-label');
@@ -142,7 +157,6 @@ function validateCurrentFields(container) {
     let isValid = true;
     const currentStepNum = parseInt(container.id.split('-')[1]);
 
-    // Group Checkbox Validation (Step 2 and 3)
     if (currentStepNum === 2 || currentStepNum === 3) {
         const grid = container.querySelector('.checkbox-grid');
         if (grid && grid.querySelectorAll('input:checked').length === 0) {
@@ -153,7 +167,6 @@ function validateCurrentFields(container) {
         }
     }
 
-    // Step 6 Rules (Strict Certification Checkboxes)
     if (currentStepNum === 6) {
         container.querySelectorAll('input[type="checkbox"]').forEach(cert => {
             if (!cert.checked) {
@@ -165,7 +178,6 @@ function validateCurrentFields(container) {
         });
     }
 
-    // Global Required Field Scraper
     container.querySelectorAll('[required]').forEach(field => {
         if ((field.type === 'checkbox' && !field.checked) || (!field.value.trim())) {
             field.style.border = "2px solid #e53e3e";
@@ -192,9 +204,14 @@ function updateSummary() {
         bocStatusEl.style.color = (boc3Price === 0) ? '#10b981' : 'inherit';
     }
 
-    document.getElementById('summary-plan').innerText = plan.toUpperCase();
-    document.getElementById('summary-price').innerText = "$" + basePrice.toFixed(2);
-    document.getElementById('summary-total').innerText = "$" + (basePrice + govFee + boc3Price).toFixed(2);
+    const planNameEl = document.getElementById('summary-plan');
+    if (planNameEl) planNameEl.innerText = plan.toUpperCase();
+    
+    const planPriceEl = document.getElementById('summary-price');
+    if (planPriceEl) planPriceEl.innerText = "$" + basePrice.toFixed(2);
+
+    const totalEl = document.getElementById('summary-total');
+    if (totalEl) totalEl.innerText = "$" + (basePrice + govFee + boc3Price).toFixed(2);
 }
 
 /* ============================================================
@@ -212,12 +229,11 @@ async function prepareOrder() {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (session && session.user) userEmail = session.user.email;
-        } catch (e) { 
-            console.warn("Telemetry warning: Active secure context bypassed."); 
+        } catch (e) {
+            console.warn("Telemetry warning: Active secure context bypassed.");
         }
 
-        const companyInput = document.querySelector('input[placeholder*="Business Name"]') || 
-                             document.querySelector('input[name="company_name"]');
+        const companyInput = document.querySelector('input[placeholder*="Business Name"]') || document.querySelector('input[name="company_name"]');
 
         const orderData = {
             plan: window.location.pathname.split('/').pop().replace('wizard-', '').replace('.html', ''),
@@ -228,13 +244,10 @@ async function prepareOrder() {
 
         console.log("Packaging data for payment gateway:", orderData);
         sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-        
-        // FIXED REDIRECT ROUTING TO YOUR PORTAL CHECKOUT HUB
         window.location.assign("order.html");
-
     } catch (err) {
         console.error("Pipeline failure. Executing fail-safe fallback routing: ", err);
-        window.location.assign("https://filings4u.com");
+        window.location.assign("order.html");
     }
 }
 
@@ -247,38 +260,6 @@ function handleLogout() { if (confirm("Sign out?")) { supabase.auth.signOut().th
 // 5. BOOTSTRAP EVENT HOOK
 document.addEventListener('DOMContentLoaded', () => {
     PortalApp.init();
-    
     const dateEl = document.getElementById('current-date');
     if (dateEl) dateEl.value = new Date().toLocaleDateString();
-});
-
-// REPLACE THE INITIALIZATION BLOCK AT THE BOTTOM OF portal-global.js
-window.addEventListener('load', () => {
-    // 1. Start UI sub-systems safely
-    startClock();
-    
-    const dateEl = document.getElementById('current-date');
-    if (dateEl) dateEl.value = new Date().toLocaleDateString();
-
-    // 2. Safe Section Switcher (Prevents loop crash)
-    const activeSection = document.querySelector('.form-section.active');
-    if (!activeSection) {
-        // Only force step 1 if no section is explicitly set to active in HTML
-        const firstSection = document.getElementById('step-1');
-        if (firstSection) firstSection.classList.add('active');
-    }
-
-    // 3. Set the step bar metric safely without triggering global validation cycles
-    const label = document.getElementById('step-label');
-    const activeSectionNow = document.querySelector('.form-section.active');
-    if (label && activeSectionNow) {
-        const stepNum = activeSectionNow.id.split('-')[1] || '1';
-        label.innerText = `Step ${stepNum} of ${TOTAL_STEPS}`;
-        
-        const bar = document.getElementById('progress-fill');
-        if (bar) bar.style.width = (parseInt(stepNum) / TOTAL_STEPS) * 100 + '%';
-    }
-
-    // 4. Run pricing engine context evaluation
-    updateSummary();
 });
