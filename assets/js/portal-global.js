@@ -105,3 +105,49 @@ function handleLogout() {
 
 // SINGLE entry point for performance
 document.addEventListener('DOMContentLoaded', () => PortalApp.init());
+
+async function prepareOrder() {
+    console.log("Preparing Order...");
+    
+    // 1. Get the total from the UI
+    const totalEl = document.getElementById('summary-total');
+    if (!totalEl) {
+        console.error("Critical Error: element 'summary-total' not found.");
+        return;
+    }
+
+    // 2. Format Price: Remove ALL non-numeric characters (converts $849.00 to 849)
+    const rawValue = totalEl.innerText;
+    const cleanPrice = Math.floor(parseFloat(rawValue.replace(/[^0-9.]/g, '')));
+    
+    if (isNaN(cleanPrice) || cleanPrice <= 0) {
+        alert("Invalid order amount. Please refresh and try again.");
+        return;
+    }
+
+    // 3. Get Auth Session for Email
+    const { data: { session } } = await supabase.auth.getSession();
+    const userEmail = session?.user?.email || "pending@filings4u.com";
+
+    // 4. Capture Company Name
+    const companyInput = document.querySelector('input[placeholder*="Business Name"]') || 
+                         document.querySelector('input[name="company_name"]');
+    const companyName = companyInput?.value || "New Filing Entity";
+
+    // 5. detect Service Type (from filename)
+    const serviceType = window.location.pathname.split('/').pop().replace('wizard-', '').replace('.html', '');
+
+    const orderData = {
+        plan: serviceType,
+        price: cleanPrice, // Number, not string
+        customer_email: userEmail,
+        company_name: companyName
+    };
+
+    // 6. Save and Force Redirect
+    console.log("Saving order data:", orderData);
+    sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+    
+    // Using assign() to force the browser to navigate
+    window.location.assign("https://filings4u.com");
+}
