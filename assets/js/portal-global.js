@@ -263,3 +263,121 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateEl = document.getElementById('current-date');
     if (dateEl) dateEl.value = new Date().toLocaleDateString();
 });
+
+/* ============================================================
+   FILINGS4U CLOUD DATA, VAULT STORAGE & PAYMENTS ENGINE
+   Production Version 2.4 (Consolidated Client API Wrappers)
+   ============================================================ */
+
+/**
+ * 1. LIVE SECURE DOCUMENT VAULT DOWNLOADS
+ * Fetches an ephemeral 60-second signed URL for a protected file asset in Supabase Storage
+ * @param {string} filePath - The structured path within the bucket (e.g., "user-uuid/document.pdf")
+ */
+async function downloadUserDocument(filePath) {
+    if (!filePath) return console.error('Aborting transfer: File token reference parameter missing.');
+    console.log(`Requesting secure download handshake token for asset target: ${filePath}`);
+
+    try {
+        const { data, error } = await window.supabase.storage
+            .from('compliance-documents')
+            .createSignedUrl(filePath, 60, { download: true });
+
+        if (error) throw error;
+
+        if (data && data.signedUrl) {
+            console.log("Token handshake verified. Dispatching browser download channel...");
+            window.location.href = data.signedUrl;
+        }
+    } catch (err) {
+        console.error('Secure Vault Sourcing Failure:', err.message);
+        alert("Unable to fetch document download link. Please refresh your profile view.");
+    }
+}
+
+/**
+ * 2. REGULATORY SYSTEM PDF GENERATION INTERFACE
+ * Invokes the edge function cluster to run a jsPDF instance and save the artifact directly into object storage
+ * @param {string} company - The legal corporate business entity footprint name
+ * @param {string} type - The specific application layout filing classification string (e.g., "Form_2290")
+ */
+async function handleGenerateAndSavePDF(company, type) {
+    console.log(`Initializing cloud generation protocols for operational footprint: ${type}`);
+    
+    try {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if (!user) throw new Error("Active authenticated user identity reference missing.");
+
+        // Invoke your deployed backend Deno function router instance
+        const { data, error } = await window.supabase.functions.invoke('stripe-webhook', {
+            body: { 
+                action: 'generate-pdf', 
+                companyName: company, 
+                filingType: type, 
+                userId: user.id 
+            }
+        });
+
+        if (error) throw error;
+
+        alert(`Filing artifact [${type}] generated successfully and written to your secure folder layer.`);
+        
+        // Auto-trigger dynamic download channel loop if returned path trace is active
+        if (data && data.path) {
+            await downloadUserDocument(data.path);
+        }
+
+    } catch (err) {
+        console.error('Automated PDF Sourcing Deployment Aborted:', err.message);
+        alert("Filing generation pipeline timed out. Verify your connection metrics or alert engineering.");
+    }
+}
+
+/**
+ * 3. FALLBACK SIDE-BAR DIRECT PAYMENTS HANDSHAKE
+ * Creates a raw on-the-fly checkout token session directly from static list actions if needed
+ * @param {string} email - Logged-in email anchor coordinate
+ * @param {string} company - Registered target legal business entity name parameter
+ * @param {string} service - Profile type key identifier (e.g., "dot-consortium")
+ * @param {number} price - Absolute price formatted integer calculated strictly in cents (pennies)
+ */
+async function startCheckout(email, company, service, price) {
+    console.log(`Processing direct off-wizard invoice placement routing context for: ${service}`);
+    
+    if (!price || isNaN(price) || price <= 0) {
+        return console.error("Billing pipeline crash: Invalid integer amount properties passed.");
+    }
+
+    try {
+        const { data, error } = await window.supabase.functions.invoke('stripe-webhook', {
+            body: { 
+                action: 'checkout', 
+                email: email, 
+                company_name: company, 
+                service_type: service, 
+                amount: Math.round(price) 
+            }
+        });
+
+        if (error) throw error;
+
+        // Stage data cleanly inside local storage arrays to bridge across pages
+        const orderData = {
+            plan: service,
+            price: Math.round(price / 100),
+            customer_email: email,
+            company_name: company
+        };
+        sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+
+        console.log("Dynamic price tracking tokens locked. Navigating client to secure payment hub...");
+        window.location.href = "filings4u.com";
+
+    } catch (err) {
+        console.error('Stripe Client Interface Handshake Interrupted:', err.message);
+        alert("Billing network handshake failed. Please refresh your view or try a different invoice.");
+    }
+}
+
+
+
