@@ -137,53 +137,49 @@
         const orderData = JSON.parse(rawData);
         document.getElementById('display-company').innerText = orderData.company_name;
 
-        try {
-            // FIND THIS EXTENSION CONTAINER INSIDE THE TRY BLOCK OF order.html
-const fetchClientSecret = async () => {
-    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-            action: 'checkout', 
-            email: orderData.customer_email, 
-            company_name: orderData.company_name, 
-            amount: Math.round(parseFloat(orderData.price) * 100), 
-            service_type: orderData.plan || 'trucker' 
-        })
-    });
+       // Locate this block in your order.html and replace it exactly
+try {
+    const fetchClientSecret = async () => {
+        const response = await fetch('supabase.co', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'checkout',
+                email: orderData.customer_email,
+                company_name: orderData.company_name,
+                amount: Math.round(parseFloat(orderData.price) * 100),
+                service_type: orderData.plan || 'trucker'
+            })
+        });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server status ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
-    return data.clientSecret;
-};
-
-// FIX: Force layout scaling parameter constraints to absolute full width bounds
-const checkout = await stripe.initEmbeddedCheckout({ 
-    fetchClientSecret,
-    // Native Stripe parameters forcing structural grid auto-expansion
-    layout: 'accordion' 
-});
-
-// Hide loading panel container UI asset
-loadingMessage.style.display = 'none';
-
-// Mount the cleaned form layout
-checkout.mount('#checkout');
-
-            console.log("Stripe embedded checkout successfully mounted.");
-
-        } catch (err) {
-            console.error("Initialization failed:", err);
-            loadingMessage.innerHTML = `<div style="color:red; font-weight:700;">Handshake Error: ${err.message}</div>`;
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server status ${response.status}: ${errorText}`);
         }
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        return data.clientSecret;
+    };
+
+    // FIXED: Removed 'layout: accordion' parameter to pass Stripe validation rules
+    const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
+
+    // Hide loading panel container UI asset
+    loadingMessage.style.display = 'none';
+
+    // Mount the layout securely
+    checkout.mount('#checkout');
+    console.log("Stripe embedded checkout successfully mounted.");
+
+} catch (err) {
+    console.error("Initialization failed:", err);
+    loadingMessage.innerHTML = `<div style="color:red; font-weight:700;">Handshake Error: ${err.message}</div>`;
+}
+
     });
     </script>
 </body>
