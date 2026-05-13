@@ -96,6 +96,28 @@
             document.getElementById('loading-message').innerHTML = `<div style="color:red;">Error: ${err.message}</div>`;
         }
     });
+
+    function prepareOrder() {
+    const totalElement = document.getElementById('summary-total');
+    if (!totalElement) return alert("Error: Total not found.");
+
+    // Clean the price string: "$849.00" -> "849"
+    const cleanPrice = totalElement.innerText.replace(/[^0-9.]/g, '').split('.')[0];
+    
+    const params = new URLSearchParams(window.location.search);
+    const orderData = {
+        plan: params.get('plan') || 'basic',
+        price: cleanPrice,
+        customer_email: "active-user@filings4u.com", // This will come from Supabase session
+        company_name: document.querySelector('input[placeholder*="Business Name"]')?.value || "Carrier LLC"
+    };
+
+    sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+    
+    // Use absolute path for reliability
+    window.location.assign("https://filings4u.com");
+}
+
     </script>
 </body>
 </html>
