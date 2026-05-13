@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trucker Authority (MC#) Wizard | filings4u</title>
-    
+
     <link rel="stylesheet" href="assets/css/portal-wizard.css">
 
 <script>
@@ -577,165 +577,6 @@
         </div>
     </main>
 
-<script>
-const TOTAL_STEPS = 8;
-
-// 1. NAVIGATION & PROGRESS LOGIC
-function nextStep(step) {
-    const currentSection = document.querySelector('.form-section.active');
-    
-    if (currentSection) {
-        const currentStepNum = parseInt(currentSection.id.split('-')[1]);
-        // Only validate if moving FORWARD
-        if (step > currentStepNum && !validateCurrentFields(currentSection)) {
-            return; 
-        }
-    }
-
-    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById('step-' + step);
-    if (target) target.classList.add('active');
-
-    // Update Progress Bar
-    const bar = document.getElementById('progress-fill');
-    if (bar) {
-        bar.style.width = (step / TOTAL_STEPS) * 100 + '%';
-        bar.style.backgroundColor = '#10b981';
-        bar.style.transition = 'width 0.4s ease-in-out';
-    }
-
-    const label = document.getElementById('step-label');
-    if (label) label.innerText = `Step ${step} of ${TOTAL_STEPS}`;
-
-    if (step === 8) updateSummary();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// 2. ENHANCED VALIDATION LOGIC
-function validateCurrentFields(container) {
-    let isValid = true;
-    const currentStepNum = parseInt(container.id.split('-')[1]);
-
-    // Group Validation: Step 2 & Step 3 (At least ONE required)
-    if (currentStepNum === 2 || currentStepNum === 3) {
-        const grid = container.querySelector('.checkbox-grid');
-        if (grid) {
-            const checked = grid.querySelectorAll('input:checked').length > 0;
-            if (!checked) {
-                grid.style.border = "2px solid #e53e3e";
-                isValid = false;
-            } else {
-                grid.style.border = "1px solid var(--border-color)";
-            }
-        }
-    }
-
-    // Step 6 Rule: ALL checkboxes in this section are mandatory
-    if (currentStepNum === 6) {
-        const certs = container.querySelectorAll('input[type="checkbox"]');
-        certs.forEach(cert => {
-            if (!cert.checked) {
-                cert.parentElement.style.border = "2px solid #e53e3e";
-                isValid = false;
-            } else {
-                cert.parentElement.style.border = "none";
-            }
-        });
-    }
-
-    // General Required Field Validation (Skips checkboxes handled above)
-    const requiredInputs = container.querySelectorAll('[required]');
-    requiredInputs.forEach(field => {
-        const isCheckbox = field.type === 'checkbox' || field.type === 'radio';
-        
-        if (isCheckbox) {
-            // Primarily for Step 4's single mandatory checkbox
-            if (!field.checked) {
-                field.parentElement.style.border = "2px solid #e53e3e";
-                isValid = false;
-            } else {
-                field.parentElement.style.border = "none";
-            }
-        } else if (!field.value.trim()) {
-            field.style.border = "2px solid #e53e3e";
-            isValid = false;
-        } else {
-            field.style.border = "1px solid var(--border-color)";
-        }
-    });
-
-    if (!isValid) alert("Please complete the required sections highlighted in red.");
-    return isValid;
-}
-
-// 3. PRICING & SUMMARY
-function updateSummary() {
-    const params = new URLSearchParams(window.location.search);
-    const plan = params.get('plan') || 'basic';
-    const basePrice = parseInt(params.get('price')) || 499;
-    const govFee = 300;
-    let boc3Price = (plan === 'elite' || plan === 'enterprise') ? 0 : 50;
-
-    const bocStatusEl = document.getElementById('boc3-status');
-    if (bocStatusEl) {
-        bocStatusEl.innerText = (boc3Price === 0) ? 'Included' : '+$50.00';
-        bocStatusEl.style.color = (boc3Price === 0) ? '#10b981' : 'inherit';
-    }
-
-    document.getElementById('summary-plan').innerText = plan.toUpperCase();
-    document.getElementById('summary-price').innerText = "$" + basePrice.toFixed(2);
-    document.getElementById('summary-total').innerText = "$" + (basePrice + govFee + boc3Price).toFixed(2);
-}
-
-// 4. PREPARE ORDER & REDIRECT
-function prepareOrder() {
-    const total = document.getElementById('summary-total')?.innerText.replace('$', '') || "799";
-    const params = new URLSearchParams(window.location.search);
-    const fName = document.getElementById('signature-first')?.value || "";
-    const lName = document.getElementById('signature-last')?.value || "";
-    const emailInput = document.querySelector('input[type="email"]') || document.querySelector('input[placeholder*="Telephone"]');
-    const companyInput = document.querySelector('input[placeholder*="Business Name"]');
-
-    const orderData = {
-        plan: params.get('plan') || 'basic',
-        price: total,
-        customer_email: emailInput ? emailInput.value : 'pending@filings4u.com',
-        company_name: companyInput ? companyInput.value : 'New Carrier LLC',
-        signer: fName + " " + lName
-    };
-
-    sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-    window.location.assign("order.html");
-}
-
-// 5. CLOCK INITIALIZATION
-function startClock() {
-    const clock = document.getElementById('portal-clock');
-    if (clock) {
-        setInterval(() => {
-            const now = new Date();
-            clock.innerText = now.toLocaleString('en-US', { 
-                weekday: 'short', month: 'short', day: 'numeric', 
-                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
-            });
-        }, 1000);
-    }
-}
-
-function handleSaveExit() { document.getElementById('save-modal').style.display = 'flex'; }
-function closeSaveModal() { document.getElementById('save-modal').style.display = 'none'; }
-function toggleDiv(id, show) { const el = document.getElementById(id); if (el) show ? el.classList.remove('hidden') : el.classList.add('hidden'); }
-
-window.addEventListener('load', () => {
-    nextStep(1);
-    startClock();
-    const dateEl = document.getElementById('current-date');
-    if (dateEl) dateEl.value = new Date().toLocaleDateString();
-});
-</script>
-
-
-
 
 <!-- SAVE & EXIT LEAD MODAL -->
 <div id="save-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,31,68,0.8); z-index:9999; align-items:center; justify-content:center;">
@@ -775,6 +616,145 @@ window.addEventListener('load', () => {
         </form>
     </div>
 </div>
+
+<script>
+const TOTAL_STEPS = 8;
+
+// 1. NAVIGATION & PROGRESS LOGIC
+function nextStep(step) {
+    const currentSection = document.querySelector('.form-section.active');
+    if (currentSection) {
+        const currentStepNum = parseInt(currentSection.id.split('-')[1]);
+        if (step > currentStepNum && !validateCurrentFields(currentSection)) return;
+    }
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('step-' + step);
+    if (target) target.classList.add('active');
+
+    const bar = document.getElementById('progress-fill');
+    if (bar) {
+        bar.style.width = (step / TOTAL_STEPS) * 100 + '%';
+        bar.style.backgroundColor = '#10b981';
+    }
+    const label = document.getElementById('step-label');
+    if (label) label.innerText = `Step ${step} of ${TOTAL_STEPS}`;
+
+    if (step === 8) updateSummary();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 2. ENHANCED VALIDATION LOGIC
+function validateCurrentFields(container) {
+    let isValid = true;
+    const currentStepNum = parseInt(container.id.split('-')[1]);
+
+    if (currentStepNum === 2 || currentStepNum === 3) {
+        const grid = container.querySelector('.checkbox-grid');
+        if (grid && grid.querySelectorAll('input:checked').length === 0) {
+            grid.style.border = "2px solid #e53e3e";
+            isValid = false;
+        } else if (grid) {
+            grid.style.border = "1px solid var(--border-color)";
+        }
+    }
+
+    if (currentStepNum === 6) {
+        container.querySelectorAll('input[type="checkbox"]').forEach(cert => {
+            if (!cert.checked) {
+                cert.parentElement.style.border = "2px solid #e53e3e";
+                isValid = false;
+            } else {
+                cert.parentElement.style.border = "none";
+            }
+        });
+    }
+
+    container.querySelectorAll('[required]').forEach(field => {
+        if ((field.type === 'checkbox' && !field.checked) || (!field.value.trim())) {
+            field.style.border = "2px solid #e53e3e";
+            isValid = false;
+        } else {
+            field.style.border = "1px solid var(--border-color)";
+        }
+    });
+
+    if (!isValid) alert("Please complete required fields highlighted in red.");
+    return isValid;
+}
+
+// 3. PRICING & SUMMARY
+function updateSummary() {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get('plan') || 'basic';
+    const basePrice = parseInt(params.get('price')) || 499;
+    const govFee = 300;
+    let boc3Price = (plan === 'elite' || plan === 'enterprise') ? 0 : 50;
+
+    const bocStatusEl = document.getElementById('boc3-status');
+    if (bocStatusEl) {
+        bocStatusEl.innerText = (boc3Price === 0) ? 'Included' : '+$50.00';
+        bocStatusEl.style.color = (boc3Price === 0) ? '#10b981' : 'inherit';
+    }
+
+    document.getElementById('summary-plan').innerText = plan.toUpperCase();
+    document.getElementById('summary-price').innerText = "$" + basePrice.toFixed(2);
+    document.getElementById('summary-total').innerText = "$" + (basePrice + govFee + boc3Price).toFixed(2);
+}
+
+// 4. PREPARE ORDER & REDIRECT (Corrected)
+async function prepareOrder() {
+    console.log("Saving session to portal.filings4u.com...");
+
+    const totalEl = document.getElementById('summary-total');
+    const rawValue = totalEl ? totalEl.innerText : "0";
+    const cleanPrice = Math.floor(parseFloat(rawValue.replace(/[^0-9.]/g, '')));
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        alert("Session expired. Please log in again.");
+        window.location.href = "index.html";
+        return;
+    }
+
+    const companyInput = document.querySelector('input[placeholder*="Business Name"]') || 
+                         document.querySelector('input[name="company_name"]');
+
+    const orderData = {
+        plan: window.location.pathname.split('/').pop().replace('wizard-', '').replace('.html', ''),
+        price: cleanPrice,
+        customer_email: session.user.email,
+        company_name: companyInput ? companyInput.value : "New Carrier LLC"
+    };
+
+    sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+    
+    // Redirect to the PORTAL checkout
+    window.location.href = "https://filings4u.com";
+}
+
+// 5. HELPERS
+function startClock() {
+    const clock = document.getElementById('portal-clock');
+    if (clock) {
+        setInterval(() => {
+            const now = new Date();
+            clock.innerText = now.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }, 1000);
+    }
+}
+
+function handleSaveExit() { document.getElementById('save-modal').style.display = 'flex'; }
+function closeSaveModal() { document.getElementById('save-modal').style.display = 'none'; }
+function toggleDiv(id, show) { const el = document.getElementById(id); if (el) show ? el.classList.remove('hidden') : el.classList.add('hidden'); }
+
+window.addEventListener('load', () => {
+    nextStep(1);
+    startClock();
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) dateEl.value = new Date().toLocaleDateString();
+});
+</script>
+
 
 <!-- BOTTOM OF PAGE -->
 <script src="https://jsdelivr.net" defer></script>
