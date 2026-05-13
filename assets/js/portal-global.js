@@ -1,6 +1,6 @@
 /* ============================================================
    FILINGS4U GLOBAL PORTAL ENGINE & STATE MANAGEMENT
-   Production Version 2.0 (Optimized & Non-Blocking)
+   Production Version 2.1 (Bug Fix for Loop & Navigation)
    ============================================================ */
 
 const TOTAL_STEPS = 8;
@@ -22,7 +22,7 @@ const PortalApp = {
         this.initSidebarActiveState();
         this.initNotifications();
 
-        // Check authentication in the background to prevent rendering freezes
+        // Check authentication safely without rendering freezes
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -30,6 +30,11 @@ const PortalApp = {
                 return;
             }
             this.syncEntityContext();
+            
+            // Set initial dynamic labels without running structural validation loops
+            const label = document.getElementById('step-label');
+            if (label) label.innerText = `Step 1 of ${TOTAL_STEPS}`;
+            
         } catch (e) {
             console.error("Auth security check failed: ", e);
         }
@@ -53,7 +58,6 @@ const PortalApp = {
         if (overlay) overlay.style.display = 'flex';
         localStorage.setItem('active_entity_id', id);
         
-        // Visual opacity transition before hard-refreshing context data
         const mainContent = document.querySelector('.portal-main');
         if (mainContent) mainContent.style.opacity = '0.5';
 
@@ -112,6 +116,7 @@ function nextStep(step) {
     const currentSection = document.querySelector('.form-section.active');
     if (currentSection) {
         const currentStepNum = parseInt(currentSection.id.split('-')[1]);
+        // Only run validation if the user is trying to move FORWARD
         if (step > currentStepNum && !validateCurrentFields(currentSection)) return;
     }
     
@@ -160,7 +165,7 @@ function validateCurrentFields(container) {
         });
     }
 
-    // Global Required Target Scraper
+    // Global Required Field Scraper
     container.querySelectorAll('[required]').forEach(field => {
         if ((field.type === 'checkbox' && !field.checked) || (!field.value.trim())) {
             field.style.border = "2px solid #e53e3e";
@@ -221,14 +226,14 @@ async function prepareOrder() {
             company_name: companyInput ? companyInput.value : "New Carrier LLC"
         };
 
-        console.log("Packaging application footprint for order pipeline: ", orderData);
+        console.log("Packaging data for payment gateway:", orderData);
         sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
         
-        // FORCED ROUTING TO SECURE PAYMENT HUB CONTAINER
-        window.location.assign("filings4u.com");
+        // FIXED REDIRECT ROUTING TO YOUR PORTAL CHECKOUT HUB
+        window.location.assign("https://portal.filings4u.com/order.html");
 
     } catch (err) {
-        console.error("Pipeline failure. Executing high-priority fail-safe bypass routing: ", err);
+        console.error("Pipeline failure. Executing fail-safe fallback routing: ", err);
         window.location.assign("filings4u.com");
     }
 }
@@ -243,7 +248,7 @@ function handleLogout() { if (confirm("Sign out?")) { supabase.auth.signOut().th
 document.addEventListener('DOMContentLoaded', () => {
     PortalApp.init();
     
-    // Auto-populate local formatting context for any active date picker interfaces
     const dateEl = document.getElementById('current-date');
     if (dateEl) dateEl.value = new Date().toLocaleDateString();
 });
+</script>
