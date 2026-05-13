@@ -251,4 +251,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateEl = document.getElementById('current-date');
     if (dateEl) dateEl.value = new Date().toLocaleDateString();
 });
+
+// REPLACE THE INITIALIZATION BLOCK AT THE BOTTOM OF portal-global.js
+window.addEventListener('load', () => {
+    // 1. Start UI sub-systems safely
+    startClock();
+    
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) dateEl.value = new Date().toLocaleDateString();
+
+    // 2. Safe Section Switcher (Prevents loop crash)
+    const activeSection = document.querySelector('.form-section.active');
+    if (!activeSection) {
+        // Only force step 1 if no section is explicitly set to active in HTML
+        const firstSection = document.getElementById('step-1');
+        if (firstSection) firstSection.classList.add('active');
+    }
+
+    // 3. Set the step bar metric safely without triggering global validation cycles
+    const label = document.getElementById('step-label');
+    const activeSectionNow = document.querySelector('.form-section.active');
+    if (label && activeSectionNow) {
+        const stepNum = activeSectionNow.id.split('-')[1] || '1';
+        label.innerText = `Step ${stepNum} of ${TOTAL_STEPS}`;
+        
+        const bar = document.getElementById('progress-fill');
+        if (bar) bar.style.width = (parseInt(stepNum) / TOTAL_STEPS) * 100 + '%';
+    }
+
+    // 4. Run pricing engine context evaluation
+    updateSummary();
+});
+
 </script>

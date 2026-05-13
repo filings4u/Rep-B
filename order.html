@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Checkout | filings4u</title>
     
+    <!-- 1. EXTERNAL LIBRARIES FIRST WITH CORRECT SECURE WEB PROTOCOLS -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <link rel="stylesheet" href="assets/css/portal-wizard.css">
     <style>
         :root { --emerald: #10b981; --navy: #0a1f44; }
         body { background: #fcfcfc; display: flex; margin: 0; font-family: 'Inter', sans-serif; }
-        .checkout-container { 
-            background: white; padding: 40px; border-radius: 20px; 
-            border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            width: 100%; max-width: 900px; margin: 0 auto;
-        }
+        .checkout-container { background: white; padding: 40px; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; max-width: 900px; margin: 0 auto; }
         #checkout { margin-top: 20px; min-height: 500px; width: 100%; }
         .secure-header { text-align: center; margin-bottom: 40px; border-bottom: 1px solid #f1f5f9; padding-bottom: 30px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="portal-body">
@@ -47,16 +48,18 @@
                 <div style="margin: 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--emerald); border-radius: 50%; animation: spin 1s linear infinite;"></div>
             </div>
 
+            <!-- STRIPE MOUNT POINT -->
             <div id="checkout"></div>
         </div>
     </main>
 
-    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-
+    <!-- 2. CHECKOUT ENGINE RUNNING EXCLUSIVELY ON THIS CONTAINER -->
     <script>
     window.addEventListener('load', async () => {
+        const loadingMessage = document.getElementById('loading-message');
+        
         if (typeof Stripe === 'undefined') {
-            document.getElementById('loading-message').innerHTML = "Stripe failed to load. Please disable ad-blockers.";
+            loadingMessage.innerHTML = "<div style='color:red; font-weight:700;'>Stripe failed to load. Please check your internet connection or network filters.</div>";
             return;
         }
 
@@ -64,8 +67,11 @@
         const orderData = JSON.parse(sessionStorage.getItem('pendingOrder'));
 
         if (!orderData || !orderData.customer_email) {
-            alert("Session data missing. Redirecting back.");
-            window.location.href = "https://www.portal.filings4u.com/wizard-trucker-authority.html"; // MATCH THIS TO YOUR WIZARD FILENAME
+            loadingMessage.innerHTML = "<div style='color:red; font-weight:700;'>Session data missing.</div><p>Returning to your configuration layout...</p>";
+            setTimeout(() => {
+                // FIXED REDIRECT PATHWAY: Stays on your exact subdomain ecosystem
+                window.location.href = "https://portal.filings4u.com/wizard-trucker-authority.html";
+            }, 2500);
             return;
         }
 
@@ -76,68 +82,29 @@
                 const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email: orderData.customer_email, 
-                        company_name: orderData.company_name, 
-                        amount: parseInt(orderData.price) * 100, 
-                        service_type: 'trucker' 
+                    body: JSON.stringify({
+                        action: 'checkout', // Matches your Edge Function conditional branch logic
+                        email: orderData.customer_email,
+                        company_name: orderData.company_name,
+                        amount: Math.round(parseFloat(orderData.price) * 100), // Secure currency math conversions
+                        service_type: orderData.plan || 'trucker'
                     })
                 });
+                
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
                 return data.clientSecret;
             };
 
             const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
-            document.getElementById('loading-message').style.display = 'none';
+            loadingMessage.style.display = 'none';
             checkout.mount('#checkout');
+            
         } catch (err) {
-            document.getElementById('loading-message').innerHTML = `<div style="color:red;">Error: ${err.message}</div>`;
+            console.error("Initialization failed:", err);
+            loadingMessage.innerHTML = `<div style="color:red; font-weight:700;">Handshake Error: ${err.message}. Please refresh or notify engineering support.</div>`;
         }
     });
-
-    function prepareOrder() {
-    const totalElement = document.getElementById('summary-total');
-    if (!totalElement) return alert("Error: Total not found.");
-
-    // Clean the price string: "$849.00" -> "849"
-    const cleanPrice = totalElement.innerText.replace(/[^0-9.]/g, '').split('.')[0];
-    
-    const params = new URLSearchParams(window.location.search);
-    const orderData = {
-        plan: params.get('plan') || 'basic',
-        price: cleanPrice,
-        customer_email: "active-user@filings4u.com", // This will come from Supabase session
-        company_name: document.querySelector('input[placeholder*="Business Name"]')?.value || "Carrier LLC"
-    };
-
-    sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-    
-    // Use absolute path for reliability
-    window.location.assign("https://filings4u.com");
-
-    // Inside order.html script section
-const amountInCents = parseInt(orderData.price) * 100;
-
-// Ensure it is sent to the webhook correctly
-body: JSON.stringify({ 
-    action: 'checkout', // Ensure this matches your Edge Function case
-    email: orderData.customer_email, 
-    company_name: orderData.company_name, 
-    amount: amountInCents, 
-    service_type: orderData.plan 
-})
-
-}
-
     </script>
-
-<script src="https://jsdelivr.net" defer></script>
-<script src="https://js.stripe.com/v3/" defer></script>
-<script src="assets/js/portal-global.js" defer></script>
-
-
-
-
 </body>
 </html>
