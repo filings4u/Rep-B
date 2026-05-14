@@ -3,28 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Portal Dashboard | filings4u</title>
-    <!-- 1. CORE ENGINE DEPENDENCY SOURCING -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="assets/css/portal-global.css">
-    <style>
-        /* Component architecture patches to align with dashboard design constraints */
-        :root { 
-            --emerald: #10b981; 
-            --navy: #0a1f44; 
-        }
-        .portal-grid .dynamic-service-panel { 
-            grid-column: 1 / -1; 
-            width: 100%;
-        }
-        .inner-panel-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-    </style>
+    <title>Client Portal | filings4u</title>
+    <script>const { data: { session } } = await supabase.auth.getSession();
+if (!session) window.location.href = 'index.html';
+</script>
+  <style>
+    /* GLOBAL PORTAL STYLES - filings4u */
+    :root {
+        --primary-blue: #0a1f44;
+        --white: #ffffff;
+        --bg-light: #f8f9fa;
+        --border-color: #e2e8f0;
+        --text-gray: #4a5568;
+        --danger-red: #e53e3e;
+        --success-green: #48bb78;
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #fcfcfc;
+        display: flex;
+    }
+
+    /* SIDEBAR STYLES */
+    .portal-sidebar {
+        width: 260px;
+        height: 100vh;
+        background: var(--bg-light);
+        border-right: 1px solid var(--border-color);
+        padding: 20px;
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+    }
+
+    .sidebar-header { 
+        margin-bottom: 40px; 
+        padding-left: 5px;
+    }
+
+    .sidebar-logo {
+        height: 45px;
+        width: auto;
+    }
+
+    .sidebar-nav { 
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        color: var(--primary-blue);
+    }
+
+    .nav-item:hover, .nav-item.active {
+        background-color: var(--primary-blue);
+        color: var(--white);
+    }
+
+    .nav-item span { margin-right: 12px; }
+
+    /* SIGN OUT BUTTON */
+    .logout-container {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .logout-btn {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        background-color: var(--primary-blue);
+        color: var(--white);
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: opacity 0.2s;
+    }
+
+    .logout-btn:hover { opacity: 0.9; }
+
+    /* MAIN CONTENT AREA & SPACING */
+    .portal-main {
+        margin-left: 280px; 
+        width: calc(100% - 280px);
+        padding: 50px 60px; 
+        box-sizing: border-box;
+    }
+
+    .content-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* HEADER COMPONENTS */
+    .portal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+    }
+
+    .welcome-text h1 { margin: 0; color: var(--primary-blue); }
+    .welcome-text p { margin: 5px 0; color: var(--text-gray); }
+
+    .header-actions {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .search-container { position: relative; }
+
+    .search-input {
+        padding: 10px 15px 10px 35px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        width: 220px;
+        outline: none;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.9rem;
+        color: var(--text-gray);
+    }
+
+    .notification-wrapper {
+        position: relative;
+        cursor: pointer;
+        font-size: 1.3rem;
+    }
+
+    .notification-dot {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 10px;
+        height: 10px;
+        background-color: var(--danger-red);
+        border: 2px solid var(--white);
+        border-radius: 50%;
+    }
+
+    .btn-primary-small {
+        background-color: var(--primary-blue);
+        color: var(--white);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    /* CARDS & GRID */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: var(--white);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        border-color: var(--primary-blue);
+    }
+
+    .stat-card small { color: var(--text-gray); font-weight: 600; }
+    .stat-card h2 { margin: 10px 0 0; color: var(--primary-blue); font-size: 1.8rem; }
+
+    .portal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+    }
+
+    .portal-card {
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .portal-card h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1rem; }
+
+    .status-badge.active {
+        background: #c6f6d5;
+        color: #22543d;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .compliance-list { list-style: none; padding: 0; margin: 0; }
+    .compliance-list-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f7f7f7; font-size: 0.9rem; }
+    .tag-success { color: var(--success-green); font-weight: bold; }
+
+    .drop-zone { border: 2px dashed #cbd5e0; border-radius: 10px; padding: 30px; text-align: center; background: #f7fafc; cursor: pointer; }
+</style>
+
 </head>
 <body class="portal-body">
 
@@ -34,147 +239,214 @@
             <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
         </div>
         <nav class="sidebar-nav">
-            <a href="portal-dashboard.html" class="nav-item active"><span>📊</span> Dashboard</a>
+            <a href="#" class="nav-item active"><span>📊</span> Dashboard</a>
             <a href="#" class="nav-item"><span>🏢</span> My Companies</a>
             <a href="#" class="nav-item"><span>📅</span> Compliance Calendar</a>
             <a href="#" class="nav-item"><span>📂</span> Document Vault</a>
             <a href="#" class="nav-item"><span>💳</span> Billing & Orders</a>
             <a href="#" class="nav-item"><span>⚙️</span> Account Settings</a>
             
-            <div class="logout-container" style="text-align: center; margin-top: auto;">
-                <a href="javascript:void(0)" onclick="handleLogout()" class="logout-btn">Sign Out</a>
-                <!-- SHINY SECURE BADGE -->
-                <div style="background: linear-gradient(145deg, #0a1f44, #1a2e5a); padding: 6px 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
-                    <div style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: pulse-green 2s infinite;"></div>
-                    <div style="color: white; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;"> Secure Session </div>
-                </div>
-            </div>
-        </nav>
-    </aside>
-
-<!-- MAIN PORTAL CONTENT -->
-<main class="portal-main" style="position: relative;">
-    <!-- DYNAMIC PORTAL CLOCK MOUNT TARGET -->
-    <div id="portal-clock" style="position: absolute; top: 25px; right: 40px; color: var(--text-gray); font-size: 0.85rem; font-weight: 700; font-family: monospace;"></div>
-
-    <div class="content-container">
-        <header class="portal-header">
-            <div class="welcome-text">
-                <h1>Dashboard</h1>
-                <!-- FIX 1: Restored functional semantic tracking element wrapper tags -->
-                <p>Welcome back, Loading Active Workspace...</strong></p>
-            </div>
-            <div class="header-actions">
-                <div class="search-container">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" class="search-input" placeholder="Search filings...">
-                </div>
-                <div class="notification-wrapper">
-                    <span>🔔</span>
-                    <div class="notification-dot"></div>
-                </div>
-                <button class="btn-main" style="background: var(--emerald); width: auto; padding: 10px 20px;" onclick="window.location.href='wizard-trucker-authority.html'">+ New Filing</button>
-            </div>
-        </header>
-
-        <!-- STATS ROW -->
-        <div class="stats-row">
-            <div class="stat-card"><small>Total Filings</small><h2 id="metric-total-filings">1</h2></div>
-            <div class="stat-card"><small>Active Permits</small><h2 id="metric-active-permits">1</h2></div>
-            <div class="stat-card"><small>Pending Tasks</small><h2 id="metric-pending-tasks" style="color: var(--danger-red);">0</h2></div>
-            <div class="stat-card"><small>Next Renewal</small><h2 id="metric-renewal">30d</h2></div>
-        </div>
-
-       <!-- UPDATE THE DEFAULT SUMMARY STATE PANEL INSIDE portal-dashboard.html -->
-<div id="panel-all" class="dynamic-service-panel" style="display: block; width: 100%;">
+        <!-- Inside the Sidebar, replace the old secure div with this -->
+<div class="logout-container" style="text-align: center;">
+    <a href="javascript:void(0)" onclick="handleLogout()" class="logout-btn">Sign Out</a>
     
-    <!-- ACCOUNT PORTFOLIO HEADER METRICS -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 35px;">
-        <div class="portal-card">
-            <h3>Active Entity Status</h3>
-            <div class="standing-indicator">
-                <span class="status-badge active" style="background:#ecfdf5; color:#064e3b; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem;">✓ Account Active</span>
-                <p style="margin-top:15px; font-size: 0.9rem; color: var(--text-gray); font-weight: 600;">Corporate compliance tracks are monitored continuously.</p>
-            </div>
+    <!-- SLIM SECURE BADGE -->
+    <div style="margin: 190px auto 0; background: var(--primary-blue); padding: 6px 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="width: 6px; height: 6px; background: var(--success-green); border-radius: 50%; box-shadow: 0 0 6px var(--success-green);"></div>
+        <div style="color: white; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">
+            Secure Session
         </div>
-        <div class="portal-card">
-            <h3>Enterprise News & System Alerts</h3>
-            <p style="font-size:0.85rem; color:#64748b; line-height: 1.5; margin: 0;">FMCSA and IRS state filing windows for the 2026 cycle are currently open. Select a service tier box below to initiate a regulatory database submission block.</p>
-        </div>
-    </div>
-
-    <!-- THE COMPLIANCE CATALOG FILINGS APP STORE GRID -->
-    <h3 style="margin-top: 40px; margin-bottom: 20px; color: var(--primary-blue); font-weight: 800; font-size: 1.3rem;">Available Corporate Filings & Compliance Add-ons</h3>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; box-sizing: border-box; width: 100%;">
-        
-        <!-- SERVICE CATEGORY CARD 1: TRUCKER AUTHORITY -->
-        <div class="stat-card" style="background: white; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;" onclick="window.location.href='wizard-trucker-authority.html'">
-            <div>
-                <span style="font-size: 2rem; display: block; margin-bottom: 10px;">Interstate Operating Authority</span>
-                <h4 style="margin: 0 0 8px; color: var(--primary-blue); font-size: 1.1rem; font-weight: 800;">FMCSA MC & USDOT Numbers</h4>
-                <p style="margin: 0; font-size: 0.8rem; color: var(--text-gray); line-height: 1.4;">Complete corporate setup registration for interstate cargo haulers. Includes process agents matching setup protocols.</p>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                <span style="font-weight: 800; color: var(--emerald); font-size: 1.1rem;">From $499</span>
-                <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 0.5px;">Launch Setup →</span>
-            </div>
-        </div>
-
-        <!-- SERVICE CATEGORY CARD 2: LLC FORMATION -->
-        <div class="stat-card" style="background: white; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;" onclick="window.location.href='wizard-llc-formation.html'">
-            <div>
-                <span style="font-size: 2rem; display: block; margin-bottom: 10px;">Corporate Structure</span>
-                <h4 style="margin: 0 0 8px; color: var(--primary-blue); font-size: 1.1rem; font-weight: 800;">LLC Formation Registry</h4>
-                <p style="margin: 0; font-size: 0.8rem; color: var(--text-gray); line-height: 1.4;">Incorporate your trucking entity to protect personal vehicles and household bank accounts from business liabilities.</p>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                <span style="font-weight: 800; color: var(--emerald); font-size: 1.1rem;">$499 <small style="color:var(--text-gray); font-size:0.65rem; font-weight:500;">+ state fee</small></span>
-                <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 0.5px;">Launch Setup →</span>
-            </div>
-        </div>
-
-        <!-- SERVICE CATEGORY CARD 3: HEAVY HIGHWAY USE TAX -->
-        <div class="stat-card" style="background: white; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;" onclick="window.location.href='wizard-heavy-use-tax.html'">
-            <div>
-                <span style="font-size: 2rem; display: block; margin-bottom: 10px;">Federal Vehicle Tax</span>
-                <h4 style="margin: 0 0 8px; color: var(--primary-blue); font-size: 1.1rem; font-weight: 800;">IRS Form 2290 (HVUT)</h4>
-                <p style="margin: 0; font-size: 0.8rem; color: var(--text-gray); line-height: 1.4;">Secure your watermarked Schedule 1 receipt required to renew state commercial weight highway license plates.</p>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                <span style="font-weight: 800; color: var(--emerald); font-size: 1.1rem;">$69 <small style="color:var(--text-gray); font-size:0.65rem; font-weight:500;">+ IRS tax</small></span>
-                <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 0.05em;">Launch Setup →</span>
-            </div>
-        </div>
-
-        <!-- SERVICE CATEGORY CARD 4: DOT RANDOM TESTING POOL -->
-        <div class="stat-card" style="background: white; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;" onclick="window.location.href='wizard-dot-consortium.html'">
-            <div>
-                <span style="font-size: 2rem; display: block; margin-bottom: 10px;">Drug & Alcohol Pool</span>
-                <h4 style="margin: 0 0 8px; color: var(--primary-blue); font-size: 1.1rem; font-weight: 800;">DOT Consortium Enrollment</h4>
-                <p style="margin: 0; font-size: 0.8rem; color: var(--text-gray); line-height: 1.4;">Enroll commercial drivers into a certified random testing pool to maintain compliance with FMCSA Part 382 mandates.</p>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                <span style="font-weight: 800; color: var(--emerald); font-size: 1.1rem;">$149 / year</span>
-                <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 0.05em;">Launch Setup →</span>
-            </div>
-        </div>
-
     </div>
 </div>
 
-        </div> <!-- FIX 2: Correctly balanced structural card index block grid ends here safely -->
-    </div>
-</main>
+        </nav>
 
 
-    <!-- UNIFIED CORE INFRASTRUCTURE HANDSHAKE SCHEME SOURCING -->
-    <script>
-        window.supabase = supabase.createClient(
-            'supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-        );
-    </script>
-    <script src="assets/js/portal-global.js" defer></script>
+    </aside>
+
+    <!-- MAIN PORTAL CONTENT -->
+    <main class="portal-main">
+        <div class="content-container">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back, <strong>Roseland Logistics LLC</strong></p>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" placeholder="Search filings...">
+                    </div>
+                    <div class="notification-wrapper">
+                        <span>🔔</span>
+                        <div class="notification-dot"></div>
+                    </div>
+                    <button class="btn-primary-small">+ New Filing</button>
+                </div>
+            </header>
+
+            <!-- STATS ROW -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <small>Total Filings</small>
+                    <h2>24</h2>
+                </div>
+                <div class="stat-card">
+                    <small>Active Permits</small>
+                    <h2>8</h2>
+                </div>
+                <div class="stat-card">
+                    <small>Pending Tasks</small>
+                    <h2 style="color: var(--danger-red);">3</h2>
+                </div>
+                <div class="stat-card">
+                    <small>Next Renewal</small>
+                    <h2>14d</h2>
+                </div>
+            </div>
+
+            <div class="portal-grid">
+                <!-- ENTITY STANDING -->
+                <div class="portal-card">
+                    <h3>Entity Standing</h3>
+                    <div class="standing-indicator">
+                        <span class="status-badge active">Good Standing</span>
+                        <p>Domestic: Delaware</p>
+                    </div>
+                    <div style="background: #edf2f7; height: 8px; border-radius: 10px; margin: 15px 0 5px;"><div style="background: var(--success-green); height: 100%; width: 85%; border-radius: 10px;"></div></div>
+                    <small>85% Compliance Score</small>
+                </div>
+
+                <!-- UPCOMING DEADLINES -->
+                <div class="portal-card">
+                    <h3>Upcoming Deadlines</h3>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div style="text-align: center; background: #edf2f7; padding: 5px; border-radius: 6px; min-width: 45px;"><span>JUN</span> 01</div>
+                        <div>
+                            <h4 style="margin:0; font-size: 0.95rem;">DE Franchise Tax</h4>
+                            <p style="margin:0; font-size: 0.8rem; color: var(--danger-red);">Action Required</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <div style="text-align: center; background: #edf2f7; padding: 5px; border-radius: 6px; min-width: 45px;"><span>JUL</span> 31</div>
+                        <div>
+                            <h4 style="margin:0; font-size: 0.95rem;">Q2 IFTA Filing</h4>
+                            <p style="margin:0; font-size: 0.8rem; color: var(--text-gray);">Pending Data</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: COMPLIANCE SNAPSHOT (The 6th Card) -->
+                <div class="portal-card">
+                    <h3>Service Status</h3>
+                    <ul class="compliance-list">
+                        <li class="compliance-list-item"><span>Registered Agent</span> <span class="tag-success">✓ Active</span></li>
+                        <li class="compliance-list-item"><span>BOC-3 Filing</span> <span class="tag-success">✓ Active</span></li>
+                        <li class="compliance-list-item"><span>UCR 2026</span> <span style="color: #ed8936; font-weight: bold;">! Due Soon</span></li>
+                        <li class="compliance-list-item"><span>DOT Update</span> <span class="tag-success">✓ Current</span></li>
+                    </ul>
+                </div>
+
+                <!-- RECENT ACTIVITY -->
+                <div class="portal-card">
+                    <h3>Recent Activity</h3>
+                    <div style="padding-bottom: 10px; border-bottom: 1px solid #f1f1f1;">
+                        <p style="margin:0; font-size: 0.9rem;"><strong>IFTA Q1</strong> was approved.</p>
+                        <small style="color: #a0aec0;">2 hours ago</small>
+                    </div>
+                    <div style="padding-top: 10px;">
+                        <p style="margin:0; font-size: 0.9rem;">New document: <strong>Articles of Org</strong></p>
+                        <small style="color: #a0aec0;">Yesterday</small>
+                    </div>
+                </div>
+
+                <!-- RECENT DOCUMENTS -->
+                <div class="portal-card">
+                    <h3>Recent Documents</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 10px 0; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>📄 EIN_Letter.pdf</span> <a href="#" style="color: var(--primary-blue); font-weight: bold; text-decoration: none;">Download</a>
+                        </li>
+                        <li style="padding: 10px 0; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>📄 Form_2290.pdf</span> <a href="#" style="color: var(--primary-blue); font-weight: bold; text-decoration: none;">Download</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- SUBMIT DATA -->
+                <div class="portal-card">
+                    <h3>Submit Data</h3>
+                    <div class="drop-zone">
+                        <span style="font-size: 2rem;">☁️</span>
+                        <p>Drag files here or <strong>Browse</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+ <script>
+    // 1. DOWNLOAD: Gets a signed URL for an existing file in Supabase Storage
+    async function downloadUserDocument(filePath) {
+        const { data, error } = await supabase.storage
+            .from('compliance-documents')
+            .createSignedUrl(filePath, 60, { download: true });
+
+        if (data) {
+            window.location.href = data.signedUrl;
+        } else {
+            console.error('Download failed:', error.message);
+        }
+    }
+
+    // 2. GENERATE & SAVE: Triggers the Edge Function to create PDF and save to Storage
+    async function handleGenerateAndSavePDF(company, type) {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const { data, error } = await supabase.functions.invoke('generate-compliance-pdf', {
+            body: { 
+                action: 'generate-pdf',
+                companyName: company, 
+                filingType: type,
+                userId: user.id 
+            },
+        });
+
+        if (error) {
+            console.error('Generation Error:', error);
+            return;
+        }
+
+        alert("Document generated and saved to your vault.");
+        // data.path contains the storage path (e.g., "uuid/Form_2290_12345.pdf")
+        // You can now call downloadUserDocument(data.path) if you want to open it immediately
+        downloadUserDocument(data.path);
+    }
+
+    // 3. CHECKOUT: Triggers the Stripe payment session
+    async function startCheckout(email, company, service, price) {
+        const { data, error } = await supabase.functions.invoke('generate-compliance-pdf', {
+            body: { 
+                action: 'checkout',
+                email: email,
+                company_name: company,
+                service_type: service,
+                amount: price // price in cents, e.g., 5000 for $50.00
+            }
+        });
+
+        if (error) {
+            console.error('Stripe Error:', error);
+            return;
+        }
+
+        // Redirect or load Stripe Embedded UI using data.clientSecret
+        console.log("Stripe Client Secret received:", data.clientSecret);
+    }
+</script>
+
+
+
 </body>
 </html>
