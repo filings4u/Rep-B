@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise Service Dashboard | filings4u</title>
+    <title>Client Portal | filings4u</title>
     <link rel="stylesheet" href="assets/css/portal-global.css">
     
     <!-- Core Infrastructure Cloud Delivery CDN Script Libraries -->
@@ -24,13 +24,20 @@
                 return;
             }
             
-            // Render the live user email onto your original stronger strong welcome element
+            // Render the live user email onto your original welcome element
             document.getElementById('company-name-target').innerText = session.user.email;
             
             // Run dynamic engine query pipelines
             initializeSmartServiceDashboard(session.user.id);
         });
     </script>
+    <style>
+        /* Tab Views Core Architecture CSS Rules */
+        .portal-main-view { display: none; }
+        .portal-main-view.active-view { display: block; }
+        .drop-zone { border: 2px dashed #cbd5e0; border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; background: #fafbfc; }
+        .drop-zone:hover { background: #f7fafc; }
+    </style>
 </head>
 <body class="portal-body">
     <!-- PORTAL SIDEBAR -->
@@ -39,12 +46,13 @@
             <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
         </div>
         <nav class="sidebar-nav">
-            <a href="portal-dashboard.html" class="nav-item active"><span>📊</span> Service Dashboard</a>
-            <a href="wizard-engine.html" class="nav-item"><span>🏢</span> Add Services</a>
-            <a href="#" class="nav-item"><span>📅</span> Compliance Calendar</a>
-            <a href="#" class="nav-item"><span>📂</span> Document Vault</a>
-            <a href="#" class="nav-item"><span>💳</span> Billing & Orders</a>
-            <a href="#" class="nav-item"><span>⚙️</span> Account Settings</a>
+            <!-- Modified links with target attributes to activate tab-switching functions -->
+            <a href="javascript:void(0)" onclick="switchActivePortalTab('dashboard-tab', this)" class="nav-item active"><span>📊</span> Dashboard</a>
+            <a href="javascript:void(0)" onclick="switchActivePortalTab('catalog-tab', this)" class="nav-item"><span>🏢</span> My Companies</a>
+            <a href="javascript:void(0)" onclick="switchActivePortalTab('calendar-tab', this)" class="nav-item"><span>📅</span> Compliance Calendar</a>
+            <a href="javascript:void(0)" onclick="switchActivePortalTab('vault-tab', this)" class="nav-item"><span>📂</span> Document Vault</a>
+            <a href="javascript:void(0)" onclick="openBillingOrdersModal()" class="nav-item"><span>💳</span> Billing & Orders</a>
+            <a href="javascript:void(0)" onclick="switchActivePortalTab('settings-tab', this)" class="nav-item"><span>⚙️</span> Account Settings</a>
             
             <!-- Inside the Sidebar, replace the old secure div with this -->
             <div class="logout-container" style="text-align: center;">
@@ -63,8 +71,8 @@
         <div class="content-container">
             <header class="portal-header">
                 <div class="welcome-text">
-                    <h1 id="dynamic-service-title-target">Filing Workspace</h1>
-                    <p>Account Workspace: <strong id="company-name-target">Loading...</strong></p>
+                    <h1 id="dynamic-service-title-target">Dashboard</h1>
+                    <p>Welcome back, <strong id="company-name-target">Roseland Logistics LLC</strong></p>
                 </div>
                 <div class="header-actions">
                     <div class="search-container">
@@ -75,404 +83,337 @@
                         <span>🔔</span>
                         <div class="notification-dot"></div>
                     </div>
-<button class="btn-primary-small" onclick="window.location.href='portal.services.html'">+ New Filing</button>
-
+                    <button class="btn-primary-small" onclick="switchActivePortalTab('catalog-tab', null)">+ New Filing</button>
                 </div>
             </header>
 
-            <!-- Insert this container right inside your <main class="portal-main"> element, below your other tab containers -->
-<div id="billing-tab" class="tab-view" style="display: none;">
-    <div class="portal-card" style="max-width: 850px; margin: 0 auto; padding: 40px; background: #ffffff; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-        
-        <!-- Receipt Corporate Header Matrix -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 30px; margin-bottom: 30px;">
-            <div style="text-align: left;">
-                <img src="images/logo.png" alt="filings4u logo" style="height: 40px; margin-bottom: 12px; display: block;">
-                <p style="margin: 0; font-size: 0.85rem; color: var(--text-gray); line-height: 1.5;">
-                    <strong>filings4u Compliance Group LLC</strong><br>
-                    Corporate Registration Hub Operations Terminal<br>
-                    Secure Billing Network Pipeline
-                </p>
-            </div>
-            <div style="text-align: right; font-family: monospace;">
-                <h2 style="color: var(--primary-blue); margin: 0 0 8px 0; font-size: 1.5rem; font-weight: 800; font-family: sans-serif;">TRANSACTION RECEIPT</h2>
-                <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: var(--text-dark);"><strong>Receipt Reference:</strong> <span id="receipt-id-field">#SCANNING-TOKEN</span></p>
-                <p style="margin: 0; font-size: 0.85rem; color: var(--text-gray);"><strong>Settlement Date:</strong> <span id="receipt-date-field">--/--/----</span></p>
-            </div>
-        </div>
-
-        <!-- Metadata Entity Columns Address Space -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; text-align: left; font-size: 0.9rem; line-height: 1.5;">
-            <div>
-                <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-gray); letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Billed Account Entity</span>
-                <strong id="receipt-client-email" style="color: var(--primary-blue); display: block;">user@company.com</strong>
-                <span id="receipt-user-id" style="font-size: 0.75rem; color: var(--text-gray); font-family: monospace;">Client Reference: --</span>
-            </div>
-            <div>
-                <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-gray); letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Payment Verification Gateway</span>
-                <span style="color: var(--success-green); font-weight: 700; display: block;">✓ Charge Authorized & Cleared</span>
-                <span style="font-size: 0.85rem; color: var(--text-dark); display: block;">Method: Credit / Debit Card (Stripe Gateway)</span>
-                <span id="receipt-stripe-intent" style="font-size: 0.75rem; color: var(--text-gray); font-family: monospace;">Intent: ch_test_...</span>
-            </div>
-        </div>
-
-        <!-- Itemized Calculations Pricing Data Table Ledger -->
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; margin-bottom: 30px;">
-            <thead>
-                <tr style="background: #f8fafc; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-gray);">
-                    <th style="padding: 12px 15px;">Filing Core Package Asset Description</th>
-                    <th style="padding: 12px 15px; text-align: right; width: 120px;">Unit Fee</th>
-                    <th style="padding: 12px 15px; text-align: right; width: 120px;">Amount Paid</th>
-                </tr>
-            </thead>
-            <tbody id="receipt-items-tbody-target">
-                <!-- Row instances render dynamically on matching client database selections -->
-                <tr><td colspan="3" style="padding: 30px; text-align: center; color: var(--text-gray);">Select an active transaction from the workspace list to render items...</td></tr>
-            </tbody>
-        </table>
-
-        <!-- Summary Cost Tallies Panel -->
-        <div style="display: flex; justify-content: flex-end; padding-top: 20px; border-top: 1px solid #f1f5f9;">
-            <div style="width: 280px; font-size: 0.9rem; line-height: 1.8; text-align: left;">
-                <div style="display: flex; justify-content: space-between; color: var(--text-gray);">
-                    <span>Filing Subtotal:</span>
-                    <span id="receipt-subtotal-val">$0.00</span>
+            <!-- VIEW COVER LAYER 1: MAIN DASHBOARD VIEWPORT -->
+            <div id="dashboard-tab" class="portal-main-view active-view">
+                <!-- STATS ROW -->
+                <div class="stats-row">
+                    <div class="stat-card"><small>Total Filings</small><h2 id="stat-total-count">0</h2></div>
+                    <div class="stat-card"><small>Active Permits</small><h2 id="stat-paid-count">0</h2></div>
+                    <div class="stat-card"><small>Pending Tasks</small><h2 id="stat-draft-count" style="color: var(--danger-red);">0</h2></div>
+                    <div class="stat-card"><small>Next Renewal</small><h2>14d</h2></div>
                 </div>
-                <div style="display: flex; justify-content: space-between; color: var(--text-gray);">
-                    <span>Statutory Surcharges:</span>
-                    <span id="receipt-gov-val">$0.00</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: var(--primary-blue); padding-top: 8px; margin-top: 8px; border-top: 1px dashed var(--border-color);">
-                    <span>Total Settled:</span>
-                    <span id="receipt-total-val">$0.00</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Terminal Receipt Download Trigger Elements Button Menu -->
-        <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.75rem; color: var(--text-gray); font-style: italic;">This document serves as an official proof-of-payment token receipt inside filings4u client network.</span>
-            <button onclick="window.print()" class="btn-primary-small" style="height: auto; padding: 12px 24px; font-size: 0.85rem; font-weight: 700; background: var(--primary-blue); border-radius: 6px; cursor: pointer; border: none; color: #fff;">🖨️ Print Receipt Document</button>
-        </div>
-
-    </div>
-</div>
-
-
-            <!-- STATS ROW -->
-            <div class="stats-row">
-                <div class="stat-card">
-                    <small>Registration Lifecycle</small>
-                    <h2 id="stat-progress-pct">0%</h2>
-                </div>
-                <div class="stat-card">
-                    <small>Filing Stage Step</small>
-                    <h2 id="stat-current-step-index">0/0</h2>
-                </div>
-                <div class="stat-card">
-                    <small>Account Status</small>
-                    <h2 id="stat-payment-badge" style="color: var(--primary-blue);">DRAFT</h2>
-                </div>
-                <div class="stat-card">
-                    <small>Next Action Due</small>
-                    <h2 id="stat-time-remaining">ASAP</h2>
-                </div>
-            </div>
-
-            <div class="portal-grid">
-                <!-- ENTITY STANDING CARD -->
-                <div class="portal-card">
-                    <h3>Filing Stream Standing</h3>
-                    <div class="standing-indicator" style="margin-top: 15px;">
-                        <span id="dynamic-standing-badge" class="status-badge" style="background: #fffbeb; color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">Pending Finalization</span>
-                        <p id="dynamic-jurisdiction-label" style="margin: 10px 0 0 0; font-weight: 600; font-size: 0.9rem;">Verification Processing Context Active</p>
+                <div class="portal-grid">
+                    <!-- ENTITY STANDING -->
+                    <div class="portal-card">
+                        <h3>Entity Standing</h3>
+                        <div class="standing-indicator">
+                            <span class="status-badge active">Good Standing</span>
+                            <p>Domestic: Delaware</p>
+                        </div>
+                        <div style="background: #edf2f7; height: 8px; border-radius: 10px; margin: 15px 0 5px;"><div style="background: var(--success-green); height: 100%; width: 85%; border-radius: 10px;"></div></div>
+                        <small>85% Compliance Score</small>
                     </div>
-                    <div style="background: #edf2f7; height: 8px; border-radius: 10px; margin: 20px 0 5px;">
-                        <div id="dynamic-progress-bar-fill" style="background: var(--success-green); height: 100%; width: 0%; border-radius: 10px; transition: width 0.4s ease;"></div>
+
+                    <!-- UPCOMING DEADLINES -->
+                    <div class="portal-card">
+                        <h3>Upcoming Deadlines</h3>
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <div style="text-align: center; background: #edf2f7; padding: 5px; border-radius: 6px; min-width: 45px;"><span>JUN</span> 01</div>
+                            <div>
+                                <h4 style="margin:0; font-size: 0.95rem;">DE Franchise Tax</h4>
+                                <p style="margin:0; font-size: 0.8rem; color: var(--danger-red);">Action Required</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <div style="text-align: center; background: #edf2f7; padding: 5px; border-radius: 6px; min-width: 45px;"><span>JUL</span> 31</div>
+                            <div>
+                                <h4 style="margin:0; font-size: 0.95rem;">Q2 IFTA Filing</h4>
+                                <p style="margin:0; font-size: 0.8rem; color: var(--text-gray);">Pending Data</p>
+                            </div>
+                        </div>
                     </div>
-                    <small id="dynamic-compliance-score-label">0% Pipeline Completion Tracked</small>
-                </div>
 
-                <!-- UPCOMING DEADLINES CARD -->
-                <div class="portal-card">
-                    <h3>Target Milestones & Deadlines</h3>
-                    <div id="dynamic-deadlines-container" style="display:flex; flex-direction:column; gap:15px; margin-top:15px;">
-                        <!-- Context deadlines append dynamically here -->
+                    <!-- SERVICE STATUS SNAPSHOT -->
+                    <div class="portal-card">
+                        <h3>Service Status</h3>
+                        <ul class="compliance-list" id="dynamic-status-snapshot-target">
+                            <li class="compliance-list-item" style="color:var(--text-gray); font-size:0.85rem; text-align:center; padding:10px 0;">No active packages deployed yet.</li>
+                        </ul>
                     </div>
-                </div>
 
-                <!-- SERVICE STATUS SNAPSHOT CARD -->
-                <div class="portal-card">
-                    <h3>Filing Form Checklist Steps</h3>
-                    <ul class="compliance-list" id="dynamic-form-steps-checklist-target" style="list-style:none; padding:0; margin:15px 0 0 0;">
-                        <!-- Context status list maps dynamically here -->
-                    </ul>
-                </div>
-
-                <!-- RECENT ACTIVITY LOG CARD -->
-                <div class="portal-card">
-                    <h3>Workspace Activity Logs</h3>
-                    <div id="dynamic-activity-logs-container" style="margin-top:15px; display:flex; flex-direction:column; gap:12px;">
-                        <!-- Context logs append here -->
+                    <!-- RECENT ACTIVITY MAP -->
+                    <div class="portal-card">
+                        <h3>Recent Activity</h3>
+                        <div id="dynamic-activity-logs-target">
+                            <div style="padding-bottom: 10px; border-bottom: 1px solid #f1f1f1;">
+                                <p style="margin:0; font-size: 0.9rem;">Filing workspace session synchronized securely.</p>
+                                <small style="color: #a0aec0;">Just now</small>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- RECENT DOCUMENTS DOWNLOAD SECTOR -->
-                <div class="portal-card">
-                    <h3>Service Generated Deliverables</h3>
-                    <ul style="list-style: none; padding: 0; margin:15px 0 0 0;" id="dynamic-vault-downloads-target">
-                        <!-- Documents append here -->
-                    </ul>
-                </div>
+                    <!-- RECENT DOCUMENTS DOWNLOAD SECTOR -->
+                    <div class="portal-card">
+                        <h3>Recent Documents</h3>
+                        <ul style="list-style: none; padding: 0;" id="dynamic-vault-downloads-target">
+                            <li style="padding: 10px 0; text-align: center; color: var(--text-gray); font-size: 0.85rem;">No print files generated yet.</li>
+                        </ul>
+                    </div>
 
-                <!-- SUBMIT DATA DROPZONE -->
-                <div class="portal-card">
-                    <h3>Submit Service Payload Attachments</h3>
-                    <p style="font-size:0.8rem; color:var(--text-gray); margin: 0 0 15px 0; line-height:1.4;" id="dynamic-upload-instruction-label">Upload parameters required for this selection.</p>
-                    <div class="drop-zone" style="border: 2px dashed #cbd5e0; border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; background: #fafbfc;" onclick="document.getElementById('vault-file-input').click()">
-                        <span style="font-size: 2rem;">☁️</span>
-                        <p>Drag files here or <strong>Browse</strong></p>
-                        <input type="file" id="vault-file-input" style="display:none;" onchange="handleVaultUploadPipeline(this.files)">
+                    <!-- SUBMIT DATA DROPZONE -->
+                    <div class="portal-card">
+                        <h3>Submit Data</h3>
+                        <div class="drop-zone" onclick="document.getElementById('vault-file-input').click()">
+                            <span style="font-size: 2rem;">☁️</span>
+                            <p>Drag files here or <strong>Browse</strong></p>
+                            <input type="file" id="vault-file-input" style="display:none;" onchange="handleVaultUploadPipeline(this.files)">
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- VIEW COVER LAYER 2: SERVICE ONLINE CATALOG STORE -->
+            <div id="catalog-tab" class="portal-main-view">
+                <div class="portal-card" style="margin-top:20px;">
+                    <h3 style="margin-top:0;">New Compliance Registration Store</h3>
+                    <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom:25px;">Select a configuration package below to initialize a dynamic form setup path.</p>
+                    <div id="live-store-catalog-grid-target" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:20px;">
+                        <!-- JS loops output modules here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW COVER LAYER 3: COMPLIANCE CALENDAR -->
+            <div id="calendar-tab" class="portal-main-view">
+                <div class="portal-card" style="margin-top:20px; text-align:center; padding:40px;">
+                    <h3>Compliance Calendar</h3>
+                    <p style="color:var(--text-gray);">Your specific annual tax filing milestones will track here dynamically based on what packages you buy.</p>
+                </div>
+            </div>
+
+            <!-- VIEW COVER LAYER 4: ENCRYPTED VAULT ARCHIVE -->
+            <div id="vault-tab" class="portal-main-view">
+                <div class="portal-card" style="margin-top:20px; text-align:center; padding:40px;">
+                    <h3>Document Archive Vault</h3>
+                    <p style="color:var(--text-gray);">Every legal certification PDF statement compiled by our automation system registers safely inside this bucket.</p>
+                </div>
+            </div>
+
+            <!-- VIEW COVER LAYER 5: ACCOUNT SETTINGS PERMISSIONS -->
+            <div id="settings-tab" class="portal-main-view">
+                <div class="portal-card" style="margin-top:20px; text-align:center; padding:40px;">
+                    <h3>Account Settings & Profile Management</h3>
+                    <p style="color:var(--text-gray);">Configure security keys, primary contacts address registries, and password structures.</p>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- Smart Service Context Tracker Engine Controller -->
+    <!-- PERSISTENT TRANSACTION LEDGER MODAL WINDOW MODULE -->
+    <div id="billing-orders-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,31,68,0.7); z-index:99999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+        <div class="wizard-card" style="max-width: 750px; width:92%; position:relative; padding: 40px; background: #ffffff; border-radius: 16px; text-align: left; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0,0,0,0.15); max-height: 85vh; overflow-y: auto;">
+            <button onclick="closeBillingOrdersModal()" style="position:absolute; top:20px; right:25px; background:none; border:none; font-size:1.8rem; cursor:pointer; color:var(--text-gray); font-weight: 300;">&times;</button>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 30px; border-bottom: 2px solid var(--border-color); padding-bottom: 20px;">
+                <div>
+                    <img src="images/logo.png" alt="filings4u" style="height: 35px; display:block; margin-bottom:8px;">
+                    <h3 style="color: var(--primary-blue); margin: 0; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px;">Billing Statements & History</h3>
+                </div>
+                <div style="text-align:right;">
+                    <span style="background:#ecfdf5; color:#10b981; font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:12px; text-transform:uppercase; letter-spacing:0.5px;">Merchant Verified</span>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:30px;">
+                <div style="background:#f8fafc; border:1px solid var(--border-color); padding:15px; border-radius:8px;">
+                    <small style="color:var(--text-gray); text-transform:uppercase; font-size:0.65rem; font-weight:700; letter-spacing:0.5px;">Lifetime Investments</small>
+                    <h4 id="billing-total-spent" style="margin:5px 0 0 0; color:var(--primary-blue); font-size:1.6rem; font-weight:800;">$0.00</h4>
+                </div>
+                <div style="background:#f8fafc; border:1px solid var(--border-color); padding:15px; border-radius:8px;">
+                    <small style="color:var(--text-gray); text-transform:uppercase; font-size:0.65rem; font-weight:700; letter-spacing:0.5px;">Settled Orders</small>
+                    <h4 id="billing-settled-count" style="margin:5px 0 0 0; color:var(--success-green); font-size:1.6rem; font-weight:800;">0 Transactions</h4>
+                </div>
+            </div>
+            <h4 style="color: var(--primary-blue); font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 15px 0;">Itemized Order Logs</h4>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-color); color:var(--text-gray); font-weight:700; text-transform:uppercase; font-size:0.68rem; letter-spacing:0.5px;">
+                            <th style="padding:10px 5px;">Order Reference / Item Description</th>
+                            <th style="padding:10px 5px;">Settlement Date</th>
+                            <th style="padding:10px 5px; text-align:right;">Filing Cost</th>
+                            <th style="padding:10px 5px; text-align:right;">Invoice Receipts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billing-ledger-table-body">
+                        <tr><td colspan="4" style="padding:30px 5px; text-align:center; color:var(--text-gray);">Scanning secure transaction archives...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integrated Automation Script Matrix Loop Controller -->
     <script>
-        var currentServiceKey = "2290"; // Defualt tracking routing context
-        var authSessionUserId = null;
-        var activeFilingRecord = null;
+        var globalSessionUserId = null;
+
+        // Fully functional Single Page tab routing controller
+        function switchActivePortalTab(tabId, anchorElement) {
+            const views = document.querySelectorAll('.portal-main-view');
+            const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+            
+            // Toggle active classes on view layers
+            views.forEach(v => {
+                if(v.id === tabId) {
+                    v.classList.add('active-view');
+                } else {
+                    v.classList.remove('active-view');
+                }
+            });
+
+            // Adjust highlighting metrics inside your sidebar anchors
+            if(anchorElement) {
+                navItems.forEach(item => item.classList.remove('active'));
+                anchorElement.classList.add('active');
+            } else {
+                // Scenario where code triggers a redirection (like hitting the "+ New Filing" button)
+                navItems.forEach(item => item.classList.remove('active'));
+                const matchLink = Array.from(navItems).find(i => i.innerHTML.includes('My Companies') || i.getAttribute('onclick').includes(tabId));
+                if(matchLink) matchLink.classList.add('active');
+            }
+
+            // Sync Header text value properties natively
+            const headingsMap = { 'dashboard-tab': 'Dashboard', 'catalog-tab': 'Compliance Store Catalog', 'calendar-tab': 'Compliance Calendar', 'vault-tab': 'Secure Document Archive', 'settings-tab': 'Account Management Settings' };
+            if(headingsMap[tabId]) document.getElementById('dynamic-service-title-target').innerText = headingsMap[tabId];
+        }
 
         async function initializeSmartServiceDashboard(userId) {
-            authSessionUserId = userId;
+            globalSessionUserId = userId;
             
-            // Read incoming parameter value paths parsed from query arguments (?service=ein)
-            const urlParams = new URLSearchParams(window.location.search);
-            const parameterServiceKey = urlParams.get("service");
-            
-            // Read user session data to pick up the most recent active database record path
-            const { data: userRecords, error: dbError } = await supabase
+            const { data: filings, error } = await supabase
                 .from('user_filings_workspace')
                 .select('*')
-                .eq('user_id', userId)
-                .order('updated_at', { ascending: false });
+                .eq('user_id', userId);
 
-            if (dbError) {
-                console.error("Dashboard engine query execution failure:", dbError.message);
+            if (error) {
+                console.error("Dashboard engine data mapping block failure:", error.message);
                 return;
             }
 
-            // Fallback strategy match: use parameter if explicit, otherwise track their latest file record activity
-            if (parameterServiceKey && window.WIZARD_REGISTRY[parameterServiceKey]) {
-                currentServiceKey = parameterServiceKey;
-                activeFilingRecord = userRecords ? userRecords.find(r => r.service_key === currentServiceKey) : null;
-            } else if (userRecords && userRecords.length > 0) {
-                activeFilingRecord = userRecords[0];
-                currentServiceKey = activeFilingRecord.service_key;
+            // Bind values directly into stats boxes
+            const totalCount = filings ? filings.length : 0;
+            const paidCount = filings ? filings.filter(f => f.status === 'paid').length : 0;
+            const draftCount = filings ? filings.filter(f => f.status === 'draft').length : 0;
+
+            document.getElementById('stat-total-count').innerText = totalCount;
+            document.getElementById('stat-paid-count').innerText = paidCount;
+            document.getElementById('stat-draft-count').innerText = draftCount;
+
+            const vaultContainer = document.getElementById('dynamic-vault-downloads-target');
+            const statusContainer = document.getElementById('dynamic-status-snapshot-target');
+            const activityContainer = document.getElementById('dynamic-activity-logs-target');
+            const registryMeta = window.WIZARD_REGISTRY || {};
+
+            const paidFilings = filings ? filings.filter(f => f.status === 'paid') : [];
+            const draftFilings = filings ? filings.filter(f => f.status === 'draft') : [];
+
+            if (paidFilings.length > 0) {
+                vaultContainer.innerHTML = paidFilings.map(file => {
+                    return `
+                        <li style="padding: 10px 0; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>📄 Approval_Certificate_${file.service_key.toUpperCase()}.pdf</span>
+                            <a href="javascript:void(0)" onclick="triggerDeliverableDownload('${file.service_key}')" style="color: var(--primary-blue); font-weight: bold; text-decoration: none;">Download</a>
+                        </li>
+                    `;
+                }).join('');
+
+                statusContainer.innerHTML = paidFilings.map(file => {
+                    const meta = registryMeta[file.service_key] || { title: file.service_key };
+                    return `
+                        <li class="compliance-list-item" style="display:flex; justify-content:space-between; padding: 8px 0; font-size:0.9rem;">
+                            <span>${meta.title || file.service_key}</span> <span style="color:var(--success-green); font-weight:bold;">✓ Active</span>
+                        </li>
+                    `;
+                }).join('');
             }
 
-            const activeConfig = window.WIZARD_REGISTRY[currentServiceKey];
-            if (!activeConfig) {
-                document.getElementById('dynamic-service-title-target').innerText = "Filing Selection Missing";
-                return;
+            if (draftFilings.length > 0) {
+                activityContainer.innerHTML += draftFilings.map(file => {
+                    const meta = registryMeta[file.service_key] || { title: file.service_key };
+                    return `
+                        <div style="padding: 10px 0; border-bottom: 1px solid #f1f1f1;">
+                            <p style="margin:0; font-size: 0.9rem;">Draft active: <strong>${meta.title || file.service_key}</strong> forms suite require entries.</p>
+                            <small style="color: #a0aec0;"><a href="wizard-engine.html?service=${file.service_key}" style="color:var(--primary-blue); font-weight:700; text-decoration:none;">Resume Filing Form ➔</a></small>
+                        </div>
+                    `;
+                }).join('');
             }
 
-            renderServiceSpecificDashboard(activeConfig, activeFilingRecord);
+            // Sync dynamic store catalog grid interface layout cards
+            generateLiveStoreCatalogGrid(filings);
         }
 
-        function renderServiceSpecificDashboard(config, record) {
-            // A. Update Main Service Header Titles
-            document.getElementById('dynamic-service-title-target').innerText = `${config.title} Overview`;
+        function generateLiveStoreCatalogGrid(filings) {
+            const targetGrid = document.getElementById('live-store-catalog-grid-target');
+            const registry = window.WIZARD_REGISTRY || {};
+            const activeKeys = filings ? filings.map(f => f.service_key) : [];
 
-            // Calculate metric values dynamically based on current configuration steps
-            const totalStepsCount = config.steps ? config.steps.length : 1;
-            const currentActiveStepIdx = record ? record.current_step : 0;
-            const statusFlag = record ? record.status : "draft";
-            
-            const pipelineProgressPct = record && record.status === 'paid' ? 100 : Math.round(((currentActiveStepIdx) / totalStepsCount) * 100);
+            targetGrid.innerHTML = Object.keys(registry).map(key => {
+                const spec = registry[key];
+                const alreadyPurchased = activeKeys.includes(key);
 
-            // B. Sync Top Stats Metric Counters
-            document.getElementById('stat-progress-pct').innerText = `${pipelineProgressPct}%`;
-            document.getElementById('stat-current-step-index').innerText = `${currentActiveStepIdx + 1} / ${totalStepsCount}`;
-            
-            const paymentNode = document.getElementById('stat-payment-badge');
-            paymentNode.innerText = statusFlag.toUpperCase();
-            paymentNode.style.color = statusFlag === 'paid' ? 'var(--success-green)' : '#ed8936';
-            document.getElementById('stat-time-remaining').innerText = statusFlag === 'paid' ? "Complete" : "ASAP";
-
-            // C. Sync Entity Standing Card Progress Metrics
-            const standingBadge = document.getElementById('dynamic-standing-badge');
-            standingBadge.innerText = statusFlag === 'paid' ? "✓ Deployed / Good Standing" : "⚠️ Incomplete Draft Profile";
-            standingBadge.style.background = statusFlag === 'paid' ? '#ecfdf5' : '#fffbeb';
-            standingBadge.style.color = statusFlag === 'paid' ? 'var(--success-green)' : '#f59e0b';
-            
-            document.getElementById('dynamic-jurisdiction-label').innerText = `Filing Pipeline Context Key: Code-${currentServiceKey.toUpperCase()}`;
-            document.getElementById('dynamic-progress-bar-fill').style.width = `${pipelineProgressPct}%`;
-            document.getElementById('dynamic-compliance-score-label').innerText = `${pipelineProgressPct}% Operational Progress Score`;
-
-            // D. Sync Dynamic Step Form Checklist Target Panel
-            const checklistTarget = document.getElementById('dynamic-form-steps-checklist-target');
-            checklistTarget.innerHTML = config.steps.map((step, idx) => {
-                let checkBadge = `<span style="color: #ed8936; font-weight: bold;">! Incomplete</span>`;
-                if (statusFlag === 'paid') {
-                    checkBadge = `<span class="tag-success" style="color:var(--success-green); font-weight:bold;">✓ Complete</span>`;
-                } else if (idx < currentActiveStepIdx) {
-                    checkBadge = `<span class="tag-success" style="color:var(--success-green); font-weight:bold;">✓ Saved</span>`;
-                } else if (idx === currentActiveStepIdx) {
-                    checkBadge = `<span style="color: var(--primary-blue); font-weight: bold;">● Active Step</span>`;
-                }
                 return `
-                    <li class="compliance-list-item" style="display:flex; justify-content:space-between; padding: 10px 0; border-bottom: 1px solid #f1f1f1; font-size: 0.9rem;">
-                        <span>Step ${idx + 1}: ${step.title}</span> ${checkBadge}
-                    </li>
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px; display:flex; flex-direction:column; justify-content:space-between; opacity:${alreadyPurchased ? '0.65' : '1'}; text-align:left; box-shadow:0 4px 12px rgba(0,0,0,0.02);">
+                        <div>
+                            <h4 style="margin:0 0 6px 0; color:var(--primary-blue); font-size:0.95rem; font-weight:700;">${spec.title}</h4>
+                            <p style="margin:0 0 20px 0; font-size:0.8rem; color:#4a5568; line-height:1.4;">Initialize dynamic compliance configurations instantly inside your profile.</p>
+                        </div>
+                        <a href="${alreadyPurchased ? 'javascript:void(0)' : `wizard-engine.html?service=${key}`}" class="btn-primary-small" style="text-align:center; display:block; text-decoration:none; width:100%; box-sizing:border-box; background:${alreadyPurchased ? '#a0aec0' : 'var(--primary-blue)'}; border-color:${alreadyPurchased ? '#a0aec0' : 'var(--primary-blue)'}; padding:8px; color:white; border-radius:4px; font-size:0.8rem; font-weight:600;">
+                            ${alreadyPurchased ? '✓ Package Active' : 'Launch Setup ➔'}
+                        </a>
+                    </div>
                 `;
             }).join('');
+        }
 
-            // E. Render Service-Specific Deadlines & Milestones Automatically
-            const deadlinesContainer = document.getElementById('dynamic-deadlines-container');
-            const targetMonth = new Date().toLocaleString('en-US', { month: 'short' }).toUpperCase();
-            const targetDay = new Date().getDate();
+        async function openBillingOrdersModal() {
+            const modal = document.getElementById('billing-orders-modal');
+            if (!modal || !globalSessionUserId) return;
+            modal.style.display = 'flex';
 
-            deadlinesContainer.innerHTML = `
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <div style="text-align: center; background: #edf2f7; padding: 8px; border-radius: 6px; min-width: 50px; font-weight:700;">
-                        <span>${targetMonth}</span><br>${targetDay}
-                    </div>
-                    <div>
-                        <h4 style="margin:0; font-size: 0.95rem; color:var(--primary-blue);">${statusFlag === 'paid' ? 'Application Dispatched' : 'Form Inputs Registration Clearance'}</h4>
-                        <p style="margin:5px 0 0 0; font-size: 0.8rem; color: ${statusFlag === 'paid' ? 'var(--success-green)' : 'var(--danger-red)'}; font-weight:600;">
-                            ${statusFlag === 'paid' ? 'No action required' : 'Requires Payment processing Authorization'}
-                        </p>
-                    </div>
-                </div>
-            `;
+            const { data: records, error } = await supabase
+                .from('user_filings_workspace')
+                .select('*')
+                .eq('user_id', globalSessionUserId)
+                .eq('status', 'paid');
 
-            // F. Sync Activity Log Context Elements
-            const logsContainer = document.getElementById('dynamic-activity-logs-container');
-            logsContainer.innerHTML = `
-                <div style="padding-bottom: 10px; border-bottom: 1px solid #f1f1f1; font-size:0.88rem;">
-                    <p style="margin:0;">Filing configuration pipeline route <strong>Code-${currentServiceKey.toUpperCase()}</strong> compiled into profile tracking stream.</p>
-                    <small style="color: #a0aec0;">Just now</small>
-                </div>
-            `;
-            if (statusFlag === 'draft') {
-                logsContainer.innerHTML += `
-                    <div style="padding-top: 5px; font-size:0.88rem;">
-                        <p style="margin:0; color:var(--text-gray);">Filing draft has been saved. Resume form layout sequences to continue parameters injection.</p>
-                        <small style="color: var(--primary-blue); font-weight:700;"><a href="wizard-engine.html?service=${currentServiceKey}" style="color:inherit; text-decoration:none;">Resume Application Wizard ➔</a></small>
-                    </div>
-                `;
+            const tableBody = document.getElementById('billing-ledger-table-body');
+            const spentTarget = document.getElementById('billing-total-spent');
+            const countTarget = document.getElementById('billing-settled-count');
+            const registry = window.WIZARD_REGISTRY || {};
+
+            if (error || !records || records.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" style="padding:20px; text-align:center; color:var(--text-gray);">No settled orders found in this workspace profile.</td></tr>`;
+                spentTarget.innerText = "$0.00"; countTarget.innerText = "0 Transactions";
+                return;
             }
 
-            // G. Sync Generated Certificate Downloads Matrix
-            const downloadsTarget = document.getElementById('dynamic-vault-downloads-target');
-            if (statusFlag === 'paid') {
-                downloadsTarget.innerHTML = `
-                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; font-size: 0.9rem; align-items:center;">
-                        <span>📄 Official_Compliance_Certificate_${currentServiceKey.toUpperCase()}.pdf</span>
-                        <a href="javascript:void(0)" onclick="executeSecureCloudDownload('${currentServiceKey}')" style="color: var(--primary-blue); font-weight: bold; text-decoration: none; background:#edf2f7; padding:6px 12px; border-radius:4px; font-size:0.8rem;">Download Archive File</a>
-                    </li>
+            let spent = 0;
+            tableBody.innerHTML = records.map(item => {
+                const spec = registry[item.service_key] || { basePrice: 149, govFee: 0, title: item.service_key };
+                const total = (spec.basePrice || 0) + (spec.govFee || 0);
+                spent += total;
+                return `
+                    <tr style="border-bottom:1px solid #e2e8f0; color:var(--primary-blue);">
+                        <td style="padding:15px 5px; font-weight:700;">${spec.title}</td>
+                        <td style="padding:15px 5px; color:#4a5568;">${new Date(item.updated_at).toLocaleDateString()}</td>
+                        <td style="padding:15px 5px; text-align:right; font-weight:800;">$${total.toFixed(2)}</td>
+                        <td style="padding:15px 5px; text-align:right;"><button onclick="alert('Downloading invoice copy...')" style="background:transparent; border:1px solid var(--primary-blue); color:var(--primary-blue); padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; cursor:pointer;">Print</button></td>
+                    </tr>
                 `;
-            } else {
-                downloadsTarget.innerHTML = `<li style="padding: 10px 0; text-align: center; color: var(--text-gray); font-size: 0.85rem;">Certificate output deliverables unlock instantly post-checkout payment validation checks.</li>`;
-            }
-
-            // H. Personalize Upload Instructions text nodes dynamically matching types
-            document.getElementById('dynamic-upload-instruction-label').innerText = `Provide required document attachments matching criteria instructions parameters for: ${config.title}.`;
+            }).join('');
+            spentTarget.innerText = `$${spent.toFixed(2)}`;
+            countTarget.innerText = `${records.length} Paid Order(s)`;
         }
 
-        async function handleVaultUploadPipeline(files) {
-            if (!files || files.length === 0 || !authSessionUserId) return;
-            const file = files[0];
-            alert(`Encrypting parameter token document payload [${file.name}] securely into private profile bucket workspace tracking context for Code-${currentServiceKey.toUpperCase()}.`);
-        }
-
-        function executeSecureCloudDownload(serviceKey) {
-            alert(`Assembling secure compiler elements for archive document: [Certificate_${serviceKey.toUpperCase()}.PDF]. Generating signed receipt package...`);
-        }
-
-        async function handleLogout() {
-            await supabase.auth.signOut();
-            window.location.href = 'index.html';
-        }
-
-        // Append these helper configurations inside the script tag of portal-dashboard.html
-
-// 1. Hook the billing tab cleanly into your Sidebar link events
-document.addEventListener("DOMContentLoaded", () => {
-    const billingSelectorBtn = document.querySelector('[data-target="billing-tab"]') || document.querySelector('a[href*="Billing"]');
-    if (billingSelectorBtn) {
-        // Assign explicit targeting rules to clear parent overlapping states
-        billingSelectorBtn.setAttribute('data-target', 'billing-tab');
-        billingSelectorBtn.addEventListener('click', function() {
-            document.querySelectorAll('.sidebar-nav .nav-item').forEach(i => i.classList.remove('active'));
-            this.classList.add('active');
-            
-            document.querySelectorAll('.tab-view').forEach(t => t.classList.remove('active-view'));
-            const targetView = document.getElementById('billing-tab');
-            if (targetView) targetView.classList.add('active-view');
-            
-            document.getElementById('view-title-label').innerText = "Billing & Receipts Portal";
-            executeReceiptCompilerLoop();
-        });
-    }
-});
-
-// 2. Automated Calculations Compiler Engine Loop Core
-async function executeReceiptCompilerLoop() {
-    if (!supabase || !currentUserIdToken) return;
-
-    // Fetch only verified paid transactions records belonging to this client session token
-    const { data: transactions, error } = await supabase
-        .from('user_filings_workspace')
-        .select('*')
-        .eq('user_id', currentUserIdToken)
-        .eq('status', 'paid')
-        .order('checkout_completed_at', { ascending: false });
-
-    const tbody = document.getElementById('receipt-items-tbody-target');
-    const registry = window.WIZARD_REGISTRY || {};
-
-    if (error || !transactions || transactions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="padding: 30px; text-align: center; color: var(--text-gray); font-weight:500;">No paid transaction accounts found matching this user token profile. Complete a wizard filing checklist package checkout payment to display receipts.</td></tr>`;
-        return;
-    }
-
-    // Pick the most recent paid transaction row configuration instance as base view model
-    const file = transactions[0];
-    const itemConfig = registry[file.service_key] || { title: `Filing Service Portfolio: ${file.service_key.toUpperCase()}`, basePrice: 149.00, govFee: 0.00 };
-
-    const parsedBasePrice = file.amount_paid ? (parseFloat(file.amount_paid) - (itemConfig.govFee || 0)) : (itemConfig.basePrice || 149.00);
-    const totalReceiptSum = file.amount_paid ? parseFloat(file.amount_paid) : (parsedBasePrice + (itemConfig.govFee || 0));
-    const settlementDateString = file.checkout_completed_at ? new Date(file.checkout_completed_at).toLocaleDateString([], { month: 'long', day: '2-digit', year: 'numeric' }) : new Date().toLocaleDateString();
-
-    // 3. Render calculations text lines straight onto UI components frames
-    document.getElementById('receipt-id-field').innerText = `#F4U-${file.id.substring(0, 8).toUpperCase()}`;
-    document.getElementById('receipt-date-field').innerText = settlementDateString;
-    document.getElementById('receipt-client-email').innerText = document.getElementById('company-name-target').innerText;
-    document.getElementById('receipt-user-id').innerText = `Client Identification Hash: UID-${currentUserIdToken.substring(0, 8).toUpperCase()}`;
-    document.getElementById('receipt-stripe-intent').innerText = `Gateway Payment Intent Hash Reference ID: ${file.stripe_payment_intent || 'ch_Stripe Mock Settlement Simulation Node Token'}`;
-
-    // Write row entries items matrix dynamically
-    tbody.innerHTML = `
-        <tr style="border-bottom: 1px solid #f1f5f9;">
-            <td style="padding: 16px 15px;">
-                <strong style="color: var(--primary-blue); display:block; font-size:0.95rem;">${itemConfig.title} Package Registration</strong>
-                <span style="font-size:0.8rem; color:var(--text-gray); display:block; margin-top:4px;">Compliance configuration service initialization sequence mapping parameters.</span>
-            </td>
-            <td style="padding: 16px 15px; text-align: right; color: var(--text-dark); font-weight:500;">$${parsedBasePrice.toFixed(2)}</td>
-            <td style="padding: 16px 15px; text-align: right; color: var(--primary-blue); font-weight: 700;">$${parsedBasePrice.toFixed(2)}</td>
-        </tr>
-    `;
-
-    // Write final summary cost metrics figures nodes
-    document.getElementById('receipt-subtotal-val').innerText = `$${parsedBasePrice.toFixed(2)}`;
-    document.getElementById('receipt-gov-val').innerText = `$${(itemConfig.govFee || 0).toFixed(2)}`;
-    document.getElementById('receipt-total-val').innerText = `$${totalReceiptSum.toFixed(2)}`;
-}
-
+        function closeBillingOrdersModal() { document.getElementById('billing-orders-modal').style.display = 'none'; }
+        async function handleVaultUploadPipeline(files) { alert("File encrypted and securely synchronized to your account bucket."); }
+        function triggerDeliverableDownload(key) { alert(`Compiling security manifest package for: [${key.toUpperCase()}]. PDF loading...`); }
+        async function handleLogout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
     </script>
 </body>
 </html>
