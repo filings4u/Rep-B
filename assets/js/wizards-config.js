@@ -513,4 +513,4 @@ WIZARD_REGISTRY["wizard-payroll-tax"] = WIZARD_REGISTRY["payroll-tax"];
 WIZARD_REGISTRY["wizard-franchise-tax-filing"] = WIZARD_REGISTRY["franchise-tax-filing"];
 WIZARD_REGISTRY["wizard-owner-operators"] = WIZARD_REGISTRY["owner-operators"];
 WIZARD_REGISTRY["wizard-driver-qualification-file"] = WIZARD_REGISTRY["driver-qualification-file"];
-WIZARD_REGISTRY["wizard-ucr-registration"] = W
+WIZARD_REGISTRY["wizard-ucr-registration"] = WIZARD_REGISTRY["ucr-registration"];
