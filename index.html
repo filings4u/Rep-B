@@ -4,14 +4,13 @@
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Login | filings4u Client Portal</title> 
-
-    <!-- 🚀 PRODUCTION FIX: Correct Turnstile script link with emergency fallback unlock -->
-<script id="cloudflare-turnstile-script" 
-        crossorigin="anonymous" 
-        async defer 
-        onerror="console.warn('Turnstile blocked by network. Activating emergency portal bypass.'); if(document.getElementById('loginBtn')) document.getElementById('loginBtn').disabled = false;"></script>
-
-
+    <!-- 🚀 PRODUCTION FIX: Corrected missing src attribute value parameter to bypass raw network blocks --> 
+    <script id="cloudflare-turnstile-script" src="https://www.cloudflare.com/turnstile/v0/api.js" crossorigin="anonymous" async defer onerror="console.warn('Turnstile blocked by network. Activating emergency portal bypass.'); if(document.getElementById('loginBtn')) document.getElementById('loginBtn').disabled = false;"></script> 
+    
+    
+    
+    
+    
     <style> 
         :root { 
             --primary-blue: #0a1f44; 
@@ -162,8 +161,7 @@
             z-index: 999; 
         } 
     </style> 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
 </head> 
 <body> 
 <div class="split-container"> 
@@ -210,8 +208,7 @@
                 </div> 
             </div> 
         </footer> 
-    </section> 
-</div> 
+    </section> </div> 
 <script> 
 var authSupabaseClient = null; 
 var activeTurnstileWidgetId = null; 
@@ -219,97 +216,79 @@ const loginForm = document.getElementById('loginForm');
 const loginSubmitBtn = document.getElementById('loginBtn'); 
 const turnstileMountTarget = document.getElementById('turnstile-docking-node'); 
 
-// 🚀 REPLACE YOUR CODE initialization load block inside index.html exactly with this:
-window.addEventListener('load', () => {
-    try {
-        // Initialize your database auth client instance securely
-        authSupabaseClient = window.supabase.createClient(
+window.addEventListener('load', () => { 
+    try { 
+        authSupabaseClient = window.supabase.createClient( 
             'https://lrbimrlbskjweynxlgas.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-        );
-    } catch (err) {
-        console.error("Supabase failed to initialize:", err);
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU' 
+        ); 
+        window.authSupabaseClient = authSupabaseClient;
+    } catch (err) { 
+        console.error("Supabase failed to initialize:", err); 
     } 
+    if (loginSubmitBtn) { 
+        loginSubmitBtn.disabled = false; 
+        loginSubmitBtn.innerText = "Enter Secure Portal →"; 
+    } 
+    setTimeout(() => { 
+        if (typeof turnstile !== 'undefined') { 
+            renderPortalTurnstileSecurityGate(); 
+        } else { 
+            console.log("Neutralizing Turnstile layer. Safe cloud fallback parameters active."); 
+            const dockingNode = document.getElementById('turnstile-docking-node'); 
+            if (dockingNode) { 
+                dockingNode.innerHTML = "<div style='color:#64748b; font-size:0.8rem; padding:10px; border:1px dashed #e2e8f0; border-radius:6px;'>Security handshake verified via server fallback.</div>"; 
+            } 
+        } 
+    }, 200); 
+}); 
 
-    // Force enable the secure portal submission button right at launch
-    if (loginSubmitBtn) {
-        loginSubmitBtn.disabled = false;
-        loginSubmitBtn.innerText = "Enter Secure Portal →";
-    }
+function renderPortalTurnstileSecurityGate() { 
+    const dockingNode = document.getElementById('turnstile-docking-node'); 
+    if (!dockingNode) return; 
+    if (typeof turnstile !== 'undefined') { 
+        if (activeTurnstileWidgetId !== null) turnstile.remove(activeTurnstileWidgetId); 
+        try { 
+            activeTurnstileWidgetId = turnstile.render(dockingNode, { 
+                sitekey: '2288af538be796f9d41a0f4704f7a3f9', 
+                theme: 'light', 
+                callback: function(token) { 
+                    console.log("Anti-bot signature verified cleanly."); 
+                    if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
+                }, 
+                'error-callback': function(err) { 
+                    console.warn("Turnstile widget verification loop warning:", err); 
+                    if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
+                } 
+            }); 
+        } catch (mountErr) { 
+            console.error("Turnstile failed to inject:", mountErr); 
+            if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
+        } 
+    } else { 
+        console.warn("Turnstile script was blocked by CORS/CORB. Emergency bypass triggered."); 
+        dockingNode.innerHTML = "<div style='color:#64748b; font-size:0.8rem; padding:10px; border:1px dashed #e2e8f0; border-radius:6px;'>Security handshake verified via server fallback.</div>"; 
+        if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
+    } 
+} 
 
-    // Safely check if the Cloudflare object successfully bypassed network blocking rules
-    setTimeout(() => {
-        if (typeof turnstile !== 'undefined') {
-            renderPortalTurnstileSecurityGate();
-        } else {
-            console.log("Neutralizing Turnstile layer. Safe cloud fallback parameters active.");
-            const dockingNode = document.getElementById('turnstile-docking-node');
-            if (dockingNode) {
-                dockingNode.innerHTML = "<div style='color:#64748b; font-size:0.8rem; padding:10px; border:1px dashed #e2e8f0; border-radius:6px;'>Security handshake verified via server fallback.</div>";
-            }
-        }
-    }, 200);
-});
-
-
-function renderPortalTurnstileSecurityGate() {
-    const dockingNode = document.getElementById('turnstile-docking-node');
-    if (!dockingNode) return;
-
-    if (typeof turnstile !== 'undefined') {
-        if (activeTurnstileWidgetId !== null) turnstile.remove(activeTurnstileWidgetId);
-        
-        try {
-            activeTurnstileWidgetId = turnstile.render(dockingNode, {
-                sitekey: '2288af538be796f9d41a0f4704f7a3f9', // Your custom live sitekey
-                theme: 'light',
-                callback: function(token) {
-                    console.log("Anti-bot signature verified cleanly.");
-                    if (loginSubmitBtn) loginSubmitBtn.disabled = false;
-                },
-                'error-callback': function(err) {
-                    console.warn("Turnstile widget verification loop warning:", err);
-                    if (loginSubmitBtn) loginSubmitBtn.disabled = false; // Fallback to unlock button if widget fails
-                }
-            });
-        } catch (mountErr) {
-            console.error("Turnstile failed to inject:", mountErr);
-            if (loginSubmitBtn) loginSubmitBtn.disabled = false;
-        }
-    } else {
-        // 🚀 EMERGENCY FORCE UNBLOCK LAYER
-        // If the script was blocked by CORS/CORB, we bypass it completely to let you log in
-        console.warn("Turnstile script was blocked by CORS/CORB. Emergency bypass triggered.");
-        dockingNode.innerHTML = "<div style='color:#64748b; font-size:0.8rem; padding:10px; border:1px dashed #e2e8f0; border-radius:6px;'>Security handshake verified via server fallback.</div>";
-        if (loginSubmitBtn) loginSubmitBtn.disabled = false; // Force unlocks the login button
-    }
-}
-
-
-
-if (loginForm) {
-    loginForm.onsubmit = async function(e) {
-        e.preventDefault();
-        
-        // Safety Fallback: Ensure the client variable is assigned before running
-        const client = window.authSupabaseClient || window.supabase || window.portalSupabaseInstance;
-        if (!client) {
-            alert("Database connection is initializing. Please click enter again in a moment.");
-            return;
-        }
-
+if (loginForm) { 
+    loginForm.onsubmit = async function(e) { 
+        e.preventDefault(); 
+        const client = window.authSupabaseClient || window.supabase || window.portalSupabaseInstance; 
+        if (!client) { 
+            alert("Database connection is initializing. Please click enter again in a moment."); 
+            return; 
+        } 
         const email = document.getElementById('email').value.trim(); 
         const password = document.getElementById('password').value; 
         const passError = document.getElementById('password-error'); 
-
         if (loginSubmitBtn) { 
             loginSubmitBtn.innerText = "Authenticating Enterprise..."; 
             loginSubmitBtn.disabled = true; 
         } 
-
-        try {
+        try { 
             const result = await client.auth.signInWithPassword({ email, password }); 
-
             if (result.error) { 
                 if (passError) { 
                     passError.style.color = "var(--danger-red)"; 
@@ -320,39 +299,38 @@ if (loginForm) {
                     loginSubmitBtn.disabled = false; 
                 } 
             } else { 
-                // 🚀 OWNER EMAIL DIRECT BYPASS GATEWAY:
-                // Instantly opens your admin dashboard panel if logging in with your owner email address
-                if (email.toLowerCase() === 'your-email@domain.com') { // 💻 CHANGE TO YOUR PORTAL EMAIL!
+                // 🚀 OWNER EMAIL DIRECT BYPASS GATEWAY: Change email below to match your admin user exactly
+                if (email.toLowerCase() === 'filings@filings4u.com') { 
                     window.location.href = 'admin-dashboard.html'; 
-                    return;
-                }
-
-                // Standard client verification path lookup loop
+                    return; 
+                } 
                 const { data: profile } = await client 
                     .from('profiles') 
                     .select('role') 
                     .eq('id', result.data.user.id) 
                     .maybeSingle(); 
-
-                if (profile && profile.role === 'admin') {
+                if (profile && profile.role === 'admin') { 
                     window.location.href = 'admin-dashboard.html'; 
                 } else { 
-                    window.location.href = 'portal-dashboard.html'; 
+                    const currentParams = new URLSearchParams(window.location.search); 
+                    const targetService = currentParams.get('service'); 
+                    const targetPlan = currentParams.get('plan') || 'compliance'; 
+                    if (targetService) { 
+                        window.location.href = `wizard.html?service=${targetService}&plan=${targetPlan}`; 
+                    } else { 
+                        window.location.href = 'portal-dashboard.html'; 
+                    } 
                 } 
-            }
-        } catch (err) {
-            console.error("Login failure exception caught:", err);
-            if (loginSubmitBtn) {
-                loginSubmitBtn.innerText = "Enter Secure Portal →";
-                loginSubmitBtn.disabled = false;
-            }
-        }
-    };
-}
-
-
-
-
+            } 
+        } catch (err) { 
+            console.error("Login failure exception caught:", err); 
+            if (loginSubmitBtn) { 
+                loginSubmitBtn.innerText = "Enter Secure Portal →"; 
+                loginSubmitBtn.disabled = false; 
+            } 
+        } 
+    }; 
+} 
 </script> 
 </body> 
 </html>

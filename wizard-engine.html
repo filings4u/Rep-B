@@ -7,21 +7,21 @@
     <!-- Core layout style engine links system mapping --> 
     <link rel="stylesheet" href="assets/css/portal-wizard.css"> 
     
-    <!-- PRODUCTION FIX: Fully qualified, absolute web CDN paths map for external engines --> 
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- PRODUCTION CDN INFRASTRUCTURE: Absolute fully qualified web layout paths mapping --> 
+    <script src="https://js.stripe.com/v3/"></script> 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
     <script src="assets/js/wizards-config.js"></script> 
     
-    <style>
+    <style> 
         :root { 
             --emerald: #10b981; 
             --navy: #0a1f44; 
-        }
+        } 
         @keyframes spin { 
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
-        }
-        /* Dynamic full-width alignment modifiers for Stripe Shadow tree elements */
+        } 
+        /* Dynamic full-width alignment modifiers for Stripe Shadow tree elements */ 
         #checkout { 
             margin-top: 20px; 
             min-height: 500px; 
@@ -33,31 +33,40 @@
             width: 100% !important; 
             min-width: 100% !important; 
             max-width: 100% !important; 
-        }
-    </style>
+        } 
+    </style> 
 
     <!-- Safe, asynchronous session check guard prevents white screen lockouts --> 
     <script> 
-        window.portalSupabaseInstance = window.supabase ? window.supabase.createClient( 
-            'https://lrbimrlbskjweynxlgas.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU' 
-        ) : null; 
+        window.portalSupabaseInstance = null; 
 
         document.addEventListener("DOMContentLoaded", async () => { 
+            // 🚀 FIXED: Initialize connection profile directly inside DOM loop to ensure CDN script compiled first
+            if (typeof supabase !== 'undefined') {
+                window.portalSupabaseInstance = supabase.createClient( 
+                    'https://lrbimrlbskjweynxlgas.supabase.co', 
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU' 
+                ); 
+            }
+
             if (!window.portalSupabaseInstance) { 
-                console.error("Critical: Supabase library failed to initialize during head layout parsing."); 
+                console.error("Critical: Supabase library failed to initialize or mount during head layout parsing."); 
                 return; 
             } 
+
             try { 
                 const { data: { session }, error } = await window.portalSupabaseInstance.auth.getSession(); 
+                
                 if (error || !session) { 
                     console.warn("User unauthorized or session token record expired. Evicting to login gate."); 
-                    // Preserve target location parameters upon redirect to index.html
-                    const currentQueryString = window.location.search;
+                    // Preserve target location parameters upon redirect to index.html 
+                    const currentQueryString = window.location.search; 
                     window.location.href = `index.html${currentQueryString}`; 
                     return; 
                 } 
-                window.activeCustomerEmail = session.user.email;
+                
+                window.activeCustomerEmail = session.user.email; 
+                
                 if (typeof mountDynamicWizardEngineCore === 'function') { 
                     mountDynamicWizardEngineCore(session.user.id); 
                 } 
@@ -68,7 +77,8 @@
         }); 
     </script> 
     <script type="module" src="assets/js/portal-global.js" defer></script> 
-</head> 
+</head>
+
 <body class="portal-body" style="background-color: #f8fafc; margin:0; padding:20px; font-family: system-ui, -apple-system, sans-serif;"> 
     
     <main class="wizard-container" style="max-width: 800px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02);"> 
