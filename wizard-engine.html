@@ -245,15 +245,15 @@ const fetchClientSecret = async () => {
             'Content-Type': 'application/json', 
             'Accept': 'application/json' 
         }, 
-        body: JSON.stringify({ 
-            action: 'checkout', 
-            email: window.activeCustomerEmail || 'guest-checkout@filings4u.com', 
-            company_name: companyName, 
-            amount: Math.round(parseFloat(calculatedPrice) * 100), 
-            service_type: `${serviceKey}-${verifiedPlanTier}`,
-            // 🚀 FIXED: Cleans the routing base path to ensure it hooks on success.html without structural errors
-            success_url: `${currentOriginUrl}/https://portal.filings4u.com/success.html`
-        }) 
+       body: JSON.stringify({ 
+    action: 'checkout', 
+    email: window.activeCustomerEmail || 'guest-checkout@filings4u.com', 
+    company_name: companyName, 
+    amount: Math.round(parseFloat(calculatedPrice) * 100), 
+    service_type: `${serviceKey}-${verifiedPlanTier}`,
+    // 🚀 FIXED: Added an explicit trailing slash. This forces Stripe to append tokens safely as a parameter!
+    success_url: `${currentOriginUrl}/success.html/` 
+})
     }); 
 
     if (!response.ok) { 
