@@ -12,30 +12,49 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/wizards-config.js"></script>
     
-    <!-- Token Security Authorization Guard Module -->
-    <script type="module">
-        // CRITICAL FIX: declared type="module" to enable top-level asynchronous execution loops safely
-        const supabase = window.supabase.createClient(
-           'https://lrbimrlbskjweyvnxlgas.supabase.co', 
- 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+<!-- Consolidated Token Security Authorization Guard Module --> 
+<script>
+let dashboardSupabaseClient = null;
+
+window.addEventListener('load', async () => {
+    try {
+        // 1. FIXED DOMAIN: Uses 'weynxlgas' to match your functional login state setup
+        dashboardSupabaseClient = window.supabase.createClient(
+            'https://lrbimrlbskjweynxlgas.supabase.co', 
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
         );
 
-        window.supabase = supabase; // Expose to legacy scripts securely
+        // Expose to legacy scripts securely if required by wizards-config.js
+        window.supabase = dashboardSupabaseClient;
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            if (error || !session) {
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            // Render the live user email onto your welcome element
-            document.getElementById('company-name-target').innerText = session.user.email;
-            
-            // Run system data aggregation query engines
-            initializeSmartServiceDashboard(session.user.id);
-        });
-    </script>
+        // 2. Extract user profiling information 
+        const { data, error } = await dashboardSupabaseClient.auth.getSession();
+
+        if (error || !data.session) {
+            console.warn("Unauthorized access detected. Kicking back to login script.");
+            window.location.href = 'index.html'; 
+            return;
+        }
+
+        // 3. Success! Inject metadata onto dashboard interface layout elements
+        console.log("Welcome authorized user:", data.session.user.email);
+        
+        const targetElement = document.getElementById('company-name-target');
+        if (targetElement) {
+            targetElement.innerText = data.session.user.email;
+        }
+
+        // 4. Initialize lower processing engines 
+        if (typeof initializeSmartServiceDashboard === 'function') {
+            initializeSmartServiceDashboard(data.session.user.id);
+        }
+
+    } catch (err) {
+        console.error("Dashboard security handshake failed:", err);
+        window.location.href = 'index.html';
+    }
+});
+</script>
     <style>
         /* Single Page App Architecture Display Rules */
         .portal-main-view { display: none; }
