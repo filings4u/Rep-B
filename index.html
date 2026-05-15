@@ -191,21 +191,10 @@
                 <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button> 
             </form> 
 
-            <form id="forgotForm" style="display: none;"> 
-                <div class="form-group" style="margin-bottom: 15px;"> 
-                    <label>Reset Account Email</label> 
-                    <input type="email" id="reset-flow-email-input" placeholder="name@company.com" required> 
-                </div> 
-                <div id="recovery-turnstile-container" style="width: 100%;"></div> 
-                <div id="reset-captcha-error" class="error-msg" style="text-align: center; margin-bottom: 8px;"></div> 
-                <button type="submit" id="forgotPasswordSubmitBtn" class="btn-login">Send Reset Verification Link →</button> 
-            </form> 
-
             <div style="margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;"> 
-    <!-- Change this href to point directly to your dedicated recovery request file -->
-    <a href="reset-password.html" id="switchAuthBtn" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a> 
-    <span style="color: var(--text-gray); font-weight: 500;">Paid Account Gate</span> 
-</div>
+                <a href="reset-password.html" id="switchAuthBtn" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a> 
+                <span style="color: var(--text-gray); font-weight: 500;">Paid Account Gate</span> 
+            </div> 
         </div> 
         <footer class="badge-footer-fixed"> 
             <div style="background: rgba(10, 31, 68, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); width: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"> 
@@ -221,19 +210,11 @@
 
 <script> 
 var authSupabaseClient = null; 
-var isRecoveryModeActive = false; 
 var activeTurnstileWidgetId = null; 
 
-const switchAuthBtn = document.getElementById('switchAuthBtn'); 
 const loginForm = document.getElementById('loginForm'); 
-const forgotForm = document.getElementById('forgotForm'); 
-const heading = document.getElementById('form-heading'); 
-const subtext = document.getElementById('form-subtext'); 
 const loginSubmitBtn = document.getElementById('loginBtn'); 
-const resetSubmitBtn = document.getElementById('forgotPasswordSubmitBtn'); 
 const turnstileMountTarget = document.getElementById('turnstile-docking-node'); 
-const loginContainerBox = document.getElementById('master-turnstile-container'); 
-const recoveryContainerBox = document.getElementById('recovery-turnstile-container'); 
 
 window.addEventListener('load', () => { 
     try { 
@@ -255,40 +236,50 @@ function renderPortalTurnstileSecurityGate() {
             theme: 'light', 
             callback: function(token) { 
                 loginSubmitBtn.disabled = false; 
-                resetSubmitBtn.disabled = false; 
             } 
         }); 
     } 
 } 
 
-if (switchAuthBtn) { 
-    switchAuthBtn.addEventListener('click', function() { 
-        isRecoveryModeActive = !isRecoveryModeActive; 
-        if (isRecoveryModeActive) { 
-            heading.innerText = "Reset Password"; 
-            subtext.innerText = "Type your registered email to request an encrypted recovery token."; 
-            loginForm.style.display = "none"; 
-            forgotForm.style.display = "block"; 
-            switchAuthBtn.innerText = "Return to Sign In"; 
-            if(turnstileMountTarget && recoveryContainerBox) { 
-                recoveryContainerBox.appendChild(turnstileMountTarget); 
-                if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId); 
-            } 
-        } else { 
-            heading.innerText = "Portal Login"; 
-            subtext.innerText = "Please enter your credentials to access your secure dashboard."; 
-            loginForm.style.display = "block"; 
-            forgotForm.style.display = "none"; 
-            switchAuthBtn.innerText = "Forgot Password?"; 
-            if(turnstileMountTarget && loginContainerBox) { 
-                loginContainerBox.appendChild(turnstileMountTarget); 
-                if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId); 
-            } 
-        } 
-    }); 
-} 
+if (loginForm) {
+    loginForm.onsubmit = async function(e) {
+        e.preventDefault();
+        if (!authSupabaseClient) return;
 
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const passError = document.getElementById('password-error');
+        const captchaError = document.getElementById('captcha-error');
 
+        // Capture Turnstile token to pass if Supabase Auth captcha requirement is on
+        let turnstileToken = null;
+        if (typeof turnstile !== 'undefined' && activeTurnstileWidgetId !== null) {
+            turnstileToken = turnstile.getResponse(activeTurnstileWidgetId);
+        }
+
+        loginSubmitBtn.innerText = "Authenticating Enterprise...";
+        loginSubmitBtn.disabled = true;
+
+        const signInPayload = { email, password };
+        if (turnstileToken) {
+            signInPayload.options = { captchaToken: turnstileToken };
+        }
+
+        const result = await authSupabaseClient.auth.signInWithPassword(signInPayload);
+
+        if (result.error) {
+            if (passError) {
+                passError.style.color = "var(--danger-red)";
+                passError.innerText = result.error.message;
+            }
+            loginSubmitBtn.innerText = "Enter Secure Portal →";
+            loginSubmitBtn.disabled = false;
+            if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId);
+        } else {
+            window.location.href = 'portal-dashboard.html';
+        }
+    };
+}
 </script> 
 </body> 
 </html>
