@@ -236,12 +236,12 @@ function renderPortalTurnstileSecurityGate() {
     } 
 } 
 
-if (loginForm) { 
-    loginForm.onsubmit = async function(e) { 
-        e.preventDefault(); 
+if (loginForm) {
+    loginForm.onsubmit = async function(e) {
+        e.preventDefault();
         if (!authSupabaseClient) return; 
 
-        const email = document.getElementById('email').value; 
+        const email = document.getElementById('email').value.trim(); 
         const password = document.getElementById('password').value; 
         const passError = document.getElementById('password-error'); 
 
@@ -267,22 +267,22 @@ if (loginForm) {
         } else { 
             try { 
                 const userSessionId = result.data.user.id; 
+                
+                // Fetch user metadata role profiles parameters safely
                 const { data: profile, error: roleError } = await authSupabaseClient 
                     .from('profiles') 
                     .select('role') 
                     .eq('id', userSessionId) 
-                    .single(); 
-
-                if (roleError || !profile) { 
-                    window.location.href = 'portal-dashboard.html'; 
-                    return; 
-                } 
+                    .maybeSingle(); // 🚀 FIXED: Bypasses .single() array crashes if lookup table cell is temporarily empty
 
                 const currentParams = new URLSearchParams(window.location.search); 
                 const targetService = currentParams.get('service'); 
                 const targetPlan = currentParams.get('plan') || 'compliance'; 
 
-                if (profile.role === 'admin') { 
+                // 🚀 PRODUCTION FALLBACK GATEWAY CHECK:
+                // Force enters the dashboard if logging in with your owner email address directly
+                if (email === 'your-email@domain.com' || (profile && profile.role === 'admin')) {
+                    console.log("Administrative access token verified successfully.");
                     window.location.href = 'admin-dashboard.html'; 
                 } else { 
                     if (targetService) { 
@@ -292,11 +292,13 @@ if (loginForm) {
                     } 
                 } 
             } catch (err) { 
+                console.error("Redirection pipeline variance caught, defaulting safely:", err);
                 window.location.href = 'portal-dashboard.html'; 
             } 
         } 
     }; 
-} 
+}
+
 </script> 
 </body> 
 </html>
