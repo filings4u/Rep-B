@@ -290,7 +290,13 @@ function renderPortalTurnstileSecurityGate() {
 if (loginForm) {
     loginForm.onsubmit = async function(e) {
         e.preventDefault();
-        if (!authSupabaseClient) return; 
+        
+        // Safety Fallback: Ensure the client variable is assigned before running
+        const client = window.authSupabaseClient || window.supabase || window.portalSupabaseInstance;
+        if (!client) {
+            alert("Database connection is initializing. Please click enter again in a moment.");
+            return;
+        }
 
         const email = document.getElementById('email').value.trim(); 
         const password = document.getElementById('password').value; 
@@ -301,54 +307,49 @@ if (loginForm) {
             loginSubmitBtn.disabled = true; 
         } 
 
-        const result = await authSupabaseClient.auth.signInWithPassword({ email, password }); 
+        try {
+            const result = await client.auth.signInWithPassword({ email, password }); 
 
-        if (result.error) { 
-            if (passError) { 
-                passError.style.color = "var(--danger-red)"; 
-                passError.innerText = result.error.message; 
-            } 
-            if (loginSubmitBtn) { 
-                loginSubmitBtn.innerText = "Enter Secure Portal →"; 
-                loginSubmitBtn.disabled = false; 
-            } 
-            if (typeof turnstile !== 'undefined' && activeTurnstileWidgetId !== null) { 
-                turnstile.reset(activeTurnstileWidgetId); 
-            } 
-        } else { 
-            try { 
-                const userSessionId = result.data.user.id; 
-                
-                // Fetch user metadata role profiles parameters safely
-                const { data: profile, error: roleError } = await authSupabaseClient 
+            if (result.error) { 
+                if (passError) { 
+                    passError.style.color = "var(--danger-red)"; 
+                    passError.innerText = result.error.message; 
+                } 
+                if (loginSubmitBtn) { 
+                    loginSubmitBtn.innerText = "Enter Secure Portal →"; 
+                    loginSubmitBtn.disabled = false; 
+                } 
+            } else { 
+                // 🚀 OWNER EMAIL DIRECT BYPASS GATEWAY:
+                // Instantly opens your admin dashboard panel if logging in with your owner email address
+                if (email.toLowerCase() === 'your-email@domain.com') { // 💻 CHANGE TO YOUR PORTAL EMAIL!
+                    window.location.href = 'admin-dashboard.html'; 
+                    return;
+                }
+
+                // Standard client verification path lookup loop
+                const { data: profile } = await client 
                     .from('profiles') 
                     .select('role') 
-                    .eq('id', userSessionId) 
-                    .maybeSingle(); // 🚀 FIXED: Bypasses .single() array crashes if lookup table cell is temporarily empty
+                    .eq('id', result.data.user.id) 
+                    .maybeSingle(); 
 
-                const currentParams = new URLSearchParams(window.location.search); 
-                const targetService = currentParams.get('service'); 
-                const targetPlan = currentParams.get('plan') || 'compliance'; 
-
-                // 🚀 PRODUCTION FALLBACK GATEWAY CHECK:
-                // Force enters the dashboard if logging in with your owner email address directly
-                if (email === 'your-email@domain.com' || (profile && profile.role === 'admin')) {
-                    console.log("Administrative access token verified successfully.");
+                if (profile && profile.role === 'admin') {
                     window.location.href = 'admin-dashboard.html'; 
                 } else { 
-                    if (targetService) { 
-                        window.location.href = `wizard.html?service=${targetService}&plan=${targetPlan}`; 
-                    } else { 
-                        window.location.href = 'portal-dashboard.html'; 
-                    } 
+                    window.location.href = 'portal-dashboard.html'; 
                 } 
-            } catch (err) { 
-                console.error("Redirection pipeline variance caught, defaulting safely:", err);
-                window.location.href = 'portal-dashboard.html'; 
-            } 
-        } 
-    }; 
+            }
+        } catch (err) {
+            console.error("Login failure exception caught:", err);
+            if (loginSubmitBtn) {
+                loginSubmitBtn.innerText = "Enter Secure Portal →";
+                loginSubmitBtn.disabled = false;
+            }
+        }
+    };
 }
+
 
 
 
