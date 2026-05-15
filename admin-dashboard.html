@@ -662,5 +662,73 @@ document.getElementById('adminSignOutBtn').addEventListener('click', async (e) =
     window.location.href = 'index.html';
 });
 </script>
+
+<!-- START: SELF-CONTAINED MASTER ADMIN PRICE AUDIT MODULE -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const adminClient = window.portalSupabaseInstance || window.supabase || window.authSupabaseClient;
+        if (!adminClient) return;
+
+        adminClient.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' || session?.user) {
+                const mainAdminLayoutContainer = document.querySelector('.admin-main') || document.querySelector('main') || document.body;
+                if (!mainAdminLayoutContainer) return;
+
+                let adminLedgerCard = document.getElementById('admin-master-sales-panel');
+                if (!adminLedgerCard) {
+                    adminLedgerCard = document.createElement('section');
+                    adminLedgerCard.id = 'admin-master-sales-panel';
+                    adminLedgerCard.style.cssText = "background:#ffffff; padding:30px; border-radius:12px; border:1px solid #e2e8f0; margin-top:40px; box-shadow: 0 4px 20px rgba(0,0,0,0.01);";
+                    adminLedgerCard.innerHTML = `
+                        <h3 style="margin:0 0 5px 0; color:#0a1f44; font-size:1.2rem; font-weight:800;">Global Corporate Sales Pricing Ledger</h3>
+                        <p style="margin:0 0 20px 0; font-size:0.85rem; color:#64748b;">Administrative view tracking all multi-tier incoming user transactions and verification secrets.</p>
+                        <div id="admin-global-sales-target-box"><p style="color:#64748b; font-size:0.9rem;">Compiling enterprise sales indices parameters...</p></div>
+                    `;
+                    mainAdminLayoutContainer.appendChild(adminLedgerCard);
+                }
+
+                const adminDisplayBox = document.getElementById('admin-global-sales-target-box');
+
+                try {
+                    // Administrators bypass individual constraint maps to scan ALL rows
+                    const { data: allSales, error } = await adminClient
+                        .from('user_filings_workspace')
+                        .select('*')
+                        .eq('status', 'paid')
+                        .order('created_at', { ascending: false });
+
+                    if (error || !allSales || allSales.length === 0) {
+                        adminDisplayBox.innerHTML = '<p style="color:#64748b; font-size:0.88rem; margin:0;">No sales transactions currently captured in network data trees.</p>';
+                        return;
+                    }
+
+                    adminDisplayBox.innerHTML = '';
+                    allSales.forEach(sale => {
+                        const saleDate = new Date(sale.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        const saleRow = document.createElement('div');
+                        saleRow.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #e2e8f0; background:#ffffff;";
+                        saleRow.innerHTML = `
+                            <div>
+                                <strong style="color:#0a1f44; font-size:0.92rem; display:block;">${sale.company_name}</strong>
+                                <span style="font-size:0.8rem; color:#64748b;">Service: ${sale.service_key} (${sale.plan_tier}) • User ID Token: ${sale.user_id.substring(0,8).toUpperCase()}...</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:20px;">
+                                <span style="font-size:0.82rem; color:#64748b;">${saleDate}</span>
+                                <strong style="color:#10b981; font-size:1rem;">$${parseFloat(sale.amount_paid).toFixed(2)}</strong>
+                                <a href="receipt.html?id=${sale.id}" target="_blank" style="background:transparent; border:1px solid #0a1f44; color:#0a1f44; padding:5px 12px; border-radius:4px; font-size:0.78rem; text-decoration:none; font-weight:700; display:inline-block;">Audit Invoicing</a>
+                            </div>
+                        `;
+                        adminDisplayBox.appendChild(saleRow);
+                    });
+                } catch (adminErr) {
+                    console.error("Admin ledger compiler failure caught:", adminErr);
+                }
+            }
+        });
+    });
+</script>
+<!-- END: SELF-CONTAINED MASTER ADMIN PRICE AUDIT MODULE -->
+
 </body> 
 </html>

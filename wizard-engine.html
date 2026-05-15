@@ -1,81 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compliance Setup Wizard Engine | filings4u</title>
-    <!-- Core layout style engine links system mapping -->
-    <link rel="stylesheet" href="assets/css/portal-wizard.css">
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Compliance Setup Wizard Engine | filings4u</title> 
+    <!-- Core layout style engine links system mapping --> 
+    <link rel="stylesheet" href="assets/css/portal-wizard.css"> 
     
-    <!-- FIX A: Fully qualified, absolute web CDN path maps for Supabase Core libraries distribution -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="assets/js/wizards-config.js"></script>
+    <!-- PRODUCTION FIX: Fully qualified, absolute web CDN paths map for external engines --> 
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
+    <script src="assets/js/wizards-config.js"></script> 
+    
+    <style>
+        :root { 
+            --emerald: #10b981; 
+            --navy: #0a1f44; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        /* Dynamic full-width alignment modifiers for Stripe Shadow tree elements */
+        #checkout { 
+            margin-top: 20px; 
+            min-height: 500px; 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            box-sizing: border-box; 
+        } 
+        #checkout iframe { 
+            width: 100% !important; 
+            min-width: 100% !important; 
+            max-width: 100% !important; 
+        }
+    </style>
 
-    <!-- FIX B: Safe, asynchronous session check guard prevents white screen lockouts -->
-    <script>
-        // Singleton client setup allocation. Do not copy or duplicate this const string line elsewhere on the page
-        window.portalSupabaseInstance = window.supabase ? window.supabase.createClient(
+    <!-- Safe, asynchronous session check guard prevents white screen lockouts --> 
+    <script> 
+        window.portalSupabaseInstance = window.supabase ? window.supabase.createClient( 
             'https://lrbimrlbskjweynxlgas.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-        ) : null;
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU' 
+        ) : null; 
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (!window.portalSupabaseInstance) {
-                console.error("Critical: Supabase library failed to initialize during head layout parsing.");
-                return;
-            }
+        document.addEventListener("DOMContentLoaded", async () => { 
+            if (!window.portalSupabaseInstance) { 
+                console.error("Critical: Supabase library failed to initialize during head layout parsing."); 
+                return; 
+            } 
+            try { 
+                const { data: { session }, error } = await window.portalSupabaseInstance.auth.getSession(); 
+                if (error || !session) { 
+                    console.warn("User unauthorized or session token record expired. Evicting to login gate."); 
+                    // Preserve target location parameters upon redirect to index.html
+                    const currentQueryString = window.location.search;
+                    window.location.href = `index.html${currentQueryString}`; 
+                    return; 
+                } 
+                window.activeCustomerEmail = session.user.email;
+                if (typeof mountDynamicWizardEngineCore === 'function') { 
+                    mountDynamicWizardEngineCore(session.user.id); 
+                } 
+            } catch (lifecycleErr) { 
+                console.error("Fatal exception caught during workspace initialization:", lifecycleErr); 
+                window.location.href = 'index.html'; 
+            } 
+        }); 
+    </script> 
+    <script type="module" src="assets/js/portal-global.js" defer></script> 
+</head> 
+<body class="portal-body" style="background-color: #f8fafc; margin:0; padding:20px; font-family: system-ui, -apple-system, sans-serif;"> 
+    
+    <main class="wizard-container" style="max-width: 800px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02);"> 
+        
+        <!-- Interactive Layout Frame Header --> 
+        <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:center;"> 
+            <div> 
+                <img src="images/logo.png" alt="filings4u" style="height: 32px; display:block; margin-bottom:8px;"> 
+                <h1 id="wizard-title-display" style="margin:0; font-size:1.5rem; color:#0a1f44; font-weight:800;">Loading Registration Form Module...</h1> 
+            </div> 
+            <button onclick="window.location.href='portal-dashboard.html'" style="background:transparent; border:1px solid #0a1f44; color:#0a1f44; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.85rem; cursor:pointer;">Dashboard Return ➔</button> 
+        </div> 
 
-            try {
-                // Safely evaluate active customer registration token statuses parameters
-                const { data: { session }, error } = await window.portalSupabaseInstance.auth.getSession();
-                
-                if (error || !session) {
-                    console.warn("User unauthorized or session token record expired. Evicting to login gate.");
-                    window.location.href = 'index.html';
-                    return;
-                }
-                
-                console.log("Authentication handshake authorized. Enterprise profile active:", session.user.email);
-                
-                // Fire dynamic layout wizard engine inputs generation functions safely post-check
-                if (typeof mountDynamicWizardEngineCore === 'function') {
-                    mountDynamicWizardEngineCore(session.user.id);
-                }
-            } catch (lifecycleErr) {
-                console.error("Fatal exception caught during workspace initialization:", lifecycleErr);
-                window.location.href = 'index.html';
-            }
-        });
-    </script>
+        <!-- DYNAMIC STEP COMPONENT INJECTION CONTAINER --> 
+        <div id="wizard-form-fields-target-box" style="min-height: 250px;"> 
+            <p style="text-align:center; padding:50px; color:#64748b;">Assembling user interface layout arrays parameters match matrix...</p> 
+        </div> 
+        
+    </main> 
 
-    <!-- FIX C: Appended explicit script layout modules type tags to prevent import statements exceptions crashes -->
-    <script type="module" src="assets/js/portal-global.js" defer></script>
-</head>
-<body class="portal-body" style="background-color: #f8fafc; margin:0; padding:20px; font-family: system-ui, -apple-system, sans-serif;">
-
-    <main class="wizard-container" style="max-width: 800px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-        <!-- Interactive Layout Frame Header -->
-        <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <img src="images/logo.png" alt="filings4u" style="height: 32px; display:block; margin-bottom:8px;">
-                <h1 id="wizard-title-display" style="margin:0; font-size:1.5rem; color:#0a1f44; font-weight:800;">Loading Registration Form Module...</h1>
-            </div>
-            <button onclick="window.location.href='portal-dashboard.html'" style="background:transparent; border:1px solid #0a1f44; color:#0a1f44; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.85rem; cursor:pointer;">Dashboard Return ➔</button>
-        </div>
-
-        <!-- DYNAMIC STEP COMPONENT INJECTION CONTAINER -->
-        <div id="wizard-form-fields-target-box" style="min-height: 250px;">
-            <p style="text-align:center; padding:50px; color:#64748b;">Assembling user interface layout arrays parameters match matrix...</p>
-        </div>
-    </main>
-
-  <!-- UI STEPS INTERACTION ENGINE AUTOMATION LOGIC CONTROLLER --> 
+<!-- UI STEPS INTERACTION ENGINE AUTOMATION LOGIC CONTROLLER --> 
 <script> 
 function mountDynamicWizardEngineCore(userId) { 
-    // 1. Read active URL parameters string targets (?service=ein&plan=compliance) 
     const urlParams = new URLSearchParams(window.location.search); 
     const activeServiceKey = urlParams.get('service') || 'llc-formation'; 
-    const chosenPlanTier = urlParams.get('plan') || 'compliance'; // Default fallback tier 
+    const chosenPlanTier = urlParams.get('plan') || 'compliance'; 
 
     const registry = window.WIZARD_REGISTRY || {}; 
     const serviceConfig = registry[activeServiceKey]; 
@@ -88,11 +107,9 @@ function mountDynamicWizardEngineCore(userId) {
         return; 
     } 
 
-    // 2. Production Dynamic Pricing Tier Matrix Lookup 
     let finalFilingPrice = 149.00; 
     let planDisplayName = "Standard Compliance Package"; 
 
-    // Check if wizards-config.js defines a multi-plan object first; otherwise calculate standard standard offsets
     if (serviceConfig.plans && serviceConfig.plans[chosenPlanTier]) { 
         finalFilingPrice = serviceConfig.plans[chosenPlanTier].price; 
         planDisplayName = serviceConfig.plans[chosenPlanTier].title; 
@@ -109,43 +126,103 @@ function mountDynamicWizardEngineCore(userId) {
         } 
     } 
 
-    // Sync titles variables onto text fields views nodes locations 
     document.getElementById('wizard-title-display').innerText = `${serviceConfig.title} — ${planDisplayName}`; 
 
-    // Generate inputs canvas dynamically matching your steps arrays mappings layouts 
     const targetContainerBox = document.getElementById('wizard-form-fields-target-box'); 
     targetContainerBox.innerHTML = ` 
         <div style="text-align:left;"> 
             <p style="color:#4a5568; font-size:0.92rem; line-height:1.5; margin-bottom:25px;">${serviceConfig.steps?.description || 'Fulfill state and federal operational registration guidelines seamlessly. Values automatically cache to workspace records slots prior to checkout thresholds.'}</p> 
+            
+            <!-- PRODUCTION FORM: Captured variables to build clean Stripe orders payloads -->
+            <div style="margin-bottom: 25px;">
+                <label style="display:block; font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#4a5568; margin-bottom:6px; letter-spacing:0.5px;">Legal Entity / Filing Entity Name</label>
+                <input type="text" id="target_company_name" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.95rem; outline:none;" placeholder="e.g., Alpha Logistics Group LLC" required>
+            </div>
+
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:25px; margin-bottom:30px;"> 
-                <h3 style="margin:0 0 15px 0; font-size:1rem; color:#0a1f44; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Workspace Parameters</h3> 
+                <h3 style="margin:0 0 15px 0; font-size:1rem; color:#0a1f44; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Selected Tier Parameters</h3> 
                 <p style="margin:0 0 8px 0; font-size:0.88rem; color:#64748b;">Selected Tier Option: <strong style="color:#0a1f44;">${planDisplayName}</strong></p> 
                 <p style="margin:0; font-size:0.88rem; color:#64748b;">Filing Base Value Fee: <strong style="color:#0a1f44;">$${finalFilingPrice.toFixed(2)}</strong></p> 
             </div> 
             
-            <!-- Context data variables targets hidden cache frames -->
             <input type="hidden" id="cachedActivePrice" value="${finalFilingPrice}">
             <input type="hidden" id="cachedPlanTier" value="${chosenPlanTier}">
+            <input type="hidden" id="cachedServiceKey" value="${activeServiceKey}">
 
-            <button onclick="handleFormStepProceed('${activeServiceKey}')" style="background:#0a1f44; color:white; border:none; width:100%; padding:14px; border-radius:6px; font-weight:700; font-size:1rem; cursor:pointer;">Initialize Setup Fields Sequence ➔</button> 
+            <button onclick="handleFormStepProceed()" style="background:#0a1f44; color:white; border:none; width:100%; padding:14px; border-radius:6px; font-weight:700; font-size:1rem; cursor:pointer;">Proceed directly to payment gateway ➔</button> 
         </div> 
     `; 
 } 
 
-function handleFormStepProceed(serviceKey) { 
-    // FIXED: Extracted dynamic value references directly out of the hidden state data nodes
+async function handleFormStepProceed() { 
+    const entityNameField = document.getElementById('target_company_name');
+    const companyName = entityNameField ? entityNameField.value.trim() : '';
+    
+    if (!companyName) {
+        alert("Please specify your official corporate or entity filing name to initialize gateway checkout.");
+        if (entityNameField) entityNameField.focus();
+        return;
+    }
+
     const calculatedPrice = document.getElementById('cachedActivePrice').value;
     const verifiedPlanTier = document.getElementById('cachedPlanTier').value;
+    const serviceKey = document.getElementById('cachedServiceKey').value;
 
-    // Set pending checkout transaction variables caches straight to memory frames 
-    sessionStorage.setItem("checkout_service_key", serviceKey); 
-    sessionStorage.setItem("checkout_plan_tier", verifiedPlanTier); 
-    sessionStorage.setItem("checkout_total_price", calculatedPrice); 
+    const targetContainerBox = document.getElementById('wizard-form-fields-target-box'); 
+    
+    // Switch container to display processing loader 
+    targetContainerBox.innerHTML = `
+        <div id="loading-message" style="text-align: center; padding: 60px;"> 
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--navy);">Initializing Secure Handshake...</div> 
+            <div style="margin: 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--emerald); border-radius: 50%; animation: spin 1s linear infinite;"></div> 
+        </div>
+        <div id="checkout"></div>
+    `;
 
-    // Forward user right into your single-page portal checkout dashboard tab view node layer frame 
-    window.location.href = `portal-dashboard.html?service=${serviceKey}&plan=${verifiedPlanTier}&status=checkout`; 
+    if (typeof Stripe === 'undefined') { 
+        document.getElementById('loading-message').innerHTML = "<div style='color:red; font-weight:700;'>Stripe Engine CDN reference is unreachable. Checkout halted.</div>";
+        return;
+    }
+
+    try {
+        const stripe = Stripe('pk_test_51TTy4u1hrjQxq47MgsMyTpdS4Aadnk4H63kILJaWbuUfppSySDt4Ijx9we7zkkCFEaeqzQ7C3k7Ql9HcSA5Urh3n00pEKGxNLE');
+        
+        const fetchClientSecret = async () => { 
+            const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', { 
+                method: 'POST', 
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Accept': 'application/json' 
+                }, 
+                body: JSON.stringify({ 
+                    action: 'checkout', 
+                    email: window.activeCustomerEmail || 'guest-checkout@filings4u.com', 
+                    company_name: companyName, 
+                    amount: Math.round(parseFloat(calculatedPrice) * 100), 
+                    service_type: `${serviceKey}-${verifiedPlanTier}` 
+                }) 
+            }); 
+
+            if (!response.ok) { 
+                const errorText = await response.text(); 
+                throw new Error(`Server status ${response.status}: ${errorText}`); 
+            } 
+            const data = await response.json(); 
+            if (data.error) throw new Error(data.error); 
+            return data.clientSecret; 
+        }; 
+
+        const checkoutInstance = await stripe.initEmbeddedCheckout({ fetchClientSecret }); 
+        
+        // Unveil the mounted Stripe Embedded container UI frame
+        document.getElementById('loading-message').style.display = 'none'; 
+        checkoutInstance.mount('#checkout'); 
+        console.log("Production embedded checkout transaction securely established."); 
+    } catch (err) { 
+        console.error("Initialization loop crash:", err); 
+        document.getElementById('loading-message').innerHTML = `<div style="color:red; font-weight:700;">Handshake Error: ${err.message}</div>`; 
+    } 
 } 
-</script>
-
-</body>
+</script> 
+</body> 
 </html>

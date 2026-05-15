@@ -1125,5 +1125,77 @@ async function handlePaidWorkspaceTableMutation(serviceKeyTarget) {
     </div>
 </div>
 
+<!-- START: SELF-CONTAINED CHECKOUT LEDGER INTAKE GRAPH MODULE -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Latch onto your active global Supabase connection instance variables
+        const clientInstance = window.portalSupabaseInstance || window.supabase || window.authSupabaseClient;
+        if (!clientInstance) return;
+
+        // Automatically wait until the system authentication handshake completes safely
+        clientInstance.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' || session?.user) {
+                // Find a container on your dashboard to mount the billing history box into
+                const targetWorkspaceArea = document.querySelector('.portal-main') || document.querySelector('main') || document.body;
+                if (!targetWorkspaceArea) return;
+
+                // Create a clean visual section card box dynamically
+                let ledgerCardWrapper = document.getElementById('client-billing-card-panel');
+                if (!ledgerCardWrapper) {
+                    ledgerCardWrapper = document.createElement('section');
+                    ledgerCardWrapper.id = 'client-billing-card-panel';
+                    ledgerCardWrapper.style.cssText = "background:#ffffff; padding:30px; border-radius:12px; border:1px solid #e2e8f0; margin-top:40px; box-shadow: 0 4px 20px rgba(0,0,0,0.01);";
+                    ledgerCardWrapper.innerHTML = `
+                        <h3 style="margin:0 0 5px 0; color:#0a1f44; font-size:1.2rem; font-weight:800;">Filing Transactions & Pricing</h3>
+                        <p style="margin:0 0 20px 0; font-size:0.85rem; color:#64748b;">Review active package options, pricing parameters, and download printable invoice records.</p>
+                        <div id="dynamic-receipts-ledger-target"><p style="color:#64748b; font-size:0.9rem;">Querying payment repository entries...</p></div>
+                    `;
+                    targetWorkspaceArea.appendChild(ledgerCardWrapper);
+                }
+
+                const displayBox = document.getElementById('dynamic-receipts-ledger-target');
+
+                try {
+                    // Pull the exact rows from your newly deployed user table logs matching the session
+                    const { data: records, error } = await clientInstance
+                        .from('user_filings_workspace')
+                        .select('*')
+                        .eq('status', 'paid')
+                        .eq('user_id', session.user.id)
+                        .order('created_at', { ascending: false });
+
+                    if (error || !records || records.length === 0) {
+                        displayBox.innerHTML = '<p style="color:#64748b; font-size:0.88rem; margin:0;">No verified payment history logs linked to this profile node.</p>';
+                        return;
+                    }
+
+                    displayBox.innerHTML = '';
+                    records.forEach(row => {
+                        const dateString = new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        const ledgerRow = document.createElement('div');
+                        ledgerRow.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:15px; border:1px solid #f1f5f9; background:#f8fafc; border-radius:8px; margin-bottom:12px; box-sizing:border-box;";
+                        ledgerRow.innerHTML = `
+                            <div>
+                                <strong style="color:#0a1f44; font-size:0.92rem; display:block;">${row.company_name}</strong>
+                                <span style="font-size:0.8rem; color:#64748b;">${row.service_key.toUpperCase().replace(/-/g, ' ')} — ${row.plan_tier.toUpperCase()} • ${dateString}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <strong style="color:#10b981; font-size:1rem;">$${parseFloat(row.amount_paid).toFixed(2)}</strong>
+                                <a href="receipt.html?id=${row.id}" target="_blank" style="background:#0a1f44; color:#ffffff; padding:6px 14px; border-radius:4px; font-size:0.8rem; text-decoration:none; font-weight:700; display:inline-block;">Invoice 📥</a>
+                            </div>
+                        `;
+                        displayBox.appendChild(ledgerRow);
+                    });
+                } catch (err) {
+                    console.error("Ledger compilation crash layout loop:", err);
+                }
+            }
+        });
+    });
+</script>
+<!-- END: SELF-CONTAINED CHECKOUT LEDGER INTAKE GRAPH MODULE -->
+
+
 </body>
 </html>
