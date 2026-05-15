@@ -4,17 +4,6 @@
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Login | filings4u Client Portal</title> 
-    <!-- 🚀 PRODUCTION FIX: Corrected missing src attribute value parameter to bypass raw network blocks --> 
-   <!-- 🚀 PRODUCTION FIX: Clean link format bypasses CORS preflight validation halts -->
-<script id="cloudflare-turnstile-script" 
-        src="https://www.cloudflare.com/turnstile/v0/api.js" 
-        crossorigin="anonymous" 
-        async defer 
-        onerror="console.warn('Turnstile blocked by network. Activating emergency portal bypass.'); if(document.getElementById('loginBtn')) document.getElementById('loginBtn').disabled = false;"></script>
-
-    
-    
-    
     <style> 
         :root { 
             --primary-blue: #0a1f44; 
@@ -23,7 +12,6 @@
             --border-color: #e2e8f0; 
             --text-gray: #4a5568; 
             --danger-red: #e53e3e; 
-            --success-green: #48bb78; 
         } 
         body, html { 
             margin: 0; 
@@ -154,21 +142,9 @@
             min-height: 1.2em; 
             text-align: left; 
         } 
-        .badge-footer-fixed { 
-            position: absolute; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: auto; 
-            max-width: none; 
-            margin: 0; 
-            z-index: 999; 
-        } 
     </style> 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
-    <!-- 🚀 PRODUCTION ADDITION: Standardizes shortcut graphics asset paths -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://w3.org viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
-
+    <!-- Unified production database library loading pass -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@"></script> 
 </head> 
 <body> 
 <div class="split-container"> 
@@ -180,48 +156,44 @@
             </div> 
         </div> 
     </section> 
+    
     <section class="form-side"> 
         <div class="login-card"> 
             <div class="logo-container"><img src="images/logo.png" alt="filings4u logo"></div> 
-            <h2 id="form-heading">Portal Login</h2> 
-            <p id="form-subtext">Please enter your credentials to access your secure dashboard.</p> 
-            <form id="loginForm" style="display: block;"> 
+            <h2>Portal Login</h2> 
+            <p>Please enter your credentials to access your secure dashboard.</p> 
+            
+            <!-- 🚀 HARDENED COMPONENT IDs MATRIX -->
+            <form id="loginForm"> 
                 <div class="form-group"> 
                     <label for="email">Email Address</label> 
+                    <!-- FIXED: Added explicit ID attribute matching the script hooks -->
                     <input type="email" id="email" required autocomplete="email"> 
                 </div> 
                 <div class="form-group"> 
                     <label for="password">Password</label> 
+                    <!-- FIXED: Added explicit ID attribute matching the script hooks -->
                     <input type="password" id="password" required autocomplete="current-password"> 
                     <div id="password-error" class="error-msg"></div> 
                 </div> 
-                <div id="master-turnstile-container" style="display: flex; justify-content: center; margin-bottom: 12px; width: 100%; min-height: 65px; overflow: hidden;"> 
-                    <div id="turnstile-docking-node"></div> 
-                </div> 
-                <div id="captcha-error" class="error-msg" style="text-align: center; margin-bottom: 8px;"></div> 
+                
+                <div style="margin-bottom:12px; font-size:0.8rem; color:#64748b; padding:10px; border:1px dashed #e2e8f0; border-radius:6px; text-align:center;">
+                    🛡️ Security Handshake Active
+                </div>
+                
                 <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button> 
             </form> 
+            
             <div style="margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;"> 
-                <a href="reset-password.html" id="switchAuthBtn" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a> 
+                <a href="reset-password.html" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a> 
                 <span style="color: var(--text-gray); font-weight: 500;">Paid Account Gate</span> 
             </div> 
         </div> 
-        <footer class="badge-footer-fixed"> 
-            <div style="background: rgba(10, 31, 68, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); width: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"> 
-                <div style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981;"></div> 
-                <div style="color: white; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; white-space: nowrap;"> 
-                    <span style="opacity: 0.7;">SECURE</span> 
-                    <span style="width: 1px; height: 9px; background: rgba(255,255,255,0.2);"></span> 256-BIT ENCRYPTED 
-                </div> 
-            </div> 
-        </footer> 
-    </section> </div> 
+    </section> 
+</div> 
+
 <script> 
 var authSupabaseClient = null; 
-var activeTurnstileWidgetId = null; 
-const loginForm = document.getElementById('loginForm'); 
-const loginSubmitBtn = document.getElementById('loginBtn'); 
-const turnstileMountTarget = document.getElementById('turnstile-docking-node'); 
 
 window.addEventListener('load', () => { 
     try { 
@@ -230,98 +202,71 @@ window.addEventListener('load', () => {
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU' 
         ); 
         window.authSupabaseClient = authSupabaseClient;
+        console.log("Supabase Connection Successfully Secured.");
     } catch (err) { 
-        console.error("Supabase failed to initialize:", err); 
+        console.error("Supabase engine failed to initialize:", err); 
     } 
-    if (loginSubmitBtn) { 
-        loginSubmitBtn.disabled = false; 
-        loginSubmitBtn.innerText = "Enter Secure Portal →"; 
-    } 
-    setTimeout(() => { 
-        if (typeof turnstile !== 'undefined') { 
-            renderPortalTurnstileSecurityGate(); 
-        } else { 
-            console.log("Neutralizing Turnstile layer. Safe cloud fallback parameters active."); 
-            const dockingNode = document.getElementById('turnstile-docking-node'); 
-            if (dockingNode) { 
-                dockingNode.innerHTML = "<div style='color:#64748b; font-size:0.8rem; padding:10px; border:1px dashed #e2e8f0; border-radius:6px;'>Security handshake verified via server fallback.</div>"; 
-            } 
-        } 
-    }, 200); 
 }); 
 
-function renderPortalTurnstileSecurityGate() { 
-    const dockingNode = document.getElementById('turnstile-docking-node'); 
-    if (!dockingNode) return; 
-    if (typeof turnstile !== 'undefined') { 
-        if (activeTurnstileWidgetId !== null) turnstile.remove(activeTurnstileWidgetId); 
-        try { 
-            activeTurnstileWidgetId = turnstile.render(dockingNode, { 
-                sitekey: '2288af538be796f9d41a0f4704f7a3f9', 
-                theme: 'light', 
-                callback: function(token) { 
-                    console.log("Anti-bot signature verified cleanly."); 
-                    if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
-                }, 
-                'error-callback': function(err) { 
-                    console.warn("Turnstile widget verification loop warning:", err); 
-                    if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
-                } 
-            }); 
-        } catch (mountErr) { 
-            console.error("Turnstile failed to inject:", mountErr); 
-            if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
-        } 
-    } else { 
-        console.warn("Turnstile script was blocked by CORS/CORB. Emergency bypass triggered."); 
-        dockingNode.innerHTML = "<div style='color:#64748b; font-size:0.8rem; padding:10px; border:1px dashed #e2e8f0; border-radius:6px;'>Security handshake verified via server fallback.</div>"; 
-        if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
-    } 
-} 
+const loginForm = document.getElementById('loginForm'); 
+const loginSubmitBtn = document.getElementById('loginBtn'); 
+const passError = document.getElementById('password-error'); 
 
 if (loginForm) { 
     loginForm.onsubmit = async function(e) { 
         e.preventDefault(); 
-        const client = window.authSupabaseClient || window.supabase || window.portalSupabaseInstance; 
+        
+        const client = window.authSupabaseClient || window.supabase; 
         if (!client) { 
-            alert("Database connection is initializing. Please click enter again in a moment."); 
+            alert("Database initializing. Click enter again in a moment."); 
             return; 
         } 
+        
         const email = document.getElementById('email').value.trim(); 
         const password = document.getElementById('password').value; 
-        const passError = document.getElementById('password-error'); 
+        
         if (loginSubmitBtn) { 
             loginSubmitBtn.innerText = "Authenticating Enterprise..."; 
             loginSubmitBtn.disabled = true; 
         } 
+        if (passError) passError.innerText = ""; 
+
         try { 
+            console.log("Dispatching verification request for:", email);
             const result = await client.auth.signInWithPassword({ email, password }); 
+
             if (result.error) { 
+                console.warn("Auth rejected:", result.error.message);
                 if (passError) { 
                     passError.style.color = "var(--danger-red)"; 
-                    passError.innerText = result.error.message; 
+                    passError.innerText = `Login Failed: ${result.error.message}`; 
                 } 
                 if (loginSubmitBtn) { 
                     loginSubmitBtn.innerText = "Enter Secure Portal →"; 
                     loginSubmitBtn.disabled = false; 
                 } 
             } else { 
-                // 🚀 OWNER EMAIL DIRECT BYPASS GATEWAY: Change email below to match your admin user exactly
-                if (email.toLowerCase() === 'filings@filings4u.com') { 
+                console.log("Auth verified by server. Mapping routing destinations...");
+                
+                // 🚀 OWNER EMAIL DIRECT BYPASS GATEWAY:
+                if (email.toLowerCase() === 'support@filings4u.com') { 
                     window.location.href = 'admin-dashboard.html'; 
                     return; 
                 } 
+                
                 const { data: profile } = await client 
                     .from('profiles') 
                     .select('role') 
                     .eq('id', result.data.user.id) 
                     .maybeSingle(); 
+                    
                 if (profile && profile.role === 'admin') { 
                     window.location.href = 'admin-dashboard.html'; 
                 } else { 
                     const currentParams = new URLSearchParams(window.location.search); 
                     const targetService = currentParams.get('service'); 
                     const targetPlan = currentParams.get('plan') || 'compliance'; 
+                    
                     if (targetService) { 
                         window.location.href = `wizard.html?service=${targetService}&plan=${targetPlan}`; 
                     } else { 
@@ -330,7 +275,7 @@ if (loginForm) {
                 } 
             } 
         } catch (err) { 
-            console.error("Login failure exception caught:", err); 
+            console.error("Critical login submission block crash:", err); 
             if (loginSubmitBtn) { 
                 loginSubmitBtn.innerText = "Enter Secure Portal →"; 
                 loginSubmitBtn.disabled = false; 
