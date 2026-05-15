@@ -1,198 +1,294 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | filings4u Client Portal</title>
-    <style>
-        :root {
-            --primary-blue: #0a1f44;
-            --white: #ffffff;
-            --bg-light: #f8f9fa;
-            --border-color: #e2e8f0;
-            --text-gray: #4a5568;
-            --danger-red: #e53e3e;
-            --success-green: #48bb78;
-        }
-        body, html { margin: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        .split-container { display: flex; height: 100vh; width: 100%; overflow: hidden; }
-        .image-side { flex: 1; background: linear-gradient(rgba(10, 31, 68, 0.6), rgba(10, 31, 68, 0.6)), url('images/login-hero.jpg'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; padding: 60px; box-sizing: border-box; }
-        .image-content h1 { font-size: 3rem; line-height: 1.2; margin-bottom: 20px; }
-        .image-content p { font-size: 1.1rem; opacity: 0.9; max-width: 500px; }
-        .form-side { flex: 1; background-color: var(--bg-light); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; position: relative; height: 100vh; overflow: hidden; }
-        .login-card { width: 100%; max-width: 370px; background: var(--white); padding: 25px 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 12px 30px rgba(10,31,68,0.04); text-align: center; z-index: 10; box-sizing: border-box; }
-        .logo-container { margin-bottom: 15px; }
-        .logo-container img { height: 38px; }
-        .login-card h2 { color: var(--primary-blue); font-size: 1.4rem; margin: 0 0 4px 0; font-weight: 700; }
-        .login-card p { color: var(--text-gray); margin-bottom: 20px; font-size: 0.85rem; line-height: 1.4; }
-        .form-group { text-align: left; margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--text-gray); margin-bottom: 5px; letter-spacing: 0.05em; }
-        .form-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: all 0.3s; color: var(--primary-blue); }
-        .form-group input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(10, 31, 68, 0.05); }
-        .btn-login { width: 100%; background-color: var(--primary-blue) !important; color: var(--white) !important; border: none; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; margin-top: 2px; display: block; }
-        .btn-login:hover { opacity: 0.95; }
-        .error-msg { color: var(--danger-red); font-size: 0.75rem; margin-top: 5px; min-height: 1.2em; text-align: left; }
-        .badge-footer-fixed { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: auto; max-width: none; margin: 0; z-index: 999; }
-    </style>
-    <!-- GLOBAL CORE REPOSITORIES SECURITY INJECTIONS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
-</head>
-<body>
-    <div class="split-container">
-        <section class="image-side">
-            <div style="position: absolute; top: 60px; left: 60px; text-align: left;">
-                <div class="image-content">
-                    <h1>Built for<br>Compliance.</h1>
-                    <p>The comprehensive hub for managing all your filings, registrations, and agent services throughout your corporate journey.</p>
-                </div>
-            </div>
-        </section>
-        <section class="form-side">
-            <div class="login-card">
-                <div class="logo-container"><img src="images/logo.png" alt="filings4u logo"></div>
-                <h2 id="form-heading">Portal Login</h2>
-                <p id="form-subtext">Please enter your credentials to access your secure dashboard.</p>
-                
-                <form id="loginForm" style="display: block;">
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="email" placeholder="name@company.com" required>
-                        <div id="email-error" class="error-msg"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="password" placeholder="••••••••" required>
-                        <div id="password-error" class="error-msg"></div>
-                    </div>
-                    <div id="master-turnstile-container" style="display: flex; justify-content: center; margin-bottom: 12px; width: 100%; min-height: 65px; overflow: hidden;">
-                        <div id="turnstile-docking-node"></div>
-                    </div>
-                    <div id="captcha-error" class="error-msg" style="text-align: center; margin-bottom: 8px;"></div>
-                    <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button>
-                </form>
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Login | filings4u Client Portal</title> 
+    <style> 
+        :root { 
+            --primary-blue: #0a1f44; 
+            --white: #ffffff; 
+            --bg-light: #f8f9fa; 
+            --border-color: #e2e8f0; 
+            --text-gray: #4a5568; 
+            --danger-red: #e53e3e; 
+            --success-green: #48bb78; 
+        } 
+        body, html { 
+            margin: 0; 
+            height: 100%; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            overflow: hidden; 
+        } 
+        .split-container { 
+            display: flex; 
+            height: 100vh; 
+            width: 100%; 
+            overflow: hidden; 
+        } 
+        .image-side { 
+            flex: 1; 
+            background: linear-gradient(rgba(10, 31, 68, 0.6), rgba(10, 31, 68, 0.6)), url('images/login-hero.jpg'); 
+            background-size: cover; 
+            background-position: center; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            padding: 60px; 
+            box-sizing: border-box; 
+        } 
+        .image-content h1 { 
+            font-size: 3rem; 
+            line-height: 1.2; 
+            margin-bottom: 20px; 
+        } 
+        .image-content p { 
+            font-size: 1.1rem; 
+            opacity: 0.9; 
+            max-width: 500px; 
+        } 
+        .form-side { 
+            flex: 1; 
+            background-color: var(--bg-light); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 15px; 
+            box-sizing: border-box; 
+            position: relative; 
+            height: 100vh; 
+            overflow: hidden; 
+        } 
+        .login-card { 
+            width: 100%; 
+            max-width: 370px; 
+            background: var(--white); 
+            padding: 25px 30px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 12px 30px rgba(10,31,68,0.04); 
+            text-align: center; 
+            z-index: 10; 
+            box-sizing: border-box; 
+        } 
+        .logo-container { 
+            margin-bottom: 15px; 
+        } 
+        .logo-container img { 
+            height: 38px; 
+        } 
+        .login-card h2 { 
+            color: var(--primary-blue); 
+            font-size: 1.4rem; 
+            margin: 0 0 4px 0; 
+            font-weight: 700; 
+        } 
+        .login-card p { 
+            color: var(--text-gray); 
+            margin-bottom: 20px; 
+            font-size: 0.85rem; 
+            line-height: 1.4; 
+        } 
+        .form-group { 
+            text-align: left; 
+            margin-bottom: 12px; 
+        } 
+        .form-group label { 
+            display: block; 
+            font-size: 0.65rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            color: var(--text-gray); 
+            margin-bottom: 5px; 
+            letter-spacing: 0.05em; 
+        } 
+        .form-group input { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            font-size: 0.9rem; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: all 0.3s; 
+            color: var(--primary-blue); 
+        } 
+        .form-group input:focus { 
+            border-color: var(--primary-blue); 
+            box-shadow: 0 0 0 4px rgba(10, 31, 68, 0.05); 
+        } 
+        .btn-login { 
+            width: 100%; 
+            background-color: var(--primary-blue) !important; 
+            color: var(--white) !important; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+            cursor: pointer; 
+            transition: opacity 0.2s; 
+            margin-top: 2px; 
+            display: block; 
+        } 
+        .btn-login:hover { 
+            opacity: 0.95; 
+        } 
+        .error-msg { 
+            color: var(--danger-red); 
+            font-size: 0.75rem; 
+            margin-top: 5px; 
+            min-height: 1.2em; 
+            text-align: left; 
+        } 
+        .badge-footer-fixed { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: auto; 
+            max-width: none; 
+            margin: 0; 
+            z-index: 999; 
+        } 
+    </style> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
+    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script> 
+</head> 
+<body> 
+<div class="split-container"> 
+    <section class="image-side"> 
+        <div style="position: absolute; top: 60px; left: 60px; text-align: left;"> 
+            <div class="image-content"> 
+                <h1>Built for<br>Compliance.</h1> 
+                <p>The comprehensive hub for managing all your filings, registrations, and agent services throughout your corporate journey.</p> 
+            </div> 
+        </div> 
+    </section> 
+    <section class="form-side"> 
+        <div class="login-card"> 
+            <div class="logo-container"><img src="images/logo.png" alt="filings4u logo"></div> 
+            <h2 id="form-heading">Portal Login</h2> 
+            <p id="form-subtext">Please enter your credentials to access your secure dashboard.</p> 
+            
+            <form id="loginForm" style="display: block;"> 
+                <div class="form-group"> 
+                    <label>Email Address</label> 
+                    <input type="email" id="email" placeholder="name@company.com" required> 
+                    <div id="email-error" class="error-msg"></div> 
+                </div> 
+                <div class="form-group"> 
+                    <label>Password</label> 
+                    <input type="password" id="password" placeholder="••••••••" required> 
+                    <div id="password-error" class="error-msg"></div> 
+                </div> 
+                <div id="master-turnstile-container" style="display: flex; justify-content: center; margin-bottom: 12px; width: 100%; min-height: 65px; overflow: hidden;"> 
+                    <div id="turnstile-docking-node"></div> 
+                </div> 
+                <div id="captcha-error" class="error-msg" style="text-align: center; margin-bottom: 8px;"></div> 
+                <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button> 
+            </form> 
 
-                <form id="forgotForm" style="display: none;">
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label>Reset Account Email</label>
-                        <input type="email" id="reset-flow-email-input" placeholder="name@company.com" required>
-                    </div>
-                    <div id="recovery-turnstile-container" style="width: 100%;"></div>
-                    <div id="reset-captcha-error" class="error-msg" style="text-align: center; margin-bottom: 8px;"></div>
-                    <button type="submit" id="forgotPasswordSubmitBtn" class="btn-login">Send Reset Verification Link →</button>
-                </form>
+            <form id="forgotForm" style="display: none;"> 
+                <div class="form-group" style="margin-bottom: 15px;"> 
+                    <label>Reset Account Email</label> 
+                    <input type="email" id="reset-flow-email-input" placeholder="name@company.com" required> 
+                </div> 
+                <div id="recovery-turnstile-container" style="width: 100%;"></div> 
+                <div id="reset-captcha-error" class="error-msg" style="text-align: center; margin-bottom: 8px;"></div> 
+                <button type="submit" id="forgotPasswordSubmitBtn" class="btn-login">Send Reset Verification Link →</button> 
+            </form> 
 
-                <div style="margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
-                    <a href="javascript:void(0)" id="switchAuthBtn" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a>
-                    <span style="color: var(--text-gray); font-weight: 500;">Paid Account Gate</span>
-                </div>
-            </div>
-            <footer class="badge-footer-fixed">
-                <div style="background: rgba(10, 31, 68, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); width: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <div style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981;"></div>
-                    <div style="color: white; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                        <span style="opacity: 0.7;">SECURE</span> <span style="width: 1px; height: 9px; background: rgba(255,255,255,0.2);"></span> 256-BIT ENCRYPTED
-                    </div>
-                </div>
-            </footer>
-        </section>
-    </div>
+            <div style="margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;"> 
+    <!-- Change this href to point directly to your dedicated recovery request file -->
+    <a href="reset-password.html" id="switchAuthBtn" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a> 
+    <span style="color: var(--text-gray); font-weight: 500;">Paid Account Gate</span> 
+</div>
+        </div> 
+        <footer class="badge-footer-fixed"> 
+            <div style="background: rgba(10, 31, 68, 0.95); border: 1px solid rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); width: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"> 
+                <div style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; box-shadow: 0 0 5px #10b981;"></div> 
+                <div style="color: white; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; white-space: nowrap;"> 
+                    <span style="opacity: 0.7;">SECURE</span> 
+                    <span style="width: 1px; height: 9px; background: rgba(255,255,255,0.2);"></span> 256-BIT ENCRYPTED 
+                </div> 
+            </div> 
+        </footer> 
+    </section> 
+</div> 
 
-    <script>
-        var authSupabaseClient = null;
-        var isRecoveryModeActive = false;
-        var activeTurnstileWidgetId = null;
+<script> 
+var authSupabaseClient = null; 
+var isRecoveryModeActive = false; 
+var activeTurnstileWidgetId = null; 
 
-        const switchAuthBtn = document.getElementById('switchAuthBtn');
-        const loginForm = document.getElementById('loginForm');
-        const forgotForm = document.getElementById('forgotForm');
-        const heading = document.getElementById('form-heading');
-        const subtext = document.getElementById('form-subtext');
-        const loginSubmitBtn = document.getElementById('loginBtn');
-        const resetSubmitBtn = document.getElementById('forgotPasswordSubmitBtn');
-        const turnstileMountTarget = document.getElementById('turnstile-docking-node');
-        const loginContainerBox = document.getElementById('master-turnstile-container');
-        const recoveryContainerBox = document.getElementById('recovery-turnstile-container');
+const switchAuthBtn = document.getElementById('switchAuthBtn'); 
+const loginForm = document.getElementById('loginForm'); 
+const forgotForm = document.getElementById('forgotForm'); 
+const heading = document.getElementById('form-heading'); 
+const subtext = document.getElementById('form-subtext'); 
+const loginSubmitBtn = document.getElementById('loginBtn'); 
+const resetSubmitBtn = document.getElementById('forgotPasswordSubmitBtn'); 
+const turnstileMountTarget = document.getElementById('turnstile-docking-node'); 
+const loginContainerBox = document.getElementById('master-turnstile-container'); 
+const recoveryContainerBox = document.getElementById('recovery-turnstile-container'); 
 
-        window.addEventListener('load', () => {
-            try {
-                authSupabaseClient = window.supabase.createClient(
-                    'https://lrbimrlbskjweynxlgas.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-                );
-            } catch (err) { console.error("Supabase failed to initialize:", err); }
-            setTimeout(renderPortalTurnstileSecurityGate, 250);
-        });
+window.addEventListener('load', () => { 
+    try { 
+        authSupabaseClient = window.supabase.createClient( 
+            'https://lrbimrlbskjweynxlgas.supabase.co', 
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU' 
+        ); 
+    } catch (err) { 
+        console.error("Supabase failed to initialize:", err); 
+    } 
+    setTimeout(renderPortalTurnstileSecurityGate, 250); 
+}); 
 
-        function renderPortalTurnstileSecurityGate() {
-            if (typeof turnstile !== 'undefined' && turnstileMountTarget) {
-                if (activeTurnstileWidgetId !== null) turnstile.remove(activeTurnstileWidgetId);
-                activeTurnstileWidgetId = turnstile.render(turnstileMountTarget, {
-                    sitekey: '1x00000000000000000000AA', 
-                    theme: 'light',
-                    callback: function(token) {
-                        loginSubmitBtn.disabled = false;
-                        resetSubmitBtn.disabled = false;
-                    }
-                });
-            }
-        }
+function renderPortalTurnstileSecurityGate() { 
+    if (typeof turnstile !== 'undefined' && turnstileMountTarget) { 
+        if (activeTurnstileWidgetId !== null) turnstile.remove(activeTurnstileWidgetId); 
+        activeTurnstileWidgetId = turnstile.render(turnstileMountTarget, { 
+            sitekey: '1x00000000000000000000AA', 
+            theme: 'light', 
+            callback: function(token) { 
+                loginSubmitBtn.disabled = false; 
+                resetSubmitBtn.disabled = false; 
+            } 
+        }); 
+    } 
+} 
 
-        if (switchAuthBtn) {
-            switchAuthBtn.addEventListener('click', function() {
-                isRecoveryModeActive = !isRecoveryModeActive;
-                if (isRecoveryModeActive) {
-                    heading.innerText = "Reset Password";
-                    subtext.innerText = "Type your registered email to request an encrypted recovery token.";
-                    loginForm.style.display = "none"; forgotForm.style.display = "block";
-                    switchAuthBtn.innerText = "Return to Sign In";
-                    if(turnstileMountTarget && recoveryContainerBox) {
-                        recoveryContainerBox.appendChild(turnstileMountTarget);
-                        if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId);
-                    }
-                } else {
-                    heading.innerText = "Portal Login";
-                    subtext.innerText = "Please enter your credentials to access your secure dashboard.";
-                    loginForm.style.display = "block"; forgotForm.style.display = "none";
-                    switchAuthBtn.innerText = "Forgot Password?";
-                    if(turnstileMountTarget && loginContainerBox) {
-                        loginContainerBox.appendChild(turnstileMountTarget);
-                        if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId);
-                    }
-                }
-            });
-        }
+if (switchAuthBtn) { 
+    switchAuthBtn.addEventListener('click', function() { 
+        isRecoveryModeActive = !isRecoveryModeActive; 
+        if (isRecoveryModeActive) { 
+            heading.innerText = "Reset Password"; 
+            subtext.innerText = "Type your registered email to request an encrypted recovery token."; 
+            loginForm.style.display = "none"; 
+            forgotForm.style.display = "block"; 
+            switchAuthBtn.innerText = "Return to Sign In"; 
+            if(turnstileMountTarget && recoveryContainerBox) { 
+                recoveryContainerBox.appendChild(turnstileMountTarget); 
+                if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId); 
+            } 
+        } else { 
+            heading.innerText = "Portal Login"; 
+            subtext.innerText = "Please enter your credentials to access your secure dashboard."; 
+            loginForm.style.display = "block"; 
+            forgotForm.style.display = "none"; 
+            switchAuthBtn.innerText = "Forgot Password?"; 
+            if(turnstileMountTarget && loginContainerBox) { 
+                loginContainerBox.appendChild(turnstileMountTarget); 
+                if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId); 
+            } 
+        } 
+    }); 
+} 
 
-       if (forgotForm) {
-  forgotForm.onsubmit = async function(e) {
-    e.preventDefault();
-    if (!authSupabaseClient) return;
 
-    const email = document.getElementById('reset-flow-email-input').value;
-    const resetCaptchaError = document.getElementById('reset-captcha-error');
-    
-    resetSubmitBtn.innerText = "Sending Reset Token...";
-    resetSubmitBtn.disabled = true;
-
-    const result = await authSupabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: '127.0.0',
-    });
-
-    if (result.error) {
-      if(resetCaptchaError) {
-        resetCaptchaError.style.color = "var(--danger-red)";
-        resetCaptchaError.innerText = result.error.message;
-      }
-      resetSubmitBtn.innerText = "Send Reset Verification Link →";
-      resetSubmitBtn.disabled = false;
-    } else {
-      if(resetCaptchaError) {
-        resetCaptchaError.style.color = "var(--success-green)";
-        resetCaptchaError.innerText = "Recovery email successfully sent!";
-      }
-    }
-  };
-}
-
-    </script>
-</body>
+</script> 
+</body> 
 </html>
