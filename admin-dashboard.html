@@ -7,6 +7,69 @@
     
     <!-- Core Infrastructure Cloud Delivery CDN Script Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+<script>
+    // Centralized production admin system connection profile
+    window.adminSupabaseInstance = window.supabase ? window.supabase.createClient(
+        'https://lrbimrlbskjweynxlgas.supabase.co', 
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+    ) : null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        if (!window.adminSupabaseInstance) {
+            alert("Critical Error: Core script engine failed to mount.");
+            return;
+        }
+
+        try {
+            // 1. Extract the current active session authorization state token
+            const { data: { session }, error: sessionError } = await window.adminSupabaseInstance.auth.getSession();
+
+            if (sessionError || !session || !session.user) {
+                console.warn("No active session found. Evicting to login gate.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const userEmail = session.user.email ? session.user.email.toLowerCase().trim() : '';
+
+            // 🚀 MASTER OWNER EMAIL BYPASS GATE:
+            if (userEmail === 'your-email@domain.com') { // 💻 TYPE YOUR EXACT PORTAL ADMIN EMAIL HERE!
+                console.log("Master Administrator credentials verified by inline email fallback loop.");
+                
+                // 🚀 Automatically executes your pricing sales ledger injection engine 
+                if (typeof renderMasterAdminLedger === 'function') {
+                    renderMasterAdminLedger();
+                }
+                return; // Authorization success: Halts evaluation and retains window context cleanly
+            }
+
+            // 2. Structural Database Verification Lookup Fallback Pass
+            const { data: profile, error: profileError } = await window.adminSupabaseInstance
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .maybeSingle();
+
+            if (profileError || !profile || profile.role !== 'admin') {
+                console.error("Access Unauthorized: Account lacks explicit administrative token metadata.");
+                alert("Unauthenticated Entity Route Blocked: Moving account back to Client Workspace.");
+                window.location.href = 'portal-dashboard.html';
+                return;
+            }
+
+            console.log("Administrative security database handshake authorized successfully.");
+            if (typeof renderMasterAdminLedger === 'function') {
+                renderMasterAdminLedger();
+            }
+
+        } catch (fatalErr) {
+            console.error("Session guard exception caught:", fatalErr);
+            window.location.href = 'index.html';
+        }
+    });
+</script>
+
 
     <style> 
         :root { 
