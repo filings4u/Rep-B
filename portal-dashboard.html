@@ -36,6 +36,13 @@ window.addEventListener('load', async () => {
             return;
         }
 
+        // SUCCESS: Execute data processing pipeline directly inside the layout
+console.log("Welcome authorized user:", data.session.user.email);
+
+// 🚀 RUN THE NEW INLINE ENGINES AUTOMATICALLY
+loadInlineNotifications(data.session.user.id);
+loadInlineDocuments(data.session.user.id);
+
         // 3. Success! Inject metadata onto dashboard interface layout elements
         console.log("Welcome authorized user:", data.session.user.email);
         
@@ -54,6 +61,91 @@ window.addEventListener('load', async () => {
         window.location.href = 'index.html';
     }
 });
+
+async function loadInlineNotifications(userId) {
+    const box = document.getElementById('inlineNotificationsList');
+    if (!box) return;
+
+    const { data, error } = await dashboardSupabaseClient
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+        box.innerHTML = '<div class="portal-empty-message">Your notification history is currently clear.</div>';
+        return;
+    }
+
+    box.innerHTML = '';
+    data.forEach(item => {
+        const timestamp = new Date(item.created_at).toLocaleDateString();
+        const row = document.createElement('div');
+        row.className = 'portal-item-row';
+        row.innerHTML = `
+            <div class="item-txt-container">
+                <h3>${!item.is_read ? '<span class="unread-indicator-dot"></span>' : ''}${item.title}</h3>
+                <p>${item.message}</p>
+                <div class="item-timestamp">${timestamp}</div>
+            </div>
+        `;
+        box.appendChild(row);
+    });
+}
+
+async function loadInlineDocuments(userId) {
+    const box = document.getElementById('inlineDocumentsList');
+    if (!box) return;
+
+    const { data, error } = await dashboardSupabaseClient
+        .from('documents')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+        box.innerHTML = '<div class="portal-empty-message">No files have been uploaded to your account yet.</div>';
+        return;
+    }
+
+    box.innerHTML = '';
+    data.forEach(doc => {
+        const row = document.createElement('div');
+        row.className = 'portal-item-row';
+        row.innerHTML = `
+            <div class="item-txt-container">
+                <h3>${doc.file_name}</h3>
+                <p>Size: ${doc.file_size}</p>
+            </div>
+            <div>
+                <button class="btn-portal-download" onclick="executeSecureVaultDownload('${doc.storage_path}')">Download</button>
+            </div>
+        `;
+        box.appendChild(row);
+    });
+}
+
+async function executeSecureVaultDownload(storagePath) {
+    // Generates an authenticated, short-lived download link bypassing public bucket locks
+    const { data, error } = await dashboardSupabaseClient
+        .storage
+        .from('portal-docs')
+        .createSignedUrl(storagePath, 60);
+
+    if (error) {
+        alert("Security Handshake Timeout: File missing or access token invalid.");
+        return;
+    }
+
+    // Force browser background stream attachment download cleanly
+    const link = document.createElement('a');
+    link.href = data.signedUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 </script>
     <style>
         /* Single Page App Architecture Display Rules */
@@ -63,6 +155,92 @@ window.addEventListener('load', async () => {
         .drop-zone:hover { background: #f7fafc; }
         .grid-half { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .grid-half { grid-template-columns: 1fr; } }
+
+    
+    .dashboard-features-grid {
+        display: flex;
+        gap: 25px;
+        margin: 25px 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .portal-feature-card {
+        flex: 1;
+        background: var(--white, #ffffff);
+        border-radius: 12px;
+        border: 1px solid var(--border-color, #e2e8f0);
+        padding: 22px 25px;
+        box-shadow: 0 4px 15px rgba(10,31,68,0.02);
+        box-sizing: border-box;
+    }
+    .portal-feature-card h2 {
+        font-size: 1.15rem;
+        color: var(--primary-blue, #0a1f44);
+        margin: 0 0 15px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--bg-light, #f8f9fa);
+        font-weight: 700;
+    }
+    .portal-list-wrapper {
+        max-height: 320px;
+        overflow-y: auto;
+    }
+    .portal-item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+    .portal-item-row:last-child {
+        border-bottom: none;
+    }
+    .item-txt-container h3 {
+        font-size: 0.9rem;
+        margin: 0 0 4px 0;
+        color: var(--primary-blue, #0a1f44);
+    }
+    .item-txt-container p {
+        font-size: 0.8rem;
+        color: var(--text-gray, #4a5568);
+        margin: 0;
+        line-height: 1.4;
+    }
+    .item-timestamp {
+        font-size: 0.7rem;
+        color: var(--text-gray, #4a5568);
+        margin-top: 4px;
+        opacity: 0.8;
+    }
+    .unread-indicator-dot {
+        width: 7px;
+        height: 7px;
+        background-color: var(--danger-red, #e53e3e);
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    .btn-portal-download {
+        background-color: var(--primary-blue, #0a1f44);
+        color: var(--white, #ffffff);
+        border: none;
+        padding: 7px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .btn-portal-download:hover {
+        opacity: 0.9;
+    }
+    .portal-empty-message {
+        font-size: 0.8rem;
+        color: var(--text-gray, #4a5568);
+        text-align: center;
+        padding: 20px 0;
+    }
+
     </style>
 </head>
 <body class="portal-body">
@@ -311,6 +489,113 @@ window.addEventListener('load', async () => {
 </div>
 
 
+<!-- Paste this code inside your existing dashboard <style> area -->
+<style>
+    .dashboard-features-grid {
+        display: flex;
+        gap: 25px;
+        margin: 25px 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .portal-feature-card {
+        flex: 1;
+        background: var(--white, #ffffff);
+        border-radius: 12px;
+        border: 1px solid var(--border-color, #e2e8f0);
+        padding: 22px 25px;
+        box-shadow: 0 4px 15px rgba(10,31,68,0.02);
+        box-sizing: border-box;
+    }
+    .portal-feature-card h2 {
+        font-size: 1.15rem;
+        color: var(--primary-blue, #0a1f44);
+        margin: 0 0 15px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--bg-light, #f8f9fa);
+        font-weight: 700;
+    }
+    .portal-list-wrapper {
+        max-height: 320px;
+        overflow-y: auto;
+    }
+    .portal-item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+    .portal-item-row:last-child {
+        border-bottom: none;
+    }
+    .item-txt-container h3 {
+        font-size: 0.9rem;
+        margin: 0 0 4px 0;
+        color: var(--primary-blue, #0a1f44);
+    }
+    .item-txt-container p {
+        font-size: 0.8rem;
+        color: var(--text-gray, #4a5568);
+        margin: 0;
+        line-height: 1.4;
+    }
+    .item-timestamp {
+        font-size: 0.7rem;
+        color: var(--text-gray, #4a5568);
+        margin-top: 4px;
+        opacity: 0.8;
+    }
+    .unread-indicator-dot {
+        width: 7px;
+        height: 7px;
+        background-color: var(--danger-red, #e53e3e);
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    .btn-portal-download {
+        background-color: var(--primary-blue, #0a1f44);
+        color: var(--white, #ffffff);
+        border: none;
+        padding: 7px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .btn-portal-download:hover {
+        opacity: 0.9;
+    }
+    .portal-empty-message {
+        font-size: 0.8rem;
+        color: var(--text-gray, #4a5568);
+        text-align: center;
+        padding: 20px 0;
+    }
+</style>
+
+<!-- Paste this visual grid inside your main dashboard panel view block -->
+<div class="dashboard-features-grid">
+    
+    <!-- Real-time Portal Notifications -->
+    <div class="portal-feature-card">
+        <h2>System Alerts</h2>
+        <div class="portal-list-wrapper" id="inlineNotificationsList">
+            <div class="portal-empty-message">Loading active notifications...</div>
+        </div>
+    </div>
+
+    <!-- Secure Document Download Vault -->
+    <div class="portal-feature-card">
+        <h2>Secure Document Vault</h2>
+        <div class="portal-list-wrapper" id="inlineDocumentsList">
+            <div class="portal-empty-message">Loading vault access...</div>
+        </div>
+    </div>
+
+</div>
 
 
 
