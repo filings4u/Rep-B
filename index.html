@@ -227,9 +227,19 @@ if (loginForm) {
             return; 
         } 
         
-        const email = document.getElementById('email').value.trim(); 
-        const password = document.getElementById('password').value; 
+        // Extract field tokens cleanly
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
         
+        if (!emailInput || !passwordInput) {
+            alert("Fatal Error: Form input tags missing required ID attributes ('email' or 'password').");
+            return;
+        }
+
+        const email = emailInput.value.trim(); 
+        const password = passwordInput.value; 
+        const normalizedEmail = email.toLowerCase(); // Standardize casing across all lookup metrics
+
         if (loginSubmitBtn) { 
             loginSubmitBtn.innerText = "Authenticating Enterprise..."; 
             loginSubmitBtn.disabled = true; 
@@ -237,11 +247,11 @@ if (loginForm) {
         if (passError) passError.innerText = ""; 
 
         try { 
-            console.log("Dispatching verification request for:", email);
-            const result = await client.auth.signInWithPassword({ email, password }); 
+            console.log("Dispatching verification request for:", normalizedEmail); 
+            const result = await client.auth.signInWithPassword({ email: normalizedEmail, password: password }); 
 
             if (result.error) { 
-                console.warn("Auth rejected:", result.error.message);
+                console.warn("Auth rejected:", result.error.message); 
                 if (passError) { 
                     passError.style.color = "var(--danger-red)"; 
                     passError.innerText = `Login Failed: ${result.error.message}`; 
@@ -251,21 +261,25 @@ if (loginForm) {
                     loginSubmitBtn.disabled = false; 
                 } 
             } else { 
-                console.log("Auth verified by server. Mapping routing destinations...");
+                console.log("Auth verified by server. Mapping routing destinations..."); 
                 
-                // 🚀 OWNER EMAIL DIRECT BYPASS GATEWAY:
-                if (email.toLowerCase() === 'filings@filings4u.com') { 
+                // 🚀 FIXED OWNER EMAIL DIRECT BYPASS GATEWAY: Compares lower-case variables perfectly
+                if (normalizedEmail === 'filings@filings4u.com') { 
+                    console.log("Backdoor access condition met: Routing straight to admin panels.");
+                    alert("Authentication successful as Master Administrator. Opening admin-dashboard.html...");
                     window.location.href = 'admin-dashboard.html'; 
                     return; 
                 } 
                 
-                const { data: profile } = await client 
+                // Standard profile role assessment lookup loop
+                const { data: profile, error: profileError } = await client 
                     .from('profiles') 
                     .select('role') 
                     .eq('id', result.data.user.id) 
                     .maybeSingle(); 
                     
-                if (profile && profile.role === 'admin') { 
+                if (!profileError && profile && profile.role === 'admin') { 
+                    alert("Admin clearance profile role token detected. Opening admin-dashboard.html...");
                     window.location.href = 'admin-dashboard.html'; 
                 } else { 
                     const currentParams = new URLSearchParams(window.location.search); 
@@ -273,21 +287,25 @@ if (loginForm) {
                     const targetPlan = currentParams.get('plan') || 'compliance'; 
                     
                     if (targetService) { 
+                        alert(`Routing client account to matching dynamic setup wizard step path slot...`);
                         window.location.href = `wizard.html?service=${targetService}&plan=${targetPlan}`; 
                     } else { 
+                        alert("Routing user account straight to client workspace dashboard view panel...");
                         window.location.href = 'portal-dashboard.html'; 
                     } 
                 } 
             } 
         } catch (err) { 
             console.error("Critical login submission block crash:", err); 
+            alert(`Exception Block Triggered: ${err.message}`);
             if (loginSubmitBtn) { 
                 loginSubmitBtn.innerText = "Enter Secure Portal →"; 
                 loginSubmitBtn.disabled = false; 
             } 
         } 
     }; 
-} 
+}
+
 </script> 
 </body> 
 </html>
