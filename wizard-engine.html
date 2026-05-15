@@ -164,6 +164,7 @@ function mountDynamicWizardEngineCore(userId) {
     `; 
 } 
 
+// 🚀 UPDATE THIS FUNCTION INSIDE YOUR wizard-engine.html FILE:
 async function handleFormStepProceed() { 
     const entityNameField = document.getElementById('target_company_name');
     const companyName = entityNameField ? entityNameField.value.trim() : '';
@@ -178,61 +179,19 @@ async function handleFormStepProceed() {
     const verifiedPlanTier = document.getElementById('cachedPlanTier').value;
     const serviceKey = document.getElementById('cachedServiceKey').value;
 
-    const targetContainerBox = document.getElementById('wizard-form-fields-target-box'); 
-    
-    // Switch container to display processing loader 
-    targetContainerBox.innerHTML = `
-        <div id="loading-message" style="text-align: center; padding: 60px;"> 
-            <div style="font-size: 1.1rem; font-weight: 700; color: var(--navy);">Initializing Secure Handshake...</div> 
-            <div style="margin: 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--emerald); border-radius: 50%; animation: spin 1s linear infinite;"></div> 
-        </div>
-        <div id="checkout"></div>
-    `;
+    // Package your variables into the exact payload object order.html is looking for
+    const pendingOrderPayload = {
+        company_name: companyName,
+        customer_email: window.activeCustomerEmail || 'guest-checkout@filings4u.com',
+        price: calculatedPrice,
+        plan: `${serviceKey}-${verifiedPlanTier}`
+    };
 
-    if (typeof Stripe === 'undefined') { 
-        document.getElementById('loading-message').innerHTML = "<div style='color:red; font-weight:700;'>Stripe Engine CDN reference is unreachable. Checkout halted.</div>";
-        return;
-    }
+    // Save payload and route seamlessly to your separate working page
+    sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrderPayload));
+    window.location.href = 'order.html'; 
+}
 
-    try {
-        const stripe = Stripe('pk_test_51TTy4u1hrjQxq47MgsMyTpdS4Aadnk4H63kILJaWbuUfppSySDt4Ijx9we7zkkCFEaeqzQ7C3k7Ql9HcSA5Urh3n00pEKGxNLE');
-        
-        const fetchClientSecret = async () => { 
-            const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', { 
-                method: 'POST', 
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Accept': 'application/json' 
-                }, 
-                body: JSON.stringify({ 
-                    action: 'checkout', 
-                    email: window.activeCustomerEmail || 'guest-checkout@filings4u.com', 
-                    company_name: companyName, 
-                    amount: Math.round(parseFloat(calculatedPrice) * 100), 
-                    service_type: `${serviceKey}-${verifiedPlanTier}` 
-                }) 
-            }); 
-
-            if (!response.ok) { 
-                const errorText = await response.text(); 
-                throw new Error(`Server status ${response.status}: ${errorText}`); 
-            } 
-            const data = await response.json(); 
-            if (data.error) throw new Error(data.error); 
-            return data.clientSecret; 
-        }; 
-
-        const checkoutInstance = await stripe.initEmbeddedCheckout({ fetchClientSecret }); 
-        
-        // Unveil the mounted Stripe Embedded container UI frame
-        document.getElementById('loading-message').style.display = 'none'; 
-        checkoutInstance.mount('#checkout'); 
-        console.log("Production embedded checkout transaction securely established."); 
-    } catch (err) { 
-        console.error("Initialization loop crash:", err); 
-        document.getElementById('loading-message').innerHTML = `<div style="color:red; font-weight:700;">Handshake Error: ${err.message}</div>`; 
-    } 
-} 
 
 
 // 🛠️ UPDATE ONLY THIS BLOCK INSIDE YOUR wizard-engine.html FILE:
