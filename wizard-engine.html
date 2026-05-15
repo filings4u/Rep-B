@@ -233,6 +233,39 @@ async function handleFormStepProceed() {
         document.getElementById('loading-message').innerHTML = `<div style="color:red; font-weight:700;">Handshake Error: ${err.message}</div>`; 
     } 
 } 
+
+
+// 🛠️ UPDATE ONLY THIS BLOCK INSIDE YOUR wizard-engine.html FILE:
+const fetchClientSecret = async () => { 
+    const currentOriginUrl = window.location.origin; 
+
+    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', { 
+        method: 'POST', 
+        headers: { 
+            'Content-Type': 'application/json', 
+            'Accept': 'application/json' 
+        }, 
+        body: JSON.stringify({ 
+            action: 'checkout', 
+            email: window.activeCustomerEmail || 'guest-checkout@filings4u.com', 
+            company_name: companyName, 
+            amount: Math.round(parseFloat(calculatedPrice) * 100), 
+            service_type: `${serviceKey}-${verifiedPlanTier}`,
+            // 🚀 FIXED: Cleans the routing base path to ensure it hooks on success.html without structural errors
+            success_url: `${currentOriginUrl}/success.html`
+        }) 
+    }); 
+
+    if (!response.ok) { 
+        const errorText = await response.text(); 
+        throw new Error(`Server status ${response.status}: ${errorText}`); 
+    } 
+    const data = await response.json(); 
+    if (data.error) throw new Error(data.error); 
+    return data.clientSecret; 
+};
+
+
 </script> 
 </body> 
 </html>
