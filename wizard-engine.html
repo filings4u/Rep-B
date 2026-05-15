@@ -15,7 +15,7 @@
     <script>
         // Singleton client setup allocation. Do not copy or duplicate this const string line elsewhere on the page
         window.portalSupabaseInstance = window.supabase ? window.supabase.createClient(
-            'https://lrbimrlbskjweyvnxlgas.supabase.co', 
+            'https://lrbimrlbskjweynxlgas.supabase.co', 
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
         ) : null;
 
@@ -69,51 +69,83 @@
         </div>
     </main>
 
-    <!-- UI STEPS INTERACTION ENGINE AUTOMATION LOGIC CONTROLLER -->
-    <script>
-        function mountDynamicWizardEngineCore(userId) {
-            // Read active URL parameters string targets (?service=ein)
-            const urlParams = new URLSearchParams(window.location.search);
-            const activeServiceKey = urlParams.get('service') || 'llc-formation';
+  <!-- UI STEPS INTERACTION ENGINE AUTOMATION LOGIC CONTROLLER --> 
+<script> 
+function mountDynamicWizardEngineCore(userId) { 
+    // 1. Read active URL parameters string targets (?service=ein&plan=compliance) 
+    const urlParams = new URLSearchParams(window.location.search); 
+    const activeServiceKey = urlParams.get('service') || 'llc-formation'; 
+    const chosenPlanTier = urlParams.get('plan') || 'compliance'; // Default fallback tier 
+
+    const registry = window.WIZARD_REGISTRY || {}; 
+    const serviceConfig = registry[activeServiceKey]; 
+
+    if (!serviceConfig) { 
+        document.getElementById('wizard-form-fields-target-box').innerHTML = ` 
+            <div style="text-align:center; padding:40px; color:#e53e3e; font-weight:700;"> 
+                Filing Profile Identifier Key [${activeServiceKey.toUpperCase()}] Not Found Inside Configuration Registry Maps. 
+            </div>`; 
+        return; 
+    } 
+
+    // 2. Production Dynamic Pricing Tier Matrix Lookup 
+    let finalFilingPrice = 149.00; 
+    let planDisplayName = "Standard Compliance Package"; 
+
+    // Check if wizards-config.js defines a multi-plan object first; otherwise calculate standard standard offsets
+    if (serviceConfig.plans && serviceConfig.plans[chosenPlanTier]) { 
+        finalFilingPrice = serviceConfig.plans[chosenPlanTier].price; 
+        planDisplayName = serviceConfig.plans[chosenPlanTier].title; 
+    } else { 
+        if (chosenPlanTier === 'starter') { 
+            finalFilingPrice = serviceConfig.basePrice || 149.00; 
+            planDisplayName = "Starter Basic Tier"; 
+        } else if (chosenPlanTier === 'enterprise') { 
+            finalFilingPrice = (serviceConfig.basePrice || 149.00) + 250.00; 
+            planDisplayName = "Enterprise Complete Fleet Sync"; 
+        } else { 
+            finalFilingPrice = (serviceConfig.basePrice || 149.00) + 100.00; 
+            planDisplayName = "Standard Compliance Package"; 
+        } 
+    } 
+
+    // Sync titles variables onto text fields views nodes locations 
+    document.getElementById('wizard-title-display').innerText = `${serviceConfig.title} — ${planDisplayName}`; 
+
+    // Generate inputs canvas dynamically matching your steps arrays mappings layouts 
+    const targetContainerBox = document.getElementById('wizard-form-fields-target-box'); 
+    targetContainerBox.innerHTML = ` 
+        <div style="text-align:left;"> 
+            <p style="color:#4a5568; font-size:0.92rem; line-height:1.5; margin-bottom:25px;">${serviceConfig.steps?.description || 'Fulfill state and federal operational registration guidelines seamlessly. Values automatically cache to workspace records slots prior to checkout thresholds.'}</p> 
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:25px; margin-bottom:30px;"> 
+                <h3 style="margin:0 0 15px 0; font-size:1rem; color:#0a1f44; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Workspace Parameters</h3> 
+                <p style="margin:0 0 8px 0; font-size:0.88rem; color:#64748b;">Selected Tier Option: <strong style="color:#0a1f44;">${planDisplayName}</strong></p> 
+                <p style="margin:0; font-size:0.88rem; color:#64748b;">Filing Base Value Fee: <strong style="color:#0a1f44;">$${finalFilingPrice.toFixed(2)}</strong></p> 
+            </div> 
             
-            const registry = window.WIZARD_REGISTRY || {};
-            const serviceConfig = registry[activeServiceKey];
+            <!-- Context data variables targets hidden cache frames -->
+            <input type="hidden" id="cachedActivePrice" value="${finalFilingPrice}">
+            <input type="hidden" id="cachedPlanTier" value="${chosenPlanTier}">
 
-            if (!serviceConfig) {
-                document.getElementById('wizard-form-fields-target-box').innerHTML = `
-                    <div style="text-align:center; padding:40px; color:#e53e3e; font-weight:700;">
-                        Filing Profile Identifier Key [${activeServiceKey.toUpperCase()}] Not Found Inside Configuration Registry Maps.
-                    </div>`;
-                return;
-            }
+            <button onclick="handleFormStepProceed('${activeServiceKey}')" style="background:#0a1f44; color:white; border:none; width:100%; padding:14px; border-radius:6px; font-weight:700; font-size:1rem; cursor:pointer;">Initialize Setup Fields Sequence ➔</button> 
+        </div> 
+    `; 
+} 
 
-            // Sync titles variables onto text fields views nodes locations
-            document.getElementById('wizard-title-display').innerText = serviceConfig.title;
+function handleFormStepProceed(serviceKey) { 
+    // FIXED: Extracted dynamic value references directly out of the hidden state data nodes
+    const calculatedPrice = document.getElementById('cachedActivePrice').value;
+    const verifiedPlanTier = document.getElementById('cachedPlanTier').value;
 
-            // Generate inputs canvas dynamically matching your steps arrays mappings layouts
-            const targetContainerBox = document.getElementById('wizard-form-fields-target-box');
-            targetContainerBox.innerHTML = `
-                <div style="text-align:left;">
-                    <p style="color:#4a5568; font-size:0.92rem; line-height:1.5; margin-bottom:25px;">${serviceConfig.steps?.description || 'Fulfill state and federal operational registration guidelines seamlessly. Values automatically cache to workspace records slots prior to checkout thresholds.'}</p>
-                    
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:25px; margin-bottom:30px;">
-                        <h3 style="margin:0 0 15px 0; font-size:1rem; color:#0a1f44; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Workspace Parameters</h3>
-                        <p style="margin:0; font-size:0.88rem; color:#64748b;">Filing Base Value Fee: <strong style="color:#0a1f44;">$${(serviceConfig.basePrice || 149.00).toFixed(2)}</strong></p>
-                    </div>
+    // Set pending checkout transaction variables caches straight to memory frames 
+    sessionStorage.setItem("checkout_service_key", serviceKey); 
+    sessionStorage.setItem("checkout_plan_tier", verifiedPlanTier); 
+    sessionStorage.setItem("checkout_total_price", calculatedPrice); 
 
-                    <button onclick="handleFormStepProceed('${activeServiceKey}')" style="background:#0a1f44; color:white; border:none; width:100%; padding:14px; border-radius:6px; font-weight:700; font-size:1rem; cursor:pointer;">Initialize Setup Fields Sequence ➔</button>
-                </div>
-            `;
-        }
+    // Forward user right into your single-page portal checkout dashboard tab view node layer frame 
+    window.location.href = `portal-dashboard.html?service=${serviceKey}&plan=${verifiedPlanTier}&status=checkout`; 
+} 
+</script>
 
-        function handleFormStepProceed(serviceKey) {
-            // Set pending checkout transaction variables caches straight to memory frames
-            sessionStorage.setItem("checkout_service_key", serviceKey);
-            sessionStorage.setItem("checkout_total_price", "149.00");
-            
-            // Forward user right into your single-page portal checkout dashboard tab view node layer frame
-            window.location.href = `portal-dashboard.html?service=${serviceKey}&status=checkout`;
-        }
-    </script>
 </body>
 </html>

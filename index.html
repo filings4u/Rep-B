@@ -154,7 +154,7 @@
             z-index: 999; 
         } 
     </style> 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script> 
 </head> 
 <body> 
@@ -172,16 +172,14 @@
             <div class="logo-container"><img src="images/logo.png" alt="filings4u logo"></div> 
             <h2 id="form-heading">Portal Login</h2> 
             <p id="form-subtext">Please enter your credentials to access your secure dashboard.</p> 
-            
             <form id="loginForm" style="display: block;"> 
                 <div class="form-group"> 
-                    <label>Email Address</label> 
-                    <input type="email" id="email" placeholder="name@company.com" required> 
-                    <div id="email-error" class="error-msg"></div> 
+                    <label for="email">Email Address</label> 
+                    <input type="email" id="email" required autocomplete="email"> 
                 </div> 
                 <div class="form-group"> 
-                    <label>Password</label> 
-                    <input type="password" id="password" placeholder="••••••••" required> 
+                    <label for="password">Password</label> 
+                    <input type="password" id="password" required autocomplete="current-password"> 
                     <div id="password-error" class="error-msg"></div> 
                 </div> 
                 <div id="master-turnstile-container" style="display: flex; justify-content: center; margin-bottom: 12px; width: 100%; min-height: 65px; overflow: hidden;"> 
@@ -190,7 +188,6 @@
                 <div id="captcha-error" class="error-msg" style="text-align: center; margin-bottom: 8px;"></div> 
                 <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button> 
             </form> 
-
             <div style="margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;"> 
                 <a href="reset-password.html" id="switchAuthBtn" style="color: var(--primary-blue); text-decoration: none; font-weight: 600;">Forgot Password?</a> 
                 <span style="color: var(--text-gray); font-weight: 500;">Paid Account Gate</span> 
@@ -207,11 +204,9 @@
         </footer> 
     </section> 
 </div> 
-
 <script> 
 var authSupabaseClient = null; 
 var activeTurnstileWidgetId = null; 
-
 const loginForm = document.getElementById('loginForm'); 
 const loginSubmitBtn = document.getElementById('loginBtn'); 
 const turnstileMountTarget = document.getElementById('turnstile-docking-node'); 
@@ -235,7 +230,7 @@ function renderPortalTurnstileSecurityGate() {
             sitekey: '1x00000000000000000000AA', 
             theme: 'light', 
             callback: function(token) { 
-                loginSubmitBtn.disabled = false; 
+                if (loginSubmitBtn) loginSubmitBtn.disabled = false; 
             } 
         }); 
     } 
@@ -250,50 +245,58 @@ if (loginForm) {
         const password = document.getElementById('password').value; 
         const passError = document.getElementById('password-error'); 
 
-        loginSubmitBtn.innerText = "Authenticating Enterprise..."; 
-        loginSubmitBtn.disabled = true; 
+        if (loginSubmitBtn) { 
+            loginSubmitBtn.innerText = "Authenticating Enterprise..."; 
+            loginSubmitBtn.disabled = true; 
+        } 
 
         const result = await authSupabaseClient.auth.signInWithPassword({ email, password }); 
 
-        if (result.error) {
-            passError.style.color = "var(--danger-red)";
-            passError.innerText = result.error.message;
-            loginSubmitBtn.innerText = "Enter Secure Portal →";
-            loginSubmitBtn.disabled = false;
+        if (result.error) { 
+            if (passError) { 
+                passError.style.color = "var(--danger-red)"; 
+                passError.innerText = result.error.message; 
+            } 
+            if (loginSubmitBtn) { 
+                loginSubmitBtn.innerText = "Enter Secure Portal →"; 
+                loginSubmitBtn.disabled = false; 
+            } 
+            if (typeof turnstile !== 'undefined' && activeTurnstileWidgetId !== null) { 
+                turnstile.reset(activeTurnstileWidgetId); 
+            } 
         } else { 
-            try {
-                const userSessionId = result.data.user.id;
+            try { 
+                const userSessionId = result.data.user.id; 
+                const { data: profile, error: roleError } = await authSupabaseClient 
+                    .from('profiles') 
+                    .select('role') 
+                    .eq('id', userSessionId) 
+                    .single(); 
 
-                // Query your roles matrix table
-                const { data: profile, error: roleError } = await authSupabaseClient
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', userSessionId)
-                    .single();
+                if (roleError || !profile) { 
+                    window.location.href = 'portal-dashboard.html'; 
+                    return; 
+                } 
 
-                if (roleError || !profile) {
-                    // Safety Fallback: Default to standard dashboard if table check hiccups
-                    window.location.href = 'portal-dashboard.html';
-                    return;
-                }
+                const currentParams = new URLSearchParams(window.location.search); 
+                const targetService = currentParams.get('service'); 
+                const targetPlan = currentParams.get('plan') || 'compliance'; 
 
-                // 🚀 FIXED: Wrapped routing steps in a 150ms timeout to prevent cookie writing race conditions
-                setTimeout(() => {
-                    if (profile.role === 'admin') {
-                        window.location.href = 'admin-dashboard.html'; 
-                    } else {
+                if (profile.role === 'admin') { 
+                    window.location.href = 'admin-dashboard.html'; 
+                } else { 
+                    if (targetService) { 
+                        window.location.href = `wizard.html?service=${targetService}&plan=${targetPlan}`; 
+                    } else { 
                         window.location.href = 'portal-dashboard.html'; 
-                    }
-                }, 150);
-
-            } catch (err) {
-                window.location.href = 'portal-dashboard.html';
-            }
+                    } 
+                } 
+            } catch (err) { 
+                window.location.href = 'portal-dashboard.html'; 
+            } 
         } 
     }; 
-}
-
-
+} 
 </script> 
 </body> 
 </html>

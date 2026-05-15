@@ -346,6 +346,34 @@
                         <button type="submit" id="uploadSubmitBtn" class="btn-admin-submit">Upload & Link File →</button>
                     </form>
                 </div>
+
+                <!-- Paste this visual card container inside the .admin-action-grid container layout -->
+<div class="admin-console-card">
+    <h2>Publish Blog Article</h2>
+    <form id="adminBlogForm">
+        <div class="admin-form-group">
+            <label for="blogTitle">Article Title</label>
+            <input type="text" id="blogTitle" class="admin-input" placeholder="e.g., New IFTA Requirements for 2026" required>
+        </div>
+        <div class="admin-form-group">
+            <label for="blogCategory">Content Category</label>
+            <select id="blogCategory" class="admin-select" required>
+                <option value="">-- Choose Section Topic --</option>
+                <option value="Corporate Formations">Corporate Formations</option>
+                <option value="Compliance Auditing">Compliance Auditing</option>
+                <option value="Corporate Tax Planning">Corporate Tax Planning</option>
+                <option value="DOT & Fleet">DOT & Fleet</option>
+            </select>
+        </div>
+        <div class="admin-form-group">
+            <label for="blogSummary">Article Summary / Excerpt</label>
+            <textarea id="blogSummary" class="admin-textarea" placeholder="Type a brief article overview extract description here..." required></textarea>
+        </div>
+        <div id="blogStatus" class="admin-status-msg"></div>
+        <button type="submit" id="blogSubmitBtn" class="btn-admin-submit">Publish Article Globally →</button>
+    </form>
+</div>
+
             </div>
 
             <div class="portal-grid"> 
@@ -379,7 +407,7 @@ window.addEventListener('load', async () => {
     try {
         // 1. Initialize client using your working project key parameters
         authSupabaseClient = window.supabase.createClient(
-           'https://lrbimrlbskjweyvnxlgas.supabase.co',
+          'https://lrbimrlbskjweyvnxlgas.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
         );
 
@@ -398,7 +426,7 @@ window.addEventListener('load', async () => {
             .select('role')
             .eq('id', session.user.id);
 
-      // 🛠️ FIXED: Target the first index array element [0] to extract the string property accurately!
+        // 🛠️ FIXED: Target the first index array element [0] to extract the string property accurately!
         if (profileError || !profiles || profiles.length === 0 || profiles.role !== 'admin') {
             console.error("Access Denied: This account does not possess Admin privileges.");
             alert("Security Error: You do not have permission to access the staff panel.");
@@ -418,10 +446,12 @@ window.addEventListener('load', async () => {
         }
 
     } catch (err) {
-        console.error("Admin dashboard runtime initialization failed:", err);
-        window.location.href = 'index.html';
-    }
+    console.error("Admin dashboard runtime initialization failed:", err);
+    // window.location.href = 'index.html'; // ⬅️ COMMENT THIS OUT
+}
+
 });
+
 
 
 
@@ -563,6 +593,65 @@ document.getElementById('adminUploadForm').onsubmit = async function(e) {
         btn.innerText = "Upload & Link File →";
     }
 };
+
+// 🚀 ENGINE 3: DYNAMIC BLOG POST PUBLISHING CONSOLE MODULE
+const adminBlogForm = document.getElementById('adminBlogForm');
+
+if (adminBlogForm) {
+    adminBlogForm.onsubmit = async function(e) {
+        e.preventDefault();
+        
+        // Safety validation fallback layer to ensure Supabase client connection context is ready
+        if (!authSupabaseClient) {
+            alert("Error: Supabase backend instance initialization state missing.");
+            return;
+        }
+
+        const title = document.getElementById('blogTitle').value.trim();
+        const category = document.getElementById('blogCategory').value;
+        const summary = document.getElementById('blogSummary').value.trim();
+        const status = document.getElementById('blogStatus');
+        const btn = document.getElementById('blogSubmitBtn');
+
+        // Automatically format a URL-friendly unique slug string reference
+        const dynamicSlug = title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '') // Strip out special punctuation characters
+            .replace(/\s+/g, '-')         // Convert spacing gaps to hyphens
+            .replace(/-+/g, '-')          // Prevent repeating stacked hyphens
+            + '-' + Date.now().toString().slice(-4); // Append short random timestamp suffix to avoid collisions
+
+        btn.innerText = "Writing to Database Node...";
+        btn.disabled = true;
+
+        // Push properties directly into the live posts table matrix
+       const { error: postError } = await authSupabaseClient
+    .from('posts')
+    .insert([{
+        title: title,
+        category: category,
+        summary: summary,
+        content: content, // Matches your live production table database column
+        slug: dynamicSlug,
+        image_url: 'images/login-hero.jpg'
+    }]);
+
+
+        if (postError) {
+            status.style.color = "var(--danger-red)";
+            status.innerText = `Publishing aborted: ${postError.message}`;
+            btn.innerText = "Publish Article Globally →";
+            btn.disabled = false;
+        } else {
+            status.style.color = "var(--success-green)";
+            status.innerText = "Article successfully published! Live on blog.html instantly.";
+            adminBlogForm.reset();
+            btn.innerText = "Publish Article Globally →";
+            btn.disabled = false;
+        }
+    };
+}
+
 
 // 🚀 LOG OUT SESSION ENGINE
 document.getElementById('adminSignOutBtn').addEventListener('click', async (e) => {

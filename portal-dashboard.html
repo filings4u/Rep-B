@@ -192,19 +192,10 @@ window.addEventListener('load', async () => {
                         <span class="search-icon">🔍</span>
                         <input type="text" class="search-input" placeholder="Search filings...">
                     </div>
-                   <div class="notification-wrapper" id="notificationIconBtn" style="position: relative; cursor: pointer; display: inline-block;"> 
-    <span style="font-size: 1.2rem;">🔔</span> 
-    <div class="notification-dot" id="liveAlertBadge" style="position: absolute; top: -2px; right: -2px; background-color: var(--danger-red, #e53e3e); width: 8px; height: 8px; border-radius: 50%;"></div> 
-</div>
-
-<!-- 🚀 DROPDOWN PANEL ADDED: This container holds your notifications and positions itself cleanly under the bell -->
-<div id="notificationDropdownMenu" style="display: none; position: absolute; right: 20px; top: 65px; width: 340px; background: var(--white, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; box-shadow: 0 12px 30px rgba(10,31,68,0.1); z-index: 1000; box-sizing: border-box; padding: 20px;">
-    <h2 style="font-size: 1.1rem; color: var(--primary-blue, #0a1f44); margin: 0 0 12px 0; font-weight: 700; border-bottom: 2px solid var(--bg-light, #f8f9fa); padding-bottom: 6px;">System Alerts</h2>
-    <div class="portal-list-wrapper" id="inlineNotificationsList" style="max-height: 280px; overflow-y: auto;">
-        <div class="portal-empty-message" style="font-size: 0.8rem; color: var(--text-gray, #4a5568); text-align: center; padding: 15px 0;">Your notification history is currently clear.</div>
-    </div>
-</div>
-
+                    <div class="notification-wrapper">
+                        <span>🔔</span>
+                        <div class="notification-dot"></div>
+                    </div>
                     <button class="btn-primary-small" onclick="switchActivePortalTab('catalog-tab', null)">+ New Filing</button>
                 </div>
             </header>
@@ -1133,49 +1124,6 @@ async function handlePaidWorkspaceTableMutation(serviceKeyTarget) {
         </div>
     </div>
 </div>
-
-<!-- Independent Dropdown Engine - Safe from conflicting styles -->
-<script>
-(function() {
-    window.addEventListener('load', () => {
-        // Safe elements collection
-        const iconBtn = document.getElementById('notificationIconBtn');
-        const dropdownMenu = document.getElementById('notificationDropdownMenu');
-        const alertBadge = document.getElementById('liveAlertBadge');
-
-        // Verify elements are present on screen before binding events
-        if (iconBtn && dropdownMenu) {
-            console.log("Isolated Notification Dropdown engine successfully linked.");
-
-            iconBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation(); // Prevents page logic from clicking away instantly
-                
-                // Read the active CSS layout display state
-                const currentDisplay = window.getComputedStyle(dropdownMenu).display;
-
-                if (currentDisplay === 'none') {
-                    dropdownMenu.style.display = 'block';
-                    // Clear the red badge icon notification flag on look open
-                    if (alertBadge) alertBadge.style.display = 'none';
-                } else {
-                    dropdownMenu.style.display = 'none';
-                }
-            });
-
-            // Safely close the dropdown wrapper window if user clicks anywhere else
-            document.addEventListener('click', (e) => {
-                if (!dropdownMenu.contains(e.target) && e.target !== iconBtn) {
-                    dropdownMenu.style.display = 'none';
-                }
-            });
-        } else {
-            console.warn("Dropdown Engine Warning: Missing #notificationIconBtn or #notificationDropdownMenu elements in HTML.");
-        }
-    });
-})();
-</script>
-
 
 </body>
 </html>
