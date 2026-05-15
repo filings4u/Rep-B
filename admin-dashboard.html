@@ -392,13 +392,13 @@ window.addEventListener('load', async () => {
             return;
         }
 
-        // 3. SECURE ROLE CHECK: Pull data without forcing .single() to prevent 406/PGRST116 runtime crashes
+        // 3. SECURE ROLE CHECK: Pulling table records safely
         const { data: profiles, error: profileError } = await authSupabaseClient
             .from('profiles')
             .select('role')
             .eq('id', session.user.id);
 
-        // Check if profile array exists and has a record matching 'admin'
+        // 🛠️ FIXED: We read the index [0] item from the list array to extract the string accurately!
         if (profileError || !profiles || profiles.length === 0 || profiles[0].role !== 'admin') {
             console.error("Access Denied: This account does not possess Admin privileges.");
             alert("Security Error: You do not have permission to access the staff panel.");
@@ -418,11 +418,11 @@ window.addEventListener('load', async () => {
         }
 
     } catch (err) {
-        // 🛠️ BUG EXPOSED: This line kicks you out if any function above breaks.
         console.error("Admin dashboard runtime initialization failed:", err);
         window.location.href = 'index.html';
     }
 });
+
 
 
 async function populateClientSelectionList() {
