@@ -241,45 +241,75 @@ function renderPortalTurnstileSecurityGate() {
     } 
 } 
 
-if (loginForm) {
-    loginForm.onsubmit = async function(e) {
-        e.preventDefault();
-        if (!authSupabaseClient) return;
+if (loginForm) { 
+    loginForm.onsubmit = async function(e) { 
+        e.preventDefault(); 
+        if (!authSupabaseClient) return; 
 
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const passError = document.getElementById('password-error');
-        const captchaError = document.getElementById('captcha-error');
+        const email = document.getElementById('email').value; 
+        const password = document.getElementById('password').value; 
+        const passError = document.getElementById('password-error'); 
+        const captchaError = document.getElementById('captcha-error'); 
 
-        // Capture Turnstile token to pass if Supabase Auth captcha requirement is on
-        let turnstileToken = null;
-        if (typeof turnstile !== 'undefined' && activeTurnstileWidgetId !== null) {
-            turnstileToken = turnstile.getResponse(activeTurnstileWidgetId);
-        }
+        // Capture Turnstile token to pass if Supabase Auth captcha requirement is on 
+        let turnstileToken = null; 
+        if (typeof turnstile !== 'undefined' && activeTurnstileWidgetId !== null) { 
+            turnstileToken = turnstile.getResponse(activeTurnstileWidgetId); 
+        } 
 
-        loginSubmitBtn.innerText = "Authenticating Enterprise...";
-        loginSubmitBtn.disabled = true;
+        loginSubmitBtn.innerText = "Authenticating Enterprise..."; 
+        loginSubmitBtn.disabled = true; 
 
-        const signInPayload = { email, password };
-        if (turnstileToken) {
-            signInPayload.options = { captchaToken: turnstileToken };
-        }
+        const signInPayload = { email, password }; 
+        if (turnstileToken) { 
+            signInPayload.options = { captchaToken: turnstileToken }; 
+        } 
 
-        const result = await authSupabaseClient.auth.signInWithPassword(signInPayload);
+        const result = await authSupabaseClient.auth.signInWithPassword(signInPayload); 
 
-        if (result.error) {
-            if (passError) {
-                passError.style.color = "var(--danger-red)";
-                passError.innerText = result.error.message;
+        if (result.error) { 
+            if (passError) { 
+                passError.style.color = "var(--danger-red)"; 
+                passError.innerText = result.error.message; 
+            } 
+            loginSubmitBtn.innerText = "Enter Secure Portal →"; 
+            loginSubmitBtn.disabled = false; 
+            if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId); 
+        } else { 
+            // 🚀 FIXED: Dynamic Routing Engine integration
+            try {
+                const userSessionId = result.data.user.id;
+
+                // Query the verified profiles tracking table to parse account privileges
+                const { data: profile, error: roleError } = await authSupabaseClient
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', userSessionId)
+                    .single();
+
+                if (roleError || !profile) {
+                    console.error("Failed to parse user authorization level matrix:", roleError);
+                    // Security Fallback: Route to standard customer panel if table check errors out
+                    window.location.href = 'portal-dashboard.html';
+                    return;
+                }
+
+                // Split routing streams based on account tier roles
+                if (profile.role === 'admin') {
+                    console.log("Welcome verified administrator. Access granted.");
+                    window.location.href = 'admin-dashboard.html'; 
+                } else {
+                    console.log("Welcome client user. Routing to portal view layout.");
+                    window.location.href = 'portal-dashboard.html'; 
+                }
+            } catch (err) {
+                console.error("Critical routing breakdown handler triggered:", err);
+                window.location.href = 'portal-dashboard.html';
             }
-            loginSubmitBtn.innerText = "Enter Secure Portal →";
-            loginSubmitBtn.disabled = false;
-            if (typeof turnstile !== 'undefined') turnstile.reset(activeTurnstileWidgetId);
-        } else {
-            window.location.href = 'portal-dashboard.html';
-        }
-    };
+        } 
+    }; 
 }
+
 </script> 
 </body> 
 </html>

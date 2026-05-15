@@ -6,7 +6,7 @@
     <title>Admin Dashboard | filings4u Staff</title> 
     
     <!-- Core Infrastructure Cloud Delivery CDN Script Libraries -->
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style> 
         :root { 
@@ -379,7 +379,7 @@ window.addEventListener('load', async () => {
     try {
         // 1. Initialize client using the working project key parameters
         authSupabaseClient = window.supabase.createClient(
-            'https://supabase.co', 
+            'https://lrbimrlbskjweyvnxlgas.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
         );
 
@@ -405,28 +405,34 @@ async function populateClientSelectionList() {
     const dropdown = document.getElementById('adminClientDropdown');
     if (!dropdown) return;
 
-    // Pull users from your records profile mapping table
-    const { data, error } = await authSupabaseClient
-        .from('notifications')
-        .select('user_id')
+    // Pulls records where role is explicitly 'client'
+    const { data: clientUsers, error } = await authSupabaseClient
+        .from('profiles')
+        .select('id, email')
+        .eq('role', 'client')
         .order('created_at', { ascending: false });
 
-    if (error || !data || data.length === 0) {
-        dropdown.innerHTML = '<option value="">-- No clients tracked yet --</option>';
+    if (error) {
+        console.error("Database sync failed:", error);
+        dropdown.innerHTML = '<option value="">-- Connection Error --</option>';
         return;
     }
 
-    // Extract unique user IDs from notification entries to create selection rows
-    const uniqueUserIds = [...new Set(data.map(item => item.user_id))];
-    
+    if (!clientUsers || clientUsers.length === 0) {
+        dropdown.innerHTML = '<option value="">-- No Registered Clients Found --</option>';
+        return;
+    }
+
+    // Bind real data to your selection node element
     dropdown.innerHTML = '<option value="">-- Select Target Client --</option>';
-    uniqueUserIds.forEach((userId, index) => {
+    clientUsers.forEach((client) => {
         const option = document.createElement('option');
-        option.value = userId;
-        option.innerText = `Client Account: #${index + 1} (${userId.substring(0, 8)}...)`;
+        option.value = client.id; // Database UUID
+        option.innerText = client.email; // Client email label
         dropdown.appendChild(option);
     });
 }
+
 
 // 🚀 DISPATCH MESSAGE ENGINE
 document.getElementById('adminAlertForm').onsubmit = async function(e) {
