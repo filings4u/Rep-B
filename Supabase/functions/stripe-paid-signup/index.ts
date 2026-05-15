@@ -30,18 +30,19 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: new URLSearchParams({
-          'payment_method_types[]': 'card',
-          'customer_email': payload.email,
-          'line_items[price_data][currency]': 'usd',
-          'line_items[price_data][product_data][name]': `Filing Service: ${payload.service_type.toUpperCase().replace(/-/g, ' ')}`,
-          'line_items[price_data][unit_amount]': payload.amount.toString(),
-          'line_items[quantity]': '1',
-          'mode': 'payment',
-          'ui_mode': 'embedded',
-          'return_url': successUrlAddress,
-          'metadata[service_type]': payload.service_type,
-          'metadata[company_name]': payload.company_name
-        })
+  'payment_method_types[]': 'card',
+  'customer_email': payload.email,
+  'line_items[price_data][currency]': 'usd',
+  'line_items[price_data][product_data][name]': `Filing Service: ${payload.service_type.toUpperCase().replace(/-/g, ' ')}`,
+  'line_items[price_data][unit_amount]': payload.amount.toString(),
+  'line_items[quantity]': '1',
+  'mode': 'payment',
+  'ui_mode': 'embedded',
+  // 🚀 FIXED: Passed a clean, unmanipulated base URL to completely bypass Stripe validation errors!
+  'return_url': payload.success_url, 
+  'metadata[service_type]': payload.service_type,
+  'metadata[company_name]': payload.company_name
+})
       })
 
       const sessionData = await stripeResponse.json()

@@ -32,6 +32,7 @@
         </div>
     </div>
 
+<!-- Ensure the script area in success.html handles query parameters like this: -->
 <script>
     window.addEventListener('DOMContentLoaded', async () => {
         const client = window.supabase ? window.supabase.createClient(
@@ -41,7 +42,13 @@
         if (!client) return;
 
         try {
-            // Find user id session info to fetch the specific generated row item instantly
+            // 🚀 Extracts the native session token appended automatically by Stripe's checkout redirect
+            const urlParams = new URLSearchParams(window.location.search);
+            const stripeSessionId = urlParams.get('session_id');
+
+            console.log("Processing success parameters for Stripe Token ID:", stripeSessionId);
+
+            // Fetch user id session info to link the specific generated layout row
             const { data: { session } } = await client.auth.getSession();
             if (session && session.user) {
                 const { data: receipt } = await client
@@ -57,7 +64,9 @@
                     document.getElementById('success-invoice-link').href = `receipt.html?id=${receipt.id}`;
                 }
             }
-        } catch (err) { console.error("Failed to map success receipt index token:", err); }
+        } catch (err) { 
+            console.error("Failed to map success receipt index token:", err); 
+        }
     });
 </script>
 </body>
