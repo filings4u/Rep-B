@@ -3,99 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message Notifications Hub | filings4u</title>
-    <!-- PRODUCTION CDN INFRASTRUCTURE -->
-    <script src="https://jsdelivr.net"></script>
-    <link rel="stylesheet" href="assets/css/portal-wizard.css">
-    <style>
-        :root { --emerald: #10b981; --navy: #0a1f44; }
-        body { background: #fcfcfc; display: flex; margin: 0; font-family: system-ui, -apple-system, sans-serif; }
-        .portal-sidebar { width: 260px; height: 100vh; background: #f8fafc; border-right: 1px solid #e2e8f0; position: fixed; }
-        .portal-main { margin-left: 260px; width: calc(100% - 260px); padding: 40px; box-sizing: border-box; }
-        .nav-item { display: block; padding: 12px 20px; color: #4a5568; text-decoration: none; font-weight: 600; border-radius: 6px; margin-bottom: 5px; }
-        .nav-item:hover, .nav-item.active { background: #e2e8f0; color: var(--navy); }
-    </style>
+    <title>Notifications Hub | filings4u</title>
+    <link rel="stylesheet" href="assets/css/portal-global.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="portal-body">
-
-    <!-- BRAND COHESIVE SIDEBAR NAVIGATION -->
+    <!-- 1. IDENTICAL SIDEBAR LAYOUT FRAME -->
     <aside class="portal-sidebar">
-        <div style="padding: 25px; border-bottom: 1px solid #e2e8f0;">
-            <img src="images/logo.png" style="height: 35px; cursor: pointer;" onclick="window.location.href='portal-dashboard.html'">
+        <div class="sidebar-logo">
+            <img src="images/logo.png" alt="filings4u" style="height: 35px;">
         </div>
-        <nav style="padding: 20px;">
-            <a href="portal-dashboard.html" class="nav-item">🎛️ Dashboard</a>
-            <a href="portal-notifications.html" class="nav-item active">🔔 Notifications</a>
-            <a href="#" onclick="window.portalSupabaseInstance.auth.signOut();" class="nav-item" style="margin-top: 40px; color: #ef4444;">🚪 Sign Out</a>
+        <nav class="sidebar-nav">
+            <a href="portal-dashboard.html" class="nav-link">🎛️ Dashboard</a>
+            <a href="portal-notifications.html" class="nav-link active" style="background:#e2e8f0; color:#0a1f44; font-weight:700;">🔔 Notifications</a>
         </nav>
     </aside>
 
-    <!-- CONTENT DISPLAY FRAME CONTAINER -->
+    <!-- 2. IDENTICAL MAIN CONTENT REGION FRAME -->
     <main class="portal-main">
-        <div style="max-width: 800px; margin: 0 auto;">
-            <header style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1 style="margin: 0; color: var(--navy); font-weight: 800; font-size: 2rem;">Notifications Hub</h1>
-                    <p style="color: #64748b; margin: 5px 0 0 0;">Review operational updates and alerts sent to your profile mapping slot</p>
-                </div>
-                <button id="mark-all-btn" onclick="markAllNotificationsAsRead()" style="background: transparent; border: 1px solid var(--navy); color: var(--navy); padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; display: none;">Mark All as Read</button>
-            </header>
+        <header class="portal-header">
+            <div class="welcome-text">
+                <h1 style="margin: 0; color: #0a1f44; font-weight: 800;">Notifications Hub</h1>
+                <p style="margin: 4px 0 0 0; color: #4a5568;" id="company-name-target">Loading account context parameter maps...</p>
+            </div>
+            <div class="header-actions">
+                <button id="mark-all-btn" onclick="clearUnreadAlerts()" class="btn-portal-download" style="background: transparent; border: 1px solid #0a1f44; color: #0a1f44; display: none;">Clear Unread Badges</button>
+            </div>
+        </header>
 
-            <div id="notifications-target-list">
-                <p style="color:#64748b; font-size:1rem;">Assembling system notification matrix records...</p>
+        <!-- LIVE ALERT LISTING INJECTION CONTAINER -->
+        <div style="max-width: 800px; margin-top: 25px;">
+            <div id="notifications-target-box">
+                <p style="color:#64748b; font-size:0.9rem;">Assembling historical alert log matrices...</p>
             </div>
         </div>
     </main>
 
     <script>
-        window.portalSupabaseInstance = null;
+        let clientInstance = null;
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (typeof supabase !== 'undefined') {
-                window.portalSupabaseInstance = supabase.createClient(
-                    'https://lrbimrlbskjweynxlgas.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-                );
-            }
-            setTimeout(loadFullNotificationHistory, 500);
+        window.addEventListener('load', async () => {
+            clientInstance = window.supabase.createClient(
+                'https://lrbimrlbskjweynxlgas.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+            );
+
+            const { data, error } = await clientInstance.auth.getSession();
+            if (error || !data.session) { window.location.href = 'index.html'; return; }
+            document.getElementById('company-name-target').innerText = data.session.user.email;
+
+            setTimeout(fetchWorkspaceNotificationsList, 300);
         });
 
-        async function loadFullNotificationHistory() {
-            const listTarget = document.getElementById('notifications-target-list');
-            const { data: { session } } = await window.portalSupabaseInstance.auth.getSession();
-            if (!session) { window.location.href = 'index.html'; return; }
+        async function fetchWorkspaceNotificationsList() {
+            const listContainer = document.getElementById('notifications-target-box');
+            const { data: { session } } = await clientInstance.auth.getSession();
 
-            const { data: alerts, error } = await window.portalSupabaseInstance
+            const { data: alerts, error } = await clientInstance
                 .from('notifications')
                 .select('*')
                 .eq('user_id', session.user.id)
                 .order('created_at', { ascending: false });
 
             if (error || !alerts || alerts.length === 0) {
-                listTarget.innerHTML = `<p style="color:#64748b;">No security message alerts logged inside this workspace canvas.</p>`;
+                listContainer.innerHTML = `<div class="portal-card"><p style="color:#64748b; margin:0; font-size:0.9rem;">No operational message history found inside this profile record tracker.</p></div>`;
                 return;
             }
 
-            if (alerts.some(a => !a.is_read)) { document.getElementById('mark-all-btn').style.display = 'block'; }
+            if (alerts.some(a => !a.is_read)) {
+                document.getElementById('mark-all-btn').style.display = 'inline-block';
+            }
 
-            listTarget.innerHTML = alerts.map(alert => `
-                <div style="background: white; border: 1px solid #e2e8f0; border-left: 5px solid ${alert.is_read ? '#cbd5e1' : '#10b981'}; padding: 25px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
-                    <h3 style="margin: 0 0 8px 0; color: var(--navy);">${alert.title}</h3>
-                    <p style="margin: 0; color: #4a5568; line-height: 1.5; font-size: 0.95rem;">${alert.message}</p>
-                    <span style="display: block; font-size: 0.8rem; color: #94a3b8; margin-top: 15px;">${new Date(alert.created_at).toLocaleString()}</span>
+            listContainer.innerHTML = alerts.map(alert => `
+                <div class="portal-card" style="margin-bottom: 15px; border-left: 5px solid ${alert.is_read ? '#cbd5e1' : '#10b981'}; padding: 20px; background: #ffffff;">
+                    <h3 style="margin: 0 0 6px 0; color: #0a1f44; font-size: 1.05rem; font-weight:700;">
+                        ${!alert.is_read ? '<span style="color:#10b981; font-size:0.7rem; margin-right:5px;">●</span>' : ''}${alert.title}
+                    </h3>
+                    <p style="margin: 0 0 12px 0; color: #4a5568; font-size: 0.92rem; line-height: 1.5;">${alert.message}</p>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">Sent on: ${new Date(alert.created_at).toLocaleString()}</span>
                 </div>
             `).join('');
         }
 
-        async function markAllNotificationsAsRead() {
-            const { data: { session } } = await window.portalSupabaseInstance.auth.getSession();
-            await window.portalSupabaseInstance
-                .from('notifications')
-                .update({ is_read: true })
-                .eq('user_id', session.user.id);
-            
+        async function clearUnreadAlerts() {
+            const { data: { session } } = await clientInstance.auth.getSession();
+            await clientInstance.from('notifications').update({ is_read: true }).eq('user_id', session.user.id);
             document.getElementById('mark-all-btn').style.display = 'none';
-            loadFullNotificationHistory();
+            fetchWorkspaceNotificationsList();
         }
     </script>
 </body>
