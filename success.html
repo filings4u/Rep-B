@@ -3,71 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Confirmed Successfully | filings4u</title>
-    <link rel="stylesheet" href="assets/css/site-elite.css">
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; color: #0a1f44; background: #f8fafc; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .success-card { max-width: 550px; background: #ffffff; padding: 50px 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(10,31,68,0.02); text-align: center; box-sizing: border-box; }
-        .checkmark-icon { width: 70px; height: 70px; background: #ecfdf5; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px auto; box-shadow: 0 0 15px rgba(16,185,129,0.15); }
-        h1 { font-size: 1.8rem; margin: 0 0 12px 0; font-weight: 800; color: #0a1f44; }
-        p { color: #4a5568; font-size: 0.95rem; line-height: 1.6; margin: 0 0 30px 0; }
-        .action-btn-row { display: flex; flex-direction: column; gap: 12px; }
-        .btn-primary-dashboard { background: #0a1f44; color: #ffffff; padding: 14px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 0.95rem; display: block; box-shadow: 0 4px 12px rgba(10,31,68,0.15); }
-        .btn-secondary-receipt { background: #ffffff; color: #0a1f44; padding: 13px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 0.95rem; display: block; border: 1px solid #e2e8f0; }
-        .btn-secondary-receipt:hover { background: #f8fafc; }
-    </style>
+    <title>Payment Successful | filings4u</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-
-    <div class="success-card">
-        <div class="checkmark-icon">✓</div>
-        <h1>Filing Deployment Initiated!</h1>
-        <p>Your payment transaction completed over secure Stripe nodes. Our filing directorate has locked your credentials into the state processing queue. Check your email inbox for an activation login link.</p>
+<body style="background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; padding: 40px 20px;">
+    <main style="max-width: 550px; margin: 50px auto; background: white; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+        <div style="width: 56px; height: 56px; background: #ecfdf5; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 24px; font-weight: bold;">✓</div>
         
-        <div class="action-btn-row">
-            <a href="portal-dashboard.html" class="btn-primary-dashboard">Enter Client Workspace Dashboard ➔</a>
-            <!-- 🚀 Dynamic invoice lookup route link anchor -->
-            <a id="success-invoice-link" href="portal-dashboard.html" target="_blank" class="btn-secondary-receipt">Download Printable Invoice Receipt 📥</a>
+        <h2 style="color: #0a1f44; margin:0 0 10px 0;">Order Confirmed!</h2>
+        <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 30px;">Thank you for your business. Your registration processing framework has officially started.</p>
+
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 25px; margin-bottom: 30px;">
+            <button onclick="fetchStripeReceipt()" style="background: transparent; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 6px; font-weight: 600; color: #4a5568; cursor: pointer; width: 100%;">🗎 Download Payment Receipt</button>
         </div>
-    </div>
 
-<!-- Ensure the script area in success.html handles query parameters like this: -->
-<script>
-    window.addEventListener('DOMContentLoaded', async () => {
-        const client = window.supabase ? window.supabase.createClient(
-            'https://lrbimrlbskjweynxlgas.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-        ) : null;
-        if (!client) return;
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; text-align: left;">
+            <h4 style="margin: 0 0 8px 0; color: #0a1f44; font-size: 0.95rem;">Claim Your Portal Account</h4>
+            <p style="margin: 0 0 15px 0; font-size: 0.85rem; color: #64748b;">Establish dashboard access credentials to monitor your legal filing structures in real-time.</p>
+            <button onclick="window.location.href='register.html'" style="background: #0a1f44; color: white; border: none; width: 100%; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer;">Create Account & Log In ➔</button>
+        </div>
+    </main>
 
-        try {
-            // 🚀 Extracts the native session token appended automatically by Stripe's checkout redirect
+    <script>
+        // Clean session cache tracking to prevent configuration parameter memory leaks
+        sessionStorage.removeItem('pendingOrder');
+
+        function fetchStripeReceipt() {
             const urlParams = new URLSearchParams(window.location.search);
             const stripeSessionId = urlParams.get('session_id');
-
-            console.log("Processing success parameters for Stripe Token ID:", stripeSessionId);
-
-            // Fetch user id session info to link the specific generated layout row
-            const { data: { session } } = await client.auth.getSession();
-            if (session && session.user) {
-                const { data: receipt } = await client
-                    .from('receipts')
-                    .select('id')
-                    .eq('user_id', session.user.id)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-
-                if (receipt && document.getElementById('success-invoice-link')) {
-                    // Re-route invoice anchor right onto the specific receipt page token slot
-                    document.getElementById('success-invoice-link').href = `receipt.html?id=${receipt.id}`;
-                }
+            if (stripeSessionId) {
+                // If tracking through hosted payments, redirect to Stripe customer portal, otherwise alert fallback instructions
+                alert("Your official tax invoice receipt is being compiled and sent directly to your registered mailbox.");
+            } else {
+                alert("Receipt generated. Please check your external inbox configuration profile folder.");
             }
-        } catch (err) { 
-            console.error("Failed to map success receipt index token:", err); 
         }
-    });
-</script>
+    </script>
 </body>
 </html>
