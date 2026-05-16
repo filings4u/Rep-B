@@ -192,11 +192,13 @@ window.addEventListener('load', async () => {
                         <span class="search-icon">🔍</span>
                         <input type="text" class="search-input" placeholder="Search filings...">
                     </div>
-                    <button class="notification-wrapper" onclick="window.location.href='portal-notifications.html'" style="background: transparent; border: none; cursor: pointer; position: relative; padding: 5px; display: inline-flex; align-items: center;">
+<!-- 🔔 FIX: Updates the icon wrapper to be a clickable element routing to your notifications page -->
+<button class="notification-wrapper" onclick="window.location.href='portal-notifications.html'" style="background: transparent; border: none; cursor: pointer; position: relative; padding: 5px; display: inline-flex; align-items: center; vertical-align: middle;">
     <span style="font-size: 1.3rem;">🔔</span>
-    <!-- Dynamic notification counter dot node -->
-    <div class="notification-dot" id="global-unread-badge" style="display: none; position: absolute; top: 0; right: 0; background: var(--danger-red, #ef4444); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; font-weight: 800; align-items: center; justify-content: center;">0</div>
+    <!-- Dynamic notification counter badge element -->
+    <div class="notification-dot" id="global-unread-badge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; font-weight: 800; align-items: center; justify-content: center;">0</div>
 </button>
+
 
                     <button class="btn-primary-small" onclick="switchActivePortalTab('catalog-tab', null)">+ New Filing</button>
                 </div>
@@ -492,11 +494,14 @@ window.addEventListener('load', async () => {
 <div class="dashboard-features-grid">
     
     <!-- Real-time Portal Notifications -->
-    <div class="portal-feature-card">
-        <h2>System Alerts</h2>
-        <div class="portal-list-wrapper" id="inlineNotificationsList">
-            <div class="portal-empty-message">Loading active notifications...</div>
-        </div>
+    <!-- 📊 FIX: Provides explicit placeholder anchor ids for the JavaScript engine mapping layer -->
+<div class="portal-card" style="margin-bottom: 25px; padding: 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+    <h3 style="margin: 0 0 15px 0; color: #0a1f44;">System Alerts</h3>
+    <div id="portal-alerts-text-container">
+        <p style="color:#64748b; font-size:0.9rem; margin:0;">Assembling your profile notifications tracking array...</p>
+    </div>
+</div>
+
     </div>
 
     <!-- 💻 PLACE THIS EXACT DIV INSIDE YOUR portal-dashboard.html FILE WHERE YAULT DOWNLOADS BELONG -->
@@ -1445,29 +1450,36 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(syncAdminDashboardMetrics, 1000);
 });
 
-// 🚀 FIX: Live Sync Engine for Notification Badge Counter and System Alerts Panel
 async function syncPortalNotificationsHub() {
-    const alertBox = document.getElementById('portal-alerts-target-box') || document.querySelector('.content-container'); 
     const badgeElement = document.getElementById('global-unread-badge');
+    const displayContainer = document.getElementById('portal-alerts-text-container');
+
+    // Security Fallback: Abort if the target dashboard layout containers aren't on the DOM tree yet
+    if (!displayContainer) return;
 
     if (!window.portalSupabaseInstance) {
-        console.error("Connection instance missing from workspace context.");
+        console.error("Critical Profile Core: Connection instance missing from portal context window.");
+        displayContainer.innerHTML = `<p style="color:red; font-size:0.9rem; margin:0;">Database link offline.</p>`;
         return;
     }
 
     try {
-        // Fetch current active user session profile parameters
-        const { data: { session } } = await window.portalSupabaseInstance.auth.getSession();
-        if (!session) return;
+        // Fetch current active user session profile parameters securely
+        const { data: { session }, error: authError } = await window.portalSupabaseInstance.auth.getSession();
+        
+        if (authError || !session) {
+            displayContainer.innerHTML = `<p style="color:#64748b; font-size:0.9rem; margin:0;">Session expired. Please log back in.</p>`;
+            return;
+        }
 
-        // Query the live notifications table filtered strictly by the logged-in user
-        const { data: alerts, error } = await window.portalSupabaseInstance
+        // Query the notifications database table filtered strictly by the logged-in user identity token
+        const { data: alerts, error: fetchError } = await window.portalSupabaseInstance
             .from('notifications')
             .select('*')
             .eq('user_id', session.user.id)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (fetchError) throw fetchError;
 
         // 1. UPDATE DYNAMIC UNREAD COUNTER BADGE NUMBER
         const unreadCount = alerts ? alerts.filter(a => !a.is_read).length : 0;
@@ -1476,41 +1488,37 @@ async function syncPortalNotificationsHub() {
                 badgeElement.innerText = unreadCount;
                 badgeElement.style.display = 'inline-flex'; // Reveals red indicator circle
             } else {
-                badgeElement.style.display = 'none'; // Clear from layout canvas framework
+                badgeElement.style.display = 'none'; // Hide badge if all alerts are cleared
             }
         }
 
         // 2. RENDER THE TEXT LIST INSIDE THE USER DASHBOARD BOARD
-        // Look for your placeholder text block or container target item
-        const displayContainer = document.getElementById('portal-alerts-text-container') || alertBox;
-        
         if (!alerts || alerts.length === 0) {
-            if (displayContainer) displayContainer.innerHTML = `<p style="color:#64748b; font-size:0.9rem; margin:0;">No active system-wide notifications at this time.</p>`;
+            displayContainer.innerHTML = `<p style="color:#64748b; font-size:0.9rem; margin:0;">No active system-wide alerts at this time.</p>`;
             return;
         }
 
-        if (displayContainer) {
-            displayContainer.innerHTML = alerts.map(alert => `
-                <div style="background: #ffffff; border: 1px solid ${alert.is_read ? '#e2e8f0' : '#d1fae5'}; padding: 15px; border-radius: 8px; margin-bottom: 12px; position:relative;">
-                    <h4 style="margin: 0 0 5px 0; color: #0a1f44; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                        ${!alert.is_read ? '<span style="color:#10b981; font-size:0.6rem;">●</span>' : ''} ${alert.title}
-                    </h4>
-                    <p style="margin: 0; font-size: 0.88rem; color: #4a5568; line-height: 1.4;">${alert.message}</p>
-                    <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-top: 8px;">${new Date(alert.created_at).toLocaleDateString()}</span>
-                </div>
-            `).join('');
-        }
+        displayContainer.innerHTML = alerts.map(alert => `
+            <div style="background: #f8fafc; border-left: 4px solid ${alert.is_read ? '#cbd5e1' : '#10b981'}; padding: 15px; border-radius: 4px; margin-bottom: 12px; transition: all 0.2s ease;">
+                <h4 style="margin: 0 0 5px 0; color: #0a1f44; font-size: 0.95rem; font-weight: 700;">
+                    ${alert.title}
+                </h4>
+                <p style="margin: 0; font-size: 0.88rem; color: #4a5568; line-height: 1.4;">${alert.message}</p>
+                <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-top: 8px;">${new Date(alert.created_at).toLocaleDateString()}</span>
+            </div>
+        `).join('');
 
     } catch (lifecycleErr) {
         console.error("Failed to compile dashboard notifications system pipeline:", lifecycleErr);
+        displayContainer.innerHTML = `<p style="color:red; font-size:0.9rem; margin:0;">Error loading updates.</p>`;
     }
 }
 
-// Ensure execution triggers automatically after client initialization loops complete
+// Invoke data sync tracking immediately after core document initialization cycles
 document.addEventListener("DOMContentLoaded", () => {
+    // Small delay ensures client configuration initialization loops pass successfully
     setTimeout(syncPortalNotificationsHub, 1200);
 });
-
 
 </script>
 
