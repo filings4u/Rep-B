@@ -1445,6 +1445,72 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(syncAdminDashboardMetrics, 1000);
 });
 
+// 🚀 FIX: Live Sync Engine for Notification Badge Counter and System Alerts Panel
+async function syncPortalNotificationsHub() {
+    const alertBox = document.getElementById('portal-alerts-target-box') || document.querySelector('.content-container'); 
+    const badgeElement = document.getElementById('global-unread-badge');
+
+    if (!window.portalSupabaseInstance) {
+        console.error("Connection instance missing from workspace context.");
+        return;
+    }
+
+    try {
+        // Fetch current active user session profile parameters
+        const { data: { session } } = await window.portalSupabaseInstance.auth.getSession();
+        if (!session) return;
+
+        // Query the live notifications table filtered strictly by the logged-in user
+        const { data: alerts, error } = await window.portalSupabaseInstance
+            .from('notifications')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // 1. UPDATE DYNAMIC UNREAD COUNTER BADGE NUMBER
+        const unreadCount = alerts ? alerts.filter(a => !a.is_read).length : 0;
+        if (badgeElement) {
+            if (unreadCount > 0) {
+                badgeElement.innerText = unreadCount;
+                badgeElement.style.display = 'inline-flex'; // Reveals red indicator circle
+            } else {
+                badgeElement.style.display = 'none'; // Clear from layout canvas framework
+            }
+        }
+
+        // 2. RENDER THE TEXT LIST INSIDE THE USER DASHBOARD BOARD
+        // Look for your placeholder text block or container target item
+        const displayContainer = document.getElementById('portal-alerts-text-container') || alertBox;
+        
+        if (!alerts || alerts.length === 0) {
+            if (displayContainer) displayContainer.innerHTML = `<p style="color:#64748b; font-size:0.9rem; margin:0;">No active system-wide notifications at this time.</p>`;
+            return;
+        }
+
+        if (displayContainer) {
+            displayContainer.innerHTML = alerts.map(alert => `
+                <div style="background: #ffffff; border: 1px solid ${alert.is_read ? '#e2e8f0' : '#d1fae5'}; padding: 15px; border-radius: 8px; margin-bottom: 12px; position:relative;">
+                    <h4 style="margin: 0 0 5px 0; color: #0a1f44; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                        ${!alert.is_read ? '<span style="color:#10b981; font-size:0.6rem;">●</span>' : ''} ${alert.title}
+                    </h4>
+                    <p style="margin: 0; font-size: 0.88rem; color: #4a5568; line-height: 1.4;">${alert.message}</p>
+                    <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-top: 8px;">${new Date(alert.created_at).toLocaleDateString()}</span>
+                </div>
+            `).join('');
+        }
+
+    } catch (lifecycleErr) {
+        console.error("Failed to compile dashboard notifications system pipeline:", lifecycleErr);
+    }
+}
+
+// Ensure execution triggers automatically after client initialization loops complete
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(syncPortalNotificationsHub, 1200);
+});
+
 
 </script>
 
