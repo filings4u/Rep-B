@@ -3,184 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Checkout | filings4u</title>
-    <!-- 1. EXTERNAL LIBRARIES FIRST WITH CORRECT SECURE WEB PROTOCOLS -->
+    <meta name="theme-color" content="#10b981">
+    <title>Secure Payment | filings4u</title>
+    <link rel="stylesheet" href="assets/css/portal-global.css">
     <script src="https://js.stripe.com/v3/"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="assets/css/portal-wizard.css">
+    <script src="assets/js/wizards-config.js"></script>
     <style>
-    :root { --emerald: #10b981; --navy: #0a1f44; }
-    body { background: #fcfcfc; display: flex; margin: 0; font-family: 'Inter', sans-serif; }
-    
-    /* FIX: Force container element wide by shifting constraints to absolute pixel width rules */
-    .checkout-container { 
-        background: white; 
-        padding: 40px; 
-        border-radius: 20px; 
-        border: 1px solid #e2e8f0; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        width: 100% !important; 
-        max-width: 100% !important; 
-        box-sizing: border-box; 
-    }
-    
-    /* FIX: Force internal Stripe Elements root nodes to span full internal width */
-    #checkout { 
-        margin-top: 20px; 
-        min-height: 500px; 
-        width: 100% !important; 
-        max-width: 100% !important; 
-        box-sizing: border-box; 
-    }
-    
-    /* Force dynamic secure iframes injected from Stripe's CDN network tree to stretch wide */
-    #checkout iframe { 
-        width: 100% !important; 
-        min-width: 100% !important; 
-        max-width: 100% !important; 
-    }
-    
-    .secure-header { text-align: center; margin-bottom: 40px; border-bottom: 1px solid #f1f5f9; padding-bottom: 30px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-
-        /* Add these rules within the <style> section of your order.html file */
-
-#checkout {
-    margin-top: 20px;
-    min-height: 500px;
-    width: 100% !important; /* Forces the Stripe container element wide */
-    max-width: 100% !important;
-    box-sizing: border-box;
-}
-
-/* Force structural targets within Stripe's DOM shadow tree to stretch wide */
-#checkout iframe {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-}
-
-.checkout-container {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    width: 100% !important; /* Matches main container alignment models */
-    max-width: 100% !important; 
-    box-sizing: border-box;
-}
-
+        .portal-main-view { display: block; }
+        #checkout {
+            margin-top: 20px;
+            min-height: 500px;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box;
+        }
+        #checkout iframe {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="portal-body">
-
-    <!-- SIDEBAR FOR BRAND CONSISTENCY -->
-    <aside class="portal-sidebar" style="width: 260px; height: 100vh; background: #f8fafc; border-right: 1px solid #e2e8f0; position: fixed;">
-        <div style="padding: 20px;">
-            <img src="images/logo.png" style="height: 35px;">
-            <div style="margin-top: 40px;">
-                <p style="font-size: 0.75rem; font-weight: 800; color: var(--navy); text-transform: uppercase;">Payment Security</p>
-                <p style="font-size: 0.8rem; color: #64748b; line-height: 1.5;">Your payment is encrypted via 256-bit SSL. We do not store your full credit card details.</p>
-            </div>
+    <!-- PORTAL SIDEBAR -->
+    <aside class="portal-sidebar">
+        <div class="sidebar-header">
+            <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
         </div>
+
+         <!-- SLIM SECURE BADGE -->
+                <div style="margin: 100px auto 0; background: var(--primary-blue); padding: 6px 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="width: 6px; height: 6px; background: var(--success-green); border-radius: 50%; box-shadow: 0 0 6px var(--success-green);"></div>
+                    <div style="color: white; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;"> Secure Session </div>
+                </div>
     </aside>
 
-    <main class="portal-main" style="margin-left: 260px; width: calc(100% - 260px); padding: 40px;">
-        <div class="checkout-container">
-            <div class="secure-header">
-                <div style="background: #ecfdf5; color: #064e3b; display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; margin-bottom: 15px;">
-                    🛡️ SECURE STRIPE CHECKOUT
+    <!-- MAIN PORTAL CONTENT FRAME -->
+    <main class="portal-main">
+        <div class="content-container" style="max-width: 100%; width: 100%;">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Complete Secure Payment</h1>
+                    <p id="company-name-target" style="color: #4a5568;">Validating user authorization slot...</p>
                 </div>
-                <h1 style="margin: 0; color: var(--navy);">Complete Your Order</h1>
-                <p style="color: #64748b;">Processing your application for <strong id="display-company">New Carrier</strong></p>
-            </div>
+                <div class="header-actions">
+                    <button onclick="window.location.href='portal-dashboard.html'" class="btn-portal-download" style="background: transparent; border: 1px solid #0a1f44; color: #0a1f44; padding: 8px 16px;">Cancel & Return ➔</button>
+                </div>
+            </header>
 
-            <!-- LOADING SCREEN -->
-            <div id="loading-message" style="text-align: center; padding: 60px;">
-                <div style="font-size: 1.1rem; font-weight: 700; color: var(--navy);">Initializing Secure Handshake...</div>
-                <div style="margin: 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--emerald); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            </div>
+            <!-- DESIGN CONTENT AREA: Form blends smoothly with zero card containers -->
+            <div style="margin: 20px 0; width: 100%; box-sizing: border-box;">
+                <div style="padding: 0 0 20px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px;">
+                    <p style="margin: 0 0 4px 0; font-size: 1rem; color: #4a5568;">
+                        Filing Target Entity: <strong id="summary-company-name" style="color: #0a1f44;">Loading context...</strong>
+                    </p>
+                    <p style="margin: 0; font-size: 1rem; color: #4a5568;">
+                        Amount Due: <strong id="summary-price-display" style="color: #10b981;">$0.00</strong>
+                    </p>
+                </div>
 
-            <!-- STRIPE MOUNT POINT -->
-            <div id="checkout"></div>
+                <!-- LOADING SPINNER HUB -->
+                <div id="loading-message" style="text-align: center; padding: 60px 0;">
+                    <p style="color: #4a5568; font-size: 0.95rem; margin-bottom: 15px;">Assembling secure connection gateway...</p>
+                    <div style="margin: 0 auto; width: 35px; height: 35px; border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                </div>
+
+                <!-- STRIPE ELEMENT TARGET -->
+                <div id="checkout"></div>
+            </div>
         </div>
     </main>
 
-    <!-- 2. CHECKOUT ENGINE RUNNING EXCLUSIVELY ON THIS CONTAINER -->
     <script>
-    window.addEventListener('load', async () => {
-        const loadingMessage = document.getElementById('loading-message');
-        if (typeof Stripe === 'undefined') {
-            loadingMessage.innerHTML = "<div style='color:red; font-weight:700;'>Stripe failed to load. Check your connection.</div>";
-            return;
-        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loadingMessage = document.getElementById('loading-message');
+            
+            // 🚀 LIVE MODE ACTIVATION: Swap this text out with your actual pk_live_ string key
+            const stripeKey = 'pk_live_51TTy4i0dNjSlvyScbq19wWCQjOhDKdFMUzkV4Et4ok1NAWFFab4qV2KyZB5CwAp6dAvpLSuMZq2xKAR3BZ1gfuTM00KtmvEgc4'; 
 
-        const stripe = Stripe('pk_test_51TTy4u1hrjQxq47MgsMyTpdS4Aadnk4H63kILJaWbuUfppSySDt4Ijx9we7zkkCFEaeqzQ7C3k7Ql9HcSA5Urh3n00pEKGxNLE');
-        const rawData = sessionStorage.getItem('pendingOrder');
+            if (typeof supabase === 'undefined') {
+                loadingMessage.innerHTML = "<div style='color:#e53e3e; font-weight:700;'>Initialization Error: CDN dependencies missing.</div>";
+                return;
+            }
 
-        if (!rawData) {
-            console.warn("Session data missing on initial execution trace.");
-            loadingMessage.innerHTML = "<div style='color:red; font-weight:700;'>Session Expired or Missing.</div><p>Returning to your configuration layout...</p>";
-            setTimeout(() => {
-                const previousPage = document.referrer;
-                if (previousPage && previousPage.includes('wizard-') && previousPage.includes('filings4u.com')) {
-                    window.location.href = previousPage;
-                } else {
-                    window.location.href = "https://filings4u.com";
-                }
-            }, 2500);
-            return;
-        }
+            const supabaseClient = supabase.createClient(
+                'https://lrbimrlbskjweynxlgas.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+            );
 
-        const orderData = JSON.parse(rawData);
-        document.getElementById('display-company').innerText = orderData.company_name;
+            const { data, error } = await supabaseClient.auth.getSession();
+            if (error || !data.session) { window.location.href = 'index.html'; return; }
+            document.getElementById('company-name-target').innerText = data.session.user.email;
 
-       // Locate this block in your order.html and replace it exactly
-try {
-    const fetchClientSecret = async () => {
-        const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'checkout',
-                email: orderData.customer_email,
-                company_name: orderData.company_name,
-                amount: Math.round(parseFloat(orderData.price) * 100),
-                service_type: orderData.plan || 'trucker'
-            })
+            const rawData = sessionStorage.getItem('pendingOrder');
+            if (!rawData) {
+                loadingMessage.innerHTML = "<div style='color:#e53e3e; font-weight:700;'>Session records missing. Returning...</div>";
+                setTimeout(() => { window.location.href = "portal-dashboard.html"; }, 2000);
+                return;
+            }
+
+            const orderData = JSON.parse(rawData);
+            const validCompanyName = orderData.company_name || 'Registration Profile';
+            const validPriceValue = orderData.price ? parseFloat(orderData.price) : 0.00;
+
+            document.getElementById('summary-company-name').innerText = validCompanyName;
+            document.getElementById('summary-price-display').innerText = `$${validPriceValue.toFixed(2)}`;
+
+            try {
+                const fetchClientSecret = async () => {
+                    const currentOriginUrl = window.location.origin;
+                    const response = await fetch('https://supabase.co/functions/v1/stripe-webhook', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'checkout',
+                            email: data.session.user.email,
+                            company_name: validCompanyName,
+                            amount: Math.round(validPriceValue * 100),
+                            service_type: orderData.plan || 'trucker',
+                            return_url: `${currentOriginUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+                            success_url: `${currentOriginUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`
+                        })
+                    });
+
+                    if (!response.ok) throw new Error(`Server Response Error Status: ${response.status}`);
+                    const jsonPayload = await response.json();
+                    if (jsonPayload.error) throw new Error(jsonPayload.error);
+                    return jsonPayload.clientSecret;
+                };
+
+                const checkout = await Stripe(stripeKey).initEmbeddedCheckout({ fetchClientSecret });
+                loadingMessage.style.display = 'none';
+                checkout.mount('#checkout');
+
+            } catch (err) {
+                console.error("Stripe runtime error:", err);
+                loadingMessage.innerHTML = `<div style="color:#e53e3e; font-weight:700;">Handshake Connection Error: ${err.message}</div>`;
+            }
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server status ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        return data.clientSecret;
-    };
-
-    // FIXED: Removed 'layout: accordion' parameter to pass Stripe validation rules
-    const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
-
-    // Hide loading panel container UI asset
-    loadingMessage.style.display = 'none';
-
-    // Mount the layout securely
-    checkout.mount('#checkout');
-    console.log("Stripe embedded checkout successfully mounted.");
-
-} catch (err) {
-    console.error("Initialization failed:", err);
-    loadingMessage.innerHTML = `<div style="color:red; font-weight:700;">Handshake Error: ${err.message}</div>`;
+        function openBillingOrdersModal() {
+    const modal = document.getElementById('billing-orders-modal');
+    if(modal) { modal.style.display = 'flex'; }
+}
+function closeBillingOrdersModal() {
+    const modal = document.getElementById('billing-orders-modal');
+    if(modal) { modal.style.display = 'none'; }
 }
 
-    });
     </script>
 </body>
 </html>
