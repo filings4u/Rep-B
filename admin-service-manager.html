@@ -3,227 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Manager | filings4u Admin</title>
-    <script>const { data: { session } } = await supabase.auth.getSession();
-if (!session) window.location.href = 'index.html';
-</script>
+    <title>Service Manager | Admin Portal</title>
+    
     <style>
-        :root {
-            --primary-blue: #0a1f44;
-            --white: #ffffff;
-            --bg-light: #f8f9fa;
-            --border-color: #e2e8f0;
-            --text-gray: #4a5568;
-            --danger-red: #e53e3e;
-            --success-green: #48bb78;
-            --staff-red: #c15254;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #fcfcfc;
-            display: flex;
-        }
-
-        /* SIDEBAR STYLES */
-        .portal-sidebar {
-            width: 260px;
-            height: 100vh;
-            background: var(--bg-light);
-            border-right: 1px solid var(--border-color);
-            padding: 20px;
-            position: fixed;
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-            box-sizing: border-box;
-        }
-
-        .sidebar-header { margin-bottom: 30px; }
-        .sidebar-logo { height: 45px; width: auto; margin-bottom: 12px; display: block; }
-
-        .admin-badge {
-            background: var(--staff-red);
-            color: white;
-            font-size: 0.8rem;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-weight: 800;
-            text-transform: uppercase;
-            display: inline-block;
-            letter-spacing: 0.05em;
-        }
-
-        .sidebar-nav {
-            flex-grow: 1;
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            text-decoration: none;
-            font-weight: 600;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            transition: all 0.3s ease;
-            color: var(--primary-blue);
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background-color: var(--primary-blue);
-            color: var(--white);
-        }
-
-        .nav-item span { margin-right: 12px; width: 20px; text-align: center; }
-
-        .logout-container {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .logout-btn {
-            display: block;
-            text-align: center;
-            text-decoration: none;
-            background-color: var(--primary-blue);
-            color: var(--white);
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-
-        /* MAIN CONTENT AREA */
-        .portal-main {
-            margin-left: 260px;
-            width: calc(100% - 260px);
-            padding: 50px 60px;
-            box-sizing: border-box;
-        }
-
-        .content-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .portal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .welcome-text h1 { margin: 0; color: var(--primary-blue); }
-
-        /* SERVICE MANAGER COMPONENTS */
-        .manager-card {
-            background: var(--white);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 0.75rem; color: var(--text-gray); padding: 15px; border-bottom: 2px solid var(--bg-light); text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid var(--bg-light); font-size: 0.9rem; }
-
-        .btn-edit {
-            color: var(--primary-blue);
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.8rem;
-            border: 1px solid var(--border-color);
-            padding: 5px 10px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .btn-edit:hover {
-            background: var(--primary-blue);
-            color: white;
-        }
-
-        .status-tag {
-            font-weight: bold;
-            color: var(--success-green);
-        }
+        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0a1f44; padding-left: 260px; }
+        .main-content { padding: 40px; }
+        .ticket-list { display: flex; flex-direction: column; gap: 15px; }
+        .ticket-row { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .badge-pending { background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body>
-
-     <!-- PORTAL SIDEBAR -->
-   <aside class="portal-sidebar">
-        <div class="sidebar-header">
-            <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
-            <span class="admin-badge">Staff Account</span>
+    <!-- SIDEBAR ENGINE INJECTED -->
+    <aside class="portal-sidebar" style="width: 260px !important; height: 100vh !important; background: #ffffff !important; color: #0a1f44 !important; position: fixed !important; top: 0 !important; left: 0 !important; display: flex !important; flex-direction: column !important; box-sizing: border-box !important; z-index: 100 !important; border-right: 1px solid #e2e8f0 !important;">
+        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;"><img src="images/logo.png" alt="filings4u" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;"></div>
+            <div style="background: #0a1f44; color: #ffffff; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Directorate Admin</div>
         </div>
-        <nav class="sidebar-nav">
-            <a href="admin-dashboard.html" class="nav-item active"><span>📈</span> Overview</a>
-            <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master</a>
-            <a href="admin-compliance-audit.html" class="nav-item"><span>⚖️</span> Audit Queue</a>
-            <a href="admin-revenue-reconciliation.html" class="nav-item"><span>💰</span> Revenue</a>
-            <a href="admin-system-logs.html" class="nav-item"><span>🖥️</span> Logs</a>
-            <div class="logout-container">
-                <a href="index.html" class="logout-btn">Sign Out</a>
-            </div>
+        <div style="padding: 15px 25px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 10px;"><span style="font-size: 0.68rem; font-weight: 800; color: #64748b;">System Time:</span><span id="portal-clock" style="font-family: monospace; font-size: 1.05rem; font-weight: 800; color: #10b981;">00:00:00</span></div>
+        <nav style="flex: 1; padding: 25px 15px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto;">
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 0 0 10px 10px;">Control Systems</p>
+            <a href="admin-dashboard.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>📊</span> System Hub Home</a>
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Operations</p>
+            <span>🏢</span> Entity Master</a>
+            <a href="admin-crm.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>👥</span> Client CRM Portal</a>
+            <a href="admin-service-manager.html" style="display: flex; align-items: center; gap: 12px; color: #0a1f44; background: #f1f5f9; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 700;"><span>🛠️</span> Service Manager</a>
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Financial Ledger</p>
+            <a href="admin-billing.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🧾</span> Billing Management</a>
+            <a href="admin-revenue-reconciliation.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🔄</span> Rev Reconciliation</a>
+            <a href="admin-portfolio-spend.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>💼</span> Portfolio Spend</a>
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Governance</p>
+            <a href="admin-compliance-audit.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🛡️</span> Compliance Audit</a>
+            <a href="admin-system-logs.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>📜</span> System Activity Logs</a>
         </nav>
     </aside>
 
-    <!-- MAIN PORTAL CONTENT -->
-    <main class="portal-main">
-        <div class="content-container">
-            <header class="portal-header">
-                <div class="welcome-text">
-                    <h1>Service Manager</h1>
-                    <p>Configure platform services, catalog pricing, and availability</p>
+    <div class="main-content">
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 30px;">Service Execution Pipeline</h1>
+        <div class="ticket-list">
+            <div class="ticket-row">
+                <div>
+                    <h3 style="margin: 0 0 5px 0; font-size: 1.1rem;">Delaware Registered Agent Assignment</h3>
+                    <span style="font-size: 0.85rem; color: #64748b;">Client: Alpha Corp | Date Received: Today</span>
                 </div>
-            </header>
-
-            <div class="manager-card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Service Name</th>
-                            <th>Default Price</th>
-                            <th>Category</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>IFTA Quarterly Filing</strong></td>
-                            <td>$150.00</td>
-                            <td>Compliance</td>
-                            <td><span class="status-tag">Live</span></td>
-                            <td><a href="#" class="btn-edit">Edit Pricing</a></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Delaware Annual Report</strong></td>
-                            <td>$75.00</td>
-                            <td>State Tax</td>
-                            <td><span class="status-tag">Live</span></td>
-                            <td><a href="#" class="btn-edit">Edit Pricing</a></td>
-                        </tr>
-                        <tr>
-                            <td><strong>BOC-3 Processing</strong></td>
-                            <td>$50.00</td>
-                            <td>DOT Authority</td>
-                            <td><span class="status-tag">Live</span></td>
-                            <td><a href="#" class="btn-edit">Edit Pricing</a></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div><span class="badge-pending">Processing</span></div>
             </div>
         </div>
-    </main>
-
+    </div>
+    <script>
+        (function(){function u(){const c=document.getElementById('portal-clock');if(c){const n=new Date();c.innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}}u();setInterval(u,1000);})();
+    </script>
 </body>
 </html>

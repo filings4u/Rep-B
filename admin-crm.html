@@ -2,205 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Command | filings4u Control</title>
-    <script>const { data: { session } } = await supabase.auth.getSession();
-if (!session) window.location.href = 'index.html';
-</script>
-    <!-- Load jsPDF for the document generation -->
-    <script src="https://cloudflare.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client CRM Portal | Admin Portal</title>
+    
+    
     <style>
-        :root { 
-            --admin-purple: #6366f1; 
-            --navy: #0a1f44; 
-            --emerald: #10b981; 
-            --white: #ffffff; 
-            --bg: #f1f5f9; 
-            --border: #e2e8f0; 
-            --danger: #ef4444;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); display: flex; }
-
-        /* ADMIN-ONLY SIDEBAR */
-        .admin-sidebar { 
-            width: 280px; height: 100vh; background: var(--navy); padding: 40px 25px; 
-            position: fixed; color: white; display: flex; flex-direction: column; 
-        }
-        .admin-brand { font-size: 1.2rem; font-weight: 800; color: var(--emerald); margin-bottom: 40px; letter-spacing: 1px; }
-        .nav-item { 
-            display: flex; align-items: center; padding: 14px 18px; 
-            color: rgba(255,255,255,0.6); text-decoration: none; font-weight: 600; 
-            border-radius: 12px; margin-bottom: 8px; transition: 0.3s;
-        }
-        .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
-        .nav-item.active { background: var(--admin-purple); color: white; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
-
-        /* MAIN DASHBOARD */
-        .main-content { margin-left: 280px; flex-grow: 1; padding: 50px; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        
-        /* CLIENT TABLE */
-        .admin-card { background: white; border-radius: 20px; border: 1px solid var(--border); padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .client-table { width: 100%; border-collapse: collapse; }
-        .client-table th { text-align: left; padding: 15px; font-size: 0.7rem; text-transform: uppercase; color: var(--text-gray); border-bottom: 2px solid var(--bg); }
-        .client-table td { padding: 20px 15px; border-bottom: 1px solid var(--bg); font-size: 0.9rem; }
-        
-        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
-        .badge-purple { background: rgba(99, 102, 241, 0.1); color: var(--admin-purple); }
-        .badge-warning { background: #fffbeb; color: #92400e; }
-
-        .btn-purple { background: var(--admin-purple); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.8rem; }
-        .btn-outline { background: white; border: 1px solid var(--border); padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.75rem; }
-
-        /* MODAL */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,31,68,0.85); z-index: 10000; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 500px; padding: 40px; border-radius: 24px; }
+        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0a1f44; padding-left: 260px; }
+        .main-content { padding: 40px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .crm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .crm-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .client-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .avatar { width: 45px; height: 45px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #0a1f44; }
+        .btn-outline { border: 1px solid #cbd5e1; background: transparent; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
     </style>
 </head>
 <body>
-
-    <aside class="admin-sidebar">
-        <div class="admin-brand">filings4u ADMIN</div>
-        <nav>
-            <a href="admin-crm.html" class="nav-item active"><span>👥</span> Client CRM</a>
-            <a href="admin-billing.html" class="nav-item"><span>💳</span> Billing Oversight</a>
-            <a href="#" class="nav-item"><span>⛽</span> IFTA Filings</a>
-            <a href="#" class="nav-item"><span>📋</span> Decal Inventory (IFTA-2)</a>
-            <a href="#" class="nav-item"><span>🛡️</span> Safety Audit Review</a>
-        </nav>
-        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <a href="../login.html" class="nav-item"><span>🔒</span> Secure Logout</a>
+    <!-- SIDEBAR ENGINE INJECTED -->
+    <aside class="portal-sidebar" style="width: 260px !important; height: 100vh !important; background: #ffffff !important; color: #0a1f44 !important; position: fixed !important; top: 0 !important; left: 0 !important; display: flex !important; flex-direction: column !important; box-sizing: border-box !important; z-index: 100 !important; border-right: 1px solid #e2e8f0 !important;">
+        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;"><img src="images/logo.png" alt="filings4u" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;"></div>
+            <div style="background: #0a1f44; color: #ffffff; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Directorate Admin</div>
         </div>
+        <div style="padding: 15px 25px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 10px;"><span style="font-size: 0.68rem; font-weight: 800; color: #64748b;">System Time:</span><span id="portal-clock" style="font-family: monospace; font-size: 1.05rem; font-weight: 800; color: #10b981;">00:00:00</span></div>
+        <nav style="flex: 1; padding: 25px 15px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto;">
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 0 0 10px 10px;">Control Systems</p>
+            <a href="admin-dashboard.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>📊</span> System Hub Home</a>
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Operations</p>
+            <span>🏢</span> Entity Master</a>
+            <a href="admin-crm.html" style="display: flex; align-items: center; gap: 12px; color: #0a1f44; background: #f1f5f9; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 700;"><span>👥</span> Client CRM Portal</a>
+            <a href="admin-service-manager.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🛠️</span> Service Manager</a>
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Financial Ledger</p>
+            <a href="admin-billing.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🧾</span> Billing Management</a>
+            <a href="admin-revenue-reconciliation.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🔄</span> Rev Reconciliation</a>
+            <a href="admin-portfolio-spend.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>💼</span> Portfolio Spend</a>
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Governance</p>
+            <a href="admin-compliance-audit.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🛡️</span> Compliance Audit</a>
+            <a href="admin-system-logs.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>📜</span> System Activity Logs</a>
+        </nav>
     </aside>
 
-    <main class="main-content">
-        <header class="header-flex">
+    <div class="main-content">
+        <div class="page-header">
             <div>
-                <h1>Client Infrastructure Manager</h1>
-                <p style="color: #64748b;">Managing 42 Active High-Volume Fleets</p>
+                <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Customer Relationship Portal</h1>
+                <p style="margin: 5px 0 0 0; color: #64748b;">Review accounts, contact details, assigned files, and operational health.</p>
             </div>
-            <button class="btn-purple">+ New Corporate Client</button>
-        </header>
-
-        <div class="admin-card">
-            <table class="client-table">
-                <thead>
-                    <tr>
-                        <th>Company / Base</th>
-                        <th>Fleet Size</th>
-                        <th>Alerts</th>
-                        <th>Statutory Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- CLIENT 1 -->
-                    <tr>
-                        <td><strong>Roseland Logistics LLC</strong><br><small>Illinois (IL)</small></td>
-                        <td><span class="badge badge-purple">112 Units</span></td>
-                        <td><span class="badge badge-warning" onclick="triggerDecalOrder('Roseland')">⚠️ 3 Missing Decals</span></td>
-                        <td>
-                            <button class="btn-outline" onclick="openUpload('Roseland')">Push to Vault</button>
-                            <button class="btn-purple" onclick="generateIftaPermit('Roseland Logistics LLC', 'DOT399201', 'K8829102', 'Unit 102')">Issue Temp Permit</button>
-                        </td>
-                    </tr>
-                    <!-- CLIENT 2 -->
-                    <tr>
-                        <td><strong>Global Freight Group</strong><br><small>Texas (TX)</small></td>
-                        <td><span class="badge badge-purple">250 Units</span></td>
-                        <td><span class="badge" style="color:var(--emerald)">✓ Compliant</span></td>
-                        <td>
-                            <button class="btn-outline">Push to Vault</button>
-                            <button class="btn-purple">Audit Math</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
-    </main>
-
-    <!-- admin-ifta.html -->
-<main class="main-content">
-    <div class="header-flex">
-        <h1>Quarterly IFTA Oversight</h1>
-        <div class="badge badge-warning">7 High-Risk MPG Detected</div>
-    </div>
-
-    <div class="admin-card">
-        <table class="client-table">
-            <thead>
-                <tr>
-                    <th>Carrier</th>
-                    <th>MPG</th>
-                    <th>Variance %</th>
-                    <th>IL Part B Surcharge</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="admin-math-rows">
-                <tr style="border-left: 4px solid var(--danger);">
-                    <td><strong>Roseland Logistics</strong></td>
-                    <td style="color:var(--danger)">3.2 (LOW)</td>
-                    <td>14.2% (FAIL)</td>
-                    <td>$1,240.50</td>
-                    <td><button class="btn-purple">Request Variance Cert</button></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</main>
-
-
-    <!-- ADMIN UPLOAD MODAL -->
-    <div id="uploadModal" class="modal">
-        <div class="modal-content">
-            <h2 style="margin-bottom:10px;">Push Document to Vault</h2>
-            <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Document will be instantly visible to the client in their Digital Vault.</p>
-            
-            <div style="margin-bottom:20px;">
-                <label style="display:block; font-size:0.7rem; font-weight:800; margin-bottom:8px;">Document Category</label>
-                <select id="doc-cat" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border);">
-                    <option>IFTA Quarterly License</option>
-                    <option>Uniform Cab Card (IRP)</option>
-                    <option>Articles of Organization</option>
-                    <option>Statutory POA (Signed)</option>
-                </select>
+        <div class="crm-grid">
+            <div class="crm-card">
+                <div class="client-meta">
+                    <div class="avatar">JD</div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 1rem;">John Doe</h4>
+                        <span style="font-size: 0.8rem; color: #64748b;">j.doe@example.com</span>
+                    </div>
+                </div>
+                <p style="font-size: 0.85rem; color: #4a5568;"><strong>Entities Active:</strong> 3 Formations</p>
+                <button class="btn-outline">Open Full Profile Canvas</button>
             </div>
-            
-            <input type="file" style="margin-bottom:25px;">
-            
-            <button class="btn-purple" style="width:100%; padding:15px;" onclick="closeModal()">Upload & Notify Client →</button>
-            <p style="text-align:center; margin-top:15px;"><a href="javascript:void(0)" onclick="closeModal()" style="color:#64748b; font-size:0.8rem;">Cancel</a></p>
         </div>
     </div>
-
     <script>
-        // MODAL LOGIC
-        function openUpload(name) { document.getElementById('uploadModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
-
-        // IFTA-2 DECAL ORDER TRIGGER
-        function triggerDecalOrder(client) {
-            alert(`AUTOMATED COMPLIANCE:\nGenerating Illinois IFTA-2 Form for ${client}.\n3 VINs without decals have been mapped to the form.`);
-        }
-
-        // IFTA PERMIT GENERATOR (jsPDF)
-        window.generateIftaPermit = function(clientName, dotNum, vin, unitNum) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFillColor(10, 31, 68);
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.text("IFTA TEMPORARY PERMIT", 105, 20, { align: "center" });
-            doc.setTextColor(10, 31, 68);
-            doc.setFontSize(10);
-            doc.text(`Carrier: ${clientName}`, 20, 50);
-            doc.text(`DOT: ${dotNum}`, 20, 60);
-            doc.text(`Unit: ${unitNum} | VIN: ${vin}`, 20, 70);
-            doc.setDrawColor(16, 185, 129);
-            doc.rect(140, 140, 40, 40);
-            doc.text("VERIFIED", 150, 160);
-            doc.save(`Permit_${unitNum}.pdf`);
-        };
+        (function(){function u(){const c=document.getElementById('portal-clock');if(c){const n=new Date();c.innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}}u();setInterval(u,1000);})();
     </script>
 </body>
 </html>

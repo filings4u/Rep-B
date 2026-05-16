@@ -350,3 +350,82 @@ WIZARD_REGISTRY["wizard-franchise-tax-filing"] = WIZARD_REGISTRY["franchise-tax-
 WIZARD_REGISTRY["wizard-owner-operators"] = WIZARD_REGISTRY["owner-operators"];
 WIZARD_REGISTRY["wizard-driver-qualification-file"] = WIZARD_REGISTRY["driver-qualification-file"];
 WIZARD_REGISTRY["wizard-ucr-registration"] = WIZARD_REGISTRY["ucr-registration"];
+
+
+
+// Ensure the registry namespace exists globally on the window context loop
+window.WIZARD_REGISTRY = window.WIZARD_REGISTRY || {};
+
+window.WIZARD_REGISTRY['trucker-authority'] = {
+    title: "FMCSA DOT OP-1 Registration",
+    basePrice: 499.00,
+    description: "Fulfill Federal Motor Carrier Safety Administration (FMCSA) operational guidelines seamlessly. Parameters automatically register to your workspace records prior to gateway checkout.",
+    plans: {
+        'starter': { title: "Starter Basic Fleet Tier", price: 399.00 },
+        'standard': { title: "Standard Trucker Authority Package", price: 499.00 },
+        'enterprise': { title: "Enterprise Complete Fleet Sync", price: 799.00 }
+    },
+    // 🚀 INJECTED SCHEMA: Form layout definition tree arrays processed by the wizard engine
+    formFieldsSchema: [
+        {
+            sectionTitle: "1. Applicant Information",
+            fields: [
+                { id: "full_name", label: "Full Name / Primary Officer", type: "text", required: true, placeholder: "e.g., John Doe" },
+                { id: "customer_email", label: "Email Address", type: "email", required: true, readOnly: true },
+                { id: "phone", label: "Phone Number", type: "tel", required: true, placeholder: "(555) 555-5555" },
+                { id: "target_company_name", label: "Legal Business Name", type: "text", required: true, placeholder: "e.g., Alpha Logistics Group LLC" }
+            ]
+        },
+        {
+            sectionTitle: "2. Business Details",
+            fields: [
+                { id: "business_type", label: "Type of Corporate Structure", type: "select", required: true, options: [
+                    { value: "sole_proprietorship", label: "Sole Proprietorship" },
+                    { value: "partnership", label: "Partnership" },
+                    { value: "corporation", label: "Corporation (C/S-Corp)" },
+                    { value: "llc", label: "Limited Liability Company (LLC)" }
+                ]},
+                { id: "duns_number", label: "DUNS Number (If assigned)", type: "text", required: false, placeholder: "Optional / 9-Digit ID" },
+                { id: "ein_number", label: "Federal Employer Identification Number (EIN)", type: "text", required: true, placeholder: "XX-XXXXXXX" }
+            ]
+        },
+        {
+            sectionTitle: "3. Business Address",
+            fields: [
+                { id: "street_address", label: "Physical Street Address", type: "text", required: true, placeholder: "P.O. Boxes not permitted" },
+                { id: "city", label: "City", type: "text", required: true, placeholder: "e.g., Chicago" },
+                { id: "state", label: "State Jurisdiction", type: "select", required: true, isStateDropdown: true },
+                { id: "zip_code", label: "Zip Code", type: "text", required: true, placeholder: "e.g., 60601" }
+            ]
+        },
+        {
+            sectionTitle: "4. Fleet & Vehicle Specifications",
+            fields: [
+                { id: "operation_type", label: "Classification Type of Operation", type: "select", required: true, options: [
+                    { value: "for_hire", label: "Motor Common Carrier For-Hire" },
+                    { value: "private", label: "Motor Private Carrier" }
+                ]},
+                { id: "cargo_type", label: "Primary Cargo Classification Type", type: "select", required: true, options: [
+                    { value: "general_freight", label: "General Freight Commodities" },
+                    { value: "household_goods", label: "Household Goods Moving" },
+                    { value: "hazardous_materials", label: "Hazardous Commercial Materials" },
+                    { value: "other", label: "Other Specialized Freight" }
+                ]},
+                { id: "number_of_vehicles", label: "Total Planned Fleet Vehicles (Power Units)", type: "number", min: "1", value: "1", required: true }
+            ]
+        },
+        {
+            sectionTitle: "5. Scope of Intended Services",
+            fields: [
+                { id: "services_description", label: "Describe localized or interstate service logistics targets", type: "textarea", required: true, placeholder: "e.g., Interstate transport of commercial general dry van commodities..." }
+            ]
+        },
+        {
+            sectionTitle: "6. Certification Signature",
+            fields: [
+                { id: "signature", label: "Legal Electronic Signature Name", type: "text", required: true, placeholder: "Type primary corporate officer name" },
+                { id: "date_executed", label: "Date of Execution", type: "date", required: true }
+            ]
+        }
+    ]
+};
