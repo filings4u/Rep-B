@@ -192,10 +192,12 @@ window.addEventListener('load', async () => {
                         <span class="search-icon">🔍</span>
                         <input type="text" class="search-input" placeholder="Search filings...">
                     </div>
-                    <div class="notification-wrapper">
-                        <span>🔔</span>
-                        <div class="notification-dot"></div>
-                    </div>
+                    <button class="notification-wrapper" onclick="window.location.href='portal-notifications.html'" style="background: transparent; border: none; cursor: pointer; position: relative; padding: 5px; display: inline-flex; align-items: center;">
+    <span style="font-size: 1.3rem;">🔔</span>
+    <!-- Dynamic notification counter dot node -->
+    <div class="notification-dot" id="global-unread-badge" style="display: none; position: absolute; top: 0; right: 0; background: var(--danger-red, #ef4444); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; font-weight: 800; align-items: center; justify-content: center;">0</div>
+</button>
+
                     <button class="btn-primary-small" onclick="switchActivePortalTab('catalog-tab', null)">+ New Filing</button>
                 </div>
             </header>
@@ -509,10 +511,6 @@ window.addEventListener('load', async () => {
 
 
 </div>
-
-
-
-
 
         </div>
     </main>
@@ -1281,6 +1279,171 @@ async function renderUserSecureVaultFiles(userId) {
             }
         });
     });
+
+    async function loadCustomerPaymentReceipts() {
+    // Read user identity authentication matrices out of active memory state loops
+    const { data: { session } } = await window.portalSupabaseInstance.auth.getSession();
+    if (!session) return;
+
+    const { data: orders, error } = await window.portalSupabaseInstance
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error loading invoices mapping array:", error);
+        return;
+    }
+
+    // Target a wrapper grid container element inside your portal-dashboard UI code
+    const invoiceContainer = document.getElementById('client-invoices-list-box');
+    if (!invoiceContainer) return;
+
+    if (!orders || orders.length === 0) {
+        invoiceContainer.innerHTML = `<p style="color:#64748b; font-size:0.9rem;">No payment documents discovered inside current workspace.</p>`;
+        return;
+    }
+
+    invoiceContainer.innerHTML = orders.map(order => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#ffffff; border:1px solid #e2e8f0; padding:15px; border-radius:8px; margin-bottom:10px;">
+            <div>
+                <strong style="color:#0a1f44; display:block;">${order.company_name}</strong>
+                <span style="font-size:0.8rem; color:#64748b;">${new Date(order.created_at).toLocaleDateString()}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <span style="font-weight:700; color:#0a1f44;">$${order.amount_paid.toFixed(2)}</span>
+                <a href="${order.receipt_url}" target="_blank" style="background:#0a1f44; color:#ffffff; padding:6px 12px; border-radius:4px; font-size:0.8rem; font-weight:600; text-decoration:none;">Download</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Invoke data sync tracking immediately after document mount routines pass successfully
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(loadCustomerPaymentReceipts, 1500); 
+});
+
+
+async function syncAdminDashboardMetrics() {
+    if (!window.portalSupabaseInstance) {
+        console.error("Connection instance missing from workspace context.");
+        return;
+    }
+
+    try {
+        // 1. DYNAMIC SALES LEDGER AND PLATFORM REVENUE FETCH
+        const { data: records, error: orderErr } = await window.portalSupabaseInstance
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!orderErr && records) {
+            const totalRev = records.reduce((sum, item) => sum + parseFloat(item.amount_paid || 0), 0);
+            const revDisplay = document.getElementById('stat-total-revenue');
+            if (revDisplay) revDisplay.innerText = `$${totalRev.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+            const targetBox = document.getElementById('admin-global-sales-target-box');
+            if (targetBox) {
+                targetBox.innerHTML = records.map(order => `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 14px 16px; font-size: 0.9rem; color: #0a1f44; font-weight: 600;">${order.company_name}</td>
+                        <td style="padding: 14px 16px; font-size: 0.85rem; color: #4a5568;">${order.customer_email}</td>
+                        <td style="padding: 14px 16px; font-size: 0.85rem; color: #64748b;">${new Date(order.created_at).toLocaleDateString()}</td>
+                        <td style="padding: 14px 16px; font-size: 0.9rem; font-weight: 700; color: #10b981;">$${parseFloat(order.amount_paid).toFixed(2)}</td>
+                        <td style="padding: 14px 16px;">
+                            ${order.receipt_url ? `<a href="${order.receipt_url}" target="_blank" style="color:#0a1f44; font-weight:700; text-decoration:underline;">View Receipt ➔</a>` : 'Processing'}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // 2. ACTIVE ENTITIES CALCULATOR MAPPING (Pulls unique profile entries count)
+        const { count: usersCount, error: userErr } = await window.portalSupabaseInstance
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+        
+        if (!userErr && document.getElementById('stat-active-users')) {
+            document.getElementById('stat-active-users').innerText = usersCount || 0;
+        }
+
+        // 3. AUDITS AND SYSTEM HEALTH STATS LOGS MAPPING
+        const { data: audits, error: auditErr } = await window.portalSupabaseInstance
+            .from('filings_tracker')
+            .select('status');
+
+        if (!auditErr && audits) {
+            const pendingCount = audits.filter(a => a.status === 'pending' || a.status === 'overdue').length;
+            const healthyCount = audits.filter(a => a.status === 'completed' || a.status === 'active').length;
+
+            if (document.getElementById('stat-pending-filings')) document.getElementById('stat-pending-filings').innerText = pendingCount;
+            if (document.getElementById('stat-completed-filings')) document.getElementById('stat-completed-filings').innerText = healthyCount;
+        }
+
+    } catch (err) {
+        console.error("Metrics computation lifecycle exception:", err);
+    }
+}
+
+// 🚀 REAL-TIME ALERT BROADCASTER PIPELINE HANDLER
+document.getElementById('adminAlertForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const statusBox = document.getElementById('alertStatus');
+    const submitBtn = document.getElementById('alertSubmitBtn');
+    const targetUserId = document.getElementById('adminClientDropdown').value;
+
+    if (!targetUserId) {
+        statusBox.innerHTML = "<span style='color:red;'>Please select a target client profile from the dropdown panel first.</span>";
+        return;
+    }
+
+    submitBtn.disabled = true;
+    statusBox.innerText = "Transmitting secure multi-channel notification package...";
+
+    try {
+        const title = document.getElementById('alertTitle').value;
+        const msg = document.getElementById('alertMessage').value;
+
+        // Step A: Push the message to the internal web database table
+        const { error: dbError } = await window.portalSupabaseInstance
+            .from('notifications')
+            .insert([{
+                user_id: targetUserId,
+                title: title,
+                message: msg,
+                is_read: false
+            }]);
+
+        if (dbError) throw dbError;
+
+        // Step B: Route to Edge Function to trigger the transactional email sendoff
+        const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'send-alert-email',
+                userId: targetUserId,
+                subject: title,
+                textBody: msg
+            })
+        });
+
+        if (!response.ok) throw new Error("Database alert logged, but email loop timed out.");
+
+        statusBox.innerHTML = "<span style='color:green;'>✓ Alert broadcasted to portal dashboard and email inbox!</span>";
+        document.getElementById('adminAlertForm').reset();
+
+    } catch (err) {
+        statusBox.innerHTML = `<span style='color:red;'>Broadcast Fault: ${err.message}</span>`;
+    } finally {
+        submitBtn.disabled = false;
+    }
+});
+
+// Run initial execution thread
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(syncAdminDashboardMetrics, 1000);
+});
 
 
 </script>

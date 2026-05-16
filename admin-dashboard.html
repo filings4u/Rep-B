@@ -464,13 +464,33 @@
 
             </div>
 
-            <!-- 💰 INJECTED: LIVE DYNAMIC HORIZONTAL TRANSACTION SALES LEDGER -->
+<!-- 💰 INJECTED: LIVE DYNAMIC HORIZONTAL TRANSACTION SALES LEDGER -->
 <div class="portal-card" style="margin: 40px 0; width: 100%; box-sizing: border-box;">
-    <h3 style="margin-bottom: 20px;">Global Corporate Sales Pricing Ledger</h3>
-    <div id="admin-global-sales-target-box">
-        <p style="color:#64748b; font-size:0.9rem;">Initializing tracking records matrices...</p>
+    <h3 style="margin-bottom: 20px; color: var(--navy);">Global Corporate Sales Pricing Ledger</h3>
+    
+    <div style="overflow-x: auto; width: 100%;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc;">
+                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Filing Entity</th>
+                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Customer Email</th>
+                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Purchase Date</th>
+                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Amount Paid</th>
+                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Action</th>
+                </tr>
+            </thead>
+            <!-- DYNAMIC TARGET PLUG FOR LIVE ORDER ROWS -->
+            <tbody id="admin-global-sales-target-box">
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem;">
+                        Initializing transaction ledger matrix logs...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
+
 
 
             <div class="portal-grid"> 
@@ -705,6 +725,113 @@ function initializeOperationalFormHandlers() {
     }
 }
 
+async function loadGlobalAdminTransactionLogs() {
+    const { data: globalOrders, error } = await window.portalSupabaseInstance
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Admin workspace query extraction matrix block fault execution:", error);
+        return;
+    }
+
+    const adminContainer = document.getElementById('admin-global-orders-table');
+    if (!adminContainer) return;
+
+    adminContainer.innerHTML = globalOrders.map(order => `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 12px; font-size:0.9rem; color:#0a1f44; font-weight:600;">${order.company_name}</td>
+            <td style="padding: 12px; font-size:0.9rem; color:#4a5568;">${order.customer_email}</td>
+            <td style="padding: 12px; font-size:0.9rem; color:#64748b;">${new Date(order.created_at).toLocaleDateString()}</td>
+            <td style="padding: 12px; font-size:0.9rem; font-weight:700; color:#10b981;">$${order.amount_paid.toFixed(2)}</td>
+            <td style="padding: 12px;">
+                <a href="${order.receipt_url}" target="_blank" style="color:#0a1f44; font-weight:700; font-size:0.85rem; text-decoration:underline;">View Receipt ➔</a>
+            </td>
+        </tr>
+    `).join('');
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(loadGlobalAdminTransactionLogs, 1500);
+});
+
+async function syncAdminSalesLedger() {
+    const targetBox = document.getElementById('admin-global-sales-target-box');
+    const revenueDisplay = document.getElementById('stat-total-revenue');
+
+    // Security Fallback: Confirm Supabase framework initialized properly
+    if (!window.portalSupabaseInstance) {
+        console.error("Critical Admin Core: Connection wrapper missing from context runtime.");
+        if (targetBox) targetBox.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center; padding:20px;">Configuration Mount Failure.</td></tr>`;
+        return;
+    }
+
+    try {
+        // Fetch all order metrics chronologically out of public database container
+        const { data: records, error } = await window.portalSupabaseInstance
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // If the table database instance is blank, clean out the loader panel views
+        if (!records || records.length === 0) {
+            targetBox.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem;">
+                        No corporate transactions logged in system architecture vaults yet.
+                    </td>
+                </tr>`;
+            if (revenueDisplay) revenueDisplay.innerText = "$0.00";
+            return;
+        }
+
+        // 📊 COMPUTE TOTAL PLATFORM REVENUE DYNAMICALLY
+        const combinedRevenue = records.reduce((runningSum, currentItem) => {
+            return runningSum + parseFloat(currentItem.amount_paid || 0);
+        }, 0);
+
+        if (revenueDisplay) {
+            revenueDisplay.innerText = `$${combinedRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        // 💻 RENDER EACH TRANSACTION INTO DATA ROW STRUCTS
+        targetBox.innerHTML = records.map(order => {
+            const displayDate = new Date(order.created_at).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+
+            // Fallback checking to confirm receipt urls map clean string profiles
+            const downloadActionLink = order.receipt_url 
+                ? `<a href="${order.receipt_url}" target="_blank" style="color: #0a1f44; font-weight: 700; text-decoration: underline; font-size: 0.85rem;">View Receipt ➔</a>`
+                : `<span style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">Processing...</span>`;
+
+            return `
+                <tr style="border-bottom: 1px solid #e2e8f0; hover: background: #f8fafc;">
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #0a1f44; font-weight: 600;">${order.company_name}</td>
+                    <td style="padding: 14px 16px; font-size: 0.85rem; color: #4a5568;">${order.customer_email}</td>
+                    <td style="padding: 14px 16px; font-size: 0.85rem; color: #64748b;">${displayDate}</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; font-weight: 700; color: #10b981;">$${parseFloat(order.amount_paid).toFixed(2)}</td>
+                    <td style="padding: 14px 16px;">${downloadActionLink}</td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (runtimeErr) {
+        console.error("Ledger execution lifecycle fault caught:", runtimeErr);
+        if (targetBox) {
+            targetBox.innerHTML = `<tr><td colspan="5" style="color: red; padding: 20px; text-align: center; font-weight: 600;">Failed to fetch ledger logs: ${runtimeErr.message}</td></tr>`;
+        }
+    }
+}
+
+// Automatically fire metrics loading sequence after core dependencies are compiled
+document.addEventListener("DOMContentLoaded", () => {
+    // Small delay ensures client configuration initialization loops pass successfully
+    setTimeout(syncAdminSalesLedger, 1200);
+});
 
 </script>
 <!-- END: MASTER ADMINISTRATIVE AUTOMATION BACKEND PIPELINE -->

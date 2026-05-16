@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful | filings4u</title>
+    <!-- Production JavaScript CDN Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body style="background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; padding: 40px 20px;">
@@ -13,8 +14,10 @@
         <h2 style="color: #0a1f44; margin:0 0 10px 0;">Order Confirmed!</h2>
         <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 30px;">Thank you for your business. Your registration processing framework has officially started.</p>
 
+        <!-- RECEIPT INJECTION PLUG NODE -->
         <div style="border-top: 1px solid #e2e8f0; padding-top: 25px; margin-bottom: 30px;">
-            <button onclick="fetchStripeReceipt()" style="background: transparent; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 6px; font-weight: 600; color: #4a5568; cursor: pointer; width: 100%;">🗎 Download Payment Receipt</button>
+            <a id="receipt-btn" href="#" target="_blank" style="display: none; background: transparent; border: 1px solid #e2e8f0; padding: 12px 20px; border-radius: 6px; font-weight: 600; color: #4a5568; text-decoration: none; text-align: center;">🗎 Download Payment Receipt</a>
+            <div id="receipt-loader" style="color: #64748b; font-size: 0.9rem;">Compiling digital payment invoice...</div>
         </div>
 
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; text-align: left;">
@@ -25,19 +28,57 @@
     </main>
 
     <script>
-        // Clean session cache tracking to prevent configuration parameter memory leaks
-        sessionStorage.removeItem('pendingOrder');
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Clean up raw local data configurations to secure checkout loops
+            sessionStorage.removeItem('pendingOrder');
 
-        function fetchStripeReceipt() {
+            // Initialize connection parameters directly 
+            const supabaseInstance = supabase.createClient(
+                'https://lrbimrlbskjweynxlgas.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+            );
+
             const urlParams = new URLSearchParams(window.location.search);
             const stripeSessionId = urlParams.get('session_id');
-            if (stripeSessionId) {
-                // If tracking through hosted payments, redirect to Stripe customer portal, otherwise alert fallback instructions
-                alert("Your official tax invoice receipt is being compiled and sent directly to your registered mailbox.");
-            } else {
-                alert("Receipt generated. Please check your external inbox configuration profile folder.");
+
+            if (!stripeSessionId) {
+                document.getElementById('receipt-loader').innerText = "Order mapped. Receipt copy dispatched to mailbox.";
+                return;
             }
-        }
+
+            try {
+                // Fetch dynamic receipt configuration details out of Stripe's backend system infrastructure
+                const response = await fetch('https://supabase.co/functions/v1/stripe-webhook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'retrieve-session', session_id: stripeSessionId })
+                });
+
+                const data = await response.json();
+                if (!response.ok || data.error) throw new Error(data.error || "Retrieval error");
+
+                // Bind URL values directly to the download button layout engine target elements
+                if (data.receipt_url) {
+                    const btn = document.getElementById('receipt-btn');
+                    btn.href = data.receipt_url;
+                    btn.style.display = 'block';
+                    document.getElementById('receipt-loader').style.display = 'none';
+                }
+
+                // Write the transaction record into public.orders database table
+                await supabaseInstance.from('orders').insert([{
+                    stripe_session_id: stripeSessionId,
+                    customer_email: data.customer_email,
+                    company_name: data.company_name,
+                    amount_paid: data.amount_paid,
+                    receipt_url: data.receipt_url
+                }]);
+
+            } catch (err) {
+                console.error("Failed to map receipts lifecycle sync pipelines:", err);
+                document.getElementById('receipt-loader').innerText = "Invoice logged. Available inside dashboard panels.";
+            }
+        });
     </script>
 </body>
 </html>
