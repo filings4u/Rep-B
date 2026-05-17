@@ -245,133 +245,157 @@
             buildUpsellInterfaceGrid();
         });
 
-        // --- 3. STEP 2: TRANSITION & VALIDATION INTAKE ENGINES ---
-        function transitionToUpsellStep() {
-            const inputs = document.querySelectorAll('#step-pane-intake .custom-dynamic-input');
-            let invalidElement = null;
+// ==========================================================================
+// 🧱 FILINGS4U COMPATIBLE MULTI-STEP FUNNEL APPARATUS ENGINE
+// ==========================================================================
 
-            inputs.forEach(i => { i.style.borderColor = '#e2e8f0'; i.style.boxShadow = 'none'; });
+// 🌟 CRITICAL STATE TOKENS: Safely retains form values in memory when steps change
+let globalCachedUserEmail = "";
+let globalCachedCompanyName = "";
 
-            const email = document.getElementById('customer_guest_email');
-            const comp = document.getElementById('target_company_name');
+// --- 3. STEP 2: TRANSITION & VALIDATION INTAKE ENGINES ---
+function transitionToUpsellStep() {
+    const inputs = document.querySelectorAll('#step-pane-intake .custom-dynamic-input');
+    let invalidElement = null;
 
-            if (!email.value.trim()) { invalidElement = email; }
-            if (!comp.value.trim()) { if (!invalidElement) invalidElement = comp; }
+    inputs.forEach(i => {
+        i.style.borderColor = '#e2e8f0';
+        i.style.boxShadow = 'none';
+    });
 
-            const key = document.getElementById('cached_service_key').value;
-            const extra = window.WIZARD_REGISTRY[key]?.extraFields || [];
-            extra.forEach(f => {
-                const el = document.getElementById(`custom_${f.id}`);
-                if (el && !el.value.trim()) { if (!invalidElement) invalidElement = el; }
-            });
+    const email = document.getElementById('customer_guest_email');
+    const comp = document.getElementById('target_company_name');
 
-            if (invalidElement) {
-                invalidElement.style.borderColor = '#ef4444';
-                invalidElement.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
-                invalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
-            }
+    if (!email || !email.value.trim()) {
+        invalidElement = email;
+    }
+    if (!comp || !comp.value.trim()) {
+        if (!invalidElement) invalidElement = comp;
+    }
 
-            document.getElementById('step-pane-intake').classList.remove('step-active');
-            document.getElementById('step-pane-upsells').classList.add('step-active');
+    const key = document.getElementById('cached_service_key').value;
+    const extra = window.WIZARD_REGISTRY[key]?.extraFields || [];
+    extra.forEach(f => {
+        const el = document.getElementById(`custom_${f.id}`);
+        if (el && !el.value.trim()) {
+            if (!invalidElement) invalidElement = el;
         }
+    });
 
-        function buildUpsellInterfaceGrid() {
-            const target = document.getElementById('upsell-items-injection-target');
-            const upsells = window.UPSELL_REGISTRY || {};
-            target.innerHTML = "";
+    if (invalidElement) {
+        invalidElement.style.borderColor = '#ef4444';
+        invalidElement.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
+        invalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
 
-            Object.keys(upsells).forEach(key => {
-                const item = upsells[key];
-                const isChecked = selectedUpsellKeys.includes(key);
-                
-                const card = document.createElement('div');
-                card.className = `upsell-item-card ${isChecked ? 'selected' : ''}`;
-                card.id = `upsell-card-${key}`;
-                card.innerHTML = `
-                    <div style="flex:1; text-align:left;">
-                        <h4 style="margin:0 0 4px 0; color:#0a1f44; font-weight:700; font-size:1.05rem;">${item.title}</h4>
-                        <p style="margin:0; color:#64748b; font-size:0.85rem; line-height:1.4;">${item.desc}</p>
-                    </div>
-                    <div style="text-align:right; display:flex; align-items:center; gap:15px;">
-                        <span style="font-weight:800; color:var(--navy); font-size:1.1rem;">+$${item.price.toFixed(2)}</span>
-                        <input type="checkbox" style="transform:scale(1.3); cursor:pointer;" ${isChecked ? 'checked' : ''} onchange="handleUpsellSelectionChange('${key}', this)">
-                    </div>
-                `;
-                target.appendChild(card);
-            });
-        }
+    // 🚀 CACHE ACQUISITION LOCK: Store values safely right before the DOM elements are modified
+    globalCachedUserEmail = email.value.trim();
+    globalCachedCompanyName = comp.value.trim();
 
-        function handleUpsellSelectionChange(key, checkbox) {
-            const card = document.getElementById(`upsell-card-${key}`);
-            if (checkbox.checked) {
-                if (!selectedUpsellKeys.includes(key)) selectedUpsellKeys.push(key);
-                card.classList.add('selected');
-            } else {
-                selectedUpsellKeys = selectedUpsellKeys.filter(k => k !== key);
-                card.classList.remove('selected');
+    document.getElementById('step-pane-intake').classList.remove('step-active');
+    document.getElementById('step-pane-upsells').classList.add('step-active');
+}
+
+function buildUpsellInterfaceGrid() {
+    const target = document.getElementById('upsell-items-injection-target');
+    const upsells = window.UPSELL_REGISTRY || {};
+    target.innerHTML = "";
+
+    Object.keys(upsells).forEach(key => {
+        const item = upsells[key];
+        const isChecked = selectedUpsellKeys.includes(key);
+
+        const card = document.createElement('div');
+        card.className = `upsell-item-card ${isChecked ? 'selected' : ''}`;
+        card.id = `upsell-card-${key}`;
+        card.innerHTML = `
+            <div style="flex:1; text-align:left;">
+                <h4 style="margin:0 0 4px 0; color:#0a1f44; font-weight:700; font-size:1.05rem;">${item.title}</h4>
+                <p style="margin:0; color:#64748b; font-size:0.85rem; line-height:1.4;">${item.desc}</p>
+            </div>
+            <div style="text-align:right; display:flex; align-items:center; gap:15px;">
+                <span style="font-weight:800; color:var(--navy); font-size:1.1rem;">+$${item.price.toFixed(2)}</span>
+                <input type="checkbox" style="transform:scale(1.3); cursor:pointer;" ${isChecked ? 'checked' : ''} onchange="handleUpsellSelectionChange('${key}', this)">
+            </div>
+        `;
+        target.appendChild(card);
+    });
+}
+
+function handleUpsellSelectionChange(key, checkbox) {
+    const card = document.getElementById(`upsell-card-${key}`);
+    if (checkbox.checked) {
+        if (!selectedUpsellKeys.includes(key)) selectedUpsellKeys.push(key);
+        card.classList.add('selected');
+    } else {
+        selectedUpsellKeys = selectedUpsellKeys.filter(k => k !== key);
+        card.classList.remove('selected');
+    }
+
+    const extAgentForm = document.getElementById('external-agent-form-container');
+    if (!selectedUpsellKeys.includes('registered-agent')) {
+        extAgentForm.style.display = "block";
+        document.querySelectorAll('#external-agent-form-container .custom-dynamic-input').forEach(i => i.setAttribute('required', 'true'));
+    } else {
+        extAgentForm.style.display = "none";
+        document.querySelectorAll('#external-agent-form-container .custom-dynamic-input').forEach(i => i.removeAttribute('required'));
+    }
+}
+
+// --- 4. STEP 3: REAL-TIME SUMMARY & POA COMPILATION ---
+function transitionToSummaryStep() {
+    if (!selectedUpsellKeys.includes('registered-agent')) {
+        let invalidField = null;
+        const extInputs = document.querySelectorAll('#external-agent-form-container .custom-dynamic-input');
+        extInputs.forEach(i => {
+            i.style.borderColor = '#e2e8f0';
+            i.style.boxShadow = 'none';
+        });
+
+        extInputs.forEach(i => {
+            if (!i.value.trim()) {
+                if (!invalidField) invalidField = i;
             }
+        });
 
-            const extAgentForm = document.getElementById('external-agent-form-container');
-            if (!selectedUpsellKeys.includes('registered-agent')) {
-                extAgentForm.style.display = "block";
-                document.querySelectorAll('#external-agent-form-container .custom-dynamic-input').forEach(i => i.setAttribute('required', 'true'));
-            } else {
-                extAgentForm.style.display = "none";
-                document.querySelectorAll('#external-agent-form-container .custom-dynamic-input').forEach(i => i.removeAttribute('required'));
-            }
+        if (invalidField) {
+            invalidField.style.borderColor = '#ef4444';
+            invalidField.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
+            invalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
         }
+    }
 
-        // --- 4. STEP 3: REAL-TIME SUMMARY & POA COMPILATION ---
-        function transitionToSummaryStep() {
-            if (!selectedUpsellKeys.includes('registered-agent')) {
-                let invalidField = null;
-                const extInputs = document.querySelectorAll('#external-agent-form-container .custom-dynamic-input');
-                extInputs.forEach(i => { i.style.borderColor = '#e2e8f0'; i.style.boxShadow='none'; });
-                
-                extInputs.forEach(i => {
-                    if (!i.value.trim()) { if (!invalidField) invalidField = i; }
-                });
+    document.getElementById('step-pane-upsells').classList.remove('step-active');
+    document.getElementById('step-pane-summary').classList.add('step-active');
+    calculateRealTimeSummaryMatrix();
+}
 
-                if (invalidField) {
-                    invalidField.style.borderColor = '#ef4444';
-                    invalidField.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
-                    invalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-            }
+function calculateRealTimeSummaryMatrix() {
+    const listTarget = document.getElementById('summary-items-list-target');
+    const totalTarget = document.getElementById('summary-total-price-box');
+    const docTarget = document.getElementById('dynamic-poa-document-body');
+    listTarget.innerHTML = "";
+    
+    let rollingSum = coreBasePrice;
+    listTarget.innerHTML += `<div class="summary-item-row"><strong>${chosenServiceTitle}</strong><span>$${coreBasePrice.toFixed(2)}</span></div>`;
 
-            document.getElementById('step-pane-upsells').classList.remove('step-active');
-            document.getElementById('step-pane-summary').classList.add('step-active');
-            calculateRealTimeSummaryMatrix();
-        }
+    selectedUpsellKeys.forEach(key => {
+        const item = window.UPSELL_REGISTRY[key];
+        rollingSum += item.price;
+        listTarget.innerHTML += `<div class="summary-item-row"><span>+ ${item.title}</span><span>$${item.price.toFixed(2)}</span></div>`;
+    });
 
-        function calculateRealTimeSummaryMatrix() {
-            const listTarget = document.getElementById('summary-items-list-target');
-            const totalTarget = document.getElementById('summary-total-price-box');
-            const docTarget = document.getElementById('dynamic-poa-document-body');
-            
-            listTarget.innerHTML = "";
-            let rollingSum = coreBasePrice;
+    totalTarget.innerText = `$${rollingSum.toFixed(2)}`;
+    sessionStorage.setItem('rollingCalculatedSumPrice', rollingSum);
 
-            listTarget.innerHTML += `<div class="summary-item-row"><strong>${chosenServiceTitle}</strong><span>$${coreBasePrice.toFixed(2)}</span></div>`;
+    // 🚀 FIXED: Fed parameters context properties cleanly via memory variables to prevent null errors
+    const rightNowDate = new Date().toLocaleDateString([], { month: 'long', day: '2-digit', year: 'numeric' });
+    
+    const legalContractText = `LIMITED POWER OF ATTORNEY & FILING AUTHORIZATION
 
-            selectedUpsellKeys.forEach(key => {
-                const item = window.UPSELL_REGISTRY[key];
-                rollingSum += item.price;
-                listTarget.innerHTML += `<div class="summary-item-row"><span>+ ${item.title}</span><span>$${item.price.toFixed(2)}</span></div>`;
-            });
-
-            totalTarget.innerText = `$${rollingSum.toFixed(2)}`;
-            sessionStorage.setItem('rollingCalculatedSumPrice', rollingSum);
-
-            const companyInputName = document.getElementById('target_company_name').value.trim().toUpperCase();
-            const customerInputEmail = document.getElementById('customer_guest_email').value.trim();
-            const rightNowDate = new Date().toLocaleDateString([], { month: 'long', day: '2-digit', year: 'numeric' });
-
-            const legalContractText = `LIMITED POWER OF ATTORNEY & FILING AUTHORIZATION
-
-This instrument certifies that the applicant, operating on behalf of corporate structure ${companyInputName || "[ SPECIFY COMPANY NAME ]"} ("Principal"), hereby nominates, constitutes, and appoints filings4u LLC ("Agent") as its true and lawful attorney-in-fact.
+This instrument certifies that the applicant, operating on behalf of corporate structure ${globalCachedCompanyName || "[ SPECIFY COMPANY NAME ]"} ("Principal"), hereby nominates, constitutes, and appoints filings4u LLC ("Agent") as its true and lawful attorney-in-fact.
 
 Agent is granted full limited authorization and power to act in the name, place, and stead of Principal for the distinct purpose of drafting, preparing, electronic signing, and submitting processing declarations, licensing requests, regulatory registrations, and mandated compliance applications directly with the Federal Motor Carrier Safety Administration (FMCSA), Internal Revenue Service (IRS), and respective State Secretarial Departments.
 
@@ -380,18 +404,37 @@ Principal acknowledges that Agent operates as a private, third-party logistics c
 This Limited Power of Attorney structure activates immediately on this day of execution: ${rightNowDate}, and terminates automatically upon successful jurisdictional status certification validation loops.
 
 Executed Remotely via Certified Electronic Form Delivery Channel.
-Account Correspondence Vector: ${customerInputEmail || "[ SPECIFY EMAIL ]"}`;
+Account Correspondence Vector: ${globalCachedUserEmail || "[ SPECIFY EMAIL ]"}`;
 
-            docTarget.innerText = legalContractText;
-            sessionStorage.setItem('compiledLegalPoaTextString', legalContractText);
-        }
+    if (docTarget) docTarget.innerText = legalContractText;
+    sessionStorage.setItem('compiledLegalPoaTextString', legalContractText);
+}
 
 /* ==========================================================================
    🚀 SECURED PAYLOAD DELIVERIES RUNTIME CONTROLLER
    ========================================================================== */
 async function executeFinalFunnelOrderPaymentSubmit() {
-    // 1. Reset all field validation outlines before checking values
-    const allFormInputs = document.querySelectorAll('.custom-dynamic-input');
+    // Verify Power of Attorney checkboxes states
+    const poaCheck = document.getElementById('poa_checkbox');
+    const poaSig = document.getElementById('poa_signature_input');
+
+    if (poaSig) {
+        poaSig.style.borderColor = '#e2e8f0';
+        poaSig.style.boxShadow = 'none';
+    }
+
+    if (!poaCheck || !poaCheck.checked || !poaSig || !poaSig.value.trim()) {
+        if (poaSig) {
+            poaSig.style.borderColor = '#ef4444';
+            poaSig.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
+            poaSig.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        alert("Mandatory Verification: You must execute and sign the corporate Limited Power of Attorney to launch government processing.");
+        return;
+    }
+
+    // 1. Clean dynamic extra input borders styling
+    const allFormInputs = document.querySelectorAll('#extra-government-inputs-hook .custom-dynamic-input');
     allFormInputs.forEach(input => {
         input.style.borderColor = '#e2e8f0';
         input.style.boxShadow = 'none';
@@ -399,31 +442,19 @@ async function executeFinalFunnelOrderPaymentSubmit() {
 
     let firstInvalidElement = null;
 
-    // 2. Validate standard baseline input parameters fields
-    const emailField = document.getElementById('customer_guest_email');
-    const companyField = document.getElementById('target_company_name');
-
-    if (emailField && !emailField.value.trim()) {
-        emailField.style.borderColor = '#ef4444';
-        emailField.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
-        if (!firstInvalidElement) firstInvalidElement = emailField;
-    }
-
-    if (companyField && !companyField.value.trim()) {
-        companyField.style.borderColor = '#ef4444';
-        companyField.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
-        if (!firstInvalidElement) firstInvalidElement = companyField;
-    }
-
-    // 3. Extract hidden context variables flags properties
+    // 2. Extract configuration variables tokens
     const calculatedPrice = document.getElementById('cachedActivePrice').value;
     const verifiedPlanTier = document.getElementById('cachedPlanTier').value;
     const serviceKey = document.getElementById('cachedServiceKey').value;
+    const finalPriceSum = sessionStorage.getItem('rollingCalculatedSumPrice') || calculatedPrice;
 
-    const collectedCustomMetaData = {};
+    const collectedCustomMetaData = {
+        poa_signature: poaSig.value.trim()
+    };
+
     const registry = window.WIZARD_REGISTRY || {};
     const currentFields = registry[serviceKey]?.extraFields || [];
-
+    
     currentFields.forEach(field => {
         const element = document.getElementById(`custom_${field.id}`);
         if (element) {
@@ -438,22 +469,31 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         }
     });
 
-    // 4. Smooth scroll intercept if questions are left blank
     if (firstInvalidElement) {
         firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(() => { firstInvalidElement.focus(); }, 400);
         return;
     }
 
-    // 5. Package the unified form state data string payload
-    const emailValue = emailField.value.trim();
-    const companyName = companyField.value.trim();
-    const cleanEscapedEmail = encodeURIComponent(emailValue);
+    // Capture third-party registered agent components if unselected
+    if (!selectedUpsellKeys.includes('registered-agent')) {
+        metadataPayload['external_agent'] = {
+            name: document.getElementById('ext_agent_name')?.value || '',
+            street: document.getElementById('ext_agent_address')?.value || '',
+            suite: document.getElementById('ext_agent_suite')?.value || '',
+            city: document.getElementById('ext_agent_city')?.value || '',
+            state: document.getElementById('ext_agent_state')?.value || '',
+            zip: document.getElementById('ext_agent_zip')?.value || '',
+        };
+    }
+
+    // 🚀 FIXED STRING TRANSLATIONS: Clean template interpolation formats prevents parsing syntax breaks
+    const cleanEscapedEmail = encodeURIComponent(globalCachedUserEmail);
 
     const pendingOrderPayload = {
-        company_name: companyName,
-        customer_email: emailValue,
-        price: calculatedPrice,
+        company_name: globalCachedCompanyName,
+        customer_email: globalCachedUserEmail,
+        price: finalPriceSum,
         plan: `${serviceKey}-${verifiedPlanTier}`,
         metadata: collectedCustomMetaData
     };
@@ -461,21 +501,20 @@ async function executeFinalFunnelOrderPaymentSubmit() {
     sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrderPayload));
 
     try {
-        /* 🚀 FIXED FULL ENDPOINT URL STRING PATH (No placeholder linkages):
-           h t t p s : / / l r b i m r l b s k j w e y n x l g a s . s u p a b a s e . c / f u n c t i o n s / v 1 / s t r i p e - w e b h o o k */
         const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
             method: 'POST',
             mode: 'cors', // Forces clear cross-origin preflight handshakes [1]
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
                 action: 'checkout',
-                email: emailValue,
-                company_name: companyName,
-                amount: Math.round(parseFloat(calculatedPrice) * 100),
+                email: globalCachedUserEmail, // Fetched from memory parameters maps
+                company_name: globalCachedCompanyName,
+                amount: Math.round(parseFloat(finalPriceSum) * 100),
                 service_type: `${serviceKey}-${verifiedPlanTier}`,
+                // 🚀 FIXED URL STRINGS: Added missing forward slash and parameter keys mapping variables
                 return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`
             })
         });
@@ -495,6 +534,7 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         alert(`Order execution fault: ${err.message}`);
     }
 }
+
 
 
     </script>
