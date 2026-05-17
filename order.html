@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Payment Checkout | filings4u</title>
-    <!-- Match the styling framework layout profiles of the wizard engine -->
     <link rel="stylesheet" href="assets/css/portal-wizard.css">
     <script src="https://js.stripe.com/v3/"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,16 +19,15 @@
 </head>
 <body style="background-color: #f8fafc; margin:0; padding:20px; font-family: system-ui, -apple-system, sans-serif;">
 
-    <!-- CENTRALIZED EMBEDDED CARD CONTAINER -->
     <main class="wizard-container" style="max-width: 850px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02); position: relative;">
         
-        <!-- ⏰ LIVE SYSTEM TIME AND DATE COUNTER COMPONENT (TOP RIGHT CORNER) -->
+        <!-- Live System Clock Dashboard Component -->
         <div style="position: absolute; top: 15px; right: 40px; text-align: right;">
             <div id="live-wizard-date" style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">--/--/----</div>
             <div id="live-wizard-clock" style="font-family: monospace; font-size: 0.95rem; font-weight: 800; color: var(--emerald); margin-top: 2px;">00:00:00</div>
         </div>
 
-        <!-- Interactive Layout Frame Header -->
+        <!-- Layout Frame Header Component -->
         <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <img src="images/logo.png" alt="filings4u" style="height: 32px; display:block; margin-bottom:8px;">
@@ -38,31 +36,31 @@
             <button onclick="handleCancelAbortRedirect()" style="background:transparent; border:1px solid #0a1f44; color:#0a1f44; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.85rem; cursor:pointer;">✕ Abort & Return</button>
         </div>
 
-        <!-- DESIGN CONTENT AREA: LINE ITEM BREAKDOWNS -->
+        <!-- Line Item Breakdowns Box Viewport Container -->
         <div style="margin: 20px 0; width: 100%; box-sizing: border-box; text-align: left;">
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
                 <p style="margin: 0 0 10px 0; font-size: 1rem; color: #4a5568;">
-                    Filing Target Contact Email: <strong id="summary-customer-email" style="color: #0a1f44;">Loading...</strong>
+                    Filing Contact Email: <strong id="summary-customer-email" style="color: #0a1f44;">Loading...</strong>
                 </p>
                 <p style="margin: 0 0 10px 0; font-size: 1rem; color: #4a5568;">
-                    Filing Target Corporate Entity: <strong id="summary-company-name" style="color: #0a1f44;">Loading...</strong>
+                    Filing Corporate Entity: <strong id="summary-company-name" style="color: #0a1f44;">Loading...</strong>
                 </p>
                 <p style="margin: 0; font-size: 1rem; color: #4a5568; border-top: 1px dashed #e2e8f0; padding-top: 12px; margin-top: 12px;">
                     Total Unified Amount Due: <strong id="summary-price-display" style="color: var(--emerald); font-size: 1.2rem;">$0.00</strong>
                 </p>
             </div>
 
-            <!-- LOADING SPINNER HUB -->
+            <!-- Loading Spinner Hub Component -->
             <div id="loading-message" style="text-align: center; padding: 60px 0;">
                 <p style="color: #4a5568; font-size: 0.95rem; margin-bottom: 15px;">Establishing secure encrypted connection layer parameters...</p>
                 <div style="margin: 0 auto; width: 35px; height: 35px; border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; animation: spin 1s linear infinite;"></div>
             </div>
 
-            <!-- STRIPE EMBEDDED FORM IFRAME TARGET HOOK -->
+            <!-- Stripe Element Target Placement Anchor -->
             <div id="checkout"></div>
         </div>
 
-        <!-- 🛡️ INTEGRATED TRUST SECURE BADGE PANEL (BOTTOM OF CARD) -->
+        <!-- Secure Connection Footer Badging -->
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; width: 100%;">
             <div class="trust-badge">
                 <span>SECURE</span> 256-bit SSL Encrypted Connection
@@ -74,7 +72,7 @@
     </main>
 
     <script>
-        // --- 1. RUNNING SYSTEM CLOCK ENGINE ---
+        // System Clock Tick Driver
         (function() {
             function updateCheckoutClock() {
                 const clockBox = document.getElementById('live-wizard-clock');
@@ -87,16 +85,15 @@
             setInterval(updateCheckoutClock, 1000);
         })();
 
-        // --- 2. UNLOCKED OPEN CHECKOUT CLIENT PROCESSING ENGINE ---
+        // Primary Core Extraction Matrix Handoff Loader
         document.addEventListener('DOMContentLoaded', async () => {
             const loadingMessage = document.getElementById('loading-message');
             const stripeKey = 'pk_live_51TTy4i0dNjSlvyScbq19wWCQjOhDKdFMUzkV4Et4ok1NAWFFab4qV2KyZB5CwAp6dAvpLSuMZq2xKAR3BZ1gfuTM00KtmvEgc4';
 
-            // 🔒 BALANCING REDIRECT GUARD: Bounces straight to marketing domain if session cache is clean
             const rawData = sessionStorage.getItem('pendingOrder');
             if (!rawData) {
                 loadingMessage.innerHTML = "<div style='color:#0a1f44; font-weight:700;'>Session records empty. Redirecting to form configurations launcher...</div>";
-                setTimeout(() => { window.location.href = "https://filings4u.com/get-started.html"; }, 1500);
+                setTimeout(() => { window.location.href = "https://filings4u.com"; }, 1500);
                 return;
             }
 
@@ -105,7 +102,6 @@
             const validCompanyName = orderData.company_name || 'Registration Profile';
             const validPriceValue = orderData.price ? parseFloat(orderData.price) : 0.00;
 
-            // Populate summary metrics onto DOM target rows
             document.getElementById('summary-customer-email').innerText = guestEmail;
             document.getElementById('summary-company-name').innerText = validCompanyName;
             document.getElementById('summary-price-display').innerText = `$${validPriceValue.toFixed(2)}`;
@@ -128,7 +124,6 @@
                             amount: Math.round(validPriceValue * 100),
                             service_type: orderData.plan || 'llc-formation-compliance',
                             return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`
-
                         })
                     });
 
@@ -139,7 +134,6 @@
                     return jsonPayload.clientSecret;
                 };
 
-                // Initialize Stripe Embedded Checkout
                 const checkout = await Stripe(stripeKey).initEmbeddedCheckout({ fetchClientSecret });
                 loadingMessage.style.display = 'none';
                 checkout.mount('#checkout');
@@ -151,8 +145,8 @@
         });
 
         function handleCancelAbortRedirect() {
-            if (confirm("Are you sure you want to discard your registration form selections and return to the main hub?")) {
-                window.location.href = 'https://filings4u.com/get-started.html';
+            if (confirm("Are you sure you want to discard your registration selections and return to the main hub?")) {
+                window.location.href = 'https://filings4u.com';
             }
         }
     </script>
