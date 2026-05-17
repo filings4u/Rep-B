@@ -114,40 +114,39 @@
             document.getElementById('summary-company-name').innerText = validCompanyName;
             document.getElementById('summary-price-display').innerText = `$${validPriceValue.toFixed(2)}`;
 
-            try {
-                const fetchClientSecret = async () => {
-                    const currentOriginUrl = window.location.origin;
-                    
-                    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'checkout',
-                            email: guestEmail,
-                            company_name: validCompanyName,
-                            amount: Math.round(validPriceValue * 100),
-                            service_type: orderData.plan || 'llc-formation-compliance',
-                            success_url: `${currentOriginUrl}/success.html?email=${encodeURIComponent(guestEmail)}`
-                        })
-                    });
+     // --- UPDATE THIS PARAMETER SECTION INSIDE order.html ---
+try {
+    const fetchClientSecret = async () => {
+        const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+                action: 'checkout',
+                email: guestEmail,
+                company_name: validCompanyName,
+                amount: Math.round(validPriceValue * 100),
+                service_type: orderData.plan || 'llc-formation-compliance',
+                
+                // 🚀 FIXED: Updated parameters layout to prevent browser iframe crashes
+                return_url: `https://filings4u.com{encodeURIComponent(guestEmail)}`
+            })
+        });
 
-                    if (!response.ok) throw new Error(`Server edge gateway response failure status: ${response.status}`);
-                    const jsonPayload = await response.json();
-                    if (jsonPayload.error) throw new Error(jsonPayload.error);
-                    
-                    if (jsonPayload.url) {
-                        window.location.href = jsonPayload.url;
-                        return;
-                    }
-                    return jsonPayload.clientSecret;
-                };
+        if (!response.ok) throw new Error(`Server edge gateway response failure status: ${response.status}`);
+        const jsonPayload = await response.json();
+        if (jsonPayload.error) throw new Error(jsonPayload.error);
+        
+        return jsonPayload.clientSecret;
+    };
 
-                // Initialize the direct Stripe Embedded Checkout iframe on the form target
-                const checkout = await Stripe(stripeKey).initEmbeddedCheckout({ fetchClientSecret });
-                loadingMessage.style.display = 'none';
-                checkout.mount('#checkout');
+    // Initialize Stripe Embedded Checkout
+    const checkout = await Stripe(stripeKey).initEmbeddedCheckout({ fetchClientSecret });
+    loadingMessage.style.display = 'none';
+    checkout.mount('#checkout');
 
-            } catch (err) {
+} catch (err) {
+    // ... error handling block continues cleanly
+
                 console.error("Stripe runtime connection crash error:", err);
                 loadingMessage.innerHTML = `<div style="color:#e53e3e; font-weight:700;">Handshake Secure Tunnel Interrupted: ${err.message}</div>`;
             }

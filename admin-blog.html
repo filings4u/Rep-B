@@ -184,5 +184,48 @@
             }
         });
     </script>
+
+    <!-- 🌐 FILINGS4U MARKETING GRIDS DYNAMIC SYNC -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const publicSupabase = supabase.createClient(
+            'https://lrbimrlbskjweynxlgas.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+        );
+
+        // Targeted element on your storefront homepage where blog cards render
+        const blogGridTarget = document.getElementById('public-homepage-blog-grid-target');
+        if (!blogGridTarget) return;
+
+        try {
+            const { data: articles, error } = await publicSupabase
+                .from('blogs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(3); // Limits pulling to the 3 freshest articles to keep speed fast
+
+            if (error) throw error;
+
+            if (articles && articles.length > 0) {
+                blogGridTarget.innerHTML = articles.map(art => `
+                    <a href="blog-viewer.html?id=${art.id}" class="blog-card">
+                        <div class="blog-thumb">
+                            <img src="${art.thumbnail_url || 'images/blog-default.jpg'}" alt="${art.title}" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+                        <div class="blog-body">
+                            <span>${art.category}</span>
+                            <h4>${art.title}</h4>
+                            <p>${art.summary}</p>
+                            <small style="color:#64748b; font-size:0.75rem; display:block; margin-top:10px;">Published: ${new Date(art.created_at).toLocaleDateString()}</small>
+                        </div>
+                    </a>
+                `).join('');
+            }
+        } catch (err) {
+            console.error("Storefront grid compilation failed:", err);
+        }
+    });
+</script>
 </body>
 </html>
