@@ -1522,6 +1522,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
+<!-- 🌐 CLIENT PORTAL AUTOMATED REAL-TIME SYNC DATA PANEL LINKS -->
+<script src="https://jsdelivr.net"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Initialize central database connection handle mapping
+        const clientSupabase = supabase.createClient(
+            'https://supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+        );
+
+        // Capture current session variables cleanly to authenticate data views
+        const { data: { session } } = await clientSupabase.auth.getSession();
+        if (!session) return; // Silent fallback if accessed via guest parameters
+
+        const currentClientEmail = session.user.email;
+        const currentClientUserId = session.user.id;
+
+        // --- TRACK A: STREAM LIVE STAFF SUPPORT MESSAGES ---
+        const messageContainer = document.getElementById('client-message-timeline-target');
+        if (messageContainer) {
+            const { data: chatHistory } = await clientSupabase
+                .from('messages')
+                .select('*')
+                .eq('recipient_email', currentClientEmail)
+                .order('created_at', { ascending: false });
+
+            if (chatHistory && chatHistory.length > 0) {
+                messageContainer.innerHTML = chatHistory.map(chat => `
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; padding:15px; border-radius:8px; margin-bottom:10px; text-align:left;">
+                        <span style="font-size:0.7rem; font-weight:800; color:#10b981; display:block; margin-bottom:4px;">MESSAGE FROM STAFF OPERATOR</span>
+                        <p style="margin:0; font-size:0.9rem; color:#0a1f44; font-weight:500;">${chat.message_text}</p>
+                        <small style="color:#64748b; font-size:0.75rem; display:block; margin-top:6px;">Received: ${new Date(chat.created_at).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            } else {
+                messageContainer.innerHTML = `<p style='color:#64748b; font-size:0.85rem; padding:15px;'>No active support messages thread available.</p>`;
+            }
+        }
+
+        // --- TRACK B: MOUNT VAULT UPLINK DOCUMENT STREAMS ---
+        const vaultContainer = document.getElementById('client-vault-documents-target');
+        if (vaultContainer) {
+            const { data: legalFiles } = await clientSupabase
+                .from('user_documents')
+                .select('*')
+                .eq('user_id', currentClientUserId)
+                .order('created_at', { ascending: false });
+
+            if (legalFiles && legalFiles.length > 0) {
+                vaultContainer.innerHTML = legalFiles.map(doc => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#ffffff; border:1px solid #e2e8f0; padding:12px 15px; border-radius:8px; margin-bottom:8px;">
+                        <div style="text-align:left;">
+                            <strong style="color:#0a1f44; font-size:0.88rem; display:block;">📄 ${doc.file_name}</strong>
+                            <small style="color:#64748b; font-size:0.75rem;">Size Matrix Weight: ${doc.file_size || 'N/A'}</small>
+                        </div>
+                        <a href="${doc.file_url}" target="_blank" style="background:#10b981; color:#ffffff; font-size:0.75rem; font-weight:700; padding:6px 12px; border-radius:4px; text-decoration:none;">Download File ⬇️</a>
+                    </div>
+                `).join('');
+            } else {
+                vaultContainer.innerHTML = `<p style='color:#64748b; font-size:0.85rem; padding:15px;'>Your secure private documentation vault is empty.</p>`;
+            }
+        }
+    });
+</script>
+
 
 </body>
 </html>

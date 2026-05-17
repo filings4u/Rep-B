@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publishing Center | filings4u Staff</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="assets/css/site-elite.css">
+    
+    <style>
+        :root { --navy: #0a1f44; --emerald: #10b981; --border: #e2e8f0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fcfcfc; color: var(--navy); display: flex; }
+        
+        /* Fixed Left Column Administrative Structural Dock */
+        .portal-sidebar { width: 260px; height: 100vh; background: #ffffff; border-right: 1px solid var(--border); padding: 20px; position: fixed; display: flex; flex-direction: column; box-sizing: border-box; }
+        .portal-main { margin-left: 260px; width: calc(100% - 260px); padding: 50px 60px; box-sizing: border-box; }
+        
+        /* Publisher Canvas Workspace Form Items */
+        .publisher-card { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 40px; box-shadow: 0 4px 20px rgba(10,31,68,0.02); text-align: left; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #4a5568; margin-bottom: 8px; letter-spacing: 0.5px; }
+        
+        .input-text, .input-select, .input-textarea { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; font-family: inherit; color: var(--navy); box-sizing: border-box; }
+        .input-text:focus, .input-select:focus, .input-textarea:focus { border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+        .input-textarea { min-height: 350px; line-height: 1.6; }
+        
+        .btn-publish { background: var(--navy); color: white; border: none; padding: 16px 40px; border-radius: 6px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+        .btn-publish:hover { background: var(--emerald); }
+        .status-feedback { font-size: 0.85rem; font-weight: 600; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <!-- 🌐 ADMINISTRATIVE LEFT COLUMN NAVIGATION FRAMEWORK -->
+    <aside class="portal-sidebar">
+        <div style="padding: 15px 0 25px 0; border-bottom: 1px solid var(--border); text-align: center;">
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;">
+                <img src="images/logo.png" alt="filings4u" style="max-width: 100%; height: auto; max-height: 40px; display: block; margin: 0 auto;">
+            </div>
+            <div style="background: #0a1f44; color: #ffffff; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Content Desk</div>
+        </div>
+
+        <nav style="flex: 1; padding: 25px 0; display: flex; flex-direction: column; gap: 8px;">
+            <a href="admin-dashboard.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;">📊 System Hub Home</a>
+            <a href="admin-blog.html" style="display: flex; align-items: center; gap: 12px; color: #0a1f44; background: #f1f5f9; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 700;">📰 Publish Long Article</a>
+        </nav>
+    </aside>
+
+    <!-- 🧱 MAIN TEXT CREATION WORKSPACE CANVAS -->
+    <main class="portal-main">
+        <div style="max-width: 1000px; margin: 0 auto;">
+            
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                <div style="text-align: left;">
+                    <h1 style="margin: 0; font-size: 2.2rem; font-weight: 800; color: var(--navy);">Long-Form Article Publisher</h1>
+                    <p style="margin: 5px 0 0 0; color: #64748b;">Compose complete editorial articles, configure headings, and attach custom graphic images features site-wide.</p>
+                </div>
+            </header>
+
+            <div class="publisher-card">
+                <form id="masterLongBlogForm">
+                    
+                    <div class="form-group">
+                        <label for="blogTitle">Article Headline Title</label>
+                        <input type="text" id="blogTitle" class="input-text" placeholder="e.g., Understanding FMCSA 2026 Fleet Compliance Guideline Audits" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                        <div class="form-group">
+                            <label for="blogCategory">Topic Classification Vector</label>
+                            <select id="blogCategory" class="input-select" required>
+                                <option value="">-- Choose Category --</option>
+                                <option value="Corporate Formations">Corporate Formations</option>
+                                <option value="Compliance Auditing">Compliance Auditing</option>
+                                <option value="Corporate Tax Planning">Corporate Tax Planning</option>
+                                <option value="DOT & Fleet">DOT & Fleet</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="blogImageFile">Feature Cover Graphic Photo (.PNG, .JPG, Max 25MB)</label>
+                            <input type="file" id="blogImageFile" class="input-text" accept="image/*" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="blogSummary">Brief Card Summary Excerpt (Shows on search grid rows)</label>
+                        <input type="text" id="blogSummary" class="input-text" placeholder="Type a concise 1-sentence overview snippet summary hook here..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="blogContent">Long-Form Article Editorial Body Content (Supports spacing paragraphs breaks)</label>
+                        <textarea id="blogContent" class="input-textarea" placeholder="Compose your deep informative legal columns text content fields here..." required></textarea>
+                    </div>
+
+                    <div id="publishFeedbackMsg" class="status-feedback"></div>
+                    
+                    <div style="margin-top: 30px; text-align: right;">
+                        <button type="submit" id="publishSubmitBtn" class="btn-publish">Publish Article Globally 🚀</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ==========================================================================
+       🎯 UNIFIED REAL-TIME IMAGE STORAGE & DATA PUSH ENGINES
+       ========================================================================== -->
+    <script>
+        const supabaseDeskClient = supabase.createClient(
+            'https://lrbimrlbskjweynxlgas.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+        );
+
+        document.getElementById('masterLongBlogForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const feedbackBox = document.getElementById('publishFeedbackMsg');
+            const submitBtn = document.getElementById('publishSubmitBtn');
+            const imageField = document.getElementById('blogImageFile');
+
+            submitBtn.disabled = true;
+            feedbackBox.style.color = "var(--navy)";
+            feedbackBox.innerText = "Uploading cover photo assets to infrastructure vaults...";
+
+            try {
+                let generatedThumbnailUrl = 'images/blog-default.jpg'; // Static fallback option
+
+                // --- TRACK A: COMPILE AND UPLOAD BINARY PICTURE VECTOR TO STORAGE ---
+                if (imageField.files && imageField.files.length > 0) {
+                    const selectedPhoto = imageField.files[0];
+                    const photoPathName = `blog_covers/${Date.now()}_${selectedPhoto.name.replace(/\s+/g, '_')}`;
+
+                    const { data: storageData, error: storageErr } = await supabaseDeskClient.storage
+                        .from('vault_documents') // Leverages your secure 25MB optimized bucket channel setup
+                        .upload(photoPathName, selectedPhoto);
+
+                    if (storageErr) throw storageErr;
+
+                    const { data: publicUrlData } = supabaseDeskClient.storage
+                        .from('vault_documents')
+                        .getPublicUrl(photoPathName);
+
+                    generatedThumbnailUrl = publicUrlData.publicUrl;
+                }
+
+                // --- TRACK B: MAP METRICS CONTENT TO PUBLIC BLOG TABLE CELL ROWS ---
+                feedbackBox.innerText = "Broadcasting long-form article text lines to system matrix feeds...";
+                
+                const titleText = document.getElementById('blogTitle').value.trim();
+                const categorySelection = document.getElementById('blogCategory').value;
+                const summaryText = document.getElementById('blogSummary').value.trim();
+                const fullContentBody = document.getElementById('blogContent').value.trim();
+
+                const computedUrlRoutingSlug = titleText.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+
+                const { error: dbErr } = await supabaseDeskClient
+                    .from('blogs')
+                    .insert({
+                        author_email: 'compliance-team@filings4u.com',
+                        title: titleText,
+                        summary: summaryText,
+                        content: fullContentBody, // Safely handles multi-paragraph long copy text fields
+                        category: categorySelection,
+                        thumbnail_url: generatedThumbnailUrl
+                    });
+
+                if (dbErr) throw dbErr;
+
+                feedbackBox.style.color = "var(--emerald)";
+                feedbackBox.innerText = "Success: Long article with images published live to filings4u.com news sections!";
+                document.getElementById('masterLongBlogForm').reset();
+
+            } catch (err) {
+                console.error("Publishing lifecycle fault caught:", err);
+                feedbackBox.style.color = "#e53e3e";
+                feedbackBox.innerText = `Publish failed: ${err.message}`;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

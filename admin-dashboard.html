@@ -1,402 +1,82 @@
-<!DOCTYPE html> 
-<html lang="en"> 
-<head> 
-    <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>Admin Dashboard | filings4u Staff</title> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | filings4u Staff</title>
     
-<!-- Replace the top script area in admin-dashboard.html exactly with this: -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-<script>
-    // Forced Master Admin Session Standalone Link Configuration
-    window.adminSupabaseInstance = null;
-    if (typeof supabase !== 'undefined') {
-        window.adminSupabaseInstance = supabase.createClient(
-            'https://lrbimrlbskjweynxlgas.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-        );
-        window.portalSupabaseInstance = window.adminSupabaseInstance; // Maps cross-compatibility
-    }
-
-    // 🚀 BYPASS ALL FORCED REDIRECTS: This guarantees your browser session stays locked on screen!
-    document.addEventListener("DOMContentLoaded", () => {
-        console.log("🔓 DEVELOPMENT ENGINE ACTIVE: Security redirect rules successfully neutralized.");
-        
-        // Wait 1 second to ensure the DOM dashboard layouts assemble safely
-        setTimeout(() => {
-            if (typeof renderMasterAdminLedger === 'function') {
-                console.log("Firing master sales ledger extraction node...");
-                renderMasterAdminLedger();
-            } else {
-                console.warn("Notice: renderMasterAdminLedger function not mounted in scripts section yet.");
-            }
-        }, 1000);
-    });
-</script>
-
-    <style> 
-        :root { 
-            --primary-blue: #0a1f44; 
-            --white: #ffffff; 
-            --bg-light: #f8f9fa; 
-            --border-color: #e2e8f0; 
-            --text-gray: #4a5568; 
-            --danger-red: #e53e3e; 
-            --success-green: #48bb78; 
-            --staff-red: #c15254; 
-        } 
-        body { 
-            margin: 0; 
-            font-family: 'Segoe UI', sans-serif; 
-            background-color: #fcfcfc; 
-            display: flex; 
-        } 
-        /* SIDEBAR STYLES */ 
-        .portal-sidebar { 
-            width: 260px; 
-            height: 100vh; 
-            background: var(--bg-light); 
-            border-right: 1px solid var(--border-color); 
-            padding: 20px; 
-            position: fixed; 
-            display: flex; 
-            flex-direction: column; 
-            z-index: 100; 
-            box-sizing: border-box; 
-        } 
-        .sidebar-header { 
-            margin-bottom: 30px; 
-        } 
-        .sidebar-logo { 
-            height: 45px; 
-            width: auto; 
-            margin-bottom: 12px; 
-            display: block; 
-        } 
-        .admin-badge { 
-            background: var(--staff-red); 
-            color: white; 
-            font-size: 0.8rem; 
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            display: inline-block; 
-            letter-spacing: 0.05em; 
-        } 
-        .sidebar-nav { 
-            flex-grow: 1; 
-            margin-top: 20px; 
-            display: flex; 
-            flex-direction: column; 
-        } 
-        .nav-item { 
-            display: flex; 
-            align-items: center; 
-            padding: 12px 15px; 
-            text-decoration: none; 
-            font-weight: 600; 
-            border-radius: 8px; 
-            margin-bottom: 8px; 
-            transition: 0.3s; 
-            color: var(--primary-blue); 
-        } 
-        .nav-item:hover, .nav-item.active { 
-            background-color: var(--primary-blue); 
-            color: var(--white); 
-        } 
-        .nav-item span { 
-            margin-right: 12px; 
-            width: 20px; 
-            text-align: center; 
-        } 
-        .logout-container { 
-            margin-top: 30px; 
-            padding-top: 20px; 
-            border-top: 1px solid var(--border-color); 
-        } 
-        .logout-btn { 
-            display: block; 
-            text-align: center; 
-            text-decoration: none; 
-            background-color: var(--primary-blue); 
-            color: var(--white); 
-            padding: 12px; 
-            border-radius: 8px; 
-            font-weight: 600; 
-            cursor: pointer;
-            border: none;
-            width: 100%;
-            box-sizing: border-box;
-        } 
-        /* MAIN CONTENT AREA */ 
-        .portal-main { 
-            margin-left: 260px; 
-            width: calc(100% - 260px); 
-            padding: 50px 60px; 
-            box-sizing: border-box; 
-        } 
-        .content-container { 
-            max-width: 1200px; 
-            margin: 0 auto; 
-        } 
-        .portal-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 40px; 
-        } 
-        .welcome-text h1 { 
-            margin: 0; 
-            color: var(--primary-blue); 
-        } 
-        .header-actions { 
-            display: flex; 
-            gap: 20px; 
-            align-items: center; 
-        } 
-        .search-input { 
-            padding: 10px 15px 10px 35px; 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            width: 250px; 
-            outline: none; 
-        } 
-        .stats-row { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 25px; 
-            margin-bottom: 40px; 
-        } 
-        .stat-card { 
-            background: var(--white); 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid var(--border-color); 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04); 
-        } 
-        .stat-card h2 { 
-            margin: 10px 0 0; 
-            color: var(--primary-blue); 
-            font-size: 1.8rem; 
-        } 
-        .portal-grid { 
-            display: grid; 
-            grid-template-columns: 2fr 1fr; 
-            gap: 30px; 
-            margin-bottom: 40px;
-        } 
-        .portal-card { 
-            background: var(--white); 
-            border: 1px solid var(--border-color); 
-            border-radius: 12px; 
-            padding: 25px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        } 
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 15px; 
-        } 
-        th { 
-            text-align: left; 
-            font-size: 0.8rem; 
-            color: var(--text-gray); 
-            padding: 12px; 
-            border-bottom: 2px solid var(--bg-light); 
-        } 
-        td { 
-            padding: 12px; 
-            border-bottom: 1px solid var(--bg-light); 
-            font-size: 0.9rem; 
-        } 
-        .status-pill { 
-            padding: 4px 10px; 
-            border-radius: 20px; 
-            font-size: 0.75rem; 
-            font-weight: bold; 
-        } 
-        .status-pill.urgent { 
-            background: #fff5f5; 
-            color: var(--danger-red); 
-        } 
-
-        /* 🚀 INJECTED: CLIENT MANAGEMENT CONSOLE STYLES */
-        .admin-action-grid {
-            display: flex;
-            gap: 25px;
-            margin: 25px 0 40px 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .admin-console-card {
-            flex: 1;
-            background: #ffffff;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(10,31,68,0.02);
-            box-sizing: border-box;
-        }
-        .admin-console-card h2 {
-            font-size: 1.15rem;
-            color: #0a1f44;
-            margin: 0 0 15px 0;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #f8f9fa;
-            font-weight: 700;
-        }
-        .admin-form-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .admin-form-group label {
-            display: block;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #4a5568;
-            margin-bottom: 6px;
-            letter-spacing: 0.02em;
-        }
-        .admin-select, .admin-input, .admin-textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            box-sizing: border-box;
-            outline: none;
-            color: #0a1f44;
-            font-family: inherit;
-        }
-        .admin-textarea {
-            resize: vertical;
-            min-height: 70px;
-        }
-        .btn-admin-submit {
-            background-color: #0a1f44;
-            color: #ffffff;
-            border: none;
-            padding: 11px 20px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: opacity 0.2s;
-        }
-        .btn-admin-submit:hover { opacity: 0.95; }
-        .btn-admin-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-        .admin-status-msg { font-size: 0.75rem; margin-top: 8px; text-align: left; font-weight: 600; }
-    </style> 
-</head> 
-<body> 
-
-<!-- 🚀 REPAIRED ADMIN SIDEBAR: FIXED BLUE BACKGROUND CACHE & LIVE SYSTEM CLOCK --> 
-<aside class="portal-sidebar" style="width: 260px !important; height: 100vh !important; background: #ffffff !important; color: #0a1f44 !important; position: fixed !important; top: 0 !important; left: 0 !important; display: flex !important; flex-direction: column !important; box-sizing: border-box !important; z-index: 100 !important; border-right: 1px solid #e2e8f0 !important; font-family: system-ui, -apple-system, sans-serif !important;"> 
+    <!-- 🚀 MOBILE BROWSER INTERFACE EMERALD THEME CONTROLLERS -->
+    <meta name="theme-color" content="#c15254">
     
-    <!-- BRAND DISPLAY CONSOLE - MATCHING LIGHT LAYOUT ACCENT --> 
-    <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;"> 
-        <!-- Logo Wrapper Canvas: High-res layout matching dark site logo asset --> 
-        <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;"> 
-            <img src="images/logo.png" alt="filings4u" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;"> 
-        </div> 
-        <div style="background: #0a1f44; color: #ffffff; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; box-shadow: 0 4px 10px rgba(10,31,68,0.15);"> 
-            Directorate Admin 
-        </div> 
-    </div> 
-
-    <!-- 🚀 LIVE DIGITAL CLOCK BAR --> 
-    <div style="padding: 15px 25px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; box-sizing: border-box;"> 
-        <span style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">System Time:</span> 
-        <!-- Dynamic Target Output Slot --> 
-        <span id="portal-clock" style="font-family: monospace; font-size: 1.05rem; font-weight: 800; color: #10b981; letter-spacing: 0.5px;">00:00:00</span> 
-    </div> 
-
-  <!-- 🚀 REPAIRED SIDEBAR LINKS: Redirects scroll anchor points clear of navigation crashes -->
-<nav style="flex: 1; padding: 25px 15px; display: flex; flex-direction: column; gap: 8px;">
-    <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 10px;">Control Systems</p>
+    <!-- PRODUCTION CDN INFRASTRUCTURE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     
-    <a href="admin-dashboard.html" style="display: flex; align-items: center; gap: 12px; color: #0a1f44; background: #f1f5f9; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 700; transition: all 0.2s;">
-        <span>📊</span> System Hub Home
-    </a>
-    
-    <a href="#admin-master-sales-panel" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.color='#0a1f44'; this.style.background='#f8fafc'" onmouseout="this.style.color='#4a5568'; this.style.background='transparent'">
-        <span>💰</span> Sales & Price Audit
-    </a>
-    
-    <!-- FIXED: Links to the functional creation terminal anchor card row layout -->
-    <a href="#adminBlogCardAnchor" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.color='#0a1f44'; this.style.background='#f8fafc'" onmouseout="this.style.color='#4a5568'; this.style.background='transparent'">
-        <span>📰</span> Manage Insights Blog
-    </a>
+    <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
+    <link rel="stylesheet" href="assets/css/admin-core.css">
+</head>
+<body>
 
-    
-</nav>
+    <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE -->
+    <aside class="portal-sidebar">
+        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <img src="images/logo.png" alt="filings4u" class="logo" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;">
+            </div>
+            <div class="admin-badge">Directorate Admin</div>
+        </div>
 
+        <!-- LIVE SYSTEM CLOCK -->
+        <div class="sidebar-clock-bar">
+            <span>System Time:</span>
+            <span id="portal-clock">00:00:00</span>
+        </div>
 
-    <!-- SECURITY DATA STATUS FOOTER --> 
-    <div style="padding: 20px; border-top: 1px solid #e2e8f0; background: #f8fafc;"> 
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"> 
-            <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div> 
-            <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span> 
-        </div> 
-        <p style="margin: 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via master bypass channel configuration.</p> 
-        <button onclick="handleAdminSignOutLogout()" style="width: 100%; margin-top: 15px; background: rgba(229,62,62,0.08); color: #e53e3e; border: 1px solid rgba(229,62,62,0.15); padding: 8px; border-radius: 4px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(229,62,62,0.15)'" onmouseout="this.style.background='rgba(229,62,62,0.08)'"> Exit Admin Session </button> 
-    </div>
+        <nav style="flex: 1; padding: 25px 15px; display: flex; flex-direction: column; gap: 8px;">
+            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 10px;">Control Systems</p>
+            <a href="admin-dashboard.html" class="nav-item active"><span>📊</span> System Hub Home</a>
+            <a href="#admin-master-sales-panel" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+            <!-- Update your navigation element list block to point directly to the isolated page -->
+<a href="admin-blog.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.color='#0a1f44'; this.style.background='#f8fafc'" onmouseout="this.style.color='#4a5568'; this.style.background='transparent'">
+    <span>📰</span> Manage Insights Blog
+</a>
 
-    <!-- 🎯 LIVE SELF-CONTAINED CLOCK ENGINE DRIVER -->
-    <script>
-        (function() {
-            function updateAdminSidebarClock() {
-                const clockElement = document.getElementById('portal-clock');
-                if (clockElement) {
-                    const now = new Date();
-                    clockElement.innerText = now.toLocaleTimeString([], {
-                        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-                    });
-                }
-            }
-            updateAdminSidebarClock();
-            setInterval(updateAdminSidebarClock, 1000);
+        </nav>
 
-            window.handleAdminSignOutLogout = async function() {
-                const client = window.adminSupabaseInstance || window.supabase;
-                if (client?.auth) {
-                    try { await client.auth.signOut(); } catch (e) {}
-                }
-                sessionStorage.clear();
-                window.location.href = 'index.html';
-            };
-        })();
-    </script>
-</aside>
+        <div style="padding: 20px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div>
+                <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span>
+            </div>
+            <p style="margin: 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via corporate staff domain.</p>
+            <button onclick="handleAdminSignOutLogout()" class="logout-btn">Exit Admin Session</button>
+        </div>
+    </aside>
 
+    <!-- 🧱 MAIN SCREEN PERFORMANCE DASHBOARD WORKING CANVAS -->
+    <main class="portal-main">
+        <div class="content-container">
+            
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Admin Dashboard</h1>
+                    <p>System-wide performance overview</p>
+                </div>
+                <div class="header-actions">
+                    <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search accounts...">
+                </div>
+            </header>
 
-    <main class="portal-main"> 
-        <div class="content-container"> 
-            <header class="portal-header"> 
-                <div class="welcome-text"> 
-                    <h1>Admin Dashboard</h1> 
-                    <p>System-wide performance overview</p> 
-                </div> 
-                <div class="header-actions"> 
-                    <input type="text" class="search-input" placeholder="Search accounts..."> 
-                </div> 
-            </header> 
+            <!-- 📊 STATS CARDS GRID ROW DISPLAY -->
+            <div class="stats-row">
+                <div class="stat-card"><small>Platform Revenue</small><h2 id="stat-total-revenue">$0.00</h2></div>
+                <div class="stat-card"><small>Active Entities</small><h2 id="stat-active-users">0</h2></div>
+                <div class="stat-card"><small>Pending Audits</small><h2 id="stat-pending-filings" style="color: var(--danger-red);">0</h2></div>
+                <div class="stat-card"><small>System Health</small><h2 id="stat-completed-filings" style="color: var(--success-green);">0</h2></div>
+            </div>
 
-          <!-- 📊 STATS ROW: CONNECTED TO LIVE SUPABASE CALCULATORS -->
-<div class="stats-row"> 
-    <div class="stat-card"><small>Platform Revenue</small><h2 id="stat-total-revenue">$0.00</h2></div> 
-    <div class="stat-card"><small>Active Entities</small><h2 id="stat-active-users">0</h2></div> 
-    <div class="stat-card"><small>Pending Audits</small><h2 id="stat-pending-filings" style="color: var(--danger-red);">0</h2></div> 
-    <div class="stat-card"><small>System Health</small><h2 id="stat-completed-filings" style="color: var(--success-green);">0</h2></div> 
-</div>
-
-
-            <!-- 🚀 INJECTED: CLIENT INTERACTIVE MANAGEMENT HUB -->
+            <!-- 🛠️ INTERACTIVE CLIENT CONSOLE MANAGEMENT GRID HUB -->
             <div class="admin-action-grid">
-                <!-- Dropdown Client Selection Card -->
+                
                 <div class="admin-console-card" style="flex: 0 0 280px;">
                     <h2>Client Target Selector</h2>
                     <div class="admin-form-group">
@@ -405,10 +85,10 @@
                             <option value="">-- Loading Registered Users --</option>
                         </select>
                     </div>
-                    <p style="font-size: 0.8rem; color: #4a5568; line-height: 1.4; margin: 15px 0 0 0;">Selecting a target profile updates the target configuration for the communications forms.</p>
+                    <p style="font-size: 0.8rem; color: #4a5568; line-height: 1.4; margin: 15px 0 0 0;">Selecting a target profile updates the target configuration parameters for the communication forms.</p>
                 </div>
 
-                <!-- Instant Notification Broadcaster Card -->
+                <!-- MESSAGING FORM -->
                 <div class="admin-console-card">
                     <h2>Send Dynamic Message</h2>
                     <form id="adminAlertForm">
@@ -425,418 +105,76 @@
                     </form>
                 </div>
 
-                <!-- Document Vault Private Uplink Card -->
-                <div class="admin-console-card">
-                    <h2>Upload Vault Document</h2>
-                    <form id="adminUploadForm">
-                        <div class="admin-form-group">
-                            <label>Select Secure File Reference</label>
-                            <input type="file" id="uploadFileInput" class="admin-input" required>
-                        </div>
-                        <div id="uploadStatus" class="admin-status-msg"></div>
-                        <button type="submit" id="uploadSubmitBtn" class="btn-admin-submit">Upload & Link File →</button>
-                    </form>
-                </div>
-
-                <!-- Paste this visual card container inside the .admin-action-grid container layout -->
-<!-- 💻 ADD THE id="adminBlogCardAnchor" SPECIFICALLY TO YOUR BLOG CREATION BLOCK OVERLAY: -->
-<div class="admin-console-card" id="adminBlogCardAnchor"> 
-    <h2>Publish Blog Article</h2> 
-    <form id="adminBlogForm">
-        <!-- Keep your existing input field form rows completely intact here -->
-
-        <div class="admin-form-group">
-            <label for="blogCategory">Content Category</label>
-            <select id="blogCategory" class="admin-select" required>
-                <option value="">-- Choose Section Topic --</option>
-                <option value="Corporate Formations">Corporate Formations</option>
-                <option value="Compliance Auditing">Compliance Auditing</option>
-                <option value="Corporate Tax Planning">Corporate Tax Planning</option>
-                <option value="DOT & Fleet">DOT & Fleet</option>
-            </select>
-        </div>
-        <div class="admin-form-group">
-            <label for="blogSummary">Article Summary / Excerpt</label>
-            <textarea id="blogSummary" class="admin-textarea" placeholder="Type a brief article overview extract description here..." required></textarea>
-        </div>
-        <div id="blogStatus" class="admin-status-msg"></div>
-        <button type="submit" id="blogSubmitBtn" class="btn-admin-submit">Publish Article Globally →</button>
-    </form>
-</div>
-
-            </div>
-
-<!-- 💰 INJECTED: LIVE DYNAMIC HORIZONTAL TRANSACTION SALES LEDGER -->
-<div class="portal-card" style="margin: 40px 0; width: 100%; box-sizing: border-box;">
-    <h3 style="margin-bottom: 20px; color: var(--navy);">Global Corporate Sales Pricing Ledger</h3>
-    
-    <div style="overflow-x: auto; width: 100%;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-            <thead>
-                <tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc;">
-                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Filing Entity</th>
-                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Customer Email</th>
-                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Purchase Date</th>
-                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Amount Paid</th>
-                    <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Action</th>
-                </tr>
-            </thead>
-            <!-- DYNAMIC TARGET PLUG FOR LIVE ORDER ROWS -->
-            <tbody id="admin-global-sales-target-box">
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem;">
-                        Initializing transaction ledger matrix logs...
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+            
+               <!-- 💬 NEW: LIVE REVENUE PORTAL COMMUNICATIONS HUB -->
+<div class="admin-console-card" id="adminCommunicationsHubCard">
+    <h2>Client Communications Inbox</h2>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; max-height: 200px; overflow-y: auto;" id="admin-inbox-live-stream-box">
+        <!-- Injected via syncAdminIncomingInboxMessages() -->
+        <p style="color: #64748b; font-size: 0.85rem; font-style: italic; text-align: center; margin-top: 20px;">Monitoring live portal message waves...</p>
+    </div>
+    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #4a5568; letter-spacing: 0.5px; background: #fffaf0; padding: 10px; border-radius: 6px; border: 1px solid #feebc8;">
+        <span>Unread Threads: <strong id="admin-unread-msg-count" style="color: #dd6b20;">0</strong></span>
+        <span>Secure Chat Synchronized</span>
     </div>
 </div>
 
 
+            </div>
 
-            <div class="portal-grid"> 
-                <div class="portal-card"> 
-                    <h3>Compliance Alerts</h3> 
-                    <table> 
-                        <thead> 
-                            <tr><th>Entity</th><th>Type</th><th>Status</th></tr> 
-                        </thead> 
-                        <tbody> 
-                            <tr> 
-                                <td><strong>Swift Hauling</strong></td> 
-                                <td>UCR</td> 
-                                <td><span class="status-pill urgent">Overdue</span></td> 
-                            </tr> 
-                        </tbody> 
-                    </table> 
-                </div> 
-                <div class="portal-card"> 
-                    <h3>Recent Logs</h3> 
-                    <p style="font-size: 0.85rem; color: var(--text-gray);">User #405 updated address.</p> 
-                </div> 
-            </div> 
-        </div> 
-    </main> 
+            <!-- 💰 DYNAMIC SALES LEDGER MONITOR CARD -->
+            <div id="admin-master-sales-panel" class="portal-card" style="margin: 40px 0; width: 100%; box-sizing: border-box;">
+                <h3 style="margin-bottom: 20px; color: var(--primary-blue);">Global Corporate Sales Pricing Ledger</h3>
+                <div style="overflow-x: auto; width: 100%;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc;">
+                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Filing Entity</th>
+                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Customer Email</th>
+                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Purchase Date</th>
+                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Amount Paid</th>
+                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-global-sales-target-box">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem;">
+                                    Initializing transaction ledger matrix logs...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-<!-- START: MASTER ADMINISTRATIVE AUTOMATION BACKEND PIPELINE -->
-<script>
-var adminSupabaseClient = window.adminSupabaseInstance || window.supabase || window.portalSupabaseInstance;
-let cachedMasterRecordsArray = [];
+            <!-- LOWER DATA LOG OVERVIEW ARRAYS -->
+            <div class="portal-grid">
+                <div class="portal-card">
+                    <h3>Compliance Alerts</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Entity</th><th>Type</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Swift Hauling</strong></td>
+                                <td>UCR</td>
+                                <td><span class="status-pill urgent">Overdue</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="portal-card">
+                    <h3>Recent Administrative Logs</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 8px;">• System account session bypassed safely via verified terminal token.</p>
+                    <p id="liveStaffEmailDisplayLog" style="font-size: 0.85rem; color: var(--staff-red); font-weight: 700;"></p>
+                </div>
+            </div>
 
-document.addEventListener("DOMContentLoaded", () => {
-    // Safety check initialization variables assignments
-    if (!adminSupabaseClient && typeof supabase !== 'undefined') {
-        adminSupabaseClient = supabase.createClient(
-            'https://lrbimrlbskjweynxlgas.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
-        );
-        window.adminSupabaseInstance = adminSupabaseClient;
-    }
+        </div>
+    </main>
 
-    if (adminSupabaseClient) {
-        // Fire master loading chains
-        fetchMasterAdministrativeMetrics();
-        populateClientSelectorDropdown();
-        initializeOperationalFormHandlers();
-    }
-});
-
-/**
- * 📊 1. METRICS ACCUMULATOR & SALES LEDGER BINDINGS
- */
-async function fetchMasterAdministrativeMetrics() {
-    const ledgerBox = document.getElementById('admin-global-sales-target-box');
-    try {
-        const { data, error } = await adminSupabaseClient
-            .from('user_filings_workspace')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        cachedMasterRecordsArray = data || [];
-        
-        // Compute live calculations stats cards figures
-        let revenueSum = 0, paidCount = 0, processingCount = 0, completedCount = 0;
-        cachedMasterRecordsArray.forEach(r => {
-            const amt = parseFloat(r.amount_paid) || 0;
-            const status = (r.status || 'draft').toLowerCase().trim();
-            if (['paid', 'processing', 'completed'].includes(status)) revenueSum += amt;
-            if (status === 'paid') paidCount++;
-            if (status === 'processing') processingCount++;
-            if (status === 'completed') completedCount++;
-        });
-
-        // Map live numbers into DOM boxes elements
-        if(document.getElementById('stat-total-revenue')) document.getElementById('stat-total-revenue').innerText = `$${revenueSum.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-        if(document.getElementById('stat-active-users')) document.getElementById('stat-active-users').innerText = cachedMasterRecordsArray.length;
-        if(document.getElementById('stat-pending-filings')) document.getElementById('stat-pending-filings').innerText = processingCount;
-        if(document.getElementById('stat-completed-filings')) document.getElementById('stat-completed-filings').innerText = completedCount;
-
-        // Render dynamic table metrics mapping blocks
-        if (ledgerBox) {
-            if (cachedMasterRecordsArray.length === 0) {
-                ledgerBox.innerHTML = '<p style="color:#64748b; font-size:0.88rem;">No sales logs captured inside cloud repositories.</p>';
-                return;
-            }
-            ledgerBox.innerHTML = '';
-            cachedMasterRecordsArray.forEach(sale => {
-                const dateDisplay = new Date(sale.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const row = document.createElement('div');
-                row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #e2e8f0; background:#ffffff; margin-bottom:10px; border-radius:8px; border:1px solid #e2e8f0; box-sizing:border-box;";
-                row.innerHTML = `
-                    <div>
-                        <strong style="color:#0a1f44; font-size:0.95rem; display:block;">${sale.company_name}</strong>
-                        <span style="font-size:0.8rem; color:#64748b;">${sale.service_key.toUpperCase()} (${sale.plan_tier.toUpperCase()}) • ${dateDisplay}</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:20px;">
-                        <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase; padding:4px 8px; border-radius:4px; ${sale.status === 'paid' ? 'background:#ecfdf5; color:#10b981;' : 'background:#fef3c7; color:#d97706;'}">${sale.status}</span>
-                        <strong style="color:#10b981; font-size:1rem;">$${parseFloat(sale.amount_paid).toFixed(2)}</strong>
-                        <a href="receipt.html?id=${sale.id}" target="_blank" style="background:#0a1f44; color:#ffffff; padding:5px 12px; border-radius:4px; font-size:0.75rem; text-decoration:none; font-weight:700;">Audit Receipt 📥</a>
-                    </div>
-                `;
-                ledgerBox.appendChild(row);
-            });
-        }
-    } catch (err) { console.error("Metrics render pipeline stalled:", err); }
-}
-
-/**
- * 👥 2. LIVE USER TARGET SELECTION FILLER MAPS
- */
-async function populateClientSelectorDropdown() {
-    const dropdown = document.getElementById('adminClientDropdown');
-    if (!dropdown) return;
-    try {
-        const { data: users, error } = await adminSupabaseClient.from('profiles').select('id, role');
-        if (error) throw error;
-        dropdown.innerHTML = '<option value="">-- Choose Active Client User ID --</option>';
-        (users || []).forEach(u => {
-            const option = document.createElement('option');
-            option.value = u.id;
-            option.innerText = `Client: ${u.id.substring(0,12).toUpperCase()}... [${u.role || 'user'}]`;
-            dropdown.appendChild(option);
-        });
-    } catch (err) { console.error("Client selector map loading failed:", err); }
-}
-
-/**
- * 🛠️ 3. CORE SUBMISSION PROCESSING FORMS CAPTURE CHANNELS
- */
-function initializeOperationalFormHandlers() {
-    // A. Dynamic Notifications Pipeline 
-    const alertForm = document.getElementById('adminAlertForm');
-    if (alertForm) {
-        alertForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const targetUser = document.getElementById('adminClientDropdown').value;
-            const statusBox = document.getElementById('alertStatus');
-            const submitBtn = document.getElementById('alertSubmitBtn');
-            
-            if (!targetUser) { alert("Please choose a target user profile ID out of the drop-down menu vector selector."); return; }
-            submitBtn.disabled = true; statusBox.innerText = "Dispatching secure signal packet...";
-
-            try {
-                const { error } = await adminSupabaseClient.from('notifications').insert({
-                    user_id: targetUser,
-                    title: document.getElementById('alertTitle').value.trim(),
-                    message: document.getElementById('alertMessage').value.trim(),
-                    status: 'unread'
-                });
-                if (error) throw error;
-                statusBox.style.color = "var(--success-green, #48bb78)"; statusBox.innerText = "Success: Real-time alert dispatched to target workspace account card.";
-                alertForm.reset();
-            } catch (err) { statusBox.style.color = "var(--danger-red)"; statusBox.innerText = `Dispatch failed: ${err.message}`; }
-            finally { submitBtn.disabled = false; }
-        });
-    }
-
-    // B. Secure Document Vault Bucket System Uplink
-    const uploadForm = document.getElementById('adminUploadForm');
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const targetUser = document.getElementById('adminClientDropdown').value;
-            const fileField = document.getElementById('uploadFileInput');
-            const statusBox = document.getElementById('uploadStatus');
-            const submitBtn = document.getElementById('uploadSubmitBtn');
-
-            if (!targetUser) { alert("Please map a Client User ID selector parameter before uploading documents."); return; }
-            if (!fileField.files || fileField.files.length === 0) return;
-            
-            const file = fileField.files[0];
-            submitBtn.disabled = true; statusBox.innerText = "Executing binary vault encryption push...";
-
-            try {
-                // 🚀 BUCKETS SYSTEM REPAIR: Storage asset file binary allocation channel path
-                const uniquePathName = `${targetUser}/${Date.now()}_${file.name}`;
-                const { data: uploadData, error: storageErr } = await adminSupabaseClient.storage
-                    .from('vault_documents')
-                    .upload(uniquePathName, file);
-
-                if (storageErr) throw storageErr;
-
-                // Retrieve absolute authenticated download access url endpoints token string properties
-                const { data: urlData } = adminSupabaseClient.storage.from('vault_documents').getPublicUrl(uniquePathName);
-
-                // Inject file tracking record row inside vaults schema mapping logs
-                const { error: recordErr } = await adminSupabaseClient.from('user_documents').insert({
-                    user_id: targetUser,
-                    file_name: file.name,
-                    file_url: urlData.publicUrl,
-                    file_size: `${(file.size / 1024).toFixed(1)} KB`
-                });
-
-                if (recordErr) throw recordErr;
-                statusBox.style.color = "var(--success-green)"; statusBox.innerText = "Success: Binary safe file locked into Secure Vault repository slots.";
-                uploadForm.reset();
-            } catch (err) { statusBox.style.color = "var(--danger-red)"; statusBox.innerText = `Vault upload failed: ${err.message}`; }
-            finally { submitBtn.disabled = false; }
-        });
-    }
-
-    // C. Global Dynamic Insights Blog Publishing Engine
-    const blogForm = document.getElementById('adminBlogForm');
-    if (blogForm) {
-        blogForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const statusBox = document.getElementById('blogStatus');
-            const submitBtn = document.getElementById('blogSubmitBtn');
-            submitBtn.disabled = true; statusBox.innerText = "Broadcasting article text streams...";
-
-            const title = document.getElementById('blogTitle').value.trim();
-            const category = document.getElementById('blogCategory').value;
-            const summary = document.getElementById('blogSummary').value.trim();
-            // Generate valid, clean system routing url slugs natively matching corporate naming guidelines
-            const computedSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-            try {
-                const { error } = await adminSupabaseClient.from('posts').insert({
-                    title: title,
-                    category: category,
-                    summary: summary,
-                    slug: computedSlug,
-                    content: summary // Mirror summary payload string directly inside long body values field cells maps
-                });
-                if (error) throw error;
-                statusBox.style.color = "var(--success-green)"; statusBox.innerText = "Success: Article published globally! Grid layout feed items synchronized live.";
-                blogForm.reset();
-            } catch (err) { statusBox.style.color = "var(--danger-red)"; statusBox.innerText = `Publish failed: ${err.message}`; }
-            finally { submitBtn.disabled = false; }
-        });
-    }
-}
-
-async function loadGlobalAdminTransactionLogs() {
-    const { data: globalOrders, error } = await window.portalSupabaseInstance
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error("Admin workspace query extraction matrix block fault execution:", error);
-        return;
-    }
-
-    const adminContainer = document.getElementById('admin-global-orders-table');
-    if (!adminContainer) return;
-
-    adminContainer.innerHTML = globalOrders.map(order => `
-        <tr style="border-bottom: 1px solid #e2e8f0;">
-            <td style="padding: 12px; font-size:0.9rem; color:#0a1f44; font-weight:600;">${order.company_name}</td>
-            <td style="padding: 12px; font-size:0.9rem; color:#4a5568;">${order.customer_email}</td>
-            <td style="padding: 12px; font-size:0.9rem; color:#64748b;">${new Date(order.created_at).toLocaleDateString()}</td>
-            <td style="padding: 12px; font-size:0.9rem; font-weight:700; color:#10b981;">$${order.amount_paid.toFixed(2)}</td>
-            <td style="padding: 12px;">
-                <a href="${order.receipt_url}" target="_blank" style="color:#0a1f44; font-weight:700; font-size:0.85rem; text-decoration:underline;">View Receipt ➔</a>
-            </td>
-        </tr>
-    `).join('');
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(loadGlobalAdminTransactionLogs, 1500);
-});
-
-async function syncAdminSalesLedger() {
-    const targetBox = document.getElementById('admin-global-sales-target-box');
-    const revenueDisplay = document.getElementById('stat-total-revenue');
-
-    // Security Fallback: Confirm Supabase framework initialized properly
-    if (!window.portalSupabaseInstance) {
-        console.error("Critical Admin Core: Connection wrapper missing from context runtime.");
-        if (targetBox) targetBox.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center; padding:20px;">Configuration Mount Failure.</td></tr>`;
-        return;
-    }
-
-    try {
-        // Fetch all order metrics chronologically out of public database container
-        const { data: records, error } = await window.portalSupabaseInstance
-            .from('orders')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // If the table database instance is blank, clean out the loader panel views
-        if (!records || records.length === 0) {
-            targetBox.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem;">
-                        No corporate transactions logged in system architecture vaults yet.
-                    </td>
-                </tr>`;
-            if (revenueDisplay) revenueDisplay.innerText = "$0.00";
-            return;
-        }
-
-        // 📊 COMPUTE TOTAL PLATFORM REVENUE DYNAMICALLY
-        const combinedRevenue = records.reduce((runningSum, currentItem) => {
-            return runningSum + parseFloat(currentItem.amount_paid || 0);
-        }, 0);
-
-        if (revenueDisplay) {
-            revenueDisplay.innerText = `$${combinedRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        }
-
-        // 💻 RENDER EACH TRANSACTION INTO DATA ROW STRUCTS
-        targetBox.innerHTML = records.map(order => {
-            const displayDate = new Date(order.created_at).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'short', day: 'numeric'
-            });
-
-            // Fallback checking to confirm receipt urls map clean string profiles
-            const downloadActionLink = order.receipt_url 
-                ? `<a href="${order.receipt_url}" target="_blank" style="color: #0a1f44; font-weight: 700; text-decoration: underline; font-size: 0.85rem;">View Receipt ➔</a>`
-                : `<span style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">Processing...</span>`;
-
-            return `
-                <tr style="border-bottom: 1px solid #e2e8f0; hover: background: #f8fafc;">
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #0a1f44; font-weight: 600;">${order.company_name}</td>
-                    <td style="padding: 14px 16px; font-size: 0.85rem; color: #4a5568;">${order.customer_email}</td>
-                    <td style="padding: 14px 16px; font-size: 0.85rem; color: #64748b;">${displayDate}</td>
-                    <td style="padding: 14px 16px; font-size: 0.9rem; font-weight: 700; color: #10b981;">$${parseFloat(order.amount_paid).toFixed(2)}</td>
-                    <td style="padding: 14px 16px;">${downloadActionLink}</td>
-                </tr>
-            `;
-        }).join('');
-
-    } catch (runtimeErr) {
-        console.error("Ledger execution lifecycle fault caught:", runtimeErr);
-        if (targetBox) {
-            targetBox.innerHTML = `<tr><td colspan="5" style="color: red; padding: 20px; text-align: center; font-weight: 600;">Failed to fetch ledger logs: ${runtimeErr.message}</td></tr>`;
-        }
-    }
-}
-
-// Automatically fire metrics loading sequence after core dependencies are compiled
-document.addEventListener("DOMContentLoaded", () => {
-    // Small delay ensures client configuration initialization loops pass successfully
-    setTimeout(syncAdminSalesLedger, 1200);
-});
-
-</script>
-<!-- END: MASTER ADMINISTRATIVE AUTOMATION BACKEND PIPELINE -->
-
-</body> 
+    <!-- 🎯 SINGLE MASTER CONTROLLER FILE IMPLEMENTATION -->
+    <script src="assets/js/admin-engine.js"></script>
+</body>
 </html>
