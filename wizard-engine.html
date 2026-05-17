@@ -386,90 +386,116 @@ Account Correspondence Vector: ${customerInputEmail || "[ SPECIFY EMAIL ]"}`;
             sessionStorage.setItem('compiledLegalPoaTextString', legalContractText);
         }
 
-        // --- 5. SECURED PAYLOAD DELIVERIES ---
-        async function executeFinalFunnelOrderPaymentSubmit() {
-            const check = document.getElementById('poa_checkbox');
-            const sig = document.getElementById('poa_signature_input');
-
-            sig.style.borderColor = '#e2e8f0'; sig.style.boxShadow = 'none';
-
-            if (!check.checked || !sig.value.trim()) {
-                sig.style.borderColor = '#ef4444';
-                sig.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
-                sig.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                alert("Mandatory Verification: You must execute and signature the corporate Limited Power of Attorney to launch government processing.");
-                return;
-            }
-
-            const emailValue = document.getElementById('customer_guest_email').value.trim();
-            const companyName = document.getElementById('target_company_name').value.trim();
-            const serviceKey = document.getElementById('cached_service_key').value;
-            const verifiedPlanTier = document.getElementById('cached_plan_tier').value;
-            const finalPriceSum = sessionStorage.getItem('rollingCalculatedSumPrice');
-
-            const metadataPayload = { poa_signed_name: sig.value.trim(), selected_upsells: selectedUpsellKeys };
-            document.querySelectorAll('#extra-government-inputs-hook .custom-dynamic-input').forEach(i => {
-                metadataPayload[i.id.replace('custom_', '')] = i.value;
-            });
-
-            if (!selectedUpsellKeys.includes('registered-agent')) {
-                metadataPayload['external_agent'] = {
-                    name: document.getElementById('ext_agent_name').value,
-                    street: document.getElementById('ext_agent_address').value,
-                    suite: document.getElementById('ext_agent_suite').value,
-                    city: document.getElementById('ext_agent_city').value,
-                    state: document.getElementById('ext_agent_state').value,
-                    zip: document.getElementById('ext_agent_zip').value,
-                };
-            }
-
-            const pendingOrderPayload = {
-                company_name: companyName,
-                customer_email: emailValue,
-                price: finalPriceSum,
-                plan: `${serviceKey}-${verifiedPlanTier}`,
-                metadata: metadataPayload
-            };
-
-            sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrderPayload));
-
-
-try { 
-    const userEmailValue = document.getElementById('customer_guest_email').value.trim(); 
-    const cleanEscapedEmail = encodeURIComponent(userEmailValue); 
-    
-    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', { 
-        method: 'POST', 
-        headers: { 
-            'Content-Type': 'application/json' 
-        }, 
-        body: JSON.stringify({ 
-            action: 'checkout', 
-            email: userEmailValue, 
-            company_name: companyName, 
-            amount: Math.round(parseFloat(finalPriceSum) * 100), 
-            service_type: `${serviceKey}-${verifiedPlanTier}`, 
-            
-            /* 🚀 FIXED: Added missing '$' prefix and directed the completion track 
-               to your active secure app platform success handler page code script */ 
-            return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}` 
-        }) 
+/* ==========================================================================
+   🚀 SECURED PAYLOAD DELIVERIES RUNTIME CONTROLLER
+   ========================================================================== */
+async function handleFormStepProceed() {
+    // 1. Reset all field validation outlines before checking values
+    const allFormInputs = document.querySelectorAll('.custom-dynamic-input');
+    allFormInputs.forEach(input => {
+        input.style.borderColor = '#e2e8f0';
+        input.style.boxShadow = 'none';
     });
 
+    let firstInvalidElement = null;
 
+    // 2. Validate standard baseline input parameters fields
+    const emailField = document.getElementById('customer_guest_email');
+    const companyField = document.getElementById('target_company_name');
 
-    const data = await response.json();
-    if (data.clientSecret) {
-        window.location.href = `order.html?secret=${data.clientSecret}`;
-    } else if (data.url) {
-        window.location.href = data.url;
-    } else {
-        throw new Error(data.error || "Integration handoff error.");
+    if (emailField && !emailField.value.trim()) {
+        emailField.style.borderColor = '#ef4444';
+        emailField.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+        if (!firstInvalidElement) firstInvalidElement = emailField;
     }
-} catch (err) {
-    alert(`Order execution fault: ${err.message}`);
+
+    if (companyField && !companyField.value.trim()) {
+        companyField.style.borderColor = '#ef4444';
+        companyField.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+        if (!firstInvalidElement) firstInvalidElement = companyField;
+    }
+
+    // 3. Extract hidden context variables flags properties
+    const calculatedPrice = document.getElementById('cachedActivePrice').value;
+    const verifiedPlanTier = document.getElementById('cachedPlanTier').value;
+    const serviceKey = document.getElementById('cachedServiceKey').value;
+
+    const collectedCustomMetaData = {};
+    const registry = window.WIZARD_REGISTRY || {};
+    const currentFields = registry[serviceKey]?.extraFields || [];
+
+    currentFields.forEach(field => {
+        const element = document.getElementById(`custom_${field.id}`);
+        if (element) {
+            const val = element.value.trim();
+            if (!val || val === "") {
+                element.style.borderColor = '#ef4444';
+                element.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                if (!firstInvalidElement) firstInvalidElement = element;
+            } else {
+                collectedCustomMetaData[field.id] = element.value;
+            }
+        }
+    });
+
+    // 4. Smooth scroll intercept if questions are left blank
+    if (firstInvalidElement) {
+        firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => { firstInvalidElement.focus(); }, 400);
+        return;
+    }
+
+    // 5. Package the unified form state data string payload
+    const emailValue = emailField.value.trim();
+    const companyName = companyField.value.trim();
+    const cleanEscapedEmail = encodeURIComponent(emailValue);
+
+    const pendingOrderPayload = {
+        company_name: companyName,
+        customer_email: emailValue,
+        price: calculatedPrice,
+        plan: `${serviceKey}-${verifiedPlanTier}`,
+        metadata: collectedCustomMetaData
+    };
+
+    sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrderPayload));
+
+    try {
+        /* 🚀 FIXED FULL ENDPOINT URL STRING PATH (No placeholder linkages):
+           h t t p s : / / l r b i m r l b s k j w e y n x l g a s . s u p a b a s e . c / f u n c t i o n s / v 1 / s t r i p e - w e b h o o k */
+        const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+            method: 'POST',
+            mode: 'cors', // Forces clear cross-origin preflight handshakes [1]
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'checkout',
+                email: emailValue,
+                company_name: companyName,
+                amount: Math.round(parseFloat(calculatedPrice) * 100),
+                service_type: `${serviceKey}-${verifiedPlanTier}`,
+                return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`
+            })
+        });
+
+        if (!response.ok) throw new Error(`Edge Response Error Status: ${response.status}`);
+        const data = await response.json();
+        
+        if (data.clientSecret) {
+            window.location.href = `order.html?secret=${data.clientSecret}`;
+        } else if (data.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error(data.error || "Mismatched integration secret tracking keys.");
+        }
+    } catch (err) {
+        console.error("Filing transmission error caught:", err);
+        alert(`Order execution fault: ${err.message}`);
+    }
 }
-}
+
 
     </script>
 </body>
