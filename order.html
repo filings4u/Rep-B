@@ -71,85 +71,92 @@
         </div>
     </main>
 
-    <script>
-        // System Clock Tick Driver
-        (function() {
-            function updateCheckoutClock() {
-                const clockBox = document.getElementById('live-wizard-clock');
-                const dateBox = document.getElementById('live-wizard-date');
-                const rightNow = new Date();
-                if (clockBox) clockBox.innerText = rightNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-                if (dateBox) dateBox.innerText = rightNow.toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' });
-            }
-            updateCheckoutClock();
-            setInterval(updateCheckoutClock, 1000);
-        })();
+ <script>
+// System Clock Tick Driver
+(function() {
+  function updateCheckoutClock() {
+    const clockBox = document.getElementById('live-wizard-clock');
+    const dateBox = document.getElementById('live-wizard-date');
+    const rightNow = new Date();
+    if (clockBox) clockBox.innerText = rightNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    if (dateBox) dateBox.innerText = rightNow.toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' });
+  }
+  updateCheckoutClock();
+  setInterval(updateCheckoutClock, 1000);
+})();
 
-        // Primary Core Extraction Matrix Handoff Loader
-        document.addEventListener('DOMContentLoaded', async () => {
-            const loadingMessage = document.getElementById('loading-message');
-            const stripeKey = 'pk_live_51TTy4i0dNjSlvyScbq19wWCQjOhDKdFMUzkV4Et4ok1NAWFFab4qV2KyZB5CwAp6dAvpLSuMZq2xKAR3BZ1gfuTM00KtmvEgc4';
+// Primary Core Extraction Matrix Handoff Loader
+document.addEventListener('DOMContentLoaded', async () => {
+  const loadingMessage = document.getElementById('loading-message');
+  const stripeKey = 'pk_live_51TTy4i0dNjSlvyScbq19wWCQjOhDKdFMUzkV4Et4ok1NAWFFab4qV2KyZB5CwAp6dAvpLSuMZq2xKAR3BZ1gfuTM00KtmvEgc4';
+  
+  const rawData = sessionStorage.getItem('pendingOrder');
+  if (!rawData) {
+    loadingMessage.innerHTML = "<div style='color:#0a1f44; font-weight:700;'>Session records empty. Redirecting to form configurations launcher...</div>";
+    setTimeout(() => { window.location.href = "https://filings4u.com"; }, 1500);
+    return;
+  }
 
-            const rawData = sessionStorage.getItem('pendingOrder');
-            if (!rawData) {
-                loadingMessage.innerHTML = "<div style='color:#0a1f44; font-weight:700;'>Session records empty. Redirecting to form configurations launcher...</div>";
-                setTimeout(() => { window.location.href = "https://filings4u.com"; }, 1500);
-                return;
-            }
+  const orderData = JSON.parse(rawData);
+  const guestEmail = orderData.customer_email || 'guest-checkout@filings4u.com';
+  const validCompanyName = orderData.company_name || 'Registration Profile';
+  const validPriceValue = orderData.price ? parseFloat(orderData.price) : 0.00;
 
-            const orderData = JSON.parse(rawData);
-            const guestEmail = orderData.customer_email || 'guest-checkout@filings4u.com';
-            const validCompanyName = orderData.company_name || 'Registration Profile';
-            const validPriceValue = orderData.price ? parseFloat(orderData.price) : 0.00;
+  document.getElementById('summary-customer-email').innerText = guestEmail;
+  document.getElementById('summary-company-name').innerText = validCompanyName;
+  document.getElementById('summary-price-display').innerText = `$${validPriceValue.toFixed(2)}`;
 
-            document.getElementById('summary-customer-email').innerText = guestEmail;
-            document.getElementById('summary-company-name').innerText = validCompanyName;
-            document.getElementById('summary-price-display').innerText = `$${validPriceValue.toFixed(2)}`;
+  try {
+    const cleanEscapedEmail = encodeURIComponent(guestEmail);
+    
+    // 1. Initialize Stripe object using your public live key
+    const stripe = await loadStripe(stripeKey);
 
-            try {
-                const fetchClientSecret = async () => {
-                    const cleanEscapedEmail = encodeURIComponent(guestEmail);
-                    
-                    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { 
-                            'Content-Type': 'application/json', 
-                            'Accept': 'application/json' 
-                        },
-                        body: JSON.stringify({
-                            action: 'checkout',
-                            email: guestEmail,
-                            company_name: validCompanyName,
-                            amount: Math.round(validPriceValue * 100),
-                            service_type: orderData.plan || 'llc-formation-compliance',
-                            return_url: 'https://filings4u.com' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}'
+    // 2. Safely call your Edge Function to generate the live session client secret
+    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'checkout',
+        email: guestEmail,
+        company_name: validCompanyName,
+        amount: Math.round(validPriceValue * 100),
+        service_type: orderData.plan || 'llc-formation-compliance',
+        // 🚀 FIXED: Added ?email= formatting to prevent server-side URL crashes
+        return_url: 'https://filings4u.com' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}'
+      })
+    });
 
-                        })
-                    });
+    if (!response.ok) throw new Error(`Server edge gateway response failure status: ${response.status}`);
+    const jsonPayload = await response.json();
+    if (jsonPayload.error) throw new Error(jsonPayload.error);
+    if (!jsonPayload.clientSecret) throw new Error("No client secret returned from backend.");
 
-                    if (!response.ok) throw new Error(`Server edge gateway response failure status: ${response.status}`);
-                    const jsonPayload = await response.json();
-                    if (jsonPayload.error) throw new Error(jsonPayload.error);
-                    
-                    return jsonPayload.clientSecret;
-                };
+    // 3. 🚀 FIXED: Correctly pass the resolved clientSecret string straight into the frame initializer [1]
+    const checkout = await stripe.initEmbeddedCheckout({
+      clientSecret: jsonPayload.clientSecret
+    });
 
-                const checkout = await Stripe(stripeKey).initEmbeddedCheckout({ fetchClientSecret });
-                loadingMessage.style.display = 'none';
-                checkout.mount('#checkout');
+    // 4. Hide loader element and mount the payment interface container
+    loadingMessage.style.display = 'none';
+    checkout.mount('#checkout');
 
-            } catch (err) {
-                console.error("Stripe runtime connection crash error:", err);
-                loadingMessage.innerHTML = `<div style="color:#e53e3e; font-weight:700;">Handshake Secure Tunnel Interrupted: ${err.message}</div>`;
-            }
-        });
+  } catch (err) {
+    console.error("Stripe runtime connection crash error:", err);
+    loadingMessage.innerHTML = `<div style="color:#e53e3e; font-weight:700;">Handshake Secure Tunnel Interrupted: <br><span style="font-size:0.85rem; font-weight:400; color:#4a5568;">${err.message}</span></div>`;
+  }
+});
 
-        function handleCancelAbortRedirect() {
-            if (confirm("Are you sure you want to discard your registration selections and return to the main hub?")) {
-                window.location.href = 'https://filings4u.com';
-            }
-        }
-    </script>
+function handleCancelAbortRedirect() {
+  if (confirm("Are you sure you want to discard your registration selections and return to the main hub?")) {
+    window.location.href = 'https://filings4u.com';
+  }
+}
+</script>
+
 </body>
 </html>
