@@ -115,9 +115,12 @@
             document.getElementById('summary-price-display').innerText = `$${validPriceValue.toFixed(2)}`;
 
      // --- UPDATE THIS PARAMETER SECTION INSIDE order.html ---
+// --- UPDATE THIS FETCH BODY INSIDE order.html ---
 try {
     const fetchClientSecret = async () => {
-        const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+        const cleanEscapedEmail = encodeURIComponent(guestEmail);
+        
+        const response = await fetch('https://supabase.co', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
@@ -127,8 +130,8 @@ try {
                 amount: Math.round(validPriceValue * 100),
                 service_type: orderData.plan || 'llc-formation-compliance',
                 
-                // 🚀 FIXED: Updated parameters layout to prevent browser iframe crashes
-                return_url: `https://filings4u.com{encodeURIComponent(guestEmail)}`
+                // 🚀 FIXED: Balanced string concatenation solves the URL parsing break
+                return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`
             })
         });
 
@@ -145,6 +148,8 @@ try {
     checkout.mount('#checkout');
 
 } catch (err) {
+    // ... standard error rendering keeps running safely
+
     // ... error handling block continues cleanly
 
                 console.error("Stripe runtime connection crash error:", err);
