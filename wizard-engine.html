@@ -396,10 +396,16 @@ async function executeFinalFunnelOrderPaymentSubmit() {
 
     let firstInvalidElement = null;
 
-    // 2. Extract configuration variables tokens
-    const calculatedPrice = document.getElementById('cachedActivePrice').value;
-    const verifiedPlanTier = document.getElementById('cachedPlanTier').value;
-    const serviceKey = document.getElementById('cachedServiceKey').value;
+   // 2. Extract configuration variables tokens (FIXED IDs & Added Null Fallbacks)
+const calculatedPriceEl = document.getElementById('cachedActivePrice');
+const calculatedPrice = calculatedPriceEl ? calculatedPriceEl.value : coreBasePrice;
+
+const verifiedPlanTierEl = document.getElementById('cached_plan_tier');
+const verifiedPlanTier = verifiedPlanTierEl ? verifiedPlanTierEl.value : 'compliance';
+
+const serviceKeyEl = document.getElementById('cached_service_key');
+const serviceKey = serviceKeyEl ? serviceKeyEl.value : 'llc-formation';
+
     
     let finalPriceSum = parseFloat(sessionStorage.getItem('rollingCalculatedSumPrice'));
     if (isNaN(finalPriceSum) || !finalPriceSum) {
@@ -472,7 +478,8 @@ async function executeFinalFunnelOrderPaymentSubmit() {
                 amount: Math.round(finalPriceSum * 100),
                 service_type: `${serviceKey}-${verifiedPlanTier}`,
                 // 🚀 FIXED RETURN URL: Added missing '$' and structural page endpoints parameters to prevent format errors
-                return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`
+                return_url: 'https://filings4u.com' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}'
+
             })
         });
 
