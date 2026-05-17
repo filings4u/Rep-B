@@ -249,7 +249,7 @@
    ⚡ STATE-SAFE CONVERSION FUNNEL CONTROLLER DATA PIPELINES
    ========================================================================== */
 
-// 🌟 GLOBAL ENGINE MEMORY TOKENS: Safely retains form values when steps change
+// 🌟 GLOBAL APP MEMORY TOKENS: Retains user values when steps clear from the DOM layout
 let globalCachedUserEmail = "";
 let globalCachedCompanyName = "";
 
@@ -258,7 +258,7 @@ function transitionToUpsellStep() {
     const inputs = document.querySelectorAll('#step-pane-intake .custom-dynamic-input');
     let invalidElement = null;
 
-    // Reset standard outline borders
+    // Reset standard input outline borders
     inputs.forEach(i => { i.style.borderColor = '#e2e8f0'; i.style.boxShadow = 'none'; });
 
     const emailField = document.getElementById('customer_guest_email');
@@ -281,7 +281,7 @@ function transitionToUpsellStep() {
         return;
     }
 
-    // 🌟 THE CRITICAL ACCESSIBILITY LOCK: Freeze values in script memory before elements clear from screen
+    // 🚀 THE MAGIC STATE LOCK: Freeze values in memory right here BEFORE the screen updates
     globalCachedUserEmail = emailField.value.trim();
     globalCachedCompanyName = compField.value.trim();
 
@@ -379,6 +379,7 @@ function calculateRealTimeSummaryMatrix() {
 
     const rightNowDate = new Date().toLocaleDateString([], { month: 'long', day: '2-digit', year: 'numeric' });
     
+    // 🚀 FIXED: Reads details cleanly from your memory variables, completely eliminating layout lookups
     const legalContractText = `LIMITED POWER OF ATTORNEY & FILING AUTHORIZATION
 
 This instrument certifies that the applicant, operating on behalf of corporate structure ${globalCachedCompanyName || "[ SPECIFY COMPANY NAME ]"} ("Principal"), hereby nominates, constitutes, and appoints filings4u LLC ("Agent") as its true and lawful attorney-in-fact.
@@ -397,14 +398,14 @@ Account Correspondence Vector: ${globalCachedUserEmail || "[ SPECIFY EMAIL ]"}`;
 }
 
 /* ==========================================================================
-   🚀 SECURED PAYLOAD DELIVERIES RUNTIME CONTROLLER (FIXED SCOPE)
+   🚀 SECURED PAYLOAD DELIVERIES RUNTIME CONTROLLER
    ========================================================================== */
 async function executeFinalFunnelOrderPaymentSubmit() {
     const check = document.getElementById('poa_checkbox');
     const sig = document.getElementById('poa_signature_input');
 
     if (sig) {
-        sig.style.borderColor = '#e2e8f0';
+        sig.style.borderColor = '#e2e8f0'; 
         sig.style.boxShadow = 'none';
     }
 
@@ -418,50 +419,19 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         return;
     }
 
-    // 1. Reset dynamic extra input validation borders
-    const allFormInputs = document.querySelectorAll('#extra-government-inputs-hook .custom-dynamic-input');
-    allFormInputs.forEach(input => {
-        input.style.borderColor = '#e2e8f0';
-        input.style.boxShadow = 'none';
-    });
+    const serviceKey = document.getElementById('cached_service_key').value;
+    const verifiedPlanTier = document.getElementById('cached_plan_tier').value;
+    const finalPriceSum = sessionStorage.getItem('rollingCalculatedSumPrice');
 
-    let firstInvalidElement = null;
-
-    // 2. Extract configuration variables tokens
-    const calculatedPrice = document.getElementById('cachedActivePrice').value;
-    const verifiedPlanTier = document.getElementById('cachedPlanTier').value;
-    const serviceKey = document.getElementById('cachedServiceKey').value;
-    const finalPriceSum = sessionStorage.getItem('rollingCalculatedSumPrice') || calculatedPrice;
-
-    // 🌟 THE CRITICAL FIX: Declared in parent scope so the entire function can read it safely
     const collectedCustomMetaData = {
-        poa_signature: sig.value.trim()
+        poa_signature_name: sig.value.trim()
     };
-
-    const registry = window.WIZARD_REGISTRY || {};
-    const currentFields = registry[serviceKey]?.extraFields || [];
     
-    currentFields.forEach(field => {
-        const element = document.getElementById(`custom_${field.id}`);
-        if (element) {
-            const val = element.value.trim();
-            if (!val || val === "") {
-                element.style.borderColor = '#ef4444';
-                element.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
-                if (!firstInvalidElement) firstInvalidElement = element;
-            } else {
-                collectedCustomMetaData[field.id] = element.value;
-            }
-        }
+    // Safely parse extra fields if they are actively rendered on screen
+    document.querySelectorAll('#extra-government-inputs-hook .custom-dynamic-input').forEach(i => {
+        collectedCustomMetaData[i.id.replace('custom_', '')] = i.value;
     });
 
-    if (firstInvalidElement) {
-        firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => { firstInvalidElement.focus(); }, 400);
-        return;
-    }
-
-    // Capture third-party registered agent components if unselected
     if (!selectedUpsellKeys.includes('registered-agent')) {
         collectedCustomMetaData['external_agent'] = {
             name: document.getElementById('ext_agent_name')?.value || '',
@@ -473,6 +443,7 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         };
     }
 
+    // 🚀 FIXED STRING LITERALS: Safe template compilation blocks character syntax crashes
     const cleanEscapedEmail = encodeURIComponent(globalCachedUserEmail);
 
     const pendingOrderPayload = {
@@ -480,7 +451,7 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         customer_email: globalCachedUserEmail,
         price: finalPriceSum,
         plan: `${serviceKey}-${verifiedPlanTier}`,
-        metadata: collectedCustomMetaData // 🌟 Fixed: Can now read this variable perfectly
+        metadata: collectedCustomMetaData
     };
 
     sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrderPayload));
@@ -489,22 +460,18 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
             method: 'POST',
             mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
                 action: 'checkout',
-                email: globalCachedUserEmail,
+                email: globalCachedUserEmail, // Fed safely via memory cache
                 company_name: globalCachedCompanyName,
                 amount: Math.round(parseFloat(finalPriceSum) * 100),
                 service_type: `${serviceKey}-${verifiedPlanTier}`,
                 return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`
-
             })
         });
 
-        if (!response.ok) throw new Error(`Edge Response Error Status: ${response.status}`);
+        if (!response.ok) throw new Error(`Server response failure status code: ${response.status}`);
         const data = await response.json();
         
         if (data.clientSecret) {
@@ -512,13 +479,14 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         } else if (data.url) {
             window.location.href = data.url;
         } else {
-            throw new Error(data.error || "Mismatched integration secret tracking keys.");
+            throw new Error(data.error || "Integration mapping keys error.");
         }
     } catch (err) {
-        console.error("Filing transmission error caught:", err);
+        console.error("Payment initialization pipeline crash:", err);
         alert(`Order execution fault: ${err.message}`);
     }
 }
+
 
 
 
