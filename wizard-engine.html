@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compliance Setup Wizard Engine | filings4u</title>
+    <title>Filing Setup Wizard Engine | filings4u</title>
     <link rel="stylesheet" href="assets/css/portal-wizard.css">
     
     <script src="https://js.stripe.com/v3/"></script>
@@ -12,7 +12,9 @@
     
     <style>
         :root { --emerald: #10b981; --navy: #0a1f44; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-dynamic-label { display:block; font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#4a5568; margin-bottom:6px; letter-spacing:0.5px; margin-top: 18px; }
+        .custom-dynamic-input { width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.95rem; outline:none; font-family: inherit; color: var(--navy); box-sizing: border-box; width: 100%; }
+        .custom-dynamic-input:focus { border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
         
         .wizard-step-pane { display: none; text-align: left; }
         .wizard-step-pane.step-active { display: block; }
@@ -21,10 +23,6 @@
         .upsell-item-card.selected { border-color: var(--emerald); background: rgba(16, 185, 129, 0.02); box-shadow: 0 4px 12px rgba(16,185,129,0.05); }
         
         .summary-item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
-        .custom-dynamic-label { display:block; font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#4a5568; margin-bottom:6px; letter-spacing:0.5px; margin-top: 18px; }
-        .custom-dynamic-input { width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.95rem; outline:none; font-family: inherit; color: var(--navy); box-sizing: border-box; }
-        .custom-dynamic-input:focus { border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
-        
         .trust-badge { background: rgba(16, 185, 129, 0.1); padding: 10px 20px; border-radius: 8px; font-size: 0.75rem; color: var(--navy); font-weight: 600; display: flex; align-items: center; gap: 8px; }
         .trust-badge span { color: var(--emerald); font-weight: 800; }
     </style>
@@ -33,13 +31,11 @@
 
     <main class="wizard-container" style="max-width: 850px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02); position: relative;">
         
-        <!-- Live System Clock Dashboard Component -->
         <div style="position: absolute; top: 15px; right: 40px; text-align: right;">
             <div id="live-wizard-date" style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">--/--/----</div>
             <div id="live-wizard-clock" style="font-family: monospace; font-size: 0.95rem; font-weight: 800; color: var(--emerald); margin-top: 2px;">00:00:00</div>
         </div>
 
-        <!-- Layout Frame Header Component -->
         <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <img src="images/logo.png" alt="filings4u" style="height: 32px; display:block; margin-bottom:8px;">
@@ -48,15 +44,13 @@
             <a href="https://filings4u.com" style="text-decoration:none; border:1px solid #0a1f44; color:#0a1f44; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.85rem;">✕ Cancel</a>
         </div>
 
-        <!-- 🚀 STEP 1: DYNAMIC GOVERNMENT INTAKE FORM -->
+        <!-- STEP 1: DYNAMIC GOVERNMENT INTAKE FORM -->
         <div id="step-pane-intake" class="wizard-step-pane step-active">
-            <div id="government-fields-injection-wrapper">
-                <p style="text-align:center; padding:40px; color:#64748b;">Assembling user interface layout components...</p>
-            </div>
+            <div id="government-fields-injection-wrapper"></div>
             <button onclick="transitionToUpsellStep()" style="background:#0a1f44; color:white; border:none; width:100%; padding:14px; border-radius:6px; font-weight:700; font-size:1rem; cursor:pointer; margin-top: 25px;">Continue to Special Services ➔</button>
         </div>
 
-        <!-- 🚀 STEP 2: SERVICES UPSELL & EXTERNAL AGENT DATA PANEL -->
+        <!-- STEP 2: SERVICES UPSELL & EXTERNAL AGENT DATA FORMS -->
         <div id="step-pane-upsells" class="wizard-step-pane">
             <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--navy); margin-bottom: 10px;">Enhance Your Protection Portfolio</h2>
             <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 25px;">Select additional legal structures to satisfy state guidelines and safeguard your assets site-wide.</p>
@@ -65,7 +59,7 @@
 
             <div id="external-agent-form-container" style="display: none; background: #fffaf0; border: 1px solid #feebc8; border-radius: 8px; padding: 25px; margin-top: 25px;">
                 <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #dd6b20; font-weight: 800;">⚠️ External Statutory Agent Designation Needed</h3>
-                <p style="margin: 0 0 20px 0; font-size: 0.88rem; color: #7b341e; line-height: 1.4;">States require a physical address presence inside your formation jurisdiction. Since you opted out of our registered agent package, enter your third-party provider's valid statutory data records below:</p>
+                <p style="margin: 0 0 20px 0; font-size: 0.88rem; color: #7b341e; line-height: 1.4;">States require a physical address presence inside your formation jurisdiction. Enter your third-party provider's valid statutory data records below:</p>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div style="grid-column: span 2;">
@@ -101,7 +95,7 @@
             <button onclick="transitionToSummaryStep()" style="background:#0a1f44; color:white; border:none; width:100%; padding:14px; border-radius:6px; font-weight:700; font-size:1rem; cursor:pointer; margin-top: 25px;">Proceed directly to Order Summary ➔</button>
         </div>
 
-        <!-- 🚀 STEP 3: REAL-TIME SUMMARY & LEGAL POWER OF ATTORNEY SIGNATURE -->
+        <!-- STEP 3: REAL-TIME SUMMARY & LEGAL POWER OF ATTORNEY SIGNATURE -->
         <div id="step-pane-summary" class="wizard-step-pane">
             <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--navy); margin-bottom: 20px;">Review & Authorize Application</h2>
             
@@ -114,7 +108,6 @@
                 </div>
             </div>
 
-            <!-- 📜 FMCSA COMPLIANT: DYNAMIC AUTOMATED POWER OF ATTORNEY INSTRUMENT -->
             <div style="border: 1px solid #cbd5e1; border-radius: 12px; background: #ffffff; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow: hidden;">
                 <div style="background: #f1f5f9; padding: 15px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-size: 0.75rem; font-weight: 800; color: var(--navy); text-transform: uppercase; letter-spacing: 1px;">Generated Legal Instrument</span>
@@ -133,7 +126,7 @@
 
                     <div>
                         <label class="custom-dynamic-label" style="margin-top:0; color: #475569;">Authorized Signature (Type Full Legal Name To Bind Document)</label>
-                        <input type="text" id="poa_signature_input" class="custom-dynamic-input" style="font-size: 1.1rem; padding: 10px 15px;" placeholder="Type name to sign digitally...">
+                        <input type="text" id="poa_signature_input" class="custom-dynamic-input" style="font-family: 'Brush Script MT', cursive, sans-serif; font-size: 1.3rem; padding: 10px 15px;" placeholder="Type name to sign digitally...">
                     </div>
                 </div>
             </div>
@@ -146,20 +139,19 @@
                 <span>SECURE</span> 256-bit SSL Encrypted Connection
             </div>
             <div style="font-size: 0.8rem; color: #64748b; font-weight: 500; text-align: right;">
-                State & Federal Filing Data Safeguarded Securely
+                PCI-DSS Compliant Transaction Pipeline
             </div>
         </div>
     </main>
 
     <script>
-        // Global variables initialized at top scope to stop compile crashes
         let coreBasePrice = 149.00;
-        let chosenServiceTitle = "Compliance Service Track";
+        let chosenServiceTitle = "";
         let selectedUpsellKeys = ["registered-agent"];
+        
         let globalCachedUserEmail = "";
         let globalCachedCompanyName = "";
 
-        // --- 1. CLOCK ENGINE ---
         (function() {
             function tick() {
                 const clock = document.getElementById('live-wizard-clock');
@@ -171,7 +163,6 @@
             tick(); setInterval(tick, 1000);
         })();
 
-        // --- 2. STEP 1 LAYOUT ENGINE ---
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
             const activeServiceKey = urlParams.get('service') || 'llc-formation';
@@ -181,16 +172,12 @@
             const config = registry[activeServiceKey];
             
             if (!config) {
-                document.getElementById('government-fields-injection-wrapper').innerHTML = `
-                    <div style="color:red; font-weight:700; text-align:center; padding:40px;">
-                        Service layout key [${activeServiceKey.toUpperCase()}] not found.
-                    </div>`;
+                document.getElementById('government-fields-injection-wrapper').innerHTML = `<div style="color:red; font-weight:700; text-align:center; padding:40px;">Configuration Error: Service profile map missing.</div>`;
                 return;
             }
 
-            coreBasePrice = (config.prices && config.prices[chosenPlanTier]) ? config.prices[chosenPlanTier] : 149.00;
+            coreBasePrice = config.prices[chosenPlanTier] || config.prices['compliance'];
             chosenServiceTitle = `${config.title} (${chosenPlanTier.toUpperCase()})`;
-
             document.getElementById('wizard-title-display').innerText = config.title;
 
             let baseFormFieldsHTML = `
@@ -246,7 +233,6 @@
             buildUpsellInterfaceGrid();
         });
 
-        // --- 3. TRANSITION OPERATIONS ---
         function transitionToUpsellStep() {
             const inputs = document.querySelectorAll('#step-pane-intake .custom-dynamic-input');
             let invalidElement = null;
@@ -283,7 +269,6 @@
         function buildUpsellInterfaceGrid() {
             const target = document.getElementById('upsell-items-injection-target');
             const upsells = window.UPSELL_REGISTRY || {};
-            if (!target) return;
             target.innerHTML = "";
 
             Object.keys(upsells).forEach(key => {
@@ -311,17 +296,17 @@
             const card = document.getElementById(`upsell-card-${key}`);
             if (checkbox.checked) {
                 if (!selectedUpsellKeys.includes(key)) selectedUpsellKeys.push(key);
-                if (card) card.classList.add('selected');
+                card.classList.add('selected');
             } else {
                 selectedUpsellKeys = selectedUpsellKeys.filter(k => k !== key);
-                if (card) card.classList.remove('selected');
+                card.classList.remove('selected');
             }
 
             const extAgentForm = document.getElementById('external-agent-form-container');
             if (!selectedUpsellKeys.includes('registered-agent')) {
-                if (extAgentForm) extAgentForm.style.display = "block";
+                extAgentForm.style.display = "block";
             } else {
-                if (extAgentForm) extAgentForm.style.display = "none";
+                extAgentForm.style.display = "none";
             }
         }
 
@@ -329,7 +314,7 @@
             if (!selectedUpsellKeys.includes('registered-agent')) {
                 let invalidField = null;
                 const extInputs = document.querySelectorAll('#external-agent-form-container .custom-dynamic-input');
-                extInputs.forEach(i => { i.style.borderColor = '#e2e8f0'; i.style.boxShadow='none'; });
+                extInputs.forEach(i => { i.style.borderColor = '#e2e8f0'; i.style.boxShadow = 'none'; });
                 
                 extInputs.forEach(i => {
                     if (!i.value.trim()) { if (!invalidField) invalidField = i; }
@@ -352,7 +337,6 @@
             const listTarget = document.getElementById('summary-items-list-target');
             const totalTarget = document.getElementById('summary-total-price-box');
             const docTarget = document.getElementById('dynamic-poa-document-body');
-            if (!listTarget) return;
             listTarget.innerHTML = "";
             
             let rollingSum = coreBasePrice;
@@ -360,13 +344,11 @@
 
             selectedUpsellKeys.forEach(key => {
                 const item = window.UPSELL_REGISTRY[key];
-                if (item) {
-                    rollingSum += item.price;
-                    listTarget.innerHTML += `<div class="summary-item-row"><span>+ ${item.title}</span><span>$${item.price.toFixed(2)}</span></div>`;
-                }
+                rollingSum += item.price;
+                listTarget.innerHTML += `<div class="summary-item-row"><span>+ ${item.title}</span><span>$${item.price.toFixed(2)}</span></div>`;
             });
 
-            if (totalTarget) totalTarget.innerText = `$${rollingSum.toFixed(2)}`;
+            totalTarget.innerText = `$${rollingSum.toFixed(2)}`;
             sessionStorage.setItem('rollingCalculatedSumPrice', rollingSum);
 
             const rightNowDate = new Date().toLocaleDateString([], { month: 'long', day: '2-digit', year: 'numeric' });
@@ -375,10 +357,6 @@
 This instrument certifies that the applicant, operating on behalf of corporate structure ${globalCachedCompanyName || "[ SPECIFY COMPANY NAME ]"} ("Principal"), hereby nominates, constitutes, and appoints filings4u LLC ("Agent") as its true and lawful attorney-in-fact.
 
 Agent is granted full limited authorization and power to act in the name, place, and stead of Principal for the distinct purpose of drafting, preparing, electronic signing, and submitting processing declarations, licensing requests, regulatory registrations, and mandated compliance applications directly with the Federal Motor Carrier Safety Administration (FMCSA), Internal Revenue Service (IRS), and respective State Secretarial Departments.
-
-Principal acknowledges that Agent operates as a private, third-party logistics compliance network processing data vectors based entirely on statements supplied by the user channel framework. Principal accepts absolute liability for the accuracy of file statements completed during intake gates.
-
-This Limited Power of Attorney structure activates immediately on this day of execution: ${rightNowDate}, and terminates automatically upon successful jurisdictional status certification validation loops.
 
 Executed Remotely via Certified Electronic Form Delivery Channel.
 Account Correspondence Vector: ${globalCachedUserEmail || "[ SPECIFY EMAIL ]"}`;
@@ -391,38 +369,28 @@ Account Correspondence Vector: ${globalCachedUserEmail || "[ SPECIFY EMAIL ]"}`;
             const check = document.getElementById('poa_checkbox');
             const sig = document.getElementById('poa_signature_input');
 
-            if (sig) { sig.style.borderColor = '#e2e8f0'; sig.style.boxShadow = 'none'; }
-
             if (!check || !check.checked || !sig || !sig.value.trim()) {
                 if (sig) {
                     sig.style.borderColor = '#ef4444';
                     sig.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
-                    sig.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-                alert("Mandatory Verification: You must execute and sign the corporate Limited Power of Attorney.");
+                alert("Mandatory Verification: You must sign the Limited Power of Attorney to continue checkout.");
                 return;
             }
 
             const serviceKey = document.getElementById('cached_service_key').value;
             const verifiedPlanTier = document.getElementById('cached_plan_tier').value;
-            const finalPriceSum = sessionStorage.getItem('rollingCalculatedSumPrice') || coreBasePrice;
+            
+            // 🚀 FIXED CALCULATION FALLBACK: Guarantees a clean price state payload is passed to your edge code
+            let finalPriceSum = parseFloat(sessionStorage.getItem('rollingCalculatedSumPrice'));
+            if (isNaN(finalPriceSum) || !finalPriceSum) {
+                finalPriceSum = coreBasePrice;
+            }
 
             const collectedCustomMetaData = { poa_signature_name: sig.value.trim() };
-            
             document.querySelectorAll('#extra-government-inputs-hook .custom-dynamic-input').forEach(i => {
                 collectedCustomMetaData[i.id.replace('custom_', '')] = i.value;
             });
-
-            if (!selectedUpsellKeys.includes('registered-agent')) {
-                collectedCustomMetaData['external_agent'] = {
-                    name: document.getElementById('ext_agent_name')?.value || '',
-                    street: document.getElementById('ext_agent_address')?.value || '',
-                    suite: document.getElementById('ext_agent_suite')?.value || '',
-                    city: document.getElementById('ext_agent_city')?.value || '',
-                    state: document.getElementById('ext_agent_state')?.value || '',
-                    zip: document.getElementById('ext_agent_zip')?.value || '',
-                };
-            }
 
             const cleanEscapedEmail = encodeURIComponent(globalCachedUserEmail);
             const pendingOrderPayload = {
@@ -444,13 +412,13 @@ Account Correspondence Vector: ${globalCachedUserEmail || "[ SPECIFY EMAIL ]"}`;
                         action: 'checkout',
                         email: globalCachedUserEmail,
                         company_name: globalCachedCompanyName,
-                        amount: Math.round(parseFloat(finalPriceSum) * 100),
+                        amount: Math.round(finalPriceSum * 100), // Secure numeric conversion block
                         service_type: `${serviceKey}-${verifiedPlanTier}`,
                         return_url: `https://filings4u.com{cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`
                     })
                 });
 
-                if (!response.ok) throw new Error(`Edge Error: ${response.status}`);
+                if (!response.ok) throw new Error(`Server Response Code: ${response.status}`);
                 const data = await response.json();
                 
                 if (data.clientSecret) {
@@ -458,7 +426,7 @@ Account Correspondence Vector: ${globalCachedUserEmail || "[ SPECIFY EMAIL ]"}`;
                 } else if (data.url) {
                     window.location.href = data.url;
                 } else {
-                    throw new Error(data.error || "Mismatched tracking keys.");
+                    throw new Error(data.error || "Mismatched integration signature keys.");
                 }
             } catch (err) {
                 alert(`Order execution fault: ${err.message}`);
