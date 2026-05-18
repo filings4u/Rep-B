@@ -323,3 +323,64 @@ async function syncAdminIncomingInboxMessages() {
     }
 }
 // Push message loading routines into the parallel Promise loop inside your engine file
+
+// Dynamic sales ledger population function mapping into your DOM target box
+async function fetchAndSyncAdministrativeSalesLedger() {
+    const targetBox = document.getElementById('admin-global-sales-target-box');
+    if (!targetBox) return;
+
+    try {
+        // Query database via your globally mounted Supabase script SDK
+        const { data: orders, error } = await window.supabase
+            .from('document_orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!orders || orders.length === 0) {
+            targetBox.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">No corporate document purchases found.</td></tr>`;
+            return;
+        }
+
+        targetBox.innerHTML = "";
+
+        // Loop through purchases and build real-time interactive rows
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+            row.style.borderBottom = "1px solid #e2e8f0";
+            
+            // Format form fields into an easily readable diagnostic label string
+            const formSummary = Object.entries(order.form_responses)
+                .map(([key, val]) => `${key}: ${val}`).join(' | ');
+
+            row.innerHTML = `
+                <td style="padding: 12px 16px; font-weight: 700; color: #0a1f44;">${order.entity_name}</td>
+                <td style="padding: 12px 16px; color: #4a5568;">${order.customer_email}</td>
+                <td style="padding: 12px 16px;"><span class="tier-pill" style="background:#edf2f7; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">${order.pricing_tier.toUpperCase()}</span></td>
+                <td style="padding: 12px 16px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color: #64748b;" title="${formSummary}">${formSummary}</td>
+                <td style="padding: 12px 16px; color: #4a5568;">${new Date(order.created_at).toLocaleDateString()}</td>
+                <td style="padding: 12px 16px; font-weight: 700; color: #10b981;">$${order.amount_paid.toFixed(2)}</td>
+                <td style="padding: 12px 16px;">
+                    <div style="display: flex; gap: 8px;">
+                        ${order.word_file_url ? `<a href="${order.word_file_url}" target="_blank" style="text-decoration:none; font-size:0.85rem;" title="Download Docx">📝 DOCX</a>` : ''}
+                        ${order.pdf_file_url ? `<a href="${order.pdf_file_url}" target="_blank" style="text-decoration:none; font-size:0.85rem; color:#e53e3e;" title="Download PDF">📕 PDF</a>` : ''}
+                        ${!order.word_file_url && !order.pdf_file_url ? `<span style="color:#dd6b20; font-size:0.8rem; font-weight:700;">⚙️ Generating...</span>` : ''}
+                    </div>
+                </td>
+            `;
+            targetBox.appendChild(row);
+        });
+
+    } catch (err) {
+        console.error("Dashboard failed to map transaction records safely:", err.message);
+        targetBox.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#e53e3e;">Failed to populate sales synchronization logs.</td></tr>`;
+    }
+}
+
+// Call inside your existing initialization system checks
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fetchAndSyncAdministrativeSalesLedger);
+} else {
+    fetchAndSyncAdministrativeSalesLedger();
+}
