@@ -19,22 +19,61 @@
     const adminLoginForm = document.getElementById('adminLoginForm');
     const loginSubmitBtn = document.getElementById('loginBtn');
     const passError = document.getElementById('password-error');
-    const loginCard = document.querySelector('.login-card');
+
+    // ROLE-BASED AUTHENTICATION GATE
+    async function verifyAdminRoleClearance(userId) {
+        try {
+            // Query the profiles table to ensure this user has the real 'admin' role token
+            const { data: profile, error: profileError } = await client
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .maybeSingle();
+
+            if (profileError) throw new Error(`Database check failed: ${profileError.message}`);
+            
+            if (!profile) {
+                throw new Error("Your user row is missing inside the public 'profiles' table. Run the SQL fix script.");
+            }
+
+            if (profile.role !== 'admin') {
+                throw new Error("Access Denied: Your profile role is listed as a customer, not an administrator.");
+            }
+
+            // Success: Clean passage straight to dashboard
+            console.log("Access authorization confirmed.");
+            window.location.replace('admin-dashboard.html');
+
+        } catch (routeErr) {
+            console.error("Critical admin barrier breach:", routeErr.message);
+            
+            // Halt the flashing/blinking loop and display the technical error to the staff member
+            if (passError) {
+                passError.innerText = `Authorization Denied: ${routeErr.message}`;
+            } else {
+                alert(`Authorization Denied: ${routeErr.message}`);
+            }
+
+            if (loginSubmitBtn) {
+                loginSubmitBtn.innerText = "Verify Terminal Session →";
+                loginSubmitBtn.disabled = false;
+            }
+
+            // Wipe token and stay on the login screen instead of blindly bouncing
+            await client.auth.signOut();
+        }
+    }
 
     try {
         await client.auth.initialize();
 
-        // 1. AUTO-REDIRECT TRANSITION
+        // AUTO-REDIRECT GATE: Route straight out if already fully authenticated
         const { data: { session } } = await client.auth.getSession();
         if (session && session.user && session.user.email.toLowerCase().endsWith('@filings4u.com')) {
-            if (loginCard) loginCard.classList.add('auth-success');
-            setTimeout(() => {
-                window.location.replace('admin-dashboard.html');
-            }, 350);
+            window.location.replace('admin-dashboard.html');
             return;
         }
 
-        // 2. FORM INTERACTION HANDLING
         if (adminLoginForm) {
             adminLoginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -43,48 +82,46 @@
                 const passwordInput = document.getElementById('password');
                 if (!emailInput || !passwordInput) return;
 
+                // Reset validation states
+                emailInput.classList.remove('field-error');
+                passwordInput.classList.remove('field-error');
+                if (passError) passError.innerText = "";
+
                 const email = emailInput.value.trim().toLowerCase();
                 const password = passwordInput.value;
 
+                // Form validation pre-flight check
+                let hasFormErrors = false;
+                if (!email) { emailInput.classList.add('field-error'); hasFormErrors = true; }
+                if (!password) { passwordInput.classList.add('field-error'); hasFormErrors = true; }
+                
                 if (!email.endsWith('@filings4u.com')) {
-                    if (passError) {
-                        passError.innerText = "Access denied: Entry is strictly reserved for verified @filings4u.com email domains.";
-                    }
+                    emailInput.classList.add('field-error');
+                    if (passError) passError.innerText = "Entry is strictly reserved for verified @filings4u.com corporate email profiles.";
                     return;
                 }
 
-                // Inject spinner infrastructure into UI
+                if (hasFormErrors) return;
+
                 if (loginSubmitBtn) {
-                    loginSubmitBtn.innerHTML = `<span class="btn-spinner"></span> Verifying Session...`;
+                    loginSubmitBtn.innerText = "Authenticating Admin...";
                     loginSubmitBtn.disabled = true;
                 }
-                if (passError) passError.innerText = "";
 
                 try {
                     const result = await client.auth.signInWithPassword({ email, password });
                     if (result.error) throw new Error(result.error.message);
 
-                    const authenticatedUser = result.data.user;
-                    if (!authenticatedUser || !authenticatedUser.email.toLowerCase().endsWith('@filings4u.com')) {
-                        await client.auth.signOut();
-                        throw new Error("Administrative server validation check failed.");
-                    }
-
-                    // Success state animation trigger
-                    if (loginSubmitBtn) loginSubmitBtn.innerHTML = "Access Authorized ✓";
-                    if (loginCard) loginCard.classList.add('auth-success');
-                    
-                    setTimeout(() => {
-                        window.location.replace('admin-dashboard.html');
-                    }, 400);
+                    // Execute profile evaluation loop
+                    await verifyAdminRoleClearance(result.data.user.id);
 
                 } catch (err) {
-                    console.warn("Auth barrier caught exception:", err.message);
-                    if (passError) {
-                        passError.innerText = `Authorization Failed: ${err.message}`;
-                    }
+                    console.warn("Auth exception caught:", err.message);
+                    emailInput.classList.add('field-error');
+                    passwordInput.classList.add('field-error');
+                    if (passError) passError.innerText = `Authorization Failed: ${err.message}`;
                     if (loginSubmitBtn) {
-                        loginSubmitBtn.innerHTML = "Verify Terminal Session →";
+                        loginSubmitBtn.innerText = "Verify Terminal Session →";
                         loginSubmitBtn.disabled = false;
                     }
                 }

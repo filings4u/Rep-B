@@ -3,55 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 🔴 ADMINISTRATIVE SYSTEM STATUS BAR COLOR (CRIMSON ACCENT DESIGNATION) -->
     <meta name="theme-color" content="#c15254">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="msapplication-navbutton-color" content="#c15254">
     <title>Directorate Control Panel | filings4u Staff Terminal</title>
     
+    <!-- 🎯 GLOBAL FAVICON BRAND MATRIX ANCHOR -->
+    <link rel="icon" type="image/png" href="images/fav.png">
+
     <!-- PRODUCTION CDN INFRASTRUCTURE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     
-    <!-- 2. Load your centralized config -->
-    <script src="assets/js/supabase-config.js"></script> 
+    <!-- CENTRALIZED CONFIGURATION INTERFACE -->
+    <script src="assets/js/supabase-config.js"></script>
     
     <!-- LOGIN APPLICATION SECURITY FLOWS -->
     <script src="assets/js/admin-login.js"></script>
-
+    
     <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
     <link rel="stylesheet" href="assets/css/admin-core.css">
     
     <style>
-        :root { 
-            --primary-blue: #0a1f44; 
-            --white: #ffffff; 
-            --bg-light: #f8fafc; 
-            --border-color: #e2e8f0; 
-            --text-gray: #44526c; 
-            --staff-red: #c15254; 
+        :root {
+            --primary-blue: #0a1f44;
+            --white: #ffffff;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-gray: #44526c;
+            --staff-red: #c15254;
         }
         body, html { margin: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
         .split-container { display: flex; height: 100vh; width: 100%; overflow: hidden; }
         
-        /* Left Hand Branding Panel (Distinct Administrative Layout) */
         .image-side { 
             flex: 1; 
             background: linear-gradient(rgba(10, 31, 68, 0.85), rgba(193, 82, 84, 0.85)), url('images/login-hero.jpg'); 
             background-size: cover; 
             background-position: center; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: white; 
-            padding: 60px; 
-            box-sizing: border-box; 
-            position: relative;
+            display: flex; align-items: center; justify-content: center; color: white; padding: 60px; box-sizing: border-box; position: relative; 
         }
         .image-content h1 { font-size: 3rem; line-height: 1.2; margin-bottom: 20px; font-weight: 800; }
         .image-content p { font-size: 1.1rem; opacity: 0.9; max-width: 500px; line-height: 1.5; }
         
-        /* Right Hand Form Panel */
         .form-side { flex: 1; background-color: var(--bg-light); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; position: relative; height: 100vh; overflow: hidden; }
         .login-card { width: 100%; max-width: 380px; background: var(--white); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(10,31,68,0.06); text-align: center; z-index: 10; box-sizing: border-box; }
         .logo-container { margin-bottom: 15px; }
@@ -61,57 +55,94 @@
         .login-card p { color: var(--text-gray); margin-bottom: 25px; font-size: 0.85rem; line-height: 1.4; }
         .form-group { text-align: left; margin-bottom: 16px; }
         .form-group label { display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--primary-blue); margin-bottom: 6px; letter-spacing: 0.05em; }
+        
         .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: all 0.25s; color: var(--primary-blue); }
         .form-group input:focus { border-color: var(--staff-red); box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.08); }
+        
+        /* 🚨 RED GLOW ERROR SHADOW CONFIGURATION */
+        .form-group input.field-error {
+            border-color: #e53e3e !important;
+            box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.15) !important;
+            animation: formFieldShake 0.4s ease-in-out;
+        }
+        @keyframes formFieldShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
         .btn-login { width: 100%; background-color: var(--primary-blue) !important; color: var(--white) !important; border: none; padding: 14px; border-radius: 6px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s, transform 0.1s; margin-top: 5px; display: block; }
         .btn-login:hover { background-color: #122d5a !important; }
         .btn-login:active { transform: scale(0.99); }
         .error-msg { color: var(--staff-red); font-size: 0.78rem; margin-top: 8px; font-weight: 600; text-align: left; min-height: 1.2em; line-height: 1.3; }
     </style>
-
-
 </head>
 <body>
-
-<div class="split-container">
-    <!-- LEFT SIDE: ADMIN IDENTIFIER CAP CANVAS -->
-    <section class="image-side">
-        <div style="position: absolute; top: 60px; left: 60px; text-align: left;">
-            <div class="image-content">
-                <h1>Internal Staff<br>Terminal.</h1>
-                <p>Authorized access point for corporate compliance infrastructure, active ledger audits, and platform sync utilities.</p>
+    <div class="split-container">
+        <!-- LEFT SIDE: ADMIN IDENTIFIER CAP CANVAS -->
+        <section class="image-side">
+            <div style="position: absolute; top: 60px; left: 60px; text-align: left;">
+                <div class="image-content">
+                    <h1>Internal Staff<br>Terminal.</h1>
+                    <p>Authorized access point for corporate compliance infrastructure, active ledger audits, and platform sync utilities.</p>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- RIGHT SIDE: CONTROL FORM -->
-    <section class="form-side">
-        <div class="login-card">
-            <div class="logo-container"><img src="images/logo.png" alt="filings4u logo"></div>
-            <div class="admin-badge">Directorate System Security</div>
-            <h2>Staff Session Portal</h2>
-            <p>Verify administrative token parameters to launch the performance dashboard.</p>
-            
-            <form id="adminLoginForm">
-                <div class="form-group">
-                    <label for="email">Staff Email Address</label>
-                    <input type="email" id="email" required autocomplete="email" placeholder="username@filings4u.com">
-                </div>
-                <div class="form-group">
-                    <label for="password">Security Password</label>
-                    <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
-                    <div id="password-error" class="error-msg"></div>
-                </div>
+        <!-- RIGHT SIDE: CONTROL FORM -->
+        <section class="form-side">
+            <div class="login-card">
+                <div class="logo-container"><img src="images/logo.png" alt="filings4u logo"></div>
+                <div class="admin-badge">Directorate System Security</div>
+                <h2>Staff Session Portal</h2>
+                <p>Verify administrative token parameters to launch the performance dashboard.</p>
                 
-                <div style="margin-bottom:16px; font-size:0.75rem; color:#b53d40; font-weight:700; background:rgba(193, 82, 84, 0.05); padding:10px; border:1px dashed rgba(193, 82, 84, 0.3); border-radius:6px; text-align:center;">
-                    🔒 Multi-Tenant Token Verification Active
-                </div>
-                
-                <button type="submit" class="btn-login" id="loginBtn">Verify Terminal Session →</button>
-            </form>
-        </div>
-    </section>
-</div>
+                <form id="adminLoginForm" novalidate>
+                    <div class="form-group">
+                        <label for="email">Staff Email Address</label>
+                        <input type="email" id="email" required autocomplete="email" placeholder="username@filings4u.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Security Password</label>
+                        <!-- 👁️ VISIBILITY CONTAINER WRAPPER -->
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••" style="padding-right: 45px;">
+                            <button type="button" id="passwordToggleBtn" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; user-select: none;">
+                                👁️
+                            </button>
+                        </div>
+                        <div id="password-error" class="error-msg"></div>
+                    </div>
 
+                    <button type="submit" class="btn-login" id="loginBtn">Verify Terminal Session →</button>
+
+                    <!-- 🛡️ TRUST BADGE AT THE BOTTOM OF THE INPUT BOX FORM -->
+                    <div style="margin-top:16px; font-size:0.75rem; color:#b53d40; font-weight:700; background:rgba(193, 82, 84, 0.05); padding:10px; border:1px dashed rgba(193, 82, 84, 0.3); border-radius:6px; text-align:center;">
+                        🔒 Multi-Tenant Token Verification Active
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const passwordInput = document.getElementById('password');
+            const passwordToggleBtn = document.getElementById('passwordToggleBtn');
+            if (passwordToggleBtn && passwordInput) {
+                passwordToggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        passwordToggleBtn.innerText = '🙈';
+                    } else {
+                        passwordInput.type = 'password';
+                        passwordToggleBtn.innerText = '👁️';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
