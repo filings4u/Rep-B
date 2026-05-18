@@ -59,6 +59,70 @@
         .btn-login:active { transform: scale(0.99); }
         .error-msg { color: var(--staff-red); font-size: 0.78rem; margin-top: 8px; font-weight: 600; text-align: left; min-height: 1.2em; line-height: 1.3; }
     </style>
+
+    <script>
+    (async function enforceStrictAdminProtection() {
+        "use strict";
+
+        // 1. Safety Loop: Wait for your database network CDN link to mount
+        if (typeof window.supabase === 'undefined') {
+            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+        }
+
+        // Initialize connection fallback if your config file is lagging
+        const client = window.authSupabaseClient || window.supabase;
+        if (!client) return;
+
+        // 2. Fetch active session parameters directly from encrypted local cache storage
+        const { data: { session } } = await client.auth.getSession();
+
+        // 🔒 BARRIER A: Kick out immediately if no active token exists
+        if (!session || !session.user) {
+            window.location.replace('admin-login.html');
+            return;
+        }
+
+        // 🔒 BARRIER B: Wipe session instantly if the email fails the corporate extension rule
+        const staffEmail = session.user.email.toLowerCase();
+        if (!staffEmail.endsWith('@filings4u.com')) {
+            await client.auth.signOut();
+            window.location.replace('admin-login.html');
+            return;
+        }
+
+        console.log(`🔒 Terminal secure. Staff verification active for: ${staffEmail}`);
+
+        // ==========================================================================
+        // ⏱️ AUTOMATIC INACTIVITY LOGOUT ENGINE (15 MINUTE LIFECYCLE BARRIER)
+        // ==========================================================================
+        let inactivityTimeoutTimer;
+        const TIMEOUT_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes in exact milliseconds
+
+        // Sign out protocol logic
+        async function terminateInactiveAdminSession() {
+            console.warn("Inactivity limit exceeded. Destroying temporary administrative tokens...");
+            alert("Administrative Session Expired: For your data protection, you have been automatically logged out due to inactivity.");
+            await client.auth.signOut();
+            window.location.replace('admin-login.html');
+        }
+
+        // Resets the clock timer block back to zero when activity occurs
+        function resetInactivityTrackingClock() {
+            clearTimeout(inactivityTimeoutTimer);
+            inactivityTimeoutTimer = setTimeout(terminateInactiveAdminSession, TIMEOUT_LIMIT_MS);
+        }
+
+        // Wire up hardware event tracking arrays to listen for direct staff inputs
+        const userActivityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+        userActivityEvents.forEach(eventType => {
+            document.addEventListener(eventType, resetInactivityTrackingClock, { passive: true });
+        });
+
+        // Initialize the first timer loop execution instantly on page track load
+        resetInactivityTrackingClock();
+
+    })();
+</script>
 </head>
 <body>
 
