@@ -3,113 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entity Master | Admin Portal</title>
-    <!-- FIXED: Valid Supabase CDN URL -->
+    <title>Billing | filings4u Staff</title>
+    
+    <!-- 🚀 MOBILE BROWSER INTERFACE EMERALD THEME CONTROLLERS -->
+    <meta name="theme-color" content="#c15254">
+    
+    <!-- PRODUCTION CDN INFRASTRUCTURE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    
+    <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
+    <link rel="stylesheet" href="assets/css/admin-core.css">
   
-    <style>
-        body { 
-            margin: 0; 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background: #f8fafc; 
-            color: #0a1f44; 
-            padding-left: 260px; 
+        <!-- ==========================================================================
+   🚨 CRITICAL SECURITY BARRIER: DOMAIN GUARD & AUTO-LOGOUT MONITOR
+   ========================================================================== -->
+<script>
+    (async function enforceStrictAdminProtection() {
+        "use strict";
+
+        // 1. Safety Loop: Wait for your database network CDN link to mount
+        if (typeof window.supabase === 'undefined') {
+            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
         }
-        .main-content { 
-            padding: 40px; 
+
+        // Initialize connection fallback if your config file is lagging
+        const client = window.authSupabaseClient || window.supabase;
+        if (!client) return;
+
+        // 2. Fetch active session parameters directly from encrypted local cache storage
+        const { data: { session } } = await client.auth.getSession();
+
+        // 🔒 BARRIER A: Kick out immediately if no active token exists
+        if (!session || !session.user) {
+            window.location.replace('admin-login.html');
+            return;
         }
-        .page-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 30px; 
+
+        // 🔒 BARRIER B: Wipe session instantly if the email fails the corporate extension rule
+        const staffEmail = session.user.email.toLowerCase();
+        if (!staffEmail.endsWith('@filings4u.com')) {
+            await client.auth.signOut();
+            window.location.replace('admin-login.html');
+            return;
         }
-        .btn-primary { 
-            background: #0a1f44; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 6px; 
-            font-weight: 600; 
-            cursor: pointer; 
+
+        console.log(`🔒 Terminal secure. Staff verification active for: ${staffEmail}`);
+
+        // ==========================================================================
+        // ⏱️ AUTOMATIC INACTIVITY LOGOUT ENGINE (15 MINUTE LIFECYCLE BARRIER)
+        // ==========================================================================
+        let inactivityTimeoutTimer;
+        const TIMEOUT_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes in exact milliseconds
+
+        // Sign out protocol logic
+        async function terminateInactiveAdminSession() {
+            console.warn("Inactivity limit exceeded. Destroying temporary administrative tokens...");
+            alert("Administrative Session Expired: For your data protection, you have been automatically logged out due to inactivity.");
+            await client.auth.signOut();
+            window.location.replace('admin-login.html');
         }
-        .data-card { 
-            background: white; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 8px; 
-            padding: 24px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+
+        // Resets the clock timer block back to zero when activity occurs
+        function resetInactivityTrackingClock() {
+            clearTimeout(inactivityTimeoutTimer);
+            inactivityTimeoutTimer = setTimeout(terminateInactiveAdminSession, TIMEOUT_LIMIT_MS);
         }
-        .entity-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            text-align: left; 
-        }
-        .entity-table th { 
-            padding: 12px; 
-            border-bottom: 2px solid #e2e8f0; 
-            color: #64748b; 
-            font-size: 0.85rem; 
-            text-transform: uppercase; 
-        }
-        .entity-table td { 
-            padding: 16px 12px; 
-            border-bottom: 1px solid #e2e8f0; 
-            font-size: 0.95rem; 
-        }
-        .badge { 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-size: 0.75rem; 
-            font-weight: 700; 
-        }
-        .badge-active { 
-            background: #d1fae5; 
-            color: #065f46; 
-        }
-    </style>
+
+        // Wire up hardware event tracking arrays to listen for direct staff inputs
+        const userActivityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+        userActivityEvents.forEach(eventType => {
+            document.addEventListener(eventType, resetInactivityTrackingClock, { passive: true });
+        });
+
+        // Initialize the first timer loop execution instantly on page track load
+        resetInactivityTrackingClock();
+
+    })();
+</script>
 </head>
 <body>
-    <!-- SIDEBAR ENGINE INJECTED -->
-    <aside class="portal-sidebar" style="width: 260px !important; height: 100vh !important; background: #ffffff !important; color: #0a1f44 !important; position: fixed !important; top: 0 !important; left: 0 !important; display: flex !important; flex-direction: column !important; box-sizing: border-box !important; z-index: 100 !important; border-right: 1px solid #e2e8f0 !important;">
-        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <img src="images/logo.png" alt="filings4u" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;">
-            </div>
-            <div style="background: #0a1f44; color: #ffffff; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Directorate Admin</div>
+  <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE -->
+<aside class="portal-sidebar">
+    <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <img src="images/logo.png" alt="filings4u" class="logo" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;">
         </div>
-        <div style="padding: 15px 25px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <span style="font-size: 0.68rem; font-weight: 800; color: #64748b;">System Time:</span>
-            <span id="portal-clock" style="font-family: monospace; font-size: 1.05rem; font-weight: 800; color: #10b981;">00:00:00</span>
+        <div class="admin-badge">Directorate Admin</div>
+    </div>
+    
+    <!-- LIVE SYSTEM CLOCK -->
+    <div class="sidebar-clock-bar">
+        <span>System Time:</span>
+        <span id="portal-clock">00:00:00</span>
+    </div>
+    
+    <!-- 🎯 SCROLL-SAFE MANAGEMENT NAVIGATION ROW ENGINE -->
+    <nav class="sidebar-nav-container">
+        <p class="sidebar-nav-heading">Control Systems</p>
+        
+        <a href="admin-dashboard.html" class="nav-item active"><span>📊</span> System Hub Home</a>
+        <a href="#admin-master-sales-panel" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+        <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+        
+        <p class="sidebar-nav-heading">Operations & CRM</p>
+        
+        <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+        <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+        <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+        <a href="admin-compliance-audit.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+        
+        <p class="sidebar-nav-heading">Financials & Health</p>
+        
+        <a href="admin-revenue-reconciliation.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+        <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+        <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+    </nav>
+    
+    <!-- FOOTER ACCESS MATRIX FRAMEWORK -->
+    <div class="sidebar-footer-lock">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div>
+            <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span>
         </div>
-        <nav style="flex: 1; padding: 25px 15px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto;">
-            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 0 0 10px 10px;">Control Systems</p>
-            <a href="admin-dashboard.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>📊</span> System Hub Home</a>
-            
-            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Operations</p>
-            <!-- FIXED: Repaired broken formatting tag structure and styled active state -->
-            <span>🏢</span> Entity Master</a>
-            <a href="admin-crm.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>👥</span> Client CRM Portal</a>
-            <!-- FIXED: Replaced %EF%B8%8F broken URL escape strings with clean emoji glyph handles -->
-            <a href="admin-service-manager.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🛠️</span> Service Manager</a>
-            
-            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Financial Ledger</p>
-            <a href="admin-billing.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🧾</span> Billing Management</a>
-            <a href="admin-revenue-reconciliation.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🔄</span> Rev Reconciliation</a>
-            <a href="admin-portfolio-spend.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>💼</span> Portfolio Spend</a>
-            
-            <p style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 10px;">Governance</p>
-            <!-- FIXED: Cleaned escaped characters -->
-            <a href="admin-compliance-audit.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>🛡️</span> Compliance Audit</a>
-            <a href="admin-system-logs.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;"><span>📜</span> System Activity Logs</a>
-        </nav>
-        <div style="padding: 20px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></div>
-                <span style="font-size: 0.65rem; color: #10b981; font-weight: 800;">Database Sync Active</span>
-            </div>
-            <button onclick="handleAdminSignOutLogout()" style="width: 100%; margin-top: 15px; background: rgba(229,62,62,0.08); color: #e53e3e; border: 1px solid rgba(229,62,62,0.15); padding: 8px; border-radius: 4px; font-weight: 700; cursor: pointer;">Exit Session</button>
-        </div>
-    </aside>
+        <p style="margin: 0 0 12px 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via corporate staff domain.</p>
+        <button onclick="handleAdminSignOutLogout()" class="logout-btn">Exit Admin Session</button>
+    </div>
+</aside>
 
     <div class="main-content">
         <div class="page-header">

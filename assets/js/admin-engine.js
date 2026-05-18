@@ -270,18 +270,32 @@ function initializeOperationalFormHandlers() {
     }
 }
 
-/* ==========================================================================
-   🔒 LOGOUT SESSION TERMINATION CONTROLLER
-   ========================================================================== */
-window.handleAdminSignOutLogout = async function() {
-    if (confirm("Are you sure you want to terminate your administrative session logs profile guidelines?")) {
-        if (adminSupabaseClient?.auth) {
-            try { await adminSupabaseClient.auth.signOut(); } catch (e) {}
+// ==========================================================================
+// 🚀 SECURE LOGOUT HANDLER: TERMINATES TOKEN AND REDIRECTS TO PUBLIC SITE
+// ==========================================================================
+async function handleAdminSignOutLogout() {
+    if (confirm("Are you sure you want to terminate this secure administrative terminal session and log out?")) {
+        try {
+            // Locate your client instance tracker 
+            const client = window.authSupabaseClient || window.supabase;
+            
+            if (client && client.auth) {
+                // Wipe session states from Supabase local cache storage
+                await client.auth.signOut();
+            }
+            
+            console.log("Session destroyed. Redirecting terminal link to public infrastructure...");
+            // 🎯 FORCES USER DIRECTLY BACK TO THE MAIN WEBSITE HOMEPAGE
+            window.location.replace('https://filings4u.com');
+            
+        } catch (err) {
+            console.error("Error executing clean logout routing:", err.message);
+            // Emergency fallback override redirect if network lines stall
+            window.location.replace('https://filings4u.com');
         }
-        sessionStorage.clear();
-        window.location.href = 'index.html';
     }
-};
+}
+
 
 /**
  * 💬 EXTRACT AND DISPLAY REAL-TIME CUSTOMER MESSAGE REPLIES
