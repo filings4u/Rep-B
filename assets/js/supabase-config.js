@@ -10,7 +10,6 @@
         return;
     }
 
-    // Initialize the client globally for all files to share
     window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log("⚡ Administrative security layer centralized safely.");
 })();

@@ -21,10 +21,42 @@
     const passError = document.getElementById('password-error');
     const loginCard = document.querySelector('.login-card');
 
+    // ROLE-BASED INTELLIGENT ROUTING ENGINE
+    async function handleUserRouting(userId) {
+        try {
+            const { data: profile } = await client
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .maybeSingle();
+
+            if (profile && profile.role === 'admin') {
+                window.location.replace('admin-dashboard.html');
+                return;
+            }
+
+            const currentParams = new URLSearchParams(window.location.search);
+            const savedRedirectDestination = currentParams.get('redirect');
+            const targetService = currentParams.get('service');
+            const targetPlan = currentParams.get('plan') || 'compliance';
+
+            if (savedRedirectDestination) {
+                window.location.replace(decodeURIComponent(savedRedirectDestination));
+            } else if (targetService) {
+                window.location.replace(`wizard.html?service=${targetService}&plan=${targetPlan}`);
+            } else {
+                window.location.replace('portal-dashboard.html');
+            }
+        } catch (routeErr) {
+            console.error("Routing resolution error:", routeErr);
+            window.location.replace('portal-dashboard.html');
+        }
+    }
+
     try {
         await client.auth.initialize();
 
-        // 1. AUTO-REDIRECT GATE: Route them out of the login screen if already authenticated
+        // 1. AUTO-REDIRECT GATE: Route out if already authenticated
         const { data: { session } } = await client.auth.getSession();
         if (session && session.user) {
             handleUserRouting(session.user.id);
@@ -44,7 +76,7 @@
                 const password = passwordInput.value;
 
                 if (loginSubmitBtn) {
-                    loginSubmitBtn.innerHTML = `<span class="btn-spinner"></span> Authenticating...`;
+                    loginSubmitBtn.innerText = "Authenticating...";
                     loginSubmitBtn.disabled = true;
                 }
                 if (passError) passError.innerText = "";
@@ -60,42 +92,12 @@
                     console.warn("Client auth exception caught:", err.message);
                     if (passError) passError.innerText = `Login Failed: ${err.message}`;
                     if (loginSubmitBtn) {
-                        loginSubmitBtn.innerHTML = "Enter Secure Portal →";
+                        loginSubmitBtn.innerText = "Enter Secure Portal →";
                         loginSubmitBtn.disabled = false;
                     }
                 }
             });
         }
-
-        // 3. ROLE-BASED INTELLIGENT ROUTING ENGINE
-        async function handleUserRouting(userId) {
-            // Check profiles table securely for real administrative access role tokens
-            const { data: profile } = await client
-                .from('profiles')
-                .select('role')
-                .eq('id', userId)
-                .maybeSingle();
-
-            if (profile && profile.role === 'admin') {
-                window.location.replace('admin-dashboard.html');
-                return;
-            }
-
-            // Stateful redirection routing rules for customer wizards or dashboards
-            const currentParams = new URLSearchParams(window.location.search);
-            const savedRedirectDestination = currentParams.get('redirect');
-            const targetService = currentParams.get('service');
-            const targetPlan = currentParams.get('plan') || 'compliance';
-
-            if (savedRedirectDestination) {
-                window.location.replace(decodeURIComponent(savedRedirectDestination));
-            } else if (targetService) {
-                window.location.replace(`wizard.html?service=${targetService}&plan=${targetPlan}`);
-            } else {
-                window.location.replace('portal-dashboard.html');
-            }
-        }
-
     } catch (err) {
         console.error("Portal Login Application System Failure:", err.message);
     }
