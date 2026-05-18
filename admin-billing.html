@@ -1,196 +1,228 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Billing | filings4u Staff</title>
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Billing Portal | filings4u Staff</title> 
+    <meta name="theme-color" content="#c15254"> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script> 
+    <link rel="stylesheet" href="assets/css/admin-core.css"> 
     
-    <!-- 🚀 MOBILE BROWSER INTERFACE EMERALD THEME CONTROLLERS -->
-    <meta name="theme-color" content="#c15254">
-    
-    <!-- PRODUCTION CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    
-    <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
-    <link rel="stylesheet" href="assets/css/admin-core.css">
-  
-        <!-- ==========================================================================
-   🚨 CRITICAL SECURITY BARRIER: DOMAIN GUARD & AUTO-LOGOUT MONITOR
-   ========================================================================== -->
-<script>
-    (async function enforceStrictAdminProtection() {
-        "use strict";
-
-        // 1. Safety Loop: Wait for your database network CDN link to mount
-        if (typeof window.supabase === 'undefined') {
-            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
-        }
-
-        // Initialize connection fallback if your config file is lagging
-        const client = window.authSupabaseClient || window.supabase;
-        if (!client) return;
-
-        // 2. Fetch active session parameters directly from encrypted local cache storage
-        const { data: { session } } = await client.auth.getSession();
-
-        // 🔒 BARRIER A: Kick out immediately if no active token exists
-        if (!session || !session.user) {
-            window.location.replace('admin-login.html');
-            return;
-        }
-
-        // 🔒 BARRIER B: Wipe session instantly if the email fails the corporate extension rule
-        const staffEmail = session.user.email.toLowerCase();
-        if (!staffEmail.endsWith('@filings4u.com')) {
-            await client.auth.signOut();
-            window.location.replace('admin-login.html');
-            return;
-        }
-
-        console.log(`🔒 Terminal secure. Staff verification active for: ${staffEmail}`);
-
-        // ==========================================================================
-        // ⏱️ AUTOMATIC INACTIVITY LOGOUT ENGINE (15 MINUTE LIFECYCLE BARRIER)
-        // ==========================================================================
-        let inactivityTimeoutTimer;
-        const TIMEOUT_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes in exact milliseconds
-
-        // Sign out protocol logic
-        async function terminateInactiveAdminSession() {
-            console.warn("Inactivity limit exceeded. Destroying temporary administrative tokens...");
-            alert("Administrative Session Expired: For your data protection, you have been automatically logged out due to inactivity.");
-            await client.auth.signOut();
-            window.location.replace('admin-login.html');
-        }
-
-        // Resets the clock timer block back to zero when activity occurs
-        function resetInactivityTrackingClock() {
-            clearTimeout(inactivityTimeoutTimer);
-            inactivityTimeoutTimer = setTimeout(terminateInactiveAdminSession, TIMEOUT_LIMIT_MS);
-        }
-
-        // Wire up hardware event tracking arrays to listen for direct staff inputs
-        const userActivityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-        userActivityEvents.forEach(eventType => {
-            document.addEventListener(eventType, resetInactivityTrackingClock, { passive: true });
-        });
-
-        // Initialize the first timer loop execution instantly on page track load
-        resetInactivityTrackingClock();
-
-    })();
-</script>
-</head>
-<body>
-  <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE -->
-<aside class="portal-sidebar">
-    <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <img src="images/logo.png" alt="filings4u" class="logo" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;">
-        </div>
-        <div class="admin-badge">Directorate Admin</div>
-    </div>
-    
-    <!-- LIVE SYSTEM CLOCK -->
-    <div class="sidebar-clock-bar">
-        <span>System Time:</span>
-        <span id="portal-clock">00:00:00</span>
-    </div>
-    
-    <!-- 🎯 SCROLL-SAFE MANAGEMENT NAVIGATION ROW ENGINE -->
-    <nav class="sidebar-nav-container">
-        <p class="sidebar-nav-heading">Control Systems</p>
-        
-        <a href="admin-dashboard.html" class="nav-item active"><span>📊</span> System Hub Home</a>
-        <a href="#admin-master-sales-panel" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-        <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-        
-        <p class="sidebar-nav-heading">Operations & CRM</p>
-        
-        <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
-        <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-        <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-        <a href="admin-compliance-audit.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-        
-        <p class="sidebar-nav-heading">Financials & Health</p>
-        
-        <a href="admin-revenue-reconciliation.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-        <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-        <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-    </nav>
-    
-    <!-- FOOTER ACCESS MATRIX FRAMEWORK -->
-    <div class="sidebar-footer-lock">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div>
-            <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span>
-        </div>
-        <p style="margin: 0 0 12px 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via corporate staff domain.</p>
-        <button onclick="handleAdminSignOutLogout()" class="logout-btn">Exit Admin Session</button>
-    </div>
-</aside>
-
-    <div class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Entity Master Directory</h1>
-                <p style="margin: 5px 0 0 0; color: #64748b;">Manage global corporate formations and active jurisdictional legal states.</p>
-            </div>
-            <button class="btn-primary">+ Register New Legal Entity</button>
-        </div>
-        <div class="data-card">
-            <!-- FIXED: Injected missing container <table> element wrapping tabular metrics -->
+    <!-- 🚨 SECURITY GUARD: DOMAIN BARRIER & AUTO-LOGOUT MONITOR --> 
+    <script> 
+        (async function enforceStrictAdminProtection() { 
+            "use strict"; 
+            if (typeof window.supabase === 'undefined') { 
+                await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve)); 
+            } 
+            const client = window.authSupabaseClient || window.supabase; 
+            if (!client) return; 
+            const { data: { session } } = await client.auth.getSession(); 
+            if (!session || !session.user) { 
+                window.location.replace('admin-login.html'); 
+                return; 
+            } 
+            const staffEmail = session.user.email.toLowerCase(); 
+            if (!staffEmail.endsWith('@filings4u.com')) { 
+                await client.auth.signOut(); 
+                window.location.replace('admin-login.html'); 
+                return; 
+            } 
+            console.log(`🔒 Terminal secure. Staff verification active for: ${staffEmail}`); 
             
-                <thead>
-                    <tr>
-                        <th>Entity Name</th>
-                        <th>Filing ID</th>
-                        <th>State/Jurisdiction</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Acme Holdings LLC</td>
-                        <td>#EF-99201</td>
-                        <td>Delaware</td>
-                        <td>LLC</td>
-                        <td><span class="badge badge-active">Active / Good Standing</span></td>
-                    </tr>
-                    <tr>
-                        <td>Nexus FinTech Inc</td>
-                        <td>#EF-88192</td>
-                        <td>California</td>
-                        <td>C-Corp</td>
-                        <td><span class="badge badge-active">Active / Good Standing</span></td>
-                    </tr>
-                </tbody>
-            </table>
+            let inactivityTimeoutTimer; 
+            const TIMEOUT_LIMIT_MS = 15 * 60 * 1000; 
+            async function terminateInactiveAdminSession() { 
+                alert("Administrative Session Expired due to inactivity."); 
+                await client.auth.signOut(); 
+                window.location.replace('admin-login.html'); 
+            } 
+            function resetInactivityTrackingClock() { 
+                clearTimeout(inactivityTimeoutTimer); 
+                inactivityTimeoutTimer = setTimeout(terminateInactiveAdminSession, TIMEOUT_LIMIT_MS); 
+            } 
+            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(e => { 
+                document.addEventListener(e, resetInactivityTrackingClock, { passive: true }); 
+            }); 
+            resetInactivityTrackingClock(); 
+        })(); 
+    </script> 
+</head> 
+<body> 
+
+    <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE --> 
+    <aside class="portal-sidebar"> 
+        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;"> 
+            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;"> 
+                <img src="images/logo.png" alt="filings4u" class="logo" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;"> 
+            </div> 
+            <div class="admin-badge">Directorate Admin</div> 
+        </div> 
+        <div class="sidebar-clock-bar"> 
+            <span>System Time:</span> 
+            <span id="portal-clock">00:00:00</span> 
+        </div> 
+        <nav class="sidebar-nav-container"> 
+            <p class="sidebar-nav-heading">Control Systems</p> 
+            <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a> 
+            <a href="#admin-master-sales-panel" class="nav-item"><span>💰</span> Sales & Price Audit</a> 
+            <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a> 
+            <p class="sidebar-nav-heading">Operations & CRM</p> 
+            <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a> 
+            <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a> 
+            <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a> 
+            <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a> 
+            <p class="sidebar-nav-heading">Financials & Health</p> 
+            <a href="admin-billing.html" class="nav-item active"><span>💸</span> Revenue Reconciliation</a> 
+            <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a> 
+            <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a> 
+        </nav> 
+        <div class="sidebar-footer-lock"> 
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"> 
+                <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div> 
+                <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span> 
+            </div> 
+            <p style="margin: 0 0 12px 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via corporate staff domain.</p> 
+            <button onclick="handleAdminSignOutLogout()" class="logout-btn">Exit Admin Session</button> 
+        </div> 
+    </aside> 
+
+    <div class="portal-main"> 
+        <div class="content-container">
+            <header class="portal-header"> 
+                <div> 
+                    <!-- 🎯 FIXED HEADER DESIGNATION -->
+                    <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Corporate Billing Portal</h1> 
+                    <p style="margin: 5px 0 0 0; color: #64748b;">Monitor premium checkout invoices, track pipeline balances, and generate manual statements.</p> 
+                </div> 
+                <button class="btn-primary" onclick="toggleInvoiceGenerationModal(true)">+ Generate Fresh Invoice</button> 
+            </header> 
+
+            <!-- 📊 THREE-COLUMN SUMMARY BANNER METRICS -->
+            <div class="stats-row" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <small>Gross Orders Fulfilled</small>
+                    <h2 id="summary-total-orders">0</h2>
+                </div>
+                <div class="stat-card">
+                    <small>Open / Unpaid Invoices</small>
+                    <h2 id="summary-unpaid-amount" style="color: var(--danger-red);">$0.00</h2>
+                </div>
+                <div class="stat-card">
+                    -- Platform Revenue
+                    <h2 id="summary-collected-revenue" style="color: var(--success-green);">$0.00</h2>
+                </div>
+            </div>
+
+ <!-- ⚙️ ADVANCED MODAL: DYNAMIC LINE ITEM INVOICE GENERATOR -->
+<div id="invoice-modal-overlay" style="display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(10,31,68,0.4); z-index:2000; align-items:center; justify-content:center;">
+    <div class="admin-console-card" style="max-width: 600px; width:100%; margin: 20px; max-height:90vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+            <h2 style="margin:0; font-size:1.2rem;">Create Real Stripe Invoice</h2>
+            <button onclick="toggleInvoiceGenerationModal(false)" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
         </div>
+        
+        <form id="manualInvoiceSubmissionForm">
+            <div class="admin-form-group">
+                <label>Customer Email Address</label>
+                <input type="email" id="inv-customer-email" required placeholder="client@example.com">
+            </div>
+            
+            <!-- 🎯 CUSTOM SEARCH FILTER BAR INJECTED IN FRONTEND -->
+            <div style="margin-bottom:20px; background:#f1f5f9; padding:12px; border-radius:8px;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--text-gray); display:block; margin-bottom:6px;">Live Filter Ledger Rows</label>
+                <input type="text" id="billingLedgerSearchField" class="admin-input" placeholder="Type email to screen invoices instantaneously..." style="background:#ffffff;">
+            </div>
+
+            <!-- DYNAMIC ROWS SECTION -->
+            <div style="margin-bottom:15px;">
+                <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--text-gray); display:block; margin-bottom:6px;">Invoice Line Items</label>
+                <div id="invoice-line-items-container">
+                    <!-- Default Initial Blank Row -->
+                    <div class="invoice-item-row" style="display:grid; grid-template-columns: 2fr 1fr auto; gap:10px; margin-bottom:10px;">
+                        <input type="text" class="item-description admin-input" placeholder="e.g., Corporate Bylaws Compilation" required>
+                        <input type="number" class="item-price admin-input" step="0.01" placeholder="150.00" required>
+                        <button type="button" onclick="removeInvoiceLineRow(this)" style="background:#fee2e2; border:none; color:var(--danger-red); border-radius:6px; padding:0 12px; cursor:pointer;">✕</button>
+                    </div>
+                </div>
+                <button type="button" onclick="addNewInvoiceLineRow()" style="background:transparent; border:1px dashed var(--primary-blue); color:var(--primary-blue); padding:6px 12px; border-radius:6px; font-weight:600; font-size:0.8rem; cursor:pointer; margin-top:5px;">+ Add Another Item Line</button>
+            </div>
+
+            <div id="invoice-form-status-feedback" class="admin-status-msg"></div>
+            <button type="submit" id="invoiceSubmitBtn" class="btn-admin-submit" style="margin-top:10px;">Compile Stripe Invoice & Email Client →</button>
+        </form>
     </div>
+</div>
 
-    <script>
-        (function(){
-            function u(){
-                const c=document.getElementById('portal-clock');
-                if(c){
-                    const n=new Date();
-                    c.innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-                }
-            }
-            u();
-            setInterval(u,1000);
 
-            window.handleAdminSignOutLogout = async function() {
-                const client = window.adminSupabaseInstance || window.supabase;
-                if (client?.auth) {
-                    try { await client.auth.signOut(); } catch (e) {}
-                }
-                sessionStorage.clear();
-                window.location.href = 'index.html';
-            };
-        })();
-    </script>
-</body>
+            <!-- 📑 DUAL MONITOR TABLE TABS WRAPPER -->
+            <div class="portal-card" style="margin-bottom: 30px;">
+                <h3 style="margin:0 0 15px 0; color: var(--primary-blue);">Unpaid Statement / Open Invoices Queue</h3>
+                <div style="overflow-x: auto; width: 100%;">
+                    <!-- 🎯 FIXED: Re-added missing structural table wrappers -->
+                    
+                        <thead> 
+                            <tr> 
+                                <th>Target Entity</th> 
+                                <th>Customer Email</th> 
+                                <th>Service Scope</th> 
+                                <th>Balance Due</th> 
+                                <th>Invoice State</th> 
+                                <th>Action Panel</th> 
+                            </tr> 
+                        </thead> 
+                        <tbody id="billing-open-invoices-tbody"> 
+                            <tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b;">Synchronizing open invoices...</td></tr>
+                        </tbody> 
+                    </table> 
+                </div>
+            </div>
+
+            <div class="portal-card">
+                <h3 style="margin:0 0 15px 0; color: var(--primary-blue);">Settled Orders History Ledger</h3>
+                <div style="overflow-x: auto; width: 100%;">
+                    
+                        <thead> 
+                            <tr> 
+                                <th>Filing Entity</th> 
+                                <th>Customer Email</th> 
+                                <th>Date Processed</th> 
+                                <th>Amount Captured</th> 
+                                <th>System Status</th> 
+                            </tr> 
+                        </thead> 
+                        <tbody id="billing-settled-orders-tbody"> 
+                            <tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Synchronizing transaction ledger records...</td></tr>
+                        </tbody> 
+                    </table> 
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    <!-- CORE FUNCTIONAL CONTROL MODULE SCRIPTS HANDOFF -->
+    <script src="assets/js/admin-billing.js"></script>
+    <script> 
+        (function(){ 
+            function updatePortalClock() { 
+                const clockElement = document.getElementById('portal-clock'); 
+                if (clockElement) { 
+                    const now = new Date(); 
+                    clockElement.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); 
+                } 
+            } 
+            updatePortalClock(); 
+            setInterval(updatePortalClock, 1000); 
+            
+            window.handleAdminSignOutLogout = async function() { 
+                const client = window.authSupabaseClient || window.supabase; 
+                if (client?.auth) { 
+                    try { await client.auth.signOut(); } catch (e) {} 
+                } 
+                sessionStorage.clear(); 
+                window.location.replace('https://filings4u.com'); 
+            }; 
+        })(); 
+    </script> 
+</body> 
 </html>
