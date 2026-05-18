@@ -16,12 +16,22 @@
 
     const client = await waitForSupabaseClientEngine();
 
+    // 🎯 CRITICAL PROTECTION CRASH GATE BYPASS
+    // If the browser is currently resting on the login page layout, halt execution 
+    // to prevent the session script from auto-refreshing its own form window!
+    const isCurrentLoginPage = window.location.pathname.endsWith('admin-login.html');
+    if (isCurrentLoginPage) {
+        console.log("Guard initialized on login panel. Redirect loops bypassed successfully.");
+        return;
+    }
+
     try {
-        await client.auth.initialize();
+        // Fetch active session parameters directly from verified cache layers
+        // (Removed the non-existent client.auth.initialize() crashing function)
         const { data: { session }, error } = await client.auth.getSession();
 
-        // Target exact login fallback destination via absolute paths
         if (error || !session || !session.user) {
+            console.warn("Session context missing. Routing back to terminal gateway.");
             window.location.assign(`${window.productionRootUrl}/admin-login.html`);
             return;
         }
