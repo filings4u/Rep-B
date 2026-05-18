@@ -7,45 +7,51 @@
     <title>Login | filings4u Client Portal</title>
     <link rel="stylesheet" href="assets/css/portal-global.css">
     
-    <!-- 1. PRODUCTION CDN ENGINE -->
+    <!-- Core Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    
-    <!-- 2. CENTRALIZED APPLICATION ROUTER WRAPPER -->
     <script src="assets/js/supabase-config.js"></script>
-    
-    <!-- 3. CUSTOMER PORTAL INTERACTION LAYER -->
     <script src="assets/js/portal-login.js"></script>
-    
     <link rel="icon" type="image/png" href="images/fav.png">
 
-    <!-- 🎨 HERO IMAGE BACKGROUND LAYER CONFIGURATION -->
     <style>
-        .image-side {
-            background: linear-gradient(rgba(10, 31, 68, 0.8), rgba(16, 185, 129, 0.8)), url('images/login-hero.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            position: relative;
+        .image-side { background: linear-gradient(rgba(10, 31, 68, 0.8), rgba(16, 185, 129, 0.8)), url('images/login-hero.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; }
+        .image-content h1 { color: #ffffff; font-size: 3rem; line-height: 1.2; margin-bottom: 20px; font-weight: 800; }
+        .image-content p { color: #ffffff; font-size: 1.1rem; opacity: 0.9; max-width: 500px; line-height: 1.5; }
+
+        /* 🚨 RED GLOW ERROR SHADOW FOR MISSING/INVALID FIELDS */
+        .form-group input.field-error {
+            border-color: #e53e3e !important;
+            box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.15) !important;
+            animation: shake 0.4s ease-in-out;
         }
-        .image-content h1 {
-            color: #ffffff;
-            font-size: 3rem;
-            line-height: 1.2;
-            margin-bottom: 20px;
-            font-weight: 800;
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
         }
-        .image-content p {
-            color: #ffffff;
-            font-size: 1.1rem;
-            opacity: 0.9;
-            max-width: 500px;
-            line-height: 1.5;
+
+        /* 🎯 CENTERED UNAUTHORIZED ACCESS MODAL OVERLAY */
+        .access-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 99999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
+        .access-modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .access-modal-box {
+            background: #ffffff; padding: 30px; border-radius: 12px;
+            box-shadow: 0 24px 48px rgba(10, 31, 68, 0.18); width: 90%; max-width: 400px;
+            text-align: center; border: 1px solid #e2e8f0; transform: scale(0.9); transition: transform 0.3s ease;
+        }
+        .access-modal-overlay.active .access-modal-box { transform: scale(1); }
+        .access-modal-box h3 { margin: 0 0 10px 0; color: #c15254; font-size: 1.3rem; font-weight: 800; }
+        .access-modal-box p { color: #44526c; font-size: 0.9rem; line-height: 1.5; margin: 0 0 20px 0; }
+        .access-modal-btn { background-color: #0a1f44; color: #ffffff; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
     <div class="split-container">
-        <!-- LEFT SIDE: BRANDING PANEL WITH HERO BACKGROUND IMAGE -->
         <section class="image-side">
             <div style="position: absolute; top: 60px; left: 60px; text-align: left;">
                 <div class="image-content">
@@ -55,27 +61,38 @@
             </div>
         </section>
 
-        <!-- RIGHT SIDE: INTERACTIVE CONTROL FORM -->
         <section class="form-side">
             <div class="login-card">
                 <div class="logo-container"><img src="images/logo.png" alt="filings4u logo"></div>
                 <h2>Portal Login</h2>
                 <p>Please enter your credentials to access your secure dashboard.</p>
                 
-                <form id="loginForm">
+                <form id="loginForm" novalidate> <!-- novalidate lets our JS handle error glows cleanly -->
                     <div class="form-group">
                         <label for="email">Email Address</label>
                         <input type="email" id="email" required autocomplete="email">
                     </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" required autocomplete="current-password">
-                        <div id="password-error" class="error-msg"></div>
-                    </div>
-                    <div style="margin-bottom:12px; font-size:0.8rem; color:#64748b; padding:10px; border:1px dashed #e2e8f0; border-radius:6px; text-align:center;">
+                    <!-- Update your password form field block inside portal-login.html -->
+<div class="form-group">
+    <label for="password">Password</label>
+    <div style="position: relative; display: flex; align-items: center;">
+        <input type="password" id="password" required autocomplete="current-password" style="padding-right: 45px;">
+        
+        <!-- 👁️ INTERACTIVE VISIBILITY TOGGLE BUTTON -->
+        <button type="button" id="passwordToggleBtn" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; user-select: none;">
+            👁️
+        </button>
+    </div>
+    <div id="password-error" class="error-msg"></div>
+</div>
+
+                    
+                    <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button>
+                    
+                    <!-- 🎯 BADGE POSITIONED SAFELY UNDER THE BUTTON LAYOUT -->
+                    <div style="margin-top:16px; font-size:0.8rem; color:#64748b; padding:10px; border:1px dashed #e2e8f0; border-radius:6px; text-align:center; background: #f8fafc;">
                         🛡️ Security Handshake Active
                     </div>
-                    <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button>
                 </form>
                 
                 <div style="margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
@@ -84,6 +101,15 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <!-- 🎯 DYNAMIC ACCESS DENIED MODAL POPUP CONTAINER -->
+    <div class="access-modal-overlay" id="accessDeniedModal">
+        <div class="access-modal-box">
+            <h3>⚠️ Access Clearance Denied</h3>
+            <p>Your profile token parameters do not hold the required clearance level to inspect this administrative workspace directory.</p>
+            <button class="access-modal-btn" id="closeAccessModalBtn">Return to Authentication Terminal</button>
+        </div>
     </div>
 </body>
 </html>

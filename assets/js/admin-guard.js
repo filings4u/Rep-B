@@ -26,9 +26,12 @@
         }
 
         const staffEmail = session.user.email.toLowerCase();
+        
+        // 🎯 SECURITY CHECK BARRIER: Throw out non-corporate users and prompt the login popup modal
         if (!staffEmail.endsWith('@filings4u.com')) {
+            console.warn("Security Barrier Activated: Unauthorized account domain profile detected.");
             await client.auth.signOut();
-            window.location.href = 'admin-login.html';
+            window.location.href = 'portal-login.html?auth=denied';
             return;
         }
 
@@ -59,7 +62,7 @@
         // ==========================================================================
         let warningTimeoutTimer;
         let finalLogoutTimer;
-        
+
         const WARNING_LIMIT_MS = 13 * 60 * 1000; // Trigger alert at 13 minutes
         const FINAL_LIMIT_MS = 2 * 60 * 1000;    // Terminate 2 minutes later (15 mins total)
 
@@ -73,7 +76,6 @@
 
         function triggerWarningPopup() {
             overlay.classList.add('active'); // Pop open in the middle of screen
-            // Launch secondary death-clock timer
             finalLogoutTimer = setTimeout(terminateInactiveAdminSession, FINAL_LIMIT_MS);
         }
 
