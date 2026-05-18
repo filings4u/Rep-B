@@ -8,91 +8,17 @@
     <!-- 🚀 MOBILE BROWSER INTERFACE EMERALD THEME CONTROLLERS -->
     <meta name="theme-color" content="#c15254">
     
-    <!-- PRODUCTION CDN INFRASTRUCTURE -->
+     <!-- PRODUCTION CDN INFRASTRUCTURE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    
+    <!-- 2. Load your centralized config -->
+    <script src="assets/js/supabase-config.js"></script>
+    
+    <!-- 3. Load the guard file to lock the page -->
+    <script src="assets/js/admin-guard.js"></script>
     
     <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
     <link rel="stylesheet" href="assets/css/admin-core.css">
- <!-- ==========================================================================
-   🚨 BARRIER REPAIRED: LOOP-BREAKING ADMIN TERMINAL DOMAIN GUARD
-   ========================================================================= -->
-<script>
-    (async function enforceStrictAdminProtection() {
-        "use strict";
-
-        // 1. Loop and poll until the global Supabase library container is loaded into memory
-        function waitForSupabaseClientEngine() {
-            return new Promise((resolve) => {
-                if (window.authSupabaseClient || window.supabase) {
-                    return resolve(window.authSupabaseClient || window.supabase);
-                }
-                const trackingInterval = setInterval(() => {
-                    const client = window.authSupabaseClient || window.supabase;
-                    if (client) {
-                        clearInterval(trackingInterval);
-                        resolve(client);
-                    }
-                }, 30);
-            });
-        }
-
-        const client = await waitForSupabaseClientEngine();
-
-        try {
-            // 🎯 CRITICAL FIX: Explicitly pull local storage memory blocks to hydrate the token before calling session
-            await client.auth.initialize();
-
-            // 2. Fetch active session parameters directly from verified cache layers
-            const { data: { session }, error } = await client.auth.getSession();
-
-            // 🔒 BARRIER A: Halt if no token exists. Use window.location.href to stop loop caching parameters
-            if (error || !session || !session.user) {
-                console.warn("Session context missing. Stopping loop and routing to login.");
-                window.location.href = 'admin-login.html';
-                return;
-            }
-
-            // 🔒 BARRIER B: Wipe session instantly if the email string fails the corporate extension rule
-            const staffEmail = session.user.email.toLowerCase();
-            if (!staffEmail.endsWith('@filings4u.com')) {
-                console.warn("Security Barrier Activated: Unauthorized account domain profile detected.");
-                await client.auth.signOut();
-                window.location.href = 'admin-login.html';
-                return;
-            }
-
-            console.log(`🔒 Terminal secure. Staff verification active for: ${staffEmail}`);
-
-            // ==========================================================================
-            // ⏱️ AUTOMATIC INACTIVITY LOGOUT ENGINE (15 MINUTE LIFECYCLE BARRIER)
-            // ==========================================================================
-            let inactivityTimeoutTimer;
-            const TIMEOUT_LIMIT_MS = 15 * 60 * 1000;
-
-            async function terminateInactiveAdminSession() {
-                clearTimeout(inactivityTimeoutTimer);
-                await client.auth.signOut();
-                window.location.href = 'https://filings4u.com';
-            }
-
-            function resetInactivityTrackingClock() {
-                clearTimeout(inactivityTimeoutTimer);
-                inactivityTimeoutTimer = setTimeout(terminateInactiveAdminSession, TIMEOUT_LIMIT_MS);
-            }
-
-            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(eventType => {
-                document.addEventListener(eventType, resetInactivityTrackingClock, { passive: true });
-            });
-
-            resetInactivityTrackingClock();
-
-        } catch (err) {
-            console.error("Guard Script Exception caught, forcing routing reset:", err.message);
-            window.location.href = 'admin-login.html';
-        }
-    })();
-</script>
-
 
 </head>
 <body>
