@@ -14,78 +14,86 @@
     <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
     <link rel="stylesheet" href="assets/css/admin-core.css">
 
-    <script>const { data: { session } } = await supabase.auth.getSession();
-if (!session) window.location.href = 'index.html';
-</script>
+    <!-- ==========================================================================
+       🚨 CRITICAL SECURITY BARRIER: ASYNC INITIALIZATION DOMAIN GUARD & AUTO-LOGOUT
+       ========================================================================= -->
+    <script>
+        (async function enforceStrictAdminProtection() {
+            "use strict";
 
+            // 🎯 FIXED: Explicitly loops and polls until the Supabase library is safely loaded into memory
+            function waitForSupabaseClientEngine() {
+                return new Promise((resolve) => {
+                    if (window.authSupabaseClient || window.supabase) {
+                        return resolve(window.authSupabaseClient || window.supabase);
+                    }
+                    const trackingInterval = setInterval(() => {
+                        const client = window.authSupabaseClient || window.supabase;
+                        if (client) {
+                            clearInterval(trackingInterval);
+                            resolve(client);
+                        }
+                    }, 30); // Polls every 30ms to prevent page rendering bypasses
+                });
+            }
 
-        <!-- ==========================================================================
-   🚨 CRITICAL SECURITY BARRIER: DOMAIN GUARD & AUTO-LOGOUT MONITOR
-   ========================================================================== -->
-<script>
-    (async function enforceStrictAdminProtection() {
-        "use strict";
+            // 1. Halt execution track until the communication client is verified active
+            const client = await waitForSupabaseClientEngine();
 
-        // 1. Safety Loop: Wait for your database network CDN link to mount
-        if (typeof window.supabase === 'undefined') {
-            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
-        }
+            try {
+                // 2. Fetch active session parameters directly from encrypted local storage cache
+                const { data: { session }, error } = await client.auth.getSession();
 
-        // Initialize connection fallback if your config file is lagging
-        const client = window.authSupabaseClient || window.supabase;
-        if (!client) return;
+                // 🔒 BARRIER A: Kick out immediately if no active token exists or if database returns an error
+                if (error || !session || !session.user) {
+                    window.location.replace('admin-login.html');
+                    return;
+                }
 
-        // 2. Fetch active session parameters directly from encrypted local cache storage
-        const { data: { session } } = await client.auth.getSession();
+                // 🔒 BARRIER B: Wipe session instantly if the email string fails the corporate extension rule
+                const staffEmail = session.user.email.toLowerCase();
+                if (!staffEmail.endsWith('@filings4u.com')) {
+                    console.warn("Security Breach Blocked: Unauthorized account domain profile detected.");
+                    await client.auth.signOut();
+                    window.location.replace('admin-login.html');
+                    return;
+                }
 
-        // 🔒 BARRIER A: Kick out immediately if no active token exists
-        if (!session || !session.user) {
-            window.location.replace('admin-login.html');
-            return;
-        }
+                console.log(`🔒 Terminal secure. Staff verification active for: ${staffEmail}`);
 
-        // 🔒 BARRIER B: Wipe session instantly if the email fails the corporate extension rule
-        const staffEmail = session.user.email.toLowerCase();
-        if (!staffEmail.endsWith('@filings4u.com')) {
-            await client.auth.signOut();
-            window.location.replace('admin-login.html');
-            return;
-        }
+                // ==========================================================================
+                // ⏱️ AUTOMATIC INACTIVITY LOGOUT ENGINE (15 MINUTE LIFECYCLE BARRIER)
+                // ==========================================================================
+                let inactivityTimeoutTimer;
+                const TIMEOUT_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes
 
-        console.log(`🔒 Terminal secure. Staff verification active for: ${staffEmail}`);
+                async function terminateInactiveAdminSession() {
+                    console.warn("Inactivity limit exceeded. Destroying temporary administrative tokens...");
+                    alert("Administrative Session Expired: For your data protection, you have been automatically logged out due to inactivity.");
+                    await client.auth.signOut();
+                    window.location.replace('https://filings4u.com');
+                }
 
-        // ==========================================================================
-        // ⏱️ AUTOMATIC INACTIVITY LOGOUT ENGINE (15 MINUTE LIFECYCLE BARRIER)
-        // ==========================================================================
-        let inactivityTimeoutTimer;
-        const TIMEOUT_LIMIT_MS = 15 * 60 * 1000; // 15 Minutes in exact milliseconds
+                function resetInactivityTrackingClock() {
+                    clearTimeout(inactivityTimeoutTimer);
+                    inactivityTimeoutTimer = setTimeout(terminateInactiveAdminSession, TIMEOUT_LIMIT_MS);
+                }
 
-        // Sign out protocol logic
-        async function terminateInactiveAdminSession() {
-            console.warn("Inactivity limit exceeded. Destroying temporary administrative tokens...");
-            alert("Administrative Session Expired: For your data protection, you have been automatically logged out due to inactivity.");
-            await client.auth.signOut();
-            window.location.replace('admin-login.html');
-        }
+                // Wire up user activity hardware triggers smoothly
+                ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(eventType => {
+                    document.addEventListener(eventType, resetInactivityTrackingClock, { passive: true });
+                });
 
-        // Resets the clock timer block back to zero when activity occurs
-        function resetInactivityTrackingClock() {
-            clearTimeout(inactivityTimeoutTimer);
-            inactivityTimeoutTimer = setTimeout(terminateInactiveAdminSession, TIMEOUT_LIMIT_MS);
-        }
+                resetInactivityTrackingClock();
 
-        // Wire up hardware event tracking arrays to listen for direct staff inputs
-        const userActivityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-        userActivityEvents.forEach(eventType => {
-            document.addEventListener(eventType, resetInactivityTrackingClock, { passive: true });
-        });
-
-        // Initialize the first timer loop execution instantly on page track load
-        resetInactivityTrackingClock();
-
-    })();
-</script>
+            } catch (err) {
+                console.error("Guard Script Encountered an Exception:", err.message);
+                window.location.replace('admin-login.html');
+            }
+        })();
+    </script>
 </head>
+
 <body>
    <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE --> 
     <aside class="portal-sidebar"> 
