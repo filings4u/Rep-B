@@ -3,86 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM | filings4u Staff</title>
-    
-    <!-- 🚀 MOBILE BROWSER INTERFACE EMERALD THEME CONTROLLERS -->
+    <title>User & Admin CRM | filings4u Staff</title>
     <meta name="theme-color" content="#c15254">
     
-    <!-- PRODUCTION CDN INFRASTRUCTURE -->
+    <!-- Core Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    
-    <!-- 2. Load your centralized config -->
     <script src="assets/js/supabase-config.js"></script>
-    
-    <!-- 3. Load the guard file to lock the page -->
     <script src="assets/js/admin-guard.js"></script>
-    
-    <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
     <link rel="stylesheet" href="assets/css/admin-core.css">
-  
+
+    <style>
+        .crm-container { padding: 30px; box-sizing: border-box; }
+        .crm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .crm-actions { display: flex; gap: 15px; align-items: center; }
+        .crm-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .crm-table th { background: #f8fafc; padding: 14px 18px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #44526c; border-bottom: 2px solid #e2e8f0; }
+        .crm-table td { padding: 14px 18px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; color: #0a1f44; }
+        .role-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .role-badge.admin { background: rgba(193, 82, 84, 0.1); color: #c15254; }
+        .role-badge.customer { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        
+        /* Modal Popup System Overlay */
+        .crm-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(10,31,68,0.4); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition: opacity 0.2s ease; z-index: 10000; }
+        .crm-modal.active { opacity:1; pointer-events:auto; }
+        .modal-box { background:#fff; padding:30px; border-radius:10px; width:100%; max-width:450px; box-shadow:0 20px 40px rgba(0,0,0,0.1); }
+        .modal-box h3 { margin: 0 0 15px 0; color: #0a1f44; }
+        .crm-input-group { margin-bottom: 15px; text-align: left; }
+        .crm-input-group label { display:block; font-size:0.75rem; font-weight:700; color:#0a1f44; margin-bottom:5px; }
+        .crm-input, .crm-select { width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px; box-sizing:border-box; }
+        .crm-btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
+        .crm-btn.primary { background: #0a1f44; color: #fff; }
+        .crm-btn.danger { background: #c15254; color: #fff; }
+        .crm-btn.secondary { background: #e2e8f0; color: #44526c; }
+    </style>
 </head>
 <body>
+    <div class="split-container">
+        <!-- RETAIN YOUR IDENTICAL PORTAL SIDEBAR MARKUP HERE -->
+        <aside class="portal-sidebar">
+            <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+                <img src="images/logo.png" alt="filings4u" style="max-height: 40px; margin-bottom:12px;">
+                <div class="admin-badge">CRM Control Console</div>
+            </div>
+            <nav class="sidebar-nav-container">
+                <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+                <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
+                <!-- Rest of your navigation loops -->
+            </nav>
+        </aside>
 
-       <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE --> 
-    <aside class="portal-sidebar"> 
-        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;"> 
-            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;"> 
-                <img src="images/logo.png" alt="filings4u" class="logo" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;"> 
-            </div> 
-            <div class="admin-badge">Directorate Admin</div> 
-        </div> 
-        <div class="sidebar-clock-bar"> 
-            <span>System Time:</span> 
-            <span id="portal-clock">00:00:00</span> 
-        </div> 
-        <nav class="sidebar-nav-container"> 
-            <p class="sidebar-nav-heading">Control Systems</p> 
-            <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a> 
-            <a href="#admin-master-sales-panel" class="nav-item"><span>💰</span> Sales & Price Audit</a> 
-            <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a> 
-            <p class="sidebar-nav-heading">Operations & CRM</p> 
-            <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a> 
-            <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a> 
-            <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a> 
-            <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a> 
-            <p class="sidebar-nav-heading">Financials & Health</p> 
-            <a href="admin-billing.html" class="nav-item active"><span>💸</span> Revenue Reconciliation</a> 
-            <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a> 
-            <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a> 
-        </nav> 
-        <div class="sidebar-footer-lock"> 
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"> 
-                <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div> 
-                <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span> 
-            </div> 
-            <p style="margin: 0 0 12px 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via corporate staff domain.</p> 
-            <button onclick="handleAdminSignOutLogout()" class="logout-btn">Exit Admin Session</button> 
-        </div> 
-    </aside> 
-
-    <div class="main-content">
-        <div class="page-header">
+<!-- MAIN CRM WORKSPACE CONTAINER -->
+<main class="portal-main">
+    <div class="crm-container">
+        <header class="crm-header">
             <div>
-                <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Customer Relationship Portal</h1>
-                <p style="margin: 5px 0 0 0; color: #64748b;">Review accounts, contact details, assigned files, and operational health.</p>
+                <h1>Account Management CRM</h1>
+                <p style="color: #64748b; margin: 4px 0 0 0;">Synchronize profiles, authorize administrators, and monitor ledger entries.</p>
             </div>
-        </div>
-        <div class="crm-grid">
-            <div class="crm-card">
-                <div class="client-meta">
-                    <div class="avatar">JD</div>
-                    <div>
-                        <h4 style="margin: 0; font-size: 1rem;">John Doe</h4>
-                        <span style="font-size: 0.8rem; color: #64748b;">j.doe@example.com</span>
-                    </div>
+            
+            <!-- 🎯 COMBINED ACTIONS BLOCK (No Duplicate IDs) -->
+            <div class="crm-actions">
+                <input type="text" id="crmSearchField" class="search-input" placeholder="Filter by email or name..." style="margin:0;">
+                <button class="crm-btn secondary" id="exportCrmCsvBtn" style="background: #10b981; color: white;">📥 Export CSV</button>
+                <button class="crm-btn primary" id="openCreateModalBtn">+ Register New Record</button>
+            </div>
+        </header>
+
+
+                <!-- LIVE INTERACTIVE DATA TABLE -->
+                <table class="crm-table">
+                    <thead>
+                        <tr>
+                            <th>User ID / Token</th>
+                            <th>Full Corporate Name</th>
+                            <th>Target User Email</th>
+                            <th>System Clearance Role</th>
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crmTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:40px; color:#64748b;">Querying real-time ledger vectors...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL POPUP: CREATE OR EDIT PROFILE RECORD -->
+    <div class="crm-modal" id="profileModal">
+        <div class="modal-box">
+            <h3 id="modalTitle">Manage Profile Mapping</h3>
+            <form id="crmProfileForm">
+                <input type="hidden" id="profileIdField">
+                <div class="crm-input-group">
+                    <label for="profileName">Full Name / Company Name</label>
+                    <input type="text" id="profileName" class="crm-input" required>
                 </div>
-                <p style="font-size: 0.85rem; color: #4a5568;"><strong>Entities Active:</strong> 3 Formations</p>
-                <button class="btn-outline">Open Full Profile Canvas</button>
-            </div>
+                <div class="crm-input-group">
+                    <label for="profileEmail">Associated System Email</label>
+                    <input type="email" id="profileEmail" class="crm-input" required>
+                </div>
+                <div class="crm-input-group">
+                    <label for="profileRole">System Access Clearance</label>
+                    <select id="profileRole" class="crm-select">
+                        <option value="customer">Customer (Standard Workspace)</option>
+                        <option value="admin">Admin (Directorate System Hub)</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                    <button type="button" class="crm-btn secondary" id="closeModalBtn">Cancel</button>
+                    <button type="submit" class="crm-btn primary" id="saveProfileBtn">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
-    <script>
-        (function(){function u(){const c=document.getElementById('portal-clock');if(c){const n=new Date();c.innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}}u();setInterval(u,1000);})();
-    </script>
+
+    <!-- HOOK THE CRM PROCESSING LAYER -->
+    <script src="assets/js/admin-crm.js"></script>
 </body>
 </html>
