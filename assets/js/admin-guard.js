@@ -14,7 +14,7 @@
                     clearInterval(clientTracker);
                     resolve(window.supabaseClient);
                 }
-            }, 10); // Ultra-fast checking interval prevents display rendering flashes
+            }, 10); // Checked every 10ms to eliminate flash of unauthenticated content
         });
     }
 
@@ -28,11 +28,11 @@
 
         const userEmail = session.user.email.toLowerCase().trim();
 
-        // 2. Apply your absolute security logic criteria filters
-        const isExplicitAdmin = (userEmail === 'test-admin@filings4u.com');
-        const isCorporateDomainAdmin = userEmail.endsWith('@filings4u.com') && userEmail !== 'filings@filings4u.com';
+        // 2. 🎯 MATCHED DOMAIN RULE: Any corporate email suffix or explicit test account has access
+        const isTestAdmin = (userEmail === 'test-admin@filings4u.com');
+        const isCorporateStaff = userEmail.endsWith('@filings4u.com');
 
-        if (!isExplicitAdmin && !isCorporateDomainAdmin) {
+        if (!isTestAdmin && !isCorporateStaff) {
             throw new Error(`Unauthorized profile access attempt recorded: ${userEmail}`);
         }
 
@@ -42,7 +42,7 @@
     } catch (gateError) {
         console.error("Security Terminal Violation:", gateError.message);
         
-        // Hard purge local cookies/tokens instantly so Cloudflare doesn't loop bad states
+        // Hard purge local tokens instantly so Cloudflare doesn't cache bad states
         if (window.supabaseClient && window.supabaseClient.auth) {
             await window.supabaseClient.auth.signOut();
         }
