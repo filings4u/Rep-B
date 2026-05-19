@@ -4,18 +4,33 @@
 
     console.log("🚀 Admin UI accordion engine successfully mounted.");
 
-       // Update the clock section inside your assets/js/admin-engine.js file:
+    
+    // ⏰ 1. SELF-SUFFICIENT REAL-TIME SYSTEM CLOCK (WITH DATE MERGED)
+    // ==========================================================================
     const clockDisplayElement = document.getElementById('portal-clock');
+    
     function runLiveSystemClock() {
         if (!clockDisplayElement) return;
         const now = new Date();
-        // 🎯 FIXED: Extracts only the basic HH:MM:SS format and drops the timezone text
-        clockDisplayElement.innerText = now.toTimeString().split(' ')[0];
+        
+        // 🎯 Injects numerical padded dates 
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const dateString = `${mm}/${dd}/${yyyy}`;
+        
+        // Strips any trailing timezone or GMT text parameters completely
+        const timeString = now.toTimeString().split(' ')[0];
+        
+        // Merges into a clean, unified dashboard tracker string
+        clockDisplayElement.innerText = `${dateString} | ${timeString}`;
     }
+    
     if (clockDisplayElement) {
         setInterval(runLiveSystemClock, 1000);
-        runLiveSystemClock();
+        runLiveSystemClock(); // Fires instantly to prevent initial placeholder flash
     }
+
 
 
     // ==========================================================================
