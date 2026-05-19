@@ -136,6 +136,43 @@
                     });
                 }
             }
+                        // ==========================================================================
+            // 💰 E. LIVE GLOBAL SALES PRICING LEDGER DATA POPULATION LOOP
+            // ==========================================================================
+            const dashboardSalesTbody = document.getElementById('admin-global-sales-target-box');
+            if (dashboardSalesTbody) {
+                // Fetch the last 8 paid transactions in chronological order
+                const { data: salesRecords, error: salesErr } = await client
+                    .from('user_filings_workspace')
+                    .select('id, user_id, service_key, amount_paid')
+                    .eq('status', 'paid')
+                    .order('updated_at', { ascending: false })
+                    .limit(8);
+
+                if (!salesErr && salesRecords) {
+                    if (salesRecords.length === 0) {
+                        dashboardSalesTbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:var(--text-muted); font-style:italic;">No settled platform orders currently recorded inside logs.</td></tr>';
+                    } else {
+                        const registryMeta = window.WIZARD_REGISTRY || {};
+                        
+                        dashboardSalesTbody.innerHTML = salesRecords.map(sale => {
+                            const spec = registryMeta[sale.service_key] || { title: sale.service_key.toUpperCase() };
+                            const saleCostNum = parseFloat(sale.amount_paid) || 149.00;
+                            
+                            return `
+                                <tr style="border-bottom:1px solid var(--border-color); color:var(--text-dark);">
+                                    <td style="padding:12px; font-weight:700;">#FIL-${sale.id.substring(0,8).toUpperCase()}</td>
+                                    <td style="padding:12px; font-family:monospace; font-size:0.8rem;">#USR-${sale.user_id.substring(0,8).toUpperCase()}</td>
+                                    <td style="padding:12px; font-weight:600; color:var(--text-muted);">${spec.title.split(' (')[0]}</td>
+                                    <td style="padding:12px; text-align:right; font-weight:800; color:var(--emerald); font-family:monospace;">$${saleCostNum.toFixed(2)}</td>
+                                </tr>`;
+                        }).join('');
+                    }
+                } else if (salesErr) {
+                    console.error("Dashboard accounting stream pipeline stalled:", salesErr.message);
+                }
+            }
+
 
         } catch (globalHydrationErr) {
             console.error("Telemetry hydration trace paused:", globalHydrationErr.message);
