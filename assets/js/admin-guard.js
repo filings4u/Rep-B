@@ -51,3 +51,37 @@
         window.location.replace(loginRedirectTarget);
     }
 })();
+
+// assets/js/admin-guard.js
+(async function enforcePerimeterClearance() {
+    "use strict";
+    
+    function checkClient() {
+        return new Promise((resolve) => {
+            if (window.supabaseClient) return resolve(window.supabaseClient);
+            const loop = setInterval(() => {
+                if (window.supabaseClient) { clearInterval(loop); resolve(window.supabaseClient); }
+            }, 10);
+        });
+    }
+
+    const client = await checkClient();
+    const { data: { session } } = await client.auth.getSession();
+    const fallbackUrl = window.productionRootUrl || window.location.origin;
+
+    if (!session || !session.user) {
+        console.warn("Security Breach: Unauthenticated user intercepted. Redirecting to login wall...");
+        window.location.replace(`${fallbackUrl}/admin-login.html`);
+        return;
+    }
+
+    // Force strict corporate domain checking constraints
+    const email = session.user.email.toLowerCase();
+    const isAuthorizedStaff = email.endsWith('@filings4u.com') || email === 'test-admin@filings4u.com';
+
+    if (!isAuthorizedStaff) {
+        alert("Security Lockout: Your profile tokens hold insufficient clearance parameters.");
+        await client.auth.signOut();
+        window.location.replace(`${fallbackUrl}/admin-login.html`);
+    }
+})();

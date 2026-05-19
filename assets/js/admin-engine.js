@@ -1,14 +1,13 @@
 // assets/js/admin-engine.js
-(function initializeProductionAdminEngine() {
+(function initializeProductionAdminMasterEngine() {
     "use strict";
 
-    console.log("🚀 Production Admin Engine mounted and listening...");
+    console.log("⚙️ Master Production Admin Infrastructure Engine Active...");
 
     // ==========================================================================
-    // ⏰ 1. REAL-TIME SYSTEM CLOCK & DATE COUPLING ENGINE
+    // ⏰ 1. REAL-TIME SYSTEM CLOCK & DATE COUPLING METRICS
     // ==========================================================================
     const clockDisplayElement = document.getElementById('portal-clock');
-    
     function runLiveSystemClock() {
         if (!clockDisplayElement) return;
         const now = new Date();
@@ -19,174 +18,109 @@
         const timeString = now.toTimeString().split(' ')[0]; 
         clockDisplayElement.innerText = `${dateString} | ${timeString}`;
     }
-    
     if (clockDisplayElement) {
         setInterval(runLiveSystemClock, 1000);
         runLiveSystemClock();
     }
 
     // ==========================================================================
-    // 🚪 2. SECURE INSTANT SIGN OUT DESK
+    // 🚪 2. SECURE LOGOUT & TELEMETRY CLEANER
     // ==========================================================================
-    async function executeTerminalSessionTermination(btnElement) {
+    window.executeTerminalSessionTermination = async function(btnElement) {
         if (btnElement) btnElement.disabled = true;
-        console.log("Purging authorization tokens...");
+        
+        // Log auditing telemetry to system database trail before storage teardown
+        const client = window.supabaseClient;
+        if (client && client.auth) {
+            try {
+                const { data: { session } } = await client.auth.getSession();
+                if (session && session.user) {
+                    await client.from('platform_system_logs').insert({
+                        timestamp: new Date().toISOString(),
+                        log_type: 'SYSTEM',
+                        user_email: session.user.email,
+                        message: `Staff Administrator logged out successfully.`
+                    });
+                }
+                await client.auth.signOut();
+            } catch (err) {
+                console.warn("Background audit write skipped:", err.message);
+            }
+        }
 
         localStorage.removeItem("filings4u_secure_session_token");
         sessionStorage.clear();
-
         const baseTarget = window.productionRootUrl || window.location.origin;
-
-        try {
-            if (window.supabaseClient && window.supabaseClient.auth) {
-                await window.supabaseClient.auth.signOut(); 
-            }
-        } catch (logoutErr) {
-            console.warn("Auth signout bypassed:", logoutErr.message);
-        }
-
         window.location.replace(`${baseTarget}/admin-login.html`);
-    }
+    };
 
     document.addEventListener("DOMContentLoaded", () => {
         const fallbackLogoutBtn = document.getElementById('sidebarFallbackLogoutBtn');
         if (fallbackLogoutBtn) {
             fallbackLogoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                executeTerminalSessionTermination(fallbackLogoutBtn);
+                window.executeTerminalSessionTermination(fallbackLogoutBtn);
             });
         }
     });
 
     // ==========================================================================
-    // 📊 3. PRODUCTION DATABASE HYDRATION LAYERS (LIVE QUERIES)
+    // 🔍 3. GLOBAL PLATFORM SEARCH MATRIX OVERRIDE
     // ==========================================================================
-    async function hydrateProductionDataFields() {
+    const globalSearchBox = document.getElementById('adminGlobalSearchField');
+    if (globalSearchBox) {
+        globalSearchBox.addEventListener('keyup', (e) => {
+            const criteria = e.target.value.toLowerCase().trim();
+            const searchableRows = document.querySelectorAll('.admin-table-ledger tbody tr, .ticket-row, .log-entry-row');
+            
+            searchableRows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(criteria) ? "" : "none";
+            });
+        });
+    }
+
+    // ==========================================================================
+    // 📊 4. ANALYTICS PIPELINE ENGINE
+    // ==========================================================================
+    async function loadGlobalLiveAnalytics() {
         const client = window.supabaseClient;
         if (!client) return;
 
         try {
-            // A. Log Active Staff Account Identifier Mail stamp
-            const staffEmailDisplayLog = document.getElementById('liveStaffEmailDisplayLog');
-            const { data: { session } } = await client.auth.getSession();
-            if (session && session.user && staffEmailDisplayLog) {
-                staffEmailDisplayLog.innerText = `Active Account: ${session.user.email}`;
-            }
-
-            // B. Fetch All Rows out of Workspace Table for Analytical Counting Metrics
-            const { data: filings, error: filingsErr } = await client
-                .from('user_filings_workspace')
-                .select('amount_paid, status, service_key');
-
-            if (!filingsErr && filings) {
-                // Calculate Total Revenue using your exact decimal numeric column block
-                const totalRevenueSum = filings
-                    .filter(f => f.status === 'paid' && f.amount_paid)
-                    .reduce((sum, current) => sum + parseFloat(current.amount_paid), 0);
-
-                const pendingAuditsCount = filings.filter(f => f.status === 'draft').length;
-
-                // Safely update screen elements if present on the active page layout view
-                const revEl = document.getElementById('stat-total-revenue') || document.getElementById('summary-collected-revenue');
-                const pendEl = document.getElementById('stat-pending-filings') || document.getElementById('summary-unpaid-amount');
+            const { data: workspaceRows } = await client.from('user_filings_workspace').select('amount_paid, status');
+            
+            if (workspaceRows) {
+                const grossRevenue = workspaceRows
+                    .filter(r => r.status === 'paid' && r.amount_paid)
+                    .reduce((sum, item) => sum + parseFloat(item.amount_paid), 0);
                 
-                if (revEl) revEl.innerText = `$${totalRevenueSum.toFixed(2)}`;
-                if (pendEl) {
-                    if (pendEl.id === 'summary-unpaid-amount') {
-                        // On billing pages, calculate total pending pipeline cash value
-                        const pendingCashValue = filings.filter(f => f.status === 'draft').length * 149.00;
-                        pendEl.innerText = `$${pendingCashValue.toFixed(2)}`;
+                const activeEntitiesCount = [...new Set(workspaceRows.map(r => r.id))].length;
+                const draftFilingCount = workspaceRows.filter(r => r.status === 'draft').length;
+
+                const revenueText = document.getElementById('stat-total-revenue') || document.getElementById('summary-collected-revenue');
+                const entitiesText = document.getElementById('stat-active-users') || document.getElementById('summary-total-orders');
+                const filingsText = document.getElementById('stat-pending-filings') || document.getElementById('summary-unpaid-amount');
+
+                if (revenueText) revenueText.innerText = `$${grossRevenue.toFixed(2)}`;
+                if (entitiesText) entitiesText.innerText = activeEntitiesCount.toString();
+                if (filingsText) {
+                    if (filingsText.id === 'summary-unpaid-amount') {
+                        filingsText.innerText = `$${(draftFilingCount * 149.00).toFixed(2)}`;
                     } else {
-                        pendEl.innerText = pendingAuditsCount.toString();
+                        filingsText.innerText = draftFilingCount.toString();
                     }
                 }
             }
-
-            // C. Count Distinct Customer Profiles
-            const activeUsersElement = document.getElementById('stat-active-users') || document.getElementById('summary-total-orders');
-            if (activeUsersElement) {
-                // Query unique profiles to fetch real operational database numbers
-                const { count, error: countErr } = await client
-                    .from('user_filings_workspace')
-                    .select('user_id', { count: 'exact', head: true });
-                
-                if (!countErr && count !== null) {
-                    activeUsersElement.innerText = count.toString();
-                }
-            }
-
-            // D. Populate Dynamic "Target User Account" Selector Dropdowns
-            const clientDropdown = document.getElementById('adminClientDropdown');
-            if (clientDropdown) {
-                // Query profiles holding valid customer tracking tokens
-                const { data: profiles, error: profileErr } = await client
-                    .from('user_filings_workspace')
-                    .select('user_id');
-
-                if (!profileErr && profiles) {
-                    // Extract unique user ID arrays to remove duplicates
-                    const uniqueUserIds = [...new Set(profiles.map(p => p.user_id).filter(id => id))];
-                    
-                    clientDropdown.innerHTML = '<option value="">-- Select Valid Target Client UUID --</option>';
-                    uniqueUserIds.forEach(userId => {
-                        const optionNode = document.createElement('option');
-                        optionNode.value = userId;
-                        optionNode.innerText = `Client reference ID: #USR-${userId.substring(0,8).toUpperCase()}`;
-                        clientDropdown.appendChild(optionNode);
-                    });
-                }
-            }
-                        // ==========================================================================
-            // 💰 E. LIVE GLOBAL SALES PRICING LEDGER DATA POPULATION LOOP
-            // ==========================================================================
-            const dashboardSalesTbody = document.getElementById('admin-global-sales-target-box');
-            if (dashboardSalesTbody) {
-                // Fetch the last 8 paid transactions in chronological order
-                const { data: salesRecords, error: salesErr } = await client
-                    .from('user_filings_workspace')
-                    .select('id, user_id, service_key, amount_paid')
-                    .eq('status', 'paid')
-                    .order('updated_at', { ascending: false })
-                    .limit(8);
-
-                if (!salesErr && salesRecords) {
-                    if (salesRecords.length === 0) {
-                        dashboardSalesTbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:var(--text-muted); font-style:italic;">No settled platform orders currently recorded inside logs.</td></tr>';
-                    } else {
-                        const registryMeta = window.WIZARD_REGISTRY || {};
-                        
-                        dashboardSalesTbody.innerHTML = salesRecords.map(sale => {
-                            const spec = registryMeta[sale.service_key] || { title: sale.service_key.toUpperCase() };
-                            const saleCostNum = parseFloat(sale.amount_paid) || 149.00;
-                            
-                            return `
-                                <tr style="border-bottom:1px solid var(--border-color); color:var(--text-dark);">
-                                    <td style="padding:12px; font-weight:700;">#FIL-${sale.id.substring(0,8).toUpperCase()}</td>
-                                    <td style="padding:12px; font-family:monospace; font-size:0.8rem;">#USR-${sale.user_id.substring(0,8).toUpperCase()}</td>
-                                    <td style="padding:12px; font-weight:600; color:var(--text-muted);">${spec.title.split(' (')[0]}</td>
-                                    <td style="padding:12px; text-align:right; font-weight:800; color:var(--emerald); font-family:monospace;">$${saleCostNum.toFixed(2)}</td>
-                                </tr>`;
-                        }).join('');
-                    }
-                } else if (salesErr) {
-                    console.error("Dashboard accounting stream pipeline stalled:", salesErr.message);
-                }
-            }
-
-
-        } catch (globalHydrationErr) {
-            console.error("Telemetry hydration trace paused:", globalHydrationErr.message);
+        } catch (err) {
+            console.error("Analytics pipeline trace failure:", err.message);
         }
     }
 
-    // Safe, non-blocking check loop targeting your custom initialization scripts
-    const coreCheckLoop = setInterval(() => {
+    const verificationPollingLoop = setInterval(() => {
         if (window.supabaseClient) {
-            clearInterval(coreCheckLoop);
-            hydrateProductionDataFields();
+            clearInterval(verificationPollingLoop);
+            loadGlobalLiveAnalytics();
         }
-    }, 100);
-
-    setTimeout(() => clearInterval(coreCheckLoop), 5000);
-
+    }, 150);
 })();

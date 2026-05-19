@@ -300,6 +300,19 @@
             color: var(--text-dark) !important;
             text-align: left !important;
         }
+
+        @media (max-width: 991px) {
+    body, html { overflow-y: auto !important; }
+    .dashboard-wrapper { flex-direction: column !important; }
+    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
+    .portal-main { margin-left: 0 !important; width: 100% !important; }
+    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
+    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
+    .search-input { width: 100% !important; }
+    .content-container { padding: 20px !important; }
+    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+}
+
     </style>
 </head>
 <body>
@@ -419,5 +432,39 @@
             }
         }
     </script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const checkClient = setInterval(async () => {
+            if (window.supabaseClient) {
+                clearInterval(checkClientInterval);
+                const client = window.supabaseClient;
+                const container = document.querySelector('.portal-card');
+                
+                const { data: logs, error } = await client
+                    .from('platform_security_telemetry_logs')
+                    .select('*')
+                    .order('recorded_at', { ascending: false })
+                    .limit(20);
+
+                if (!error && logs && logs.length > 0) {
+                    container.innerHTML = logs.map(l => {
+                        let classTag = "system";
+                        if (l.action_type === "TRANSACTION") classTag = "payment";
+                        if (l.action_type === "ERROR") classTag = "error";
+                        
+                        return `
+                            <div class="log-entry-row">
+                                <span class="log-timestamp">${new Date(l.recorded_at).toLocaleString()}</span>
+                                <span class="log-tag ${classTag}">${l.action_type}</span>
+                                <span class="log-message"><strong>${l.actor_email}</strong>: ${l.message_details}</span>
+                            </div>`;
+                    }).join('');
+                }
+            }
+        }, 100);
+    });
+</script>
+
 </body>
 </html>

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Compliance Cloud Vault | filings4u Staff</title>
+    <meta name="theme-color" content="#c15254">
+
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="assets/js/admin-guard.js"></script>
+    <script src="assets/js/wizard-sync.js"></script>
+
+    <style>
+        /* ==========================================================================
+           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-panel {
+            max-height: 500px !important;
+            overflow: hidden !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ DYNAMIC CORE WORKSPACE GRID CONTAINER (STRETCHES FULL WIDTH) */
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            margin-left: var(--sidebar-width) !important; /* Standard static offset block */
+            width: calc(100% - var(--sidebar-width)) !important; /* 🎯 FIX: Streches perfectly full screen width */
+            min-height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 20px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            font-size: 0.82rem !important;
+            width: 220px !important;
+            outline: none !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            color: var(--text-dark) !important;
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        /* 📥 INTERACTIVE DRAG AND DROP ZONE BOX CONTAINER styles */
+        .vault-dropzone {
+            background: var(--white) !important;
+            border: 2px dashed var(--border-color) !important;
+            border-radius: 12px !important;
+            padding: 40px 20px !important;
+            text-align: center !important;
+            cursor: pointer !important;
+            margin-bottom: 30px !important;
+            transition: all 0.2s ease !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+        .vault-dropzone.dragover {
+            background: rgba(16, 185, 129, 0.04) !important;
+            border-color: var(--emerald) !important;
+        }
+
+        .portal-card {
+            background: var(--white) !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 24px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .admin-table-ledger {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            text-align: left !important;
+            font-size: 0.85rem !important;
+        }
+
+        .admin-table-ledger th {
+            background: #f8fafc !important;
+            border-bottom: 2px solid var(--border-color) !important;
+            padding: 12px 16px !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .admin-table-ledger td {
+            padding: 14px 16px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--text-dark) !important;
+        }
+
+        .btn-action {
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 6px 12px !important;
+            border-radius: 4px !important;
+            font-weight: 700 !important;
+            font-size: 0.75rem !important;
+            cursor: pointer !important;
+            text-decoration: none !important;
+        }
+
+        @media (max-width: 991px) {
+            .portal-sidebar { display: none !important; }
+            .portal-main { margin-left: 0 !important; width: 100% !important; }
+            .portal-header { flex-direction: column !important; gap: 15px !important; padding: 15px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto; object-fit: contain; display: block; margin: 0 auto;">
+                <div><div class="admin-badge">Directorate Admin</div></div>
+            </div>
+
+            <nav class="sidebar-accordion-menu">
+                <button class="accordion-trigger active">MENU CORE</button>
+                <div class="accordion-panel">
+                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+                    <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+                    <span>🏢</span> Entity Master Ledger</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+                    <a href="admin-documents.html" class="nav-item active"><span>📂</span> Compliance Cloud Vault</a>
+                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Live Customer Relay</a>
+                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Operational Calendar</a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer-lock">
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Session</button>
+            </div>
+        </aside>
+
+        <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div>
+                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Compliance Cloud Vault</h1>
+                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Review corporate uploads, execute background file downloads, and archive customer attachments.</p>
+                </div>
+                
+                <div class="header-actions-wrapper">
+                    <div class="header-clock-pill">⏱️ <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+                    <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search saved documents...">
+                </div>
+            </header>
+
+            <div class="content-container">
+                <!-- DYNAMIC DRAG AND DROP ZONE INTERFACE -->
+                <div class="vault-dropzone" id="adminDropzone">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 10px;">📤</span>
+                    <strong style="font-size: 0.95rem; color: var(--text-dark); display: block; margin-bottom: 4px;">Drag & Drop Secure Compliance Files Here</strong>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">or click to browse your file system directories (.PDF, .PNG, .JPG up to 50MB)</span>
+                    <input type="file" id="manualFileInput" style="display: none;" multiple>
+                </div>
+
+                <!-- LIVE FILE STORAGE HISTORY MATRIX CARD -->
+                <div class="portal-card">
+                    <div style="overflow-x: auto; width: 100%;">
+                        <table class="admin-table-ledger">
+                            <thead>
+                                <tr>
+                                    <th>Document Object Handle</th>
+                                    <th>Folder Context Path</th>
+                                    <th>Asset Type</th>
+                                    <th>Archived Timestamp</th>
+                                    <th>Filing Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTableBody">
+                                <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">Querying global cloud bucket index...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- PRODUCTION LOGIC BINDINGS ENGINE -->
+    <script src="assets/js/admin-engine.js"></script>
+    <script>
+        const dropzone = document.getElementById('adminDropzone');
+        const fileInput = document.getElementById('manualFileInput');
+        const tbody = document.getElementById('documentsTableBody');
+
+        if (dropzone && fileInput) {
+            dropzone.addEventListener('click', () => fileInput.click());
+            
+            ['dragenter', 'dragover'].forEach(name => {
+                dropzone.addEventListener(name, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+            });
+            ['dragleave', 'drop'].forEach(name => {
+                dropzone.addEventListener(name, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const droppedFiles = e.dataTransfer.files;
+                if (droppedFiles.length > 0) handleVaultUploadProcess(droppedFiles);
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleVaultUploadProcess(e.target.files);
+            });
+        }
+
+        async function handleVaultUploadProcess(files) {
+            const client = window.supabaseClient;
+            if (!client) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const targetFile = files[i];
+                const sanitizedPath = `admin_uploads/${Date.now()}_${targetFile.name.replace(/\s+/g, '_')}`;
+                
+                try {
+                    const { error } = await client.storage.from('compliance_vault_documents').upload(sanitizedPath, targetFile);
+                    if (error) throw error;
+                    alert(`🎉 File "${targetFile.name}" securely locked into storage core!`);
+                } catch(err) {
+                    alert(`Upload Intercepted: ${err.message}`);
+                }
+            }
+            loadDocumentsLedgerList();
+        }
+
+        async function loadDocumentsLedgerList() {
+            const client = window.supabaseClient;
+            if (!client) return;
+
+            try {
+                // Read from your primary secure compliance bucket registry
+                const { data, error } = await client.storage.from('compliance_vault_documents').list('admin_uploads', {
+                    limit: 100, sortBy: { column: 'created_at', order: 'desc' }
+                });
+
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic;">No active assets found inside root directories.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(obj => {
+                    const fullPath = `admin_uploads/${obj.name}`;
+                    const { data: urlData } = client.storage.from('compliance_vault_documents').getPublicUrl(fullPath);
+                    const fileExtensionString = obj.name.split('.').pop().toUpperCase();
+                    
+                    return `
+                        <tr>
+                            <td><strong>${obj.name.substring(13)}</strong></td>
+                            <td><code>/vault/compliance_vault_documents/admin_uploads/</code></td>
+                            <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">${fileExtensionString}</span></td>
+                            <td>${new Date(obj.created_at).toLocaleString()}</td>
+                            <td><a href="${urlData.publicUrl}" target="_blank" class="btn-action">Download Link 💾</a></td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Storage tree retrieval stalled:", err.message);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--staff-red);">Database synchronization tracing failed. Ensure compliance_vault_documents storage bucket permissions are active.</td></tr>';
+            }
+        }
+
+        const bootSyncLoop = setInterval(() => {
+            if (window.supabaseClient) {
+                clearInterval(bootSyncLoop);
+                loadDocumentsLedgerList();
+            }
+        }, 100);
+        setTimeout(() => clearInterval(bootSyncLoop), 5000);
+    </script>
+</body>
+</html>
