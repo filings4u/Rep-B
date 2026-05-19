@@ -21,22 +21,25 @@ async function startAdminLoginEngine() {
 
     async function evaluateAdminRoute(userEmail) {
         const cleanedEmail = userEmail.toLowerCase().trim();
-        const isExplicitAdmin = (cleanedEmail === 'test-admin@filings4u.com');
-        const isCorporateDomainAdmin = cleanedEmail.endsWith('@filings4u.com') && cleanedEmail !== 'filings@filings4u.com';
+        
+        // 🎯 SCALABLE RULE: test-admin OR any standard corporate domain account holds admin rank
+        const isTestAdmin = (cleanedEmail === 'test-admin@filings4u.com');
+        const isCorporateStaff = cleanedEmail.endsWith('@filings4u.com');
 
-        if (isExplicitAdmin || isCorporateDomainAdmin) {
+        if (isTestAdmin || isCorporateStaff) {
             window.location.assign(`${window.productionRootUrl}/admin-dashboard.html`);
         } else {
-            console.error("Access Denied: Customer profile attempting admin panel entry.");
-            alert("ACCESS DENIED:\nThis console is strictly reserved for corporate system administrators.");
+            console.error("Access Denied: Standard profile attempting admin panel entry.");
+            alert("ACCESS DENIED:\nThis terminal is strictly reserved for authorized filings4u corporate staff.");
             
             if (passError) {
-                passError.innerText = "Authorization Denied: This account does not possess admin clearance.";
+                passError.innerText = "Authorization Denied: This profile lacks admin clearance.";
             }
             if (loginSubmitBtn) {
                 loginSubmitBtn.innerText = "Verify Terminal Session →";
                 loginSubmitBtn.disabled = false;
             }
+            // Wipe token instantly to clear Cloudflare caching traps
             await client.auth.signOut();
         }
     }

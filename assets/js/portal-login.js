@@ -15,23 +15,23 @@
     }
 
     const client = await waitForSupabaseClientEngine();
-    const portalLoginForm = document.getElementById('portalLoginForm'); // Verify your HTML form matches this exact ID tag
+    const portalLoginForm = document.getElementById('portalLoginForm'); 
     const loginSubmitBtn = document.getElementById('loginBtn');
     const passError = document.getElementById('password-error');
 
     async function evaluateCustomerRoute(userEmail) {
         const cleanedEmail = userEmail.toLowerCase().trim();
         
-        // Safety Fallback Check: Stop admins from hijacking customer profiles
-        const isAdminAccount = (cleanedEmail === 'test-admin@filings4u.com' || (cleanedEmail.endsWith('@filings4u.com') && cleanedEmail !== 'filings@filings4u.com'));
+        // 🎯 INTERCEPT SECURITY CHECK: If any corporate admin hits the client portal, route them to the admin workspace
+        const isCorporateAdmin = cleanedEmail.endsWith('@filings4u.com') || (cleanedEmail === 'test-admin@filings4u.com');
 
-        if (isAdminAccount) {
-            console.warn("Admin detected in customer portal. Re-routing safely...");
+        if (isCorporateAdmin) {
+            console.warn("Administrative profile detected inside customer landing path. Rerouting...");
             window.location.assign(`${window.productionRootUrl}/admin-dashboard.html`);
             return;
         }
 
-        // If it passes the check, route the client to their dashboard
+        // Standard user or brand new custom testing emails pass directly into your customer view matrix
         window.location.assign(`${window.productionRootUrl}/portal-dashboard.html`);
     }
 
