@@ -30,7 +30,7 @@
             if (profileError) throw new Error(`Database check failed: ${profileError.message}`);
             
             if (!profile) {
-                throw new Error("Your user row is missing inside the public 'profiles' table.");
+                throw new Error("Your user row is missing inside the public 'profiles' table database ledger.");
             }
 
             if (profile.role !== 'admin') {
@@ -42,6 +42,10 @@
 
         } catch (routeErr) {
             console.error("Critical admin barrier breach:", routeErr.message);
+            
+            // 🎯 PAUSES SCREEN: Keeps you on screen to read the database error description
+            alert(`CRITICAL BARRIER RESET:\n${routeErr.message}`);
+
             if (passError) {
                 passError.innerText = `Authorization Denied: ${routeErr.message}`;
             }
@@ -54,9 +58,9 @@
     }
 
     try {
-        await client.auth.initialize();
-
+        // 🎯 FIXED: Removed client.auth.initialize() to stop the silent script crash loops
         const { data: { session } } = await client.auth.getSession();
+        
         if (session && session.user && session.user.email.toLowerCase().endsWith('@filings4u.com')) {
             window.location.assign(`${window.productionRootUrl}/admin-dashboard.html`);
             return;
@@ -102,8 +106,13 @@
 
                 } catch (err) {
                     console.warn("Auth exception caught:", err.message);
+                    
+                    // 🎯 PAUSES SCREEN: Traps bad passwords or server connection blockers on submission
+                    alert(`AUTHENTICATION RUNTIME BLOCKER:\n${err.message}`);
+
                     emailInput.classList.add('field-error');
                     passwordInput.classList.add('field-error');
+                    
                     if (passError) passError.innerText = `Authorization Failed: ${err.message}`;
                     if (loginSubmitBtn) {
                         loginSubmitBtn.innerText = "Verify Terminal Session →";
