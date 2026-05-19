@@ -359,6 +359,35 @@
     </div>
 
     <!-- 🚀 MASTER LAYER ENGINE AUTOMATION ROUTER ATTACHMENT -->
-    <script src="assets/js/portal-engine.js"></script>
+    <!-- 🖥️ MAIN WORKSPACE CONTROLLER BOOTSTRAPPER -->
+<script src="assets/js/portal-engine.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        "use strict";
+        
+        // Wait safely for the core initialization scripts to map the tracking models
+        const checkClientInterval = setInterval(async () => {
+            if (window.supabaseClient) {
+                clearInterval(checkClientInterval);
+                
+                try {
+                    const { data: { session } } = await window.supabaseClient.auth.getSession();
+                    if (session && session.user) {
+                        // 1. Fire your layout data hydrators with the active user ID
+                        await window.initializeSmartServiceDashboard(session.user.id);
+                        
+                        // 2. Default display presentation tab view to the main landing matrix panel
+                        if (typeof window.switchActivePortalTab === "function") {
+                            window.switchActivePortalTab('dashboard-tab', document.querySelector('.sidebar-nav .nav-item'));
+                        }
+                    }
+                } catch (authErr) {
+                    console.error("Failed to bootstrap user portal elements:", authErr.message);
+                }
+            }
+        }, 30);
+    });
+</script>
+
 </body>
 </html>

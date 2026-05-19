@@ -15,14 +15,14 @@ async function startCustomerLoginEngine() {
     }
 
     const client = await waitForSupabaseClientEngine();
-    const portalLoginForm = document.getElementById('portalLoginForm'); // Verify this matches your HTML form ID
+    const portalLoginForm = document.getElementById('portalLoginForm'); 
     const loginSubmitBtn = document.getElementById('loginBtn');
     const passError = document.getElementById('password-error');
 
     async function evaluateCustomerRoute(userEmail) {
         const cleanedEmail = userEmail.toLowerCase().trim();
         
-        // 1. Identify staff accounts trying to access the customer area
+        // Intercept staff handles accidentally knocking on the customer door
         const isCorporateStaff = cleanedEmail.endsWith('@filings4u.com') || (cleanedEmail === 'test-admin@filings4u.com');
 
         if (isCorporateStaff) {
@@ -31,13 +31,14 @@ async function startCustomerLoginEngine() {
             return;
         }
 
-        // 2. Standard customer accounts proceed directly to their dashboard layout
+        // Standard user or brand new custom testing emails pass directly into your customer view matrix
         window.location.assign(`${window.productionRootUrl}/portal-dashboard.html`);
     }
 
     try {
         const { data: { session } } = await client.auth.getSession();
         
+        // Auto-redirect if a valid customer session token already exists
         if (session && session.user) {
             await evaluateCustomerRoute(session.user.email);
             return;
@@ -93,7 +94,10 @@ async function startCustomerLoginEngine() {
     }
 }
 
-// Automatically mount engine to the DOM framework
-document.addEventListener("DOMContentLoaded", () => {
+// 🛠️ FIX: Force the login code to wait for DOM parsing to finish completely
+document.addEventListener("DOMContentLoaded", async () => {
+    if (typeof initializeGlobalSupabase === "function") {
+        await initializeGlobalSupabase();
+    }
     startCustomerLoginEngine();
 });

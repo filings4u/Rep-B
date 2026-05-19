@@ -507,3 +507,65 @@
     };
 
 })(); // Engine closure execution complete.
+
+// 📂 INTERACTIVE DRAG-AND-DROP SECURE VAULT ENGINE APPEND
+(function initializeSecureVaultUploader() {
+    "use strict";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Targets your secure document list card layout component block
+        const dropZone = document.getElementById('vault-tab-inventory-list') || document.getElementById('vault-tab');
+        if (!dropZone) return;
+
+        // Visual feedback when dragging files over the area
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.style.background = "rgba(16, 185, 129, 0.04)";
+                dropZone.style.border = "2px dashed #10b981";
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.style.background = "#ffffff";
+                dropZone.style.border = "1px solid #e2e8f0";
+            }, false);
+        });
+
+        // Handle the dropped files
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length === 0 || !window.globalSessionUserId) return;
+
+            const targetFile = files[0];
+            const client = window.supabaseClient;
+            
+            // Format unique timestamp arrays to prevent naming collisions in storage buckets
+            const randomizedPathName = `${window.globalSessionUserId}/${Date.now()}_${targetFile.name}`;
+
+            console.log("Transmitting asset packet payload to storage core...");
+            
+            const { data, error } = await client.storage
+                .from('compliance_vault_documents')
+                .upload(randomizedPathName, targetFile, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) {
+                alert(`Upload Blocked by Security: ${error.message}`);
+                console.error("Vault transfer aborted:", error.message);
+            } else {
+                alert(`🎉 File "${targetFile.name}" securely locked into document vault!`);
+                // Instantly re-hydrate document matrix logs dynamically
+                if (typeof window.syncVaultTabDocumentGrid === "function") {
+                    window.syncVaultTabDocumentGrid(window.globalSessionUserId);
+                }
+            }
+        }, false);
+    });
+})();
+
