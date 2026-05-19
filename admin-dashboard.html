@@ -1,195 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Admin Dashboard | filings4u Staff</title>
+    <title>Admin Terminal Dashboard | filings4u Staff</title>
     <meta name="theme-color" content="#c15254">
 
-    <!-- 🎨 1. LOAD STYLESHEETS FIRST TO REPAIR BROKEN CSS RENDERING -->
+    <!-- 🎨 CENTRALIZED DESIGN STYLESHEET REGISTRY -->
     <link rel="stylesheet" href="assets/css/portal-global.css">
     <link rel="stylesheet" href="assets/css/admin-core.css">
     <link rel="stylesheet" href="assets/css/responsive.css">
 
-    <!-- 🚀 2. CORE DATABASE CLIENT DEPENDENCIES -->
+    <!-- 🚀 PRODUCTION DEPENDENCIES -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="assets/js/supabase-config.js"></script>
-
-    <!-- 🔒 3. THE PAGE GUARD: RUNS IMMEDIATELY TO LOCK OUT UNAUTHORIZED CUSTOMERS -->
     <script src="assets/js/admin-guard.js"></script>
-
-    <!-- ⚙️ 4. DATA ANALYSIS INSTRUMENTATION LINKS -->
     <script src="assets/js/admin-stats.js"></script>
     <script src="assets/js/admin-search.js"></script>
     <script src="assets/js/wizard-sync.js"></script>
     
     <style>
-        .header-search-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        /* 🎨 RE-ARCHITECTED MODERN SIDEBAR & LAYOUT CANVAS STYLES */
+        :root {
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-700: #334155;
+            --slate-900: #0f172a;
+            --emerald-600: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 280px;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f8;
+            color: var(--slate-900);
+            overflow: hidden;
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* 📁 CORE COMPACT ACCORDION SIDEBAR GRID */
+        .portal-sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 1px solid var(--slate-200);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px;
+            border-bottom: 1px solid var(--slate-100);
+            text-align: center;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: rgba(193, 82, 84, 0.08);
+            color: var(--staff-red);
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-top: 8px;
+            border: 1px solid rgba(193, 82, 84, 0.15);
+        }
+
+        .sidebar-clock-bar {
+            background: var(--slate-50);
+            padding: 10px 16px;
+            font-size: 0.75rem;
+            color: var(--slate-700);
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--slate-100);
+            font-weight: 600;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 12px;
+        }
+
+        /* Accordion Triggers Styling */
+        .accordion-trigger {
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--slate-700);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+
+        .accordion-trigger:hover {
+            background: var(--slate-100);
+            color: var(--slate-900);
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem;
+            transition: transform 0.2s ease;
+            opacity: 0.5;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Collapsible Links Panel */
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease-out;
+            padding-left: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            color: var(--slate-700);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 6px;
+            margin-top: 2px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            background: var(--slate-50);
+            color: var(--emerald-600);
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: var(--emerald-600);
+            font-weight: 700;
+        }
+
+        .sidebar-footer-lock {
+            padding: 20px;
+            border-top: 1px solid var(--slate-100);
+            background: var(--slate-50);
+        }
+
+        .logout-btn {
+            width: 100%;
+            background: var(--slate-900);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .logout-btn:hover { opacity: 0.9; }
+
+        /* 🖥️ MAIN PERFORMANCE SCREEN WRAPPER */
+        .portal-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .portal-header {
+            background: #ffffff;
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-text h1 { margin: 0; font-size: 1.6rem; font-weight: 800; color: var(--slate-900); }
+        .welcome-text p { margin: 4px 0 0 0; font-size: 0.85rem; color: var(--slate-700); }
+
+        .search-input {
+            padding: 10px 16px;
+            border: 1px solid var(--slate-200);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            width: 240px;
+            outline: none;
+            background: var(--slate-50);
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            background: #ffffff;
+            border-color: var(--emerald-600);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .content-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        /* PREMIUM METRICS GRID ROW CARD SHIELDS */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            text-align: left;
+        }
+
+        .stat-card small { font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--slate-700); letter-spacing: 0.5px; }
+        .stat-card h2 { margin: 8px 0 0 0; font-size: 1.8rem; font-weight: 800; }
+
+        .dashboard-grid-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .console-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid var(--slate-200);
+            padding: 28px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            margin-bottom: 24px;
+        }
+
+        .console-card h2 { font-size: 1.15rem; font-weight: 800; margin: 0 0 20px 0; color: var(--slate-900); }
     </style>
 </head>
-
 <body>
-    <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE -->
-    <aside class="portal-sidebar">
-        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <img src="images/logo.png" alt="filings4u" class="logo" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;">
-            </div>
-            <div class="admin-badge">Directorate Admin</div>
-        </div>
-        <div class="sidebar-clock-bar">
-            <span>System Time:</span>
-            <span id="portal-clock">00:00:00</span>
-        </div>
-        <nav class="sidebar-nav-container">
-            <p class="sidebar-nav-heading">Control Systems</p>
-            <a href="admin-dashboard.html" class="nav-item active"><span>📊</span> System Hub Home</a>
-            <a href="#admin-master-sales-panel" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-            <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-            <p class="sidebar-nav-heading">Operations & CRM</p>
-            <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
-            <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-            <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-            <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-            <p class="sidebar-nav-heading">Financials & Health</p>
-            <a href="admin-billing.html" class="nav-item active"><span>💸</span> Revenue Reconciliation</a>
-            <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-            <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-        </nav>
-        <div class="sidebar-footer-lock">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div>
-                <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span>
-            </div>
-            <p style="margin: 0 0 12px 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via corporate staff domain.</p>
-            
-            <!-- Kept for fallback convenience, sharing the same click listener -->
-            <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
-        </div>
-    </aside>
 
-    <!-- 🧱 MAIN SCREEN PERFORMANCE DASHBOARD WORKING CANVAS -->
-    <main class="portal-main">
-        <div class="content-container">
+    <div class="dashboard-wrapper">
+        
+        <!-- 🌐 COLLAPSIBLE ACCORDION SIDEBAR CONTROL BOARD -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px; width: auto; object-fit: contain;">
+                <div><div class="admin-badge">Directorate Admin</div></div>
+            </div>
+
+            <div class="sidebar-clock-bar">
+                <span>System Clock:</span>
+                <span id="portal-clock">00:00:00</span>
+            </div>
+
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION FOLDER 1 -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Control Systems <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 500px;">
+                    <a href="admin-dashboard.html" class="nav-item active"><span>📊</span> System Hub Home</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+                </div>
+
+                <!-- ACCORDION FOLDER 2 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Operations & CRM <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+                    <span>🏢</span> Entity Master Ledger</a>
+                </div>
+
+                <!-- ACCORDION FOLDER 3 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Financials & Health <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer-lock">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <div style="width: 6px; height: 6px; background: var(--emerald-600); border-radius: 50%; box-shadow: 0 0 6px var(--emerald-600);"></div>
+                    <span style="font-size: 0.65rem; color: var(--emerald-600); font-weight: 800; text-transform: uppercase;">Database Sync Active</span>
+                </div>
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
+            </div>
+        </aside>
+
+        <!-- 🧱 MAIN SCREEN WORKSPACE -->
+        <main class="portal-main">
             <header class="portal-header">
                 <div class="welcome-text">
                     <h1>Admin Dashboard</h1>
-                    <p>System-wide performance overview</p>
+                    <p>System-wide performance overview infrastructure</p>
                 </div>
-                
-                <!-- 🎯 CHOSEN LOCATION: VERTICAL ACTIONS BLOCK HOUSING BOTH BUTTON AND SEARCH FIELD -->
-                <div class="header-actions header-search-stack">
-                    <button id="adminGlobalLogoutBtn" class="nav-logout-btn">
-                        <span class="logout-icon">🚪</span> Sign Out Terminal
-                    </button>
-                    <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search accounts...">
+                <div>
+                    <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
                 </div>
             </header>
 
-            <!-- 📊 STATS CARDS GRID ROW DISPLAY -->
-            <div class="stats-row">
-                <div class="stat-card"><small>Platform Revenue</small><h2 id="stat-total-revenue">$0.00</h2></div>
-                <div class="stat-card"><small>Active Entities</small><h2 id="stat-active-users">0</h2></div>
-                <div class="stat-card"><small>Pending Audits</small><h2 id="stat-pending-filings" style="color: var(--danger-red);">0</h2></div>
-                <div class="stat-card"><small>System Health</small><h2 id="stat-completed-filings" style="color: var(--success-green);">0</h2></div>
-            </div>
-
-            <!-- 🛠️ INTERACTIVE CLIENT CONSOLE MANAGEMENT GRID HUB -->
-            <div class="admin-action-grid">
-                <div class="admin-console-card" style="flex: 0 0 280px;">
-                    <h2>Client Target Selector</h2>
-                    <div class="admin-form-group">
-                        <label>Target Portal User ID</label>
-                        <select id="adminClientDropdown" class="admin-select">
-                            <option value="">-- Loading Registered Users --</option>
-                        </select>
-                    </div>
-                    <p style="font-size: 0.8rem; color: #4a5568; line-height: 1.4; margin: 15px 0 0 0;">Selecting a target profile updates the target configuration parameters for the communication forms.</p>
+            <div class="content-container">
+                <!-- Metrics Row -->
+                <div class="stats-row">
+                    <div class="stat-card"><small>Platform Revenue</small><h2 id="stat-total-revenue">$0.00</h2></div>
+                    <div class="stat-card"><small>Active Entities</small><h2 id="stat-active-users">0</h2></div>
+                    <div class="stat-card"><small>Pending Audits</small><h2 id="stat-pending-filings" style="color: var(--staff-red);">0</h2></div>
+                    <div class="stat-card"><small>System Health</small><h2 id="stat-completed-filings" style="color: var(--emerald-600);">100%</h2></div>
                 </div>
 
-                <!-- MESSAGING FORM -->
-                <div class="admin-console-card">
-                    <h2>Send Dynamic Message</h2>
-                    <form id="adminAlertForm">
-                        <div class="admin-form-group">
-                            <label>Notification Header/Title</label>
-                            <input type="text" id="alertTitle" class="admin-input" placeholder="e.g., Annual compliance successfully processed" required>
+                <!-- Core Workspaces Splitting Layout Grid -->
+                <div class="dashboard-grid-layout">
+                    <!-- Left Side Columns Workspace -->
+                    <div class="workspace-left">
+                        <div class="console-card">
+                            <h2>Send Dynamic Message Notification</h2>
+                            <form id="adminAlertForm">
+                                <div style="margin-bottom:15px;">
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--slate-700); margin-bottom:6px; text-transform:uppercase;">Target User Account</label>
+                                    <select id="adminClientDropdown" style="width:100%; padding:12px; border:1px solid var(--slate-200); border-radius:6px; background:#fff;" class="admin-select">
+                                        <option value="">-- Loading Registered System Profiles --</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom:15px;">
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--slate-700); margin-bottom:6px; text-transform:uppercase;">Notification Header/Title</label>
+                                    <input type="text" id="alertTitle" style="width:100%; padding:12px; border:1px solid var(--slate-200); border-radius:6px; box-sizing:border-box;" placeholder="e.g., Annual report successfully validated with Secretary of State">
+                                </div>
+                                <div style="margin-bottom:15px;">
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--slate-700); margin-bottom:6px; text-transform:uppercase;">Message Content Details</label>
+                                    <textarea id="alertMessage" style="width:100%; height:100px; padding:12px; border:1px solid var(--slate-200); border-radius:6px; box-sizing:border-box; font-family:inherit;" placeholder="Type notice parameters here..."></textarea>
+                                </div>
+                                <div id="alertStatus"></div>
+                                <button type="submit" style="background:var(--slate-900); color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:700; width:100%; cursor:pointer;">Push Real-Time Alert →</button>
+                            </form>
                         </div>
-                        <div class="admin-form-group">
-                            <label>Message Content Details</label>
-                            <textarea id="alertMessage" class="admin-textarea" placeholder="Type notification context message here..." required></textarea>
+
+                        <!-- Transaction Ledger Row Card -->
+                        <div class="console-card" style="width:100%; overflow:hidden;">
+                            <h2>Global Corporate Sales Pricing Ledger</h2>
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.85rem;">
+                                    <thead>
+                                        <tr style="background:var(--slate-50); border-bottom:2px solid var(--slate-200); color:var(--slate-700);">
+                                            <th style="padding:12px;">Filing Entity</th>
+                                            <th style="padding:12px;">Customer Email</th>
+                                            <th style="padding:12px;">Tier</th>
+                                            <th style="padding:12px;">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-global-sales-target-box">
+                                        <tr><td colspan="4" style="padding:30px; text-align:center; color:var(--slate-700);">Initializing server log streams...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div id="alertStatus" class="admin-status-msg"></div>
-                        <button type="submit" id="alertSubmitBtn" class="btn-admin-submit">Push Real-Time Alert →</button>
-                    </form>
-                </div>
-
-                <!-- 💬 LIVE REVENUE PORTAL COMMUNICATIONS HUB -->
-                <div class="admin-console-card" id="adminCommunicationsHubCard">
-                    <h2>Client Communications Inbox</h2>
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; max-height: 200px; overflow-y: auto;" id="admin-inbox-live-stream-box">
-                        <p style="color: #64748b; font-size: 0.85rem; font-style: italic; text-align: center; margin-top: 20px;">Monitoring live portal message waves...</p>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #4a5568; letter-spacing: 0.5px; background: #fffaf0; padding: 10px; border-radius: 6px; border: 1px solid #feebc8;">
-                        <span>Unread Threads: <strong id="admin-unread-msg-count" style="color: #dd6b20;">0</strong></span>
-                        <span>Secure Chat Synchronized</span>
+
+                    <!-- Right Side Complementary Column Profile Info -->
+                    <div class="workspace-right">
+                        <div class="console-card">
+                            <h2>Communications Stream</h2>
+                            <div id="admin-inbox-live-stream-box" style="background:var(--slate-50); border:1px solid var(--slate-200); padding:15px; border-radius:8px; height:180px; overflow-y:auto; font-size:0.85rem; color:var(--slate-700);">
+                                Monitoring live incoming waves...
+                            </div>
+                        </div>
+                        <div class="console-card">
+                            <h2>Recent Activity Logs</h2>
+                            <p style="font-size:0.8rem; line-height:1.4; margin:0; color:var(--slate-700);">• Terminal system authorization bypassed via verified token clearance parameters.</p>
+                            <p id="liveStaffEmailDisplayLog" style="font-size:0.8rem; margin:10px 0 0 0; color:var(--staff-red); font-weight:700;"></p>
+                        </div>
                     </div>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <!-- 💰 DYNAMIC SALES LEDGER MONITOR CARD -->
-            <div id="admin-master-sales-panel" class="portal-card" style="margin: 40px 0; width: 100%; box-sizing: border-box;">
-                <h3 style="margin-bottom: 20px; color: var(--primary-blue);">Global Corporate Sales Pricing Ledger</h3>
-                <div style="overflow-x: auto; width: 100%;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc;">
-                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Filing Entity</th>
-                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Customer Email</th>
-                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Tier Purchased</th>
-                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Form Data Audit</th>
-                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Purchase Date</th>
-                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Amount Paid</th>
-                                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #4a5568;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-global-sales-target-box">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem;">
-                                    Initializing transaction ledger matrix logs...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- LOWER DATA LOG OVERVIEW ARRAYS -->
-            <div class="portal-grid">
-                <div class="portal-card">
-                    <h3>Compliance Alerts</h3>
-                    <table>
-                        <thead>
-                            <tr><th>Entity</th><th>Type</th><th>Status</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Swift Hauling</strong></td>
-                                <td>UCR</td>
-                                <td><span class="status-pill urgent">Overdue</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="portal-card">
-                    <h3>Recent Administrative Logs</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 8px;">• System account session bypassed safely via verified terminal token.</p>
-                    <p id="liveStaffEmailDisplayLog" style="font-size: 0.85rem; color: var(--staff-red); font-weight: 700;"></p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 🎯 SINGLE MASTER CONTROLLER FILE IMPLEMENTATION -->
+    <!-- 🎯 SINGLE MASTER TELEMETRY CONTROLLER INTERACTION ENGINE -->
     <script src="assets/js/admin-engine.js"></script>
+    <script>
+        // 🛠️ ANIMATED ACCORDION TOGGLING FACTORY ENGINE
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
+    </script>
 </body>
 </html>
