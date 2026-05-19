@@ -350,75 +350,95 @@
         }
     };
 
-    window.handlePaidWorkspaceTableMutation = async function(serviceKeyTarget) {
-        if (!window.globalSessionUserId) return;
+ // 🎯 ALIGNED WITH YOUR DATABASE COLUMNS: Processes checkout data maps cleanly
+window.handlePaidWorkspaceTableMutation = async function(serviceKeyTarget, paymentIntentId, purchaseAmount) {
+    if (!window.globalSessionUserId) return;
 
-        const { error } = await client
-            .from('user_filings_workspace')
-            .update({ status: 'paid' })
-            .eq('user_id', window.globalSessionUserId)
-            .eq('service_key', serviceKeyTarget)
-            .eq('status', 'draft');
+    // Convert decimal price values into clean numbers for your numeric database column
+    const verifiedAmountNum = parseFloat(purchaseAmount) || 149.00;
 
-        if (error) console.error("Failed to clear draft updates flag:", error.message);
+    const { error } = await client
+        .from('user_filings_workspace')
+        .update({ 
+            status: 'paid', // Form tracking state updates
+            amount_paid: verifiedAmountNum, // Writes directly to your numeric column
+            stripe_payment_intent: paymentIntentId, // Populates your tracking cell text string
+            checkout_completed_at: new Date().toISOString(), // Timestamp record marker
+            updated_at: new Date().toISOString()
+        })
+        .eq('user_id', window.globalSessionUserId)
+        .eq('service_key', serviceKeyTarget)
+        .eq('status', 'draft');
 
-        const receiptLabel = document.getElementById('success-service-receipt-key');
-        if (receiptLabel) {
-            receiptLabel.innerText = `Paid Filing Module Reference Key: Code-${serviceKeyTarget.toUpperCase()}`;
-        }
-        window.switchActivePortalTab('success-tab', null);
-    };
+    if (error) {
+        console.error("Failed to update paid workspace transaction records:", error.message);
+    }
+
+    const receiptLabel = document.getElementById('success-service-receipt-key');
+    if (receiptLabel) {
+        receiptLabel.innerText = `Paid Filing Module Reference Key: Code-${serviceKeyTarget.toUpperCase()}`;
+    }
+    window.switchActivePortalTab('success-tab', null);
+};
+
 
     // ==========================================================================
     // 💳 ITEMIZATION BILLING STATEMENTS & ORDER HISTORY
     // ==========================================================================
-    window.openBillingOrdersModal = async function() {
-        const modal = document.getElementById('billing-orders-modal');
-        if (!modal || !window.globalSessionUserId) return;
+   // 💳 READS EXACT COLUMN DATA: Pulls your database amount fields directly into ledger rows
+window.openBillingOrdersModal = async function() {
+    const modal = document.getElementById('billing-orders-modal');
+    if (!modal || !window.globalSessionUserId) return;
 
-        modal.style.display = 'flex';
+    modal.style.display = 'flex';
 
-        const tableBody = document.getElementById('billing-ledger-table-body');
-        const spentTarget = document.getElementById('billing-total-spent');
-        const countTarget = document.getElementById('billing-settled-count');
-        const registry = window.WIZARD_REGISTRY || {};
+    const tableBody = document.getElementById('billing-ledger-table-body');
+    const spentTarget = document.getElementById('billing-total-spent');
+    const countTarget = document.getElementById('billing-settled-count');
+    const registry = window.WIZARD_REGISTRY || {};
 
-        const { data: records, error } = await client
-            .from('user_filings_workspace')
-            .select('*')
-            .eq('user_id', window.globalSessionUserId)
-            .eq('status', 'paid');
+    const { data: records, error } = await client
+        .from('user_filings_workspace')
+        .select('*')
+        .eq('user_id', window.globalSessionUserId)
+        .eq('status', 'paid');
 
-        if (error || !records || records.length === 0) {
-            if (tableBody) {
-                tableBody.innerHTML = `<tr><td colspan="4" style="padding:30px 5px; text-align:center; color:#64748b; font-style:italic;">No settled transactions or order histories found under this workspace account token profile.</td></tr>`;
-            }
-            if (spentTarget) spentTarget.innerText = "$0.00";
-            if (countTarget) countTarget.innerText = "0 Transactions";
-            return;
+    if (error || !records || records.length === 0) {
+        if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="padding:30px 5px; text-align:center; color:#64748b; font-style:italic;">No settled transactions or order histories found under this workspace account token profile.</td></tr>`;
         }
+        if (spentTarget) spentTarget.innerText = "$0.00";
+        if (countTarget) countTarget.innerText = "0 Transactions";
+        return;
+    }
 
-        let spent = 0;
-        tableBody.innerHTML = records.map(item => {
-            const spec = registry[item.service_key] || { basePrice: 149, govFee: 0, title: `Service: ${item.service_key}` };
-            const total = (spec.basePrice || 0) + (spec.govFee || 0);
-            spent += total;
+    let spent = 0;
+    tableBody.innerHTML = records.map(item => {
+        const spec = registry[item.service_key] || { title: `Service: ${item.service_key.toUpperCase()}` };
+        
+        // 🎯 FIXED: Uses your exact table amount_paid cell value, falling back to a default parameter if empty
+        const totalFilingCost = parseFloat(item.amount_paid) || 149.00;
+        spent += totalFilingCost;
 
-            return `
-                <tr style="border-bottom:1px solid #e2e8f0; color:#0a1f44; font-size:0.85rem;">
-                    <td style="padding:15px 5px; font-weight:700;">
-                        ${spec.title}
-                        <small style="display:block; font-size:0.7rem; color:#64748b; font-weight:500; margin-top:2px;">Filing Hash Reference: #FIL-${item.id.substring(0,8).toUpperCase()}</small>
-                    </td>
-                    <td style="padding:15px 5px;">${new Date(item.updated_at).toLocaleDateString()}</td>
-                    <td style="padding:15px 5px; text-align:right; font-weight:800;">$${total.toFixed(2)}</td>
-                    <td style="padding:15px 5px; text-align:right;"><button onclick="alert('Downloading printable invoice PDF statement layout receipt...')" style="background:transparent; border:1px solid #0a1f44; color:#0a1f44; padding:4px 8px; border-radius:4px; font-weight:700; cursor:pointer;">Print</button></td>
-                </tr>`;
+        // Formats your timestamp record cell values nicely for end users
+        const purchaseDateString = item.checkout_completed_at ? new Date(item.checkout_completed_at).toLocaleDateString() : new Date(item.updated_at).toLocaleDateString();
+
+        return `
+            <tr style="border-bottom:1px solid #e2e8f0; color:#0a1f44; font-size:0.85rem;">
+                <td style="padding:15px 5px; font-weight:700;">
+                    ${spec.title}
+                    <small style="display:block; font-size:0.7rem; color:#64748b; font-weight:500; margin-top:2px;">Filing Hash Reference: #FIL-${item.id.substring(0,8).toUpperCase()}</small>
+                </td>
+                <td style="padding:15px 5px;">${purchaseDateString}</td>
+                <td style="padding:15px 5px; text-align:right; font-weight:800;">$${totalFilingCost.toFixed(2)}</td>
+                <td style="padding:15px 5px; text-align:right;"><button onclick="alert('Downloading printable invoice PDF statement layout receipt...')" style="background:transparent; border:1px solid #0a1f44; color:#0a1f44; padding:4px 8px; border-radius:4px; font-weight:700; cursor:pointer;">Print</button></td>
+            </tr>`;
         }).join('');
 
-        if (spentTarget) spentTarget.innerText = `$${spent.toFixed(2)}`;
-        if (countTarget) countTarget.innerText = `${records.length} Paid Order(s)`;
-    };
+    if (spentTarget) spentTarget.innerText = `$${spent.toFixed(2)}`;
+    if (countTarget) countTarget.innerText = `${records.length} Paid Order(s)`;
+};
+
 
     window.closeBillingOrdersModal = function() {
         const modal = document.getElementById('billing-orders-modal');
