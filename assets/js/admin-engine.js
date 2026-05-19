@@ -4,19 +4,19 @@
 
     console.log("🚀 Admin UI accordion engine successfully mounted.");
 
-    // ==========================================================================
-    // ⏰ 1. SELF-SUFFICIENT REAL-TIME SYSTEM CLOCK
-    // ==========================================================================
+       // Update the clock section inside your assets/js/admin-engine.js file:
     const clockDisplayElement = document.getElementById('portal-clock');
     function runLiveSystemClock() {
         if (!clockDisplayElement) return;
         const now = new Date();
-        clockDisplayElement.innerText = now.toTimeString().split(' ');
+        // 🎯 FIXED: Extracts only the basic HH:MM:SS format and drops the timezone text
+        clockDisplayElement.innerText = now.toTimeString().split(' ')[0];
     }
     if (clockDisplayElement) {
         setInterval(runLiveSystemClock, 1000);
         runLiveSystemClock();
     }
+
 
     // ==========================================================================
     // 🚪 2. DISCONNECTED SESSION TERMINATION ROUTINES
