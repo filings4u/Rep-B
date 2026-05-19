@@ -181,4 +181,75 @@
     } catch (systemErr) {
         console.error("Dashboard engine failed to complete lifecycle setup:", systemErr.message);
     }
+
+    // ==========================================================================
+    // 💬 STREAM LIVE STAFF SUPPORT NOTIFICATIONS
+    // ==========================================================================
+    window.streamLiveStaffSupportTimeline = async function(userId) {
+        const messageContainer = document.getElementById('client-message-timeline-target');
+        if (!messageContainer || !userId) return;
+
+        try {
+            // 🎯 FIXED SCHEMA TARGET: Queries system_notifications for your client alert cards
+            const { data: chatHistory, error } = await client
+                .from('system_notifications')
+                .select('*')
+                .eq('profile_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (chatHistory && chatHistory.length > 0) {
+                messageContainer.innerHTML = chatHistory.map(chat => `
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; padding:15px; border-radius:8px; margin-bottom:10px; text-align:left; box-shadow: 0 2px 5px rgba(0,0,0,0.01);">
+                        <span style="font-size:0.7rem; font-weight:800; color:#10b981; display:block; margin-bottom:4px; letter-spacing:0.5px; text-transform:uppercase;">MESSAGE FROM STAFF OPERATOR</span>
+                        <h4 style="margin: 0 0 5px 0; color:#0a1f44; font-size:0.95rem; font-weight:700;">${chat.title}</h4>
+                        <p style="margin:0; font-size:0.88rem; color:#4a5568; line-height:1.4;">${chat.message_text || chat.message}</p>
+                        <small style="color:#64748b; font-size:0.75rem; display:block; margin-top:6px;">Received: ${new Date(chat.created_at).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            } else {
+                messageContainer.innerHTML = `<p style='color:#64748b; font-size:0.85rem; padding:15px; font-style:italic;'>No active support messages thread available.</p>`;
+            }
+        } catch (err) {
+            console.error("Timeline streaming crash:", err.message);
+        }
+    };
+
+    // ==========================================================================
+    // 📂 MOUNT VAULT INTERFACE SYSTEM BADGES
+    // ==========================================================================
+    window.mountVaultDocumentTargetGrid = async function(userId) {
+        const vaultContainer = document.getElementById('client-vault-documents-target');
+        if (!vaultContainer || !userId) return;
+
+        try {
+            // 🎯 FIXED DATA TARGET: Lists assets from storage clusters securely instead of ghost tables
+            const { data: legalFiles, error } = await client.storage
+                .from('compliance_vault_documents')
+                .list(userId, { limit: 10, sortBy: { column: 'created_at', order: 'desc' } });
+
+            if (error) throw error;
+
+            if (legalFiles && legalFiles.length > 0) {
+                vaultContainer.innerHTML = legalFiles.map(doc => {
+                    const uploadDate = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'N/A';
+                    const sizeMB = doc.metadata ? (doc.metadata.size / (1024 * 1024)).toFixed(2) : "0.00";
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#ffffff; border:1px solid #e2e8f0; padding:12px 15px; border-radius:8px; margin-bottom:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.01);">
+                            <div style="text-align:left;">
+                                <strong style="color:#0a1f44; font-size:0.88rem; display:block;">📄 ${doc.name}</strong>
+                                <small style="color:#64748b; font-size:0.75rem;">Size: ${sizeMB} MB • Vaulted: ${uploadDate}</small>
+                            </div>
+                            <button onclick="window.triggerVaultFileDownloadAction('${userId}', '${doc.name}')" style="background:#10b981; color:#ffffff; font-size:0.75rem; font-weight:700; padding:6px 12px; border-radius:4px; text-decoration:none; border:none; cursor:pointer;">Download ⬇️</button>
+                        </div>`;
+                }).join('');
+            } else {
+                vaultContainer.innerHTML = `<p style='color:#64748b; font-size:0.85rem; padding:15px; font-style:italic;'>Your secure private documentation vault is empty.</p>`;
+            }
+        } catch (err) {
+            console.error("Vault mapping exception error:", err.message);
+        }
+    };
+
 })();
