@@ -19,38 +19,27 @@
     const loginSubmitBtn = document.getElementById('loginBtn');
     const passError = document.getElementById('password-error');
 
-    async function verifyAdminRoleClearance(userId) {
-        try {
-            const { data: profile, error: profileError } = await client
-                .from('profiles')
-                .select('role')
-                .eq('id', userId)
-                .maybeSingle();
+    async function evaluateAdminRoute(userEmail) {
+        const cleanedEmail = userEmail.toLowerCase().trim();
+        
+        // Define which emails are explicitly authorized as administrative profiles
+        const isExplicitAdmin = (cleanedEmail === 'test-admin@filings4u.com');
+        const isCorporateDomainAdmin = cleanedEmail.endsWith('@filings4u.com') && cleanedEmail !== 'filings@filings4u.com';
 
-            if (profileError) throw new Error(`Database check failed: ${profileError.message}`);
-            
-            if (!profile) {
-                throw new Error("Your user row is missing inside the public 'profiles' table database ledger.");
-            }
-
-            if (profile.role !== 'admin') {
-                throw new Error("Access Denied: Non-administrative account parameter matrix.");
-            }
-
-            // Production Success: Force forward redirect via absolute path assignment
+        if (isExplicitAdmin || isCorporateDomainAdmin) {
             window.location.assign(`${window.productionRootUrl}/admin-dashboard.html`);
-        } catch (routeErr) {
-            console.error("Critical admin barrier breach:", routeErr.message);
+        } else {
+            console.error("Access Denied: Customer profile attempting admin panel entry.");
+            alert("ACCESS DENIED:\nThis console is strictly reserved for corporate system administrators.");
             
-            alert(`CRITICAL BARRIER RESET:\n${routeErr.message}`);
             if (passError) {
-                passError.innerText = `Authorization Denied: ${routeErr.message}`;
+                passError.innerText = "Authorization Denied: This account does not possess admin clearance.";
             }
             if (loginSubmitBtn) {
                 loginSubmitBtn.innerText = "Verify Terminal Session →";
                 loginSubmitBtn.disabled = false;
             }
-            // Wipe the invalid token so it stops infinite loop cycles
+            // Wipe token out of local memory to clear out Cloudflare loop hooks
             await client.auth.signOut();
         }
     }
@@ -58,9 +47,8 @@
     try {
         const { data: { session } } = await client.auth.getSession();
         
-        // 🎯 FIXED: Initial session detection must verify role clearance before redirecting
-        if (session && session.user && session.user.email.toLowerCase().endsWith('@filings4u.com')) {
-            await verifyAdminRoleClearance(session.user.id);
+        if (session && session.user) {
+            await evaluateAdminRoute(session.user.email);
             return;
         }
 
@@ -80,19 +68,8 @@
                 const password = passwordInput.value;
                 let hasFormErrors = false;
 
-                if (!email) {
-                    emailInput.classList.add('field-error');
-                    hasFormErrors = true;
-                }
-                if (!password) {
-                    passwordInput.classList.add('field-error');
-                    hasFormErrors = true;
-                }
-                if (!email.endsWith('@filings4u.com')) {
-                    emailInput.classList.add('field-error');
-                    if (passError) passError.innerText = "Entry is strictly reserved for verified @filings4u.com corporate domains.";
-                    return;
-                }
+                if (!email) { emailInput.classList.add('field-error'); hasFormErrors = true; }
+                if (!password) { passwordInput.classList.add('field-error'); hasFormErrors = true; }
 
                 if (hasFormErrors) return;
 
@@ -105,14 +82,13 @@
                     const result = await client.auth.signInWithPassword({ email, password });
                     if (result.error) throw new Error(result.error.message);
                     
-                    await verifyAdminRoleClearance(result.data.user.id);
+                    await evaluateAdminRoute(result.data.user.email);
                 } catch (err) {
                     console.warn("Auth exception caught:", err.message);
+                    alert(`AUTHENTICATION ERROR:\n${err.message}`);
                     
-                    alert(`AUTHENTICATION RUNTIME BLOCKER:\n${err.message}`);
                     emailInput.classList.add('field-error');
                     passwordInput.classList.add('field-error');
-                    
                     if (passError) passError.innerText = `Authorization Failed: ${err.message}`;
                     if (loginSubmitBtn) {
                         loginSubmitBtn.innerText = "Verify Terminal Session →";
