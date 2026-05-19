@@ -1,110 +1,53 @@
 // assets/js/admin-guard.js
-(async function enforceStrictAdminProtection() {
+(async function enforceAdminSessionSecurityGate() {
     "use strict";
 
-    function waitForSupabaseClientEngine() {
+    // 1. Establish absolute path configurations to prevent root route clipping
+    const productionRootUrl = window.productionRootUrl || window.location.origin;
+    const loginRedirectTarget = `${productionRootUrl}/admin-login.html`;
+
+    function verifySupabaseEngineDeployment() {
         return new Promise((resolve) => {
             if (window.supabaseClient) return resolve(window.supabaseClient);
-            const trackingInterval = setInterval(() => {
+            const clientTracker = setInterval(() => {
                 if (window.supabaseClient) {
-                    clearInterval(trackingInterval);
+                    clearInterval(clientTracker);
                     resolve(window.supabaseClient);
                 }
-            }, 30);
+            }, 10); // Ultra-fast checking interval prevents display rendering flashes
         });
-    }
-
-    const client = await waitForSupabaseClientEngine();
-
-    // 🎯 CRITICAL PROTECTION CRASH GATE BYPASS
-    // If the browser is currently resting on the login page layout, halt execution 
-    // to prevent the session script from auto-refreshing its own form window!
-    const isCurrentLoginPage = window.location.pathname.endsWith('admin-login.html');
-    if (isCurrentLoginPage) {
-        console.log("Guard initialized on login panel. Redirect loops bypassed successfully.");
-        return;
     }
 
     try {
-        // Fetch active session parameters directly from verified cache layers
-        // (Removed the non-existent client.auth.initialize() crashing function)
-        const { data: { session }, error } = await client.auth.getSession();
+        const client = await verifySupabaseEngineDeployment();
+        const { data: { session }, error: sessionError } = await client.auth.getSession();
 
-        if (error || !session || !session.user) {
-            console.warn("Session context missing. Routing back to terminal gateway.");
-            window.location.assign(`${window.productionRootUrl}/admin-login.html`);
-            return;
+        if (sessionError || !session || !session.user) {
+            throw new Error("No authenticated administration terminal sequence found.");
         }
 
-        const staffEmail = session.user.email.toLowerCase();
+        const userEmail = session.user.email.toLowerCase().trim();
+
+        // 2. Apply your absolute security logic criteria filters
+        const isExplicitAdmin = (userEmail === 'test-admin@filings4u.com');
+        const isCorporateDomainAdmin = userEmail.endsWith('@filings4u.com') && userEmail !== 'filings@filings4u.com';
+
+        if (!isExplicitAdmin && !isCorporateDomainAdmin) {
+            throw new Error(`Unauthorized profile access attempt recorded: ${userEmail}`);
+        }
+
+        // System Success: Profile has clearance. Exits security gate and lets HTML parse.
+        console.log("Admin security credentials validated. Terminal access granted.");
+
+    } catch (gateError) {
+        console.error("Security Terminal Violation:", gateError.message);
         
-        if (!staffEmail.endsWith('@filings4u.com')) {
-            console.warn("Security Barrier Activated: Unauthorized account domain profile detected.");
-            await client.auth.signOut();
-            window.location.assign(`${window.productionRootUrl}/portal-login.html?auth=denied`);
-            return;
+        // Hard purge local cookies/tokens instantly so Cloudflare doesn't loop bad states
+        if (window.supabaseClient && window.supabaseClient.auth) {
+            await window.supabaseClient.auth.signOut();
         }
-
-        // ==========================================================================
-        // DYNAMIC DOM WARNING MODAL GENERATION INFRASTRUCTURE
-        // ==========================================================================
-        const overlay = document.createElement('div');
-        overlay.className = 'session-modal-overlay';
-        overlay.innerHTML = `
-            <div class="session-warning-box">
-                <h3>⚠️ Terminal Inactivity Warning</h3>
-                <p>Your administrative security token is expiring soon due to zero workflow movement. Would you like to extend this session?</p>
-                <button class="session-btn-extend" id="extendSessionBtn">Extend Authorization Token</button>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-
-        const extendBtn = document.getElementById('extendSessionBtn');
-        if (extendBtn) {
-            extendBtn.addEventListener('click', () => {
-                overlay.classList.remove('active');
-                resetInactivityTrackingClock();
-            });
-        }
-
-        // ==========================================================================
-        // DUAL-STAGE AUTOMATIC INACTIVITY LOGOUT ENGINE
-        // ==========================================================================
-        let warningTimeoutTimer;
-        let finalLogoutTimer;
-
-        const WARNING_LIMIT_MS = 13 * 60 * 1000; 
-        const FINAL_LIMIT_MS = 2 * 60 * 1000;    
-
-        async function terminateInactiveAdminSession() {
-            overlay.classList.remove('active');
-            clearTimeout(warningTimeoutTimer);
-            clearTimeout(finalLogoutTimer);
-            await client.auth.signOut();
-            window.location.assign('https://filings4u.com');
-        }
-
-        function triggerWarningPopup() {
-            overlay.classList.add('active');
-            finalLogoutTimer = setTimeout(terminateInactiveAdminSession, FINAL_LIMIT_MS);
-        }
-
-        function resetInactivityTrackingClock() {
-            clearTimeout(warningTimeoutTimer);
-            clearTimeout(finalLogoutTimer);
-            if (!overlay.classList.contains('active')) {
-                warningTimeoutTimer = setTimeout(triggerWarningPopup, WARNING_LIMIT_MS);
-            }
-        }
-
-        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(eventType => {
-            document.addEventListener(eventType, resetInactivityTrackingClock, { passive: true });
-        });
-
-        resetInactivityTrackingClock();
-
-    } catch (err) {
-        console.error("Guard Script Exception caught:", err.message);
-        window.location.assign(`${window.productionRootUrl}/admin-login.html`);
+        
+        // Escape back to login terminal immediately
+        window.location.replace(loginRedirectTarget);
     }
 })();
