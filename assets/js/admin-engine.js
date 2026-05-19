@@ -2,10 +2,10 @@
 (function initializeRobustAdminEngine() {
     "use strict";
 
-    console.log("🚀 Admin UI engine successfully synchronized.");
+    console.log("🚀 Admin UI engine successfully mounted.");
 
     // ==========================================================================
-    // ⏰ 1. SELF-SUFFICIENT REAL-TIME SYSTEM CLOCK (WITH DATE MERGED)
+    // ⏰ 1. INTEGRATED CLOCK AND SYSTEM DATE MATRIX (Clean HH:MM:SS)
     // ==========================================================================
     const clockDisplayElement = document.getElementById('portal-clock');
     
@@ -13,22 +13,19 @@
         if (!clockDisplayElement) return;
         const now = new Date();
         
-        // Formats clean numerical padded date strings
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
         const yyyy = now.getFullYear();
         const dateString = `${mm}/${dd}/${yyyy}`;
         
-        // Strips any trailing timezone or GMT text parameters completely
-        const timeString = now.toTimeString().split(' ')[0];
+        const timeString = now.toTimeString().split(' ')[0]; // Strictly extracts HH:MM:SS format
         
-        // Merges into a clean, unified dashboard tracker string
         clockDisplayElement.innerText = `${dateString} | ${timeString}`;
     }
     
     if (clockDisplayElement) {
         setInterval(runLiveSystemClock, 1000);
-        runLiveSystemClock(); // Fires instantly to prevent initial placeholder flash
+        runLiveSystemClock();
     }
 
     // ==========================================================================
@@ -38,14 +35,12 @@
         if (btnElement) btnElement.disabled = true;
         console.log("Instant clearing local authentication metrics...");
 
-        // 🎯 THE SPEED FIX: Clear local storage keys instantly before the server responds
         localStorage.removeItem("filings4u_secure_session_token");
         sessionStorage.clear();
 
         const baseTarget = window.productionRootUrl || window.location.origin;
 
         try {
-            // Trigger the remote sign-out in the background without blocking the user interface
             if (window.supabaseClient && window.supabaseClient.auth) {
                 window.supabaseClient.auth.signOut(); 
             }
@@ -53,11 +48,9 @@
             console.warn("Background auth purge trace skipped:", logoutErr.message);
         }
 
-        // Redirect immediately—takes under 50 milliseconds
         window.location.replace(`${baseTarget}/admin-login.html`);
     }
 
-    // Bind safe click listeners onto header actions and fallback sidebar elements once parsed
     document.addEventListener("DOMContentLoaded", () => {
         const fallbackLogoutBtn = document.getElementById('sidebarFallbackLogoutBtn');
         if (fallbackLogoutBtn) {
@@ -69,7 +62,7 @@
     });
 
     // ==========================================================================
-    // 📊 3. RUNTIME TELEMETRY DATA RECONCILIATIONS (FAILS SILENTLY)
+    // 📊 3. RUNTIME TELEMETRY DATA RECONCILIATIONS
     // ==========================================================================
     async function loadAsynchronousDatabaseMeta() {
         if (!window.supabaseClient) return;
