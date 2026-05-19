@@ -21,7 +21,7 @@
     <script src="assets/js/wizard-sync.js"></script>
     
     <style>
-        /* 🎨 RE-ARCHITECTED MODERN SIDEBAR & LAYOUT CANVAS STYLES */
+        /* 🎨 RE-ARCHITECTED SIDEBAR & NATURAL SCROLL LAYOUT */
         :root {
             --slate-50: #f8fafc;
             --slate-100: #f1f5f9;
@@ -36,27 +36,31 @@
         body, html {
             margin: 0;
             padding: 0;
-            height: 100vh;
+            min-height: 100vh;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f4f6f8;
             color: var(--slate-900);
-            overflow: hidden;
+            overflow-x: hidden; /* Prevent sideways leaks */
+            overflow-y: auto !important; /* 🎯 FIX: Restores default browser scrolling to the entire window */
         }
 
         .dashboard-wrapper {
             display: flex;
-            height: 100vh;
+            min-height: 100vh;
             width: 100%;
+            align-items: stretch;
         }
 
-        /* 📁 CORE COMPACT ACCORDION SIDEBAR GRID */
+        /* 📁 SIDEBAR SYSTEM PANEL CONTAINER */
         .portal-sidebar {
             width: var(--sidebar-width);
             background: #ffffff;
             border-right: 1px solid var(--slate-200);
             display: flex;
             flex-direction: column;
-            height: 100%;
+            position: sticky; /* Keep navigation fixed on left viewport axis */
+            top: 0;
+            height: 100vh;
             flex-shrink: 0;
             z-index: 100;
         }
@@ -83,7 +87,7 @@
 
         .sidebar-clock-bar {
             background: var(--slate-50);
-            padding: 10px 16px;
+            padding: 12px 20px;
             font-size: 0.75rem;
             color: var(--slate-700);
             display: flex;
@@ -95,70 +99,72 @@
         .sidebar-accordion-menu {
             flex: 1;
             overflow-y: auto;
-            padding: 15px 12px;
+            padding: 20px 16px;
         }
 
-        /* Accordion Triggers Styling */
+        /* Premium Accordion Link Triggers */
         .accordion-trigger {
             width: 100%;
-            background: transparent;
-            border: none;
-            padding: 12px 14px;
-            font-size: 0.82rem;
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            padding: 12px 16px;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--slate-700);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
-            border-radius: 6px;
-            margin-top: 8px;
-            transition: background 0.2s;
+            border-radius: 8px;
+            margin-top: 12px;
+            transition: all 0.2s;
         }
 
-        .accordion-trigger:hover {
+        .accordion-trigger:hover, .accordion-trigger.active {
             background: var(--slate-100);
             color: var(--slate-900);
+            border-color: #cbd5e1;
         }
 
         .accordion-trigger .chevron {
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             transition: transform 0.2s ease;
-            opacity: 0.5;
         }
 
         .accordion-trigger.active .chevron {
             transform: rotate(180deg);
         }
 
-        /* Collapsible Links Panel */
+        /* Collapsible Panels */
         .accordion-panel {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.25s ease-out;
-            padding-left: 8px;
+            padding-left: 4px;
+            margin-top: 4px;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px 14px;
+            padding: 10px 12px;
             color: var(--slate-700);
             text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.82rem;
+            font-weight: 600;
             border-radius: 6px;
-            margin-top: 2px;
+            margin-top: 3px;
             transition: all 0.15s;
             white-space: nowrap;
         }
 
         .nav-item:hover {
-            background: var(--slate-50);
+            background: #ffffff;
             color: var(--emerald-600);
+            padding-left: 16px; /* Subtly shift right on hover */
         }
 
         .nav-item.active {
@@ -178,43 +184,46 @@
             background: var(--slate-900);
             color: white;
             border: none;
-            padding: 10px;
+            padding: 12px;
             border-radius: 6px;
             font-weight: 700;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             cursor: pointer;
             transition: opacity 0.2s;
         }
 
         .logout-btn:hover { opacity: 0.9; }
 
-        /* 🖥️ MAIN PERFORMANCE SCREEN WRAPPER */
+        /* 🖥️ PERFORMANCE MAIN WORKSPACE SCREEN (Scroll Frame Removed) */
         .portal-main {
             flex: 1;
             display: flex;
             flex-direction: column;
-            height: 100%;
-            overflow: hidden;
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
         }
 
         .portal-header {
             background: #ffffff;
-            padding: 20px 40px;
+            padding: 24px 40px;
             border-bottom: 1px solid var(--slate-200);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 90;
         }
 
         .welcome-text h1 { margin: 0; font-size: 1.6rem; font-weight: 800; color: var(--slate-900); }
         .welcome-text p { margin: 4px 0 0 0; font-size: 0.85rem; color: var(--slate-700); }
 
         .search-input {
-            padding: 10px 16px;
+            padding: 10px 18px;
             border: 1px solid var(--slate-200);
             border-radius: 20px;
             font-size: 0.85rem;
-            width: 240px;
+            width: 260px;
             outline: none;
             background: var(--slate-50);
             transition: all 0.2s;
@@ -227,13 +236,12 @@
         }
 
         .content-container {
-            flex: 1;
-            overflow-y: auto;
             padding: 40px;
             box-sizing: border-box;
+            width: 100%;
         }
 
-        /* PREMIUM METRICS GRID ROW CARD SHIELDS */
+        /* CARD CAROUSEL SECTIONS */
         .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -246,7 +254,7 @@
             padding: 24px;
             border-radius: 12px;
             border: 1px solid var(--slate-200);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
             text-align: left;
         }
 
@@ -260,12 +268,18 @@
             align-items: start;
         }
 
+        @media (max-width: 1100px) {
+            .dashboard-grid-layout {
+                grid-template-columns: 1fr; /* Stacks column sections on laptop viewports */
+            }
+        }
+
         .console-card {
             background: #ffffff;
             border-radius: 12px;
             border: 1px solid var(--slate-200);
             padding: 28px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
             margin-bottom: 24px;
         }
 
@@ -276,7 +290,7 @@
 
     <div class="dashboard-wrapper">
         
-        <!-- 🌐 COLLAPSIBLE ACCORDION SIDEBAR CONTROL BOARD -->
+        <!-- 🌐 ACCORDION SIDEBAR CONTROL BOARD -->
         <aside class="portal-sidebar">
             <div class="sidebar-brand-block">
                 <img src="images/logo.png" alt="filings4u" style="height: 35px; width: auto; object-fit: contain;">
@@ -307,6 +321,7 @@
                     <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
                     <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
                     <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+                    <!-- 🎯 FIXED LINK PATH BINDING HERE -->
                     <span>🏢</span> Entity Master Ledger</a>
                 </div>
 
@@ -330,7 +345,7 @@
             </div>
         </aside>
 
-        <!-- 🧱 MAIN SCREEN WORKSPACE -->
+        <!-- 🧱 MAIN SCROLLING SCREEN CANVAS WRAPPER -->
         <main class="portal-main">
             <header class="portal-header">
                 <div class="welcome-text">
@@ -351,9 +366,9 @@
                     <div class="stat-card"><small>System Health</small><h2 id="stat-completed-filings" style="color: var(--emerald-600);">100%</h2></div>
                 </div>
 
-                <!-- Core Workspaces Splitting Layout Grid -->
+                <!-- Core Workspace Grid Splitter Layout -->
                 <div class="dashboard-grid-layout">
-                    <!-- Left Side Columns Workspace -->
+                    <!-- Left Side Column Workspace Panel -->
                     <div class="workspace-left">
                         <div class="console-card">
                             <h2>Send Dynamic Message Notification</h2>
@@ -377,7 +392,7 @@
                             </form>
                         </div>
 
-                        <!-- Transaction Ledger Row Card -->
+                        <!-- Sales Ledger Data Card Block -->
                         <div class="console-card" style="width:100%; overflow:hidden;">
                             <h2>Global Corporate Sales Pricing Ledger</h2>
                             <div style="overflow-x:auto;">
@@ -398,7 +413,7 @@
                         </div>
                     </div>
 
-                    <!-- Right Side Complementary Column Profile Info -->
+                    <!-- Right Side Complementary Notification Column -->
                     <div class="workspace-right">
                         <div class="console-card">
                             <h2>Communications Stream</h2>
@@ -417,10 +432,10 @@
         </main>
     </div>
 
-    <!-- 🎯 SINGLE MASTER TELEMETRY CONTROLLER INTERACTION ENGINE -->
+    <!-- 🎯 MASTER SYSTEM CONTROL ENGINE LINK -->
     <script src="assets/js/admin-engine.js"></script>
     <script>
-        // 🛠️ ANIMATED ACCORDION TOGGLING FACTORY ENGINE
+        // 🛠️ ACCORDION SIDEBAR LINK ANIMATION LAYOUT MANAGER
         function toggleSidebarAccordion(buttonElement) {
             buttonElement.classList.toggle('active');
             const panel = buttonElement.nextElementSibling;
