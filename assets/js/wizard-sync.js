@@ -11,7 +11,7 @@
                     clearInterval(trackingInterval);
                     resolve(window.supabaseClient);
                 }
-            }, 30);
+            }, 10); // Polling tightened to 10ms to eliminate Cloudflare delivery race cycles
         });
     }
 
@@ -77,17 +77,23 @@
             const { data: { session } } = await client.auth.getSession();
             if (!session || !session.user) return;
 
+            // Build the record payload to match your exact database fields
             const recordPayload = {
                 service_key: serviceKey,
-                payload_data: finalStepPayload,
-                current_step: currentStepIdx,
+                payload_data: finalStepPayload, // Exact target path map
+                current_step: parseInt(currentStepIdx) || 1,
                 status: 'draft',
-                user_id: session.user.id
+                user_id: session.user.id,
+                updated_at: new Date().toISOString()
             };
 
-            // 🎯 FIXED: Explicit constraint passing for upsert operations
+            // 🎯 FIXED PRIMARY KEY CONSTRAINT:
+            // Only attach an ID field if we have a valid, pre-existing record ID.
+            // If recordDatabaseId is null, your table schema will safely generate a clean new UUID row automatically.
             if (recordDatabaseId) {
                 recordPayload.id = recordDatabaseId;
+            } else {
+                recordPayload.created_at = new Date().toISOString();
             }
 
             const { data, error } = await client
@@ -100,24 +106,34 @@
                 recordDatabaseId = data.id;
                 console.log("✓ Wizard state saved to cloud matrix:", recordDatabaseId);
             } else {
-                console.error("Database persistence stalled:", error);
+                console.error("Database persistence stalled:", error ? error.message : "Empty payload returned");
             }
         } catch (err) {
             console.error("Sync cloud task error runtime crash:", err);
         }
     };
 
-    // Final operations for terminal transitions inside order.html checkout
-    window.updateFilingToPaidStatus = async function() {
+    // Final operations for terminal transitions inside order.html checkout window
+    window.updateFilingToPaidStatus = async function(stripeInvoiceIdStr, paymentIntentStr, amountPaidNum) {
         if (!recordDatabaseId) return;
         try {
-            await client
+            // 🎯 FIXED: Synchronized directly with your table columns layout metrics
+            const { error } = await client
                 .from('user_filings_workspace')
-                .update({ status: 'paid' })
+                .update({ 
+                    status: 'paid',
+                    stripe_invoice_id: stripeInvoiceIdStr || null,
+                    stripe_payment_intent: paymentIntentStr || null,
+                    amount_paid: parseFloat(amountPaidNum) || 149.00,
+                    checkout_completed_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
                 .eq('id', recordDatabaseId);
+
+            if (error) throw error;
             console.log("✓ Transaction ledger state switched to PAID.");
         } catch (err) {
-            console.error("Failed to update status parameters:", err);
+            console.error("Failed to update status parameters:", err.message);
         }
     };
 
@@ -137,7 +153,8 @@
     };
 
     window.executePortalExit = function() {
-        window.location.assign(`${window.productionRootUrl || window.location.origin}/portal-dashboard.html`);
+        const targetBase = window.productionRootUrl || window.location.origin;
+        window.location.assign(`${targetBase}/portal-dashboard.html`);
     };
 
 })();
