@@ -569,3 +569,46 @@
     });
 })();
 
+// 🚪 CUSTOMER PORTAL SIGN OUT CONSOLE CONTROLLER
+(function initializePortalLogoutHandler() {
+    "use strict";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Target your portal sidebar logout button using either its ID or class selector
+        const logoutBtn = document.getElementById('portalLogoutBtn') || document.querySelector('.logout-btn') || document.querySelector('.nav-logout-btn');
+        
+        if (!logoutBtn) {
+            console.warn("Portal logout button element index not found inside layout canvas. Verification skipped.");
+            return;
+        }
+
+        logoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const client = window.supabaseClient;
+            if (!client) {
+                alert("Session Termination Failed: Core connection engine offline.");
+                return;
+            }
+
+            logoutBtn.innerText = "Terminating Session...";
+            logoutBtn.disabled = true;
+
+            try {
+                console.log("Purging customer authentication token storage profiles...");
+                await client.auth.signOut();
+                
+                // Absolute structural routing redirection path anchor escape
+                const baseTarget = window.productionRootUrl || window.location.origin;
+                window.location.replace(`${baseTarget}/portal-login.html`);
+                
+            } catch (logoutErr) {
+                console.error("Auth sign out failure recorded:", logoutErr.message);
+                alert(`Logout Action Intercepted:\n${logoutErr.message}`);
+                logoutBtn.innerText = "Exit Portal Console";
+                logoutBtn.disabled = false;
+            }
+        });
+    });
+})();
+
