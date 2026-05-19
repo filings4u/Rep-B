@@ -33,7 +33,7 @@
         console.warn("Unable to write active session mail stamp:", logErr);
     }
 
-    // 4. Centralized Application Sign Out Protocol
+     // 4. Centralized Application Sign Out Protocol
     async function executeTerminalSessionTermination() {
         try {
             if (globalLogoutBtn) globalLogoutBtn.disabled = true;
@@ -42,14 +42,16 @@
             console.log("Terminating administration session state...");
             await client.auth.signOut();
             
-            const productionRootUrl = window.productionRootUrl || window.location.origin;
-            window.location.assign(`${productionRootUrl}/admin-login.html`);
+            // 🎯 FIXED: Direct absolute window coordination fallback path
+            const baseTarget = window.productionRootUrl || window.location.origin;
+            window.location.replace(`${baseTarget}/admin-login.html`);
         } catch (logoutErr) {
             alert(`Logout Failed:\n${logoutErr.message}`);
             if (globalLogoutBtn) globalLogoutBtn.disabled = false;
             if (fallbackLogoutBtn) fallbackLogoutBtn.disabled = false;
         }
     }
+
 
     // Attach click listeners to both visual sign out interface triggers
     if (globalLogoutBtn) {

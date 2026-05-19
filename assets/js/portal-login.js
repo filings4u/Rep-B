@@ -1,5 +1,5 @@
 // assets/js/portal-login.js
-(async function handleCustomerLoginFlow() {
+async function startCustomerLoginEngine() {
     "use strict";
 
     function waitForSupabaseClientEngine() {
@@ -10,28 +10,28 @@
                     clearInterval(trackingInterval);
                     resolve(window.supabaseClient);
                 }
-            }, 30);
+            }, 10);
         });
     }
 
     const client = await waitForSupabaseClientEngine();
-    const portalLoginForm = document.getElementById('portalLoginForm'); 
+    const portalLoginForm = document.getElementById('portalLoginForm'); // Verify this matches your HTML form ID
     const loginSubmitBtn = document.getElementById('loginBtn');
     const passError = document.getElementById('password-error');
 
     async function evaluateCustomerRoute(userEmail) {
         const cleanedEmail = userEmail.toLowerCase().trim();
         
-        // 🎯 INTERCEPT SECURITY CHECK: If any corporate admin hits the client portal, route them to the admin workspace
-        const isCorporateAdmin = cleanedEmail.endsWith('@filings4u.com') || (cleanedEmail === 'test-admin@filings4u.com');
+        // 1. Identify staff accounts trying to access the customer area
+        const isCorporateStaff = cleanedEmail.endsWith('@filings4u.com') || (cleanedEmail === 'test-admin@filings4u.com');
 
-        if (isCorporateAdmin) {
+        if (isCorporateStaff) {
             console.warn("Administrative profile detected inside customer landing path. Rerouting...");
             window.location.assign(`${window.productionRootUrl}/admin-dashboard.html`);
             return;
         }
 
-        // Standard user or brand new custom testing emails pass directly into your customer view matrix
+        // 2. Standard customer accounts proceed directly to their dashboard layout
         window.location.assign(`${window.productionRootUrl}/portal-dashboard.html`);
     }
 
@@ -91,4 +91,9 @@
     } catch (err) {
         console.error("Portal System Error:", err.message);
     }
-})();
+}
+
+// Automatically mount engine to the DOM framework
+document.addEventListener("DOMContentLoaded", () => {
+    startCustomerLoginEngine();
+});
