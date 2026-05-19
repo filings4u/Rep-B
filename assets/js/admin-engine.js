@@ -2,9 +2,9 @@
 (function initializeRobustAdminEngine() {
     "use strict";
 
-    console.log("🚀 Admin UI accordion engine successfully mounted.");
+    console.log("🚀 Admin UI engine successfully synchronized.");
 
-
+    // ==========================================================================
     // ⏰ 1. SELF-SUFFICIENT REAL-TIME SYSTEM CLOCK (WITH DATE MERGED)
     // ==========================================================================
     const clockDisplayElement = document.getElementById('portal-clock');
@@ -13,7 +13,7 @@
         if (!clockDisplayElement) return;
         const now = new Date();
         
-        // 🎯 Injects numerical padded dates 
+        // Formats clean numerical padded date strings
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
         const yyyy = now.getFullYear();
@@ -31,9 +31,9 @@
         runLiveSystemClock(); // Fires instantly to prevent initial placeholder flash
     }
 
-
-
-       // 🚪 2. SECURE INSTANT DISCONNECTED ACTION ROUTER
+    // ==========================================================================
+    // 🚪 2. SECURE INSTANT DISCONNECTED ACTION ROUTER (FAST LOGOUT)
+    // ==========================================================================
     async function executeTerminalSessionTermination(btnElement) {
         if (btnElement) btnElement.disabled = true;
         console.log("Instant clearing local authentication metrics...");
@@ -45,7 +45,7 @@
         const baseTarget = window.productionRootUrl || window.location.origin;
 
         try {
-            // Trigger the remote sign-out in the background without blocking the user
+            // Trigger the remote sign-out in the background without blocking the user interface
             if (window.supabaseClient && window.supabaseClient.auth) {
                 window.supabaseClient.auth.signOut(); 
             }
@@ -57,7 +57,7 @@
         window.location.replace(`${baseTarget}/admin-login.html`);
     }
 
-
+    // Bind safe click listeners onto header actions and fallback sidebar elements once parsed
     document.addEventListener("DOMContentLoaded", () => {
         const fallbackLogoutBtn = document.getElementById('sidebarFallbackLogoutBtn');
         if (fallbackLogoutBtn) {
@@ -69,7 +69,7 @@
     });
 
     // ==========================================================================
-    // 📊 3. RUNTIME TELEMETRY DATA RECONCILIATIONS
+    // 📊 3. RUNTIME TELEMETRY DATA RECONCILIATIONS (FAILS SILENTLY)
     // ==========================================================================
     async function loadAsynchronousDatabaseMeta() {
         if (!window.supabaseClient) return;
