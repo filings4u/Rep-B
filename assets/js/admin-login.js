@@ -1,5 +1,5 @@
 // assets/js/admin-login.js
-(async function handleAdminLoginFlow() {
+async function startAdminLoginEngine() {
     "use strict";
 
     function waitForSupabaseClientEngine() {
@@ -10,7 +10,7 @@
                     clearInterval(trackingInterval);
                     resolve(window.supabaseClient);
                 }
-            }, 30);
+            }, 10);
         });
     }
 
@@ -21,8 +21,6 @@
 
     async function evaluateAdminRoute(userEmail) {
         const cleanedEmail = userEmail.toLowerCase().trim();
-        
-        // Define which emails are explicitly authorized as administrative profiles
         const isExplicitAdmin = (cleanedEmail === 'test-admin@filings4u.com');
         const isCorporateDomainAdmin = cleanedEmail.endsWith('@filings4u.com') && cleanedEmail !== 'filings@filings4u.com';
 
@@ -39,7 +37,6 @@
                 loginSubmitBtn.innerText = "Verify Terminal Session →";
                 loginSubmitBtn.disabled = false;
             }
-            // Wipe token out of local memory to clear out Cloudflare loop hooks
             await client.auth.signOut();
         }
     }
@@ -100,4 +97,4 @@
     } catch (err) {
         console.error("Login System Error:", err.message);
     }
-})();
+}
