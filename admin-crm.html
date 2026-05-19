@@ -2,98 +2,446 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
+    <title>Customer CRM Portal | filings4u Staff</title>
     <meta name="theme-color" content="#c15254">
-    
-    <!-- Core Dependencies -->
+
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="assets/js/supabase-config.js"></script>
     <script src="assets/js/admin-guard.js"></script>
-    <link rel="stylesheet" href="assets/css/admin-core.css">
-
-    <!-- 🎨 STYLESHEET CHANNELS -->
-    <link rel="stylesheet" href="assets/css/portal-global.css">
-    <link rel="stylesheet" href="assets/css/responsive.css"> <!-- Linked cleanly here -->
-
-    <script src="assets/js/wizard-sync.js"></script> <!-- Linked cleanly here -->
+    <script src="assets/js/wizard-sync.js"></script>
 
     <style>
-        .crm-container { padding: 30px; box-sizing: border-box; }
-        .crm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .crm-actions { display: flex; gap: 15px; align-items: center; }
-        .crm-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .crm-table th { background: #f8fafc; padding: 14px 18px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #44526c; border-bottom: 2px solid #e2e8f0; }
-        .crm-table td { padding: 14px 18px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; color: #0a1f44; }
-        .role-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .role-badge.admin { background: rgba(193, 82, 84, 0.1); color: #c15254; }
-        .role-badge.customer { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        
-        /* Modal Popup System Overlay */
-        .crm-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(10,31,68,0.4); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition: opacity 0.2s ease; z-index: 10000; }
-        .crm-modal.active { opacity:1; pointer-events:auto; }
-        .modal-box { background:#fff; padding:30px; border-radius:10px; width:100%; max-width:450px; box-shadow:0 20px 40px rgba(0,0,0,0.1); }
-        .modal-box h3 { margin: 0 0 15px 0; color: #0a1f44; }
-        .crm-input-group { margin-bottom: 15px; text-align: left; }
-        .crm-input-group label { display:block; font-size:0.75rem; font-weight:700; color:#0a1f44; margin-bottom:5px; }
-        .crm-input, .crm-select { width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px; box-sizing:border-box; }
-        .crm-btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
-        .crm-btn.primary { background: #0a1f44; color: #fff; }
-        .crm-btn.danger { background: #c15254; color: #fff; }
-        .crm-btn.secondary { background: #e2e8f0; color: #44526c; }
+        /* ==========================================================================
+           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY MAIN WORKSPACE CONSOLE */
+        .portal-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-left: var(--sidebar-width) !important;
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 24px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px !important;
+            font-size: 0.82rem;
+            width: 220px;
+            outline: none;
+            background: #f8fafc;
+            box-sizing: border-box;
+            height: 40px;
+            color: var(--text-dark);
+        }
+
+        .search-input:focus {
+            background: var(--white);
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .crm-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            background: var(--white) !important;
+            border-radius: 10px !important;
+            overflow: hidden !important;
+            border: 1px solid var(--border-color) !important;
+            font-size: 0.85rem !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+        }
+
+        .crm-table th {
+            background: #f8fafc !important;
+            padding: 14px 18px !important;
+            text-align: left !important;
+            font-size: 0.72rem !important;
+            text-transform: uppercase !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            border-bottom: 2px solid var(--border-color) !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .crm-table td {
+            padding: 14px 18px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--text-dark) !important;
+        }
+
+        .role-badge {
+            padding: 4px 8px !important;
+            border-radius: 12px !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            display: inline-block !important;
+        }
+
+        .role-badge.admin { background: rgba(193, 82, 84, 0.1) !important; color: var(--staff-red) !important; }
+        .role-badge.customer { background: rgba(16, 185, 129, 0.1) !important; color: var(--emerald) !important; }
+
+        .crm-btn {
+            padding: 10px 18px !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.82rem !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            transition: opacity 0.2s !important;
+        }
+        .crm-btn:hover { opacity: 0.9; }
+        .crm-btn.primary { background: var(--text-dark) !important; color: #fff !important; }
+        .crm-btn.secondary { background: var(--emerald) !important; color: #fff !important; }
+
+        /* Modal Overlay System Settings */
+        .crm-modal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(10, 31, 68, 0.4) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease !important;
+            z-index: 10000 !important;
+        }
+
+        .crm-modal.active { opacity: 1 !important; pointer-events: auto !important; }
+
+        .modal-box {
+            background: #fff !important;
+            padding: 30px !important;
+            border-radius: 10px !important;
+            width: 90% !important;
+            max-width: 450px !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+            box-sizing: border-box !important;
+        }
+
+        .modal-box h3 { margin: 0 0 15px 0 !important; color: var(--text-dark) !important; font-weight: 800 !important; }
+
+        .crm-input-group { margin-bottom: 15px !important; }
+        .crm-input-group label { display: block !important; font-size: 0.65rem !important; font-weight: 700 !important; text-transform: uppercase !important; color: var(--text-muted) !important; margin-bottom: 6px !important; }
+        .crm-input, .crm-select { width: 100% !important; padding: 12px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; box-sizing: border-box !important; outline: none !important; font-family: inherit !important; }
+        .crm-input:focus, .crm-select:focus { border-color: var(--staff-red) !important; }
     </style>
 </head>
 <body>
-    <div class="split-container">
-        <!-- RETAIN YOUR IDENTICAL PORTAL SIDEBAR MARKUP HERE -->
+
+    <div class="dashboard-wrapper">
+        
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
         <aside class="portal-sidebar">
-            <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center;">
-                <img src="images/logo.png" alt="filings4u" style="max-height: 40px; margin-bottom:12px;">
-                <div class="admin-badge">CRM Control Console</div>
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge">Directorate Admin</div></div>
             </div>
-            <nav class="sidebar-nav-container">
-                <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                <!-- Rest of your navigation loops -->
+
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION PACK 1 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Control Systems <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+                </div>
+
+                <!-- ACCORDION PACK 2 ACTIVE DEFAULT -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Operations & CRM <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 500px;">
+                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
+                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+                </div>
+
+                <!-- ACCORDION PACK 3 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Financials & Health <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                </div>
             </nav>
+
+            <div class="sidebar-footer-lock">
+                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
+                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
+                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
+                </div>
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
+            </div>
         </aside>
 
-<!-- MAIN CRM WORKSPACE CONTAINER -->
-<main class="portal-main">
-    <div class="crm-container">
-        <header class="crm-header">
-            <div>
-                <h1>Account Management CRM</h1>
-                <p style="color: #64748b; margin: 4px 0 0 0;">Synchronize profiles, authorize administrators, and monitor ledger entries.</p>
-            </div>
-            
-            <!-- 🎯 COMBINED ACTIONS BLOCK (No Duplicate IDs) -->
-            <div class="crm-actions">
-                <input type="text" id="crmSearchField" class="search-input" placeholder="Filter by email or name..." style="margin:0;">
-                <button class="crm-btn secondary" id="exportCrmCsvBtn" style="background: #10b981; color: white;">📥 Export CSV</button>
-                <button class="crm-btn primary" id="openCreateModalBtn">+ Register New Record</button>
-            </div>
-        </header>
+        <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Account Management CRM</h1>
+                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Synchronize profiles, authorize administrators, and monitor ledger entries.</p>
+                </div>
+                
+                <div class="header-actions-wrapper">
+                    <div class="header-clock-pill">
+                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
+                    </div>
+                    <div>
+                        <input type="text" id="crmSearchField" class="search-input" placeholder="Filter by email or name...">
+                    </div>
+                    <button class="crm-btn secondary" id="exportCrmCsvBtn">📥 Export CSV</button>
+                    <button class="crm-btn primary" id="openCreateModalBtn">+ Register Record</button>
+                </div>
+            </header>
 
-
+            <div class="content-container">
                 <!-- LIVE INTERACTIVE DATA TABLE -->
-                <table class="crm-table">
-                    <thead>
-                        <tr>
-                            <th>User ID / Token</th>
-                            <th>Full Corporate Name</th>
-                            <th>Target User Email</th>
-                            <th>System Clearance Role</th>
-                            <th>Registration Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="crmTableBody">
-                        <tr>
-                            <td colspan="6" style="text-align:center; padding:40px; color:#64748b;">Querying real-time ledger vectors...</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div style="overflow-x: auto; width: 100%;">
+                    <table class="crm-table">
+                        <thead>
+                            <tr>
+                                <th>User ID / Token</th>
+                                <th>Full Corporate Name</th>
+                                <th>Target User Email</th>
+                                <th>System Clearance Role</th>
+                                <th>Registration Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crmTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:40px; color:#64748b; font-style:italic;">Querying real-time ledger vectors...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
@@ -120,15 +468,26 @@
                     </select>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                    <button type="button" class="crm-btn secondary" id="closeModalBtn">Cancel</button>
+                    <button type="button" class="crm-btn" id="closeModalBtn" style="background:#e2e8f0; color:#44526c;">Cancel</button>
                     <button type="submit" class="crm-btn primary" id="saveProfileBtn">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- HOOK THE CRM PROCESSING LAYER -->
+    <!-- CORE CONTROL PIPELINES SCRIPTS -->
     <script src="assets/js/admin-crm.js"></script>
     <script src="assets/js/admin-engine.js"></script>
+    <script>
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
+    </script>
 </body>
 </html>

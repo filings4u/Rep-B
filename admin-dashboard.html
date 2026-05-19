@@ -467,5 +467,58 @@
             }
         }
     </script>
+
+    <script>
+    // 📨 LIVE ALERTS SYSTEM DISPATCH CONTROLLER
+    document.getElementById('adminAlertForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const client = window.supabaseClient;
+        const statusBox = document.getElementById('alertStatus');
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        const chosenUser = document.getElementById('adminClientDropdown').value;
+        const noticeTitle = document.getElementById('alertTitle').value.trim();
+        const noticeMessage = document.getElementById('alertMessage').value.trim();
+
+        if (!chosenUser || !noticeTitle || !noticeMessage) {
+            if (statusBox) {
+                statusBox.style.color = "var(--staff-red)";
+                statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
+            }
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Transmitting Wave Packet...";
+
+        try {
+            // Write directly to your custom communication schema log table
+            const { error } = await client
+                .from('admin_notifications_stream')
+                .insert({
+                    user_id: chosenUser,
+                    title: noticeTitle,
+                    message: noticeMessage,
+                    created_at: new Date().toISOString()
+                });
+
+            if (error) throw error;
+
+            statusBox.style.color = "var(--emerald)";
+            statusBox.innerText = "🎉 Notification broadcast locked and delivered directly to customer feed!";
+            document.getElementById('adminAlertForm').reset();
+
+        } catch (err) {
+            console.error("Alert broadcast failed:", err.message);
+            statusBox.style.color = "var(--staff-red)";
+            statusBox.innerText = `Dispatch Failed: ${err.message}`;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Push Real-Time Alert →";
+        }
+    });
+</script>
+
 </body>
 </html>

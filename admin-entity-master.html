@@ -5,93 +5,432 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Entity Master | filings4u Staff</title>
-    
-    <!-- 🚀 MOBILE BROWSER INTERFACE EMERALD THEME CONTROLLERS -->
     <meta name="theme-color" content="#c15254">
-    
-   <!-- PRODUCTION CDN INFRASTRUCTURE -->
+
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    
-    <!-- 2. Load your centralized config -->
     <script src="assets/js/supabase-config.js"></script>
-    
-    <!-- 3. Load the guard file to lock the page -->
     <script src="assets/js/admin-guard.js"></script>
-    
-    <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
-    <link rel="stylesheet" href="assets/css/admin-core.css">
+    <script src="assets/js/wizard-sync.js"></script>
 
+    <style>
+        /* ==========================================================================
+           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
 
-    <!-- 🎨 STYLESHEET CHANNELS -->
-    <link rel="stylesheet" href="assets/css/portal-global.css">
-    <link rel="stylesheet" href="assets/css/responsive.css"> <!-- Linked cleanly here -->
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
 
-    <script src="assets/js/wizard-sync.js"></script> <!-- Linked cleanly here -->
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
 
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE MAIN VIEWPORTS */
+        .portal-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-left: var(--sidebar-width) !important;
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 24px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px !important;
+            font-size: 0.82rem;
+            width: 220px;
+            outline: none;
+            background: #f8fafc;
+            box-sizing: border-box;
+            height: 40px;
+            color: var(--text-dark);
+        }
+
+        .search-input:focus {
+            background: var(--white);
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .portal-card {
+            background: var(--white) !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 24px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            margin-bottom: 30px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        /* Semantically valid responsive directory ledger styling */
+        .admin-table-ledger {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            text-align: left !important;
+            font-size: 0.85rem !important;
+        }
+
+        .admin-table-ledger th {
+            background: #f8fafc !important;
+            border-bottom: 2px solid var(--border-color) !important;
+            padding: 12px 16px !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .admin-table-ledger td {
+            padding: 14px 16px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--text-dark) !important;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.1) !important;
+            color: var(--emerald) !important;
+            padding: 4px 8px !important;
+            border-radius: 12px !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            display: inline-block !important;
+        }
+
+        .btn-primary {
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px 20px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            cursor: pointer !important;
+            transition: opacity 0.2s !important;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+    </style>
 </head>
 <body>
 
-       <!-- 🌐 SIDEBAR NAVIGATION PANEL DISPLAY CONSOLE --> 
-    <aside class="portal-sidebar"> 
-        <div style="padding: 35px 25px 25px 25px; border-bottom: 1px solid #e2e8f0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;"> 
-            <div style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;"> 
-                <img src="images/logo.png" alt="filings4u" class="logo" style="max-width: 100%; height: auto; max-height: 40px; display: block; object-fit: contain;"> 
-            </div> 
-            <div class="admin-badge">Directorate Admin</div> 
-        </div> 
-        <div class="sidebar-clock-bar"> 
-            <span>System Time:</span> 
-            <span id="portal-clock">00:00:00</span> 
-        </div> 
-        <nav class="sidebar-nav-container"> 
-            <p class="sidebar-nav-heading">Control Systems</p> 
-            <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a> 
-            <a href="#admin-master-sales-panel" class="nav-item"><span>💰</span> Sales & Price Audit</a> 
-            <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a> 
-            <p class="sidebar-nav-heading">Operations & CRM</p> 
-            <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a> 
-            <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a> 
-            <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a> 
-            <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a> 
-            <p class="sidebar-nav-heading">Financials & Health</p> 
-            <a href="admin-billing.html" class="nav-item active"><span>💸</span> Revenue Reconciliation</a> 
-            <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a> 
-            <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a> 
-        </nav> 
-        <div class="sidebar-footer-lock"> 
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"> 
-                <div style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></div> 
-                <span style="font-size: 0.65rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Database Sync Active</span> 
-            </div> 
-            <p style="margin: 0 0 12px 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Administrative token verified via corporate staff domain.</p> 
-            <button onclick="handleAdminSignOutLogout()" class="logout-btn">Exit Admin Session</button> 
-        </div> 
-    </aside> 
-
-    <div class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 style="margin: 0; font-size: 1.75rem; font-weight: 800;">Entity Master Directory</h1>
-                <p style="margin: 5px 0 0 0; color: #64748b;">Manage global corporate formations and active jurisdictional legal states.</p>
+    <div class="dashboard-wrapper">
+        
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge">Directorate Admin</div></div>
             </div>
-            <button class="btn-primary">+ Register New Legal Entity</button>
-        </div>
-        <div class="data-card">
-            
-                <thead>
-                    <tr><th>Entity Name</th><th>Filing ID</th><th>State/Jurisdiction</th><th>Type</th><th>Status</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>Acme Holdings LLC</td><td>#EF-99201</td><td>Delaware</td><td>LLC</td><td><span class="badge badge-active">Active / Good Standing</span></td></tr>
-                    <tr><td>Nexus FinTech Inc</td><td>#EF-88192</td><td>California</td><td>C-Corp</td><td><span class="badge badge-active">Active / Good Standing</span></td></tr>
-                </tbody>
-            </table>
-        </div>
+
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION PACK 1 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Control Systems <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+                </div>
+
+                <!-- ACCORDION PACK 2 ACTIVE DEFAULT -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Operations & CRM <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 500px;">
+                    <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+                </div>
+
+                <!-- ACCORDION PACK 3 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Financials & Health <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer-lock">
+                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
+                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
+                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
+                </div>
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
+            </div>
+        </aside>
+
+        <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div>
+                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Entity Master Directory</h1>
+                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Manage global corporate formations and active jurisdictional legal states.</p>
+                </div>
+                
+                <div class="header-actions-wrapper">
+                    <div class="header-clock-pill">
+                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
+                    </div>
+                    <div>
+                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search entities...">
+                    </div>
+                    <button class="btn-primary" onclick="alert('Initializing corporate registration ledger generation interface maps...')">+ Register New Legal Entity</button>
+                </div>
+            </header>
+
+            <div class="content-container">
+                <div class="portal-card">
+                    <table class="admin-table-ledger">
+                        <thead>
+                            <tr>
+                                <th>Entity Name</th>
+                                <th>Filing ID</th>
+                                <th>State/Jurisdiction</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Acme Holdings LLC</strong></td>
+                                <td>#EF-99201</td>
+                                <td>Delaware</td>
+                                <td>LLC</td>
+                                <td><span class="badge-active">Active / Good Standing</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Nexus FinTech Inc</strong></td>
+                                <td>#EF-88192</td>
+                                <td>California</td>
+                                <td>C-Corp</td>
+                                <td><span class="badge-active">Active / Good Standing</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
+
+    <!-- CORE TELEMETRY RECONCILIATION ENGINE TAG -->
+    <script src="assets/js/admin-engine.js"></script>
     <script>
-        (function(){function u(){const c=document.getElementById('portal-clock');if(c){const n=new Date();c.innerText=n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}}u();setInterval(u,1000);})();
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
     </script>
-<script src="assets/js/admin-engine.js"></script>
-    
 </body>
 </html>

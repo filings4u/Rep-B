@@ -2,194 +2,536 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Publishing Center | filings4u Staff</title>
-    
-    <!-- 🚀 MOBILE BROWSER INTERFACE EMERALD THEME CONTROLLERS -->
     <meta name="theme-color" content="#c15254">
-    
-    <!-- PRODUCTION CDN INFRASTRUCTURE -->
+
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    
-    <!-- 2. Load your centralized config -->
     <script src="assets/js/supabase-config.js"></script>
-    
-    <!-- 3. Load the guard file to lock the page -->
     <script src="assets/js/admin-guard.js"></script>
-    
-    <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
-    <link rel="stylesheet" href="assets/css/admin-core.css">
-    
-    <style> 
-        :root { --navy: #0a1f44; --emerald: #10b981; --border: #e2e8f0; } 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fcfcfc; color: var(--navy); display: flex; margin: 0; } 
-        /* Fixed Left Column Administrative Structural Dock */ 
-        .portal-sidebar { width: 260px; height: 100vh; background: #ffffff; border-right: 1px solid var(--border); padding: 20px; position: fixed; display: flex; flex-direction: column; box-sizing: border-box; } 
-        .portal-main { margin-left: 260px; width: calc(100% - 260px); padding: 50px 60px; box-sizing: border-box; } 
-        /* Publisher Canvas Workspace Form Items */ 
-        .publisher-card { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 40px; box-shadow: 0 4px 20px rgba(10,31,68,0.02); text-align: left; } 
-        .form-group { margin-bottom: 25px; } 
-        .form-group label { display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #4a5568; margin-bottom: 8px; letter-spacing: 0.5px; } 
-        .input-text, .input-select, .input-textarea { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; font-family: inherit; color: var(--navy); box-sizing: border-box; } 
-        .input-text:focus, .input-select:focus, .input-textarea:focus { border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); } 
-        .input-textarea { min-height: 350px; line-height: 1.6; } 
-        .btn-publish { background: var(--navy); color: white; border: none; padding: 16px 40px; border-radius: 6px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s; } 
-        .btn-publish:hover { background: var(--emerald); } 
-        .status-feedback { font-size: 0.85rem; font-weight: 600; margin-top: 15px; } 
-    </style> 
+    <script src="assets/js/wizard-sync.js"></script>
 
-</head> 
-<body> 
+    <style>
+        /* ==========================================================================
+           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
 
-    <!-- 🌐 ADMINISTRATIVE LEFT COLUMN NAVIGATION FRAMEWORK --> 
-    <aside class="portal-sidebar"> 
-        <div style="padding: 15px 0 25px 0; border-bottom: 1px solid var(--border); text-align: center;"> 
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;"> 
-                <img src="images/logo.png" alt="filings4u" style="max-width: 100%; height: auto; max-height: 40px; display: block; margin: 0 auto;"> 
-            </div> 
-            <div style="background: #0a1f44; color: #ffffff; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Content Desk</div> 
-        </div> 
-        <nav style="flex: 1; padding: 25px 0; display: flex; flex-direction: column; gap: 8px;"> 
-            <a href="admin-dashboard.html" style="display: flex; align-items: center; gap: 12px; color: #4a5568; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600;">📊 System Hub Home</a> 
-            <a href="admin-blog.html" style="display: flex; align-items: center; gap: 12px; color: #0a1f44; background: #f1f5f9; padding: 12px 15px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 700;">📰 Publish Long Article</a> 
-        </nav>
-    </aside> 
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
 
-    <!-- 🧱 MAIN TEXT CREATION WORKSPACE CANVAS --> 
-    <main class="portal-main"> 
-        <div style="max-width: 1000px; margin: 0 auto;"> 
-            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;"> 
-                <div style="text-align: left;"> 
-                    <h1 style="margin: 0; font-size: 2.2rem; font-weight: 800; color: var(--navy);">Long-Form Article Publisher</h1> 
-                    <p style="margin: 5px 0 0 0; color: #64748b;">Compose complete editorial articles, configure headings, and attach custom graphic images features site-wide.</p> 
-                </div> 
-            </header> 
-            
-            <div class="publisher-card"> 
-                <form id="masterLongBlogForm"> 
-                    <div class="form-group"> 
-                        <label for="blogTitle">Article Headline Title</label> 
-                        <input type="text" id="blogTitle" class="input-text" placeholder="e.g., Understanding FMCSA 2026 Fleet Compliance Guideline Audits" required> 
-                    </div> 
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE MAIN VIEWPORTS */
+        .portal-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-left: var(--sidebar-width) !important;
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 24px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px !important;
+            font-size: 0.82rem;
+            width: 220px;
+            outline: none;
+            background: #f8fafc;
+            box-sizing: border-box;
+            height: 40px;
+            color: var(--text-dark);
+        }
+
+        .search-input:focus {
+            background: var(--white);
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        /* Publisher Canvas Workspace Form Items */
+        .publisher-card {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(10,31,68,0.02);
+            text-align: left;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #4a5568;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-text, .input-select, .input-textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: inherit;
+            color: var(--text-dark);
+            box-sizing: border-box;
+        }
+
+        .input-text:focus, .input-select:focus, .input-textarea:focus {
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .input-textarea {
+            min-height: 350px;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        .btn-publish {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-publish:hover {
+            background: var(--emerald);
+        }
+
+        .status-feedback {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge">Directorate Admin</div></div>
+            </div>
+
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION PACK 1 ACTIVE DEFAULT -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Control Systems <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 500px;">
+                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+                    <a href="admin-blog.html" class="nav-item active"><span>📰</span> Manage Insights Blog</a>
+                </div>
+
+                <!-- ACCORDION PACK 2 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Operations & CRM <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;"> 
-                        <div class="form-group"> 
-                            <label for="blogCategory">Topic Classification Vector</label> 
-                            <select id="blogCategory" class="input-select" required> 
-                                <option value="">-- Choose Category --</option> 
-                                <option value="Corporate Formations">Corporate Formations</option> 
-                                <option value="Compliance Auditing">Compliance Auditing</option> 
-                                <option value="Corporate Tax Planning">Corporate Tax Planning</option> 
-                                <option value="DOT & Fleet">DOT & Fleet</option> 
-                            </select> 
-                        </div> 
-                        <div class="form-group"> 
-                            <label for="blogImageFile">Feature Cover Graphic Photo (.PNG, .JPG, Max 25MB)</label> 
-                            <input type="file" id="blogImageFile" class="input-text" accept="image/*" required> 
-                        </div> 
-                    </div> 
-                    
-                    <div class="form-group"> 
-                        <label for="blogSummary">Brief Card Summary Excerpt (Shows on search grid rows)</label> 
-                        <input type="text" id="blogSummary" class="input-text" placeholder="Type a concise 1-sentence overview snippet summary hook here..." required> 
-                    </div> 
-                    
-                    <div class="form-group"> 
-                        <label for="blogContent">Long-Form Article Editorial Body Content (Supports spacing paragraphs breaks)</label> 
-                        <textarea id="blogContent" class="input-textarea" placeholder="Compose your deep informative legal columns text content fields here..." required></textarea> 
-                    </div> 
-                    
-                    <div id="publishFeedbackMsg" class="status-feedback"></div> 
-                    <div style="margin-top: 30px; text-align: right;"> 
-                        <button type="submit" id="publishSubmitBtn" class="btn-publish">Publish Article Globally 🚀</button> 
-                    </div> 
-                </form> 
-            </div> 
-        </div> 
-    </main> 
+                </div>
 
-    <!-- ========================================================================== 🎯 REAL-TIME DATA TRANSMISSION ENGINE ========================================================================== --> 
-    <script> 
-        const supabaseDeskClient = supabase.createClient( 
-            'https://lrbimrlbskjweynxlgas.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU' 
-        ); 
+                <!-- ACCORDION PACK 3 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+                    Financials & Health <span class="chevron">▼</span>
+                </button>
+                <div class="accordion-panel">
+                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                </div>
+            </nav>
 
-        document.getElementById('masterLongBlogForm').addEventListener('submit', async (e) => { 
-            e.preventDefault(); 
-            const feedbackBox = document.getElementById('publishFeedbackMsg'); 
-            const submitBtn = document.getElementById('publishSubmitBtn'); 
-            const imageField = document.getElementById('blogImageFile'); 
-            
-            submitBtn.disabled = true; 
-            feedbackBox.style.color = "var(--navy)"; 
-            feedbackBox.innerText = "Uploading cover photo assets to storage vaults..."; 
+            <div class="sidebar-footer-lock">
+                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
+                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
+                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
+                </div>
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
+            </div>
+        </aside>
 
-            try { 
-                let generatedThumbnailUrl = 'images/blog-fallback.jpg'; 
+        <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div style="text-align: left;">
+                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Long-Form Article Publisher</h1>
+                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Compose editorial articles, configure headings, and attach custom graphic images features site-wide.</p>
+                </div>
+                
+                <div class="header-actions-wrapper">
+                    <div class="header-clock-pill">
+                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
+                    </div>
+                    <div>
+                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search articles...">
+                    </div>
+                </div>
+            </header>
 
-                // --- TRACK A: COMPILE AND UPLOAD ASSET TO STORAGE --- 
-                if (imageField.files && imageField.files.length > 0) { 
-  
-                    // 🚀 FIXED: Grab the exact singular file object out of the target files array element list!
-    const selectedPhoto = imageField.files[0]; 
-    const photoPathName = `blog_covers/${Date.now()}_${selectedPhoto.name.replace(/\s+/g, '_')}`; 
-
-                    
-                    const { data: storageData, error: storageErr } = await supabaseDeskClient.storage 
-                        .from('vault_documents') 
-                        .upload(photoPathName, selectedPhoto); 
-
-                    if (storageErr) throw storageErr; 
-
-                    const { data: publicUrlData } = supabaseDeskClient.storage 
-                        .from('vault_documents') 
-                        .getPublicUrl(photoPathName); 
+            <div class="content-container">
+                <div class="publisher-card">
+                    <form id="masterLongBlogForm">
+                        <div class="form-group">
+                            <label for="blogTitle">Article Headline Title</label>
+                            <input type="text" id="blogTitle" class="input-text" placeholder="e.g., Understanding FMCSA 2026 Fleet Compliance Guideline Audits" required>
+                        </div>
                         
-                    generatedThumbnailUrl = publicUrlData.publicUrl; 
-                } 
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                            <div class="form-group">
+                                <label for="blogCategory">Topic Classification Vector</label>
+                                <select id="blogCategory" class="input-select" required>
+                                    <option value="">-- Choose Category --</option>
+                                    <option value="Corporate Formations">Corporate Formations</option>
+                                    <option value="Compliance Auditing">Compliance Auditing</option>
+                                    <option value="Corporate Tax Planning">Corporate Tax Planning</option>
+                                    <option value="DOT & Fleet">DOT & Fleet</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="blogImageFile">Feature Cover Graphic Photo (.PNG, .JPG, Max 25MB)</label>
+                                <input type="file" id="blogImageFile" class="input-text" accept="image/*" required>
+                            </div>
+                        </div>
 
-                // --- TRACK B: MAP CONTENT TO FIXED SYSTEM TABLE --- 
-                feedbackBox.innerText = "Broadcasting long-form article text to system feeds..."; 
-                
-                const titleText = document.getElementById('blogTitle').value.trim(); 
-                const categorySelection = document.getElementById('blogCategory').value; 
-                const summaryText = document.getElementById('blogSummary').value.trim(); 
-                const fullContentBody = document.getElementById('blogContent').value.trim(); 
-                
-                // Generates the routing anchor handle
-                const computedUrlRoutingSlug = titleText.toLowerCase() 
-                    .replace(/[^a-z0-9]+/g, '-') 
-                    .replace(/(^-|-$)/g, ''); 
+                        <div class="form-group">
+                            <label for="blogSummary">Brief Card Summary Excerpt (Shows on search grid rows)</label>
+                            <input type="text" id="blogSummary" class="input-text" placeholder="Type a concise 1-sentence overview snippet summary hook here..." required>
+                        </div>
 
-                // 🚀 FIXED: Keys updated to map directly to your production table properties
-                const { error: dbErr } = await supabaseDeskClient 
-                    .from('blog_posts') 
-                    .insert({ 
-                        title: titleText, 
-                        summary: summaryText, 
-                        content: fullContentBody, 
-                        category: categorySelection, 
-                        slug: computedUrlRoutingSlug,
-                        image_url: generatedThumbnailUrl 
-                    }); 
+                        <div class="form-group">
+                            <label for="blogContent">Long-Form Article Editorial Body Content (Supports spacing paragraphs breaks)</label>
+                            <textarea id="blogContent" class="input-textarea" placeholder="Compose your deep informative legal columns text content fields here..." required></textarea>
+                        </div>
 
-                if (dbErr) throw dbErr; 
+                        <div id="publishFeedbackMsg" class="status-feedback"></div>
+                        
+                        <div style="margin-top: 30px; text-align: right;">
+                            <button type="submit" id="publishSubmitBtn" class="btn-publish">Publish Article Globally 🚀</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
 
-                feedbackBox.style.color = "var(--emerald)"; 
-                feedbackBox.innerText = "Success: Long article with images published live to filings4u.com insights page!"; 
-                document.getElementById('masterLongBlogForm').reset(); 
-
-            } catch (err) { 
-                console.error("Publishing lifecycle fault caught:", err); 
-                feedbackBox.style.color = "#e53e3e"; 
-                feedbackBox.innerText = `Publish failed: ${err.message}`; 
-            } finally { 
-                submitBtn.disabled = false; 
-            } 
-        }); 
-    </script> 
-
+    <!-- CORE FUNCTIONAL CONTROL MODULE SCRIPTS HANDOFF -->
     <script src="assets/js/admin-engine.js"></script>
-</body> 
+    <script>
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
+
+        // --- DYNAMIC DATA TRANSMISSION HOOK ---
+        document.getElementById('masterLongBlogForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Wait for configuration files to bind the client instance
+            const client = window.supabaseClient;
+            if (!client) {
+                alert("Publish Failed: Core database client engine offline.");
+                return;
+            }
+
+            const feedbackBox = document.getElementById('publishFeedbackMsg');
+            const submitBtn = document.getElementById('publishSubmitBtn');
+            const imageField = document.getElementById('blogImageFile');
+            
+            submitBtn.disabled = true;
+            feedbackBox.style.color = "var(--text-dark)";
+            feedbackBox.innerText = "Uploading cover photo assets to storage vaults...";
+
+            try {
+                let generatedThumbnailUrl = 'images/blog-fallback.jpg';
+
+                // --- UPLOAD COVERS TO STORAGE BUCKET ---
+                if (imageField.files && imageField.files.length > 0) {
+                    const selectedPhoto = imageField.files[0];
+                    const photoPathName = `blog_covers/${Date.now()}_${selectedPhoto.name.replace(/\s+/g, '_')}`;
+                    
+                    const { data: storageData, error: storageErr } = await client.storage
+                        .from('vault_documents')
+                        .upload(photoPathName, selectedPhoto);
+
+                    if (storageErr) throw storageErr;
+
+                    const { data: publicUrlData } = client.storage
+                        .from('vault_documents')
+                        .getPublicUrl(photoPathName);
+
+                    generatedThumbnailUrl = publicUrlData.publicUrl;
+                }
+
+                // --- INSERT CONTENT RECORD ---
+                feedbackBox.innerText = "Broadcasting long-form article text to system feeds...";
+                
+                const titleText = document.getElementById('blogTitle').value.trim();
+                const categorySelection = document.getElementById('blogCategory').value;
+                const summaryText = document.getElementById('blogSummary').value.trim();
+                const fullContentBody = document.getElementById('blogContent').value.trim();
+
+                const computedUrlRoutingSlug = titleText.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+
+                const { error: dbErr } = await client
+                    .from('blog_posts')
+                    .insert({
+                        title: titleText,
+                        summary: summaryText,
+                        content: fullContentBody,
+                        category: categorySelection,
+                        slug: computedUrlRoutingSlug,
+                        image_url: generatedThumbnailUrl
+                    });
+
+                if (dbErr) throw dbErr;
+
+                feedbackBox.style.color = "var(--emerald)";
+                feedbackBox.innerText = "Success: Long article with images published live to filings4u.com insights page!";
+                document.getElementById('masterLongBlogForm').reset();
+
+            } catch (err) {
+                console.error("Publishing lifecycle fault caught:", err);
+                feedbackBox.style.color = "#e53e3e";
+                feedbackBox.innerText = `Publish failed: ${err.message}`;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
 </html>
