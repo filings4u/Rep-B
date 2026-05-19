@@ -2,19 +2,28 @@
 (async function initializeAdminDashboardEngine() {
     "use strict";
 
-    const client = window.supabaseClient;
-    if (!client) {
-        console.error("Fatal Engine Failure: Supabase initialization client is missing.");
-        return;
+    // 1. Asynchronous polling engine waiting safely for config client instantiation
+    function waitForSupabaseClientEngine() {
+        return new Promise((resolve) => {
+            if (window.supabaseClient) return resolve(window.supabaseClient);
+            const trackingInterval = setInterval(() => {
+                if (window.supabaseClient) {
+                    clearInterval(trackingInterval);
+                    resolve(window.supabaseClient);
+                }
+            }, 10); // Polling checks every 10ms resolves Cloudflare race states
+        });
     }
 
-    // 1. Gather all interface elements
+    const client = await waitForSupabaseClientEngine();
+
+    // 2. Gather layout interaction components
     const globalLogoutBtn = document.getElementById('adminGlobalLogoutBtn');
     const fallbackLogoutBtn = document.getElementById('sidebarFallbackLogoutBtn');
     const staffEmailDisplayLog = document.getElementById('liveStaffEmailDisplayLog');
     const clockDisplayElement = document.getElementById('portal-clock');
 
-    // 2. Synchronize Live System Clock
+    // 3. Synchronize Live System Clock
     function runLiveSystemClock() {
         if (!clockDisplayElement) return;
         const now = new Date();
@@ -23,7 +32,7 @@
     setInterval(runLiveSystemClock, 1000);
     runLiveSystemClock();
 
-    // 3. Inject User Meta State into system logs area
+    // 4. Inject Active User Meta State into administrative dashboard log panels
     try {
         const { data: { session } } = await client.auth.getSession();
         if (session && session.user && staffEmailDisplayLog) {
@@ -33,7 +42,7 @@
         console.warn("Unable to write active session mail stamp:", logErr);
     }
 
-     // 4. Centralized Application Sign Out Protocol
+    // 5. Centralized Application Sign Out Protocol
     async function executeTerminalSessionTermination() {
         try {
             if (globalLogoutBtn) globalLogoutBtn.disabled = true;
@@ -42,7 +51,7 @@
             console.log("Terminating administration session state...");
             await client.auth.signOut();
             
-            // 🎯 FIXED: Direct absolute window coordination fallback path
+            // Hard boundary escape loop directly out to absolute subdomain endpoints
             const baseTarget = window.productionRootUrl || window.location.origin;
             window.location.replace(`${baseTarget}/admin-login.html`);
         } catch (logoutErr) {
@@ -52,13 +61,19 @@
         }
     }
 
-
-    // Attach click listeners to both visual sign out interface triggers
+    // Bind safe click listeners onto header actions and fallback sidebar elements
     if (globalLogoutBtn) {
-        globalLogoutBtn.addEventListener('click', e => { e.preventDefault(); executeTerminalSessionTermination(); });
+        globalLogoutBtn.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            executeTerminalSessionTermination(); 
+        });
     }
     if (fallbackLogoutBtn) {
-        fallbackLogoutBtn.addEventListener('click', e => { e.preventDefault(); executeTerminalSessionTermination(); });
+        fallbackLogoutBtn.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            executeTerminalSessionTermination(); 
+        });
     }
 
+    console.log("🚀 Admin core telemetry engine safely stabilized.");
 })();
