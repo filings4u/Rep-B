@@ -324,13 +324,16 @@
                 })
             });
 
-            if (!edgeResponseStream.ok) throw new Error(`Edge networks rejected initialization: Code ${edgeResponseStream.status}`);
-            
+// assets/js/portal-engine.js (Part 4 - Stripe Callback, Storage Bucket Vault, & Security Triggers)
+
+            if (!edgeResponseStream.ok) {
+                throw new Error(`Edge networks rejected initialization: Code ${edgeResponseStream.status}`);
+            }
+
             const dataPayloadJSON = await edgeResponseStream.json();
             if (dataPayloadJSON.error) throw new Error(dataPayloadJSON.error);
 
             const clientSecret = dataPayloadJSON.clientSecret;
-
             const embeddedCheckoutObject = await stripeInstance.initEmbeddedCheckout({
                 fetchClientSecret: function() { return clientSecret; },
                 onComplete: function() { window.handlePaidWorkspaceTableMutation(serviceKeyTarget); }
@@ -341,11 +344,13 @@
 
         } catch (handshakeExceptionError) {
             console.error("Stripe connection failed:", handshakeExceptionError);
-            if (loaderElement) loaderElement.innerHTML = `<div style="color:#c15254; font-weight:700; padding:20px;">Stripe Configuration Handshake Error: ${handshakeExceptionError.message}</div>`;
+            if (loaderElement) {
+                loaderElement.innerHTML = `<div style="color:#c15254; font-weight:700; padding:20px;">Stripe Configuration Handshake Error: ${handshakeExceptionError.message}</div>`;
+            }
         }
     };
 
-        window.handlePaidWorkspaceTableMutation = async function(serviceKeyTarget) {
+    window.handlePaidWorkspaceTableMutation = async function(serviceKeyTarget) {
         if (!window.globalSessionUserId) return;
 
         const { error } = await client
@@ -358,18 +363,21 @@
         if (error) console.error("Failed to clear draft updates flag:", error.message);
 
         const receiptLabel = document.getElementById('success-service-receipt-key');
-        if (receiptLabel) receiptLabel.innerText = `Paid Filing Module Reference Key: Code-${serviceKeyTarget.toUpperCase()}`;
-        
+        if (receiptLabel) {
+            receiptLabel.innerText = `Paid Filing Module Reference Key: Code-${serviceKeyTarget.toUpperCase()}`;
+        }
         window.switchActivePortalTab('success-tab', null);
     };
 
     // ==========================================================================
-    // 💳 ITEMIZATION BILLING STATEMENTS & HISTORY HISTORY
+    // 💳 ITEMIZATION BILLING STATEMENTS & ORDER HISTORY
     // ==========================================================================
     window.openBillingOrdersModal = async function() {
         const modal = document.getElementById('billing-orders-modal');
         if (!modal || !window.globalSessionUserId) return;
+
         modal.style.display = 'flex';
+
         const tableBody = document.getElementById('billing-ledger-table-body');
         const spentTarget = document.getElementById('billing-total-spent');
         const countTarget = document.getElementById('billing-settled-count');
@@ -382,17 +390,20 @@
             .eq('status', 'paid');
 
         if (error || !records || records.length === 0) {
-            if (tableBody) tableBody.innerHTML = `<tr><td colspan="4" style="padding:30px 5px; text-align:center; color:#64748b; font-style:italic;">No settled transactions or order histories found under this workspace account token profile.</td></tr>`;
+            if (tableBody) {
+                tableBody.innerHTML = `<tr><td colspan="4" style="padding:30px 5px; text-align:center; color:#64748b; font-style:italic;">No settled transactions or order histories found under this workspace account token profile.</td></tr>`;
+            }
             if (spentTarget) spentTarget.innerText = "$0.00";
             if (countTarget) countTarget.innerText = "0 Transactions";
             return;
         }
-        
+
         let spent = 0;
         tableBody.innerHTML = records.map(item => {
             const spec = registry[item.service_key] || { basePrice: 149, govFee: 0, title: `Service: ${item.service_key}` };
-            const total = (spec.basePrice || 0) + (spec.govFee || 0); 
+            const total = (spec.basePrice || 0) + (spec.govFee || 0);
             spent += total;
+
             return `
                 <tr style="border-bottom:1px solid #e2e8f0; color:#0a1f44; font-size:0.85rem;">
                     <td style="padding:15px 5px; font-weight:700;">
@@ -404,13 +415,14 @@
                     <td style="padding:15px 5px; text-align:right;"><button onclick="alert('Downloading printable invoice PDF statement layout receipt...')" style="background:transparent; border:1px solid #0a1f44; color:#0a1f44; padding:4px 8px; border-radius:4px; font-weight:700; cursor:pointer;">Print</button></td>
                 </tr>`;
         }).join('');
-        
+
         if (spentTarget) spentTarget.innerText = `$${spent.toFixed(2)}`;
         if (countTarget) countTarget.innerText = `${records.length} Paid Order(s)`;
     };
 
     window.closeBillingOrdersModal = function() {
-        document.getElementById('billing-orders-modal').style.display = 'none';
+        const modal = document.getElementById('billing-orders-modal');
+        if (modal) modal.style.display = 'none';
     };
 
     // ==========================================================================
@@ -419,16 +431,16 @@
     window.syncVaultTabDocumentGrid = async function(userId) {
         const tabInventoryTargetNode = document.getElementById('vault-tab-inventory-list');
         if (!userId || !tabInventoryTargetNode) return;
-        
+
         const { data: clusterStorageFiles, error } = await client.storage
             .from('compliance_vault_documents')
             .list(userId, { limit: 15, sortBy: { column: 'created_at', order: 'desc' } });
-            
+
         if (error || !clusterStorageFiles || clusterStorageFiles.length === 0) {
             tabInventoryTargetNode.innerHTML = `<div style="padding:25px; text-align:center; color:#64748b; background:rgba(0,0,0,0.01); border:1px solid #e2e8f0; border-radius:6px; font-size:0.85rem; font-style:italic;">No documents matching this session token currently present in the cluster storage repository. Drag files onto the shortcut element to populate this archive.</div>`;
             return;
         }
-        
+
         tabInventoryTargetNode.innerHTML = clusterStorageFiles.map(fileObject => {
             const calculatedPayloadMB = fileObject.metadata ? (fileObject.metadata.size / (1024 * 1024)).toFixed(2) : "0.00";
             return `
@@ -444,43 +456,54 @@
     };
 
     window.triggerVaultFileDownloadAction = async function(userId, targetFileNameString) {
-        const { data, error } = await client.storage.from('compliance_vault_documents').download(`${userId}/${targetFileNameString}`);
-        if (error) { alert(`Download fail: ${error.message}`); return; }
-        const fileStreamBlobUrl = URL.createObjectURL(data);
-        const a = document.createElement('a'); 
-        a.href = fileStreamBlobUrl; 
-        a.download = targetFileNameString.substring(targetFileNameString.indexOf('_') + 1);
-        document.body.appendChild(a); 
-        a.click(); 
-        document.body.removeChild(a); 
-        URL.revokeObjectURL(fileStreamBlobUrl);
-    };
+        try {
+            const { data, error } = await client.storage
+                .from('compliance_vault_documents')
+                .download(`${userId}/${targetFileNameString}`);
 
-    // ==========================================================================
-    // 🔒 ACCOUNT SECURITY PROFILE DATA LINK SIGN-OUTS
-    // ==========================================================================
-    window.triggerSettingsPasswordReset = async function(event) {
-        event.preventDefault();
-        const triggerBtn = document.getElementById('settingsResetBtn');
-        const inputEmailValueStr = document.getElementById('settings-user-email').value;
-        
-        if(!inputEmailValueStr || inputEmailValueStr.includes('Loading')) return;
-        
-        triggerBtn.innerText = "Transmitting Reset Request..."; 
-        triggerBtn.disabled = true;
-        
-        const { error } = await client.auth.resetPasswordForEmail(inputEmailValueStr, { 
-            redirectTo: window.productionRootUrl + '/update-password.html' 
-        });
-        
-        if (error) { 
-            alert(`Security error: ${error.message}`); 
-            triggerBtn.innerText = "Reset Password 🔒"; 
-            triggerBtn.disabled = false; 
-        } else { 
-            alert("Password reset configuration link securely delivered to your registered inbox."); 
-            triggerBtn.innerText = "Link Dispatched ✓"; 
+            if (error) throw error;
+
+            const fileStreamBlobUrl = URL.createObjectURL(data);
+            const a = document.createElement('a');
+            a.href = fileStreamBlobUrl;
+            a.download = targetFileNameString.substring(targetFileNameString.indexOf('_') + 1);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(fileStreamBlobUrl);
+        } catch (downloadErr) {
+            alert(`Download failed: ${downloadErr.message}`);
         }
     };
 
-})(); // Final close module execution block wrapper
+    // ==========================================================================
+    // 🔐 ACCOUNT SECURITY PROFILE DATA LINK SIGN-OUTS
+    // ==========================================================================
+    window.triggerSettingsPasswordReset = async function(event) {
+        event.preventDefault();
+        
+        const triggerBtn = document.getElementById('settingsResetBtn');
+        const inputEmailValueStr = document.getElementById('settings-user-email').value;
+        
+        if (!inputEmailValueStr || inputEmailValueStr.includes('Loading')) return;
+
+        triggerBtn.innerText = "Transmitting Reset Request...";
+        triggerBtn.disabled = true;
+
+        const baseTarget = window.productionRootUrl || window.location.origin;
+        
+        const { error } = await client.auth.resetPasswordForEmail(inputEmailValueStr, { 
+            redirectTo: `${baseTarget}/update-password.html` 
+        });
+
+        if (error) {
+            alert(`Security error: ${error.message}`);
+            triggerBtn.innerText = "Reset Password 🔐";
+            triggerBtn.disabled = false;
+        } else {
+            alert("Password reset configuration link securely delivered to your registered inbox.");
+            triggerBtn.innerText = "Link Dispatched ✓";
+        }
+    };
+
+})(); // Engine closure execution complete.
