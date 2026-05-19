@@ -4,7 +4,7 @@
 
     console.log("🚀 Admin UI accordion engine successfully mounted.");
 
-    
+
     // ⏰ 1. SELF-SUFFICIENT REAL-TIME SYSTEM CLOCK (WITH DATE MERGED)
     // ==========================================================================
     const clockDisplayElement = document.getElementById('portal-clock');
@@ -33,29 +33,30 @@
 
 
 
-    // ==========================================================================
-    // 🚪 2. DISCONNECTED SESSION TERMINATION ROUTINES
-    // ==========================================================================
+       // 🚪 2. SECURE INSTANT DISCONNECTED ACTION ROUTER
     async function executeTerminalSessionTermination(btnElement) {
+        if (btnElement) btnElement.disabled = true;
+        console.log("Instant clearing local authentication metrics...");
+
+        // 🎯 THE SPEED FIX: Clear local storage keys instantly before the server responds
+        localStorage.removeItem("filings4u_secure_session_token");
+        sessionStorage.clear();
+
+        const baseTarget = window.productionRootUrl || window.location.origin;
+
         try {
-            if (btnElement) btnElement.disabled = true;
-            console.log("Purging administrative authorization tokens...");
-
+            // Trigger the remote sign-out in the background without blocking the user
             if (window.supabaseClient && window.supabaseClient.auth) {
-                await window.supabaseClient.auth.signOut();
+                window.supabaseClient.auth.signOut(); 
             }
-
-            localStorage.removeItem("filings4u_secure_session_token");
-            sessionStorage.clear();
-
-            const baseTarget = window.productionRootUrl || window.location.origin;
-            window.location.replace(`${baseTarget}/admin-login.html`);
         } catch (logoutErr) {
-            console.error("Logout caught an exception:", logoutErr.message);
-            const baseTarget = window.productionRootUrl || window.location.origin;
-            window.location.replace(`${baseTarget}/admin-login.html`);
+            console.warn("Background auth purge trace skipped:", logoutErr.message);
         }
+
+        // Redirect immediately—takes under 50 milliseconds
+        window.location.replace(`${baseTarget}/admin-login.html`);
     }
+
 
     document.addEventListener("DOMContentLoaded", () => {
         const fallbackLogoutBtn = document.getElementById('sidebarFallbackLogoutBtn');

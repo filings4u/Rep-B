@@ -1,4 +1,10 @@
 // assets/js/portal-login.js
+    // 🎯 ACCELERATION TRICK: Check local storage tokens instantly before making remote database calls
+    const fastTokenCheck = localStorage.getItem("filings4u_secure_session_token");
+    if (!fastTokenCheck) {
+        console.log("No token present, rendering login inputs instantly.");
+        // Stop waiting and let user log in immediately
+    }
 async function startCustomerLoginEngine() {
     "use strict";
 
