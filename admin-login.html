@@ -43,56 +43,73 @@
     <link rel="icon" type="image/png" href="images/fav.png">
     
     <style>
-        :root {
-            --primary-blue: #0a1f44;
-            --white: #ffffff;
-            --bg-light: #f8fafc;
-            --border-color: #e2e8f0;
-            --text-gray: #44526c;
-            --staff-red: #c15254;
-        }
-        body, html { margin: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        .split-container { display: flex; height: 100vh; width: 100%; overflow: hidden; }
-        
-        .image-side { 
-            flex: 1; 
-            background: linear-gradient(rgba(10, 31, 68, 0.85), rgba(193, 82, 84, 0.85)), url('images/login-hero.jpg'); 
-            background-size: cover; 
-            background-position: center; 
-            display: flex; align-items: center; justify-content: center; color: white; padding: 60px; box-sizing: border-box; position: relative; 
-        }
-        .image-content h1 { font-size: 3rem; line-height: 1.2; margin-bottom: 20px; font-weight: 800; }
-        .image-content p { font-size: 1.1rem; opacity: 0.9; max-width: 500px; line-height: 1.5; }
-        
-        .form-side { flex: 1; background-color: var(--bg-light); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; position: relative; height: 100vh; overflow: hidden; }
-        .login-card { width: 100%; max-width: 380px; background: var(--white); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(10,31,68,0.06); text-align: center; z-index: 10; box-sizing: border-box; }
-        .logo-container { margin-bottom: 15px; }
-        .logo-container img { height: 38px; }
-        .admin-badge { display: inline-block; background: rgba(193, 82, 84, 0.1); color: var(--staff-red); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(193, 82, 84, 0.2); }
-        .login-card h2 { color: var(--primary-blue); font-size: 1.4rem; margin: 0 0 6px 0; font-weight: 800; }
-        .login-card p { color: var(--text-gray); margin-bottom: 25px; font-size: 0.85rem; line-height: 1.4; }
-        .form-group { text-align: left; margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--primary-blue); margin-bottom: 6px; letter-spacing: 0.05em; }
-        
-        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: all 0.25s; color: var(--primary-blue); }
-        .form-group input:focus { border-color: var(--staff-red); box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.08); }
-        
-        /* 🚨 RED GLOW ERROR SHADOW CONFIGURATION */
-        .form-group input.field-error {
-            border-color: #e53e3e !important;
-            box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.15) !important;
-            animation: formFieldShake 0.4s ease-in-out;
-        }
-        @keyframes formFieldShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
+       /* ==========================================================================
+   🛠️ RESILIENT MOBILE MOBILE MEDIA QUERY BALANCER OVERRIDES
+   ========================================================================== */
+@media (max-width: 991px) {
+    html, body {
+        overflow: auto !important; /* Restores simple screen scrolling capacity */
+        height: auto !important;
+        min-height: 100vh !important;
+    }
 
-        .btn-login { width: 100%; background-color: var(--primary-blue) !important; color: var(--white) !important; border: none; padding: 14px; border-radius: 6px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s, transform 0.1s; margin-top: 5px; display: block; }
-        .btn-login:hover { background-color: #122d5a !important; }
-        .btn-login:active { transform: scale(0.99); }
-        .error-msg { color: var(--staff-red); font-size: 0.78rem; margin-top: 8px; font-weight: 600; text-align: left; min-height: 1.2em; line-height: 1.3; }
+    .split-container {
+        flex-direction: column !important; /* Stacks image above the form elements */
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
+
+    /* 🎯 THE CRITICAL OVERRIDE: Prevent the asset from stealing space */
+    .image-side {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 160px !important; /* Compresses the top banner image down to a tight row header */
+        min-height: 160px !important;
+        padding: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Recalculate title padding placement positions inside the compact banner */
+    .image-side div[style*="position: absolute"] {
+        position: static !important; /* Unpins the absolute top-left offsets */
+        text-align: center !important;
+    }
+
+    .image-content h1 {
+        font-size: 1.4rem !important; /* Shrinks the massive header font size */
+        margin-bottom: 4px !important;
+        text-align: center !important;
+    }
+
+    .image-content p {
+        display: none !important; /* Completely drops descriptive subtext paragraphs on mobile views */
+    }
+
+    /* Adjust the bottom container where your form input matrix card sits */
+    .form-side {
+        width: 100% !important;
+        height: auto !important;
+        padding: 30px 15px 50px 15px !important; /* Comfortable vertical spacing at the bottom */
+        display: flex !important;
+        align-items: flex-start !important; /* Snaps form near the image instead of centering off-screen */
+        justify-content: center !important;
+        background-color: #f8fafc !important;
+    }
+
+    .login-card {
+        width: 100% !important;
+        max-width: 380px !important;
+        padding: 25px 20px !important;
+        box-shadow: 0 10px 25px rgba(10, 31, 68, 0.04) !important;
+        border-radius: 12px !important;
+        margin: 0 auto !important;
+    }
+}
+
     </style>
 </head>
 <body>
