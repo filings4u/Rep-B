@@ -485,12 +485,12 @@ main.portal-main div.portal-content-layout {
 }
 
 /* ==========================================================================
-   🌐 UNIVERSAL COMPACT SIDEBAR NAVIGATION RECONSTRUCTION
+   🌐 RESPONSIVE DESKTOP-STATIC / MOBILE-COLLAPSIBLE INFRASTRUCTURE
    ========================================================================== */
 
-/* 📁 PERMANENT NAV TOGGLE BUTTON DESIGN MARK */
+/* 📁 MOBILE NAVIGATION FLOATING BUTTON ACTION */
 .mobile-nav-toggle-btn {
-    display: flex !important; /* Force visible permanently on all screen widths */
+    display: none; /* 🎯 HIDDEN BY DEFAULT ON DESKTOP SCREENS */
     position: fixed;
     top: 15px;
     left: 15px;
@@ -509,27 +509,23 @@ main.portal-main div.portal-content-layout {
     transition: all 0.2s ease;
 }
 
-.mobile-nav-toggle-btn:hover {
-    background: #0f2d5f;
-    transform: scale(1.02);
-}
-
-/* Base structural workspace override configuration settings */
-html, body, .dashboard-wrapper {
-    overflow: auto !important;
-    height: 100% !important;
+/* 🧱 STANDARD DESKTOP VIEWPORT: SIDEBAR VISIBLE BY DEFAULT */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; 
+    background-color: var(--bg-main-canvas);
 }
 
 .dashboard-wrapper {
-    position: relative;
+    display: flex;
+    height: 100vh;
     width: 100vw;
+    overflow: hidden;
 }
 
-/* 🔒 PERSISTENT SIDEBAR LOCK STATE (HIDDEN BY DEFAULT LAYOUT LAWS) */
 .portal-sidebar {
-    position: fixed;
-    top: 0;
-    left: -280px; /* Locked completely outside the screen borders to save space */
     width: 280px;
     height: 100vh;
     background: var(--brand-primary);
@@ -537,53 +533,101 @@ html, body, .dashboard-wrapper {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    z-index: 9995;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Fluid desktop slide speed */
-    box-shadow: 5px 0 25px rgba(10, 31, 68, 0.12);
+    position: relative;
+    left: 0; /* Locked in position on desktop screen layout views */
+    z-index: 10;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 🟢 THE REVEAL MECHANIC TRIGGER INJECTED BY CLICKS */
-.portal-sidebar.mobile-revealed {
-    left: 0 !important;
-}
-
-/* 🧱 UNRESTRICTED FULL SCREEN CONTENT CANVAS BOX */
 .portal-main {
-    width: 100vw;
-    min-height: 100vh;
-    padding: 75px 35px 35px 35px !important; /* Re-padded top space to make room for toggle button */
-    overflow-y: auto;
+    flex-grow: 1;
+    height: 100vh;
+    padding: 20px 35px 35px 35px !important; /* Base tight padding space setup */
+    overflow-y: auto;              
     box-sizing: border-box;
-    transition: padding 0.3s ease;
 }
 
-.portal-header {
-    margin-bottom: 24px;
-    gap: 16px;
-}
-
-/* 📉 MOBILE FLATTENING ADAPTATIONS COMPATIBILITY CORRECTIONS */
-@media (max-width: 768px) {
-    .portal-main {
-        padding: 75px 16px 25px 16px !important;
+/* ==========================================================================
+   📱 MOBILE BREAKPOINT RESPONSIVE OVERRIDES (UNDER 992PX WIDTH)
+   ========================================================================== */
+@media (max-width: 992px) {
+    html, body, .dashboard-wrapper {
+        overflow: auto !important; 
+        height: auto !important;
     }
+
+    .dashboard-wrapper {
+        flex-direction: column;
+    }
+
+    /* 🎯 Reveal the toggle bar button only on small layouts */
+    .mobile-nav-toggle-btn {
+        display: flex;
+    }
+
+    /* Transform the sidebar into a hidden mobile overlay drawer menu container */
+    .portal-sidebar {
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: -100vw; /* Hidden completely off-screen on mobile until toggle click */
+        z-index: 9995;
+        box-shadow: 5px 0 25px rgba(10, 31, 68, 0.2);
+    }
+
+    /* Trigger layout indicator injected by toggle clicks */
+    .portal-sidebar.mobile-revealed {
+        left: 0 !important;
+    }
+
+    .portal-main {
+        width: 100vw;
+        height: auto !important;
+        padding: 85px 20px 40px 20px !important; /* Shift down to allow clear top bar toggle margins */
+        overflow-y: visible !important;
+    }
+
+    .portal-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+
     .header-actions-wrapper {
         width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+        flex-direction: row;
+        justify-content: space-between;
     }
+
     .search-input {
-        width: 100%;
+        flex-grow: 1;
+        width: auto;
     }
+
     .metrics-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
     }
+
     .portal-content-layout {
         grid-template-columns: 1fr !important;
+        gap: 25px;
     }
+
     .tight-scroll-area {
         max-height: none !important;
         overflow-y: visible !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .header-actions-wrapper {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
