@@ -548,6 +548,37 @@
             }
         }, 100);
         setTimeout(() => clearInterval(initLoop), 5000);
+
+        function toggleMobileSidebarMenuOverlay() {
+    // Only run toggle menu slide overrides if the viewport matches mobile parameters
+    if (window.innerWidth > 992) return;
+
+    const sidebar = document.querySelector(".portal-sidebar");
+    const icon = document.getElementById("mobileNavTriggerIcon");
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("mobile-revealed");
+
+    if (sidebar.classList.contains("mobile-revealed")) {
+        icon.textContent = "✕";
+    } else {
+        icon.textContent = "☰";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const navLinks = document.querySelectorAll(".nav-item");
+    navLinks.forEach(link => {
+        link.addEventListener("click", () => {
+            const sidebar = document.querySelector(".portal-sidebar");
+            // Auto close mobile drawer layout menu only if view is running in mobile mode
+            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+                toggleMobileSidebarMenuOverlay();
+            }
+        });
+    });
+});
+
     </script>
 </body>
 </html>
