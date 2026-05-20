@@ -1,7 +1,10 @@
-// assets/js/supabase-config.js
+/**
+ * 🚀 filings4u Global Production Infrastructure Config & Secure Perimeter Gate
+ * Standardized single-source architecture for auth validation and connection syncing
+ */
 async function initializeGlobalSupabase() {
     "use strict";
-    
+
     const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
 
@@ -20,6 +23,7 @@ async function initializeGlobalSupabase() {
     try {
         const supabaseLib = await checkLibraryState();
         
+        // Build the active client window property cleanly
         window.supabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: {
                 persistSession: true,
@@ -29,10 +33,11 @@ async function initializeGlobalSupabase() {
             }
         });
 
+        // Set global scope URL helpers for fallback actions
         window.productionRootUrl = window.location.origin;
         console.log("⚡ Production client initialized safely with storage protection keys.");
 
-        // 🎯 RUN PERIMETER SECURITY GATE ROUTINES
+        // Execute unified security routines safely inside the synchronous block chain
         await executePerimeterSecurityGate(window.supabaseClient);
 
     } catch (e) {
@@ -53,7 +58,6 @@ async function executePerimeterSecurityGate(client) {
         "/update-password.html"
     ];
 
-    // If current path matches an open gateway, skip auth validation checks
     const isPublic = publicPages.some(page => currentPath.endsWith(page)) || currentPath === "/" || currentPath === "";
     if (isPublic) return;
 
@@ -64,7 +68,6 @@ async function executePerimeterSecurityGate(client) {
     try {
         const { data: { session }, error } = await client.auth.getSession();
 
-        // Check for active token
         if (error || !session || !session.user) {
             throw new Error("Missing active profile credential tokens.");
         }
@@ -73,7 +76,7 @@ async function executePerimeterSecurityGate(client) {
         const isCorporate = email.endsWith("@filings4u.com") || email === "test-admin@filings4u.com";
 
         // 3. Admin Area Routing Protection
-        if (currentPath.includes("admin-")) {
+        if (currentPath.includes("admin-") || currentPath.includes("/admin")) {
             if (!isCorporate) {
                 console.warn(`Security Breach: Client profile ${email} rejected from admin space.`);
                 window.location.replace(`${fallbackBase}/portal-login.html`);
@@ -81,13 +84,13 @@ async function executePerimeterSecurityGate(client) {
             }
         }
 
-        // Token verified: Make page visible instantly
+        // Token verified: Reveal layout instantly
         rootElement.style.visibility = "visible";
 
     } catch (gateError) {
         console.warn("Perimeter Guard Redirect Action:", gateError.message);
         
-        // Clean session corruptions
+        // Clean up corrupt session memory rows safely
         try { await client.auth.signOut(); } catch (_) {}
 
         // 4. Intelligently route back to matching entry terminals
@@ -99,7 +102,7 @@ async function executePerimeterSecurityGate(client) {
     }
 }
 
-// Auto-trigger execution instantly if the client is missing on load
+// Auto-trigger clean sequence instantiation
 if (!window.supabaseClient) {
     initializeGlobalSupabase();
 }
