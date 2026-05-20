@@ -42,12 +42,23 @@ async function initializePortalSession() {
     }
 }
 
-// 🌐 SUPABASE REALTIME BROADCAST CHANNELS SETUP
+// ==========================================================================
+// 🌐 CORRECTED SUPABASE REALTIME BROADCAST CHANNELS SETUP
+// ==========================================================================
 function initializeRealtimeBroadcastNetwork() {
-    if (typeof supabase === 'undefined') return;
+    // 🎯 FIX: Fallback sequence targeting your active window client wrapper
+    const activeClient = window.supabaseClient || window.supabase;
+    
+    // Safety check to ensure the connection instance has initialized methods
+    if (!activeClient || typeof activeClient.channel !== 'function') {
+        console.warn("⚠️ Realtime Core: Connection object or channel function is missing.");
+        return;
+    }
 
-    // Open connection channel targeting the active client's unique cluster ID
-    realtimeTelemetryChannel = supabase.channel(`telemetry_desk_${activeClientSessionUser?.id || 'sandbox'}`);
+    if (!activeClientSessionUser) return;
+
+    // Open connection channel targeting the active client's unique user UUID
+    realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${activeClientSessionUser.id}`);
 
     realtimeTelemetryChannel
         .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
@@ -56,10 +67,11 @@ function initializeRealtimeBroadcastNetwork() {
         })
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
-                console.log('📡 Connected to Supabase Broadcast Network');
+                console.log('📡 Synchronized cleanly to Supabase Realtime Broadcast Network');
             }
         });
 }
+
 
 // 🚀 DISPATCH LIVE PIPELINE MUTATION DATA OVER THE AIR
 async function dispatchOrderViaBroadcast() {
