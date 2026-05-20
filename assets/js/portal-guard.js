@@ -8,7 +8,7 @@
 
     // 2. Establish uniform routing targets
     const productionRootUrl = window.productionRootUrl || window.location.origin;
-    const portalLoginTarget = `${productionRootUrl}/portal-login.html`;
+    const portalLoginTarget = `${productionRootUrl}/https://portal.filings4u.com/portal-login.html`;
 
     function waitForSupabase() {
         return new Promise((resolve, reject) => {
