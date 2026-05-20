@@ -1,7 +1,6 @@
 /**
- * 💬 filings4u Live Admin Chat Desk Controller
- * Manages active user dropdown arrays, historical message logs retrieval, 
- * and bidirectional instant message streaming through Supabase Channels.
+ * 💬 filings4u Live Admin Chat Desk Controller (Production-Ready)
+ * Synchronized dropdown hydration and event-listener binding mechanics
  */
 (function initializeAdminChatController() {
     "use strict";
@@ -36,11 +35,12 @@
                     opt.textContent = user.company_name || `Client Account #${user.id.substring(0, 6)}`;
                     selector.appendChild(opt);
                 });
+                console.log(`✅ Successfully loaded ${profiles.length} users into admin dropdown.`);
             } else {
-                console.warn("No customer accounts located in profiles relational table index.");
+                console.warn("⚠️ No customer accounts located in profiles relational table index.");
             }
         } catch (err) {
-            console.error("Failed to compile target chat selection arrays:", err.message);
+            console.error("❌ Failed to compile target chat selection arrays:", err.message);
         }
     };
 
@@ -67,11 +67,10 @@
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
-            if (logContainer) logContainer.innerHTML = ""; // Clear loader text
+            if (logContainer) logContainer.innerHTML = ""; 
 
             if (records && records.length > 0) {
                 records.forEach(msg => {
-                    // If sender is admin, treat as outbound. If client, treat as inbound
                     const alignmentStyle = msg.sender_type === 'admin' ? 'outbound' : 'inbound';
                     appendMessageBubbleToConsoleLog(msg.message_content, alignmentStyle);
                 });
@@ -86,12 +85,11 @@
                 await client.removeChannel(activeAdminChatChannel);
             }
 
-            // C. Establish streaming connection channel to this specific customer's UUID room [1]
+            // C. Establish streaming connection channel to this specific customer's UUID room
             activeAdminChatChannel = client.channel(`support_thread_${clientId}`);
 
             activeAdminChatChannel
                 .on('broadcast', { event: 'text_message_event' }, (payload) => {
-                    // Intercept incoming messages from the client text field pipeline
                     if (payload.payload.sender === 'client') {
                         appendMessageBubbleToConsoleLog(payload.payload.msg, 'inbound');
                     }
@@ -103,7 +101,7 @@
                 });
 
         } catch (fault) {
-            console.error("Failed to connect live messaging thread arrays:", fault.message);
+            console.error("❌ Failed to connect live messaging thread arrays:", fault.message);
         }
     };
 
@@ -118,20 +116,14 @@
         const typedMessage = field.value.trim();
 
         try {
-            // A. Broadcast text over-the-air to the client window layout instantly [1]
             if (activeAdminChatChannel) {
                 await activeAdminChatChannel.send({
                     type: 'broadcast',
                     event: 'text_message_event',
-                    payload: { 
-                        msg: typedMessage, 
-                        sender: 'admin', 
-                        timestamp: new Date().toISOString() 
-                    }
+                    payload: { msg: typedMessage, sender: 'admin', timestamp: new Date().toISOString() }
                 });
             }
 
-            // B. Record text transaction to relational schema tables for persistence
             await client.from('chat_messages').insert({
                 client_id: currentlySelectedClientUuid,
                 sender_type: 'admin',
@@ -139,16 +131,13 @@
             });
 
             appendMessageBubbleToConsoleLog(typedMessage, 'outbound');
-            field.value = ""; // Clear active input area text safely
+            field.value = ""; 
 
         } catch (err) {
-            console.error("Failed to execute text delivery transaction transaction:", err.message);
+            console.error("❌ Failed to execute text delivery transaction:", err.message);
         }
     };
 
-    // ==========================================================================
-    // 🧱 4. UI STRUCTURAL DOM INSERTION ENGINES
-    // ==========================================================================
     function appendMessageBubbleToConsoleLog(text, orientationClass) {
         const logContainer = document.getElementById("adminChatMessagesLog");
         if (!logContainer) return;
@@ -158,29 +147,58 @@
         bubble.textContent = text;
         
         logContainer.appendChild(bubble);
-        logContainer.scrollTop = logContainer.scrollHeight; // Force lock scroll alignment tracking
+        logContainer.scrollTop = logContainer.scrollHeight; 
     }
 
     // ==========================================================================
-    // ⏱️ 5. INITIALIZATION POLLING LAYER TRIGGER
+    // ⚙️ 4. SAFE CORE BINDING INITIALIZATION DISPATCHER
     // ==========================================================================
+    function setupChatEventListeners() {
+        const dropdownSelector = document.getElementById("adminChatActiveClientSelector");
+        const chatInput = document.getElementById("adminChatMessageInputField");
+
+        if (dropdownSelector) {
+            // Remove any stale listeners before attaching to prevent duplicates
+            dropdownSelector.removeEventListener("change", handleDropdownChange);
+            dropdownSelector.addEventListener("change", handleDropdownChange);
+            console.log("🔗 Dropdown change listener successfully locked onto DOM.");
+        }
+
+        if (chatInput) {
+            chatInput.removeEventListener("keydown", handleInputFieldKeyDown);
+            chatInput.addEventListener("keydown", handleInputFieldKeyDown);
+            console.log("🔗 Textarea input listener successfully locked onto DOM.");
+        }
+
+        // Run primary collection population
+        window.populateAdminChatDropdownOptions();
+    }
+
+    function handleDropdownChange(e) {
+        if (e.target.value) {
+            window.bindAdminChatFocusToClient(e.target.value);
+        }
+    }
+
+    function handleInputFieldKeyDown(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            window.dispatchAdminResponseChatMessage();
+        }
+    }
+
+    // Polling bootstrap watcher checking for structural availability of dependencies
     const initializationPollingLoop = setInterval(() => {
         if (window.supabaseClient) {
             clearInterval(initializationPollingLoop);
             
-            // Hydrate account rows immediately once the client core script loads
-            window.populateAdminChatDropdownOptions();
-
-            // Bind native dropdown modification events cleanly if target element exists
-            const dropdownSelector = document.getElementById("adminChatActiveClientSelector");
-            if (dropdownSelector) {
-                dropdownSelector.addEventListener("change", (e) => {
-                    if (e.target.value) {
-                        window.bindAdminChatFocusToClient(e.target.value);
-                    }
-                });
+            // Check if DOM elements are ready right now. If not, wait for full page load.
+            if (document.getElementById("adminChatActiveClientSelector")) {
+                setupChatEventListeners();
+            } else {
+                document.addEventListener("DOMContentLoaded", setupChatEventListeners);
             }
         }
-    }, 150);
+    }, 100);
 
 })();
