@@ -46,24 +46,30 @@ async function initializePortalSession() {
 // 🌐 CORRECTED SUPABASE REALTIME BROADCAST CHANNELS SETUP
 // ==========================================================================
 function initializeRealtimeBroadcastNetwork() {
-    // 🎯 FIX: Fallback sequence targeting your active window client wrapper
+    "use strict";
+
+    // 🎯 FIX: Explicitly pull from the globally running window instance
     const activeClient = window.supabaseClient || window.supabase;
     
-    // Safety check to ensure the connection instance has initialized methods
+    // Safety abort tracking: Stops terminal crashes if script sequence delays occur
     if (!activeClient || typeof activeClient.channel !== 'function') {
-        console.warn("⚠️ Realtime Core: Connection object or channel function is missing.");
+        console.warn("⚠️ Realtime Channel Intercept: Active client system instance not ready.");
         return;
     }
 
-    if (!activeClientSessionUser) return;
+    // Fallback assignment matching variable scope footprints if session cache values lag
+    const userInstance = activeClientSessionUser || (activeClient.auth ? activeClient.auth.user : null);
+    if (!userInstance) return;
 
     // Open connection channel targeting the active client's unique user UUID
-    realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${activeClientSessionUser.id}`);
+    realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${userInstance.id}`);
 
     realtimeTelemetryChannel
         .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
-            console.log('⚡ Realtime operational state sync received:', payload);
-            handleIncomingStateSync(payload.payload);
+            console.log('⚡ Realtime state sync received:', payload);
+            if (typeof handleIncomingStateSync === 'function') {
+                handleIncomingStateSync(payload.payload);
+            }
         })
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
@@ -71,6 +77,7 @@ function initializeRealtimeBroadcastNetwork() {
             }
         });
 }
+
 
 
 // 🚀 DISPATCH LIVE PIPELINE MUTATION DATA OVER THE AIR

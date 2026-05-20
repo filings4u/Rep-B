@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <meta name="theme-color" content="#10b981">                         <!-- Chrome, Firefox, & Opera Mobile -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Wrapper Engine Tracking -->
-    <meta name="msapplication-navbutton-color" content="#10b981">         <!-- Windows Phone Interface Target -->
-
-    
+    <meta name="theme-color" content="#10b981"> <!-- Chrome, Firefox, & Opera Mobile -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Status Bar -->
+    <meta name="msapplication-navbutton-color" content="#10b981"> <!-- Windows Phone Status Bar -->
     <title>Support Chat | filings4u</title>
     <link rel="stylesheet" href="assets/css/portal-custom.css">
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="assets/js/supabase-config.js"></script>
-
+    <script src="assets/js/portal-chat-engine.js"></script>
 </head>
 <body>
-
-    <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
+    <!-- 📱 MOBILE FLOATING TOP NAVIGATION TOGGLE TRIGGER BUTTON -->
     <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
-        <span id="mobileNavTriggerIcon">☰</span> 
-        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
+        <span id="mobileNavTriggerIcon">☰</span> <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
     </button>
 
     <div class="dashboard-wrapper">
@@ -32,40 +28,41 @@
             </div>
             <nav class="sidebar-accordion-menu">
                 <!-- ACCORDION 1: My Profile & Services -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
-                    My Account <span class="chevron">▲</span>
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> 
+                    My Account <span class="chevron">▼</span> 
                 </button>
-                <div class="accordion-panel" style="max-height: 600px;">
+                <div class="accordion-panel">
                     <a href="client-dashboard.html?v=4.1" class="nav-item"><span>📊</span> Dashboard Home</a>
                     <a href="portal-entities.html?v=4.1" class="nav-item"><span>🏢</span> My Registered Entities</a>
                     <a href="portal-services.html?v=4.1" class="nav-item"><span>🛠️</span> Order New Services</a>
                 </div>
                 
                 <!-- ACCORDION 2: Filings & Progress -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
-                    Filings & Compliance <span class="chevron">▲</span>
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> 
+                    Filings & Compliance <span class="chevron">▼</span> 
                 </button>
-                <div class="accordion-panel" style="max-height: 600px;">
+                <div class="accordion-panel">
                     <a href="portal-filings.html?v=4.1" class="nav-item"><span>⚙️</span> Active Orders</a>
                     <a href="portal-compliance.html?v=4.1" class="nav-item"><span>🛡️</span> Compliance Tracker</a>
-                    <a href="portal-vault.html?v=4.1" class="nav-item active"><span>📂</span> Document Vault</a>
+                    <a href="portal-vault.html?v=4.1" class="nav-item"><span>📂</span> Document Vault</a>
                 </div>
 
                 <!-- ACCORDION 3: Financials -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
-                    Billing & Invoices <span class="chevron">▲</span>
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> 
+                    Billing & Invoices <span class="chevron">▼</span> 
                 </button>
-                <div class="accordion-panel" style="max-height: 600px;">
+                <div class="accordion-panel">
                     <a href="portal-billing.html?v=4.1" class="nav-item"><span>💰</span> Payment Methods</a>
                     <a href="portal-invoices.html?v=4.1" class="nav-item"><span>💸</span> Order History</a>
                 </div>
 
                 <!-- ACCORDION 4: Help Desk -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
-                    Support <span class="chevron">▲</span>
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> 
+                    Support <span class="chevron">▲</span> 
                 </button>
-                <div class="accordion-panel?v=4.1" style="max-height: 600px;">
-                    <a href="portal-chat.html?v=4.1" class="nav-item"><span>💬</span> Live Chat Support</a>
+                <!-- 🎯 FIX: Stripped broken query strings parameter from native class name attribute -->
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-chat.html?v=4.1" class="nav-item active"><span>💬</span> Live Chat Support</a>
                     <a href="portal-knowledgebase.html?v=4.1" class="nav-item"><span>📰</span> Help Resources</a>
                 </div>
             </nav>
@@ -78,15 +75,20 @@
             </div>
         </aside>
 
-        <!-- 🧱 MAIN WORKSPACE DISPLAY AREA -->
+        <!-- 🧱 MAIN SCROLL WORKSPACE DISPLAY AREA -->
         <main class="portal-main">
             <header class="portal-header">
                 <div class="welcome-text">
                     <h1>Filing Help Desk Support</h1>
                     <p>Live messaging terminal connected directly to your dedicated filings4u corporate representative</p>
                 </div>
+                <div class="header-actions-wrapper">
+                    <div class="header-clock-pill">
+                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
+                    </div>
+                </div>
             </header>
-
+            
             <div class="chat-window-pane">
                 <!-- Messages Box Scroll Canvas Wrapper -->
                 <div class="chat-messages-log" id="portalChatMessagesLog">
@@ -94,7 +96,6 @@
                         Hello! Thank you for connecting with filings4u corporate support team. How can I assist you with your active entity filings, agency accounts, or state corporate renewals today?
                     </div>
                 </div>
-
                 <!-- Input Console Panel Bar -->
                 <div class="chat-input-bar">
                     <input type="text" id="chatMessageTerminalInputField" class="search-input" style="flex-grow: 1; width: auto;" placeholder="Type your compliance message detail here..." onkeydown="if(event.key === 'Enter') dispatchClientLiveChatMessage()">
@@ -104,106 +105,131 @@
         </main>
     </div>
 
+    <!-- 🎯 MASTER INFRASTRUCTURE CONTROLLER ASSETS INJECTIONS -->
     <script src="assets/js/portal-engine.js"></script>
     <script>
+        // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
         function toggleSidebarAccordion(buttonElement) {
             buttonElement.classList.toggle('active');
             const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
-            else { panel.style.maxHeight = panel.scrollHeight + "px"; }
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
         }
 
-        function dispatchClientLiveChatMessage() {
+        // 📤 SECURE LIVE REALTIME TRANSMISSION SYSTEM
+        async function dispatchClientLiveChatMessage() {
             const field = document.getElementById("chatMessageTerminalInputField");
-            const logBox = document.getElementById("portalChatMessagesLog");
-            if (!field.value.trim()) return;
+            if (!field || !field.value.trim()) return;
 
-            const bubble = document.createElement("div");
-            bubble.className = "chat-bubble outbound";
-            bubble.textContent = field.value;
-            logBox.appendChild(bubble);
-            
-            field.value = "";
-            logBox.scrollTop = logBox.scrollHeight;
+            const textValue = field.value.trim();
+
+            // 🚀 PIPES MESSAGE TO POSTGRES DISK AND BROADCAST CHANNELS SIMULTANEOUSLY via portal-chat-engine.js
+            if (typeof window.submitPortalChatMessagePayload === 'function') {
+                await window.submitPortalChatMessagePayload(textValue, 'client');
+                field.value = ""; // Safely flush input values upon delivery confirmation
+            } else {
+                // UI Fallback display if database configuration is completely offline
+                const logBox = document.getElementById("portalChatMessagesLog");
+                const bubble = document.createElement("div");
+                bubble.className = "chat-bubble outbound";
+                bubble.textContent = textValue;
+                logBox.appendChild(bubble);
+                field.value = "";
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        }
+
+        // 📱 MOBILE DRAWER CONTROLLERS OVERRIDES
+        function toggleMobileSidebarMenuOverlay() {
+            if (window.innerWidth > 992) return;
+            const sidebar = document.querySelector(".portal-sidebar");
+            const icon = document.getElementById("mobileNavTriggerIcon");
+            if (!sidebar) return;
+
+            sidebar.classList.toggle("mobile-revealed");
+            if (sidebar.classList.contains("mobile-revealed")) {
+                icon.textContent = "✕";
+            } else {
+                icon.textContent = "☰";
+            }
+        }
+
+        // 🟢 AUTOMATIC SESSIONS HYDRATION LOAD EXECUTION TRACKER
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Force load chat history arrays matching this customer's account records automatically
+            const poller = setInterval(async () => {
+                const dbClient = window.supabaseClient || window.supabase;
+                if (dbClient) {
+                    clearInterval(poller);
+                    await fetchHistoricalChatLogs(dbClient);
+                }
+            }, 100);
+
+            // Bind smart sidebar link tracking highlights actions
+            const currentFileName = window.location.pathname.split("/").pop() || "portal-chat.html";
+            const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href^="${currentFileName}"]`);
+            activeLinks.forEach(link => {
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
+                const matchingPanel = link.closest('.accordion-panel');
+                if (matchingPanel) {
+                    matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
+                    const folderTriggerButton = matchingPanel.previousElementSibling;
+                    if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
+                        folderTriggerButton.classList.add('active');
+                        const chevronSpan = folderTriggerButton.querySelector('.chevron');
+                        if (chevronSpan) chevronSpan.textContent = "▲";
+                    }
+                }
+            });
+
+            // Mobile auto collapse binder
+            const navLinks = document.querySelectorAll(".nav-item");
+            navLinks.forEach(link => {
+                link.addEventListener("click", () => {
+                    const sidebar = document.querySelector(".portal-sidebar");
+                    if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+                        toggleMobileSidebarMenuOverlay();
+                    }
+                });
+            });
+        });
+
+        // 📜 ASYNC LOAD DISK RECOVERY CHAT LOGS
+        async function fetchHistoricalChatLogs(dbClient) {
+            const logBox = document.getElementById("portalChatMessagesLog");
+            if (!dbClient || !logBox) return;
+
+            try {
+                const { data: { session } } = await dbClient.auth.getSession();
+                if (!session) return;
+
+                const { data: messages, error } = await dbClient
+                    .from('chat_messages')
+                    .select('*')
+                    .eq('client_id', session.user.id)
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+
+                if (messages && messages.length > 0) {
+                    logBox.innerHTML = ""; // Remove baseline default prompt
+                    messages.forEach(msg => {
+                        const alignment = msg.sender_type === 'client' ? 'outbound' : 'inbound';
+                        const bubble = document.createElement("div");
+                        bubble.className = `chat-bubble ${alignment}`;
+                        bubble.textContent = msg.message_content;
+                        logBox.appendChild(bubble);
+                    });
+                    logBox.scrollTop = logBox.scrollHeight;
+                }
+            } catch (err) {
+                console.warn("Could not load conversational arrays history rows:", err.message);
+            }
         }
     </script>
-
-    <script>
-    // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
-    function toggleSidebarAccordion(buttonElement) {
-        buttonElement.classList.toggle('active');
-        const panel = buttonElement.nextElementSibling;
-        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-            panel.style.maxHeight = "0px";
-        } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-    }
-
-    // 🟢 AUTOMATIC ACCORDION & EMERALD LINK ACTIVE TRACKER
-    document.addEventListener("DOMContentLoaded", () => {
-        const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
-        
-        // Find every navigation link matching the exact current browser page filename
-        const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
-        
-        activeLinks.forEach(link => {
-            // 1. Wipe out any stale fallback active states on sister components
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            
-            // 2. Pin the emerald line highlight exactly to the clicked link item
-            link.classList.add('active');
-            
-            // 3. Find the parent folder panel block containing this active sub-link
-            const matchingPanel = link.closest('.accordion-panel');
-            if (matchingPanel) {
-                // Force open the panel container box
-                matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-                
-                // Find the button directly above the panel and toggle its chevron to "▲" (active)
-                const folderTriggerButton = matchingPanel.previousElementSibling;
-                if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-                    folderTriggerButton.classList.add('active');
-                    const chevronSpan = folderTriggerButton.querySelector('.chevron');
-                    if (chevronSpan) chevronSpan.textContent = "▲";
-                }
-            }
-        });
-    });
-
-
-function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
-
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-
-
-</script>
-
 </body>
 </html>
