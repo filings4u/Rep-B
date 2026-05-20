@@ -68,14 +68,14 @@
         });
     }
 
-    // ==========================================================================
+     // ==========================================================================
     // 📊 4. ANALYTICS PIPELINE ENGINE (SECURE CORRECTION)
     // ==========================================================================
     window.loadGlobalLiveAnalytics = async function() {
         const client = window.supabaseClient;
         if (!client) return;
         try {
-            // Mapped directly to your live production filing_orders relational schema table
+            // 🎯 FIXED: Points to your correct production filing_orders relational table
             const { data: orderRows, error } = await client.from('filing_orders').select('total_amount, current_stage');
             if (error) throw error;
 
@@ -93,9 +93,10 @@
                 if (filingsText) filingsText.innerText = pendingCount.toString();
             }
         } catch (err) {
-            console.error("Analytics pipeline trace failure:", err.message);
+            console.error("❌ Analytics pipeline trace failure:", err.message);
         }
     };
+
 
     // ==========================================================================
     // 💬 5. REAL-TIME INTERACTION CHAT CHANNELS
@@ -320,4 +321,3 @@ if (activeSelector) {
         }
     });
 }
-
