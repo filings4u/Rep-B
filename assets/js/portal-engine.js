@@ -145,3 +145,51 @@ function toggleSidebarAccordion(buttonElement) {
     if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
     else { panel.style.maxHeight = panel.scrollHeight + "px"; }
 }
+
+// ==========================================================================
+// 🛑 SECURE SIGN-OUT ROUTE CONTROLLER ACTION (SAFE BINDING)
+// ==========================================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("portalLogoutBtn");
+    
+    if (logoutBtn) {
+        // Clear any old accidental listener links before binding a clean one
+        logoutBtn.onclick = null; 
+        
+        logoutBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            console.log("🔒 Logout sequence initiated. Cleaning local token parameters...");
+            
+            // Disable button immediately to prevent double-submission errors
+            logoutBtn.disabled = true;
+            logoutBtn.textContent = "Logging out...";
+
+            // 1. Terminate secure Supabase token instance authentication if online
+            if (typeof supabase !== 'undefined') {
+                try {
+                    await supabase.auth.signOut();
+                } catch (err) {
+                    console.warn("Supabase clean exit skipped:", err.message);
+                }
+            } else if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient.auth.signOut();
+                } catch (err) {
+                    console.warn("Client window session exit skipped:", err.message);
+                }
+            }
+
+            // 2. Clear out persistent browser session registers
+            localStorage.removeItem("filings4u_secure_session_token");
+            sessionStorage.clear();
+
+            // 3. Clear location paths and route back to secure login entry wall
+            const targetRedirect = "https://filings4u.com";
+            window.location.replace(targetRedirect);
+        });
+        
+        console.log("✅ Secure logout listener successfully locked onto client DOM button.");
+    } else {
+        console.warn("⚠️ Client logout button target (#portalLogoutBtn) not found in current DOM layout.");
+    }
+});
