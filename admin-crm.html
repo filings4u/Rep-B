@@ -6,12 +6,12 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Customer CRM Portal | filings4u Staff</title>
     <meta name="theme-color" content="#c15254">
-
+    
     <!-- 🚀 PLATFORM PRODUCTION INFRASTRUCTURE DEPENDENCIES -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="assets/js/supabase-config.js"></script>
     <script src="assets/js/admin-guard.js"></script>
-
+    
     <style>
         /* ==========================================================================
            🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
@@ -26,7 +26,6 @@
             --staff-red: #c15254;
             --sidebar-width: 260px;
         }
-
         body, html {
             margin: 0 !important;
             padding: 0 !important;
@@ -37,14 +36,12 @@
             overflow-x: hidden !important;
             overflow-y: auto !important;
         }
-
         .dashboard-wrapper {
             display: flex !important;
             min-height: 100vh !important;
             width: 100% !important;
             position: relative !important;
         }
-
         /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
         .portal-sidebar {
             width: var(--sidebar-width) !important;
@@ -59,14 +56,12 @@
             z-index: 1000 !important;
             box-sizing: border-box !important;
         }
-
         .sidebar-brand-block {
             padding: 24px 20px !important;
             border-bottom: 1px solid #f1f5f9 !important;
             text-align: center !important;
             box-sizing: border-box !important;
         }
-
         .admin-badge {
             display: inline-block !important;
             background: rgba(193, 82, 84, 0.08) !important;
@@ -80,14 +75,12 @@
             margin-top: 6px !important;
             border: 1px solid rgba(193, 82, 84, 0.15) !important;
         }
-
         .sidebar-accordion-menu {
             flex: 1 !important;
             overflow-y: auto !important;
             padding: 15px 12px !important;
             box-sizing: border-box !important;
         }
-
         .accordion-trigger {
             width: 100% !important;
             background: #f8fafc !important;
@@ -108,14 +101,13 @@
             transition: all 0.2s !important;
             box-sizing: border-box !important;
         }
-
         .accordion-panel {
-            max-height: 600px;
+            max-height: 0;
             overflow: hidden !important;
             padding-left: 4px !important;
             box-sizing: border-box !important;
+            transition: max-height 0.25s ease-out !important;
         }
-
         .nav-item {
             display: flex !important;
             align-items: center !important;
@@ -131,26 +123,22 @@
             transition: all 0.15s !important;
             box-sizing: border-box !important;
         }
-
         .nav-item:hover {
             background: rgba(10, 31, 68, 0.02) !important;
             color: var(--emerald) !important;
             padding-left: 14px !important;
         }
-
         .nav-item.active {
             background: rgba(16, 185, 129, 0.08) !important;
             color: var(--emerald) !important;
             font-weight: 700 !important;
         }
-
         .sidebar-footer-lock {
             padding: 16px !important;
             border-top: 1px solid var(--border-color) !important;
             background: #f8fafc !important;
             box-sizing: border-box !important;
         }
-
         .logout-btn {
             width: 100% !important;
             background: var(--text-dark) !important;
@@ -162,7 +150,6 @@
             font-size: 0.8rem !important;
             cursor: pointer !important;
         }
-
         /* 🖥️ PRIMARY SCROLLABLE MAIN CONTENT REGION */
         .portal-main {
             flex: 1 !important;
@@ -173,7 +160,6 @@
             min-height: 100vh !important;
             box-sizing: border-box !important;
         }
-
         .portal-header {
             background: var(--white) !important;
             padding: 20px 40px !important;
@@ -187,13 +173,11 @@
             box-sizing: border-box !important;
             width: 100% !important;
         }
-
         .header-actions-wrapper {
             display: flex !important;
             align-items: center !important;
             gap: 12px !important;
         }
-
         .header-clock-pill {
             background: #f8fafc !important;
             border: 1px solid var(--border-color) !important;
@@ -210,7 +194,6 @@
             height: 40px !important;
             white-space: nowrap !important;
         }
-
         .search-input {
             padding: 10px 16px !important;
             border: 1px solid var(--border-color) !important;
@@ -223,24 +206,25 @@
             height: 40px !important;
             color: var(--text-dark) !important;
         }
-
         .content-container {
             padding: 40px !important;
             box-sizing: border-box !important;
             width: 100% !important;
         }
-
+        /* FIXED: Table container context layer prevents border cropping layout breaks */
+        .table-responsive-wrapper {
+            width: 100% !important;
+            border-radius: 10px !important;
+            overflow: hidden !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+        }
         .crm-table {
             width: 100% !important;
             border-collapse: collapse !important;
             background: var(--white) !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-            border: 1px solid var(--border-color) !important;
             font-size: 0.85rem !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
         }
-
         .crm-table th {
             background: #f8fafc;
             padding: 14px 18px;
@@ -251,13 +235,14 @@
             text-transform: uppercase;
             font-size: 0.72rem;
         }
-
         .crm-table td {
             padding: 14px 18px;
             border-bottom: 1px solid var(--border-color);
             color: var(--text-dark);
         }
-
+        .crm-table tr:last-child td {
+            border-bottom: none;
+        }
         .crm-btn {
             padding: 10px 18px !important;
             border: none !important;
@@ -270,8 +255,10 @@
             gap: 6px !important;
             box-sizing: border-box !important;
         }
-        .crm-btn.primary { background: var(--text-dark) !important; color: #fff !important; }
-
+        .crm-btn.primary {
+            background: var(--text-dark) !important;
+            color: #fff !important;
+        }
         .crm-modal {
             position: fixed !important;
             top: 0 !important;
@@ -286,7 +273,6 @@
             justify-content: center !important;
             z-index: 10000 !important;
         }
-
         .modal-box {
             background: #fff !important;
             padding: 30px !important;
@@ -296,7 +282,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
             box-sizing: border-box !important;
         }
-
         @media (max-width: 991px) {
             .portal-sidebar { display: none !important; }
             .portal-main { margin-left: 0 !important; width: 100% !important; }
@@ -307,40 +292,63 @@
     </style>
 </head>
 <body>
-
-    <div class="dashboard-wrapper">
-        <!-- Sidebar Menu Layout Frame -->
+       <div class="dashboard-wrapper">
+        
+      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
         <aside class="portal-sidebar">
-            <div style="padding:24px 20px; border-bottom:1px solid #f1f5f9; text-align:center;">
-                <img src="images/logo.png" alt="filings4u" style="height:35px; width:auto; margin:0 auto; display:block;">
-                <div class="admin-badge">Directorate Admin</div>
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge">Directorate Admin</div></div>
             </div>
-            
             <nav class="sidebar-accordion-menu">
-                <div class="accordion-trigger active">MENU CORE</div>
+                <!-- ACCORDION 1 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
                 <div class="accordion-panel">
                     <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+                </div>
+                <!-- ACCORDION 2 -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
+                <div class="accordion-panel" style="max-height: 600px;">
                     <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
                     <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
                     <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
                     <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+                    
+                </div>
+                <!-- ACCORDION 3 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
                     <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Compliance Cloud Vault</a>
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Live Customer Relay</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Operational Calendar</a>
+                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                </div>
+                <!-- ACCORDION 4 (NEW ADDITIONS) -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
+                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
+                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
+                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
+                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
                 </div>
             </nav>
-            
-            <div class="sidebar-footer-lock">
-                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Session</button>
+             <div class="sidebar-footer-lock">
+                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
+                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
+                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
+                </div>
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
             </div>
         </aside>
+
+        
 
         <!-- Main Scrolling Content Panel -->
         <main class="portal-main">
             <header class="portal-header">
                 <div>
-                    <h1 style="margin:0; font-size:1.5rem; font-weight:800;">Account Management CRM</h1>
+                    <h1 style="margin:0; font-size:1.5rem; font-weight:800; color:var(--text-dark);">Account Management CRM</h1>
                     <p style="margin:4px 0 0 0; font-size:0.82rem; color:var(--text-muted);">Synchronize profile states, register over-the-phone clients, and trigger invite tokens.</p>
                 </div>
                 <div class="header-actions-wrapper">
@@ -352,20 +360,22 @@
 
             <div class="content-container">
                 <div style="overflow-x: auto; width: 100%;">
-                    <table class="crm-table">
-                        <thead>
-                            <tr>
-                                <th>User Reference ID</th>
-                                <th>Filing Key</th>
-                                <th>Corporate Entity Block</th>
-                                <th>Registration Pipeline State</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="crmTableBody">
-                            <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">Querying real-time workspace vectors...</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive-wrapper">
+                        <table class="crm-table">
+                            <thead>
+                                <tr>
+                                    <th>User Reference ID</th>
+                                    <th>Filing Key</th>
+                                    <th>Corporate Entity Block</th>
+                                    <th>Registration Pipeline State</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="crmTableBody">
+                                <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">Querying real-time workspace vectors...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>
@@ -400,6 +410,27 @@
     <!-- Telemetry Runtime Operations -->
     <script src="assets/js/admin-engine.js"></script>
     <script>
+        // ==========================================================================
+        // 🗂️ SIDEBAR ACCORDION TOGGLE CONTROLLER
+        // ==========================================================================
+        function toggleSidebarAccordion(triggerButton) {
+            const targetPanel = triggerButton.nextElementSibling;
+            const chevronSymbol = triggerButton.querySelector('.chevron');
+            triggerButton.classList.toggle('active');
+            
+            if (targetPanel.style.maxHeight && targetPanel.style.maxHeight !== '0px') {
+                targetPanel.style.maxHeight = '0px';
+                if (chevronSymbol) chevronSymbol.textContent = '▼';
+            } else {
+                targetPanel.style.maxHeight = targetPanel.scrollHeight + 'px';
+                if (chevronSymbol) chevronSymbol.textContent = '▲';
+            }
+        }
+
+        function getSupabaseClient() {
+            return window.supabaseClient || window.supabase;
+        }
+
         window.toggleProfileModal = function(show) {
             const modal = document.getElementById('profileModal');
             if (modal) modal.style.display = show ? 'flex' : 'none';
@@ -408,38 +439,51 @@
         };
 
         async function loadCrmTable() {
-            const client = window.supabaseClient;
+            const client = getSupabaseClient();
             if (!client) return;
             try {
-                const { data, error } = await client.from('user_filings_workspace').select('*').order('created_at', { ascending: false });
+                const { data, error } = await client
+                    .from('user_filings_workspace')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                    
                 if (error) throw error;
                 const tbody = document.getElementById('crmTableBody');
                 if (!tbody) return;
-
+                
                 if (!data || data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic;">No records found.</td></tr>';
                     return;
                 }
                 
-                tbody.innerHTML = data.map(row => `
-                    <tr>
-                        <td><code>#USR-${row.user_id ? row.user_id.substring(0,8).toUpperCase() : "GUEST"}</code></td>
-                        <td><span style="font-weight:700; text-transform:uppercase;">${row.service_key}</span></td>
-                        <td><strong>${row.payload_data?.business_name || row.payload_data?.desired_llc_name || 'Incomplete Phone Intake'}</strong></td>
-                        <td><span style="background:${row.status === 'paid' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)'}; color:${row.status === 'paid' ? 'var(--emerald)' : '#d97706'}; padding:4px 10px; border-radius:12px; font-weight:700; font-size:0.72rem; text-transform:uppercase; display:inline-block;">${row.status || 'draft'}</span></td>
-                        <td><button class="crm-btn primary" style="padding:5px 10px; font-size:0.75rem;" onclick="alert('Audit Hash Parameter Reference: ${row.id}')">Inspect</button></td>
-                    </tr>
-                `).join('');
+                tbody.innerHTML = data.map(row => {
+                    const mailLabel = row.payload_data?.contact_email || "guest_account@filings4u.com";
+                    const displayBusiness = row.payload_data?.business_name || row.payload_data?.desired_llc_name || 'Incomplete Phone Intake';
+                    const displayToken = row.user_id ? row.user_id.substring(0, 8).toUpperCase() : "GUEST";
+                    
+                    return `
+                        <tr class="crm-data-row">
+                            <td><code>#USR-${displayToken}</code></td>
+                            <td><span style="font-weight:700; text-transform:uppercase;">${row.service_key || 'llc'}</span></td>
+                            <td>
+                                <strong style="display:block;">${displayBusiness}</strong>
+                                <small style="color:var(--text-muted); font-size:0.75rem;">${mailLabel}</small>
+                            </td>
+                            <td><span style="background:${row.status === 'paid' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)'}; color:${row.status === 'paid' ? 'var(--emerald)' : '#d97706'}; padding:4px 10px; border-radius:12px; font-weight:700; font-size:0.72rem; text-transform:uppercase; display:inline-block;">${row.status || 'draft'}</span></td>
+                            <td><button class="crm-btn primary" style="padding:5px 10px; font-size:0.75rem;" onclick="alert('Audit Hash Parameter Reference: ${row.id}')">Inspect</button></td>
+                        </tr>
+                    `;
+                }).join('');
             } catch(e) {
-                console.error(e);
+                console.error("CRM table query stalled:", e.message);
             }
         }
 
         document.getElementById('crmProfileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const client = window.supabaseClient;
+            const client = getSupabaseClient();
             if (!client) return;
-
+            
             const email = document.getElementById('profileEmail').value.trim();
             const sk = document.getElementById('profileServiceKey').value;
             const fb = document.getElementById('modalFeedback');
@@ -448,11 +492,9 @@
             btn.disabled = true;
             fb.style.color = "var(--text-dark)";
             fb.innerText = "Provisioning secure client profile tokens...";
-
+            
             try {
-                // 🎯 Safe, low-clearance database hook to seed workspace invite targets safely
                 const fakeGeneratedUid = crypto.randomUUID();
-
                 const { error: dbErr } = await client
                     .from('user_filings_workspace')
                     .insert({
@@ -460,11 +502,14 @@
                         service_key: sk,
                         status: 'draft',
                         current_step: 1,
-                        payload_data: { contact_email: email, business_name: 'Pending Telephone Capture' }
+                        payload_data: {
+                            contact_email: email,
+                            business_name: 'Pending Telephone Capture'
+                        }
                     });
-
+                    
                 if (dbErr) throw dbErr;
-
+                
                 fb.style.color = "var(--emerald)";
                 fb.innerText = "✓ Record pre-seeded. Secure invite token initialized for manual staff transmission!";
                 
@@ -472,8 +517,8 @@
                     toggleProfileModal(false);
                     document.getElementById('crmProfileForm').reset();
                     loadCrmTable();
+                    btn.disabled = false;
                 }, 2000);
-
             } catch(err) {
                 fb.style.color = "var(--staff-red)";
                 fb.innerText = `Error: ${err.message}`;
@@ -481,12 +526,28 @@
             }
         });
 
+        // ==========================================================================
+        // 🔍 LIVE CROSS-GRID FUZZY CRM TEXT SEARCH COUPLING
+        // ==========================================================================
+        document.getElementById('adminGlobalSearchField').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('.crm-data-row').forEach(row => {
+                const textContext = row.textContent.toLowerCase();
+                if (textContext.includes(query)) {
+                    row.style.setProperty('display', 'table-row', 'important');
+                } else {
+                    row.style.setProperty('display', 'none', 'important');
+                }
+            });
+        });
+
         const initLoop = setInterval(() => {
-            if (window.supabaseClient) {
+            if (getSupabaseClient()) {
                 clearInterval(initLoop);
                 loadCrmTable();
             }
         }, 100);
+        setTimeout(() => clearInterval(initLoop), 5000);
     </script>
 </body>
 </html>

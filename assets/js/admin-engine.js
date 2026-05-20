@@ -7,21 +7,32 @@
     // ==========================================================================
     // ⏰ 1. REAL-TIME SYSTEM CLOCK & DATE COUPLING METRICS
     // ==========================================================================
-    const clockDisplayElement = document.getElementById('portal-clock');
-    function runLiveSystemClock() {
-        if (!clockDisplayElement) return;
+
+function runProductionGlobalClock() {
+    const clockNode = document.getElementById('portal-clock');
+    if (!clockNode) return;
+    
+    setInterval(() => {
         const now = new Date();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const yyyy = now.getFullYear();
-        const dateString = `${mm}/${dd}/${yyyy}`;
-        const timeString = now.toTimeString().split(' ')[0]; 
-        clockDisplayElement.innerText = `${dateString} | ${timeString}`;
-    }
-    if (clockDisplayElement) {
-        setInterval(runLiveSystemClock, 1000);
-        runLiveSystemClock();
-    }
+        const dateString = now.toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
+        });
+        
+        // FORCED 12-HOUR REGIME: Enforces AM/PM structural criteria
+        const timeString = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        
+        clockNode.textContent = `${dateString} | ${timeString}`;
+    }, 1000);
+}
+document.addEventListener('DOMContentLoaded', runProductionGlobalClock);
+
 
     // ==========================================================================
     // 🚪 2. SECURE LOGOUT & TELEMETRY CLEANER

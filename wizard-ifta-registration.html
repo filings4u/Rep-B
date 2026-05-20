@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFTA Permit Application Wizard | filings4u</title>
+    <!-- Unified core CSS styling engine -->
+    <link rel="stylesheet" href="assets/css/portal-global.css">
+    <!-- Supabase core dependency architecture link -->
+    <script src="jsdelivr.net"></script>
+    <script>
+        window.supabase = supabase.createClient(
+            'supabase.co', 
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+        );
+    </script>
+    <!-- Defer master client script processing to protect loading latency metrics -->
+    <script src="assets/js/portal-global.js" defer></script>
+</head>
+<body class="portal-body">
+
+    <!-- PORTAL SIDEBAR WITH SELF-CORRECTING FAQ WRAPPER -->
+    <aside class="portal-sidebar" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh; position: fixed; box-sizing: border-box; background: var(--bg-light); border-right: 1px solid var(--border-color); width: 260px;">
+        <div style="padding-top: 15px;">
+            <div class="sidebar-header" style="margin-bottom: 20px; padding: 0 15px;">
+                <img src="images/logo.png" alt="filings4u" class="sidebar-logo" style="height: 35px;">
+            </div> 
+            <nav class="sidebar-nav">
+                <div style="padding: 0 15px;">
+                    <h4 style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-gray); margin-bottom: 15px; opacity: 0.7;">Helpful FAQ</h4>
+                    <!-- Centralized data array faqs.json auto-populates exactly 4 entries here -->
+                    <div id="dynamic-faq-container">
+                        <p style="font-size:0.8rem; color:var(--text-gray);">Loading advisory data stream...</p>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <!-- LOWER PANEL ACTION UTILITIES BOX CONTAINER -->
+        <div style="margin-top: auto; padding: 25px 15px 30px; border-top: 1px solid var(--border-color); text-align: center; background: transparent;">
+            <a href="javascript:void(0)" onclick="handleSaveExit()" class="logout-btn" style="background: var(--primary-blue); color: white; display: block; padding: 12px; border-radius: 8px; font-weight: 700; text-decoration: none; margin-bottom: 20px; font-size: 0.9rem; box-shadow: 0 4px 6px rgba(10, 31, 68, 0.1);">Save & Exit</a>
+            <div style="background: linear-gradient(145deg, #0a1f44, #1a2e5a); padding: 7px 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+                <div style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: pulse-green 2s infinite;"></div>
+                <div style="color: white; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;"> Secure Session </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN PORTAL CONTENT HUB LAYOUT -->
+    <main class="portal-main">
+        <!-- FIXED ABSOLUTE CLOCK ELIMINATES VIEW CENTERING ACCIDENTS -->
+        <div id="portal-clock" style="position: absolute; top: 25px; right: 40px; color: var(--text-gray); font-size: 0.85rem; font-weight: 700; font-family: monospace; z-index: 50;"></div>
+        
+        <div class="content-container">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>IFTA Permit Application</h1>
+                    <p id="step-label">Step 1 of 8</p>
+                </div>
+                <div style="width:100%; background:#edf2f7; height:8px; border-radius:10px; margin-top: 15px;">
+                    <div id="progress-fill" style="background:#10b981; height:100%; width:12.5%; transition:0.4s;"></div>
+                </div>
+            </header>
+
+            <div class="wizard-card">
+                <!-- FIX 1: Open form boundary wrapper cleanly encapsulated -->
+                <form id="ifta-wizard" onsubmit="event.preventDefault();">
+                    
+                    <!-- STEP 1: BASE JURISDICTION & FUEL TYPE INTAKE -->
+                    <section class="form-section active" id="step-1">
+                        <div class="wizard-header" style="margin-bottom: 30px;">
+                            <h3>Step 1: Primary Fuel Tax Jurisdiction</h3>
+                            <p style="color: var(--text-gray); font-size: 0.9rem;">Your IFTA base jurisdiction must be the state where your fleet maintains mileage records.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Base State / Jurisdiction</label>
+                            <select id="ifta-base-state" class="search-input" style="width:100%;" required onchange="updateIFTAPricing()">
+                                <option value="IL" selected>Illinois (IDOR IFTA Fleet Account Track)</option>
+                                <option value="IN">Indiana (Department of Revenue System)</option>
+                                <option value="WI">Wisconsin (Division of Motor Vehicles)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Primary Fleet Fuel Type</label>
+                            <select class="search-input" style="width: 100%;" required>
+                                <option value="diesel" selected>Diesel (Standard Heavy Commercial Fleet)</option>
+                                <option value="gasoline">Gasoline</option>
+                                <option value="lng_cng">LNG / CNG (Natural Gas)</option>
+                            </select>
+                        </div>
+                        <div class="conditional-box" style="margin-bottom: 25px;">
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--primary-blue); line-height: 1.5;">
+                                📋 <strong>Filing Mandate:</strong> Once registered, you must file quarterly tax returns detailing all traveled miles and fuel gallons purchased cross-state.
+                            </p>
+                        </div>
+                        <div style="margin-top: 40px; display: flex; justify-content: flex-end;">
+                            <button type="button" class="btn-main" style="background: var(--emerald);" onclick="nextStep(2)"> Continue to Step 2 → </button>
+                        </div>
+                    </section>
+
+                    <!-- SEQUENTIAL STUBS FOR STABLE SCRIPT EXECUTION -->
+                    <section class="form-section" id="step-2"><h3>Step 2: Fleet Sizing Matrix</h3><div style="display:flex;gap:15px;margin-top:40px;"><button type="button" class="btn-main" style="background:#e2e8f0;color:var(--primary-blue)" onclick="nextStep(1)">Back</button><button type="button" class="btn-main" onclick="nextStep(3)">Next</button></div></section>
+                    <section class="form-section" id="step-3"><h3>Step 3: Distance Metrics Sourcing</h3><div style="display:flex;gap:15px;margin-top:40px;"><button type="button" class="btn-main" style="background:#e2e8f0;color:var(--primary-blue)" onclick="nextStep(2)">Back</button><button type="button" class="btn-main" onclick="nextStep(4)">Next</button></div></section>
+                    <section class="form-section" id="step-4"><h3>Step 4: Mileage History Accounts</h3><div style="display:flex;gap:15px;margin-top:40px;"><button type="button" class="btn-main" style="background:#e2e8f0;color:var(--primary-blue)" onclick="nextStep(3)">Back</button><button type="button" class="btn-main" onclick="nextStep(5)">Next</button></div></section>
+                    <section class="form-section" id="step-5"><h3>Step 5: Operational Jurisdictions</h3><div style="display:flex;gap:15px;margin-top:40px;"><button type="button" class="btn-main" style="background:#e2e8f0;color:var(--primary-blue)" onclick="nextStep(4)">Back</button><button type="button" class="btn-main" onclick="nextStep(6)">Next</button></section>
+                    <section class="form-section" id="step-6"><h3>Step 6: Compliance Attestation</h3><div style="display:flex;gap:15px;margin-top:40px;"><button type="button" class="btn-main" style="background:#e2e8f0;color:var(--primary-blue)" onclick="nextStep(5)">Back</button><button type="button" class="btn-main" onclick="nextStep(7)">Next</button></div></section>
+                    <section class="form-section" id="step-7"><h3>Step 7: Information Audit Review</h3><div style="display:flex;gap:15px;margin-top:40px;"><button type="button" class="btn-main" style="background:#e2e8f0;color:var(--primary-blue)" onclick="nextStep(6)">Back</button><button type="button" class="btn-main" onclick="nextStep(8)">Next</button></div></section>
+
+                    <!-- STEP 8: SUMMARY CHECKOUT INVOICING PIPELINE INJECTION -->
+                    <section class="form-section" id="step-8">
+                        <div class="wizard-header" style="margin-bottom: 30px;">
+                            <h3>Step 8: Complete IFTA Compliance Order</h3>
+                        </div>
+                        
+                        <!-- FIX 2: Added corporate input element required by core prepareOrder mapping -->
+                        <div class="form-group" style="margin-bottom: 25px;">
+                            <label>Legal Corporate Business Name (Associated with USDOT)</label>
+                            <input type="text" class="search-input" required placeholder="e.g. Trans-Global Logistics LLC" name="company_name" style="width: 100%;">
+                        </div>
+
+                        <!-- FIX 3: Added total price summary elements to ensure checkout data persistence -->
+                        <div class="summary-data-list" style="width: 100%; box-sizing: border-box; margin-bottom: 30px; padding: 25px; border: 1px solid var(--border-color); border-radius: 12px; background: #ffffff;">
+                            <div class="summary-item"><span>filings4u Fleet Setup Administration Fee</span><span>$199.00</span></div>
+                            <div class="summary-item"><span>Statutory State Compliance Decal Surcharge</span><span id="ifta-gov-fee">$15.00</span></div>
+                            <div style="background: #ecfdf5; border: 1px solid #10b981; margin-top: 20px; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 1.1rem; font-weight: 800; color: #064e3b;">Total Due Today</span>
+                                <span id="summary-total" style="font-size: 1.6rem; font-weight: 800; color: #10b981;">$214.00</span>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:15px;">
+                            <button type="button" class="btn-main" style="background:#e2e8f0; color:var(--primary-blue);" onclick="nextStep(7)">Back</button>
+                            <button type="button" class="btn-main" style="background: var(--emerald); flex: 1;" onclick="prepareOrder()">Authorize Account Setup & Pay →</button>
+                        </div>
+                    </section>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- GUEST PERSISTENCE SAVE MODAL -->
+    <div id="save-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,31,68,0.8); z-index:9999; align-items:center; justify-content:center;">
+        <div class="wizard-card" style="max-width: 420px; width:90%; position:relative; padding: 35px; background: #ffffff; border-radius: 16px; text-align: center; box-sizing: border-box;">
+            <button onclick="closeSaveModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-gray);">&times;</button>
+            <div class="success-icon" style="width: 60px; height: 60px; background: #ecfdf5; color: #10b981; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 20px; border: 1px solid #a7f3d0;">✓</div>
+            <h3 style="color: var(--primary-blue); margin: 0 0 10px; font-weight: 800; font-size: 1.3rem;">Progress Saved!</h3>
+            <p style="color: var(--text-gray); font-size: 0.9rem; line-height: 1.5; margin: 0 0 25px;"> Your input data has been securely saved to your profile workspace. You can resume this session at any time. </p>
+            <button type="button" class="btn-main" style="background: var(--primary-blue); width: 100%; padding: 14px; font-weight: 700; border-radius: 8px;" onclick="executePortalExit()"> Return to Dashboard </button>
+            <a href="javascript:void(0)" onclick="closeSaveModal()" style="display:block; text-align:center; margin-top:15px; color: var(--text-gray); font-size:0.85rem; text-decoration:underline; font-weight:600;"> Cancel & Stay in Wizard </a>
+        </div>
+    </div>
+
+    <!-- LOCAL PRICING CALCULATION SCRIPT -->
+    <script>
+        function updateIFTAPricing() {
+            const baseState = document.getElementById('ifta-base-state')?.value || 'IL';
+            const clearServicePrice = 199.00;
+            
+            let localGovDecalsFee = 15.00;
+            if (baseState === "IN") localGovDecalsFee = 25.00;
+            if (baseState === "WI") localGovDecalsFee = 10.00;
+
+            if (document.getElementById('ifta-gov-fee')) {
+                document.getElementById('ifta-gov-fee').innerText = "$" + localGovDecalsFee.toFixed(2);
+            }
+            if (document.getElementById('summary-total')) {
+                document.getElementById('summary-total').innerText = "$" + (clearServicePrice + localGovDecalsFee).toFixed(2);
+            }
+        }
+    </script>
+</body>
+</html>

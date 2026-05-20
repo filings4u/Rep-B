@@ -1,520 +1,622 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Operational Calendar & Tasks | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
-
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <script src="assets/js/admin-guard.js"></script>
-    <script src="assets/js/wizard-sync.js"></script>
-
-    <style>
-        /* ==========================================================================
-           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+    <meta name="mobile-web-app-capable" content="yes"> 
+    <title>Operational Calendar & Tasks | filings4u Staff</title> 
+    <meta name="theme-color" content="#c15254"> 
+    
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE --> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script> 
+    <script src="assets/js/supabase-config.js"></script> 
+    <script src="assets/js/admin-guard.js"></script> 
+    <script src="assets/js/wizard-sync.js"></script> 
+    
+    <style> 
+        /* ========================================================================== 
+           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX 
+           ========================================================================== */ 
+        :root { 
+            --bg-light: #f4f6f9; 
+            --white: #ffffff; 
+            --border-color: #e2e8f0; 
+            --text-dark: #0f172a; 
+            --text-muted: #475569; 
+            --emerald: #10b981; 
+            --staff-red: #c15254; 
+            --sidebar-width: 260px; 
+        } 
+        body, html { 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            min-height: 100vh !important; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
+            background-color: var(--bg-light) !important; 
+            color: var(--text-dark) !important; 
+            overflow-x: hidden !important; 
+            overflow-y: auto !important; 
+        } 
+        .dashboard-wrapper { 
+            display: flex !important; 
+            min-height: 100vh !important; 
+            width: 100% !important; 
+            position: relative !important; 
+        } 
+        /* 📁 LOCKED SIDEBAR NAVIGATION */ 
+        .portal-sidebar { 
+            width: var(--sidebar-width) !important; 
+            background: var(--white) !important; 
+            border-right: 1px solid var(--border-color) !important; 
+            display: flex !important; 
+            flex-direction: column !important; 
+            position: fixed !important; 
+            top: 0 !important; 
+            left: 0 !important; 
+            height: 100vh !important; 
+            z-index: 1000 !important; 
+            box-sizing: border-box !important; 
+        } 
+        .sidebar-brand-block { 
+            padding: 24px 20px !important; 
+            border-bottom: 1px solid #f1f5f9 !important; 
+            text-align: center !important; 
+            box-sizing: border-box !important; 
+        } 
+        .admin-badge { 
+            display: inline-block !important; 
+            background: rgba(193, 82, 84, 0.08) !important; 
+            color: var(--staff-red) !important; 
+            font-size: 0.65rem !important; 
+            font-weight: 800 !important; 
+            text-transform: uppercase !important; 
+            letter-spacing: 1px !important; 
+            padding: 4px 10px !important; 
+            border-radius: 12px !important; 
+            margin-top: 6px !important; 
+            border: 1px solid rgba(193, 82, 84, 0.15) !important; 
+        } 
+        .sidebar-accordion-menu { 
+            flex: 1 !important; 
+            overflow-y: auto !important; 
+            padding: 15px 12px !important; 
+            box-sizing: border-box !important; 
+        } 
+        .accordion-trigger { 
+            width: 100% !important; 
+            background: #f8fafc !important; 
+            border: 1px solid var(--border-color) !important; 
+            padding: 10px 14px !important; 
+            font-size: 0.72rem !important; 
+            font-weight: 700 !important; 
+            color: var(--text-muted) !important; 
+            text-transform: uppercase !important; 
+            letter-spacing: 0.5px !important; 
+            display: flex !important; 
+            align-items: center !important; 
+            justify-content: space-between !important; 
+            cursor: pointer !important; 
+            border-radius: 6px !important; 
+            margin-top: 10px !important; 
+            outline: none !important; 
+            box-sizing: border-box !important; 
+        } 
+        .accordion-panel { 
+            max-height: 0; 
+            overflow: hidden !important; 
+            padding-left: 4px !important; 
+            box-sizing: border-box !important; 
+            transition: max-height 0.25s ease-out !important; 
+        } 
+        .nav-item { 
+            display: flex !important; 
+            align-items: center !important; 
+            gap: 8px !important; 
+            padding: 8px 12px !important; 
+            color: var(--text-muted) !important; 
+            text-decoration: none !important; 
+            font-size: 0.8rem !important; 
+            font-weight: 600 !important; 
+            border-radius: 6px !important; 
+            margin-top: 2px !important; 
+            white-space: nowrap !important; 
+            box-sizing: border-box !important; 
+            transition: all 0.15s ease !important;
+        } 
+        .nav-item:hover { 
+            background: rgba(10, 31, 68, 0.02) !important; 
+            color: var(--emerald) !important; 
+            padding-left: 14px !important; 
+        } 
+        .nav-item.active { 
+            background: rgba(16, 185, 129, 0.08) !important; 
+            color: var(--emerald) !important; 
+            font-weight: 700 !important; 
+        } 
+        .sidebar-footer-lock { 
+            padding: 16px !important; 
+            border-top: 1px solid var(--border-color) !important; 
+            background: #f8fafc !important; 
+            box-sizing: border-box !important; 
+        } 
+        .logout-btn { 
+            width: 100% !important; 
+            background: var(--text-dark) !important; 
+            color: white !important; 
+            border: none !important; 
+            padding: 10px !important; 
+            border-radius: 6px !important; 
+            font-weight: 700 !important; 
+            font-size: 0.8rem !important; 
+            cursor: pointer !important; 
+        } 
+        /* 🖥️ PRIMARY SCROLLABLE CONTENT REGION */ 
+        .portal-main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            margin-left: var(--sidebar-width) !important; 
+            width: calc(100% - var(--sidebar-width)); 
+            min-height: 100vh; 
+            box-sizing: border-box; 
+        } 
+        .portal-header { 
+            background: var(--white) !important; 
+            padding: 24px 40px !important; 
+            border-bottom: 1px solid var(--border-color) !important; 
+            display: flex !important; 
+            justify-content: space-between !important; 
+            align-items: center !important; 
+            position: sticky !important; 
+            top: 0 !important; 
+            z-index: 90 !important; 
+            box-sizing: border-box !important; 
+            width: 100% !important; 
+        } 
+        .header-actions-wrapper { 
+            display: flex !important; 
+            align-items: center !important; 
+            gap: 12px !important; 
+        } 
+        .header-clock-pill { 
+            background: #f8fafc !important; 
+            border: 1px solid var(--border-color) !important; 
+            padding: 10px 16px !important; 
+            border-radius: 10px !important; 
+            font-family: monospace !important; 
+            font-size: 0.9rem !important; 
+            font-weight: 700 !important; 
+            color: var(--text-dark) !important; 
+            display: flex !important; 
+            align-items: center !important; 
+            gap: 8px !important; 
+            box-sizing: border-box !important; 
+            height: 40px !important; 
+            white-space: nowrap !important; 
         }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED SIDEBAR NAVIGATION */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-panel {
-            max-height: 500px !important;
-            overflow: hidden !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ PRIMARY SCROLLABLE CONTENT REGION */
-        .portal-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 24px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
+        .search-input {
             padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        /* ⚙️ INTEGRATED OPERATION GRIDS SPLITTER */
-        .calendar-dashboard-layout {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 24px !important;
-            align-items: start !important;
-            width: 100% !important;
-        }
-
-        @media (max-width: 1100px) {
-            .calendar-dashboard-layout { grid-template-columns: 1fr !important; }
-        }
-
-        .portal-card {
-            background: var(--white) !important;
-            border-radius: 10px !important;
             border: 1px solid var(--border-color) !important;
-            padding: 24px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .portal-card h3 { font-size: 1.1rem !important; font-weight: 800; margin: 0 0 16px 0; color: var(--text-dark); text-align: left; }
-
-        /* TASK MANAGER INPUT HOOKS styles */
-        .task-input-row {
-            display: flex !important;
-            gap: 10px !important;
-            margin-bottom: 20px !important;
-        }
-
-        .admin-input {
-            padding: 12px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 6px !important;
+            border-radius: 10px !important;
             font-size: 0.88rem !important;
             outline: none !important;
-            box-sizing: border-box !important;
-            background: #f8fafc !important;
-        }
-        .admin-input:focus { background: #fff !important; border-color: var(--staff-red) !important; }
-
-        .btn-add-task {
-            background: var(--text-dark) !important;
-            color: #fff !important;
-            border: none !important;
-            border-radius: 6px !important;
-            padding: 0 20px !important;
-            font-weight: 700 !important;
-            cursor: pointer !important;
-            font-size: 0.85rem !important;
-            white-space: nowrap !important;
-        }
-
-        /* STREAMED EVENT ROW LISTINGS */
-        .ledger-item-row {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 12px 14px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            font-size: 0.88rem !important;
-            text-align: left !important;
+            width: 240px !important;
             box-sizing: border-box !important;
         }
-        .ledger-item-row:last-child { border-bottom: none !important; }
-
-        .task-checkbox {
-            transform: scale(1.2) !important;
-            cursor: pointer !important;
-            margin-right: 10px !important;
-        }
-
-        .btn-delete-log {
-            background: none !important;
-            border: none !important;
-            color: var(--staff-red) !important;
-            cursor: pointer !important;
-            font-weight: 700 !important;
-            font-size: 0.85rem !important;
-        }
-
-        @media (max-width: 991px) {
-            .portal-sidebar { display: none !important; }
-            .portal-main { margin-left: 0 !important; width: 100% !important; }
-            .portal-header { flex-direction: column !important; padding: 15px !important; }
-        }
-    </style>
-</head>
-<body>
-
+        .content-container { 
+            padding: 40px !important; 
+            box-sizing: border-box !important; 
+            width: 100% !important; 
+        } 
+        /* ⚙️ INTEGRATED OPERATION GRIDS SPLITTER */ 
+        .calendar-dashboard-layout { 
+            display: grid !important; 
+            grid-template-columns: 1fr 1fr !important; 
+            gap: 24px !important; 
+            align-items: start !important; 
+            width: 100% !important; 
+        } 
+        @media (max-width: 1100px) { 
+            .calendar-dashboard-layout { 
+                grid-template-columns: 1fr !important; 
+            } 
+        } 
+        .portal-card { 
+            background: var(--white) !important; 
+            border-radius: 10px !important; 
+            border: 1px solid var(--border-color) !important; 
+            padding: 24px !important; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; 
+            box-sizing: border-box !important; 
+            width: 100% !important; 
+        } 
+        .portal-card h3 { 
+            font-size: 1.1rem !important; 
+            font-weight: 800; 
+            margin: 0 0 16px 0; 
+            color: var(--text-dark); 
+            text-align: left; 
+        } 
+        /* TASK MANAGER INPUT HOOKS styles */ 
+        .task-input-row { 
+            display: flex !important; 
+            gap: 10px !important; 
+            margin-bottom: 20px !important; 
+        } 
+        .admin-input { 
+            padding: 12px !important; 
+            border: 1px solid var(--border-color) !important; 
+            border-radius: 6px !important; 
+            font-size: 0.88rem !important; 
+            outline: none !important; 
+            box-sizing: border-box !important; 
+            background: #f8fafc !important; 
+        } 
+        .admin-input:focus { 
+            background: #fff !important; 
+            border-color: var(--staff-red) !important; 
+        } 
+        .btn-add-task { 
+            background: var(--text-dark) !important; 
+            color: #fff !important; 
+            border: none !important; 
+            border-radius: 6px !important; 
+            padding: 0 20px !important; 
+            font-weight: 700 !important; 
+            cursor: pointer !important; 
+            font-size: 0.85rem !important; 
+            white-space: nowrap !important; 
+        } 
+        /* STREAMED EVENT ROW LISTINGS */ 
+        .ledger-item-row { 
+            display: flex !important; 
+            justify-content: space-between !important; 
+            align-items: center !important; 
+            padding: 12px 14px !important; 
+            border-bottom: 1px solid var(--border-color) !important; 
+            font-size: 0.88rem !important; 
+            text-align: left !important; 
+            box-sizing: border-box !important; 
+        } 
+        .ledger-item-row:last-child { 
+            border-bottom: none !important; 
+        } 
+        .task-checkbox { 
+            transform: scale(1.2) !important; 
+            cursor: pointer !important; 
+            margin-right: 10px !important; 
+        } 
+        .btn-delete-log { 
+            background: none !important; 
+            border: none !important; 
+            color: var(--staff-red) !important; 
+            cursor: pointer !important; 
+            font-weight: 700 !important; 
+            font-size: 0.85rem !important; 
+        } 
+        @media (max-width: 991px) { 
+            .portal-sidebar { display: none !important; } 
+            .portal-main { margin-left: 0 !important; width: 100% !important; } 
+            .portal-header { flex-direction: column !important; padding: 15px !important; } 
+        } 
+    </style> 
+</head> 
+<body> 
     <div class="dashboard-wrapper">
         
-        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
         <aside class="portal-sidebar">
             <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto; object-fit: contain; display: block; margin: 0 auto;">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
                 <div><div class="admin-badge">Directorate Admin</div></div>
             </div>
-
             <nav class="sidebar-accordion-menu">
-                <button class="accordion-trigger active">MENU CORE</button>
+                <!-- ACCORDION 1 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
                 <div class="accordion-panel">
                     <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+                </div>
+                <!-- ACCORDION 2 -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
                     <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
                     <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <span>🏢</span> Entity Master Ledger</a>
+                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+                    
+                </div>
+                <!-- ACCORDION 3 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
                     <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Compliance Cloud Vault</a>
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Live Customer Relay</a>
-                    <a href="admin-calendar.html" class="nav-item active"><span>📅</span> Operational Calendar</a>
+                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                </div>
+                <!-- ACCORDION 4 (NEW ADDITIONS) -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
+                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
+                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
+                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
+                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
                 </div>
             </nav>
-
-            <div class="sidebar-footer-lock">
-                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Session</button>
+             <div class="sidebar-footer-lock">
+                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
+                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
+                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
+                </div>
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
             </div>
-        </aside>
+        </aside> 
 
-        <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
+             <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
         <main class="portal-main">
             <header class="portal-header">
-                <div class="welcome-text">
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Operations Calendar & Tasks</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Schedule administrative items, compile upcoming filings deadlines, and assign tasks logs.</p>
+                <div>
+                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Operations Calendar Console</h1>
+                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Manage statutory formation deadlines, compliance markers, and executive actions.</p>
                 </div>
                 
                 <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">⏱️ <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+                    <div class="header-clock-pill">
+                        <span>⏱️</span> <span id="portal-clock">05/19/2026 | 10:17:15</span>
+                    </div>
+                    <div>
+                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search execution tickets...">
+                    </div>
                 </div>
             </header>
 
-            <div class="content-container">
-                <div class="calendar-dashboard-layout">
-                    
-                    <!-- LEFT CONSOLE PANEL: INTEGRATED CALENDAR DATE LOG EVENTS -->
-                    <div class="portal-card">
-                        <h3>Scheduled Filing Deadlines</h3>
-                        
-                        <form id="calendarEventForm" class="task-input-row" style="flex-direction: column; gap: 8px;">
-                            <input type="text" id="eventTitle" class="admin-input" style="width: 100%;" placeholder="Filing Event (e.g., California Franchise Tax Return)" required>
-                            <div style="display: flex; gap: 10px; width: 100%;">
-                                <input type="date" id="eventDate" class="admin-input" style="flex: 1;" required>
-                                <button type="submit" class="btn-add-task">+ Schedule</button>
-                            </div>
-                        </form>
 
-                        <div id="calendarEventsTargetList" style="margin-top: 10px;">
-                            <div style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">Querying active timeline logs...</div>
-                        </div>
+            <div class="content-container"> 
+                <div class="calendar-dashboard-layout"> 
+                    <!-- LEFT CONSOLE PANEL: INTEGRATED CALENDAR DATE LOG EVENTS --> 
+                    <div class="portal-card"> 
+                        <h3>Scheduled Filing Deadlines</h3> 
+                        <form id="calendarEventForm" class="task-input-row" style="flex-direction: column; gap: 8px;"> 
+                            <input type="text" id="eventTitle" class="admin-input" style="width: 100%;" placeholder="Filing Event (e.g., California Franchise Tax Return)" required> 
+                            <div style="display: flex; gap: 10px; width: 100%;"> 
+                                <input type="date" id="eventDate" class="admin-input" style="flex: 1;" required> 
+                                <button type="submit" class="btn-add-task">+ Schedule</button> 
+                            </div> 
+                        </form> 
+                        <div id="calendarEventsTargetList" style="margin-top: 10px;"> 
+                            <div style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">Querying active timeline logs...</div> 
+                        </div> 
                     </div>
 
-                    <!-- RIGHT CONSOLE PANEL: LOGICAL COMPACT TASK MANAGER -->
-                    <div class="portal-card">
-                        <h3>Operational Task Manager</h3>
-                        
-                        <div class="task-input-row">
-                            <input type="text" id="newTaskTextField" class="admin-input" style="flex: 1;" placeholder="Add operational objective task line item...">
-                            <button type="button" class="btn-add-task" onclick="submitNewTaskManagerRecord()">+ Add Task</button>
-                        </div>
+                    <!-- RIGHT CONSOLE PANEL: LOGICAL COMPACT TASK MANAGER --> 
+                    <div class="portal-card"> 
+                        <h3>Operational Task Manager</h3> 
+                        <div class="task-input-row"> 
+                            <input type="text" id="newTaskTextField" class="admin-input" style="flex: 1;" placeholder="Add operational objective task line item..."> 
+                            <button type="button" class="btn-add-task" onclick="submitNewTaskManagerRecord()">+ Add Task</button> 
+                        </div> 
+                        <div id="taskManagerTargetList"> 
+                            <div style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">Querying objective logs stack...</div> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+        </main> 
+    </div> 
 
-                        <div id="taskManagerTargetList">
-                            <div style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">Querying objective logs stack...</div>
-                        </div>
-                    </div>
+    <!-- PRODUCTION ENVIRONMENT TELEMETRY CONTROLLERS --> 
+    <script src="assets/js/admin-engine.js"></script> 
+    <script> 
+        // ========================================================================== 
+        // 🗂️ SIDEBAR ACCORDION TOGGLE CONTROLLER 
+        // ========================================================================== 
+        function toggleSidebarAccordion(triggerButton) { 
+            const targetPanel = triggerButton.nextElementSibling; 
+            const chevronSymbol = triggerButton.querySelector('.chevron'); 
+            
+            triggerButton.classList.toggle('active'); 
+            
+            if (targetPanel.style.maxHeight && targetPanel.style.maxHeight !== '0px') { 
+                targetPanel.style.maxHeight = '0px'; 
+                if (chevronSymbol) chevronSymbol.textContent = '▼'; 
+            } else { 
+                targetPanel.style.maxHeight = targetPanel.scrollHeight + 'px'; 
+                if (chevronSymbol) chevronSymbol.textContent = '▲'; 
+            } 
+        } 
 
-                </div>
-            </div>
-        </main>
-    </div>
+        // ========================================================================== 
+        // ⏱️ PRODUCTION ENVIRONMENT TELEMETRY CONTROLLERS 
+        // ========================================================================== 
+        const eventsList = document.getElementById('calendarEventsTargetList'); 
+        const tasksList = document.getElementById('taskManagerTargetList'); 
 
-    <!-- PRODUCTION ENVIRONMENT TELEMETRY CONTROLLERS -->
-    <script src="assets/js/admin-engine.js"></script>
-    <script>
-        const eventsList = document.getElementById('calendarEventsTargetList');
-        const tasksList = document.getElementById('taskManagerTargetList');
+        function getSupabaseClient() { 
+            return window.supabaseClient || window.supabase; 
+        } 
 
-        // ==========================================================================
-        // CALENDAR TIMELINE REGISTRY OPERATIONS
-        // ==========================================================================
-        async function loadCalendarDeadlinesLog() {
-            const client = window.supabaseClient;
-            if (!client) return;
-
-            try {
-                const { data, error } = await client.from('platform_operational_calendar').select('*').order('deadline_date', { ascending: true });
-                if (error) throw error;
-
-                if (!data || data.length === 0) {
-                    eventsList.innerHTML = '<div style="padding:15px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No upcoming calendar items registered.</div>';
-                    return;
-                }
-
-                eventsList.innerHTML = data.map(evt => `
-                    <div class="ledger-item-row">
-                        <div>
-                            <span style="background:rgba(193,82,84,0.08); color:var(--staff-red); padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.75rem; margin-right:8px;">${new Date(evt.deadline_date).toLocaleDateString()}</span>
-                            <strong>${evt.event_title}</strong>
-                        </div>
-                        <button class="btn-delete-log" onclick="deleteCalendarRecord('${evt.id}')">✕</button>
-                    </div>
-                `).join('');
-            } catch (err) { console.error(err.message); }
+        // ========================================================================== 
+        // 📅 CALENDAR TIMELINE REGISTRY OPERATIONS 
+        // ========================================================================== 
+        async function loadCalendarDeadlinesLog() { 
+            const client = getSupabaseClient(); 
+            if (!client) return; 
+            try { 
+                const { data, error } = await client 
+                    .from('platform_operational_calendar') 
+                    .select('*') 
+                    .order('deadline_date', { ascending: true }); 
+                if (error) throw error; 
+                if (!data || data.length === 0) { 
+                    eventsList.innerHTML = '<div style="padding:15px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No upcoming calendar items registered.</div>'; 
+                    return; 
+                } 
+                eventsList.innerHTML = data.map(evt => ` 
+                    <div class="ledger-item-row"> 
+                        <div> 
+                            <span style="background:rgba(193,82,84,0.08); color:var(--staff-red); padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.75rem; margin-right:8px;">${new Date(evt.deadline_date).toLocaleDateString()}</span> 
+                            <strong>${evt.event_title}</strong> 
+                        </div> 
+                        <button class="btn-delete-log" onclick="deleteCalendarRecord('${evt.id}')">✕</button> 
+                    </div> 
+                `).join(''); 
+            } catch (err) { 
+                console.error("Calendar fetch failure:", err.message); 
+            } 
         }
 
-        document.getElementById('calendarEventForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const client = window.supabaseClient;
-            const title = document.getElementById('eventTitle').value.trim();
-            const date = document.getElementById('eventDate').value;
+        document.getElementById('calendarEventForm').addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            const client = getSupabaseClient(); 
+            const title = document.getElementById('eventTitle').value.trim(); 
+            const date = document.getElementById('eventDate').value; 
+            if (!client || !title || !date) return; 
+            try { 
+                const { error } = await client 
+                    .from('platform_operational_calendar') 
+                    .insert({ event_title: title, deadline_date: date }); 
+                if (error) throw error; 
+                document.getElementById('calendarEventForm').reset(); 
+                loadCalendarDeadlinesLog(); 
+            } catch (err) { 
+                alert("Event Insertion Failed: " + err.message); 
+            } 
+        }); 
 
-            if (!client || !title || !date) return;
+        window.deleteCalendarRecord = async function(recordUuid) { 
+            const client = getSupabaseClient(); 
+            if (!client) return; 
+            try { 
+                const { error } = await client 
+                    .from('platform_operational_calendar') 
+                    .delete() 
+                    .eq('id', recordUuid); 
+                if (error) throw error; 
+                loadCalendarDeadlinesLog(); 
+            } catch (err) { 
+                alert("Deletion Blocked: " + err.message); 
+                console.error(err.message); 
+            } 
+        }; 
 
-            try {
-                const { error } = await client.from('platform_operational_calendar').insert({ event_title: title, deadline_date: date });
-                if (error) throw error;
-                document.getElementById('calendarEventForm').reset();
-                loadCalendarDeadlinesLog();
-            } catch (err) { alert(err.message); }
-        });
+        // ========================================================================== 
+        // ✅ ACTION MANAGER TASK CONTROLLERS 
+        // ========================================================================== 
+        async function loadTaskManagerObjectiveStack() { 
+            const client = getSupabaseClient(); 
+            if (!client) return; 
+            try { 
+                const { data, error } = await client 
+                    .from('platform_task_manager') 
+                    .select('*') 
+                    .order('created_at', { ascending: false }); 
+                if (error) throw error; 
+                if (!data || data.length === 0) { 
+                    tasksList.innerHTML = '<div style="padding:15px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">Zero active operational actions logged.</div>'; 
+                    return; 
+                } 
+                tasksList.innerHTML = data.map(task => ` 
+                    <div class="ledger-item-row" style="${task.is_completed ? 'opacity: 0.5; background: #f8fafc;' : ''}"> 
+                        <div style="display:flex; align-items:center;"> 
+                            <input type="checkbox" class="task-checkbox" ${task.is_completed ? 'checked' : ''} onclick="toggleTaskCompletionState('${task.id}', ${task.is_completed})"> 
+                            <span style="${task.is_completed ? 'text-decoration: line-through;' : 'font-weight:600;'}">${task.task_message}</span> 
+                        </div> 
+                        <button class="btn-delete-log" onclick="deleteTaskManagerRecord('${task.id}')">✕</button> 
+                    </div> 
+                `).join(''); 
+            } catch (err) { 
+                console.error("Task Engine Sync Failure:", err.message); 
+            } 
+        } 
 
-        window.deleteCalendarRecord = async function(recordUuid) {
-            const client = window.supabaseClient;
-            try {
-                await client.from('platform_operational_calendar').delete().eq('id', recordUuid);
-                loadCalendarDeadlinesLog();
-            } catch (err) { console.error(err.message); }
-        };
+        window.submitNewTaskManagerRecord = async function() { 
+            const client = getSupabaseClient(); 
+            const textInput = document.getElementById('newTaskTextField'); 
+            const message = textInput.value.trim(); 
+            if (!client || !message) return; 
+            try { 
+                const { error } = await client 
+                    .from('platform_task_manager') 
+                    .insert({ task_message: message, is_completed: false }); 
+                if (error) throw error; 
+                textInput.value = ''; 
+                loadTaskManagerObjectiveStack(); 
+            } catch (err) { 
+                alert("Action Pipeline Stalled: " + err.message); 
+            } 
+        }; 
+
+        window.toggleTaskCompletionState = async function(taskUuid, currentCondition) { 
+            const client = getSupabaseClient(); 
+            if (!client) return; 
+            try { 
+                const { error } = await client 
+                    .from('platform_task_manager') 
+                    .update({ is_completed: !currentCondition }) 
+                    .eq('id', taskUuid); 
+                if (error) throw error; 
+                loadTaskManagerObjectiveStack(); 
+            } catch (err) { 
+                alert("State Transformation Interrupted: " + err.message); 
+                console.error(err.message); 
+            } 
+        }; 
+
+        window.deleteTaskManagerRecord = async function(taskUuid) { 
+            const client = getSupabaseClient(); 
+            if (!client) return; 
+            try { 
+                const { error } = await client 
+                    .from('platform_task_manager') 
+                    .delete() 
+                    .eq('id', taskUuid); 
+                if (error) throw error; 
+                loadTaskManagerObjectiveStack(); 
+            } catch (err) { 
+                alert("Task Removal Blocked: " + err.message); 
+                console.error(err.message); 
+            } 
+        }; 
+
+        // ========================================================================== 
+        // 🔄 AUTOMATIC ENGINE SYNCHRONIZATION PIPELINE 
+        // ========================================================================== 
+        const syncMonitorInterval = setInterval(() => { 
+            if (getSupabaseClient()) { 
+                clearInterval(syncMonitorInterval); 
+                loadCalendarDeadlinesLog(); 
+                loadTaskManagerObjectiveStack(); 
+            } 
+        }, 100); 
+        setTimeout(() => clearInterval(syncMonitorInterval), 5000); 
 
         // ==========================================================================
-        // ACTION MANAGER TASK CONTROLLERS
-        // ==========================================================================
-        async function loadTaskManagerObjectiveStack() {
-            const client = window.supabaseClient;
-            if (!client) return;
-
-            try {
-                const { data, error } = await client.from('platform_task_manager').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-
-                if (!data || data.length === 0) {
-                    tasksList.innerHTML = '<div style="padding:15px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">Zero active operational actions logged.</div>';
-                    return;
-                }
-
-                tasksList.innerHTML = data.map(task => `
-                    <div class="ledger-item-row" style="${task.is_completed ? 'opacity: 0.5; background: #f8fafc;' : ''}">
-                        <div style="display:flex; align-items:center;">
-                            <input type="checkbox" class="task-checkbox" ${task.is_completed ? 'checked' : ''} onclick="toggleTaskCompletionState('${task.id}', ${task.is_completed})">
-                            <span style="${task.is_completed ? 'text-decoration: line-through;' : 'font-weight:600;'}">${task.task_message}</span>
-                        </div>
-                        <button class="btn-delete-log" onclick="deleteTaskManagerRecord('${task.id}')">✕</button>
-                    </div>
-                `).join('');
-            } catch (err) { console.error(err.message); }
+// 🔍 REAL-TIME GLOBAL CROSS-GRID SEARCH CONTROLLER
+// ==========================================================================
+document.getElementById('adminGlobalSearchField').addEventListener('input', function(e) {
+    const searchQuery = e.target.value.toLowerCase().trim();
+    
+    // 1. Target all generated item rows inside both console columns
+    const allRows = document.querySelectorAll('.ledger-item-row');
+    
+    allRows.forEach(row => {
+        // Extract all plain text inside the row to check for a match
+        const rowText = row.textContent.toLowerCase();
+        
+        if (rowText.includes(searchQuery)) {
+            // Match found: restore visibility
+            row.style.setProperty('display', 'flex', 'important');
+        } else {
+            // No match: hide row cleanly
+            row.style.setProperty('display', 'none', 'important');
         }
+    });
+});
 
-        window.submitNewTaskManagerRecord = async function() {
-            const client = window.supabaseClient;
-            const textInput = document.getElementById('newTaskTextField');
-            const message = textInput.value.trim();
 
-            if (!client || !message) return;
 
-            try {
-                const { error } = await client.from('platform_task_manager').insert({ task_message: message, is_completed: false });
-                if (error) throw error;
-                textInput.value = '';
-                loadTaskManagerObjectiveStack();
-            } catch (err) { alert(err.message); }
-        };
+    </script> 
 
-        window.toggleTaskCompletionState = async function(taskUuid, currentCondition) {
-            const client = window.supabaseClient;
-            try {
-                await client.from('platform_task_manager').update({ is_completed: !currentCondition }).eq('id', taskUuid);
-                loadTaskManagerObjectiveStack();
-            } catch (err) { console.error(err.message); }
-        };
-
-        window.deleteTaskManagerRecord = async function(taskUuid) {
-            const client = window.supabaseClient;
-            try {
-                await client.from('platform_task_manager').delete().eq('id', taskUuid);
-                loadTaskManagerObjectiveStack();
-            } catch (err) { console.error(err.message); }
-        };
-
-        // Bootstrap verification synchronization pipelines logs loops
-        const syncMonitorInterval = setInterval(() => {
-            if (window.supabaseClient) {
-                clearInterval(syncMonitorInterval);
-                loadCalendarDeadlinesLog();
-                loadTaskManagerObjectiveStack();
-            }
-        }, 100);
-        setTimeout(() => clearInterval(syncMonitorInterval), 5000);
-    </script>
-</body>
+    
+</body> 
 </html>
