@@ -432,69 +432,48 @@
         }
     </script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-        const checkClient = setInterval(async () => {
-            if (window.supabaseClient) {
-                clearInterval(checkClientInterval);
-                const client = window.supabaseClient;
-                const container = document.querySelector('.portal-card');
-                
-                const { data: logs, error } = await client
-                    .from('platform_security_telemetry_logs')
-                    .select('*')
-                    .order('recorded_at', { ascending: false })
-                    .limit(20);
+       <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // 🎯 FIXED: Corrected tracking handle to match interval name exactly and prevent code crash loops
+            const checkClient = setInterval(async () => {
+                const clientInstance = window.supabaseClient || window.supabase;
+                if (clientInstance) {
+                    clearInterval(checkClient); // Clean kill timer layout loops
+                    const container = document.querySelector('.portal-card');
+                    if (!container) return;
 
-                if (!error && logs && logs.length > 0) {
-                    container.innerHTML = logs.map(l => {
-                        let classTag = "system";
-                        if (l.action_type === "TRANSACTION") classTag = "payment";
-                        if (l.action_type === "ERROR") classTag = "error";
-                        
-                        return `
-                            <div class="log-entry-row">
-                                <span class="log-timestamp">${new Date(l.recorded_at).toLocaleString()}</span>
-                                <span class="log-tag ${classTag}">${l.action_type}</span>
-                                <span class="log-message"><strong>${l.actor_email}</strong>: ${l.message_details}</span>
-                            </div>`;
-                    }).join('');
+                    // 🎯 WIRED SYSTEM LOGS ENGINE: Fetches actual live auth entry events from table data rows
+                    const { data: logs, error } = await clientInstance
+                        .from('platform_security_telemetry_logs')
+                        .select('*')
+                        .order('recorded_at', { ascending: false })
+                        .limit(30);
+
+                    if (!error && logs && logs.length > 0) {
+                        container.innerHTML = logs.map(l => {
+                            // Assign tag styling colors based on the role context parameter keys
+                            let typeStyle = "system"; // gray tag
+                            if (l.account_role === "ADMIN STAFF") typeStyle = "error"; // red badge styling tag
+                            if (l.action_type === "LOGIN" && l.account_role === "PORTAL CLIENT") typeStyle = "payment"; // emerald badge tag
+
+                            // Generate production timestamp string mapping format
+                            const formattedTime = new Date(l.recorded_at).toISOString().replace('T', ' ').substring(0, 19);
+                            
+                            return `
+                                <div class="log-entry-row">
+                                    <span class="log-timestamp">${formattedTime}</span>
+                                    <span class="log-tag ${typeStyle}">${l.action_type} [${l.account_role}]</span>
+                                    <span class="log-message"><strong>${l.actor_email}</strong>: ${l.message_details}</span>
+                                </div>`;
+                        }).join('');
+                    } else if (error) {
+                        console.error("Logs hydration fail:", error.message);
+                    }
                 }
-            }
-        }, 100);
-    });
-
-    function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
-
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
+            }, 100);
         });
-    });
-});
+    </script>
 
-</script>
 
 </body>
 </html>
