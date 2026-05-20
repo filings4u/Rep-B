@@ -2,7 +2,7 @@
 (async function initializeWizardSynchronizer() {
     "use strict";
 
-    // 🚀 FIXED GLOBAL SYNC: Safely align naming schemes with centralized production infrastructure
+    // 🚀 GLOBAL SYNC: Safely align naming schemes with centralized production infrastructure
     function waitForSupabaseClientEngine() {
         return new Promise((resolve) => {
             if (window.supabaseClient) return resolve(window.supabaseClient);
@@ -56,11 +56,13 @@
             if (data && !error) {
                 recordDatabaseId = data.id;
                 sessionStorage.setItem("collected_wizard_payload", JSON.stringify(data.payload_data));
-                
-                // Expose indices back to the active rendering loop windows
-                if (typeof currentStepIndex !== 'undefined') {
-                    currentStepIndex = data.current_step;
-                    if (typeof renderStepContents === 'function') renderStepContents();
+
+                // 🎯 FIXED SYNTAX BUG: Removed rogue 'windows' text string to allow execution flow
+                if (typeof window.currentStepIndex !== 'undefined') {
+                    window.currentStepIndex = data.current_step;
+                    if (typeof window.renderStepContents === 'function') {
+                        window.renderStepContents();
+                    }
                 }
             }
         } catch (err) {
@@ -89,7 +91,6 @@
 
             // 🎯 FIXED PRIMARY KEY CONSTRAINT:
             // Only attach an ID field if we have a valid, pre-existing record ID.
-            // If recordDatabaseId is null, your table schema will safely generate a clean new UUID row automatically.
             if (recordDatabaseId) {
                 recordPayload.id = recordDatabaseId;
             } else {
@@ -120,7 +121,7 @@
             // 🎯 FIXED: Synchronized directly with your table columns layout metrics
             const { error } = await client
                 .from('user_filings_workspace')
-                .update({ 
+                .update({
                     status: 'paid',
                     stripe_invoice_id: stripeInvoiceIdStr || null,
                     stripe_payment_intent: paymentIntentStr || null,
