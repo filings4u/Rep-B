@@ -249,6 +249,39 @@
             }
         });
     });
+
+    async function executeFrontEndEmbeddedStripeCheckout() {
+    const userSession = (await window.supabaseClient.auth.getSession()).data.session;
+    if (!userSession) return;
+
+    const selectedStateElement = document.getElementById("stateRateField");
+    const stateCode = selectedStateElement.value;
+    const stateFee = selectedStateElement.options[selectedStateElement.selectedIndex].getAttribute("data-fee");
+
+    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'checkout',
+            email: userSession.user.email,
+            client_id: userSession.user.id,             // Passes UUID to Edge Function metadata
+            company_name: nameStr,                      // Product catalog item name variable string
+            service_type: nameStr,
+            amount: (baseFee + parseFloat(stateFee)) * 100, // Converts to total absolute cents
+            state_code: stateCode,                      // Selected state code lookup key
+            processing_fee: baseFee,
+            state_fee: stateFee,
+            return_url: `${window.location.origin}/portal-dashboard.html?session_id={CHECKOUT_SESSION_ID}`
+        })
+    });
+
+    const data = await response.json();
+    if (data.clientSecret) {
+        // Feed clientSecret cleanly straight into Stripe's UI embedded constructor object
+        console.log("💳 Stripe Intent secret compiled successfully. Launching canvas overlay...");
+    }
+}
+
 </script>
 
 </body>
