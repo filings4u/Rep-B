@@ -1,10 +1,11 @@
 // assets/js/portal-login.js
-    // 🎯 ACCELERATION TRICK: Check local storage tokens instantly before making remote database calls
-    const fastTokenCheck = localStorage.getItem("filings4u_secure_session_token");
-    if (!fastTokenCheck) {
-        console.log("No token present, rendering login inputs instantly.");
-        // Stop waiting and let user log in immediately
-    }
+
+// 🎯 ACCELERATION TRICK: Check local storage tokens instantly before making remote database calls
+const fastTokenCheck = localStorage.getItem("filings4u_secure_session_token");
+if (!fastTokenCheck) {
+    console.log("No token present, rendering login inputs instantly.");
+}
+
 async function startCustomerLoginEngine() {
     "use strict";
 
@@ -21,24 +22,40 @@ async function startCustomerLoginEngine() {
     }
 
     const client = await waitForSupabaseClientEngine();
-    const portalLoginForm = document.getElementById('portalLoginForm'); 
+    
+    // Elements mapped directly to your portal-login.html layout IDs
+    const portalLoginForm = document.getElementById('loginForm');
     const loginSubmitBtn = document.getElementById('loginBtn');
-    const passError = document.getElementById('password-error');
+    const globalErrorMessage = document.getElementById('errorMessage');
+    const passwordToggleBtn = document.getElementById('passwordToggleBtn');
 
     async function evaluateCustomerRoute(userEmail) {
         const cleanedEmail = userEmail.toLowerCase().trim();
-        
-        // Intercept staff handles accidentally knocking on the customer door
-        const isCorporateStaff = cleanedEmail.endsWith('@filings4u.com') || (cleanedEmail === 'test-admin@filings4u.com');
+        const fallbackUrl = window.productionRootUrl || window.location.origin;
 
+        // Intercept staff members who accidentally use the customer portal
+        const isCorporateStaff = cleanedEmail.endsWith('@filings4u.com') || (cleanedEmail === 'test-admin@filings4u.com');
+        
         if (isCorporateStaff) {
             console.warn("Administrative profile detected inside customer landing path. Rerouting...");
-            window.location.assign(`${window.productionRootUrl}/admin-dashboard.html`);
+            window.location.assign(`${fallbackUrl}/admin-dashboard.html`);
             return;
         }
 
-        // Standard user or brand new custom testing emails pass directly into your customer view matrix
-        window.location.assign(`${window.productionRootUrl}/portal-dashboard.html`);
+        // Standard user profiles pass directly to the customer dashboard layout
+        window.location.assign(`${fallbackUrl}/portal-dashboard.html`);
+    }
+
+    // Interactive Password Masking Toggle Logic
+    if (passwordToggleBtn) {
+        passwordToggleBtn.addEventListener('click', () => {
+            const passwordInput = document.getElementById('password');
+            if (passwordInput) {
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                passwordToggleBtn.innerText = isPassword ? '🙈' : '👁️';
+            }
+        });
     }
 
     try {
@@ -56,19 +73,26 @@ async function startCustomerLoginEngine() {
                 
                 const emailInput = document.getElementById('email');
                 const passwordInput = document.getElementById('password');
+                
                 if (!emailInput || !passwordInput) return;
 
+                // Clear previous validation styles
                 emailInput.classList.remove('field-error');
                 passwordInput.classList.remove('field-error');
-                if (passError) passError.innerText = "";
+                if (globalErrorMessage) globalErrorMessage.innerText = "";
 
                 const email = emailInput.value.trim().toLowerCase();
                 const password = passwordInput.value;
                 let hasFormErrors = false;
 
-                if (!email) { emailInput.classList.add('field-error'); hasFormErrors = true; }
-                if (!password) { passwordInput.classList.add('field-error'); hasFormErrors = true; }
-
+                if (!email) {
+                    emailInput.classList.add('field-error');
+                    hasFormErrors = true;
+                }
+                if (!password) {
+                    passwordInput.classList.add('field-error');
+                    hasFormErrors = true;
+                }
                 if (hasFormErrors) return;
 
                 if (loginSubmitBtn) {
@@ -83,13 +107,16 @@ async function startCustomerLoginEngine() {
                     await evaluateCustomerRoute(result.data.user.email);
                 } catch (err) {
                     console.warn("Auth exception caught:", err.message);
-                    alert(`AUTHENTICATION ERROR:\n${err.message}`);
                     
                     emailInput.classList.add('field-error');
                     passwordInput.classList.add('field-error');
-                    if (passError) passError.innerText = `Login Failed: ${err.message}`;
+                    
+                    if (globalErrorMessage) {
+                        globalErrorMessage.innerText = `Login Failed: ${err.message}`;
+                    }
+                    
                     if (loginSubmitBtn) {
-                        loginSubmitBtn.innerText = "Secure Login →";
+                        loginSubmitBtn.innerText = "Enter Secure Portal →";
                         loginSubmitBtn.disabled = false;
                     }
                 }
@@ -100,10 +127,15 @@ async function startCustomerLoginEngine() {
     }
 }
 
-// 🛠️ FIX: Force the login code to wait for DOM parsing to finish completely
+// Ensure DOM structure completes loading safely before attaching events
 document.addEventListener("DOMContentLoaded", async () => {
+    // Timeout safeguard for external configuration script definitions
     if (typeof initializeGlobalSupabase === "function") {
-        await initializeGlobalSupabase();
+        try {
+            await initializeGlobalSupabase();
+        } catch (configError) {
+            console.error("Supabase config execution error:", configError.message);
+        }
     }
     startCustomerLoginEngine();
 });
