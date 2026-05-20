@@ -116,13 +116,14 @@
         </main>
     </div>
 
-    <!-- ENGINE CODE LINK CONTAINER -->
+        <!-- 🎯 SYSTEM RUNTIME CONTROLLER ENGINE LINKS -->
     <script src="assets/js/portal-engine.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const box = document.getElementById("dropZoneElement");
             const input = document.getElementById("nativeFileInput");
             if(!box) return;
+
             box.addEventListener("click", () => input.click());
             box.addEventListener("dragover", (e) => { e.preventDefault(); box.classList.add("hovering"); });
             box.addEventListener("dragleave", () => box.classList.remove("hovering"));
@@ -133,31 +134,121 @@
             input.addEventListener("change", (e) => {
                 if(e.target.files.length) uploadVaultAssetSequence(e.target.files);
             });
+            
+            // Hydrate files directory on initial screen load
+            fetchClientVaultDirectory();
         });
 
-        async function uploadVaultAssetSequence(files) {
+        // 📤 SECURE PRODUCTION UPLOAD PIPELINE
+        async function uploadVaultAssetSequence(filesList) {
+            if (typeof supabase === 'undefined') {
+                alert("Supabase infrastructure offline. Upload aborted.");
+                return;
+            }
+
             const pCont = document.getElementById("progContainer");
             const bar = document.getElementById("pBar");
-            const container = document.getElementById("vaultInventoryContainer");
-            pCont.style.display = "block"; bar.style.width = "0%";
+            pCont.style.display = "block"; 
+            bar.style.width = "0%";
             
-            for(let i=0; i<files.length; i++) {
-                let p = Math.round(((i+1)/files.length)*100);
-                bar.style.width = p + "%";
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    window.location.href = "login.html";
+                    return;
+                }
                 
-                // Append file item to UI directory listing grid dynamically
-                const newRow = document.createElement("div");
-                newRow.className = "file-listing-strip";
-                newRow.innerHTML = `
-                    <div>
-                        <strong style="font-size:0.85rem; display:block;">${files[i].name}</strong>
-                        <span style="font-size:0.7rem; color:var(--text-muted);">${(files[i].size / 1024).toFixed(1)} KB • User Manifest Upload</span>
-                    </div>
-                    <a href="#" class="file-link-btn" onclick="alert('Secure Link Compilation Sequence Executing...')">Download</a>
-                `;
-                container.prepend(newRow);
+                const clientUuid = session.user.id;
+
+                for (let i = 0; i < filesList.length; i++) {
+                    const targetFile = filesList[i];
+                    
+                    // 🛡️ CRITICAL: Structure path as "CLIENT_UUID/timestamp_filename.ext" to clear your RLS rules
+                    const secureStoragePath = `${clientUuid}/${Date.now()}_${targetFile.name}`;
+
+                    // 1. Direct upload to the new private 'vault' bucket
+                    const { data: storageObject, error: storageError } = await supabase.storage
+                        .from('vault')
+                        .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
+
+                    if (storageError) throw storageError;
+
+                    // 2. Log metadata asset entry to the relational tracker table
+                    const { error: dbError } = await supabase.from('client_vault').insert({
+                        file_name: targetFile.name,
+                        storage_bucket_path: secureStoragePath,
+                        file_size_bytes: targetFile.size,
+                        uploaded_by: clientUuid
+                    });
+
+                    if (dbError) throw dbError;
+
+                    // Smoothly animate loading bar metrics
+                    let percentComplete = Math.round(((i + 1) / filesList.length) * 100);
+                    bar.style.width = percentComplete + "%";
+                }
+
+                alert("All files encrypted and loaded to your secure folder successfully.");
+                await fetchClientVaultDirectory(); // Refresh directory display list
+
+            } catch (err) {
+                console.error("Vault critical transmission fault:", err.message);
+                alert(`Upload failed: ${err.message}`);
+            } finally {
+                setTimeout(() => pCont.style.display = "none", 1000);
             }
-            setTimeout(() => pCont.style.display="none", 1200);
+        }
+
+        // 📂 RENDER SECURE FILE DIRECTORY ROWS
+        async function fetchClientVaultDirectory() {
+            const container = document.getElementById("vaultInventoryContainer");
+            if (typeof supabase === 'undefined' || !container) return;
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) return;
+
+                const { data: records, error } = await supabase
+                    .from('client_vault')
+                    .select('*')
+                    .eq('uploaded_by', session.user.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!records || records.length === 0) {
+                    container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.85rem;">Your secure vault folder is empty.</p>`;
+                    return;
+                }
+
+                container.innerHTML = records.map(file => {
+                    const fileSizeKB = (file.file_size_bytes / 1024).toFixed(1);
+                    return `
+                        <div class="file-listing-strip">
+                            <div>
+                                <strong style="font-size:0.85rem; display:block;">${file.file_name}</strong>
+                                <span style="font-size:0.7rem; color:var(--text-muted);">${fileSizeKB} KB • Encrypted User Asset</span>
+                            </div>
+                            <a href="#" class="file-link-btn" onclick="requestSecureDownloadToken('${file.storage_bucket_path}')">Download</a>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Directory hydration error:", err.message);
+            }
+        }
+
+        // 🔗 GENERATE EXPIRED SIGNED URL FOR EXTRA PROTECTION
+        async function requestSecureDownloadToken(bucketPath) {
+            try {
+                // Generates a link that self-destructs after 60 seconds
+                const { data, error } = await supabase.storage.from('vault').createSignedUrl(bucketPath, 60);
+                if (error) throw error;
+                window.open(data.signedUrl, '_blank');
+            } catch (err) {
+                alert("Authorization token expired. Could not secure download link.");
+            }
         }
 
         function toggleSidebarAccordion(buttonElement) {
