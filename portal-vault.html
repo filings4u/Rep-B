@@ -2,169 +2,170 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Vault | filings4u Portal</title>
-    <script>const { data: { session } } = await supabase.auth.getSession();
-if (!session) window.location.href = 'index.html';
-</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secure Document Vault | filings4u</title>
+    <link rel="stylesheet" href="assets/css/portal-custom.css">
     <style>
-        /* CORE PORTAL CSS */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        :root { --navy: #0a1f44; --emerald: #10b981; --white: #ffffff; --bg-light: #f4f7fa; --border: #e2e8f0; --text-gray: #64748b; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--navy); display: flex; min-height: 100vh; }
-
-        /* SIDEBAR SYSTEM */
-        .portal-sidebar { width: 260px; height: 100vh; background: white; border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; left: 0; top: 0; display: flex; flex-direction: column; z-index: 1000; }
-        .sidebar-logo { height: 35px; margin-bottom: 40px; }
-        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
-        .nav-item { display: flex; align-items: center; padding: 12px 15px; text-decoration: none; font-weight: 600; border-radius: 10px; color: var(--navy); font-size: 0.9rem; transition: 0.2s; }
-        .nav-item.active { background-color: var(--navy) !important; color: white !important; box-shadow: 0 8px 20px rgba(10, 31, 68, 0.3) !important; transform: translateY(-2px); }
-        .nav-item.active span { filter: brightness(0) invert(1); }
-
-        /* CONTENT AREA */
-        .portal-main { margin-left: 260px; flex-grow: 1; padding: 40px 50px; width: calc(100% - 260px); }
-        .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 30px; }
-        
-        .file-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; align-items: flex-start; gap: 15px; transition: 0.3s; }
-        .file-card:hover { border-color: var(--emerald); transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .file-icon { font-size: 2rem; background: var(--bg-light); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-        
-        .file-info h4 { font-size: 0.9rem; margin-bottom: 5px; color: var(--navy); }
-        .file-info p { font-size: 0.75rem; color: var(--text-gray); margin-bottom: 12px; }
-        .btn-download { color: var(--emerald); text-decoration: none; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; border: 1px solid var(--emerald); padding: 5px 10px; border-radius: 6px; transition: 0.3s; }
-        .btn-download:hover { background: var(--emerald); color: white; }
-
-        .vault-category { margin-bottom: 40px; }
-        .vault-category h2 { font-size: 1.1rem; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; }
+        .drag-zone-box { border: 2px dashed #cbd5e1; padding: 40px 15px; border-radius: 12px; text-align: center; background: #ffffff; cursor: pointer; transition: all 0.2s; }
+        .drag-zone-box.hovering { border-color: var(--brand-accent); background: rgba(16, 185, 129, 0.03); }
+        .progress-container { width: 100%; height: 6px; background: #e2e8f0; border-radius: 4px; margin-top: 15px; display: none; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: var(--brand-accent); transition: width 0.1s linear; }
+        .file-listing-strip { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 10px; background: #fff; }
+        .file-link-btn { color: var(--brand-accent); font-weight: 600; text-decoration: none; font-size: 0.8rem; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="assets/js/portal-guard.js"></script> 
 </head>
 <body>
+    <div class="dashboard-wrapper">
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: #2ecc71 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION 1: My Profile & Services -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    My Account <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-dashboard.html" class="nav-item"><span>📊</span> Dashboard Home</a>
+                    <a href="portal-entities.html" class="nav-item"><span>🏢</span> My Registered Entities</a>
+                    <a href="portal-services.html" class="nav-item"><span>🛠️</span> Order New Services</a>
+                </div>
+                
+                <!-- ACCORDION 2: Filings & Progress -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Filings & Compliance <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-filings.html" class="nav-item"><span>⚙️</span> Active Orders</a>
+                    <a href="portal-compliance.html" class="nav-item"><span>🛡️</span> Compliance Tracker</a>
+                    <a href="portal-vault.html" class="nav-item active"><span>📂</span> Document Vault</a>
+                </div>
 
-    <aside class="portal-sidebar">
-        <img src="images/logo.png" alt="filings4u" class="sidebar-logo">
-        <nav class="sidebar-nav">
-            <a href="index.html" class="nav-item"><span>📊</span> Dashboard</a>
-            <a href="portal-vault.html" class="nav-item active"><span>📂</span> Document Vault</a>
-            <a href="portal-ifta-master.html" class="nav-item"><span>⛽</span> IFTA Reporting</a>
-            <a href="portal-cab-card.html" class="nav-item"><span>🆔</span> Cab Cards</a>
-            <a href="portal-settings.html" class="nav-item"><span>⚙️</span> Settings</a>
-        </nav>
-    </aside>
+                <!-- ACCORDION 3: Financials -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Billing & Invoices <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-billing.html" class="nav-item"><span>💰</span> Payment Methods</a>
+                    <a href="portal-invoices.html" class="nav-item"><span>💸</span> Order History</a>
+                </div>
 
-    <!-- [SIDEBAR & CORE CSS PRESERVED] -->
+                <!-- ACCORDION 4: Help Desk -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Support <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-chat.html" class="nav-item"><span>💬</span> Live Chat Support</a>
+                    <a href="portal-knowledgebase.html" class="nav-item"><span>📰</span> Help Resources</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <div class="secure-badge-container">
+                    <div class="secure-pulse-dot"></div>
+                    <span class="secure-badge-text">Secure Session</span>
+                </div>
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
 
-<main class="portal-main">
-    <header class="vault-header">
-        <div>
-            <h1>Enterprise Compliance Vault</h1>
-            <p style="color: var(--text-gray);">Fleet Status: <strong style="color: var(--emerald);">Audit-Ready</strong></p>
-        </div>
-        <div style="text-align: right;">
-            <!-- AUTO-ARCHIVE FEATURE -->
-            <button onclick="triggerArchive()" class="btn-navy" style="background: var(--navy); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 800; cursor: pointer;">
-                📦 Generate 4-Year Audit Archive (.zip)
-            </button>
-        </div>
-    </header>
+        <!-- 🧱 MAIN SCROLL ZONE AREA WORKSPACE -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Secure Document Vault</h1>
+                    <p>Encrypted cloud storage repo infrastructure for statutory formation records</p>
+                </div>
+                <div class="header-actions-wrapper">
+                    <div class="header-clock-pill"><span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+                </div>
+            </header>
 
-    <!-- CRITICAL COMPLIANCE ALERTS -->
-    <div id="decal-alert" style="background: #fff5f5; border: 1px solid var(--danger); padding: 15px; border-radius: 12px; margin: 25px 0; display: flex; align-items: center; gap: 15px; color: var(--danger);">
-        <span style="font-size: 1.5rem;">⚠️</span>
-        <div style="font-size: 0.85rem;">
-            <strong>MISSING DECAL ASSIGNMENT:</strong> 3 power units have been added to your roster without an assigned IFTA Decal Serial Number. Operating these units may result in citations.
-        </div>
+            <div class="portal-content-layout">
+                <!-- DRAG ZONE FORM -->
+                <div class="content-panel visual-card">
+                    <div class="panel-header"><h2>Upload Manifest Records</h2></div>
+                    <div class="drag-zone-box" id="dropZoneElement">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">📤</div>
+                        <h3>Drag and drop filing documents here</h3>
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin:5px 0 0 0;">or click this container panel to browse device assets</p>
+                        <input type="file" id="nativeFileInput" multiple style="display:none;">
+                        <div class="progress-container" id="progContainer"><div class="progress-bar" id="pBar"></div></div>
+                    </div>
+                </div>
+
+                <!-- FILE LISTINGS -->
+                <div class="content-panel visual-card">
+                    <div class="panel-header"><h2>Managed Vault Inventory</h2></div>
+                    <div class="tight-scroll-area" style="max-height: 480px;" id="vaultInventoryContainer">
+                        <!-- Populated by engine upload routine pipelines -->
+                        <div class="file-listing-strip">
+                            <div>
+                                <strong style="font-size:0.85rem; display:block;">Delaware_Formation_Certificate.pdf</strong>
+                                <span style="font-size:0.7rem; color:var(--text-muted);">142 KB • Verified Corporate Record</span>
+                            </div>
+                            <a href="#" class="file-link-btn">Download</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-  <!-- CORPORATE MINUTE BOOK & ASSET DISPOSAL -->
-<section class="vault-category">
-    <div class="category-title">📚 Governance & Asset Management</div>
-    <div class="vault-grid">
-        <!-- TEMPLATE LIBRARY -->
-        <div class="doc-card" style="border: 1px solid var(--emerald);">
-            <div class="doc-icon">📝</div>
-            <div class="doc-info">
-                <h4>Minute Book Templates</h4>
-                <p>Resolution to Buy, Sell, or Borrow.</p>
-                <select id="template-select" class="ifta-input" style="margin-bottom:10px;">
-                    <option>Select Template...</option>
-                    <option>Resolution: Purchase Equipment</option>
-                    <option>Resolution: Open Bank Account</option>
-                    <option>Annual Meeting Minutes</option>
-                </select>
-                <button class="btn-download" style="width:100%">Generate Form</button>
-            </div>
-        </div>
+    <!-- ENGINE CODE LINK CONTAINER -->
+    <script src="assets/js/portal-engine.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const box = document.getElementById("dropZoneElement");
+            const input = document.getElementById("nativeFileInput");
+            if(!box) return;
+            box.addEventListener("click", () => input.click());
+            box.addEventListener("dragover", (e) => { e.preventDefault(); box.classList.add("hovering"); });
+            box.addEventListener("dragleave", () => box.classList.remove("hovering"));
+            box.addEventListener("drop", (e) => {
+                e.preventDefault(); box.classList.remove("hovering");
+                if(e.dataTransfer.files.length) uploadVaultAssetSequence(e.dataTransfer.files);
+            });
+            input.addEventListener("change", (e) => {
+                if(e.target.files.length) uploadVaultAssetSequence(e.target.files);
+            });
+        });
 
-        <!-- ASSET DISPOSAL TOOL -->
-        <div class="doc-card" style="border: 1px solid var(--danger);">
-            <div class="doc-icon">🚛</div>
-            <div class="doc-info">
-                <h4>Asset Disposal (Void)</h4>
-                <p>Flag units as Sold or Scrapped.</p>
-                <button onclick="triggerDisposal()" class="btn-download" style="color:var(--danger); border-color:var(--danger);">Report Vehicle Sale</button>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-    <!-- NEW SECTION: DECAL INVENTORY TRACKING -->
-    <section class="vault-category">
-        <div class="category-title">🎫 IFTA Decal Inventory (UNLIMITED)</div>
-        <div class="ifta-card" style="margin-top: 0; padding: 0; overflow: hidden;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead style="background: #f8fafc;">
-                    <tr>
-                        <th style="padding: 12px 20px; font-size: 0.7rem; text-align: left; color: var(--text-gray);">Unit #</th>
-                        <th style="padding: 12px 20px; font-size: 0.7rem; text-align: left; color: var(--text-gray);">VIN (Last 8)</th>
-                        <th style="padding: 12px 20px; font-size: 0.7rem; text-align: left; color: var(--text-gray);">Decal Serial Number</th>
-                        <th style="padding: 12px 20px; font-size: 0.7rem; text-align: left; color: var(--text-gray);">Expiration</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="padding: 15px 20px;">Unit 101</td>
-                        <td style="padding: 15px 20px;"><code>K8829102</code></td>
-                        <td style="padding: 15px 20px;"><strong>IL-2026-992811</strong></td>
-                        <td style="padding: 15px 20px;">12/31/2026</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 15px 20px;">Unit 102</td>
-                        <td style="padding: 15px 20px;"><code>L9002194</code></td>
-                        <td style="padding: 15px 20px; color: var(--danger); font-weight: 800;">UNASSIGNED</td>
-                        <td style="padding: 15px 20px;">--</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-</main>
-
-<script>
-    function triggerArchive() {
-        const confirmed = confirm("Generate Master Audit Archive?\n\nThis will compile:\n- 4 Years of IFTA Returns\n- 4 Years of Fuel Receipts\n- 4 Years of GPS Distance Records\n- Current Driver Qualification Files\n\nThis process may take a few minutes.");
-        if(confirmed) {
-            alert("Archive generation started. A download link will be emailed to the primary account holder and stored in the 'Tax' section of this vault.");
+        async function uploadVaultAssetSequence(files) {
+            const pCont = document.getElementById("progContainer");
+            const bar = document.getElementById("pBar");
+            const container = document.getElementById("vaultInventoryContainer");
+            pCont.style.display = "block"; bar.style.width = "0%";
+            
+            for(let i=0; i<files.length; i++) {
+                let p = Math.round(((i+1)/files.length)*100);
+                bar.style.width = p + "%";
+                
+                // Append file item to UI directory listing grid dynamically
+                const newRow = document.createElement("div");
+                newRow.className = "file-listing-strip";
+                newRow.innerHTML = `
+                    <div>
+                        <strong style="font-size:0.85rem; display:block;">${files[i].name}</strong>
+                        <span style="font-size:0.7rem; color:var(--text-muted);">${(files[i].size / 1024).toFixed(1)} KB • User Manifest Upload</span>
+                    </div>
+                    <a href="#" class="file-link-btn" onclick="alert('Secure Link Compilation Sequence Executing...')">Download</a>
+                `;
+                container.prepend(newRow);
+            }
+            setTimeout(() => pCont.style.display="none", 1200);
         }
-    }
 
-    function triggerDisposal() {
-    const vin = prompt("Enter the VIN of the unit disposed:");
-    if(vin) {
-        alert(`Mathematical Impact:\n1. Unit ${vin} removed from active IFTA roster.\n2. Decal voided in Admin CRM.\n3. IRP Credit calculated for next registration.`);
-        // This triggers the IRP Credit math for the Illinois SOS
-    }
-}
-
-function triggerDisposal() {
-    const vin = prompt("Enter the VIN of the unit disposed:");
-    if(vin) {
-        alert(`Mathematical Impact:\n1. Unit ${vin} removed from active IFTA roster.\n2. Decal voided in Admin CRM.\n3. IRP Credit calculated for next registration.`);
-        // This triggers the IRP Credit math for the Illinois SOS
-    }
-}
-</script>
-
-
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
+            else { panel.style.maxHeight = panel.scrollHeight + "px"; }
+        }
+    </script>
 </body>
 </html>

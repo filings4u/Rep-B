@@ -135,3 +135,49 @@ document.addEventListener('DOMContentLoaded', runProductionGlobalClock);
         }
     }, 150);
 })();
+
+/**
+ * 👑 Admin Directorate Synchronization Hook Extension
+ * Injected to manage incoming customer orders and link chat lines dynamically
+ */
+document.addEventListener("DOMContentLoaded", async () => {
+    console.log("👑 Admin Operation Engine fully loaded. Mapping global event wires...");
+    initializeGlobalAdminOversightNetwork();
+});
+
+function initializeGlobalAdminOversightNetwork() {
+    if (typeof supabase === 'undefined') return;
+
+    // Admin monitors all user registration pipeline modifications across the network
+    supabase.channel('public_pipeline_tracker')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'filing_orders' }, (payload) => {
+            notifyAdminSystemAlert(payload.new);
+        })
+        .subscribe();
+}
+
+function notifyAdminSystemAlert(newOrderRecord) {
+    console.log("🔔 New client order payload logged to platform:", newOrderRecord);
+    
+    // Smoothly pushes notifications straight to the admin manager screen layout
+    const alertBox = document.createElement("div");
+    alertBox.style.cssText = "position: fixed; bottom: 20px; right: 20px; background: var(--emerald); color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.85rem; font-weight: 600;";
+    alertBox.textContent = `New Order: ${newOrderRecord.service_title} in ${newOrderRecord.target_state} ($${newOrderRecord.total_amount})`;
+    
+    document.body.appendChild(alertBox);
+    setTimeout(() => alertBox.remove(), 5000);
+
+    // Refresh data tables in admin-dashboard layout automatically if function definitions exist
+    if (typeof fetchSystemWideOperationsMetrics === 'function') {
+        fetchSystemWideOperationsMetrics();
+    }
+}
+
+// 🎧 ACTIVATE ADMIN CHAT OVER WATCH LINK FOR SELECTED CLIENT
+function bindAdminChatFocusToClient(clientId) {
+    const logContainer = document.getElementById("adminChatMessagesLog");
+    if (logContainer) logContainer.innerHTML = ""; // Wipe past active chat thread panel views
+    
+    // Connect admin listeners to the specified user's room tracking thread
+    linkLiveMessagingTerminal(clientId);
+}

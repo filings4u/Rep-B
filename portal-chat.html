@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Support Chat | filings4u</title>
+    <link rel="stylesheet" href="assets/css/portal-custom.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="assets/js/portal-guard.js"></script> 
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: #2ecc71 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    My Account <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-dashboard.html" class="nav-item"><span>📊</span> Dashboard Home</a>
+                    <a href="portal-entities.html" class="nav-item"><span>🏢</span> My Registered Entities</a>
+                    <a href="portal-services.html" class="nav-item"><span>🛠️</span> Order New Services</a>
+                </div>
+                
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Filings & Compliance <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-filings.html" class="nav-item"><span>⚙️</span> Active Orders</a>
+                    <a href="portal-compliance.html" class="nav-item"><span>🛡️</span> Compliance Tracker</a>
+                    <a href="portal-vault.html" class="nav-item"><span>📂</span> Document Vault</a>
+                </div>
+
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Billing & Invoices <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-billing.html" class="nav-item"><span>💰</span> Payment Methods</a>
+                    <a href="portal-invoices.html" class="nav-item"><span>💸</span> Order History</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <div class="secure-badge-container">
+                    <div class="secure-pulse-dot"></div>
+                    <span class="secure-badge-text">Secure Session</span>
+                </div>
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
+
+        <!-- 🧱 MAIN WORKSPACE DISPLAY AREA -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Filing Help Desk Support</h1>
+                    <p>Live messaging terminal connected directly to your dedicated filings4u corporate representative</p>
+                </div>
+            </header>
+
+            <div class="chat-window-pane">
+                <!-- Messages Box Scroll Canvas Wrapper -->
+                <div class="chat-messages-log" id="portalChatMessagesLog">
+                    <div class="chat-bubble inbound">
+                        Hello! Thank you for connecting with filings4u corporate support team. How can I assist you with your active entity filings, agency accounts, or state corporate renewals today?
+                    </div>
+                </div>
+
+                <!-- Input Console Panel Bar -->
+                <div class="chat-input-bar">
+                    <input type="text" id="chatMessageTerminalInputField" class="search-input" style="flex-grow: 1; width: auto;" placeholder="Type your compliance message detail here..." onkeydown="if(event.key === 'Enter') dispatchClientLiveChatMessage()">
+                    <button class="btn-sm" style="height: 38px; padding: 0 20px;" onclick="dispatchClientLiveChatMessage()">Send Message</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/portal-engine.js"></script>
+    <script>
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
+            else { panel.style.maxHeight = panel.scrollHeight + "px"; }
+        }
+
+        function dispatchClientLiveChatMessage() {
+            const field = document.getElementById("chatMessageTerminalInputField");
+            const logBox = document.getElementById("portalChatMessagesLog");
+            if (!field.value.trim()) return;
+
+            const bubble = document.createElement("div");
+            bubble.className = "chat-bubble outbound";
+            bubble.textContent = field.value;
+            logBox.appendChild(bubble);
+            
+            field.value = "";
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>

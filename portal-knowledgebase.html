@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Help Center & Resources | filings4u</title>
+    <link rel="stylesheet" href="assets/css/portal-custom.css">
+    <!-- Scoped knowledge base grid layouts -->
+    <style>
+        .kb-search-hero {
+            background: var(--brand-primary);
+            color: var(--text-on-dark);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(10, 31, 68, 0.1);
+        }
+        .kb-search-hero h2 { 
+            margin: 0 0 10px 0; 
+            font-size: 1.4rem; 
+        }
+        .kb-search-hero p { 
+            margin: 0 0 20px 0; 
+            font-size: 0.9rem; 
+            color: rgba(255, 255, 255, 0.7); /* Bound to correct color key */
+        }
+        .kb-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        .kb-category-card {
+            background: var(--bg-card-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+        }
+        .kb-category-card h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.1rem;
+            color: var(--brand-primary);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .kb-article-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .kb-article-links li {
+            margin-bottom: 12px;
+        }
+        .kb-article-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: block;
+            transition: color 0.15s ease;
+        }
+        .kb-article-links a:hover {
+            color: var(--brand-accent);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="assets/js/portal-guard.js"></script> 
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: #2ecc71 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION 1: My Profile & Services -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    My Account <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-dashboard.html" class="nav-item"><span>📊</span> Dashboard Home</a>
+                    <a href="portal-entities.html" class="nav-item"><span>🏢</span> My Registered Entities</a>
+                    <a href="portal-services.html" class="nav-item"><span>🛠️</span> Order New Services</a>
+                </div>
+                
+                <!-- ACCORDION 2: Filings & Progress -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Filings & Compliance <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-filings.html" class="nav-item"><span>⚙️</span> Active Orders</a>
+                    <a href="portal-compliance.html" class="nav-item"><span>🛡️</span> Compliance Tracker</a>
+                    <a href="portal-vault.html" class="nav-item"><span>📂</span> Document Vault</a>
+                </div>
+
+                <!-- ACCORDION 3: Financials -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Billing & Invoices <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-billing.html" class="nav-item"><span>💰</span> Payment Methods</a>
+                    <a href="portal-invoices.html" class="nav-item"><span>💸</span> Order History</a>
+                </div>
+
+                <!-- ACCORDION 4: Help Desk -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Support <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-chat.html" class="nav-item"><span>💬</span> Live Chat Support</a>
+                    <a href="portal-knowledgebase.html" class="nav-item active"><span>📰</span> Help Resources</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <div class="secure-badge-container">
+                    <div class="secure-pulse-dot"></div>
+                    <span class="secure-badge-text">Secure Session</span>
+                </div>
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
+
+        <!-- 🧱 MAIN INDEPENDENT WORKSPACE FRAME -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Knowledge Base</h1>
+                    <p>Search corporate filing guidelines, state regulatory parameters, and proxy compliance</p>
+                </div>
+                <div class="header-actions-wrapper">
+                    <div class="header-clock-pill"><span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+                </div>
+            </header>
+
+            <!-- 🔍 SEARCH HERO WIDGET -->
+            <section class="kb-search-hero">
+                <h2>How can we help your business stay compliant?</h2>
+                <p>Browse step-by-step corporate registration metrics across all 50 states.</p>
+                <input type="text" class="search-input" style="width: 100%; max-width: 500px;" placeholder="Search articles, state rules, or filing workflows...">
+            </section>
+
+            <!-- 🏢 CATEGORICAL DIRECTORY GRID -->
+            <div class="kb-grid tight-scroll-area" style="max-height: calc(100vh - 360px);">
+                <!-- Category 1 -->
+                <div class="kb-category-card">
+                    <h3><span>🏢</span> Company Formation</h3>
+                    <ul class="kb-article-links">
+                        <li><a href="#">Understanding LLC vs. C-Corp Classifications &rarr;</a></li>
+                        <li><a href="#">How to File Articles of Organization Safely &rarr;</a></li>
+                        <li><a href="#">What is an Operating Agreement and is it Required? &rarr;</a></li>
+                    </ul>
+                </div>
+
+                <!-- Category 2 -->
+                <div class="kb-category-card">
+                    <h3><span>🛡️</span> Ongoing Compliance</h3>
+                    <ul class="kb-article-links">
+                        <li><a href="#">State Franchise Tax Deadlines Master Calendar &rarr;</a></li>
+                        <li><a href="#">What Happens if My Corporate Status Delinquents? &rarr;</a></li>
+                        <li><a href="#">How to Change Your Appointed Registered Agent &rarr;</a></li>
+                    </ul>
+                </div>
+
+                <!-- Category 3 -->
+                <div class="kb-category-card">
+                    <h3><span>🤝</span> Agency Wholesaling</h3>
+                    <ul class="kb-article-links">
+                        <li><a href="#">Executing Filings on Behalf of Sub-Clients &rarr;</a></li>
+                        <li><a href="#">Power of Attorney (PoA) Scanning Manifest Guidelines &rarr;</a></li>
+                        <li><a href="#">Setting Up Multi-Entity Wholesale Invoicing &rarr;</a></li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/portal-engine.js"></script>
+    <script>
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
+            else { panel.style.maxHeight = panel.scrollHeight + "px"; }
+        }
+    </script>
+</body>
+</html>

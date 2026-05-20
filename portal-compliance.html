@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Compliance Tracker | filings4u</title>
+    <link rel="stylesheet" href="assets/css/portal-custom.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="assets/js/portal-guard.js"></script> 
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: #2ecc71 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    My Account <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-dashboard.html" class="nav-item"><span>📊</span> Dashboard Home</a>
+                    <a href="portal-entities.html" class="nav-item"><span>🏢</span> My Registered Entities</a>
+                    <a href="portal-services.html" class="nav-item"><span>🛠️</span> Order New Services</a>
+                </div>
+                
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Filings & Compliance <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-filings.html" class="nav-item"><span>⚙️</span> Active Orders</a>
+                    <a href="portal-compliance.html" class="nav-item active"><span>🛡️</span> Compliance Tracker</a>
+                    <a href="portal-vault.html" class="nav-item"><span>📂</span> Document Vault</a>
+                </div>
+
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Billing & Invoices <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-billing.html" class="nav-item"><span>💰</span> Payment Methods</a>
+                    <a href="portal-invoices.html" class="nav-item"><span>💸</span> Order History</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <div class="secure-badge-container">
+                    <div class="secure-pulse-dot"></div>
+                    <span class="secure-badge-text">Secure Session</span>
+                </div>
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
+
+        <!-- 🧱 MAIN INDEPENDENT CONTAINER CONSOLE AREA -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>State Compliance Matrix</h1>
+                    <p>Track renewal deadlines, franchise tax states, and verify proxy representations</p>
+                </div>
+                <div class="header-actions-wrapper">
+                    <!-- 🏢 Dynamic Client Filter Context Box for Agencies -->
+                    <select id="agencyActiveClientFilter" class="search-input" style="width: 250px;" onchange="syncComplianceContextEntity()">
+                        <option value="internal_acct">My Premium Account (Primary)</option>
+                        <option value="sub_client_01">Client: Vertex Logistical Systems LLC</option>
+                        <option value="sub_client_02">Client: Onyx Capital Investments Group</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- 📜 LEGAL CONTRACTS BANNER -->
+            <div class="agency-notice-banner">
+                <div>
+                    <strong style="color: var(--brand-primary);">Agency Operations Framework Active</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Ensure valid Power of Attorney (PoA) signatures are logged prior to filing updates.</p>
+                </div>
+                <button onclick="downloadSamplePoADocument()" class="btn-sm" style="background: var(--brand-primary);">Download Sample PoA</button>
+            </div>
+
+            <div class="portal-content-layout">
+                <!-- LEFT COLUMN: DEADLINE MATRIX TABLE -->
+                <div class="content-panel visual-card">
+                    <div class="panel-header"><h2>Upcoming Statutory Obligations</h2></div>
+                    <div class="table-responsive tight-scroll-area">
+                        <table class="portal-table">
+                            <thead>
+                                <tr>
+                                    <th>Requirement Description</th>
+                                    <th>State Authority</th>
+                                    <th>Filing Deadline</th>
+                                    <th>Operational Risk Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complianceMatrixTableBody">
+                                <tr>
+                                    <td><strong>Annual Franchise Tax Report</strong></td>
+                                    <td>Delaware Division of Corporations</td>
+                                    <td>06/01/2026</td>
+                                    <td><span class="status-pill pending">Pending Action</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Registered Agent Renewal Verification</strong></td>
+                                    <td>Wyoming Secretary of State</td>
+                                    <td>09/15/2026</td>
+                                    <td><span class="status-pill active" style="background: rgba(16,185,129,0.1); color: var(--brand-accent);">Compliant</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: CLEARANCE TRACKER WIDGET -->
+                <div class="content-panel visual-card">
+                    <div class="panel-header"><h2>Representation Legality</h2></div>
+                    <p style="font-size:0.85rem; line-height: 1.4; color: var(--text-muted); margin: 0 0 15px 0;">
+                        Upload the signed Power of Attorney assignment payload authorization scan file to link this entity to your secure pipeline registry account.
+                    </p>
+                    <div class="poa-download-box">
+                        <span style="font-size: 0.75rem; text-transform: uppercase; display: block; margin-bottom: 8px; font-weight: 700; color: var(--text-main);">Active Proxy Tracking</span>
+                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--brand-accent);" id="poaValidationLabel">PoA Verified Status: Active</div>
+                    </div>
+                    <button class="btn-sm" style="width: 100%; text-align: center; margin-top: 15px; padding: 10px; display: block;" onclick="window.location.href='portal-vault.html'">Upload Signed Manifest Scan</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/portal-engine.js"></script>
+    <script>
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
+            else { panel.style.maxHeight = panel.scrollHeight + "px"; }
+        }
+
+        function syncComplianceContextEntity() {
+            const filter = document.getElementById("agencyActiveClientFilter").value;
+            const poaLabel = document.getElementById("poaValidationLabel");
+            if (filter === "internal_acct") {
+                poaLabel.textContent = "PoA Verified Status: Active (Account Owner)";
+                poaLabel.style.color = "var(--brand-accent)";
+            } else {
+                poaLabel.textContent = "Awaiting Client Sign-off Upload File";
+                poaLabel.style.color = "#d97706";
+            }
+        }
+
+        // Automated execution routing download link generation sequence
+        function downloadSamplePoADocument() {
+            const documentContent = `POWER OF ATTORNEY \n\nThe undersigned Grantor hereby appoints the Agent account to execute business filing registration payloads and compliance modifications on behalf of the Grantor with State Corporations Authorities. \n\nSigned: ___________________________\nDate: ___________________________`;
+            const fileBlob = new Blob([documentContent], { type: "text/plain" });
+            const anchorLink = document.createElement("a");
+            anchorLink.href = URL.createObjectURL(fileBlob);
+            anchorLink.download = "filings4u_Sample_PoA_Template.txt";
+            document.body.appendChild(anchorLink);
+            anchorLink.click();
+            document.body.removeChild(anchorLink);
+        }
+    </script>
+</body>
+</html>

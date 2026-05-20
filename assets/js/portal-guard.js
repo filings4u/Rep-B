@@ -58,4 +58,35 @@
         // 5. Force client redirect back to secure portal entry wall
         window.location.replace(portalLoginTarget);
     }
+
+    /**
+ * 🔒 filings4u Production Session Protection Guard
+ * Strictly intercepting unauthenticated traffic layers before view initialization
+ */
+(async function enforceSecureWorkspaceAccess() {
+    const supabaseUrl = window.SUPABASE_URL || localStorage.getItem("https://lrbimrlbskjweynxlgas.supabase.co");
+    const supabaseKey = window.SUPABASE_ANON_KEY || localStorage.getItem("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+
+    if (!supabaseUrl || !supabaseKey) {
+        console.error("Critical Platform Config Keys Isolated or Missing.");
+        window.location.href = "https://portal.filings4u.com/portal-login.html";
+        return;
+    }
+
+    // Initialize local instance checker cleanly prior to page load
+    const clientInstance = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+    
+    if (!clientInstance) {
+        window.location.href = "https://portal.filings4u.com/portal-login.html";
+        return;
+    }
+
+    const { data: { session }, error } = await clientInstance.auth.getSession();
+    
+    if (error || !session) {
+        console.warn("Unauthorized access trace blocked. Redirecting session context to login.");
+        window.location.href = "https://portal.filings4u.com/portal-login.html";
+    }
+})();
+
 })();
