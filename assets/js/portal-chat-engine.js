@@ -92,3 +92,32 @@ function appendMessageBubbleToLogView(text, orientationStyle) {
     container.appendChild(bubble);
     container.scrollTop = container.scrollHeight; // Force scroll alignment visibility bounds
 }
+
+// ==========================================================================
+// 🚀 PRODUCTION LIVE SOCKET SYNCHRONIZER (AUTO-RUN TESTER)
+// ==========================================================================
+(function automaticChatEngineBindingBootstrap() {
+    const trackingPollingInterval = setInterval(async () => {
+        // Wait for the master connection client script inside assets/js/supabase-config.js to load
+        const activeClient = window.supabaseClient || window.supabase;
+        
+        if (activeClient && typeof activeClient.auth !== 'undefined') {
+            clearInterval(trackingPollingInterval);
+            console.log("💬 Portal Chat Script Engine hooked into storage instance. Syncing channels...");
+
+            const currentPathName = window.location.pathname.toLowerCase();
+
+            // Case A: If user is on the customer portal chat page
+            if (currentPathName.includes("portal-chat")) {
+                await window.linkLiveMessagingTerminal(); // Auto-binds user to their own UUID room
+                console.log("👤 Customer real-time websocket link established.");
+            }
+            
+            // Case B: If administrator is on the admin chat/dashboard viewports
+            if (currentPathName.includes("admin-")) {
+                console.log("👑 Admin runtime detected. Standing by for dropdown selection event triggers...");
+                // The dropdown event listener defined inside admin-engine-wire.js handles switching rooms cleanly
+            }
+        }
+    }, 150);
+})();
