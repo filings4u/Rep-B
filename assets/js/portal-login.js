@@ -43,7 +43,7 @@ async function startCustomerLoginEngine() {
         }
 
         // Standard user profiles pass directly to the customer dashboard layout
-        window.location.assign(`${fallbackUrl}/portal-dashboard.html`);
+        window.location.assign(`${fallbackUrl}/client-dashboard.html`);
     }
 
     // Interactive Password Masking Toggle Logic
