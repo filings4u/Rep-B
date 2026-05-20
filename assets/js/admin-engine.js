@@ -270,3 +270,54 @@
     });
 
 })();
+
+// ==========================================================================
+// 🚚 FMCSA DATA MANIPULATION WORKSPACE HANDLERS
+// ==========================================================================
+window.hydrateFmcsaApplicantWorkspace = async function(clientId) {
+    const client = window.supabaseClient;
+    if (!client || !clientId) return;
+
+    try {
+        // Query company parameters from your registered entities relational tables
+        const { data: entityData } = await client
+            .from('entities')
+            .select('*')
+            .eq('owner_id', clientId)
+            .single();
+
+        if (entityData) {
+            document.getElementById("fmcsa_legal_name").textContent = entityData.entity_name;
+            document.getElementById("fmcsa_address").textContent = entityData.state_jurisdiction + " Corporate Registry File";
+        }
+    } catch (err) {
+        console.warn("Fmcsa pipeline profile trace timeout:", err.message);
+    }
+};
+
+window.copyApplicantDataToClipboard = function() {
+    const legalName = document.getElementById("fmcsa_legal_name").textContent;
+    const classification = document.getElementById("fmcsa_classification").textContent;
+    const cargo = document.getElementById("fmcsa_cargo").textContent;
+
+    const consolidatedText = `LEGAL NAME: ${legalName}\nCLASSIFICATION: ${classification}\nCARGO: ${cargo}`;
+
+    navigator.clipboard.writeText(consolidatedText)
+        .then(() => {
+            alert("📋 Client registry metadata copied to your device clipboard.");
+        })
+        .catch(() => {
+            alert("❌ Clipboard write access denied by system settings.");
+        });
+};
+
+// 🎧 Attach this trigger hook right inside your active dropdown change handler code block
+const activeSelector = document.getElementById("adminChatActiveClientSelector");
+if (activeSelector) {
+    activeSelector.addEventListener("change", (e) => {
+        if (e.target.value) {
+            window.hydrateFmcsaApplicantWorkspace(e.target.value);
+        }
+    });
+}
+
