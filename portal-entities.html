@@ -114,5 +114,50 @@
             else { panel.style.maxHeight = panel.scrollHeight + "px"; }
         }
     </script>
+
+    <script>
+    // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
+    function toggleSidebarAccordion(buttonElement) {
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+        } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+    }
+
+    // 🟢 AUTOMATIC ACCORDION & EMERALD LINK ACTIVE TRACKER
+    document.addEventListener("DOMContentLoaded", () => {
+        const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
+        
+        // Find every navigation link matching the exact current browser page filename
+        const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
+        
+        activeLinks.forEach(link => {
+            // 1. Wipe out any stale fallback active states on sister components
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            // 2. Pin the emerald line highlight exactly to the clicked link item
+            link.classList.add('active');
+            
+            // 3. Find the parent folder panel block containing this active sub-link
+            const matchingPanel = link.closest('.accordion-panel');
+            if (matchingPanel) {
+                // Force open the panel container box
+                matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
+                
+                // Find the button directly above the panel and toggle its chevron to "▲" (active)
+                const folderTriggerButton = matchingPanel.previousElementSibling;
+                if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
+                    folderTriggerButton.classList.add('active');
+                    const chevronSpan = folderTriggerButton.querySelector('.chevron');
+                    if (chevronSpan) chevronSpan.textContent = "▲";
+                }
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
