@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Live Customer Relay Chat | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
-    
+    <title>Platform Chat Console | filings4u Staff</title>
     <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
     <script src="assets/js/supabase-config.js"></script>
-    <script src="assets/js/admin-guard.js"></script>
-    <script src="assets/js/wizard-sync.js"></script>
     
+    <!-- Scoped embedding your exact layout style criteria rules matrix -->
     <style>
         /* ==========================================================================
            🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
@@ -27,6 +23,7 @@
             --staff-red: #c15254;
             --sidebar-width: 260px;
         }
+
         body, html {
             margin: 0 !important;
             padding: 0 !important;
@@ -36,12 +33,14 @@
             color: var(--text-dark) !important;
             overflow: hidden !important;
         }
+
         .dashboard-wrapper {
             display: flex !important;
             height: 100vh !important;
             width: 100% !important;
             position: relative !important;
         }
+
         /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
         .portal-sidebar {
             width: var(--sidebar-width) !important;
@@ -56,12 +55,14 @@
             z-index: 1000 !important;
             box-sizing: border-box !important;
         }
+
         .sidebar-brand-block {
             padding: 24px 20px !important;
             border-bottom: 1px solid #f1f5f9 !important;
             text-align: center !important;
             box-sizing: border-box !important;
         }
+
         .admin-badge {
             display: inline-block !important;
             background: rgba(193, 82, 84, 0.08) !important;
@@ -75,12 +76,14 @@
             margin-top: 6px !important;
             border: 1px solid rgba(193, 82, 84, 0.15) !important;
         }
+
         .sidebar-accordion-menu {
             flex: 1 !important;
             overflow-y: auto !important;
             padding: 15px 12px !important;
             box-sizing: border-box !important;
         }
+
         .accordion-trigger {
             width: 100% !important;
             background: #f8fafc !important;
@@ -101,6 +104,7 @@
             transition: all 0.2s !important;
             box-sizing: border-box !important;
         }
+
         .accordion-panel {
             max-height: 0;
             overflow: hidden !important;
@@ -108,6 +112,7 @@
             box-sizing: border-box !important;
             transition: max-height 0.25s ease-out !important;
         }
+
         .nav-item {
             display: flex !important;
             align-items: center !important;
@@ -123,22 +128,26 @@
             transition: all 0.15s !important;
             box-sizing: border-box !important;
         }
+
         .nav-item:hover {
             background: rgba(10, 31, 68, 0.02) !important;
             color: var(--emerald) !important;
             padding-left: 14px !important;
         }
+
         .nav-item.active {
             background: rgba(16, 185, 129, 0.08) !important;
             color: var(--emerald) !important;
             font-weight: 700 !important;
         }
+
         .sidebar-footer-lock {
             padding: 16px !important;
             border-top: 1px solid var(--border-color) !important;
             background: #f8fafc !important;
             box-sizing: border-box !important;
         }
+
         .logout-btn {
             width: 100% !important;
             background: var(--text-dark) !important;
@@ -150,6 +159,7 @@
             font-size: 0.8rem !important;
             cursor: pointer !important;
         }
+
         /* 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH */
         .portal-main {
             flex: 1 !important;
@@ -160,6 +170,7 @@
             height: 100vh !important;
             box-sizing: border-box !important;
         }
+
         .portal-header {
             background: var(--white) !important;
             padding: 15px 40px !important;
@@ -171,11 +182,13 @@
             width: 100% !important;
             height: 75px !important;
         }
+
         .header-actions-wrapper {
             display: flex !important;
             align-items: center !important;
             gap: 12px !important;
         }
+
         .header-clock-pill {
             background: #f8fafc !important;
             border: 1px solid var(--border-color) !important;
@@ -192,6 +205,7 @@
             height: 40px !important;
             white-space: nowrap !important;
         }
+
         .search-input {
             padding: 10px 14px !important;
             border: 1px solid var(--border-color) !important;
@@ -201,6 +215,7 @@
             box-sizing: border-box !important;
             width: 200px !important;
         }
+
         /* 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION */
         .chat-layout-container {
             display: flex !important;
@@ -210,6 +225,7 @@
             background: var(--white) !important;
             box-sizing: border-box !important;
         }
+
         .chat-users-panel {
             width: 300px !important;
             border-right: 1px solid var(--border-color) !important;
@@ -219,11 +235,13 @@
             height: 100% !important;
             box-sizing: border-box !important;
         }
+
         .search-users-box {
             padding: 15px !important;
             border-bottom: 1px solid var(--border-color) !important;
             box-sizing: border-box !important;
         }
+
         .user-search-input {
             width: 100% !important;
             padding: 10px 14px !important;
@@ -234,11 +252,13 @@
             outline: none !important;
             box-sizing: border-box !important;
         }
+
         .users-scrollable-feed {
             flex: 1 !important;
             overflow-y: auto !important;
             box-sizing: border-box !important;
         }
+
         .user-channel-row {
             display: flex !important;
             align-items: center !important;
@@ -250,13 +270,16 @@
             text-align: left !important;
             box-sizing: border-box !important;
         }
+
         .user-channel-row:hover {
             background: #edf2f7 !important;
         }
+
         .user-channel-row.active {
             background: rgba(16, 185, 129, 0.08) !important;
             border-left: 4px solid var(--emerald) !important;
         }
+
         .avatar-circle {
             width: 38px !important;
             height: 38px !important;
@@ -270,11 +293,13 @@
             font-size: 0.85rem !important;
             flex-shrink: 0 !important;
         }
+
         .user-meta-block {
             overflow: hidden !important;
             white-space: nowrap !important;
             text-overflow: ellipsis !important;
         }
+
         .chat-thread-panel {
             flex: 1 !important;
             display: flex !important;
@@ -284,6 +309,7 @@
             background: var(--white) !important;
             box-sizing: border-box !important;
         }
+
         .messages-timeline-scroll {
             flex: 1 !important;
             overflow-y: auto !important;
@@ -291,14 +317,21 @@
             background: #fdfdfd !important;
             box-sizing: border-box !important;
         }
+
         .msg-row {
             display: flex !important;
             margin-bottom: 20px !important;
             width: 100% !important;
         }
-        .msg-row.staff-sent { justify-content: flex-end !important; }
-        .msg-row.client-sent { justify-content: flex-start !important; }
-        
+
+        .msg-row.staff-sent {
+            justify-content: flex-end !important;
+        }
+
+        .msg-row.client-sent {
+            justify-content: flex-start !important;
+        }
+
         .msg-bubble {
             max-width: 65% !important;
             padding: 12px 18px !important;
@@ -309,17 +342,20 @@
             box-sizing: border-box !important;
             text-align: left !important;
         }
+
         .msg-row.staff-sent .msg-bubble {
             background: var(--text-dark) !important;
             color: #ffffff !important;
             border-bottom-right-radius: 2px !important;
         }
+
         .msg-row.client-sent .msg-bubble {
             background: #f1f5f9 !important;
             color: var(--text-dark) !important;
             border-bottom-left-radius: 2px !important;
             border: 1px solid var(--border-color) !important;
         }
+
         .msg-timestamp {
             font-size: 0.68rem !important;
             opacity: 0.6;
@@ -327,17 +363,20 @@
             margin-top: 4px !important;
             text-align: right !important;
         }
+
         .chat-input-footer-tray {
             padding: 20px 30px !important;
             border-top: 1px solid var(--border-color) !important;
             background: var(--white) !important;
             box-sizing: border-box !important;
         }
+
         .tray-form-grid {
             display: flex !important;
             gap: 12px !important;
             width: 100% !important;
         }
+
         .tray-textarea-input {
             flex: 1 !important;
             padding: 12px 16px !important;
@@ -352,10 +391,12 @@
             color: var(--text-dark) !important;
             background: #f8fafc !important;
         }
+
         .tray-textarea-input:focus {
             background: #fff !important;
             border-color: var(--emerald) !important;
         }
+
         .btn-send {
             background: var(--text-dark) !important;
             color: white !important;
@@ -368,6 +409,7 @@
             height: 44px !important;
             box-sizing: border-box !important;
         }
+
         @media (max-width: 991px) {
             .portal-sidebar { display: none !important; }
             .portal-main { margin-left: 0 !important; width: 100% !important; }
@@ -379,311 +421,266 @@
     </style>
 </head>
 <body>
-      <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+
+    <div class="dashboard-wrapper">
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
         <aside class="portal-sidebar">
             <div class="sidebar-brand-block">
                 <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
                 <div><div class="admin-badge">Directorate Admin</div></div>
             </div>
             <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">Control Systems <span>▼</span></button>
                 <div class="accordion-panel">
                     <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
                     <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
                 </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
+                
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">Operations & CRM <span>▼</span></button>
                 <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                    <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Ledger</a>
+                
                 </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
+
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">Communication & Tools <span>▼</span></button>
+                <div class="accordion-panel" style="max-height: 500px;">
+                    <a href="admin-chat.html" class="nav-item active"><span>💬</span> Client Chat</a>
                     <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
                 </div>
             </nav>
-             <div class="sidebar-footer-lock">
-                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
-                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
-                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
-                </div>
-                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
+            <div class="sidebar-footer-lock">
+                <button id="sidebarFallbackLogoutBtn" class="logout-btn" onclick="window.executeTerminalSessionTermination()">Exit Session</button>
             </div>
         </aside>
 
-             <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
+        <!-- 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH -->
         <main class="portal-main">
             <header class="portal-header">
-                <div>
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Live Customer Relay Chat</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Coordinate real-time client consultations, broadcast direct text wires, and patch operational support hooks.</p>
+                <div style="text-align: left;">
+                    <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Customer Communication Desk</h1>
                 </div>
-                
                 <div class="header-actions-wrapper">
                     <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">05/19/2026 | 10:17:15</span>
-                    </div>
-                    <div>
-                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search execution tickets...">
+                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
                     </div>
                 </div>
             </header>
 
+            <!-- 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION -->
+            <div class="chat-layout-container">
+                <!-- LEFT USERS COLUMN FEED -->
+                <aside class="chat-users-panel">
+                    <div class="search-users-box">
+                        <input type="text" id="userFeedFilterField" class="user-search-input" placeholder="Search clients..." onkeyup="filterUsersFeed()">
+                    </div>
+                    <div class="users-scrollable-feed" id="adminUsersFeedContainer">
+                        <!-- Dynamic list of accounts loaded here -->
+                        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">Loading live accounts feed...</div>
+                    </div>
+                </aside>
 
-<!-- 🧱 NEW MAIN WORKSPACE LAYOUT CONSTAINER -->
-<div class="admin-chat-center-container">
+                <!-- RIGHT MAIN MESSAGE THREAD -->
+                <section class="chat-thread-panel">
+                    <div class="messages-timeline-scroll" id="adminChatMessagesLog">
+                        <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">
+                            Select a client row on the left panel to connect streaming text thread nodes.
+                        </div>
+                    </div>
 
-    <!-- Secure Chat Counterpart Widget Frame -->
-    <!-- 🚨 EXTREMELY CRITICAL: ID ATTRIBUTES MUST MATCH LETTER-FOR-LETTER -->
-    <div class="content-panel visual-card"> 
-        <div class="panel-header"> 
-            <h2>Live Customer Support Desk</h2> 
-            <select id="adminChatActiveClientSelector" class="search-input"> 
-                <option value="">Select an active client session user to open channel...</option> 
-            </select> 
-        </div>
-        
-        <div class="chat-window-pane" style="display: flex; flex-direction: column; height: 420px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-            <div class="chat-messages-log" id="adminChatMessagesLog" style="flex-grow: 1; padding: 15px; overflow-y: auto; background: #f4f7fa; display: flex; flex-direction: column;">
-                <div class="chat-bubble inbound">Awaiting client support thread connection select option...</div>
+                    <div class="chat-input-footer-tray">
+                        <div class="tray-form-grid">
+                            <textarea id="adminChatMessageInputField" class="tray-textarea-input" placeholder="Type your secure response message payload here... (Press Enter to Send)" onkeydown="handleAdminChatKeyOptions(event)" disabled></textarea>
+                            <button id="adminChatSendButton" class="btn-send" onclick="dispatchAdminResponseChatMessage()" disabled>Send</button>
+                        </div>
+                    </div>
+                </section>
             </div>
-            
-            <div class="chat-input-bar" style="display: flex; padding: 12px; gap: 10px; background: #fff; border-top: 1px solid #e2e8f0;">
-                <input type="text" id="adminChatMessageInputField" class="search-input" style="flex-grow: 1;" placeholder="Type secure administrative response message payload...">
-                <button class="btn-sm" onclick="window.dispatchAdminResponseChatMessage()">Send Message</button>
-            </div>
-        </div>
-    </div>
-
-</div> <!-- /admin-chat-center-container -->
-
-    
-    <div class="chat-window-pane" style="display: flex; flex-direction: column; height: 420px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-        <div class="chat-messages-log" id="adminChatMessagesLog" style="flex-grow: 1; padding: 15px; overflow-y: auto; background: #f4f7fa; display: flex; flex-direction: column;">
-            <div class="chat-bubble inbound">Awaiting client support thread connection select option...</div>
-        </div>
-        
-        <div class="chat-input-bar" style="display: flex; padding: 12px; gap: 10px; background: #fff; border-top: 1px solid #e2e8f0;">
-            <!-- 🎯 INPUT TEXTAREA ID LINKED DIRECTLY TO SCRIPT ENGINE KEYBOARD LISTENERS -->
-            <input type="text" id="adminChatMessageInputField" class="search-input" style="flex-grow: 1;" placeholder="Type secure administrative response message payload...">
-            <button class="btn-sm" onclick="window.dispatchAdminResponseChatMessage()">Send Message</button>
-        </div>
-    </div>
-</div>
-
-
         </main>
     </div>
 
-    <!-- PRODUCTION COMMUNICATIONS ENGINE PIPELINE BINDINGS -->
-    <script src="assets/js/admin-engine.js"></script>
+    <!-- 🎯 MASTER INTEGRATION CONTROLLER MODULE -->
     <script>
-        // ==========================================================================
-        // 🗂️ SIDEBAR ACCORDION TOGGLE CONTROLLER
-        // ==========================================================================
-        function toggleSidebarAccordion(triggerButton) {
-            const targetPanel = triggerButton.nextElementSibling;
-            const chevronSymbol = triggerButton.querySelector('.chevron');
-            triggerButton.classList.toggle('active');
-            
-            if (targetPanel.style.maxHeight && targetPanel.style.maxHeight !== '0px') {
-                targetPanel.style.maxHeight = '0px';
-                if (chevronSymbol) chevronSymbol.textContent = '▼';
-            } else {
-                targetPanel.style.maxHeight = targetPanel.scrollHeight + 'px';
-                if (chevronSymbol) chevronSymbol.textContent = '▲';
+        let activeAdminSupportChannel = null;
+        let currentlySelectedClientUuid = null;
+
+        // ⏰ Live Synchronization Header System Clock
+        setInterval(() => {
+            const clock = document.getElementById("portal-clock");
+            if (!clock) return;
+            const now = new Date();
+            clock.textContent = `${now.toLocaleDateString('en-US')} | ${now.toLocaleTimeString('en-US', { hour12: false })}`;
+        }, 1000);
+
+        // Sidebar collapsible directory rules actions
+        function toggleSidebarAccordion(btn) {
+            btn.classList.toggle('active');
+            const panel = btn.nextElementSibling;
+            panel.style.maxHeight = (panel.style.maxHeight && panel.style.maxHeight !== "0px") ? "0px" : panel.scrollHeight + "px";
+        }
+
+        // ⏱️ Production initialization loop checking for initialized state registers
+        const bootPoller = setInterval(() => {
+            if (window.supabaseClient) {
+                clearInterval(bootPoller);
+                hydrateAdminLiveUsersFeed();
             }
-        }
+        }, 150);
 
-        // ==========================================================================
-        // 💬 CLIENT CHAT COMMUNICATIONS INFRASTRUCTURE ENGINE
-        // ==========================================================================
-        function getSupabaseClient() {
-            return window.supabaseClient || window.supabase;
-        }
+        // 👥 HYDRATE LEFT SPLIT-PANEL USERS SELECTION FEED
+        async function hydrateAdminLiveUsersFeed() {
+            const container = document.getElementById("adminUsersFeedContainer");
+            if (!container) return;
 
-        function escapeHtml(unsafeText) {
-            if (!unsafeText) return '';
-            return unsafeText
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        let currentlySelectedUserUuid = null;
-        const feedTarget = document.getElementById('channelsTargetFeed');
-        const timelineBox = document.getElementById('messagesTimelineScrollBox');
-        const inputField = document.getElementById('rawMessageText');
-        const submitBtn = document.getElementById('msgSubmitBtn');
-
-        async function loadConversationsChannelsList() {
-            const client = getSupabaseClient();
-            if (!client || !feedTarget) return;
             try {
-                const { data, error } = await client
-                    .from('user_filings_workspace')
-                    .select('user_id, payload_data')
-                    .order('updated_at', { ascending: false });
-                    
+                const { data: profiles, error } = await window.supabaseClient
+                    .from('profiles')
+                    .select('id, company_name')
+                    .order('company_name', { ascending: true });
+
                 if (error) throw error;
-                if (!data || data.length === 0) {
-                    feedTarget.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem;">No clients tracked.</div>';
+
+                if (!profiles || profiles.length === 0) {
+                    container.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem;">No active user profiles logged.</div>`;
                     return;
                 }
 
-                const seen = new Set();
-                const uniqueClients = data.filter(item => {
-                    if (!item.user_id || seen.has(item.user_id)) return false;
-                    seen.add(item.user_id);
-                    return true;
+                container.innerHTML = profiles.map(user => {
+                    const initials = (user.company_name || 'U').substring(0, 2).toUpperCase();
+                    return `
+                        <div class="user-channel-row" id="user-row-${user.id}" onclick="bindAdminChatFocusToClient('${user.id}')">
+                            <div class="avatar-circle">${initials}</div>
+                            <div class="user-meta-block">
+                                <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-dark);">${user.company_name || 'Unnamed Client'}</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top:2px;">Click to view messages</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Feed hydration crash:", err.message);
+                container.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted);">Failed to sync profiles feed.</div>`;
+            }
+        }
+
+        // 🎧 CONNECT RUNTIME CHANNEL WEBSOCKET TO SELECTED CLIENT THREAD ROOM
+        async function bindAdminChatFocusToClient(clientId) {
+            if (!clientId) return;
+            currentlySelectedClientUuid = clientId;
+
+            // Highlight chosen list item indicator row
+            document.querySelectorAll(".user-channel-row").forEach(r => r.classList.remove("active"));
+            document.getElementById(`user-row-${clientId}`)?.classList.add("active");
+
+            // Unlock execution form text fields
+            document.getElementById("adminChatMessageInputField").removeAttribute("disabled");
+            document.getElementById("adminChatSendButton").removeAttribute("disabled");
+
+            const logBox = document.getElementById("adminChatMessagesLog");
+            logBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.8rem; font-style:italic;">Reconstructing conversational arrays...</div>`;
+
+            try {
+                // 1. Fetch text lines from table storage arrays
+                const { data: messages } = await window.supabaseClient
+                    .from('chat_messages')
+                    .select('*')
+                    .eq('client_id', clientId)
+                    .order('created_at', { ascending: true });
+
+                logBox.innerHTML = ""; // Clear canvas loader
+
+                if (messages && messages.length > 0) {
+                    messages.forEach(msg => {
+                        const styleClass = msg.sender_type === 'admin' ? 'staff-sent' : 'client-sent';
+                        appendMessageBubbleToCanvas(msg.message_content, styleClass);
+                    });
+                } else {
+                    logBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.8rem; font-style:italic;">Thread initialized safely. No text lines logged.</div>`;
+                }
+
+                // 2. Tear down old channels to free thread lines
+                if (activeAdminSupportChannel) {
+                    await window.supabaseClient.removeChannel(activeAdminSupportChannel);
+                }
+
+                // 3. Connect live listener to client's specific folder room channel string ID
+                activeAdminSupportChannel = window.supabaseClient.channel(`support_thread_${clientId}`);
+
+                activeAdminSupportChannel
+                    .on('broadcast', { event: 'text_message_event' }, (payload) => {
+                        if (payload.payload.sender === 'client') {
+                            appendMessageBubbleToCanvas(payload.payload.msg, 'client-sent');
+                        }
+                    })
+                    .subscribe();
+
+            } catch (err) {
+                console.error("Room attachment fault:", err.message);
+            }
+        }
+
+        // 📤 BROADCAST ACTION DISPATCH
+        async function dispatchAdminResponseChatMessage() {
+            const field = document.getElementById("adminChatMessageInputField");
+            if (!field || !field.value.trim() || !currentlySelectedClientUuid) return;
+
+            const text = field.value.trim();
+
+            try {
+                if (activeAdminSupportChannel) {
+                    await activeAdminSupportChannel.send({
+                        type: 'broadcast',
+                        event: 'text_message_event',
+                        payload: { msg: text, sender: 'admin', timestamp: new Date().toISOString() }
+                    });
+                }
+
+                await window.supabaseClient.from('chat_messages').insert({
+                    client_id: currentlySelectedClientUuid,
+                    sender_type: 'admin',
+                    message_content: text
                 });
 
-                feedTarget.innerHTML = uniqueClients.map(c => {
-                    const mailLabel = c.payload_data?.contact_email || "guest_account@filings4u.com";
-                    const initialChar = mailLabel.charAt(0).toUpperCase();
-                    const activeClass = currentlySelectedUserUuid === c.user_id ? 'active' : '';
-                    const displayToken = c.user_id ? c.user_id.substring(0, 6).toUpperCase() : 'UNKNOWN';
-                    
-                    return `
-                        <div class="user-channel-row ${activeClass}" data-user-id="${c.user_id}" onclick="connectActiveMessageChannel('${c.user_id}', '${mailLabel}')">
-                            <div class="avatar-circle">${initialChar}</div>
-                            <div class="user-meta-block">
-                                <strong style="display:block; font-size:0.82rem; color:var(--text-dark); overflow:hidden; text-overflow:ellipsis;">${mailLabel}</strong>
-                                <small style="font-size:0.7rem; color:var(--text-muted);">Account token: #USR-${displayToken}</small>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                appendMessageBubbleToCanvas(text, 'staff-sent');
+                field.value = "";
+
             } catch (err) {
-                console.error("Channels synchronization stalled:", err.message);
+                console.error("Text processing transmission failure:", err.message);
             }
         }
 
-        window.connectActiveMessageChannel = async function(userUuid, emailString) {
-            currentlySelectedUserUuid = userUuid;
-            if (inputField) {
-                inputField.disabled = false;
-                inputField.placeholder = `Message ${emailString}...`;
-                inputField.focus();
+        function appendMessageBubbleToCanvas(text, alignmentClass) {
+            const logBox = document.getElementById("adminChatMessagesLog");
+            if (!logBox) return;
+
+            // Strip text placeholder logs on clean slate initial hits
+            if(logBox.innerText.includes("Select a client row") || logBox.innerText.includes("Thread initialized safely")) {
+                logBox.innerHTML = "";
             }
-            if (submitBtn) submitBtn.disabled = false;
+
+            const row = document.createElement("div");
+            row.className = `msg-row ${alignmentClass}`;
+            row.innerHTML = `<div class="msg-bubble">${text}</div>`;
             
-            document.querySelectorAll('.user-channel-row').forEach(row => {
-                if (row.getAttribute('data-user-id') === userUuid) {
-                    row.classList.add('active');
-                } else {
-                    row.classList.remove('active');
-                }
-            });
-            streamLiveTimelineMessages();
-        };
-
-        async function streamLiveTimelineMessages() {
-            if (!currentlySelectedUserUuid || !timelineBox) return;
-            const client = getSupabaseClient();
-            if (!client) return;
-            try {
-                const { data: messages, error } = await client
-                    .from('platform_chat_messages')
-                    .select('*')
-                    .eq('channel_user_id', currentlySelectedUserUuid)
-                    .order('created_at', { ascending: true });
-                    
-                if (error) throw error;
-                
-                if (!messages || messages.length === 0) {
-                    timelineBox.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.85rem; font-style:italic;">🔒 Secure Encrypted Channel Established. Send initial directive message packet below...</div>';
-                    return;
-                }
-
-                timelineBox.innerHTML = messages.map(m => {
-                    const originClass = m.sender_type === 'staff' ? 'staff-sent' : 'client-sent';
-                    const cleanDate = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const safeContent = escapeHtml(m.message_text);
-                    return `
-                        <div class="msg-row ${originClass}">
-                            <div class="msg-bubble">
-                                <div class="msg-text" style="word-break: break-word;">${safeContent}</div>
-                                <span class="msg-timestamp">${cleanDate}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                timelineBox.scrollTop = timelineBox.scrollHeight;
-            } catch (err) {
-                console.error("Timeline extraction fault caught:", err.message);
-            }
+            logBox.appendChild(row);
+            logBox.scrollTop = logBox.scrollHeight; // Force scroll alignment bounds
         }
 
-        const chatForm = document.getElementById('chatTransmissionForm');
-        if (chatForm) {
-            chatForm.addEventListener('submit', async (e) => {
+        function handleAdminChatKeyOptions(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                const client = getSupabaseClient();
-                const msgText = inputField ? inputField.value.trim() : '';
-                
-                if (!client || !msgText || !currentlySelectedUserUuid) return;
-                if (inputField) inputField.value = '';
-                try {
-                    const { error } = await client
-                        .from('platform_chat_messages')
-                        .insert({
-                            channel_user_id: currentlySelectedUserUuid,
-                            message_text: msgText,
-                            sender_type: 'staff',
-                            created_at: new Date().toISOString()
-                        });
-                    if (error) throw error;
-                    streamLiveTimelineMessages();
-                } catch(err) {
-                    alert(`Transmission failed: ${err.message}`);
-                }
-            });
+                dispatchAdminResponseChatMessage();
+            }
         }
 
-        // ==========================================================================
-        // 🔍 CRM CLIENT IN-PANEL EMAIL FILTER FILTERING
-        // ==========================================================================
-        document.getElementById('userCrmFilterBox').addEventListener('input', function(e) {
-            const filterVal = e.target.value.toLowerCase().trim();
-            document.querySelectorAll('.user-channel-row').forEach(row => {
-                const text = row.querySelector('strong').textContent.toLowerCase();
-                if (text.includes(filterVal)) {
-                    row.style.setProperty('display', 'flex', 'important');
-                } else {
-                    row.style.setProperty('display', 'none', 'important');
-                }
+        function filterUsersFeed() {
+            const val = document.getElementById("userFeedFilterField").value.toLowerCase().trim();
+            document.querySelectorAll(".user-channel-row").forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(val) ? "flex" : "none";
             });
-        });
-
-        const syncCheckLoop = setInterval(() => {
-            if (getSupabaseClient()) {
-                clearInterval(syncCheckLoop);
-                loadConversationsChannelsList();
-                setInterval(streamLiveTimelineMessages, 3000);
-            }
-        }, 100);
-        setTimeout(() => clearInterval(syncCheckLoop), 5000);
+        }
     </script>
 </body>
 </html>
