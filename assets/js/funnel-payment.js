@@ -88,28 +88,33 @@ async function executeFinalFunnelOrderPaymentSubmit() {
     const baseTargetUrl = window.productionRootUrl || window.location.origin;
     const structuralReturnUrl = baseTargetUrl + '/portal-dashboard.html?email=' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}';
     
-    console.log("🚀 Initializing secure Stripe Checkout session transmission...");
+   console.log("🚀 Initializing secure Stripe Checkout session transmission...");
 
-    // ROUTED DIRECTLY TO THE LIVE STRIPE-CHECKOUT CONTROLLER
-    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-checkout', {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'checkout',
-        email: globalCachedUserEmail,
-        company_name: globalCachedCompanyName,
-        amount: Math.round(finalPriceSum * 100),
-        service_type: serviceKey + '-' + verifiedPlanTier,
-        return_url: structuralReturnUrl
-      })
-    });
+// The public anonymous credential token for project: lrbimrlbskjweynxlgas
+const projectAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
 
-    if (!response.ok) throw new Error('Edge Function Response Error Status: ' + response.status);
-    const data = await response.json();
+// ROUTED DIRECTLY TO THE LIVE STRIPE-CHECKOUT CONTROLLER
+const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-checkout', {
+  method: 'POST',
+  mode: 'cors',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Authorization': 'Bearer ' + projectAnonKey // 🔐 Clears the 401 gateway wall securely
+  },
+  body: JSON.stringify({
+    action: 'checkout',
+    email: globalCachedUserEmail,
+    company_name: globalCachedCompanyName,
+    amount: Math.round(finalPriceSum * 100),
+    service_type: serviceKey + '-' + verifiedPlanTier,
+    return_url: structuralReturnUrl
+  })
+});
+
+if (!response.ok) throw new Error('Edge Function Response Error Status: ' + response.status);
+const data = await response.json();
+
 
     if (data.clientSecret) {
       window.location.href = 'order.html';
