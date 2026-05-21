@@ -15,15 +15,25 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(initializationPoll);
       console.log("🚀 Supabase verified live inside notifications context engine.");
       
+      // 1. Fire baseline user data extraction fetches immediately on load
       await verifyActiveSessionContext();
       await synchronizeNotificationsStreamData();
+      
+      // 2. Launch persistent live real-time WebSocket listening channel
       establishLiveRealTimeWebsocketChannel();
+
+      // 3. 🛡️ BACKGROUND COMPLIANCE FALLBACK ENGINE
+      // Regularly checks data streams to update badge integers if WebSockets drop out
+      setInterval(async () => {
+        console.log("🔄 Background delta sync analyzing notification states...");
+        await synchronizeNotificationsStreamData();
+      }, 10000); // Executed systematically every 10 seconds flat
     }
   }, 100);
 
-  // Safeguard timeout to prevent infinite looping if a network issue occurs
   setTimeout(() => clearInterval(initializationPoll), 6000);
 });
+
 
 /**
  * 1. ACCOUNT SESSION SECURITY SENSOR
