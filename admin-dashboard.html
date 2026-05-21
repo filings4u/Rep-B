@@ -462,11 +462,68 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 🗂️ FILINGS HISTORY LOG COMPONENT -->
+<div class="filings-history-container">
+  <div id="historyListLoadingSpinner" style="text-align:center; padding: 30px; color:#64748b; font-weight:600;">
+    Querying historical data tables...
+  </div>
+  <!-- Injection Target for rows -->
+  <div id="filingsHistoryInjectionTarget"></div>
+</div>
+
+<!-- 🔎 POPUP DETAIL INSPECTION DRAWER MODAL -->
+<div id="filingDetailModal" class="detail-modal-overlay">
+  <div class="detail-inspection-window">
+    <div class="inspection-header">
+      <h2 id="modalHeaderFilingTitle">Application Scope Parameters</h2>
+      <button onclick="closeFilingDetailModal()" style="background:transparent; border:none; color:#ffffff; font-size:1.5rem; cursor:pointer; padding:0; line-height:1;">✕</button>
+    </div>
+    <div class="inspection-scroll-body" id="modalMetadataDisplayTarget">
+      <!-- Metadata fields inject here dynamically -->
+    </div>
+    <div class="inspection-footer-actions">
+      <button onclick="closeFilingDetailModal()" style="background:transparent; border:1px solid #64748b; color:#64748b; padding:12px 22px; border-radius:6px; font-weight:600; cursor:pointer;">Close Window</button>
+      <button id="modalDownloadPayloadBtn" class="btn-download-json">📥 Download Filing Data</button>
+    </div>
+  </div>
+</div>
+
         </main>
     </div>
 
     <!-- 🎯 SYSTEM TELEMETRY CONTROL ENGINE TERMINAL CONTROLLER LINK -->
     <script src="assets/js/admin-engine.js"></script>
+    
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+  // Confirm user session is live
+  const sessionCheckInterval = setInterval(async () => {
+    if (window.supabase) {
+      clearInterval(sessionCheckInterval);
+      
+      const { data: { user }, error } = await window.supabase.auth.getUser();
+      
+      // Extract structural metadata keys securely
+      const isAdmin = user?.app_metadata?.is_admin === true || user?.app_metadata?.role === 'admin';
+      
+      if (error || !user || !isAdmin) {
+        console.warn("🔐 Unauthorized access attempt blocked. Evicting browser session...");
+        alert("Access Denied: Administrative credentials missing.");
+        window.location.href = "https://filings4u.com";
+      } else {
+        console.log("🚀 Admin access verified. Booting management dashboards pipeline...");
+        // Call your function here to fetch all user data logs
+      }
+    }
+  }, 100);
+});
+
+</script>
+
+
+
+
     <script>
         // 📁 ACCORDION NAVIGATION COLLAPSIBLE OPENER ACTIONS
         function toggleSidebarAccordion(buttonElement) {
