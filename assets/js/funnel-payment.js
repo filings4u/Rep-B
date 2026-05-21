@@ -91,7 +91,7 @@ async function executeFinalFunnelOrderPaymentSubmit() {
     console.log("🚀 Initializing secure Stripe Checkout session transmission...");
 
     // ROUTED DIRECTLY TO THE LIVE STRIPE-CHECKOUT CONTROLLER
-    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-checkout', {
       method: 'POST',
       mode: 'cors',
       headers: {
@@ -145,7 +145,7 @@ async function executeFinalFunnelOrderPaymentSubmit() {
     
     console.log("🚀 Initializing secure Stripe Checkout session transmission...");
 
-    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-checkout', {
       method: 'POST',
       mode: 'cors',
       headers: {
