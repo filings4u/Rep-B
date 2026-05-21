@@ -123,4 +123,66 @@ async function executeFinalFunnelOrderPaymentSubmit() {
     console.error("Filing transmission error caught:", err);
     alert('Order execution fault: ' + err.message);
   }
+
+  // Add these handling triggers directly inside your executeFinalFunnelOrderPaymentSubmit() try-catch routine:
+
+  try {
+    // 1. Fetch DOM tracker elements instantly
+    const secureLoader = document.getElementById("checkoutLoadingOverlay");
+    
+    // Push form data values to your backend tracking logs before loading stripe
+    if (typeof saveDraftProgressToCloudEngine === 'function') {
+      await saveDraftProgressToCloudEngine(3);
+    }
+    
+    // 2. ACTIVATE LOADING BACKDROP: Locks screen from secondary button taps
+    if (secureLoader) {
+      secureLoader.classList.add("is-active");
+    }
+    
+    const baseTargetUrl = window.productionRootUrl || window.location.origin;
+    const structuralReturnUrl = baseTargetUrl + '/portal-dashboard.html?email=' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}';
+    
+    console.log("🚀 Initializing secure Stripe Checkout session transmission...");
+
+    const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'checkout',
+        email: globalCachedUserEmail,
+        company_name: globalCachedCompanyName,
+        amount: Math.round(finalPriceSum * 100),
+        service_type: serviceKey + '-' + verifiedPlanTier,
+        return_url: structuralReturnUrl
+      })
+    });
+
+    if (!response.ok) throw new Error('Edge Function Response Error Status: ' + response.status);
+    const data = await response.json();
+
+    // 🚀 CLIENT REDIRECT REDIRECTION HANDOFFS
+    if (data.clientSecret) {
+      window.location.href = 'order.html';
+    } else if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || "Mismatched integration secret tracking keys.");
+    }
+
+  } catch (err) {
+    // 3. FAULT FALLBACK: Instantly drop the loading panel if the gateway breaks so users can see the notice
+    const secureLoader = document.getElementById("checkoutLoadingOverlay");
+    if (secureLoader) {
+      secureLoader.classList.remove("is-active");
+    }
+
+    console.error("Filing transmission error caught:", err);
+    alert('Order execution fault: ' + err.message);
+  }
+
 }
