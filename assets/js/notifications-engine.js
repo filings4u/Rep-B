@@ -55,7 +55,7 @@ async function verifyActiveSessionContext() {
 }
 
 /**
- * 2. CHRONOLOGICAL DATA TABLE SYNC AGENT
+ * 2. CHRONOLOGICAL DATA TABLE SYNC AGENT (ANTI-LOCK COMPLETE BUILD)
  */
 async function synchronizeNotificationsStreamData() {
   const listTarget = document.getElementById("notificationsStreamTimelineInjectionTarget");
@@ -66,7 +66,8 @@ async function synchronizeNotificationsStreamData() {
 
     if (!isSystemStaffSessionMode) {
       // Client View Mode: Only track alert messages addressed to their own explicit account email
-      schemaQuery = schemaQuery.eq("recipient_email", currentAccountEmailSessionStr);
+      const cleanEmailString = String(currentAccountEmailSessionStr).toLowerCase().trim();
+      schemaQuery = schemaQuery.eq("recipient_email", cleanEmailString);
     }
 
     const { data: records, error } = await schemaQuery.order("created_at", { ascending: false });
@@ -74,14 +75,31 @@ async function synchronizeNotificationsStreamData() {
 
     activeLiveNotificationsCache = records || [];
     
-    // Update navigation bell badges on page if element links exist inside view canvases
+    // 🔔 Update top navigation bubble counts regardless of active page layout view ports
     refreshNavigationBellBadgeGraphics(activeLiveNotificationsCache);
 
-    if (!listTarget) return; 
-    if (loaderSpinner) loaderSpinner.remove();
+    // ==========================================================================
+    // 🎯 FIXED: REMOVE LOADER IMMEDIATELY ON ANSWER RECEIVED TO BREAK THE SPIN LOCK
+    // ==========================================================================
+    if (loaderSpinner) {
+      loaderSpinner.style.display = "none";
+      loaderSpinner.remove();
+    }
 
+    // If the timeline element is missing (meaning user is viewing a main dashboard), exit cleanly
+    if (!listTarget) {
+      console.log("📡 Header badge counts computed safely. Timeline rendering skipped on dashboard viewport context.");
+      return; 
+    }
+
+    // Handle empty state views beautifully inside the dedicated notification pages canvas instead of freezing
     if (activeLiveNotificationsCache.length === 0) {
-      listTarget.innerHTML = '<div style="text-align:center; padding:30px; color:#64748b;">No ongoing correspondence logs found under this channel.</div>';
+      listTarget.innerHTML = `
+        <div style="text-align:center; padding:50px 20px; color:#64748b; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; margin-top:20px; box-sizing:border-box; width:100%;">
+          <div style="font-size:2.5rem; margin-bottom:15px; line-height:1;">📥</div>
+          <h3 style="margin:0 0 8px 0; color:#0a1f44; font-weight:700; font-size:1.2rem;">Your Inbox is Empty</h3>
+          <p style="margin:0; font-size:0.9rem; opacity:0.8; line-height:1.4; max-width:320px; margin:0 auto;">There are no ongoing correspondence records or filing updates logged to this profile tracking sector yet.</p>
+        </div>`;
       return;
     }
 
@@ -89,9 +107,13 @@ async function synchronizeNotificationsStreamData() {
 
   } catch (err) {
     console.error("Filing notice loop synchronized processing failed:", err);
-    if (loaderSpinner) loaderSpinner.innerHTML = '<span style="color:#ef4444;">Handshake tracking channel error.</span>';
+    if (loaderSpinner) {
+      loaderSpinner.innerHTML = '<span style="color:#ef4444;">Handshake tracking channel error.</span>';
+    }
   }
 }
+
+
 
 /**
  * 3. REAL-TIME ROW TIMELINE GRAPHICS BUILDER RENDERER

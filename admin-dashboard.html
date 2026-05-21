@@ -512,112 +512,120 @@
 
   <!-- 4. INTERACTIVE ACCORDION & REAL-TIME ALERTS ENGINE -->
   <script>
-    /**
-     * 📁 SIDEBAR ACCORDION COLLAPSIBLE NAVIGATION HANDLERS
-     */
-    function toggleSidebarAccordion(buttonElement) {
-      buttonElement.classList.toggle('active');
-      const panel = buttonElement.nextElementSibling;
-      if (panel && panel.style) {
-        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-          panel.style.maxHeight = "0px";
-        } else {
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      }
-    }
-
-    /**
-     * 📨 LIVE ALERTS BROADCASTER INTEGRATION PIPELINE
-     */
-    document.getElementById('adminAlertForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const client = window.supabase;
-      const statusBox = document.getElementById('alertStatus');
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      const chosenUserEmail = document.getElementById('adminClientDropdown').value;
-      const noticeTitle = document.getElementById('alertTitle').value.trim();
-      const noticeMessage = document.getElementById('alertMessage').value.trim();
-
-      if (!statusBox || !submitBtn) return;
-
-      if (!chosenUserEmail || !noticeTitle || !noticeMessage) {
-        statusBox.style.color = "var(--staff-red, #ef4444)";
-        statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.innerText = "Transmitting Wave Packet...";
-
-      try {
-        if (!client) {
-          throw new Error("Supabase system core driver script missing from window context memory arrays.");
-        }
-
-        const { error } = await client
-          .from('client_notifications')
-          .insert({
-            recipient_email: String(chosenUserEmail).toLowerCase().trim(),
-            title: noticeTitle,
-            message: noticeMessage,
-            is_read: false,
-            created_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-
-        // Flash message live into the stream monitoring card box on screen
-        const liveCommsBox = document.getElementById("admin-inbox-live-stream-box");
-        if (liveCommsBox) {
-          const currentTime = new Date().toLocaleTimeString();
-          liveCommsBox.innerHTML = `<p style="margin:0 0 8px 0; color:#10b981; line-height:1.4;"><strong>[${currentTime}] Dispatched:</strong> To ${chosenUserEmail} - "${noticeTitle}"</p>` + liveCommsBox.innerHTML;
-        }
-
-        statusBox.style.color = "var(--emerald, #10b981)";
-        statusBox.innerText = "🎉 Notification broadcast locked and delivered directly to customer feed!";
-        document.getElementById('adminAlertForm').reset();
-
-      } catch (err) {
-        console.error("Alert broadcast failed:", err.message);
-        statusBox.style.color = "var(--staff-red, #ef4444)";
-        statusBox.innerText = `Dispatch Failed: ${err.message}`;
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Push Real-Time Alert →";
-      }
-    });
-
-    /**
-     * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
-     */
-    function toggleMobileSidebarMenuOverlay() {
-      if (window.innerWidth > 992) return;
-      const sidebar = document.querySelector(".portal-sidebar");
-      const icon = document.getElementById("mobileNavTriggerIcon");
-      if (!sidebar) return;
-
-      sidebar.classList.toggle("mobile-revealed");
-      if (sidebar.classList.contains("mobile-revealed")) {
-        if (icon) icon.textContent = "✕";
+  /**
+   * 📁 SIDEBAR ACCORDION COLLAPSIBLE NAVIGATION HANDLERS
+   */
+  function toggleSidebarAccordion(buttonElement) {
+    buttonElement.classList.toggle('active');
+    const panel = buttonElement.nextElementSibling;
+    if (panel && panel.style) {
+      if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+        panel.style.maxHeight = "0px";
       } else {
-        if (icon) icon.textContent = "☰";
+        panel.style.maxHeight = panel.scrollHeight + "px";
       }
     }
+  }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const navLinks = document.querySelectorAll(".nav-item");
-      navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-          const sidebar = document.querySelector(".portal-sidebar");
-          if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-            toggleMobileSidebarMenuOverlay();
+  /**
+   * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
+   */
+  function toggleMobileSidebarMenuOverlay() {
+    if (window.innerWidth > 992) return;
+    const sidebar = document.querySelector(".portal-sidebar");
+    const icon = document.getElementById("mobileNavTriggerIcon");
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("mobile-revealed");
+    if (sidebar.classList.contains("mobile-revealed")) {
+      if (icon) icon.textContent = "✕";
+    } else {
+      if (icon) icon.textContent = "☰";
+    }
+  }
+
+  /**
+   * 🧱 UNIFIED DOM LIFECYCLE CONTROLLER
+   * Ensures form fields physically exist in browser memory before attaching event listeners
+   */
+  document.addEventListener("DOMContentLoaded", () => {
+    const alertForm = document.getElementById('adminAlertForm');
+    const navLinks = document.querySelectorAll(".nav-item");
+
+    // 1. ATTACH THE REAL-TIME ALERT BROADCASTER PIPELINE SAFELY
+    if (alertForm) {
+      alertForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const client = window.supabase;
+        const statusBox = document.getElementById('alertStatus');
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const chosenUserEmail = document.getElementById('adminClientDropdown').value;
+        const noticeTitle = document.getElementById('alertTitle').value.trim();
+        const noticeMessage = document.getElementById('alertMessage').value.trim();
+
+        if (!statusBox || !submitBtn) return;
+
+        if (!chosenUserEmail || !noticeTitle || !noticeMessage) {
+          statusBox.style.color = "var(--staff-red, #ef4444)";
+          statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Transmitting Wave Packet...";
+
+        try {
+          if (!client) {
+            throw new Error("Supabase system core driver script missing from window context memory arrays.");
           }
-        });
+
+          const { error } = await client
+            .from('client_notifications')
+            .insert({
+              recipient_email: String(chosenUserEmail).toLowerCase().trim(),
+              title: noticeTitle,
+              message: noticeMessage,
+              is_read: false,
+              created_at: new Date().toISOString()
+            });
+
+          if (error) throw error;
+
+          // Flash message live into the stream monitoring card box on screen
+          const liveCommsBox = document.getElementById("admin-inbox-live-stream-box");
+          if (liveCommsBox) {
+            const currentTime = new Date().toLocaleTimeString();
+            liveCommsBox.innerHTML = `<p style="margin:0 0 8px 0; color:#10b981; line-height:1.4;"><strong>[${currentTime}] Dispatched:</strong> To ${chosenUserEmail} - "${noticeTitle}"</p>` + liveCommsBox.innerHTML;
+          }
+
+          statusBox.style.color = "var(--emerald, #10b981)";
+          statusBox.innerText = "🎉 Notification broadcast locked and delivered directly to customer feed!";
+          alertForm.reset();
+
+        } catch (err) {
+          console.error("Alert broadcast failed:", err.message);
+          statusBox.style.color = "var(--staff-red, #ef4444)";
+          statusBox.innerText = `Dispatch Failed: ${err.message}`;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Push Real-Time Alert →";
+        }
+      });
+    }
+
+    // 2. ATTACH RESPONSIVE CLOSING TRIGGERS TO SIDEBAR LINKS
+    navLinks.forEach(link => {
+      link.addEventListener("click", () => {
+        const sidebar = document.querySelector(".portal-sidebar");
+        if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+          toggleMobileSidebarMenuOverlay();
+        }
       });
     });
-  </script>
+  });
+</script>
+
 
 
 <!-- PASTE THIS MODAL CONTAINER AT THE ABSOLUTE BOTTOM OF THE FILE RIGHT BEFORE THE </body> TAG -->
