@@ -1,323 +1,272 @@
 /**
- * 👑 filings4u Consolidated Master Production Admin Infrastructure Engine
- * Manages secure telemetry, analytics compilation, global searches, and live chat syncs
+ * ==========================================================================
+ * 🛡️ FILINGS4U HARMONIZED ADMINISTRATIVE DATA ENGINE (STELLAR INTEGRATED)
+ * ==========================================================================
  */
-(function initializeProductionAdminMasterEngine() {
-    "use strict";
 
-    console.log("⚙️ Master Production Admin Infrastructure Engine Active...");
+document.addEventListener("DOMContentLoaded", () => {
+  initSystemClockTick();
+  initAdminDashboardManager();
+});
 
-    let activeAdminSupportChannel = null;
-    let currentlySelectedClientUuid = null;
+// 🔐 ANTI-COLLISION ENGINE: Binds variables to window properties to prevent duplicate let/const crashes
+if (!window.adminStorage) {
+  window.adminStorage = {
+    globalAdminApplicationsCache: [],
+    localRegisteredUsersCache: []
+  };
+}
 
-    // ==========================================================================
-    // ⏰ 1. REAL-TIME SYSTEM CLOCK & DATE COUPLING METRICS
-    // ==========================================================================
-    function runProductionGlobalClock() {
-        const clockNode = document.getElementById('portal-clock');
-        if (!clockNode) return;
-        setInterval(() => {
-            const now = new Date();
-            const dateString = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-            clockNode.textContent = `${dateString} | ${timeString}`;
-        }, 1000);
-    }
-    document.addEventListener('DOMContentLoaded', runProductionGlobalClock);
+/**
+ * 1. REAL-TIME HUD STATUS SYSTEM CLOCK
+ */
+function initSystemClockTick() {
+  const clockEl = document.getElementById("portal-clock");
+  if (!clockEl) return;
+  setInterval(() => {
+    const d = new Date();
+    clockEl.innerText = `${d.toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'})} | ${d.toLocaleTimeString('en-US',{hour12:false})}`;
+  }, 1000);
+}
 
-    // ==========================================================================
-    // 🚪 2. SECURE LOGOUT & TELEMETRY CLEANER
-    // ==========================================================================
-    window.executeTerminalSessionTermination = async function(btnElement) {
-        if (btnElement) btnElement.disabled = true;
-        const client = window.supabaseClient;
-        if (client && client.auth) {
-            try {
-                const { data: { session } } = await client.auth.getSession();
-                if (session && session.user) {
-                    await client.from('chat_messages').insert({
-                        client_id: session.user.id,
-                        sender_type: 'admin',
-                        message_content: `Staff Administrator [${session.user.email}] logged out successfully.`
-                    });
-                }
-                await client.auth.signOut();
-            } catch (err) {
-                console.warn("Background audit write skipped:", err.message);
-            }
+/**
+ * 2. MASTER SERVER CONTROL HOOK INITIALIZER
+ */
+function initAdminDashboardManager() {
+  const searchField = document.getElementById("adminGlobalSearchField");
+  const alertForm = document.getElementById("adminAlertForm");
+
+  // Safe polling loop validates database readiness prior to triggering calls
+  const infrastructurePoll = setInterval(async () => {
+    if (window.supabase && typeof window.supabase.auth !== 'undefined') {
+      clearInterval(infrastructurePoll);
+      
+      try {
+        // Enforce zero-trust session token confirmation
+        const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+        const isAdmin = user?.app_metadata?.is_admin === true || user?.app_metadata?.role === 'admin';
+
+        if (authError || !user || !isAdmin) {
+          console.warn("🔐 Unauthorized administrative access intercepted. Evicting session.");
+          window.location.href = "index.html";
+          return;
         }
-        localStorage.removeItem("filings4u_secure_session_token");
-        sessionStorage.clear();
-        const baseTarget = window.productionRootUrl || window.location.origin;
-        window.location.replace(`${baseTarget}/admin-login.html`);
-    };
 
-    // ==========================================================================
-    // 🔍 3. GLOBAL PLATFORM SEARCH MATRIX OVERRIDE
-    // ==========================================================================
-    function bindGlobalSearchSystem() {
-        const globalSearchBox = document.getElementById('adminGlobalSearchField');
-        if (!globalSearchBox) return;
-        globalSearchBox.addEventListener('keyup', (e) => {
-            const criteria = e.target.value.toLowerCase().trim();
-            const searchableRows = document.querySelectorAll('.admin-table-ledger tbody tr, .ticket-row, .log-entry-row, .portal-table tbody tr');
-            searchableRows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(criteria) ? "" : "none";
-            });
-        });
-    }
+        const displayLogEl = document.getElementById("liveStaffEmailDisplayLog");
+        if (displayLogEl) displayLogEl.innerText = `OPERATOR SESSION: ${user.email.toLowerCase()}`;
 
-     // ==========================================================================
-    // 📊 4. ANALYTICS PIPELINE ENGINE (SECURE CORRECTION)
-    // ==========================================================================
-    window.loadGlobalLiveAnalytics = async function() {
-        const client = window.supabaseClient;
-        if (!client) return;
-        try {
-            // 🎯 FIXED: Points to your correct production filing_orders relational table
-            const { data: orderRows, error } = await client.from('filing_orders').select('total_amount, current_stage');
-            if (error) throw error;
-
-            if (orderRows) {
-                const grossRevenue = orderRows.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
-                const pendingCount = orderRows.filter(r => r.current_stage === 'State Review' || r.current_stage === 'Pending').length;
-                const activeOrdersCount = orderRows.length;
-
-                const revenueText = document.getElementById('stat-total-revenue') || document.getElementById('summary-collected-revenue');
-                const entitiesText = document.getElementById('stat-active-users') || document.getElementById('summary-total-orders');
-                const filingsText = document.getElementById('stat-pending-filings') || document.getElementById('summary-unpaid-amount');
-
-                if (revenueText) revenueText.innerText = `$${grossRevenue.toFixed(2)}`;
-                if (entitiesText) entitiesText.innerText = activeOrdersCount.toString();
-                if (filingsText) filingsText.innerText = pendingCount.toString();
-            }
-        } catch (err) {
-            console.error("❌ Analytics pipeline trace failure:", err.message);
-        }
-    };
-
-
-    // ==========================================================================
-    // 💬 5. REAL-TIME INTERACTION CHAT CHANNELS
-    // ==========================================================================
-    window.populateAdminChatDropdownOptions = async function() {
-        const client = window.supabaseClient;
-        const selector = document.getElementById("adminChatActiveClientSelector");
-        if (!client || !selector) return;
-
-        try {
-            selector.innerHTML = `<option value="">Select an active client session user to open channel...</option>`;
-            const { data: profiles, error } = await client.from('profiles').select('id, company_name');
-            if (error) throw error;
-
-            if (profiles) {
-                profiles.forEach(user => {
-                    const opt = document.createElement("option");
-                    opt.value = user.id;
-                    opt.textContent = user.company_name || `Client ID #${user.id.substring(0, 6)}`;
-                    selector.appendChild(opt);
-                });
-            }
-        } catch (err) {
-            console.error("Failed to compile user dropdown list items:", err.message);
-        }
-    };
-
-    window.bindAdminChatFocusToClient = async function(clientId) {
-        const client = window.supabaseClient;
-        if (!client || !clientId) return;
-
-        currentlySelectedClientUuid = clientId;
-        const logContainer = document.getElementById("adminChatMessagesLog");
-        if (logContainer) logContainer.innerHTML = `<div style="padding:15px; color:#8a8a9e; font-style:italic;">Syncing message traces...</div>`;
-
-        try {
-            // A. Fetch historical records
-            const { data: records, error } = await client
-                .from('chat_messages')
-                .select('*')
-                .eq('client_id', clientId)
-                .order('created_at', { ascending: true });
-
-            if (error) throw error;
-            if (logContainer) logContainer.innerHTML = ""; 
-
-            if (records) {
-                records.forEach(msg => {
-                    const alignmentStyle = msg.sender_type === 'admin' ? 'outbound' : 'inbound';
-                    appendMessageBubbleToAdminConsole(msg.message_content, alignmentStyle);
-                });
-            }
-
-            // B. Unsubscribe from stale channels
-            if (activeAdminSupportChannel) {
-                await client.removeChannel(activeAdminSupportChannel);
-            }
-
-            // C. Connect live websocket using the proper configuration instance wrapper
-            activeAdminSupportChannel = client.channel(`support_thread_${clientId}`);
-
-            activeAdminSupportChannel
-                .on('broadcast', { event: 'text_message_event' }, (payload) => {
-                    if (payload.payload.sender === 'client') {
-                        appendMessageBubbleToAdminConsole(payload.payload.msg, 'inbound');
-                    }
-                })
-                .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') {
-                        console.log(`📡 Broadcast channel online for customer thread: ${clientId}`);
-                    }
-                });
-
-        } catch (fault) {
-            console.error("Failed to compile instant communication parameters:", fault.message);
-        }
-    };
-
-    window.dispatchAdminResponseChatMessage = async function() {
-        const client = window.supabaseClient;
-        const field = document.getElementById("adminChatMessageInputField");
-        if (!client || !field || !field.value.trim() || !currentlySelectedClientUuid) return;
-
-        const typedMessage = field.value.trim();
-
-        try {
-            if (activeAdminSupportChannel) {
-                await activeAdminSupportChannel.send({
-                    type: 'broadcast',
-                    event: 'text_message_event',
-                    payload: { msg: typedMessage, sender: 'admin', timestamp: new Date().toISOString() }
-                });
-            }
-
-            await client.from('chat_messages').insert({
-                client_id: currentlySelectedClientUuid,
-                sender_type: 'admin',
-                message_content: typedMessage
-            });
-
-            appendMessageBubbleToAdminConsole(typedMessage, 'outbound');
-            field.value = "";
-
-        } catch (err) {
-            console.error("Failed to execute text delivery payload:", err.message);
-        }
-    };
-
-    function appendMessageBubbleToAdminConsole(text, orientationClass) {
-        const logContainer = document.getElementById("adminChatMessagesLog");
-        if (!logContainer) return;
-        const bubble = document.createElement("div");
-        bubble.className = `chat-bubble ${orientationClass}`;
-        bubble.textContent = text;
-        logContainer.appendChild(bubble);
-        logContainer.scrollTop = logContainer.scrollHeight;
-    }
-
-    // ==========================================================================
-    // 👑 6. GLOBAL NETWORKING REALTIME OVERWATCH (FIXED)
-    // ==========================================================================
-    window.initializeGlobalAdminOversightNetwork = function() {
-        const client = window.supabaseClient;
-        if (!client) return;
-
-        client.channel('public_pipeline_tracker')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'filing_orders' }, (payload) => {
-                notifyAdminSystemAlert(payload.new);
-            })
-            .subscribe();
-    };
-
-    function notifyAdminSystemAlert(newOrderRecord) {
-        const alertBox = document.createElement("div");
-        alertBox.style.cssText = "position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.85rem; font-weight: 600;";
-        alertBox.textContent = `New Order: ${newOrderRecord.service_title} in ${newOrderRecord.target_state} ($${newOrderRecord.total_amount})`;
-        document.body.appendChild(alertBox);
-        setTimeout(() => alertBox.remove(), 5000);
+        // Fire table synchronization channels
+        await synchronizeAdminLedgerTables();
+        await fetchRegisteredSystemProfiles();
         
-        window.loadGlobalLiveAnalytics();
+        if (searchField) searchField.addEventListener("input", executeGlobalLedgerSearchFilter);
+        // Note: Form submit interactions for alerts are native to your html script blocks
+      } catch (authFault) {
+        console.error("Zero-Trust Security Verification Exception:", authFault);
+        window.location.href = "index.html";
+      }
     }
+  }, 150);
 
-    // ==========================================================================
-    // ⏱️ 7. BOOTSTRAP INITIALIZATION POLLING LAYER
-    // ==========================================================================
-    const verificationPollingLoop = setInterval(() => {
-        if (window.supabaseClient) {
-            clearInterval(verificationPollingLoop);
-            bindGlobalSearchSystem();
-            window.loadGlobalLiveAnalytics();
-            window.populateAdminChatDropdownOptions();
-            window.initializeGlobalAdminOversightNetwork();
+  setTimeout(() => clearInterval(infrastructurePoll), 5000);
+}
 
-            // Bind selector actions cleanly if dropdown target exists in view layout
-            const dropdownSelector = document.getElementById("adminChatActiveClientSelector");
-            if (dropdownSelector) {
-                dropdownSelector.addEventListener("change", (e) => {
-                    window.bindAdminChatFocusToClient(e.target.value);
-                });
-            }
-        }
-    }, 150);
+/**
+ * 3. LIVE DATA SYNCHRONIZER & METRICS AGGREGATION AGENT
+ */
+async function synchronizeAdminLedgerTables() {
+  const tableBody = document.getElementById("admin-global-sales-target-box");
+  if (!tableBody) return;
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const fallbackLogoutBtn = document.getElementById('sidebarFallbackLogoutBtn');
-        if (fallbackLogoutBtn) {
-            fallbackLogoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.executeTerminalSessionTermination(fallbackLogoutBtn);
-            });
-        }
-    });
+  try {
+    const { data: records, error } = await window.supabase
+      .from("user_filings")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-})();
+    if (error) throw error;
+    window.adminStorage.globalAdminApplicationsCache = records || [];
 
-// ==========================================================================
-// 🚚 FMCSA DATA MANIPULATION WORKSPACE HANDLERS
-// ==========================================================================
-window.hydrateFmcsaApplicantWorkspace = async function(clientId) {
-    const client = window.supabaseClient;
-    if (!client || !clientId) return;
+    // Process analytics numbers
+    calculateAndRenderOperationalMetrics(window.adminStorage.globalAdminApplicationsCache);
+    renderGlobalSalesPricingLedger(window.adminStorage.globalAdminApplicationsCache, tableBody);
 
-    try {
-        // Query company parameters from your registered entities relational tables
-        const { data: entityData } = await client
-            .from('entities')
-            .select('*')
-            .eq('owner_id', clientId)
-            .single();
+  } catch (err) {
+    console.error("Database connection failure:", err);
+    tableBody.innerHTML = `<tr><td colspan="5" style="padding:20px; color:#ef4444; text-align:center;">Sync Fault: ${err.message}</td></tr>`;
+  }
+}
 
-        if (entityData) {
-            document.getElementById("fmcsa_legal_name").textContent = entityData.entity_name;
-            document.getElementById("fmcsa_address").textContent = entityData.state_jurisdiction + " Corporate Registry File";
-        }
-    } catch (err) {
-        console.warn("Fmcsa pipeline profile trace timeout:", err.message);
+/**
+ * 4. SYSTEM OVERVIEW ANALYTICS CONVERTERS
+ */
+function calculateAndRenderOperationalMetrics(records) {
+  const revenueEl = document.getElementById("stat-total-revenue");
+  const usersEl = document.getElementById("stat-active-users");
+  const pendingEl = document.getElementById("stat-pending-filings");
+
+  let revenueSum = 0;
+  let pendingCount = 0;
+  const uniqueEmails = new Set();
+
+  records.forEach((record) => {
+    uniqueEmails.add(record.customer_email.toLowerCase().trim());
+    if (!record.is_completed) pendingCount++;
+
+    let val = parseFloat(record.price);
+    if (isNaN(val) && record.metadata) {
+      const p = typeof record.metadata === "string" ? JSON.parse(record.metadata) : record.metadata;
+      val = parseFloat(p?.price);
     }
-};
+    if (!isNaN(val)) revenueSum += val;
+  });
 
-window.copyApplicantDataToClipboard = function() {
-    const legalName = document.getElementById("fmcsa_legal_name").textContent;
-    const classification = document.getElementById("fmcsa_classification").textContent;
-    const cargo = document.getElementById("fmcsa_cargo").textContent;
+  if (revenueEl) revenueEl.innerText = `$${revenueSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (usersEl) usersEl.innerText = uniqueEmails.size;
+  if (pendingEl) pendingEl.innerText = pendingCount;
+}
 
-    const consolidatedText = `LEGAL NAME: ${legalName}\nCLASSIFICATION: ${classification}\nCARGO: ${cargo}`;
+/**
+ * 5. HYDRATE GLOBAL SALES PRICING LEDGER TABLE
+ */
+function renderGlobalSalesPricingLedger(records, container) {
+  container.innerHTML = "";
 
-    navigator.clipboard.writeText(consolidatedText)
-        .then(() => {
-            alert("📋 Client registry metadata copied to your device clipboard.");
-        })
-        .catch(() => {
-            alert("❌ Clipboard write access denied by system settings.");
-        });
-};
+  if (records.length === 0) {
+    container.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#64748b;">No sales records found.</td></tr>`;
+    return;
+  }
 
-// 🎧 Attach this trigger hook right inside your active dropdown change handler code block
-const activeSelector = document.getElementById("adminChatActiveClientSelector");
-if (activeSelector) {
-    activeSelector.addEventListener("change", (e) => {
-        if (e.target.value) {
-            window.hydrateFmcsaApplicantWorkspace(e.target.value);
-        }
+  records.forEach((record) => {
+    let priceValue = parseFloat(record.price);
+    if (isNaN(priceValue) && record.metadata) {
+      const p = typeof record.metadata === "string" ? JSON.parse(record.metadata) : record.metadata;
+      priceValue = parseFloat(p?.price);
+    }
+    const displayPrice = !isNaN(priceValue) ? `$${priceValue.toFixed(2)}` : "$0.00";
+
+    const tr = document.createElement("tr");
+    tr.style.borderBottom = "1px solid var(--border-color, #e2e8f0)";
+    tr.innerHTML = `
+      <td style="padding:12px; font-weight:700; color:#0a1f44;">${record.company_name || "New Filing Data"}</td>
+      <td style="padding:12px; color:#4a5568;">${record.customer_email}</td>
+      <td style="padding:12px;"><span style="font-size:0.72rem; text-transform:uppercase; font-weight:700; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${record.plan_service_tier || "Standard"}</span></td>
+      <td style="padding:12px; font-weight:800; color:#10b981;">${displayPrice}</td>
+      <td style="padding:12px; text-align:right;"><button class="admin-inspect-action-btn" onclick="openFilingInspectionDrawer('${record.id}')">Inspect</button></td>
+    `;
+    container.appendChild(tr);
+  });
+}
+
+/**
+ * 6. REAL-TIME SEARCH KEYWORD FILTER ACTUATOR
+ */
+function executeGlobalLedgerSearchFilter(event) {
+  const query = event.target.value.toLowerCase().trim();
+  const tableBody = document.getElementById("admin-global-sales-target-box");
+  if (!tableBody) return;
+
+  const filtered = window.adminStorage.globalAdminApplicationsCache.filter(item => {
+    return (
+      item.company_name?.toLowerCase().includes(query) ||
+      item.customer_email?.toLowerCase().includes(query) ||
+      item.plan_service_tier?.toLowerCase().includes(query)
+    );
+  });
+
+  renderGlobalSalesPricingLedger(filtered, tableBody);
+}
+
+/**
+ * 7. DYNAMICALLY HYDRATE TARGET USER ACCOUNTS DROPDOWN
+ */
+async function fetchRegisteredSystemProfiles() {
+  const dropdown = document.getElementById("adminClientDropdown");
+  if (!dropdown) return;
+  try {
+    const { data, error } = await window.supabase.from("user_filings").select("customer_email");
+    if (error) throw error;
+    const emails = [...new Set(data.map(p => p.customer_email.toLowerCase().trim()))];
+    dropdown.innerHTML = `<option value="">-- Choose Target Profile --</option>`;
+    emails.forEach(e => {
+      dropdown.innerHTML += `<option value="${e}">${e}</option>`;
     });
+  } catch (err) { console.error(err); }
+}
+
+/**
+ * 8. PUSH REAL-TIME ALERT NOTICE MESSAGES
+ */
+async function processAdminNotificationPush(event) {
+  event.preventDefault();
+  const email = document.getElementById("adminClientDropdown").value;
+  const title = document.getElementById("alertTitle").value.trim();
+  const message = document.getElementById("alertMessage").value.trim();
+  const statusLog = document.getElementById("alertStatus");
+
+  if (!email || !title || !message) return;
+
+  try {
+    const { error } = await window.supabase.from("client_notifications").insert([{
+      recipient_email: email, title: title, message: message
+    }]);
+    if (error) throw error;
+
+    const stream = document.getElementById("admin-inbox-live-stream-box");
+    if (stream) stream.innerHTML = `<p style="margin-bottom:8px; color:#10b981;"><strong>[${new Date().toLocaleTimeString()}] Sent:</strong> To ${email} - "${title}"</p>` + stream.innerHTML;
+    
+    if (statusLog) { statusLog.textContent = "Broadcast Live!"; statusLog.style.color = "#10b981"; }
+    document.getElementById("adminAlertForm").reset();
+  } catch (err) { console.error(err); }
+}
+
+/**
+ * 9. MODAL DETAILS EXTRACTION EXPANDER (COPY-PASTE DESK ENGINE)
+ */
+function openFilingInspectionDrawer(recordId) {
+  const record = window.adminStorage.globalAdminApplicationsCache.find(item => String(item.id) === String(recordId));
+  if (!record) return;
+
+  const modal = document.getElementById("filingDetailModal");
+  const display = document.getElementById("modalMetadataDisplayTarget");
+  const title = document.getElementById("modalHeaderFilingTitle");
+  const downloadBtn = document.getElementById("modalDownloadPayloadBtn");
+
+  title.innerText = record.company_name || "Application Form Payload";
+  
+  let html = `
+    <div class="modal-data-group-box"><label>User Account Email</label><div>${record.customer_email}</div></div>
+    <div class="modal-data-group-box"><label>Service Specification Tier</label><div>${record.plan_service_tier}</div></div>
+    <div class="modal-data-group-box"><label>Filing Timestamp</label><div>${new Date(record.created_at).toLocaleString()}</div></div>
+  `;
+
+  const parsed = typeof record.metadata === "string" ? JSON.parse(record.metadata) : record.metadata;
+  if (parsed && Object.keys(parsed).length > 0) {
+    html += `<h4 style="margin:20px 0 10px 0; color:#0a1f44; font-weight:800; border-bottom:1px solid #e2e8f0; padding-bottom:4px; font-size:0.8rem;">USER SUBMITTED VARIABLES</h4>`;
+    for (const key in parsed) {
+      if (parsed.hasOwnProperty(key)) {
+        html += `<div class="modal-data-group-box"><label>${key.replace(/_/g," ")}</label><div>${parsed[key]}</div></div>`;
+      }
+    }
+  }
+
+  display.innerHTML = html;
+
+  downloadBtn.onclick = () => {
+    const f = `${record.company_name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-record.json`;
+    const blob = new Blob([JSON.stringify(record, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = f;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  if (modal) modal.style.display = "flex";
+}
+
+function closeFilingDetailModal() {
+  const modal = document.getElementById("filingDetailModal");
+  if (modal) modal.style.display = "none";
 }

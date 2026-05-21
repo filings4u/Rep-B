@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Account Notifications | filings4u Portal</title>
+  
+  <link rel="stylesheet" href="assets/css/portal-wizard.css">
+  <link rel="stylesheet" href="assets/css/notifications-center.css">
+  <link rel="icon" type="image/png" href="images/fav.png">
+</head>
+<body style="background-color: #f8fafc; margin:0; padding:15px; font-family: system-ui, -apple-system, sans-serif;">
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="wizard-container" style="max-width: 800px; margin: 40px auto; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.01);">
+    
+    <!-- Header Controls Row -->
+    <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+      <div>
+        <img src="images/logo.png" alt="filings4u" style="height: 30px; display:block; margin-bottom:8px;">
+        <h1 style="margin:0; font-size:1.4rem; color:#0a1f44; font-weight:800;">Your Notifications Feed</h1>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <button onclick="executeMarkAllNotificationsAsRead()" class="btn-mark-read-action" style="padding:10px 16px; background:#f1f5f9; border-radius:6px; font-weight:700; cursor:pointer;">✓ Clear All Unread</button>
+        <button onclick="window.location.href='client-dashboard.html'" style="background:#0a1f44; border:none; color:#ffffff; padding:10px 18px; border-radius:6px; font-weight:600; font-size:0.85rem; cursor:pointer;">Dashboard →</button>
+      </div>
+    </div>
+
+    <!-- Timeline Data Stream Canvas -->
+    <div class="notifications-stream-canvas" style="margin-top: 20px; width: 100%;">
+      <div id="notificationsStreamLoadingSpinner" style="text-align:center; padding:40px; color:#64748b; font-weight:600; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+        Connecting to your secure notification stream node...
+      </div>
+      
+      <!-- Safe JavaScript row injection target anchor -->
+      <div id="notificationsStreamTimelineInjectionTarget"></div>
+    </div>
+
+  </main>
+
+  <!-- 1. CORE SUPABASE DATABASE LIBRARIES -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. CENTRAL OBJECT INITIALIZER -->
+  <script>
+    (function() {
+      const supabaseUrl = 'https://lrbimrlbskjweynxlgas.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
+      
+      if (typeof supabase !== 'undefined' && !window.supabase) {
+        window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+        console.log("🔥 Supabase infrastructure connected securely to client context.");
+      }
+    })();
+  </script>
+
+  <!-- 3. MAIN RUNTIME BUSINESS LOGIC PROCESSING FILE -->
+  <script src="assets/js/notifications-engine.js?v=client_live"></script>
+
+</body>
+</html>

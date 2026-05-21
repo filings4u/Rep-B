@@ -12,6 +12,7 @@
     <script src="assets/js/supabase-config.js"></script>
     <script src="assets/js/admin-guard.js"></script>
     <script src="assets/js/wizard-sync.js"></script>
+    <link rel="stylesheet" href="assets/css/notifications-center.css">
 
     <style>
         /* ==========================================================================
@@ -371,24 +372,43 @@
             </div>
         </aside>
 
-        <!-- 🧱 NATURAL SCROLLING MAIN WORKSPACE -->
+          <!-- 🧱 NATURAL SCROLLING MAIN WORKSPACE -->
         <main class="portal-main">
-            <header class="portal-header">
-                <div class="welcome-text">
-                    <h1>Admin Dashboard</h1>
-                    <p>System-wide performance overview infrastructure</p>
-                </div>
-                
-                <!-- 🎯 CLOCK EMBEDDED DIRECTLY NEXT TO THE ACTION SEARCH INPUT BOX -->
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
-                    </div>
-                    <div>
-                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
-                    </div>
-                </div>
-            </header>
+          <!-- 🧱 NATURAL SCROLLING MAIN WORKSPACE HEADER -->
+<header class="portal-header">
+  
+  <div class="welcome-text">
+    <h1>Admin Dashboard</h1>
+    <p>System-wide performance overview infrastructure</p>
+  </div>
+
+  <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX (Aligns Bell, Clock, and Search side-by-side) -->
+  <div class="header-actions-wrapper">
+    
+    <!-- 🧱 STRUCTURAL NAVIGATION BELL CONTAINER -->
+    <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; margin-right: 5px !important; box-sizing: border-box !important;">
+      <!-- DYNAMIC NAVIGATION BELL BADGE EMBED -->
+      <a href="notifications.html" class="nav-bell-wrapper" aria-label="View Central Notifications Channel">
+        <span class="nav-bell-icon" style="font-size: 1.3rem !important;">🔔</span>
+        <div id="globalNavUnreadCounterBadge" class="nav-bell-badge">0</div>
+      </a>
+    </div>
+
+    <!-- LIVE SYSTEM CLOCK COMPONENT PILL -->
+    <div class="header-clock-pill">
+      <span>⏱️</span>
+      <span id="portal-clock">00/00/0000 | 00:00:00</span>
+    </div>
+
+    <!-- DYNAMIC GLOBAL SEARCH FIELD -->
+    <div>
+      <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
+    </div>
+
+  </div> <!-- /header-actions-wrapper -->
+
+</header>
+
 
             <div class="content-container">  
                 <!-- Metrics Row -->
@@ -426,24 +446,26 @@
                         </div>
 
                         <!-- Data Ledger Card -->
-                        <div class="console-card" style="width:100% !important; overflow:hidden !important;">
-                            <h2>Global Corporate Sales Pricing Ledger</h2>
-                            <div style="overflow-x:auto !important;">
-                                <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-                                    <thead>
-                                        <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
-                                            <th style="padding:12px !important;">Filing Entity</th>
-                                            <th style="padding:12px !important;">Customer Email</th>
-                                            <th style="padding:12px !important;">Tier</th>
-                                            <th style="padding:12px !important;">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="admin-global-sales-target-box">
-                                        <tr><td colspan="4" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Initializing server log streams...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                       <div class="console-card" style="width:100% !important; overflow:hidden !important;">
+  <h2>Global Corporate Sales Pricing Ledger</h2>
+  <div style="overflow-x:auto !important;">
+    <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+      <thead>
+        <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+          <th style="padding:12px !important;">Filing Entity</th>
+          <th style="padding:12px !important;">Customer Email</th>
+          <th style="padding:12px !important;">Tier / Plan</th>
+          <th style="padding:12px !important;">Amount</th>
+          <th style="padding:12px !important; text-align:right !important;">Action</th> <!-- 📥 Added slot -->
+        </tr>
+      </thead>
+      <!-- The JavaScript engine targets this ID directly to build rows matching your original layout -->
+      <tbody id="admin-global-sales-target-box">
+        <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Initializing server log streams...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
                     </div>
 
                     <!-- Right Column Panel -->
@@ -462,164 +484,160 @@
                     </div>
                 </div>
             </div>
+</main>  
 
-            <!-- 🗂️ FILINGS HISTORY LOG COMPONENT -->
-<div class="filings-history-container">
-  <div id="historyListLoadingSpinner" style="text-align:center; padding: 30px; color:#64748b; font-weight:600;">
-    Querying historical data tables...
-  </div>
-  <!-- Injection Target for rows -->
-  <div id="filingsHistoryInjectionTarget"></div>
 </div>
-
-<!-- 🔎 POPUP DETAIL INSPECTION DRAWER MODAL -->
-<div id="filingDetailModal" class="detail-modal-overlay">
-  <div class="detail-inspection-window">
-    <div class="inspection-header">
-      <h2 id="modalHeaderFilingTitle">Application Scope Parameters</h2>
-      <button onclick="closeFilingDetailModal()" style="background:transparent; border:none; color:#ffffff; font-size:1.5rem; cursor:pointer; padding:0; line-height:1;">✕</button>
-    </div>
-    <div class="inspection-scroll-body" id="modalMetadataDisplayTarget">
-      <!-- Metadata fields inject here dynamically -->
-    </div>
-    <div class="inspection-footer-actions">
-      <button onclick="closeFilingDetailModal()" style="background:transparent; border:1px solid #64748b; color:#64748b; padding:12px 22px; border-radius:6px; font-weight:600; cursor:pointer;">Close Window</button>
-      <button id="modalDownloadPayloadBtn" class="btn-download-json">📥 Download Filing Data</button>
-    </div>
-  </div>
-</div>
-
-        </main>
-    </div>
-
-    <!-- 🎯 SYSTEM TELEMETRY CONTROL ENGINE TERMINAL CONTROLLER LINK -->
-    <script src="assets/js/admin-engine.js"></script>
-    
-<script>
-    document.addEventListener("DOMContentLoaded", async () => {
-  // Confirm user session is live
-  const sessionCheckInterval = setInterval(async () => {
-    if (window.supabase) {
-      clearInterval(sessionCheckInterval);
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. CENTRAL OBJECT INITIALIZER -->
+  <script>
+    (function() {
+      // FIXED: Swapped out placeholder domain string with your actual live project database URL
+      const supabaseUrl = 'https://lrbimrlbskjweynxlgas.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
       
-      const { data: { user }, error } = await window.supabase.auth.getUser();
-      
-      // Extract structural metadata keys securely
-      const isAdmin = user?.app_metadata?.is_admin === true || user?.app_metadata?.role === 'admin';
-      
-      if (error || !user || !isAdmin) {
-        console.warn("🔐 Unauthorized access attempt blocked. Evicting browser session...");
-        alert("Access Denied: Administrative credentials missing.");
-        window.location.href = "https://filings4u.com";
-      } else {
-        console.log("🚀 Admin access verified. Booting management dashboards pipeline...");
-        // Call your function here to fetch all user data logs
+      // Target global library context object natively generated by standard UMD bundles
+      if (typeof supabase !== 'undefined' && !window.supabase) {
+        window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+        console.log("🔥 Supabase central system connection mapping initialized successfully.");
+      } else if (typeof window.supabaseJs !== 'undefined' && !window.supabase) {
+        window.supabase = window.supabaseJs.createClient(supabaseUrl, supabaseAnonKey);
+        console.log("🔥 Supabase central system connection mapping initialized via fallback namespace.");
+      }
+    })();
+  </script>
+
+  <!-- 3. CENTRAL BUSINESS LOGIC ENGINE DISPATCHER -->
+  <script src="assets/js/admin-engine.js?v=refresh_fixed_ledger"></script>
+
+  <!-- 4. INTERACTIVE ACCORDION & REAL-TIME ALERTS ENGINE -->
+  <script>
+    /**
+     * 📁 SIDEBAR ACCORDION COLLAPSIBLE NAVIGATION HANDLERS
+     */
+    function toggleSidebarAccordion(buttonElement) {
+      buttonElement.classList.toggle('active');
+      const panel = buttonElement.nextElementSibling;
+      if (panel && panel.style) {
+        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+          panel.style.maxHeight = "0px";
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
       }
     }
-  }, 100);
-});
 
-</script>
-
-
-
-
-    <script>
-        // 📁 ACCORDION NAVIGATION COLLAPSIBLE OPENER ACTIONS
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
-    </script>
-
-    <script>
-    // 📨 LIVE ALERTS SYSTEM DISPATCH CONTROLLER
+    /**
+     * 📨 LIVE ALERTS BROADCASTER INTEGRATION PIPELINE
+     */
     document.getElementById('adminAlertForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const client = window.supabaseClient;
-        const statusBox = document.getElementById('alertStatus');
-        const submitBtn = e.target.querySelector('button[type="submit"]');
+      e.preventDefault();
+      
+      const client = window.supabase;
+      const statusBox = document.getElementById('alertStatus');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const chosenUserEmail = document.getElementById('adminClientDropdown').value;
+      const noticeTitle = document.getElementById('alertTitle').value.trim();
+      const noticeMessage = document.getElementById('alertMessage').value.trim();
 
-        const chosenUser = document.getElementById('adminClientDropdown').value;
-        const noticeTitle = document.getElementById('alertTitle').value.trim();
-        const noticeMessage = document.getElementById('alertMessage').value.trim();
+      if (!statusBox || !submitBtn) return;
 
-        if (!chosenUser || !noticeTitle || !noticeMessage) {
-            if (statusBox) {
-                statusBox.style.color = "var(--staff-red)";
-                statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
-            }
-            return;
+      if (!chosenUserEmail || !noticeTitle || !noticeMessage) {
+        statusBox.style.color = "var(--staff-red, #ef4444)";
+        statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Transmitting Wave Packet...";
+
+      try {
+        if (!client) {
+          throw new Error("Supabase system core driver script missing from window context memory arrays.");
         }
 
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Transmitting Wave Packet...";
+        const { error } = await client
+          .from('client_notifications')
+          .insert({
+            recipient_email: String(chosenUserEmail).toLowerCase().trim(),
+            title: noticeTitle,
+            message: noticeMessage,
+            is_read: false,
+            created_at: new Date().toISOString()
+          });
 
-        try {
-            // Write directly to your custom communication schema log table
-            const { error } = await client
-                .from('admin_notifications_stream')
-                .insert({
-                    user_id: chosenUser,
-                    title: noticeTitle,
-                    message: noticeMessage,
-                    created_at: new Date().toISOString()
-                });
+        if (error) throw error;
 
-            if (error) throw error;
-
-            statusBox.style.color = "var(--emerald)";
-            statusBox.innerText = "🎉 Notification broadcast locked and delivered directly to customer feed!";
-            document.getElementById('adminAlertForm').reset();
-
-        } catch (err) {
-            console.error("Alert broadcast failed:", err.message);
-            statusBox.style.color = "var(--staff-red)";
-            statusBox.innerText = `Dispatch Failed: ${err.message}`;
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Push Real-Time Alert →";
+        // Flash message live into the stream monitoring card box on screen
+        const liveCommsBox = document.getElementById("admin-inbox-live-stream-box");
+        if (liveCommsBox) {
+          const currentTime = new Date().toLocaleTimeString();
+          liveCommsBox.innerHTML = `<p style="margin:0 0 8px 0; color:#10b981; line-height:1.4;"><strong>[${currentTime}] Dispatched:</strong> To ${chosenUserEmail} - "${noticeTitle}"</p>` + liveCommsBox.innerHTML;
         }
+
+        statusBox.style.color = "var(--emerald, #10b981)";
+        statusBox.innerText = "🎉 Notification broadcast locked and delivered directly to customer feed!";
+        document.getElementById('adminAlertForm').reset();
+
+      } catch (err) {
+        console.error("Alert broadcast failed:", err.message);
+        statusBox.style.color = "var(--staff-red, #ef4444)";
+        statusBox.innerText = `Dispatch Failed: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Push Real-Time Alert →";
+      }
     });
 
+    /**
+     * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
+     */
     function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
+      if (window.innerWidth > 992) return;
+      const sidebar = document.querySelector(".portal-sidebar");
+      const icon = document.getElementById("mobileNavTriggerIcon");
+      if (!sidebar) return;
 
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
+      sidebar.classList.toggle("mobile-revealed");
+      if (sidebar.classList.contains("mobile-revealed")) {
+        if (icon) icon.textContent = "✕";
+      } else {
+        if (icon) icon.textContent = "☰";
+      }
     }
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const navLinks = document.querySelectorAll(".nav-item");
+      navLinks.forEach(link => {
         link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
+          const sidebar = document.querySelector(".portal-sidebar");
+          if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+            toggleMobileSidebarMenuOverlay();
+          }
         });
+      });
     });
-});
+  </script>
 
-</script>
+
+<!-- PASTE THIS MODAL CONTAINER AT THE ABSOLUTE BOTTOM OF THE FILE RIGHT BEFORE THE </body> TAG -->
+<!-- It has no style footprint because it stays completely hidden (display:none) until clicked -->
+<div id="filingDetailModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(10,31,68,0.6); backdrop-filter:blur(4px); z-index:9999999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
+  <div style="background:#ffffff; width:100%; max-width:600px; max-height:85vh; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.15); display:flex; flex-direction:column; overflow:hidden;">
+    <div style="background:#0a1f44; color:#ffffff; padding:20px 24px; display:flex; justify-content:space-between; align-items:center;">
+      <h2 id="modalHeaderFilingTitle" style="margin:0; font-size:1.2rem; color:#ffffff; font-weight:800;">Application Scope Parameters</h2>
+      <button onclick="closeFilingDetailModal()" style="background:transparent; border:none; color:#ffffff; font-size:1.5rem; cursor:pointer; line-height:1;">✕</button>
+    </div>
+    <div id="modalMetadataDisplayTarget" style="padding:25px; overflow-y:auto; text-align:left; font-family:sans-serif; font-size:0.9rem; color:#334155;">
+      <!-- Records inject here dynamically -->
+    </div>
+    <div style="background:#f8fafc; padding:15px 24px; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:12px;">
+      <button onclick="closeFilingDetailModal()" style="background:transparent; border:1px solid #64748b; color:#64748b; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">Close</button>
+      <button id="modalDownloadPayloadBtn" style="background:#10b981; color:#ffffff; border:none; padding:10px 18px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.85rem;">📥 Download JSON Data</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
