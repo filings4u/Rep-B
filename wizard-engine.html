@@ -431,7 +431,6 @@ async function executeFinalFunnelOrderPaymentSubmit() {
     return;
   }
 
-  // 1. Clear dynamic extra input validation borders
   const allFormInputs = document.querySelectorAll('#extra-government-inputs-hook .custom-dynamic-input');
   allFormInputs.forEach(input => {
     input.style.borderColor = '#e2e8f0';
@@ -439,8 +438,6 @@ async function executeFinalFunnelOrderPaymentSubmit() {
   });
 
   let firstInvalidElement = null;
-
-  // 2. Extract configuration variables tokens with safe defaults
   const calculatedPriceEl = document.getElementById('cachedActivePrice');
   const calculatedPrice = calculatedPriceEl ? calculatedPriceEl.value : coreBasePrice;
   const verifiedPlanTierEl = document.getElementById('cached_plan_tier');
@@ -477,13 +474,11 @@ async function executeFinalFunnelOrderPaymentSubmit() {
 
   if (firstInvalidElement) {
     firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      firstInvalidElement.focus();
-    }, 400);
+    setTimeout(() => { firstInvalidElement.focus(); }, 400);
     return;
   }
 
-  if (!selectedUpsellKeys.includes('registered-agent')) {
+  if (typeof selectedUpsellKeys !== 'undefined' && !selectedUpsellKeys.includes('registered-agent')) {
     collectedCustomMetaData.external_agent = {
       name: document.getElementById('ext_agent_name')?.value || '',
       street: document.getElementById('ext_agent_address')?.value || '',
@@ -506,17 +501,16 @@ async function executeFinalFunnelOrderPaymentSubmit() {
   sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrderPayload));
 
   try {
-    // Push form values to cloud database tables before redirecting to Stripe payment endpoints
-    await saveDraftProgressToCloudEngine(3);
+    if (typeof saveDraftProgressToCloudEngine === 'function') {
+      await saveDraftProgressToCloudEngine(3);
+    }
     
     const baseTargetUrl = window.productionRootUrl || window.location.origin;
-    const structuralReturnUrl = `${baseTargetUrl}/portal-dashboard.html?email=${cleanEscapedEmail}&session_id={CHECKOUT_SESSION_ID}`;
+    const structuralReturnUrl = baseTargetUrl + '/portal-dashboard.html?email=' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}';
     
     console.log("🚀 Initializing secure Stripe Checkout session transmission...");
 
-    // ==========================================================================
-    // 🎯 FIXED: ENDPOINT CORRECTLY ROUTED TO 'stripe-checkout' INSTEAD OF WEBHOOK
-    // ==========================================================================
+    // ROUTING POINT EXTRACTED CLEANLY INTO THE CORRECT ENDPOINT STRIP
     const response = await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook', {
       method: 'POST',
       mode: 'cors',
@@ -529,17 +523,16 @@ async function executeFinalFunnelOrderPaymentSubmit() {
         email: globalCachedUserEmail,
         company_name: globalCachedCompanyName,
         amount: Math.round(finalPriceSum * 100),
-        service_type: `${serviceKey}-${verifiedPlanTier}`,
+        service_type: serviceKey + '-' + verifiedPlanTier,
         return_url: structuralReturnUrl
       })
     });
 
-    if (!response.ok) throw new Error(`Edge Function Response Error Status: ${response.status}`);
+    if (!response.ok) throw new Error('Edge Function Response Error Status: ' + response.status);
     const data = await response.json();
 
-    // 🚀 CLIENT REDIRECT HANDOFF
     if (data.clientSecret) {
-      window.location.href = `order.html`;
+      window.location.href = 'order.html';
     } else if (data.url) {
       window.location.href = data.url;
     } else {
@@ -548,9 +541,10 @@ async function executeFinalFunnelOrderPaymentSubmit() {
 
   } catch (err) {
     console.error("Filing transmission error caught:", err);
-    alert(`Order execution fault: ${err.message}`);
+    alert('Order execution fault: ' + err.message);
   }
 }
+
 
 </script>
 </body>
