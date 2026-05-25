@@ -13,129 +13,96 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/wizards-config.js"></script>
   
-  <style>
-    :root {
-      --emerald: #10b981;
-      --navy: #0a1f44;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    #checkout {
-      margin-top: 20px;
-      min-height: 450px;
-      width: 100% !important;
-      max-width: 100% !important;
-      box-sizing: border-box;
-    }
-    #checkout iframe {
-      width: 100% !important;
-      min-width: 100% !important;
-      max-width: 100% !important;
-    }
-    .trust-badge {
-      background: rgba(16, 185, 129, 0.1);
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      color: var(--navy);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .trust-badge span {
-      color: var(--emerald);
-      font-weight: 800;
-    }
-    
-    /* Responsive overrides for touch screens */
-    @media screen and (max-width: 640px) {
-      .wizard-header-row {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 15px;
-      }
-      .abort-btn {
-        width: 100% !important;
-        text-align: center;
-      }
-      .wizard-footer-row {
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-      }
-    }
+ <style> 
+        :root { 
+            --emerald: #10b981; 
+            --navy: #0a1f44; 
+        } 
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        } 
 
-/* ==========================================================================
-   🖥️ STRIPE EMBEDDED CHECKOUT FULL WIDTH EXTENSION & HUD LOCK
-   ========================================================================== */
+        /* ========================================================================== 
+           🖥️ FORCES STRIPE EMBEDDED FORM TO ACCEPET THE FULL CONTAINER WIDTH
+           ========================================================================== */
+        #checkout { 
+            margin-top: 20px; 
+            min-height: 450px; 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            box-sizing: border-box; 
+        } 
+        
+        /* Overrides Stripe's internal 540px centered constraint layout */
+        .stripe-embedded-checkout-container {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
 
-/* 1. FORCE EVERY INTERNAL DYNAMIC ELEMENT TO ABANDON MAX-WIDTH RESTRAINTS */
-#checkout,
-#checkout *,
-.stripe-embedded-checkout-container,
-.stripe-embedded-checkout-container *,
-.stripe-embedded-checkout-container iframe {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* 2. REALIGNS HEADER CONTAINER ROWS TO PREVENT CORES SHIFTING CRASHES */
-.wizard-header-row {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important; 
-    position: relative !important;
-    width: 100% !important;
-    padding-top: 45px !important; 
-    margin-bottom: 25px !important;
-    box-sizing: border-box !important;
-}
-
-/* 3. BALANCES CORES LOGO AND SUB-TEXT BOX ALIGNMENT */
-.wizard-header-row > div:first-child {
-    text-align: left !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-}
-
-/* 4. CONTROLS ABORT BUTTON INTERACTION SPEED AND POSITIONS */
-.abort-btn {
-    background: transparent !important;
-    border: 1px solid #0a1f44 !important;
-    color: #0a1f44 !important;
-    padding: 8px 16px !important;
-    border-radius: 6px !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    cursor: pointer !important;
-    white-space: nowrap !important;
-    height: fit-content !important;
-    margin: 0 !important;
-}
-
-/* --- 📱 TOUCHSCREEN SMARTPHONE BREAKDOWNS COMPENSATOR --- */
-@media screen and (max-width: 640px) {
-    .wizard-header-row {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 15px !important;
-        padding-top: 55px !important; 
-    }
-    .abort-btn {
-        width: 100% !important;
-        text-align: center !important;
-    }
-}
-
-
-  </style>
+        .trust-badge { 
+            background: rgba(16, 185, 129, 0.1); 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            font-size: 0.75rem; 
+            color: var(--navy); 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        } 
+        .trust-badge span { 
+            color: var(--emerald); 
+            font-weight: 800; 
+        } 
+        .wizard-header-row { 
+            display: flex !important; 
+            flex-direction: row !important; 
+            justify-content: space-between !important; 
+            align-items: center !important; 
+            position: relative !important; 
+            width: 100% !important; 
+            padding-top: 45px !important; 
+            margin-bottom: 25px !important; 
+            box-sizing: border-box !important; 
+        } 
+        .wizard-header-row > div:first-child { 
+            text-align: left !important; 
+            display: flex !important; 
+            flex-direction: column !important; 
+            align-items: flex-start !important; 
+        } 
+        .abort-btn { 
+            background: transparent !important; 
+            border: 1px solid #0a1f44 !important; 
+            color: #0a1f44 !important; 
+            padding: 8px 16px !important; 
+            border-radius: 6px !important; 
+            font-weight: 600 !important; 
+            font-size: 0.85rem !important; 
+            cursor: pointer !important; 
+            white-space: nowrap !important; 
+            height: fit-content !important; 
+            margin: 0 !important; 
+        } 
+        @media screen and (max-width: 640px) { 
+            .wizard-header-row { 
+                flex-direction: column !important; 
+                align-items: flex-start !important; 
+                gap: 15px !important; 
+                padding-top: 55px !important; 
+            } 
+            .abort-btn { 
+                width: 100% !important; 
+                text-align: center !important; 
+            } 
+            .wizard-footer-row { 
+                flex-direction: column !important; 
+                align-items: center !important; 
+                text-align: center !important; 
+            } 
+        } 
+    </style> 
 </head>
 <body style="background-color: #f8fafc; margin:0; padding:15px; font-family: system-ui, -apple-system, sans-serif;">
 
@@ -212,7 +179,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingMessage = document.getElementById('loading-message');
     const stripeKey = 'pk_live_51TTy4i0dNjSlvyScbq19wWCQjOhDKdFMUzkV4Et4ok1NAWFFab4qV2KyZB5CwAp6dAvpLSuMZq2xKAR3BZ1gfuTM00KtmvEgc4';
-
+    
     // 📦 READ SECURE TRANSFERRED SALES PAGE PAYLOADS
     const rawData = sessionStorage.getItem('pendingOrder');
     if (!rawData) {
@@ -240,10 +207,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const stripe = window.Stripe(stripeKey);
         const cleanEscapedEmail = encodeURIComponent(guestEmail);
-
+        
         // 🔒 SECURE HOOK: Public anon token to clear the 401 Gateway Wall completely
         const projectAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
-
+        
         // Build valid structured redirection query pathing
         const structuralReturnUrl = 'https://filings4u.com' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}';
 
@@ -274,15 +241,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (jsonPayload.error) throw new Error(jsonPayload.error);
         if (!jsonPayload.clientSecret) throw new Error("No client secret returned from backend.");
 
-        // ==========================================================================
-        // 🎨 FRONTEND FULL WIDTH FIX
-        // Combines your clientSecret with layout rules to stretch form fields.
-        // ==========================================================================
-        const checkout = await stripe.initEmbeddedCheckout({
-            clientSecret: jsonPayload.clientSecret,
-            layout: 'accordion' // 🚀 Removes default column clamping and expands text inputs 100% wide
+        // Initialize and mount Embedded Checkout container
+        const checkout = await stripe.initEmbeddedCheckout({ 
+            clientSecret: jsonPayload.clientSecret 
         });
-
+        
         loadingMessage.style.display = 'none';
         checkout.mount('#checkout');
 
@@ -297,7 +260,6 @@ function handleCancelAbortRedirect() {
         window.location.href = 'https://filings4u.com';
     }
 }
-
 </script>
 
 </body>
