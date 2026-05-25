@@ -212,7 +212,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingMessage = document.getElementById('loading-message');
     const stripeKey = 'pk_live_51TTy4i0dNjSlvyScbq19wWCQjOhDKdFMUzkV4Et4ok1NAWFFab4qV2KyZB5CwAp6dAvpLSuMZq2xKAR3BZ1gfuTM00KtmvEgc4';
-    
+
     // 📦 READ SECURE TRANSFERRED SALES PAGE PAYLOADS
     const rawData = sessionStorage.getItem('pendingOrder');
     if (!rawData) {
@@ -240,10 +240,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const stripe = window.Stripe(stripeKey);
         const cleanEscapedEmail = encodeURIComponent(guestEmail);
-        
+
         // 🔒 SECURE HOOK: Public anon token to clear the 401 Gateway Wall completely
         const projectAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
-        
+
         // Build valid structured redirection query pathing
         const structuralReturnUrl = 'https://filings4u.com' + cleanEscapedEmail + '&session_id={CHECKOUT_SESSION_ID}';
 
@@ -274,11 +274,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (jsonPayload.error) throw new Error(jsonPayload.error);
         if (!jsonPayload.clientSecret) throw new Error("No client secret returned from backend.");
 
-        // Initialize and mount Embedded Checkout container
-        const checkout = await stripe.initEmbeddedCheckout({ 
-            clientSecret: jsonPayload.clientSecret 
+        // ==========================================================================
+        // 🎨 FRONTEND FULL WIDTH FIX
+        // Combines your clientSecret with layout rules to stretch form fields.
+        // ==========================================================================
+        const checkout = await stripe.initEmbeddedCheckout({
+            clientSecret: jsonPayload.clientSecret,
+            layout: 'accordion' // 🚀 Removes default column clamping and expands text inputs 100% wide
         });
-        
+
         loadingMessage.style.display = 'none';
         checkout.mount('#checkout');
 
@@ -293,6 +297,7 @@ function handleCancelAbortRedirect() {
         window.location.href = 'https://filings4u.com';
     }
 }
+
 </script>
 
 </body>
