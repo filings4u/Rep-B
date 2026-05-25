@@ -1,22 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Secure Document Vault | filings4u</title>
-    <link rel="stylesheet" href="assets/css/portal-custom.css">
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+    <meta name="mobile-web-app-capable" content="yes"> 
+    <meta name="theme-color" content="#10b981"> 
+    <!-- Mobile Navigation Theme Controls --> 
+    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> 
+    <meta name="msapplication-navbutton-color" content="#10b981"> 
+    <title>Secure Document Vault | filings4u</title> 
+    
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE --> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script> 
+    <script src="https://www.cloudflare.com/turnstile/v0/api.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="assets/css/portal-custom.css"> 
+
     <style>
-        .drag-zone-box { border: 2px dashed #cbd5e1; padding: 40px 15px; border-radius: 12px; text-align: center; background: #ffffff; cursor: pointer; transition: all 0.2s; }
-        .drag-zone-box.hovering { border-color: var(--brand-accent); background: rgba(16, 185, 129, 0.03); }
-        .progress-container { width: 100%; height: 6px; background: #e2e8f0; border-radius: 4px; margin-top: 15px; display: none; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: var(--brand-accent); transition: width 0.1s linear; }
-        .file-listing-strip { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 10px; background: #fff; }
-        .file-link-btn { color: var(--brand-accent); font-weight: 600; text-decoration: none; font-size: 0.8rem; }
+        :root {
+            --emerald: #10b981;
+            --navy: #0a1f44;
+            --slate: #64748b;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            padding: 0;
+            color: var(--navy);
+        }
+        .dashboard-nav {
+            background: var(--navy);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            box-sizing: border-box;
+        }
+        .dashboard-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(10,31,68,0.01);
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(10, 31, 68, 0.05);
+        }
+        .btn-action {
+            background: var(--emerald);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+        .btn-logout {
+            background: transparent;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-logout:hover {
+            color: white;
+            border-color: white;
+        }
+        #pdf-print-template {
+            display: none;
+        }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-     
 </head>
+
+
 <body>
 
     <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
@@ -342,5 +421,196 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
+<body>
+    <!-- Top Navigation Header Component --> 
+    <nav class="dashboard-nav"> 
+        <div style="display: flex; align-items: center; gap: 15px;"> 
+            <img src="images/logo.png" alt="filings4u" style="height: 28px; filter: brightness(0) invert(1);"> 
+            <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">Client Portal</span> 
+        </div> 
+        <button onclick="executeSecureLogout()" class="btn-logout">Logout</button> 
+    </nav> 
+
+    <!-- Main Workspace Area Wrapper --> 
+ <!-- Main Workspace Area Wrapper --> 
+<main class="dashboard-container"> 
+    
+    <!-- Welcome Message Panel Banner --> 
+    <div style="text-align: left; margin-bottom: 10px;"> 
+        <h1 style="margin: 0 0 5px 0; font-size: 1.75rem; font-weight: 800;">Welcome to Your Dashboard</h1> 
+        <p style="margin: 0; color: var(--slate); font-size: 0.95rem;">Track filed documentation, download certificates, and oversee jurisdictional submittals.</p> 
+    </div> 
+
+    <!-- ==========================================================================
+       🔒 SECURE ACCOUNT DOCUMENT VAULT CONTAINER
+       ========================================================================== -->
+    <div style="text-align: left; border-top: 1px solid #e2e8f0; padding-top: 30px; margin-top: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+            <span style="font-size: 1.3rem;">🗖</span>
+            <h2 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--navy); letter-spacing: -0.3px;">Your Secure Document Vault</h2>
+        </div>
+
+        <!-- CARD ENTRY 1: DYNAMIC SIGNED POWER OF ATTORNEY INSTRUMENT --> 
+        <div class="dashboard-card" style="margin-bottom: 20px;"> 
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;"> 
+                <div> 
+                    <h3 style="margin: 0 0 5px 0; font-size: 1.15rem; font-weight: 800;">Limited Power of Attorney (POA)</h3> 
+                    <p style="margin: 0; color: var(--slate); font-size: 0.88rem;">Your signed filing authorization instrument form is locked and verified.</p> 
+                </div> 
+                <!-- PDF Download Trigger Action (Runs dynamic html2pdf compiler engine) --> 
+                <button onclick="downloadDocumentAsPDF()" id="download-btn" class="btn-action" disabled> 
+                    📥 Download Signed PDF 
+                </button> 
+            </div> 
+
+            <!-- Scrollable UI Document Text Layout Box --> 
+            <div id="dashboard-poa-view" style="padding: 25px; border: 1px solid #e2e8f0; background: #fafafa; border-radius: 8px; font-family: Georgia, serif; font-size: 0.92rem; line-height: 1.6; max-height: 250px; overflow-y: scroll; white-space: pre-line; color: #334155;"> 
+                Loading authorized legal instruments from secure document server vault... 
+            </div> 
+        </div>
+
+        <!-- CARD ENTRY 2: HARDCODED MANAGED VAULT INVENTORY --> 
+        <div class="dashboard-card"> 
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;"> 
+                <div> 
+                    <h3 style="margin: 0 0 5px 0; font-size: 1.15rem; font-weight: 800;">Managed Vault Inventory</h3> 
+                    <p style="margin: 0; color: var(--slate); font-size: 0.88rem; font-weight: 500;">
+                        Delaware_Formation_Certificate.pdf &bull; 142 KB &bull; Verified Corporate Record
+                    </p> 
+                </div> 
+                <!-- Static Asset Download Trigger Action --> 
+                <button onclick="downloadStaticVaultAsset('Delaware_Formation_Certificate.pdf')" class="btn-action"> 
+                    📥 Download Certificate 
+                </button> 
+            </div> 
+        </div>
+
+    </div>
+</main>
+
+
+    <!-- ========================================================================== 
+       📄 INVISIBLE PRINT ELEMENT CONTAINER 
+       This template formats the text into an official certificate style for the PDF generation. 
+       ========================================================================== --> 
+    <div id="pdf-print-template"> 
+        <div style="padding: 50px; font-family: 'Times New Roman', Times, serif; color: #000000; line-height: 1.6; font-size: 12pt; background: #ffffff;"> 
+            <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px;"> 
+                <h2 style="margin: 0 0 5px 0; font-size: 18pt; font-weight: bold; letter-spacing: 1px;">FILINGS4U LLC</h2> 
+                <p style="margin: 0; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.5px;">Official Regulatory Compliance Submittals Portal</p> 
+            </div> 
+            <!-- Target for text mirroring insertion --> 
+            <div id="pdf-text-target" style="white-space: pre-line; text-align: justify; margin-bottom: 40px;"></div> 
+            <div style="margin-top: 60px; border-top: 1px dashed #000; padding-top: 20px; display: flex; justify-content: space-between;"> 
+                <div> 
+                    <p style="margin: 0; font-size: 10pt; font-weight: bold;">Status: VERIFIED & FILED</p> 
+                    <p id="pdf-timestamp-target" style="margin: 5px 0 0 0; font-size: 9pt; color: #444;"></p> 
+                </div> 
+                <div style="text-align: right;"> 
+                    <p style="margin: 0; font-size: 10pt; font-style: italic;">Secured via Certified Digital Channel</p> 
+                </div> 
+            </div> 
+        </div> 
+    </div>
+
+    <script>
+ <!-- Paste this right above the closing </body> tag inside your portal-vault.html file -->
+    // --- 1. INITIALIZE MASTER DATABASE CONNECTIONS INSTANCE ---
+    const portalSupabaseInstance = supabase.createClient(
+        'https://lrbimrlbskjweynxlgas.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'
+    );
+
+    let recoveredPoaDocumentText = "";
+    let globalProfileCompanyName = "Filing_Order";
+
+    // --- 2. RETRIEVE ACTIVE USER ACCOUNT SESSION AND FETCH DATA ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // Verify if a user session is active
+            const { data: { session }, error: sessionError } = await portalSupabaseInstance.auth.getSession();
+            if (sessionError || !session) {
+                window.location.href = 'success.html'; // Bounce back to login page if empty
+                return;
+            }
+
+            // Query the orders table for matching records
+            const { data: orderRecords, error: dbError } = await portalSupabaseInstance
+                .from('orders')
+                .select('signed_poa_document_text, company_name, created_at')
+                .eq('user_id', session.user.id)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (dbError) throw dbError;
+
+            const poaViewBox = document.getElementById('dashboard-poa-view');
+            const downloadButton = document.getElementById('download-btn');
+
+            if (orderRecords && orderRecords.length > 0 && orderRecords[0].signed_poa_document_text) {
+                recoveredPoaDocumentText = orderRecords[0].signed_poa_document_text;
+                globalProfileCompanyName = orderRecords[0].company_name || "Filing_Order";
+                
+                // Render string into UI scrollbox inside your page card
+                if (poaViewBox) poaViewBox.innerText = recoveredPoaDocumentText;
+                if (downloadButton) downloadButton.removeAttribute('disabled');
+                
+                // Pre-fill printable hidden template tags
+                const textTarget = document.getElementById('pdf-text-target');
+                if (textTarget) textTarget.innerText = recoveredPoaDocumentText;
+                
+                const timestampTarget = document.getElementById('pdf-timestamp-target');
+                if (timestampTarget) {
+                    const formattedDate = new Date(orderRecords[0].created_at).toLocaleDateString([], {month:'long', day:'2-digit', year:'numeric'});
+                    timestampTarget.innerText = `Filing Authorization Date: ${formattedDate}`;
+                }
+            } else {
+                if (poaViewBox) poaViewBox.innerText = "No signed Power of Attorney records found for this account.";
+            }
+
+        } catch (err) {
+            console.error("Dashboard engine data query exception caught:", err);
+            const poaViewBox = document.getElementById('dashboard-poa-view');
+            if (poaViewBox) poaViewBox.innerText = "System error syncing documentation logs. Please refresh your browser window.";
+        }
+    });
+
+    // --- 3. EXECUTABLE PDF COMPILATION HANDLING ---
+    function downloadDocumentAsPDF() {
+        if (!recoveredPoaDocumentText) return;
+
+        const targetElement = document.getElementById('pdf-print-template');
+        if (!targetElement) return;
+        
+        // Configuration rules for the html2pdf engine
+        const exportConfigOptions = {
+            margin:       15, 
+            filename:     `POA-${globalProfileCompanyName.replace(/\s+/g, '_')}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+            jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Temporarily show the element so the canvas engine can scan it
+        targetElement.style.display = 'block';
+
+        // Generate and save the PDF, then re-hide the print layer
+        html2pdf().set(exportConfigOptions).from(targetElement).save().then(() => {
+            targetElement.style.display = 'none';
+        }).catch((err) => {
+            console.error("PDF engine compiler failure:", err);
+            targetElement.style.display = 'none';
+        });
+    }
+
+    // --- 4. SECURE LOGOUT TERMINATION CONTROL ---
+    async function executeSecureLogout() {
+        if (confirm("Are you sure you want to log out of your dashboard profile workspace?")) {
+            await portalSupabaseInstance.auth.signOut();
+            window.location.href = 'success.html';
+        }
+    }
+
+    </script>
 </body>
 </html>
