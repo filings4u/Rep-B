@@ -338,242 +338,561 @@
     </style>
 </head>
 <body>
+  <div class="dashboard-wrapper">
+    <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <!-- ACCORDION 1 -->
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+          Control Systems <span class="chevron">▲</span>
+        </button>
+        <div class="accordion-panel" style="max-height: 600px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item active"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+          <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span> FAQ Performance Insights</a>
+        </div>
 
-       <div class="dashboard-wrapper">
+        <!-- ACCORDION 2 -->
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+          Operations & CRM <span class="chevron">▼</span>
+        </button>
+        <div class="accordion-panel">
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+          <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+          <span>🏢</span> Entity Master Ledger</a>
+        </div>
+
+        <!-- ACCORDION 3 -->
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+          Financials & Health <span class="chevron">▼</span>
+        </button>
+        <div class="accordion-panel">
+          <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+          <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+          <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+        </div>
+
+        <!-- ACCORDION 4 -->
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)">
+          Communication & Tools <span class="chevron">▼</span>
+        </button>
+        <div class="accordion-panel">
+          <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
+          <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
+          <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
+          <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
+          <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
+          <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
+        </div>
+        <button id="sidebarFallbackLogoutBtn" class="logout-btn" onclick="executeStaffLogout()">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div>
+          <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Long-Form Article Publisher</h1>
+          <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Compose editorial articles, configure headings, and attach custom graphic images features site-wide.</p>
+        </div>
+        <div class="header-actions-wrapper">
+          <div class="header-clock-pill">
+            <span>⏱️</span>
+            <span id="portal-clock">00/00/0000 | 00:00:00</span>
+          </div>
+          <div>
+            <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search execution tickets..." oninput="executeLiveBlogSearchFilter(this.value)">
+          </div>
+        </div>
+      </header>
+
+      <div class="content-container" style="display: grid; grid-template-columns: 1fr; gap: 30px;">
+        <!-- 📝 FORM CARD -->
+        <div class="publisher-card">
+          <form id="masterLongBlogForm">
+            <div class="form-group">
+              <label for="blogTitle">Article Headline Title</label>
+              <input type="text" id="blogTitle" class="input-text" placeholder="e.g., Understanding FMCSA 2026 Fleet Compliance Guideline Audits" required>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+              <div class="form-group">
+                <label for="blogCategory">Topic Classification Vector</label>
+                <select id="blogCategory" class="input-select" required>
+                  <option value="">-- Choose Category --</option>
+                  <option value="Corporate Formations">Corporate Formations</option>
+                  <option value="Compliance Auditing">Compliance Auditing</option>
+                  <option value="Corporate Tax Planning">Corporate Tax Planning</option>
+                  <option value="DOT & Fleet">DOT & Fleet</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="blogImageFile">Feature Cover Graphic Photo (.PNG, .JPG, Max 25MB)</label>
+                <input type="file" id="blogImageFile" class="input-text" accept="image/*">
+                <small id="imgEditNotice" style="display:none; color:var(--text-muted); font-size:0.75rem;">Leave empty to retain existing cover image.</small>
+              </div>
+            </div>
+
+            <!-- 🚀 NEW FIELD: MATRICULATED DROP DOWN SERVICE TARGET ROUTE -->
+            <div class="form-group">
+              <label for="blogServiceSlug">Service Route Target Page Scope</label>
+              <select id="blogServiceSlug" class="input-select" required>
+                <option value="global" selected>🌍 Global (Show inside main blog feed index)</option>
+                <optgroup label="💼 Business Formation Services">
+                  <option value="llc-formation">LLC Formation</option>
+                  <option value="corporations">Corporations (C/S-Corp)</option>
+                  <option value="sole-proprietorship">Sole Proprietorship</option>
+                  <option value="dba-registration">DBA Registration</option>
+                  <option value="nonprofit-organization">Nonprofit Organization</option>
+                  <option value="series-llc">Series LLC</option>
+                </optgroup>
+                <optgroup label="📋 Corporate Compliance">
+                  <option value="annual-reports">Annual Reports</option>
+                  <option value="operating-agreement">Operating Agreement</option>
+                  <option value="registered-agent">Registered Agent</option>
+                  <option value="business-licenses">Business Licenses</option>
+                  <option value="employer-id">Employer ID (EIN)</option>
+                  Entity Dissolution</option>
+                </optgroup>
+                <optgroup label="🏦 Tax Filings & Registrations">
+                  <option value="federal-income-tax">Federal Income Tax</option>
+                  <option value="state-income-tax">State Income Tax</option>
+                  <option value="franchise-tax-filing">Franchise Tax Filing</option>
+                  <option value="sales-tax-registration">Sales Tax Registration</option>
+                  <option value="payroll-tax">Payroll Tax (940/941)</option>
+                  <option value="heavy-use-tax">Heavy Use Tax (2290)</option>
+                </optgroup>
+                <optgroup label="🚛 Trucking & Logistics Authority">
+                  <option value="owner-operators">Owner Operators</option>
+                  <option value="trucker-authority">Trucker Authority</option>
+                  <option value="broker-authority">Broker Authority</option>
+                  <option value="ucr-registration">UCR Registration</option>
+                  <option value="dot-consortium">DOT Consortium</option>
+                  <option value="driver-qualification-file">Driver Qualification File</option>
+                  <option value="process-agent">Process Agent (BOC-3)</option>
+                  <option value="ifta-registration">IFTA Registration</option>
+                  <option value="new-entrant-audit">New Entrant Audit</option>
+                </optgroup>
+                <optgroup label="🛡️ Insurance & Risk Management">
+                  <option value="insurance-risk">Insurance & Risk (General)</option>
+                  <option value="trucker-insurance">Trucker Insurance</option>
+                  <option value="broker-insurance">Broker Insurance</option>
+                </optgroup>
+              </select>
+            </div>
+
+         <div class="form-group" style="margin-bottom: 16px;">
+  <label for="blogSummary" style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; margin-bottom: 6px;">Brief Card Summary Excerpt (Shows on search grid rows)</label>
+  <!-- 🚀 ADDED: Max length restriction with dynamic input checking listener -->
+  <input type="text" id="blogSummary" class="input-text" placeholder="Type a concise 1-sentence overview snippet summary hook here..." style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; box-sizing:border-box;" maxlength="160" oninput="evaluateSummaryCharacterCount(this)" required>
+  
+  <!-- ⚠️ Dynamic Character Counter Warning Pill Placement Zone -->
+  <div id="blog-summary-warn-pill" style="font-size: 0.72rem !important; font-weight: 700 !important; margin-top: 5px !important; color: #64748b !important; text-align: right !important; display: block !important;">
+    <span id="blog-summary-current-count">0</span> / 160 characters max
+  </div>
+</div>
+
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="blogContent" style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; margin-bottom: 6px;">Long-Form Article Editorial Body Content (Supports spacing paragraphs breaks)</label>
+          <textarea id="blogContent" class="input-textarea" rows="8" placeholder="Compose your deep informative legal columns text content fields here..." style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; box-sizing:border-box; font-family:inherit;" required></textarea>
+        </div>
+
+        <div id="publishFeedbackMsg" style="font-size:0.85rem; font-weight:700; margin-top:10px;"></div>
         
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-            <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
-            </nav>
-             <div class="sidebar-footer-lock">
-                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
-                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
-                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
-                </div>
-                <button id="sidebarFallbackLogoutBtn" class="logout-btn">Exit Admin Session</button>
-            </div>
-        </aside>
-
-
- <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div>
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Long-Form Article Publisher</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Compose editorial articles, configure headings, and attach custom graphic images features site-wide.</p>
-                </div>
-                
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">05/19/2026 | 10:17:15</span>
-                    </div>
-                    <div>
-                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search execution tickets...">
-                    </div>
-                </div>
-            </header>
-
-            <div class="content-container">
-                <div class="publisher-card">
-                    <form id="masterLongBlogForm">
-                        <div class="form-group">
-                            <label for="blogTitle">Article Headline Title</label>
-                            <input type="text" id="blogTitle" class="input-text" placeholder="e.g., Understanding FMCSA 2026 Fleet Compliance Guideline Audits" required>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-                            <div class="form-group">
-                                <label for="blogCategory">Topic Classification Vector</label>
-                                <select id="blogCategory" class="input-select" required>
-                                    <option value="">-- Choose Category --</option>
-                                    <option value="Corporate Formations">Corporate Formations</option>
-                                    <option value="Compliance Auditing">Compliance Auditing</option>
-                                    <option value="Corporate Tax Planning">Corporate Tax Planning</option>
-                                    <option value="DOT & Fleet">DOT & Fleet</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="blogImageFile">Feature Cover Graphic Photo (.PNG, .JPG, Max 25MB)</label>
-                                <input type="file" id="blogImageFile" class="input-text" accept="image/*" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="blogSummary">Brief Card Summary Excerpt (Shows on search grid rows)</label>
-                            <input type="text" id="blogSummary" class="input-text" placeholder="Type a concise 1-sentence overview snippet summary hook here..." required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="blogContent">Long-Form Article Editorial Body Content (Supports spacing paragraphs breaks)</label>
-                            <textarea id="blogContent" class="input-textarea" placeholder="Compose your deep informative legal columns text content fields here..." required></textarea>
-                        </div>
-
-                        <div id="publishFeedbackMsg" class="status-feedback"></div>
-                        
-                        <div style="margin-top: 30px; text-align: right;">
-                            <button type="submit" id="publishSubmitBtn" class="btn-publish">Publish Article Globally 🚀</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </main>
+        <div id="form-action-buttons-wrapper" style="margin-top: 30px; text-align: right;">
+          <button type="submit" id="publishSubmitBtn" style="background: var(--staff-red); color: white; border: none; padding: 12px 24px; font-weight: 700; font-size: 0.85rem; border-radius: 6px; cursor: pointer; transition: background 0.15s;">Publish Article Globally 🚀</button>
+        </div>
+      </form>
     </div>
 
-    <!-- CORE FUNCTIONAL CONTROL MODULE SCRIPTS HANDOFF -->
-    <script src="assets/js/admin-engine.js"></script>
-    <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
+       <!-- 📊 LIVE DATABASE TABLE MIRROR INVENTORY -->
+    <div class="publisher-card" style="background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; box-sizing: border-box; margin-bottom: 40px;">
+      <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin: 0 0 20px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Live Insights Article Catalog</h2>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+          <thead>
+            <tr>
+              <th style="background: #f8fafc; padding: 12px; font-weight: 700; border-bottom: 2px solid var(--border-color); color: var(--text-muted); width: 120px;">Target Slug</th>
+              <th style="background: #f8fafc; padding: 12px; font-weight: 700; border-bottom: 2px solid var(--border-color); color: var(--text-muted); width: 140px;">Category</th>
+              <th style="background: #f8fafc; padding: 12px; font-weight: 700; border-bottom: 2px solid var(--border-color); color: var(--text-muted);">Article Summary Details Matrix</th>
+              <th style="background: #f8fafc; padding: 12px; font-weight: 700; border-bottom: 2px solid var(--border-color); color: var(--text-muted); width: 120px; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="live-blog-rows-target">
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Syncing server records inventory array...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-        // --- DYNAMIC DATA TRANSMISSION HOOK ---
-        document.getElementById('masterLongBlogForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Wait for configuration files to bind the client instance
-            const client = window.supabaseClient;
-            if (!client) {
-                alert("Publish Failed: Core database client engine offline.");
-                return;
-            }
+  </div>
+</main>
+</div>
 
-            const feedbackBox = document.getElementById('publishFeedbackMsg');
-            const submitBtn = document.getElementById('publishSubmitBtn');
-            const imageField = document.getElementById('blogImageFile');
-            
-            submitBtn.disabled = true;
-            feedbackBox.style.color = "var(--text-dark)";
-            feedbackBox.innerText = "Uploading cover photo assets to storage vaults...";
+<!-- CORE FUNCTIONAL CONTROL MODULE SCRIPTS HANDOFF - SECTION 1 -->
+<script>
+  // Global memory tracking pointers for active editing modes
+  let activeEditingPostId = null;
+  let currentPreservedImageUrl = '';
 
-            try {
-                let generatedThumbnailUrl = 'images/blog-fallback.jpg';
+  // ⏱️ REAL-TIME HEADER CLOCK ENGINE
+  function startHeaderPortalClock() {
+    const targetClock = document.getElementById('portal-clock');
+    if (!targetClock) return;
+    setInterval(() => {
+      const now = new Date();
+      const d = String(now.getDate()).padStart(2, '0');
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const y = now.getFullYear();
+      const hrs = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      targetClock.textContent = `${m}/${d}/${y} | ${hrs}:${mins}:${secs}`;
+    }, 1000);
+  }
 
-                // --- UPLOAD COVERS TO STORAGE BUCKET ---
-                if (imageField.files && imageField.files.length > 0) {
-                    const selectedPhoto = imageField.files[0];
-                    const photoPathName = `blog_covers/${Date.now()}_${selectedPhoto.name.replace(/\s+/g, '_')}`;
-                    
-                    const { data: storageData, error: storageErr } = await client.storage
-                        .from('vault_documents')
-                        .upload(photoPathName, selectedPhoto);
+  // --- DYNAMIC DATA FETCH & RE-RENDER LOOPS ---
+  async function loadAdminBlogInventoryGrid() {
+    const targetBody = document.getElementById('live-blog-rows-target');
+    if (!targetBody || !window.supabaseClient) return;
 
-                    if (storageErr) throw storageErr;
+    try {
+      const { data: posts, error } = await window.supabaseClient
+        .from('blog_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-                    const { data: publicUrlData } = client.storage
-                        .from('vault_documents')
-                        .getPublicUrl(photoPathName);
+      if (error) throw error;
 
-                    generatedThumbnailUrl = publicUrlData.publicUrl;
-                }
+      if (!posts || posts.length === 0) {
+        targetBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">No published blog posts discovered. Create one above.</td></tr>`;
+        return;
+      }
 
-                // --- INSERT CONTENT RECORD ---
-                feedbackBox.innerText = "Broadcasting long-form article text to system feeds...";
-                
-                const titleText = document.getElementById('blogTitle').value.trim();
-                const categorySelection = document.getElementById('blogCategory').value;
-                const summaryText = document.getElementById('blogSummary').value.trim();
-                const fullContentBody = document.getElementById('blogContent').value.trim();
+      targetBody.innerHTML = '';
+      posts.forEach(post => {
+        const tableRow = document.createElement('tr');
+        tableRow.innerHTML = `
+          <td style="padding:12px; border-bottom:1px solid var(--border-color); vertical-align: middle;"><span style="background:#edf2f7; color:var(--text-dark); padding:2px 6px; border-radius:4px; font-family:monospace; font-size:0.75rem;">${post.service_slug || 'global'}</span></td>
+          <td style="padding:12px; border-bottom:1px solid var(--border-color); color:var(--text-muted); font-weight:600; vertical-align: middle;">${post.category}</td>
+          <td style="padding:12px; border-bottom:1px solid var(--border-color); vertical-align: middle;">
+            <div class="row-headline-text" style="font-weight:700; color:var(--text-dark); margin-bottom:4px;"></div>
+            <div class="row-summary-text" style="color:var(--text-muted); font-size:0.8rem; line-height:1.4;"></div>
+          </td>
+          <td style="text-align:center; padding:12px; border-bottom:1px solid var(--border-color); white-space:nowrap; vertical-align:middle;">
+            <button class="btn-blog-row-edit" style="background:none; border:none; color:var(--emerald); font-weight:700; font-size:0.75rem; cursor:pointer; margin-right:10px; padding:0;">Edit</button>
+            <button class="btn-blog-row-delete" style="background:none; border:none; color:#ef4444; font-weight:700; font-size:0.75rem; cursor:pointer; padding:0;">Delete</button>
+          </td>
+        `;
 
-                const computedUrlRoutingSlug = titleText.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/(^-|-$)/g, '');
+        // Safe parameter rendering checks to eliminate quote string breakout faults
+        tableRow.querySelector('.row-headline-text').textContent = post.title;
+        tableRow.querySelector('.row-summary-text').textContent = post.summary;
 
-                const { error: dbErr } = await client
-                    .from('blog_posts')
-                    .insert({
-                        title: titleText,
-                        summary: summaryText,
-                        content: fullContentBody,
-                        category: categorySelection,
-                        slug: computedUrlRoutingSlug,
-                        image_url: generatedThumbnailUrl
-                    });
-
-                if (dbErr) throw dbErr;
-
-                feedbackBox.style.color = "var(--emerald)";
-                feedbackBox.innerText = "Success: Long article with images published live to filings4u.com insights page!";
-                document.getElementById('masterLongBlogForm').reset();
-
-            } catch (err) {
-                console.error("Publishing lifecycle fault caught:", err);
-                feedbackBox.style.color = "#e53e3e";
-                feedbackBox.innerText = `Publish failed: ${err.message}`;
-            } finally {
-                submitBtn.disabled = false;
-            }
+        // Bind interactive event hooks directly
+        tableRow.querySelector('.btn-blog-row-edit').addEventListener('click', () => {
+          openBlogEditingSession(post);
         });
 
-        function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
+        tableRow.querySelector('.btn-blog-row-delete').addEventListener('click', () => {
+          dropBlogPostRow(post.id);
+        });
 
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
+        targetBody.appendChild(tableRow);
+      });
+    } catch (err) {
+      console.error("Grid compilation failure:", err);
+      targetBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">Handshake failure syncing live blog data feeds.</td></tr>`;
     }
-}
+  }
+</script>
 
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
+<!-- CORE FUNCTIONAL CONTROL MODULE SCRIPTS HANDOFF - SECTION 2 (PART 1) -->
+<script>
+  /**
+   * 🧼 AUTOMATED STORAGE COVERS CLEANUP ENGINE
+   * Isolates file paths out of full public URLs and clears old image files from storage
+   */
+  async function purgeObsoleteCoverAsset(fullImageUrlString) {
+    if (!fullImageUrlString || fullImageUrlString.includes('blog-fallback.jpg')) return;
+    const client = window.supabaseClient;
+    if (!client) return;
+
+    try {
+      const searchMarker = 'vault_documents/';
+      const markerIndex = fullImageUrlString.indexOf(searchMarker);
+      if (markerIndex === -1) return;
+
+      const extractedStorageFilePath = fullImageUrlString.substring(markerIndex + searchMarker.length);
+      
+      const { error } = await client.storage
+        .from('vault_documents')
+        .remove([extractedStorageFilePath]);
+
+      if (error) throw error;
+      console.log(`🧼 Cleanup complete. Purged asset file: ${extractedStorageFilePath}`);
+    } catch (purgeFault) {
+      console.warn("Storage vacuum cleanup pass skipped or rejected:", purgeFault.message);
+    }
+  }
+
+  // --- FORM MULTI-INTENT SUBMISSION DISPATCHER ---
+  document.getElementById('masterLongBlogForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const client = window.supabaseClient;
+    if (!client) {
+      alert("Database Client Connection Error.");
+      return;
+    }
+
+    const feedbackBox = document.getElementById('publishFeedbackMsg');
+    const submitBtn = document.getElementById('publishSubmitBtn');
+    const imageField = document.getElementById('blogImageFile');
+    const isEditingMode = (activeEditingPostId !== null);
+
+    submitBtn.disabled = true;
+    feedbackBox.style.color = "var(--text-dark)";
+    feedbackBox.innerText = "Processing media asset storage nodes...";
+
+    try {
+      let finalCoverAssetUrl = isEditingMode ? currentPreservedImageUrl : 'images/blog-fallback.jpg';
+
+      if (imageField.files && imageField.files.length > 0) {
+        const selectedFile = imageField.files[0];
+        const uniquePathString = `blog_covers/${Date.now()}_${selectedFile.name.replace(/\s+/g, '_')}`;
+        
+        const { data: uploadData, error: uploadErr } = await client.storage
+          .from('vault_documents')
+          .upload(uniquePathString, selectedFile);
+
+        if (uploadErr) throw uploadErr;
+
+        const { data: resolvedUrlData } = client.storage
+          .from('vault_documents')
+          .getPublicUrl(uniquePathString);
+
+        finalCoverAssetUrl = resolvedUrlData.publicUrl;
+      }
+
+      feedbackBox.innerText = "Broadcasting data matrix records to server lines...";
+      const titleText = document.getElementById('blogTitle').value.trim();
+      const categorySelection = document.getElementById('blogCategory').value;
+      const slugValue = document.getElementById('blogSlug').value;
+      const summaryText = document.getElementById('blogSummary').value.trim();
+      const contentBodyText = document.getElementById('blogContent').value.trim();
+      
+      const derivedUrlRoutingSlug = titleText.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-\$)/g, '');
+
+      const payload = {
+        title: titleText,
+        summary: summaryText,
+        content: contentBodyText,
+        category: categorySelection,
+        service_slug: slugValue,
+        slug: derivedUrlRoutingSlug,
+        image_url: finalCoverAssetUrl
+      };
+
+      let queryResponseError = null;
+
+      if (isEditingMode) {
+        const { error } = await client
+          .from('blog_posts')
+          .update(payload)
+          .eq('id', activeEditingPostId);
+        queryResponseError = error;
+        
+        // 🚀 STORAGE AUTO-PURGE: Discards old, replaced covers from storage vault buckets
+        if (!error && imageField.files && imageField.files.length > 0) {
+          await purgeObsoleteCoverAsset(currentPreservedImageUrl);
+        }
+      } else {
+        const { error } = await client
+          .from('blog_posts')
+          .insert([payload]);
+        queryResponseError = error;
+      }
+
+      if (queryResponseError) throw queryResponseError;
+
+      feedbackBox.style.color = "var(--emerald)";
+      feedbackBox.innerText = isEditingMode 
+        ? "Success: Editorial article entry patches compiled perfectly!" 
+        : "Success: New article broadcast live to filings4u.com insights page!";
+      
+      closeBlogEditingSession();
+      await loadAdminBlogInventoryGrid();
+
+    } catch (err) {
+      console.error("Transaction fault caught:", err);
+      feedbackBox.style.color = "#e53e3e";
+      feedbackBox.innerText = `Operation execution crash: ${err.message}`;
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+<!-- CORE FUNCTIONAL CONTROL MODULE SCRIPTS HANDOFF - SECTION 2 (PART 2) -->
+<script>
+  /**
+   * 📊 INSIGHTS CARD SUMMARY CHARACTER THRESHOLD COUNTER
+   */
+  function evaluateSummaryCharacterCount(inputElement) {
+    const length = inputElement.value.length;
+    const countWrapper = document.getElementById('blog-summary-warn-pill');
+    const countDisplay = document.getElementById('blog-summary-current-count');
+
+    if (!countWrapper || !countDisplay) return;
+    countDisplay.textContent = length;
+
+    if (length >= 140) {
+      countWrapper.style.color = 'var(--staff-red)';
+      countDisplay.textContent = `${length} (Approaching card limit warning)`;
+    } else if (length >= 100) {
+      countWrapper.style.color = '#d97706';
+    } else {
+      countWrapper.style.color = '#64748b';
+    }
+  }
+
+  // --- INITIATE EDIT SESSION RAMP-UPS ---
+  function openBlogEditingSession(postObject) {
+    activeEditingPostId = postObject.id;
+    currentPreservedImageUrl = postObject.image_url;
+
+    document.getElementById('blogTitle').value = postObject.title;
+    document.getElementById('blogCategory').value = postObject.category;
+    document.getElementById('blogSlug').value = postObject.service_slug || 'global';
+    document.getElementById('blogSummary').value = postObject.summary;
+    
+    // 🛠️ FIX: Removed the undefined 'postPostContent' lookup variable that crashed editing loads
+    document.getElementById('blogContent').value = postObject.content;
+
+    // Trigger character tracker check to calibrate length badges immediately
+    evaluateSummaryCharacterCount(document.getElementById('blogSummary'));
+
+    document.getElementById('publisher-form-title').textContent = "Modify Article Record Column Elements";
+    const submitBtn = document.getElementById('publishSubmitBtn');
+    submitBtn.textContent = "Save Changes Live 💾";
+    submitBtn.style.backgroundColor = "var(--emerald)";
+    document.getElementById('file-upload-notice').style.color = "var(--emerald)";
+
+    if (!document.getElementById('btn-cancel-blog-edit')) {
+      const resetBtn = document.createElement('button');
+      resetBtn.id = 'btn-cancel-blog-edit';
+      resetBtn.type = 'button';
+      resetBtn.textContent = 'Discard Modifications';
+      resetBtn.style.cssText = 'background:#64748b; color:white; border:none; padding:12px 24px; font-weight:700; font-size:0.85rem; border-radius:6px; cursor:pointer; margin-right:10px; transition:background 0.15s;';
+      resetBtn.onclick = closeBlogEditingSession;
+      
+      const buttonWrapper = document.getElementById('form-action-buttons-wrapper') || submitBtn.parentNode;
+      buttonWrapper.insertBefore(resetBtn, submitBtn);
+    }
+    
+    document.getElementById('blogTitle').focus();
+  }
+
+  function closeBlogEditingSession() {
+    activeEditingPostId = null;
+    currentPreservedImageUrl = '';
+
+    document.getElementById('masterLongBlogForm').reset();
+
+    // 🚀 INDICATOR RESET: Wipes summary counter badges cleanly on form clears
+    const counterLabel = document.getElementById('blog-summary-current-count');
+    if (counterLabel) counterLabel.textContent = '0';
+    const warningPill = document.getElementById('blog-summary-warn-pill');
+    if (warningPill) warningPill.style.color = '#64748b';
+
+    document.getElementById('publisher-form-title').textContent = "Draft New Article";
+    const submitBtn = document.getElementById('publishSubmitBtn');
+    submitBtn.textContent = "Publish Article Globally 🚀";
+    submitBtn.style.backgroundColor = "var(--staff-red)";
+    document.getElementById('file-upload-notice').style.color = "var(--text-muted)";
+
+    const cancelBtn = document.getElementById('btn-cancel-blog-edit');
+    if (cancelBtn) cancelBtn.remove();
+  }
+
+  // --- DELETE MATRIX ACTION HANDLERS ---
+  async function dropBlogPostRow(id) {
+    if (!confirm("Are you absolutely sure you want to drop this long-form article entry? This action completely destroys public reader paths!")) return;
+    if (!window.supabaseClient) return;
+
+    try {
+      // Pull article object variables first to identify the image URL path before row deletion
+      const { data: currentRecord } = await window.supabaseClient
+        .from('blog_posts')
+        .select('image_url')
+        .eq('id', id)
+        .single();
+
+      const { error } = await window.supabaseClient
+        .from('blog_posts')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // 🚀 CLEANUP INTEGRATION: Clean out the associated file image from your bucket vault folders
+      if (currentRecord && currentRecord.image_url) {
+        await purgeObsoleteCoverAsset(currentRecord.image_url);
+      }
+
+      document.getElementById('publishFeedbackMsg').style.color = "var(--emerald)";
+      document.getElementById('publishFeedbackMsg').innerText = "Selected insights row deleted entirely.";
+      
+      closeBlogEditingSession();
+      await loadAdminBlogInventoryGrid();
+    } catch (err) {
+      alert(`Deletion failure: ${err.message}`);
+    }
+  }
+
+  // --- FUZZY FILTER SEARCH LOGIC ---
+  function executeLiveBlogSearchFilter(val) {
+    const cleanQuery = val.toLowerCase().trim();
+    const rows = document.querySelectorAll('#live-blog-rows-target tr');
+
+    rows.forEach(row => {
+      if (row.cells.length < 3) return;
+      const combinedText = row.textContent.toLowerCase();
+
+      if (cleanQuery === "" || combinedText.includes(cleanQuery)) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
     });
-});
-    </script>
-</body>
+  }
+
+  // Polling tracker kicks off initialization loop configurations
+  const startPollerLoop = setInterval(() => {
+    if (window.supabaseClient) {
+      clearInterval(startPollerLoop);
+      startHeaderPortalClock();
+      loadAdminBlogInventoryGrid();
+    }
+  }, 50);
+</script>
+
+
+
 </html>
