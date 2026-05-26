@@ -374,3 +374,37 @@ window.WIZARD_REGISTRY = {
         ]
     }
 }; // Closes window.WIZARD_REGISTRY object matrix securely
+
+/**
+ * 🚀 AUTOMATED WIZARD ROUTING ENGINE
+ * Maps service keys dynamically to clean website page URLs
+ */
+function navigateToServicePage(serviceKey, selectedTier) {
+    // 1. Convert standard registry keys back to your exact filename slugs
+    let pageSlug = serviceKey;
+
+    // Direct mapping patches to match your exact structural filenames
+    if (serviceKey === "employer-identification-number-ein") pageSlug = "employer-identification-number-ein";
+    if (serviceKey === "dissolution") pageSlug = "dissolution";
+    if (serviceKey === "doing-business-as-dba") pageSlug = "doing-business-as-dba";
+    if (serviceKey === "process-agents-boc-3") pageSlug = "process-agents-boc-3";
+    if (serviceKey === "international-fuel-tax-agreement-ifta") pageSlug = "international-fuel-tax-agreement-ifta";
+
+    // 2. Build the exact destination address string with selected tier data attributes appended
+    let destinationUrl = pageSlug + ".html";
+    
+    if (selectedTier) {
+        destinationUrl += "?tier=" + encodeURIComponent(selectedTier);
+    }
+
+    // 3. Dispatch redirect instruction execution immediately
+    console.log("Routing user natively to: " + destinationUrl);
+    window.location.href = destinationUrl;
+}
+
+// Example usage hook for your dynamic buttons or purchase blocks:
+// $(document).on('click', '.checkout-btn', function() {
+//     let activeService = getCurrentServiceKey(); // e.g., "heavy-use-tax-2290"
+//     let chosenTier = $(this).data('tier');       // e.g., "compliance"
+//     navigateToServicePage(activeService, chosenTier);
+// });
