@@ -340,8 +340,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const registry = window.WIZARD_REGISTRY || {};
     const config = registry[activeServiceKey];
     const wrapper = document.getElementById('government-fields-injection-wrapper');
-
+    
     if (!wrapper) return;
+    
     if (!config) {
         wrapper.innerHTML = `<div style="color:red; font-weight:700; text-align:center; padding:40px;">Configuration Error: Service profile map missing.</div>`;
         return;
@@ -353,7 +354,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const titleDisplay = document.getElementById('wizard-title-display');
     if (titleDisplay) titleDisplay.innerText = config.title || '';
 
-    // FIX: Render core fields ONLY. The navigation button remains inside your static HTML file.
+    // FIXED: Cleaned escaped string backslashes to ensure text outputs perfectly
     wrapper.innerHTML = `
         <p id="config-desc-target" style="color:#4a5568; font-size:0.92rem; line-height:1.5; margin-bottom:25px;">${config.description || ''}</p>
         <div style="margin-bottom: 15px;">
@@ -369,7 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <input type="hidden" id="cached_plan_tier" value="${chosenPlanTier}">
     `;
 
-    // Process Extra Dynamic State Registry Fields
+    // Process Extra Dynamic State Registry Fields dynamically out of your matrix map
     const hook = document.getElementById('extra-government-inputs-hook');
     if (config.extraFields && hook) {
         config.extraFields.forEach(field => {
@@ -405,21 +406,65 @@ document.addEventListener("DOMContentLoaded", () => {
             hook.appendChild(block);
         });
     }
-    buildUpsellInterfaceGrid();
+    
+    // Safety verification check: execute only if the builder function is defined
+    if (typeof buildUpsellInterfaceGrid === "function") {
+        buildUpsellInterfaceGrid();
+    }
 });
 
 
 /**
  * ==========================================================================
- * 📁 PART 2: STEP TRANSITIONS & UPSELL INTERFACE COMPILER (ANIMATED UI)
+ * 📁 PART 2: DATA VERIFICATION ENGINE & STEP TRANSITION COUPLING
  * ==========================================================================
  */
 
-// 4. Validate Step 1 Data & Push State Cache
+// Global Master State Validation Directory
+const VALID_US_STATES = [
+    "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", 
+    "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", 
+    "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", 
+    "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", 
+    "new jersey", "new mexico", "new york", "north carolina", "north dakota", "ohio", 
+    "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota", 
+    "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", 
+    "wisconsin", "wyoming",
+    // Common 2-Letter Code Fallbacks
+    "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", 
+    "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", 
+    "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", 
+    "va", "wa", "wv", "wi", "wy"
+];
+
+// Helper validation logic rules
+function isValidEmailAddress(emailStr) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(emailStr);
+}
+
+function isPureNameString(textStr) {
+    const nameRegex = /^[A-Za-z\s\.,'-]+$/;
+    return nameRegex.test(textStr) && textStr.trim().length >= 2;
+}
+
+function isValidZipCode(zipStr) {
+    const zipRegex = /^\d{5}$/;
+    return zipRegex.test(zipStr.trim());
+}
+
+function isValidUSState(stateStr) {
+    let cleanStr = stateStr.trim().toLowerCase().replace(/\./g, '');
+    return VALID_US_STATES.includes(cleanStr);
+}
+
+// 4. Validate Step 1 Data (With Deep Data Type Verification) & Push State Cache
 async function transitionToUpsellStep() {
     const inputs = document.querySelectorAll('#government-fields-injection-wrapper .custom-dynamic-input');
+    let errorMessage = "";
     let invalidElement = null;
 
+    // Reset visual feedback frames
     inputs.forEach(i => {
         i.style.borderColor = '#e2e8f0';
         i.style.boxShadow = 'none';
@@ -428,35 +473,119 @@ async function transitionToUpsellStep() {
     const emailField = document.getElementById('customer_guest_email');
     const compField = document.getElementById('target_company_name');
 
-    if (!emailField || !emailField.value.trim()) invalidElement = emailField;
-    if (!compField || !compField.value.trim()) {
-        if (!invalidElement) invalidElement = compField;
+    // 1. Validate Base Core Email Address
+    if (!emailField || !emailField.value.trim()) {
+        invalidElement = emailField;
+        errorMessage = "Contact email address is required.";
+    } else if (!isValidEmailAddress(emailField.value.trim())) {
+        invalidElement = emailField;
+        errorMessage = "Please enter a valid active email format (e.g., name@company.com).";
     }
 
-    const cachedKeyElement = document.getElementById('cached_service_key');
-    if (cachedKeyElement) {
-        const key = cachedKeyElement.value;
-        const registry = window.WIZARD_REGISTRY || {};
-        const extra = registry[key]?.extraFields || [];
-        extra.forEach(f => {
-            const el = document.getElementById(`custom_${f.id}`);
-            if (el && !el.value.trim()) {
-                if (!invalidElement) invalidElement = el;
+    // 2. Validate Base Core Company Name
+    if (!invalidElement) {
+        if (!compField || !compField.value.trim()) {
+            invalidElement = compField;
+            errorMessage = "Filing company name is required.";
+        } else if (compField.value.trim().length < 3) {
+            invalidElement = compField;
+            errorMessage = "Company name must be at least 3 characters long.";
+        }
+    }
+
+    // 3. Deep Registry Field Specific Verification Loop
+    if (!invalidElement) {
+        const cachedKeyElement = document.getElementById('cached_service_key');
+        if (cachedKeyElement) {
+            const key = cachedKeyElement.value;
+            const registry = window.WIZARD_REGISTRY || {};
+            const extra = registry[key]?.extraFields || [];
+
+            for (let f of extra) {
+                const el = document.getElementById(`custom_${f.id}`);
+                if (!el) continue;
+
+                const val = el.value.trim();
+
+                // Check Blank Rule Thresholds
+                if (!val) {
+                    invalidElement = el;
+                    errorMessage = `The field "${f.label}" is mandatory.`;
+                    break;
+                }
+
+                // Verify by Specific Data Type Context Keys
+                const fieldIdLower = f.id.toLowerCase();
+
+                // A. Specific US State Dictionary Verification Check
+                if (fieldIdLower.includes('state') || fieldIdLower.includes('jurisdiction')) {
+                    if (!isValidUSState(val)) {
+                        invalidElement = el;
+                        errorMessage = `"${f.label}" must be a valid US State name or official 2-letter abbreviation (e.g., Texas or TX).`;
+                        break;
+                    }
+                }
+
+                // B. Numeric Character Restrictions for Names and General Titles
+                else if (fieldIdLower.includes('name') || fieldIdLower.includes('director') || fieldIdLower.includes('officer')) {
+                    if (!isPureNameString(val)) {
+                        invalidElement = el;
+                        errorMessage = `"${f.label}" must contain valid alphabetic letters. Numbers and special characters are not allowed.`;
+                        break;
+                    }
+                }
+
+                // C. Postal Code Structuring
+                if (fieldIdLower.includes('zip') || fieldIdLower.includes('postal')) {
+                    if (!isValidZipCode(val)) {
+                        invalidElement = el;
+                        errorMessage = `"${f.label}" must be exactly 5 numerical digits (e.g., 60601).`;
+                        break;
+                    }
+                }
+
+                // D. Tax ID Parameters (EIN / SSN length validations)
+                if (fieldIdLower.includes('ein') || fieldIdLower.includes('ssn') || fieldIdLower.includes('tax_id')) {
+                    const cleanNums = val.replace(/\D/g, ''); // Strip hyphens/spaces to check clean numbers count
+                    if (fieldIdLower.includes('ein') && cleanNums.length !== 9) {
+                        invalidElement = el;
+                        errorMessage = `"${f.label}" must be exactly 9 numbers long (e.g., 12-3456789).`;
+                        break;
+                    }
+                    if (fieldIdLower.includes('ssn') && cleanNums.length !== 9) {
+                        invalidElement = el;
+                        errorMessage = `"${f.label}" must contain exactly 9 numerical characters.`;
+                        break;
+                    }
+                }
+
+                // E. Vehicle Identification Number (VIN) Verification
+                if (fieldIdLower.includes('vin')) {
+                    if (val.length !== 17) {
+                        invalidElement = el;
+                        errorMessage = `"${f.label}" must be a completely valid 17-digit alphanumeric string. Current length is ${val.length}.`;
+                        break;
+                    }
+                }
             }
-        });
+        }
     }
 
+    // 4. Handle Interrupted Validation States
     if (invalidElement) {
+        alert(errorMessage); // Clear layout warning prompt
         invalidElement.style.borderColor = '#ef4444';
         invalidElement.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
+        invalidElement.focus();
         invalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
 
+    // Capture validated baseline structures safely into running memory strings
     globalCachedUserEmail = emailField.value.trim();
     globalCachedCompanyName = compField.value.trim();
 
-    // Sync State to Session Storages
+    // Sync state properties directly to local browser session scopes
     sessionStorage.setItem('cached_coreBasePrice', coreBasePrice);
     sessionStorage.setItem('cached_chosenServiceTitle', chosenServiceTitle);
     sessionStorage.setItem('cached_selectedUpsellKeys', JSON.stringify(selectedUpsellKeys));
@@ -469,129 +598,16 @@ async function transitionToUpsellStep() {
 
     const step1 = document.getElementById('step-pane-intake');
     const step2 = document.getElementById('step-pane-upsells');
-    if (step1) { step1.style.display = "none"; step1.classList.remove('step-active'); }
-    if (step2) { step2.style.display = "block"; step2.classList.add('step-active'); }
-    
+    if (step1) {
+        step1.style.display = "none";
+        step1.classList.remove('step-active');
+    }
+    if (step2) {
+        step2.style.display = "block";
+        step2.classList.add('step-active');
+    }
     buildUpsellInterfaceGrid();
 }
-
-// 5. Step 2 Checklist Compiler (Card Wrapper Logic with Hover and Fade-In Animation)
-function buildUpsellInterfaceGrid() {
-    const target = document.getElementById('upsell-items-injection-target');
-    const agentForm = document.getElementById('external-agent-form-container');
-    if (!target) return;
-
-    let registry = window.UPSELL_REGISTRY;
-    if (!registry || typeof registry !== 'object' || Object.keys(registry).length === 0) {
-        registry = {
-            "registered-agent": { title: "Registered Agent Service", price: 99.00, desc: "Satisfy state requirements with secure address presence." },
-            "ein-tax-id": { title: "Employer Identification Number (EIN)", price: 75.00, desc: "Obtain official IRS tax ID mapping." },
-            "compliance-lock": { title: "Annual Compliance Shield", price: 125.00, desc: "Automated state report monitoring." }
-        };
-    }
-
-    const storedKeys = sessionStorage.getItem('cached_selectedUpsellKeys');
-    if (storedKeys) {
-        try { selectedUpsellKeys = JSON.parse(storedKeys); } catch(e) {}
-    }
-
-    target.innerHTML = "";
-    
-    // Track card indexes to cascade animation entry timing delays sequentially
-    let itemIndex = 0;
-
-    Object.keys(registry).forEach(key => {
-        const item = registry[key];
-        const isChecked = selectedUpsellKeys.includes(key);
-        const card = document.createElement('div');
-        
-        // Add both style sheets and active cascading delays parameters
-        card.className = `upsell-item-card ${isChecked ? 'selected' : ''} upsell-card-animate`;
-        card.id = `upsell-card-${key}`;
-        card.style.cursor = "pointer";
-        card.style.transition = "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
-        card.style.animationDelay = `${itemIndex * 0.08}s`; // Cascading trigger entry loop
-        
-        card.style.setProperty('display', 'grid', 'important');
-        card.style.setProperty('grid-template-columns', '40px 1fr auto', 'important');
-        card.style.setProperty('align-items', 'start', 'important');
-        card.style.setProperty('gap', '20px', 'important');
-        card.style.setProperty('width', '100%', 'important');
-        card.style.setProperty('box-sizing', 'border-box', 'important');
-        card.style.setProperty('text-align', 'left', 'important');
-        card.style.setProperty('padding', '25px', 'important');
-
-        card.addEventListener('mouseenter', () => {
-            card.style.transform = "translateY(-3px)";
-            card.style.boxShadow = "0 8px 24px rgba(10, 31, 68, 0.08)";
-            if (!card.classList.contains('selected')) {
-                card.style.borderColor = "#cbd5e1";
-            }
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = "translateY(0)";
-            if (card.classList.contains('selected')) {
-                card.style.boxShadow = "0 4px 12px rgba(16,185,129,0.05)";
-            } else {
-                card.style.boxShadow = "none";
-                card.style.borderColor = "#e2e8f0";
-            }
-        });
-
-        card.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: start; min-height: 24px; pointer-events: none;">
-                <input type="checkbox" id="checkbox-${key}" ${isChecked ? 'checked' : ''} style="transform: scale(1.3); pointer-events: none; accent-color: var(--emerald); margin: 0;">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; box-sizing: border-box; pointer-events: none;">
-                <strong style="color: #0a1f44; font-size: 1.15rem; font-weight: 800; line-height: 1.2; margin: 0;">${item.title}</strong>
-                <p style="margin: 0; color: #64748b; font-size: 0.92rem; line-height: 1.5; font-weight: 500; text-align: left; width: 100%;">${item.desc || item.description || ''}</p>
-            </div>
-            <div style="text-align: right; min-height: 24px; display: flex; align-items: start; padding-top: 2px; pointer-events: none;">
-                <span style="color: #0a1f44; font-weight: 800; font-size: 1.15rem; white-space: nowrap;">+$${item.price.toFixed(2)}</span>
-            </div>
-        `;
-
-        card.addEventListener('click', () => {
-            const checkbox = document.getElementById(`checkbox-${key}`);
-            if (!checkbox) return;
-            
-            checkbox.checked = !checkbox.checked;
-            if (checkbox.checked) {
-                if (!selectedUpsellKeys.includes(key)) selectedUpsellKeys.push(key);
-                card.classList.add('selected');
-                card.style.boxShadow = "0 4px 12px rgba(16,185,129,0.05)";
-                card.style.borderColor = "var(--emerald)";
-            } else {
-                selectedUpsellKeys = selectedUpsellKeys.filter(k => k !== key);
-                card.classList.remove('selected');
-                card.style.boxShadow = "none";
-                card.style.borderColor = "#e2e8f0";
-            }
-            sessionStorage.setItem('cached_selectedUpsellKeys', JSON.stringify(selectedUpsellKeys));
-            handleAgentFormVisibility(agentForm);
-        });
-
-        target.appendChild(card);
-        itemIndex++;
-    });
-
-    handleAgentFormVisibility(agentForm);
-}
-
-function handleAgentFormVisibility(agentForm) {
-    if (!agentForm) return;
-    const nameField = document.getElementById('ext_agent_name');
-    if (!selectedUpsellKeys.includes('registered-agent')) {
-        agentForm.style.display = "block";
-        if (nameField) nameField.required = true;
-    } else {
-        agentForm.style.display = "none";
-        if (nameField) nameField.required = false;
-    }
-}
-
-
 
 
 
@@ -602,7 +618,7 @@ function handleAgentFormVisibility(agentForm) {
  * ==========================================================================
  */
 
-// 6. Step 3 Validation & Line-Item Calculations
+// 6. Step 2 Validation & Line-Item Calculations
 function transitionToSummaryStep() {
     if (!selectedUpsellKeys.includes('registered-agent')) {
         let invalidField = null;
@@ -634,9 +650,15 @@ function transitionToSummaryStep() {
 
     const step2 = document.getElementById('step-pane-upsells');
     const step3 = document.getElementById('step-pane-summary');
-    if (step2) { step2.style.display = "none"; step2.classList.remove('step-active'); }
-    if (step3) { step3.style.display = "block"; step3.classList.add('step-active'); }
-
+    
+    if (step2) {
+        step2.style.display = "none";
+        step2.classList.remove('step-active');
+    }
+    if (step3) {
+        step3.style.display = "block";
+        step3.classList.add('step-active');
+    }
     calculateRealTimeSummaryMatrix();
 }
 
@@ -644,9 +666,10 @@ function calculateRealTimeSummaryMatrix() {
     const listTarget = document.getElementById('summary-items-list-target');
     const totalTarget = document.getElementById('summary-total-price-box');
     const docTarget = document.getElementById('dynamic-poa-document-body');
+    
     if (!listTarget) return;
-
     listTarget.innerHTML = "";
+
     let rollingSum = parseFloat(coreBasePrice) || 149.00;
     listTarget.innerHTML += `<div class="summary-item-row"><strong>${chosenServiceTitle}</strong><span>$${rollingSum.toFixed(2)}</span></div>`;
 
@@ -680,20 +703,16 @@ function calculateRealTimeSummaryMatrix() {
     }
 
     if (totalTarget) totalTarget.innerText = `$${rollingSum.toFixed(2)}`;
-    
+
     sessionStorage.setItem('rollingCalculatedSumPrice', rollingSum);
     sessionStorage.setItem('globalCachedUserEmail', globalCachedUserEmail);
     sessionStorage.setItem('globalCachedCompanyName', globalCachedCompanyName);
-    
     sessionStorage.setItem('cached_coreBasePrice', coreBasePrice);
     sessionStorage.setItem('cached_chosenServiceTitle', chosenServiceTitle);
     sessionStorage.setItem('cached_selectedUpsellKeys', JSON.stringify(selectedUpsellKeys));
-    sessionStorage.setItem('cached_globalCachedUserEmail', globalCachedUserEmail);
-    sessionStorage.setItem('cached_globalCachedCompanyName', globalCachedCompanyName);
 
     // ==========================================================================
-    // 📄 SPACED & STRUCTURED LEGAL CONTRACT TEXT TEMPLATE
-    // Broken into scannable paragraphs with double-returns for extreme readability
+    // 📄 FIXED: RE-FORMATTED POWER OF ATTORNEY TEXT TEMPLATE WITH CLEAN SPACE BREAKS
     // ==========================================================================
     const legalContractText = `LIMITED POWER OF ATTORNEY & FILING AUTHORIZATION
 
@@ -704,11 +723,10 @@ Agent is granted full limited authorization and power to act in the name, place,
 Execution Terms:
 • Executed Remotely via Certified Electronic Form Delivery Channel.
 • Account Correspondence Vector: ${globalCachedUserEmail || "[ SPECIFY EMAIL ]"}`;
-    
+
     if (docTarget) docTarget.innerText = legalContractText;
     sessionStorage.setItem('compiledLegalPoaTextString', legalContractText);
 }
-
 
 // 7. Cloud Progress Synchronization Pipeline Engine
 async function saveDraftProgressToCloudEngine(currentStepNumber) {
@@ -726,6 +744,7 @@ async function saveDraftProgressToCloudEngine(currentStepNumber) {
 
         const registry = window.WIZARD_REGISTRY || {};
         const extraFields = (registry[key] && registry[key].extraFields) ? registry[key].extraFields : [];
+
         extraFields.forEach(f => {
             const element = document.getElementById(`custom_${f.id}`);
             if (element) progressPayload[f.id] = element.value;
@@ -747,12 +766,12 @@ async function saveDraftProgressToCloudEngine(currentStepNumber) {
     }
 }
 
-// 8. FINAL AUTHORIZE BUTTON: Packaging exact layout properties for Stripe on order.html
+// 8. FINAL AUTHORIZE BUTTON: Packaging properties for Stripe checkout handoff
 async function executeFinalFunnelOrderPaymentSubmit(e) {
     if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
     }
-    
+
     const signature = document.getElementById('poa_signature_input')?.value.trim();
     const checked = document.getElementById('poa_checkbox')?.checked;
 
@@ -772,19 +791,18 @@ async function executeFinalFunnelOrderPaymentSubmit(e) {
     sessionStorage.setItem('final_poa_accepted', 'true');
 
     // Run background cloud sync safely
-    try { 
-        await saveDraftProgressToCloudEngine(3); 
+    try {
+        await saveDraftProgressToCloudEngine(3);
     } catch(err) {
         console.warn("Cloud synchronization bypassed:", err);
     }
 
-    // Read the active calculated sum directly
+    // Read the active calculated sum directly matching your order layout requirements
     const currentPriceSum = sessionStorage.getItem('rollingCalculatedSumPrice') || '149.00';
     const activePlanTier = document.getElementById('cached_plan_tier')?.value || 'compliance';
 
     // ==========================================================================
-    // 🔒 THE ABSOLUTE DATA HANDOFF FIX FOR ORDER.HTML
-    // Package data into the exact "pendingOrder" JSON object format order.html requires
+    // 🔏 THE ABSOLUTE DATA HANDOFF MATRIX FIX FOR ORDER.HTML
     // ==========================================================================
     const stripePayloadObject = {
         customer_email: globalCachedUserEmail,
@@ -794,17 +812,14 @@ async function executeFinalFunnelOrderPaymentSubmit(e) {
         signature: signature
     };
 
-    // Store directly as an encrypted payload string matching your order file
+    // Store directly as a serialized payload string matching your order architecture
     sessionStorage.setItem('pendingOrder', JSON.stringify(stripePayloadObject));
 
-    // Redirect smoothly to your embedded stripe checkout screen
+    // Redirect smoothly to your embedded secure credit card payment interface
     window.location.href = 'order.html';
 }
 
-
-
 </script>
-
 
 </body>
 </html>
