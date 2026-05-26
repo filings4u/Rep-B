@@ -157,3 +157,95 @@
         }
     }, 200);
 })();
+
+/**
+ * ==========================================================================
+ * ⏱️ GLOBAL AUTOMATED ADMINISTRATIVE 12-HOUR REAL-TIME CLOCK ENGINE
+ * Automatically hooks into any admin header containing a #portal-clock element
+ * ==========================================================================
+ */
+(function initializeGlobalAdminClockMatrix() {
+  "use strict";
+
+  function executeClockSynchronization() {
+    const targetClock = document.getElementById('portal-clock');
+    // If the current page does not have a clock pill header layout element, exit gracefully
+    if (!targetClock) return;
+
+    function renderTime() {
+      const now = new Date();
+      const d = String(now.getDate()).padStart(2, '0');
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const y = now.getFullYear();
+      
+      let rawHours = now.getHours();
+      const ampmMarker = rawHours >= 12 ? 'PM' : 'AM';
+      
+      // Calculate standard meridian time units
+      rawHours = rawHours % 12;
+      rawHours = rawHours ? rawHours : 12; // Formats hour '0' directly to '12'
+      const hrs = String(rawHours).padStart(2, '0');
+      
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      
+      // Output Format Symmetry: MM/DD/YYYY | HH:MM:SS AM/PM
+      targetClock.textContent = `${m}/${d}/${y} | ${hrs}:${mins}:${secs} ${ampmMarker}`;
+    }
+
+    renderTime();
+    setInterval(renderTime, 1000);
+  }
+
+  // Poll safely to guarantee DOM mapping node readiness before processing
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', executeClockSynchronization);
+  } else {
+    executeClockSynchronization();
+  }
+})();
+
+
+/**
+ * ==========================================================================
+ * 🛡️ ISOLATED 15-MINUTE INACTIVITY SECURITY ROUTE GUARD
+ * Monitors admin workspace interaction loops and logs out idle staff profiles
+ * ==========================================================================
+ */
+(function deployStrictInactivityBarrierGate() {
+  "use strict";
+  let inactivityCountdownTimer = null;
+  const INACTIVITY_DURATION_CAP_LIMIT = 15 * 60 * 1000; // 15 Minutes calculation
+
+  async function purgeSessionOnTimeout() {
+    console.warn("Security Alert: Administrative console session idle for 15 minutes.");
+    const client = window.supabaseClient;
+    if (client && client.auth) {
+      try { await client.auth.signOut(); } catch (err) {}
+    }
+    window.location.replace(`${window.location.origin}/admin-login.html`);
+  }
+
+  function reloadInactivityCounter() {
+    if (inactivityCountdownTimer) { clearTimeout(inactivityCountdownTimer); }
+    inactivityCountdownTimer = setTimeout(purgeSessionOnTimeout, INACTIVITY_DURATION_CAP_LIMIT);
+  }
+
+  function registerInteractionTrackers() {
+    const targetPath = window.location.pathname.toLowerCase();
+    // 🚀 SAFETY CHECK: Run the timer ONLY on administrative directory routes
+    if (!targetPath.includes('admin-') && !targetPath.includes('/admin')) return;
+
+    // Track user input arrays to monitor physical attention parameters
+    const physicalEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    physicalEvents.forEach(evt => {
+      document.addEventListener(evt, reloadInactivityCounter, { passive: true });
+    });
+
+    reloadInactivityCounter();
+    console.log("📡 Automated Timeout System: Isolated 15-Minute Activity Guard Active on Admin Spaces.");
+  }
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', registerInteractionTrackers); } 
+  else { registerInteractionTrackers(); }
+})();
