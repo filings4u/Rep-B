@@ -461,7 +461,7 @@ const VALID_US_STATES = [
     "new jersey", "new mexico", "new york", "north carolina", "north dakota", "ohio", 
     "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota", 
     "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", 
-    "wisconsin", "wyoming",
+    "wisconsin", "wyoming", 
     // Common 2-Letter Code Fallbacks
     "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", 
     "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", 
@@ -486,7 +486,8 @@ function isValidZipCode(zipStr) {
 }
 
 function isValidUSState(stateStr) {
-    let cleanStr = stateStr.trim().toLowerCase().replace(/\./g, '');
+    // Strips underscores, spaces, dots, and lowers everything to safely evaluate dynamic selects or textual strings
+    let cleanStr = stateStr.trim().toLowerCase().replace(/[\._]/g, ' ').replace(/\s+/g, ' ').trim();
     return VALID_US_STATES.includes(cleanStr);
 }
 
@@ -536,9 +537,9 @@ async function transitionToUpsellStep() {
             for (let f of extra) {
                 const el = document.getElementById(`custom_${f.id}`);
                 
-                // 🛠️ FIXED: Safety guard check to skip any field not rendered in active HTML structure
+                // Safety guard check to skip any field not rendered in active HTML structure
                 if (!el || el === null) {
-                    continue; 
+                    continue;
                 }
 
                 const val = el.value ? el.value.trim() : "";
@@ -612,8 +613,12 @@ async function transitionToUpsellStep() {
         alert(errorMessage); // Clear layout warning prompt
         invalidElement.style.borderColor = '#ef4444';
         invalidElement.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
-        invalidElement.focus();
-        invalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Ensure inputs are visible and focused safely before forcing navigation halts
+        try {
+            invalidElement.focus();
+            invalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch(e) {}
         return;
     }
 
@@ -634,6 +639,7 @@ async function transitionToUpsellStep() {
 
     const step1 = document.getElementById('step-pane-intake');
     const step2 = document.getElementById('step-pane-upsells');
+    
     if (step1) {
         step1.style.display = "none";
         step1.classList.remove('step-active');
@@ -642,11 +648,14 @@ async function transitionToUpsellStep() {
         step2.style.display = "block";
         step2.classList.add('step-active');
     }
-    buildUpsellInterfaceGrid();
+
+    // Safely trigger grid compiler module logic verification
+    if (typeof buildUpsellInterfaceGrid === "function") {
+        buildUpsellInterfaceGrid();
+    } else {
+        console.error("Critical Execution Fault: buildUpsellInterfaceGrid module logic missing from runtime script context tree.");
+    }
 }
-
-
-
 
 
 /**
