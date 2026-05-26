@@ -365,7 +365,7 @@ window.WIZARD_REGISTRY = {
     "new-entrant-audit": {
         title: "FMCSA New Entrant Safety Audit Preparation",
         description: "Review, organize, and catalog critical compliance logs alongside an expert auditor to satisfy mandatory safety audits within your initial 12-month window.",
-        prices: { starter: 75.00, compliance: 199.00, enterprise: 349.00 },
+        prices: { basic: 75.00, elite: 199.00, enterprise: 349.00 },
         extraFields: [
             { id: "aud_usdot_reference", label: "USDOT Number Under Active Safety Review", type: "text", placeholder: "e.g., 1234567" },
             { id: "aud_eld_system", label: "Current Electronic Logging Device (ELD) Provider", type: "select", options: ["Motive ELD / KeepTruckin Setup", "Samsara Fleet Tracking Hub", "Garmin eLog / Manual Logging Records Log"] },
