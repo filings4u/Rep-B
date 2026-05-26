@@ -1,6 +1,6 @@
 window.WIZARD_REGISTRY = {
     /* ==========================================================================
-       CATEGORY 1: BUSINESS FORMATIONS & STRUCTURES
+       📊 TRACK 01: BUSINESS FORMATION & STRUCTURE MODULES
        ========================================================================== */
     "limited-liability-company": {
         title: "LLC Formation Registration Terminal",
@@ -79,17 +79,17 @@ window.WIZARD_REGISTRY = {
     "series-llc": {
         title: "Series LLC Structured Asset Segmentation Terminal",
         description: "Isolate individual high-risk assets, real estate parcels, or independent truck units into protected master cells under an umbrella structure.",
-        prices: { basic: 199.00, elite: 299.00, enterprise: 549.00 },
+        prices: { starter: 199.00, compliance: 299.00, enterprise: 549.00 },
         extraFields: [
             { id: "series_master_state", label: "Master Structure Formation State", type: "text", placeholder: "e.g., Delaware, Texas, Wyoming, Nevada" },
             { id: "initial_cells_count", label: "Total Number of Protected Sub-Series Cells to Launch", type: "text", placeholder: "e.g., 3 cells" },
             { id: "series_cell_naming_pattern", label: "Intended Sub-Cell Naming Scheme Structure", type: "text", placeholder: "e.g., Master Logistics LLC - Series A, Series B" },
-            { id: "series_purpose", label: "Primary Operations Segmented by Series Cells", type: "textarea", placeholder: "e.g., Series A for Truck Units, Series B for Real Estate Holdings..." }
+            { id: "series_purpose", label: "Primary Operations Segmented by Series Cells", type: "text", placeholder: "e.g., Series A for Truck Units, Series B for Real Estate Holdings" }
         ]
     },
 
     /* ==========================================================================
-       CATEGORY 2: CORPORATE GOVERNANCE & CORE COMPLIANCE
+       📊 TRACK 02: CORPORATE GOVERNANCE & CORE COMPLIANCE MODULES
        ========================================================================== */
     "annual-reports": {
         title: "Mandatory Annual Report Renewal Portal",
@@ -154,8 +154,9 @@ window.WIZARD_REGISTRY = {
         ]
     },
 
-    /* ==========================================================================
-       CATEGORY 3: TAX REGISTRATIONS & FILINGS
+
+     /* ==========================================================================
+       📊 TRACK 03: TAX REGISTRATIONS & FILINGS MODULES
        ========================================================================== */
     "federal-income-tax": {
         title: "Federal Income Tax Corporate Registration",
@@ -225,7 +226,7 @@ window.WIZARD_REGISTRY = {
     },
 
     /* ==========================================================================
-       CATEGORY 4: TRUCKING & LOGISTICS AUTHORITY
+       📊 TRACK 04: TRUCKING & LOGISTICS AUTHORITY MODULES
        ========================================================================== */
     "owner-operators": {
         title: "Owner-Operator Fleet Compliance Link",
@@ -291,7 +292,7 @@ window.WIZARD_REGISTRY = {
     },
 
     /* ==========================================================================
-       CATEGORY 5: FLEET COMPLIANCE & SAFETY
+       📊 TRACK 05: FLEET COMPLIANCE & SAFETY MODULES
        ========================================================================== */
     "dot-consortium": {
         title: "DOT Random Drug & Alcohol Consortium Enrollment",
@@ -365,7 +366,7 @@ window.WIZARD_REGISTRY = {
     "new-entrant-audit": {
         title: "FMCSA New Entrant Safety Audit Preparation",
         description: "Review, organize, and catalog critical compliance logs alongside an expert auditor to satisfy mandatory safety audits within your initial 12-month window.",
-        prices: { basic: 75.00, elite: 199.00, enterprise: 349.00 },
+        prices: { starter: 75.00, compliance: 199.00, enterprise: 349.00 },
         extraFields: [
             { id: "aud_usdot_reference", label: "USDOT Number Under Active Safety Review", type: "text", placeholder: "e.g., 1234567" },
             { id: "aud_eld_system", label: "Current Electronic Logging Device (ELD) Provider", type: "select", options: ["Motive ELD / KeepTruckin Setup", "Samsara Fleet Tracking Hub", "Garmin eLog / Manual Logging Records Log"] },
@@ -373,7 +374,8 @@ window.WIZARD_REGISTRY = {
             { id: "aud_maintenance_records", label: "Are physical vehicle periodic inspections recorded and file-ready?", type: "select", options: ["Yes - Fully documentation compliant under Part 396", "No - We require custom vehicle inspection template forms"] }
         ]
     }
-}; // Closes window.WIZARD_REGISTRY object matrix securely
+}; // 🏁 End of global window.WIZARD_REGISTRY configuration mapping matrix tree
+
 
 /**
  * 🚀 AUTOMATED WIZARD ROUTING ENGINE
