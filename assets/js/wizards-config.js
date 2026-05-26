@@ -79,7 +79,7 @@ window.WIZARD_REGISTRY = {
     "series-llc": {
         title: "Series LLC Structured Asset Segmentation Terminal",
         description: "Isolate individual high-risk assets, real estate parcels, or independent truck units into protected master cells under an umbrella structure.",
-        prices: { starter: 199.00, compliance: 299.00, enterprise: 549.00 },
+        prices: { basic: 199.00, elite: 299.00, enterprise: 549.00 },
         extraFields: [
             { id: "series_master_state", label: "Master Structure Formation State", type: "text", placeholder: "e.g., Delaware, Texas, Wyoming, Nevada" },
             { id: "initial_cells_count", label: "Total Number of Protected Sub-Series Cells to Launch", type: "text", placeholder: "e.g., 3 cells" },
