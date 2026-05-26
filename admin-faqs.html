@@ -489,18 +489,26 @@
       <div id="status-notification-toast" class="status-toast"></div>
 
       <div class="matrix-grid">
-        <!-- 🧱 INPUT LOADER COMPONENT CARD -->
+            <!-- 🧱 INPUT LOADER COMPONENT CARD -->
         <section class="matrix-card">
           <h2 class="card-title">Append Record Row</h2>
           <form id="faq-injection-form" onsubmit="handleFormSubmission(event)">
             <div class="form-group">
               <label class="form-label" for="faq-question">Target Question</label>
-              <input type="text" id="faq-question" class="form-control" placeholder="e.g., What is your turnaround execution window?" required />
+              <!-- 🚀 UI UPGRADE: Max length cap constraint logic added with live input tracking listener -->
+              <input type="text" id="faq-question" class="form-control" placeholder="e.g., What is your turnaround execution window?" maxlength="120" required oninput="evaluateQuestionCharacterThreshold(this)" />
+              
+              <!-- ⚠️ Dynamic Character Counter Warning Pill Placement Zone -->
+              <div id="faq-character-warn-pill" style="font-size: 0.72rem !important; font-weight: 700 !important; margin-top: 5px !important; color: #64748b !important; text-align: right !important; display: block !important;">
+                <span id="faq-current-count">0</span> / 120 characters max
+              </div>
             </div>
+
             <div class="form-group">
               <label class="form-label" for="faq-answer">Target Answer Narrative</label>
               <textarea id="faq-answer" class="form-control" rows="4" placeholder="Enter explicit compliance answer details here..." required></textarea>
             </div>
+
             <div class="form-group">
               <label class="form-label" for="faq-slug">Service Route Target Slug</label>
               <select id="faq-slug" class="form-control" required style="background-color: #fafafa; cursor: pointer;">
@@ -524,7 +532,7 @@
                   <option value="registered-agent">Registered Agent</option>
                   <option value="business-licenses">Business Licenses</option>
                   <option value="employer-id">Employer ID (EIN)</option>
-                  <!-- 🧠 FIXED: Closed standard selection option tag element syntax -->
+                  <!-- 🧠 FIXED: Corrected option value structural wrapper tags cleanly -->
                   Entity Dissolution</option>
                 </optgroup>
 
@@ -559,13 +567,16 @@
                 </optgroup>
               </select>
             </div>
+
             <div class="form-group">
               <label class="form-label" for="faq-order">Display Sequence Order</label>
               <input type="number" id="faq-order" class="form-control" value="1" min="1" required />
             </div>
+
             <button type="submit" class="btn-submit">Push Record Entry</button>
           </form>
         </section>
+
 
         <!-- 📊 ACTIVE ROW INVENTORY MONITOR -->
         <section class="matrix-card">
@@ -634,39 +645,71 @@ async function loadFaqGridInventory() {
       return;
     }
 
-    rowsTarget.innerHTML = '';
-    rows.forEach(row => {
-      const tableRow = document.createElement('tr');
-      
-      // 🧱 1. Render safe structural node skeletons with isolated classes
-      tableRow.innerHTML = `
-        <td style="font-weight:700; color:var(--text-dark); text-align:center;">${row.sort_order}</td>
-        <td><span class="badge-slug">${row.service_slug}</span></td>
-        <td>
-          <div class="faq-target-q" style="font-weight:700; margin-bottom:4px; color:var(--text-dark);"></div>
-          <div class="faq-target-a" style="color:var(--text-muted); font-size:0.8rem; line-height:1.4;"></div>
-        </td>
-        <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
-          <button class="btn-edit" style="background:none; border:none; color:var(--emerald); font-weight:600; font-size:0.75rem; cursor:pointer; padding:0; margin-right:8px;">Edit</button>
-          <button class="btn-delete" style="background:none; border:none; color:#ef4444; font-weight:600; font-size:0.75rem; cursor:pointer; padding:0;">Delete</button>
-        </td>
-      `;
+ rowsTarget.innerHTML = '';
+rows.forEach(row => {
+  const tableRow = document.createElement('tr');
+  
+  tableRow.innerHTML = `
+    <td style="font-weight:700; color:var(--text-dark); text-align:center;">${row.sort_order}</td>
+    <td>
+      <div style="display: flex !important; align-items: center !important; gap: 4px !important;">
+        <span class="badge-slug">${row.service_slug}</span>
+        <button class="btn-copy-slug" title="Copy Slug Layout String" style="background: none !important; border: none !important; cursor: pointer !important; padding: 2px !important; font-size: 0.75rem !important; opacity: 0.6;">📋</button>
+      </div>
+    </td>
+    <td>
+      <div class="faq-target-q" style="font-weight:700; margin-bottom:4px; color:var(--text-dark);"></div>
+      <div class="faq-target-a" style="color:var(--text-muted); font-size:0.8rem; line-height:1.4;"></div>
+    </td>
+    <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
+      <button class="btn-edit" style="background:none; border:none; color:var(--emerald); font-weight:600; font-size:0.75rem; cursor:pointer; padding:0; margin-right:8px;">Edit</button>
+      <button class="btn-delete" style="background:none; border:none; color:#ef4444; font-weight:600; font-size:0.75rem; cursor:pointer; padding:0;">Delete</button>
+    </td>
+  `;
 
-      // 🛡️ 2. Bind raw texts via textContent to block any quote-breaking syntax errors
-      tableRow.querySelector('.faq-target-q').textContent = row.question;
-      tableRow.querySelector('.faq-target-a').textContent = row.answer;
+  // Bind raw text variables to block quote syntax breakout errors
+  tableRow.querySelector('.faq-target-q').textContent = row.question;
+  tableRow.querySelector('.faq-target-a').textContent = row.answer;
 
-      // 🎯 3. Add robust isolated click listeners that hold structural reference parameter sets
-      tableRow.querySelector('.btn-edit').addEventListener('click', () => {
-        openFaqEditingSession(row.id, row.question, row.answer, row.service_slug, row.sort_order);
-      });
+  // 📋 FIXED CLIPBOARD ENGINE: Works across both localhost http and production https domains
+  const copyBtn = tableRow.querySelector('.btn-copy-slug');
+  copyBtn.addEventListener('click', () => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Modern standard pipeline encryption path
+      navigator.clipboard.writeText(row.service_slug).then(() => {
+        copyBtn.textContent = '✅';
+        setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
+      }).catch(err => console.error("Clipboard failure:", err));
+    } else {
+      // Robust structural fallback path for legacy browsers and standard HTTP connections
+      const textNodeTextArea = document.createElement('textarea');
+      textNodeTextArea.value = row.service_slug;
+      textNodeTextArea.style.position = 'fixed'; 
+      document.body.appendChild(textNodeTextArea);
+      textNodeTextArea.select();
+      try {
+        document.execCommand('copy');
+        copyBtn.textContent = '✅';
+        setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
+      } catch (fallbackError) {
+        console.error("Alternative extraction matrix block failed:", fallbackError);
+      }
+      document.body.removeChild(textNodeTextArea);
+    }
+  });
 
-      tableRow.querySelector('.btn-delete').addEventListener('click', () => {
-        dropDatabaseRow(row.id);
-      });
+  // Safe parameters scope mapping listeners
+  tableRow.querySelector('.btn-edit').addEventListener('click', () => {
+    openFaqEditingSession(row.id, row.question, row.answer, row.service_slug, row.sort_order);
+  });
 
-      rowsTarget.appendChild(tableRow);
-    });
+  tableRow.querySelector('.btn-delete').addEventListener('click', () => {
+    dropDatabaseRow(row.id);
+  });
+
+  rowsTarget.appendChild(tableRow);
+});
+
   } catch (err) {
     console.error("Pipeline Sync Failure:", err);
     rowsTarget.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444;">Could not pull data rows from Supabase. Ensure table structure is active.</td></tr>`;
@@ -917,30 +960,42 @@ let activeEditingRowId = null;
 function openFaqEditingSession(id, question, answer, slug, order) {
   activeEditingRowId = id;
 
-  // Sync input form nodes with target row data elements directly
   document.getElementById('faq-question').value = question;
   document.getElementById('faq-answer').value = answer;
   document.getElementById('faq-slug').value = slug;
   document.getElementById('faq-order').value = order;
+  
+  // Force character metric counter to analyze new values
+  evaluateQuestionCharacterThreshold(document.getElementById('faq-question'));
 
-  // Morph submit panel actions smoothly
   const submitBtn = document.querySelector('.btn-submit');
   submitBtn.textContent = 'Save Record Changes';
   submitBtn.style.backgroundColor = 'var(--emerald)';
 
-  // Append a reset controller if one doesn't exist
   if (!document.getElementById('btn-cancel-edit')) {
     const cancelBtn = document.createElement('button');
     cancelBtn.id = 'btn-cancel-edit';
     cancelBtn.type = 'button';
     cancelBtn.textContent = 'Cancel Modifications';
     cancelBtn.style.cssText = 'width:100% !important; background:#64748b !important; color:white !important; border:none !important; padding:10px !important; font-weight:700 !important; font-size:0.85rem !important; border-radius:6px !important; cursor:pointer !important; margin-top:8px !important;';
-    cancelBtn.onclick = closeFaqEditingSession;
+    
+    // 🛡️ SECURITY SEALS: Ask user to confirm cancellation if text length holds content value
+    cancelBtn.onclick = function() {
+      const currentQ = document.getElementById('faq-question').value.trim();
+      const currentA = document.getElementById('faq-answer').value.trim();
+      
+      if (currentQ.length > 5 || currentA.length > 5) {
+        if (!confirm("Are you sure you want to discard unsaved updates? Current changes will be cleared out.")) return;
+      }
+      closeFaqEditingSession();
+    };
+    
     document.getElementById('faq-injection-form').appendChild(cancelBtn);
   }
   
   document.getElementById('faq-question').focus();
 }
+
 
 function closeFaqEditingSession() {
   activeEditingRowId = null;
@@ -958,6 +1013,16 @@ function closeFaqEditingSession() {
     executeLiveMatrixSearchFilter(''); // Resets row visibilities instantly
   }
 
+  // 📊 AUTOMATION: Reset the character counter tracking elements and warning styles cleanly
+  const countDisplay = document.getElementById('faq-current-count');
+  const warnPill = document.getElementById('faq-character-warn-pill');
+  if (countDisplay) {
+    countDisplay.textContent = '0';
+  }
+  if (warnPill) {
+    warnPill.style.color = '#64748b'; // Restores neutral gray color metrics
+  }
+
   // Restore primary submit styles
   const submitBtn = document.querySelector('.btn-submit');
   submitBtn.textContent = 'Push Record Entry';
@@ -966,6 +1031,7 @@ function closeFaqEditingSession() {
   const cancelBtn = document.getElementById('btn-cancel-edit');
   if (cancelBtn) cancelBtn.remove();
 }
+
 
 /**
  * 🔍 LIVE MATRIX TABLE FUZZY KEYWORD FILTER SEARCH
@@ -995,6 +1061,73 @@ function executeLiveMatrixSearchFilter(searchQueryValue) {
   });
 }
 
+/**
+ * 📊 MOBILE VIEWPORT CHARACTER LENGTH THRESHOLD WATCHER
+ * Warns team if questions approach thresholds that layout templates break on
+ */
+function evaluateQuestionCharacterThreshold(inputElementNode) {
+  const currentLength = inputElementNode.value.length;
+  const counterWrapper = document.getElementById('faq-character-warn-pill');
+  const numericDisplay = document.getElementById('faq-current-count');
+  
+  if (!counterWrapper || !numericDisplay) return;
+
+  // Realtime numerical node synchronization
+  numericDisplay.textContent = currentLength;
+
+  // Critical design constraint state alterations
+  if (currentLength >= 100) {
+    // Flash structural red warnings when crossing critical line wrapping breaks
+    counterWrapper.style.color = 'var(--staff-red)';
+    numericDisplay.textContent = `${currentLength} (Nearing length cap warning)`;
+  } else if (currentLength >= 75) {
+    // Warning yellow transitions
+    counterWrapper.style.color = '#d97706'; 
+  } else {
+    // Normal neutral grey operational state parameters
+    counterWrapper.style.color = '#64748b';
+  }
+}
+
+/**
+ * 💾 SYSTEM AUTO-SAVE PERSISTENCE STORAGE CONTROLLER
+ * Saves form input blocks in real time so unexpected refreshes do not delete workflows
+ */
+function bindLiveFormCachePersistence() {
+  const qField = document.getElementById('faq-question');
+  const aField = document.getElementById('faq-answer');
+
+  if (!qField || !aField) return;
+
+  // 1. Recover content fragments out of browser storage arrays on document layout loads
+  if (!activeEditingRowId) {
+    if (localStorage.getItem('draft_faq_question')) {
+      qField.value = localStorage.getItem('draft_faq_question');
+      evaluateQuestionCharacterThreshold(qField);
+    }
+    if (localStorage.getItem('draft_faq_answer')) {
+      aField.value = localStorage.getItem('draft_faq_answer');
+    }
+  }
+
+  // 2. Realtime local database synchronization listeners
+  qField.addEventListener('input', () => {
+    if (!activeEditingRowId) localStorage.setItem('draft_faq_question', qField.value);
+  });
+
+  aField.addEventListener('input', () => {
+    if (!activeEditingRowId) localStorage.setItem('draft_faq_answer', aField.value);
+  });
+}
+
+// Wipe cache records cleanly upon explicit form clear configurations
+function clearPersistentDraftData() {
+  localStorage.removeItem('draft_faq_question');
+  localStorage.removeItem('draft_faq_answer');
+}
+
+// 🎯 Hook tracking initialization onto your DOM loading routines
+document.addEventListener('DOMContentLoaded', bindLiveFormCachePersistence);
 
 
 </script>
