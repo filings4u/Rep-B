@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>FAQ Management Matrix | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  
+  <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+    <script src="assets/js/wizard-sync.js"></script>
+    <link rel="stylesheet" href="assets/css/notifications-center.css">
+  
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0f172a;
+      --text-muted: #475569;
+      --emerald: #10b981;
+      --staff-red: #c15254;
+      --sidebar-width: 260px;
+    }
+    body, html {
+      margin: 0 !important; padding: 0 !important;
+      min-height: 100vh !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      background-color: var(--bg-light) !important;
+      color: var(--text-dark) !important;
+      overflow-x: hidden !important; overflow-y: auto !important;
+    }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* 📁 STATIONARY SIDEBAR PANEL */
+    .portal-sidebar {
+      width: var(--sidebar-width) !important; background: var(--white) !important;
+      border-right: 1px solid var(--border-color) !important; display: flex !important;
+      flex-direction: column !important; position: fixed !important;
+      top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important;
+    }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge {
+      display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important;
+      font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important;
+      letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important;
+    }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .nav-item {
+      display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important;
+      color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important;
+      font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; transition: all 0.15s !important;
+    }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+
+    /* 🖥️ MAIN WORKSPACE CONTENT CONTAINER */
+    .workspace-main {
+      margin-left: var(--sidebar-width) !important; flex: 1 !important; padding: 40px !important; box-sizing: border-box !important; min-width: 0 !important;
+    }
+    .workspace-header { margin-bottom: 30px !important; }
+    .workspace-title { font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; margin: 0 0 6px 0 !important; }
+    .workspace-desc { font-size: 0.85rem !important; color: var(--text-muted) !important; margin: 0 !important; }
+
+    /* 🧱 AD-HOC MATRIX COMPONENT LAYOUT CORES */
+    .matrix-grid { display: grid !important; grid-template-columns: 1fr 2fr !important; gap: 30px !important; align-items: start !important; }
+    .matrix-card { background: var(--white) !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; padding: 24px !important; box-sizing: border-box !important; }
+    .card-title { font-size: 1rem !important; font-weight: 700 !important; color: var(--text-dark) !important; margin: 0 0 20px 0 !important; border-bottom: 1px solid var(--border-color) !important; padding-bottom: 10px !important; }
+    
+    /* 📋 UTILITY WORKFLOW FORMS */
+    .form-group { margin-bottom: 16px !important; }
+    .form-label { display: block !important; font-size: 0.75rem !important; font-weight: 700 !important; color: var(--text-dark) !important; text-transform: uppercase !important; margin-bottom: 6px !important; }
+    .form-control {
+      width: 100% !important; padding: 10px 12px !important; font-size: 0.85rem !important; border: 1px solid var(--border-color) !important;
+      border-radius: 6px !important; background: #fafafa !important; box-sizing: border-box !important; color: var(--text-dark) !important;
+    }
+    .form-control:focus { outline: none !important; border-color: var(--emerald) !important; background: var(--white) !important; }
+    .btn-submit {
+      width: 100% !important; background: var(--staff-red) !important; color: var(--white) !important; border: none !important;
+      padding: 12px !important; font-weight: 700 !important; font-size: 0.85rem !important; border-radius: 6px !important; cursor: pointer !important; transition: background 0.2s !important;
+    }
+    .btn-submit:hover { background: #ab4446 !important; }
+
+    /* 📊 APPLIED DATA INTERFACES */
+    .data-table-frame { width: 100% !important; border-collapse: collapse !important; text-align: left !important; font-size: 0.85rem !important; }
+    .data-table-frame th { background: #f8fafc !important; padding: 12px !important; font-weight: 700 !important; border-bottom: 2px solid var(--border-color) !important; color: var(--text-muted) !important; }
+    .data-table-frame td { padding: 12px !important; border-bottom: 1px solid var(--border-color) !important; vertical-align: top !important; }
+    .badge-slug { background: #edf2f7 !important; color: var(--text-dark) !important; padding: 2px 6px !important; border-radius: 4px !important; font-family: monospace !important; font-size: 0.75rem !important; }
+    .btn-delete { background: none !important; border: none !important; color: #ef4444 !important; font-weight: 600 !important; font-size: 0.75rem !important; cursor: pointer !important; padding: 0 !important; }
+    .btn-delete:hover { text-decoration: underline !important; }
+    
+    .status-toast { padding: 12px !important; border-radius: 6px !important; margin-bottom: 15px !important; font-size: 0.8rem !important; display: none; }
+    .status-success { background: rgba(16, 185, 129, 0.1) !important; color: var(--emerald) !important; border: 1px solid rgba(16, 185, 129, 0.2) !important; }
+    .status-error { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; border: 1px solid rgba(239, 68, 68, 0.2) !important; }
+  
+        /* ==========================================================================
+           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important; /* Forces normal native scrolling rules */
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
+            margin-left: var(--sidebar-width) !important; 
+            width: calc(100% - var(--sidebar-width)) !important;
+            min-height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 20px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        /* ⏱️ Input-styled unified date/time pill element */
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            font-size: 0.82rem !important;
+            width: 220px !important;
+            outline: none !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            color: var(--text-dark) !important;
+        }
+
+        .search-input:focus {
+            background: var(--white) !important;
+            border-color: var(--emerald) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        /* CARD CAROUSELS SYSTEM CORES */
+        .stats-row {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+            gap: 20px !important;
+            margin-bottom: 30px !important;
+            width: 100% !important;
+        }
+
+        .stat-card {
+            background: var(--white) !important;
+            padding: 20px !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            box-sizing: border-box !important;
+        }
+
+        .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
+        .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
+
+        .dashboard-grid-layout {
+            display: grid !important;
+            grid-template-columns: 2fr 1fr !important;
+            gap: 24px !important;
+            align-items: start !important;
+            width: 100% !important;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+        }
+
+        .console-card {
+            background: var(--white) !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 24px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            margin-bottom: 24px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+   
+   @media (max-width: 991px) {
+    body, html { overflow-y: auto !important; }
+    .dashboard-wrapper { flex-direction: column !important; }
+    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
+    .portal-main { margin-left: 0 !important; width: 100% !important; }
+    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
+    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
+    .search-input { width: 100% !important; }
+    .content-container { padding: 20px !important; }
+    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+}
+
+  
+  
+  </style>
+</head>
+
+<body>
+
+  <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge">Directorate Admin</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION 1 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
+                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+                </div>
+                <!-- ACCORDION 2 -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
+                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+                    
+                </div>
+                <!-- ACCORDION 3 -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
+                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+                </div>
+                <!-- ACCORDION 4 (NEW ADDITIONS) -->
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
+                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
+                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
+                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
+                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
+                </div>
+            </nav>
+             <div class="sidebar-footer-lock">
+                <div style="display: flex !important; align-items: center !important; gap: 8px !important; margin-bottom: 12px !important;">
+                    <div style="width: 6px !important; height: 6px !important; background: var(--emerald) !important; border-radius: 50% !important; box-shadow: 0 0 6px var(--emerald) !important;"></div>
+                    <span style="font-size: 0.65rem !important; color: var(--emerald) !important; font-weight: 800 !important; text-transform: uppercase !important;">Cloud Synced</span>
+                </div>
+                <button class="logout-btn" onclick="executeStaffLogout()">Logout Terminal</button>
+            </div>
+        </aside>
+
+    <!-- 🖥️ MAIN WORKSPACE CONTENT CONTAINER -->
+    <main class="workspace-main">
+      <header class="workspace-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; flex-wrap: wrap !important; gap: 15px !important;">
+        <div class="welcome-text">
+          <h1 class="workspace-title">Dynamic FAQ Matrix Panel</h1>
+          <p class="workspace-desc">Inject, edit, or eliminate targeted question-answer rows served directly by the Supabase operational tier.</p>
+        </div>
+
+        <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX (Aligns Bell, Clock, and Search side-by-side) -->
+        <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 12px !important;">
+          <!-- 🧱 STRUCTURAL NAVIGATION BELL CONTAINER -->
+          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; box-sizing: border-box !important;">
+            <!-- DYNAMIC NAVIGATION BELL BADGE EMBED -->
+            <a href="notifications.html" class="nav-bell-wrapper" aria-label="View Central Notifications Channel" style="text-decoration: none !important; position: relative !important;">
+              <span class="nav-bell-icon" style="font-size: 1.3rem !important;">🔔</span>
+              <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -5px !important; right: -5px !important; background: var(--staff-red) !important; color: white !important; font-size: 0.65rem !important; padding: 2px 6px !important; border-radius: 10px !important; font-weight: bold !important;">0</div>
+            </a>
+          </div>
+
+          <!-- LIVE SYSTEM CLOCK COMPONENT PILL -->
+          <div class="header-clock-pill" style="background: var(--white) !important; border: 1px solid var(--border-color) !important; padding: 8px 12px !important; border-radius: 6px !important; font-size: 0.8rem !important; font-weight: 600 !important; display: flex !important; align-items: center !important; gap: 6px !important;">
+            <span>⏱️</span>
+            <span id="portal-clock">00/00/0000 | 00:00:00</span>
+          </div>
+
+          <!-- DYNAMIC GLOBAL SEARCH FIELD -->
+          <div>
+            <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices..." style="padding: 9px 12px !important; font-size: 0.85rem !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; width: 220px !important; box-sizing: border-box !important; background: var(--white) !important; color: var(--text-dark) !important;" oninput="executeLiveMatrixSearchFilter(this.value)">
+          </div>
+        </div>
+      </header>
+
+      <!-- Feedback Banner Area -->
+      <div id="status-notification-toast" class="status-toast"></div>
+
+      <div class="matrix-grid">
+        <!-- 🧱 INPUT LOADER COMPONENT CARD -->
+        <section class="matrix-card">
+          <h2 class="card-title">Append Record Row</h2>
+          <form id="faq-injection-form" onsubmit="handleFormSubmission(event)">
+            <div class="form-group">
+              <label class="form-label" for="faq-question">Target Question</label>
+              <input type="text" id="faq-question" class="form-control" placeholder="e.g., What is your turnaround execution window?" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="faq-answer">Target Answer Narrative</label>
+              <textarea id="faq-answer" class="form-control" rows="4" placeholder="Enter explicit compliance answer details here..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="faq-slug">Service Route Target Slug</label>
+              <select id="faq-slug" class="form-control" required style="background-color: #fafafa; cursor: pointer;">
+                <!-- Global Category -->
+                <option value="global" selected>🌍 Global (Show on all pages)</option>
+                
+                <!-- Business Structure Formations -->
+                <optgroup label="💼 Business Formation Services">
+                  <option value="llc-formation">LLC Formation</option>
+                  <option value="corporations">Corporations (C/S-Corp)</option>
+                  <option value="sole-proprietorship">Sole Proprietorship</option>
+                  <option value="dba-registration">DBA Registration</option>
+                  <option value="nonprofit-organization">Nonprofit Organization</option>
+                  <option value="series-llc">Series LLC</option>
+                </optgroup>
+
+                <!-- Corporate Compliance & Essentials -->
+                <optgroup label="📋 Corporate Compliance">
+                  <option value="annual-reports">Annual Reports</option>
+                  <option value="operating-agreement">Operating Agreement</option>
+                  <option value="registered-agent">Registered Agent</option>
+                  <option value="business-licenses">Business Licenses</option>
+                  <option value="employer-id">Employer ID (EIN)</option>
+                  <!-- 🧠 FIXED: Closed standard selection option tag element syntax -->
+                  Entity Dissolution</option>
+                </optgroup>
+
+                <!-- Tax Registrations & Filings -->
+                <optgroup label="🏦 Tax Filings & Registrations">
+                  <option value="federal-income-tax">Federal Income Tax</option>
+                  <option value="state-income-tax">State Income Tax</option>
+                  <option value="franchise-tax-filing">Franchise Tax Filing</option>
+                  <option value="sales-tax-registration">Sales Tax Registration</option>
+                  <option value="payroll-tax">Payroll Tax (940/941)</option>
+                  <option value="heavy-use-tax">Heavy Use Tax (2290)</option>
+                </optgroup>
+
+                <!-- Logistics, Trucking & Authority -->
+                <optgroup label="🚛 Trucking & Logistics Authority">
+                  <option value="owner-operators">Owner Operators</option>
+                  <option value="trucker-authority">Trucker Authority</option>
+                  <option value="broker-authority">Broker Authority</option>
+                  <option value="ucr-registration">UCR Registration</option>
+                  <option value="dot-consortium">DOT Consortium</option>
+                  <option value="driver-qualification-file">Driver Qualification File</option>
+                  <option value="process-agent">Process Agent (BOC-3)</option>
+                  <option value="ifta-registration">IFTA Registration</option>
+                  <option value="new-entrant-audit">New Entrant Audit</option>
+                </optgroup>
+
+                <!-- Freight Insurance & Risk Management -->
+                <optgroup label="🛡️ Insurance & Risk Management">
+                  <option value="insurance-risk">Insurance & Risk (General)</option>
+                  <option value="trucker-insurance">Trucker Insurance</option>
+                  <option value="broker-insurance">Broker Insurance</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="faq-order">Display Sequence Order</label>
+              <input type="number" id="faq-order" class="form-control" value="1" min="1" required />
+            </div>
+            <button type="submit" class="btn-submit">Push Record Entry</button>
+          </form>
+        </section>
+
+        <!-- 📊 ACTIVE ROW INVENTORY MONITOR -->
+        <section class="matrix-card">
+          <h2 class="card-title">Live Row Database Mirror</h2>
+          <div style="overflow-x: auto;">
+            <table class="data-table-frame">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Seq Ord</th>
+                  <th style="width: 120px;">Scope Slug</th>
+                  <th>Record Entry Matrix Block</th>
+                  <th style="width: 110px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="live-faq-rows-target">
+                <tr>
+                  <td colspan="4" style="text-align: center; color: var(--text-muted);">Syncing live cloud row pipelines...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ⚙️ BACKEND DATA CONTROLLERS EXECUTION DESK -->
+  <script>
+    let dbClient = null;
+    const toast = document.getElementById('status-notification-toast');
+    const rowsTarget = document.getElementById('live-faq-rows-target');
+
+    function notify(message, isSuccess = true) {
+      toast.textContent = message;
+      toast.className = `status-toast ${isSuccess ? 'status-success' : 'status-error'}`;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 5000);
+    }
+
+    // Connect Engine Infrastructure to your unified global systems instance
+    function verifyDatabaseConnection() {
+      if (window.supabaseClient) {
+        dbClient = window.supabaseClient;
+        return true;
+      }
+      return false;
+    }
+
+    // Retrieve active faq records from server instances
+// Retrieve active faq records from server instances
+async function loadFaqGridInventory() {
+  if (!dbClient && !verifyDatabaseConnection()) return;
+  
+  try {
+    const { data: rows, error } = await dbClient
+      .from('faq_items')
+      .select('*')
+      .order('service_slug', { ascending: true })
+      .order('sort_order', { ascending: true });
+
+    if (error) throw error;
+
+    if (!rows || rows.length === 0) {
+      rowsTarget.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px 10px;">No operational FAQs found in table. Formulate one to deploy.</td></tr>`;
+      return;
+    }
+
+    rowsTarget.innerHTML = '';
+    rows.forEach(row => {
+      const tableRow = document.createElement('tr');
+      
+      // 🧱 1. Render safe structural node skeletons with isolated classes
+      tableRow.innerHTML = `
+        <td style="font-weight:700; color:var(--text-dark); text-align:center;">${row.sort_order}</td>
+        <td><span class="badge-slug">${row.service_slug}</span></td>
+        <td>
+          <div class="faq-target-q" style="font-weight:700; margin-bottom:4px; color:var(--text-dark);"></div>
+          <div class="faq-target-a" style="color:var(--text-muted); font-size:0.8rem; line-height:1.4;"></div>
+        </td>
+        <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
+          <button class="btn-edit" style="background:none; border:none; color:var(--emerald); font-weight:600; font-size:0.75rem; cursor:pointer; padding:0; margin-right:8px;">Edit</button>
+          <button class="btn-delete" style="background:none; border:none; color:#ef4444; font-weight:600; font-size:0.75rem; cursor:pointer; padding:0;">Delete</button>
+        </td>
+      `;
+
+      // 🛡️ 2. Bind raw texts via textContent to block any quote-breaking syntax errors
+      tableRow.querySelector('.faq-target-q').textContent = row.question;
+      tableRow.querySelector('.faq-target-a').textContent = row.answer;
+
+      // 🎯 3. Add robust isolated click listeners that hold structural reference parameter sets
+      tableRow.querySelector('.btn-edit').addEventListener('click', () => {
+        openFaqEditingSession(row.id, row.question, row.answer, row.service_slug, row.sort_order);
+      });
+
+      tableRow.querySelector('.btn-delete').addEventListener('click', () => {
+        dropDatabaseRow(row.id);
+      });
+
+      rowsTarget.appendChild(tableRow);
+    });
+  } catch (err) {
+    console.error("Pipeline Sync Failure:", err);
+    rowsTarget.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444;">Could not pull data rows from Supabase. Ensure table structure is active.</td></tr>`;
+  }
+}
+
+
+    // Insert statement action handler routines
+ async function handleFormSubmission(event) {
+  event.preventDefault();
+  if (!dbClient && !verifyDatabaseConnection()) return;
+
+  const submitBtn = event.target.querySelector('.btn-submit');
+  const isEditingMode = (activeEditingRowId !== null);
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = isEditingMode ? 'Updating Storage Layer...' : 'Pushing Data Row...';
+
+  const payload = {
+    question: document.getElementById('faq-question').value.trim(),
+    answer: document.getElementById('faq-answer').value.trim(),
+    service_slug: document.getElementById('faq-slug').value,
+    sort_order: parseInt(document.getElementById('faq-order').value, 10) || 1
+  };
+
+  try {
+    let queryResponseError = null;
+
+    if (isEditingMode) {
+      // Execute explicit structural patch routine updates
+      const { error } = await dbClient
+        .from('faq_items')
+        .update(payload)
+        .eq('id', activeEditingRowId);
+        
+      queryResponseError = error;
+    } else {
+      // Run normal raw entry injection blocks
+      const { error } = await dbClient
+        .from('faq_items')
+        .insert([payload]);
+        
+      queryResponseError = error;
+    }
+
+    if (queryResponseError) throw queryResponseError;
+
+    notify(isEditingMode ? "FAQ updated completely." : "FAQ record injected perfectly into active cloud state variables.");
+    
+    // Drop edit lock constraints and clear inputs out
+    closeFaqEditingSession();
+    
+    // Refresh display layout states
+    await loadFaqGridInventory();
+  } catch (err) {
+    notify(`Form execution error rejection: ${err.message || err}`, false);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = activeEditingRowId ? 'Save Record Changes' : 'Push Record Entry';
+  }
+}
+
+    // Clear record arrays row handler engine block
+    async function dropDatabaseRow(id) {
+      if (!confirm("Are you absolutely sure you want to drop this FAQ row variant item?")) return;
+      if (!dbClient && !verifyDatabaseConnection()) return;
+
+      try {
+        const { error } = await dbClient
+          .from('faq_items')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+
+        notify("Selected table array data row deleted entirely.");
+        await loadFaqGridInventory();
+      } catch (err) {
+        notify(`Deletion failure routine: ${err.message || err}`, false);
+      }
+    }
+
+    // Polling sync loop ensures layout renders after the unified security check passes
+    const syncInterval = setInterval(() => {
+      if (verifyDatabaseConnection()) {
+        clearInterval(syncInterval);
+        loadFaqGridInventory();
+      }
+    }, 20);
+
+  (function() {
+      // FIXED: Swapped out placeholder domain string with your actual live project database URL
+      const supabaseUrl = 'https://lrbimrlbskjweynxlgas.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
+      
+      // Target global library context object natively generated by standard UMD bundles
+      if (typeof supabase !== 'undefined' && !window.supabase) {
+        window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+        console.log("🔥 Supabase central system connection mapping initialized successfully.");
+      } else if (typeof window.supabaseJs !== 'undefined' && !window.supabase) {
+        window.supabase = window.supabaseJs.createClient(supabaseUrl, supabaseAnonKey);
+        console.log("🔥 Supabase central system connection mapping initialized via fallback namespace.");
+      }
+    })();
+  </script>
+
+  <!-- 3. CENTRAL BUSINESS LOGIC ENGINE DISPATCHER -->
+  <script src="assets/js/admin-engine.js?v=refresh_fixed_ledger"></script>
+
+  <!-- 4. INTERACTIVE ACCORDION & REAL-TIME ALERTS ENGINE -->
+  <script>
+  /**
+   * 📁 SIDEBAR ACCORDION COLLAPSIBLE NAVIGATION HANDLERS
+   */
+  function toggleSidebarAccordion(buttonElement) {
+    buttonElement.classList.toggle('active');
+    const panel = buttonElement.nextElementSibling;
+    if (panel && panel.style) {
+      if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+        panel.style.maxHeight = "0px";
+      } else {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+      }
+    }
+  }
+
+  /**
+   * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
+   */
+  function toggleMobileSidebarMenuOverlay() {
+    if (window.innerWidth > 992) return;
+    const sidebar = document.querySelector(".portal-sidebar");
+    const icon = document.getElementById("mobileNavTriggerIcon");
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("mobile-revealed");
+    if (sidebar.classList.contains("mobile-revealed")) {
+      if (icon) icon.textContent = "✕";
+    } else {
+      if (icon) icon.textContent = "☰";
+    }
+  }
+
+  /**
+   * 🧱 UNIFIED DOM LIFECYCLE CONTROLLER
+   * Ensures form fields physically exist in browser memory before attaching event listeners
+   */
+  document.addEventListener("DOMContentLoaded", () => {
+    const alertForm = document.getElementById('adminAlertForm');
+    const navLinks = document.querySelectorAll(".nav-item");
+
+    // 1. ATTACH THE REAL-TIME ALERT BROADCASTER PIPELINE SAFELY
+    if (alertForm) {
+      alertForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const client = window.supabase;
+        const statusBox = document.getElementById('alertStatus');
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const chosenUserEmail = document.getElementById('adminClientDropdown').value;
+        const noticeTitle = document.getElementById('alertTitle').value.trim();
+        const noticeMessage = document.getElementById('alertMessage').value.trim();
+
+        if (!statusBox || !submitBtn) return;
+
+        if (!chosenUserEmail || !noticeTitle || !noticeMessage) {
+          statusBox.style.color = "var(--staff-red, #ef4444)";
+          statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Transmitting Wave Packet...";
+
+        try {
+          if (!client) {
+            throw new Error("Supabase system core driver script missing from window context memory arrays.");
+          }
+
+          const { error } = await client
+            .from('client_notifications')
+            .insert({
+              recipient_email: String(chosenUserEmail).toLowerCase().trim(),
+              title: noticeTitle,
+              message: noticeMessage,
+              is_read: false,
+              created_at: new Date().toISOString()
+            });
+
+          if (error) throw error;
+
+          // Flash message live into the stream monitoring card box on screen
+          const liveCommsBox = document.getElementById("admin-inbox-live-stream-box");
+          if (liveCommsBox) {
+            const currentTime = new Date().toLocaleTimeString();
+            liveCommsBox.innerHTML = `<p style="margin:0 0 8px 0; color:#10b981; line-height:1.4;"><strong>[${currentTime}] Dispatched:</strong> To ${chosenUserEmail} - "${noticeTitle}"</p>` + liveCommsBox.innerHTML;
+          }
+
+          statusBox.style.color = "var(--emerald, #10b981)";
+          statusBox.innerText = "🎉 Notification broadcast locked and delivered directly to customer feed!";
+          alertForm.reset();
+
+        } catch (err) {
+          console.error("Alert broadcast failed:", err.message);
+          statusBox.style.color = "var(--staff-red, #ef4444)";
+          statusBox.innerText = `Dispatch Failed: ${err.message}`;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Push Real-Time Alert →";
+        }
+      });
+    }
+
+    // 2. ATTACH RESPONSIVE CLOSING TRIGGERS TO SIDEBAR LINKS
+    navLinks.forEach(link => {
+      link.addEventListener("click", () => {
+        const sidebar = document.querySelector(".portal-sidebar");
+        if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+          toggleMobileSidebarMenuOverlay();
+        }
+      });
+    });
+  });
+
+  </script>
+
+  <script>
+
+    async function executeStaffLogout() {
+    // Hooks directly into the client initiated by your unified script file
+    const client = window.supabaseClient;
+    if (client && client.auth) {
+      try {
+        await client.auth.signOut();
+      } catch (err) {
+        console.error("Signout error caught:", err);
+      }
+    }
+    window.location.replace(`${window.location.origin}/admin-login.html`);
+  }
+  </script>
+
+  <script>
+
+// Global memory layer variables to track editing matrix state parameters
+let activeEditingRowId = null;
+
+function openFaqEditingSession(id, question, answer, slug, order) {
+  activeEditingRowId = id;
+
+  // Sync input form nodes with target row data elements directly
+  document.getElementById('faq-question').value = question;
+  document.getElementById('faq-answer').value = answer;
+  document.getElementById('faq-slug').value = slug;
+  document.getElementById('faq-order').value = order;
+
+  // Morph submit panel actions smoothly
+  const submitBtn = document.querySelector('.btn-submit');
+  submitBtn.textContent = 'Save Record Changes';
+  submitBtn.style.backgroundColor = 'var(--emerald)';
+
+  // Append a reset controller if one doesn't exist
+  if (!document.getElementById('btn-cancel-edit')) {
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'btn-cancel-edit';
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Cancel Modifications';
+    cancelBtn.style.cssText = 'width:100% !important; background:#64748b !important; color:white !important; border:none !important; padding:10px !important; font-weight:700 !important; font-size:0.85rem !important; border-radius:6px !important; cursor:pointer !important; margin-top:8px !important;';
+    cancelBtn.onclick = closeFaqEditingSession;
+    document.getElementById('faq-injection-form').appendChild(cancelBtn);
+  }
+  
+  document.getElementById('faq-question').focus();
+}
+
+function closeFaqEditingSession() {
+  activeEditingRowId = null;
+  
+  // Flush form matrix inputs cleanly
+  document.getElementById('faq-question').value = '';
+  document.getElementById('faq-answer').value = '';
+  document.getElementById('faq-slug').value = 'global';
+  document.getElementById('faq-order').value = '1';
+
+  // 🚀 AUTOMATION: Clear the search input box on session closing / edit completion
+  const searchBar = document.getElementById('adminGlobalSearchField');
+  if (searchBar) {
+    searchBar.value = '';
+    executeLiveMatrixSearchFilter(''); // Resets row visibilities instantly
+  }
+
+  // Restore primary submit styles
+  const submitBtn = document.querySelector('.btn-submit');
+  submitBtn.textContent = 'Push Record Entry';
+  submitBtn.style.backgroundColor = 'var(--staff-red)';
+
+  const cancelBtn = document.getElementById('btn-cancel-edit');
+  if (cancelBtn) cancelBtn.remove();
+}
+
+/**
+ * 🔍 LIVE MATRIX TABLE FUZZY KEYWORD FILTER SEARCH
+ * Performs localized real-time input evaluations to screen displayed table rows
+ */
+function executeLiveMatrixSearchFilter(searchQueryValue) {
+  const cleanTerm = searchQueryValue.toLowerCase().trim();
+  const tableRows = document.querySelectorAll('#live-faq-rows-target tr');
+
+  tableRows.forEach(row => {
+    // Skip status info or fallback rows missing appropriate data structures
+    if (row.cells.length < 4) return;
+
+    // Isolate textual content zones safely via specific grid indexes
+    const slugScopeText = row.cells[1].textContent.toLowerCase();
+    const entryBlockText = row.cells[2].textContent.toLowerCase();
+
+    // Check if search pattern is present inside any data node zones
+    const matchesQuery = slugScopeText.includes(cleanTerm) || entryBlockText.includes(cleanTerm);
+
+    // Dynamic visibility assignment routines
+    if (cleanTerm === "" || matchesQuery) {
+      row.style.display = "";
+    } else {
+      row.style.display = "none";
+    }
+  });
+}
+
+
+
+</script>
+
+</body>
+</html>
