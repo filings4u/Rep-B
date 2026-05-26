@@ -535,9 +535,13 @@ async function transitionToUpsellStep() {
 
             for (let f of extra) {
                 const el = document.getElementById(`custom_${f.id}`);
-                if (!el) continue;
+                
+                // 🛠️ FIXED: Safety guard check to skip any field not rendered in active HTML structure
+                if (!el || el === null) {
+                    continue; 
+                }
 
-                const val = el.value.trim();
+                const val = el.value ? el.value.trim() : "";
 
                 // Check Blank Rule Thresholds
                 if (!val) {
@@ -568,7 +572,7 @@ async function transitionToUpsellStep() {
                 }
 
                 // C. Postal Code Structuring
-                if (fieldIdLower.includes('zip') || fieldIdLower.includes('postal')) {
+                else if (fieldIdLower.includes('zip') || fieldIdLower.includes('postal')) {
                     if (!isValidZipCode(val)) {
                         invalidElement = el;
                         errorMessage = `"${f.label}" must be exactly 5 numerical digits (e.g., 60601).`;
@@ -577,7 +581,7 @@ async function transitionToUpsellStep() {
                 }
 
                 // D. Tax ID Parameters (EIN / SSN length validations)
-                if (fieldIdLower.includes('ein') || fieldIdLower.includes('ssn') || fieldIdLower.includes('tax_id')) {
+                else if (fieldIdLower.includes('ein') || fieldIdLower.includes('ssn') || fieldIdLower.includes('tax_id')) {
                     const cleanNums = val.replace(/\D/g, ''); // Strip hyphens/spaces to check clean numbers count
                     if (fieldIdLower.includes('ein') && cleanNums.length !== 9) {
                         invalidElement = el;
@@ -592,7 +596,7 @@ async function transitionToUpsellStep() {
                 }
 
                 // E. Vehicle Identification Number (VIN) Verification
-                if (fieldIdLower.includes('vin')) {
+                else if (fieldIdLower.includes('vin')) {
                     if (val.length !== 17) {
                         invalidElement = el;
                         errorMessage = `"${f.label}" must be a completely valid 17-digit alphanumeric string. Current length is ${val.length}.`;
@@ -640,6 +644,7 @@ async function transitionToUpsellStep() {
     }
     buildUpsellInterfaceGrid();
 }
+
 
 
 
