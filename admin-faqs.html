@@ -418,6 +418,7 @@
                     <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
                     <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
                     <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link">FAQ Performance Insights</a>
                 </div>
                 <!-- ACCORDION 2 -->
                 <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
@@ -489,6 +490,7 @@
       <div id="status-notification-toast" class="status-toast"></div>
 
       <div class="matrix-grid">
+        
             <!-- 🧱 INPUT LOADER COMPONENT CARD -->
         <section class="matrix-card">
           <h2 class="card-title">Append Record Row</h2>
@@ -576,7 +578,6 @@
             <button type="submit" class="btn-submit">Push Record Entry</button>
           </form>
         </section>
-
 
         <!-- 📊 ACTIVE ROW INVENTORY MONITOR -->
         <section class="matrix-card">
@@ -1130,7 +1131,47 @@ function clearPersistentDraftData() {
 document.addEventListener('DOMContentLoaded', bindLiveFormCachePersistence);
 
 
+
+/**
+ * 🔗 INCOMING ROUTING OPTIMIZATION BRIDGE TRACKER
+ * Intercepts incoming URL variables to auto-trigger edit mode sessions instantly
+ */
+async function checkIncomingOptimizationRouteParameters() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetId = urlParams.get('optimize_id');
+
+  if (!targetId || !window.supabaseClient) return;
+
+  try {
+    // Query individual record properties straight out of the table frame
+    const { data: faq, error } = await window.supabaseClient
+      .from('faq_items')
+      .select('*')
+      .eq('id', targetId)
+      .single();
+
+    if (error) throw error;
+    if (faq) {
+      // Initiate editing layout functions seamlessly
+      openFaqEditingSession(faq.id, faq.question, faq.answer, faq.service_slug, faq.sort_order);
+    }
+  } catch (err) {
+    console.error("Optimization link parsing failure:", err);
+  }
+}
+
+// Modify your existing connection watcher interval loop to check for deep links:
+const deepLinkSyncInterval = setInterval(() => {
+  if (window.supabaseClient && typeof loadFaqGridInventory === 'function') {
+    clearInterval(deepLinkSyncInterval);
+    // Fires after initialization rows render safely
+    setTimeout(checkIncomingOptimizationRouteParameters, 300);
+  }
+}, 50);
+
 </script>
+
+
 
 </body>
 </html>
