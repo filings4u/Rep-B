@@ -522,15 +522,14 @@
     </div>
 </div>
 
-
 <!-- ========================================================================== 
-🏢 FILINGS4U ITSM SUPPORT CENTER (Part 3: Production Core & Live Agent Sync)
+🏢 FILINGS4U ITSM SUPPORT CENTER (Part 1: Case-Insensitive Synchronization Core)
 =========================================================================== --> 
 <script>
-  // --- MODULE 1: GLOBAL INFRASTRUCTURE REPOSITORIES CONTROLLERS ---
+  // --- MODULE 1: GLOBAL CONTROL REGISTER MANAGERS ---
   const itsmAdminCoreClient = window.supabaseClient || window.supabase;
   let masterItsmTicketsArray = [];
-  let availableSystemAgentsList = []; // Dynamic container for live admin staff dropdowns
+  let availableSystemAgentsList = []; 
   let realtimeSupportStreamChannel = null;
 
   window.streamLiveOperationalLedgers = window.streamLiveOperationalLedgers || function() { return; };
@@ -565,7 +564,7 @@
       }, 50);
   });
 
-  // --- MODULE 3: DYNAMICALLY EXTRACT LIVE ADMIN PROFILES FROM CLOUD ---
+  // --- MODULE 3: EXTRACT REGISTRIES AND LOGS OVER THE AIR ---
   async function fetchLiveAdministrativeAgents(client) {
       try {
           const { data: agents, error } = await client.from('admin_profiles').select('*').order('full_name', { ascending: true });
@@ -573,7 +572,6 @@
           
           availableSystemAgentsList = agents || [];
 
-          // Hydrate the creation modal select element right on the DOM sheet
           const modalSelect = document.getElementById("formAgent");
           if (modalSelect) {
               let dropdownOptions = '<option value="Unassigned" selected>Leave Unassigned 👥</option>';
@@ -585,19 +583,6 @@
       } catch (err) {
           console.warn("Agents extraction fallback handled:", err.message);
       }
-  }
-
-  function openNewTicketCreationModal() {
-      const modal = document.getElementById("newTicketModal");
-      if (modal) modal.style.display = "flex";
-      const fb = document.getElementById("modalFeedbackBox");
-      if (fb) fb.textContent = "";
-  }
-
-  function closeNewTicketCreationModal() {
-      const modal = document.getElementById("newTicketModal");
-      if (modal) modal.style.display = "none";
-      document.getElementById("newTicketForm").reset();
   }
 
   async function synchronizeItsmTicketsPipeline(client) {
@@ -621,21 +606,24 @@
 
 
 
+
+
 <!-- ========================================================================== 
-🏢 FILINGS4U ITSM SUPPORT CENTER (Part 4: UI Production Card Generation Matrix)
+🏢 FILINGS4U ITSM SUPPORT CENTER (Part 2: Case-Insensitive Card Matrix Renderer)
 =========================================================================== --> 
 <script>
-  // --- MODULE 1: DYNAMIC LIGHT DATA GRID CARD COMPILER MATRIX ---
+  // --- MODULE 1: OUTPUT ACTIONABLE TICKETS CHRONOLOGICALLY ---
   function renderItsmIncidentsTimelineGrid(datasetArray) {
       const timeline = document.getElementById("itsmTicketsTimelineContainer");
       if (!timeline) return;
 
-      const criticalCount = datasetArray.filter(t => String(t.priority).toUpperCase() === 'CRITICAL' && String(t.status).toUpperCase() !== 'CLOSED').length;
-      const activeCount = datasetArray.filter(t => String(t.status).toUpperCase() === 'IN PROGRESS' || String(t.status).toUpperCase() === 'NEW').length;
+      // 🧠 SELF-HEALING COUNTERS: Defensively evaluate status case strings to pass all sweeps cleanly
+      const criticalCount = datasetArray.filter(t => String(t.priority).toUpperCase().trim() === 'CRITICAL' && String(t.status).toUpperCase().trim() !== 'CLOSED').length;
+      const activeCount = datasetArray.filter(t => String(t.status).toUpperCase().trim() === 'IN PROGRESS' || String(t.status).toUpperCase().trim() === 'NEW').length;
       
       if (document.getElementById("itsmCountCritical")) document.getElementById("itsmCountCritical").textContent = criticalCount;
       if (document.getElementById("itsmCountActive")) document.getElementById("itsmCountActive").textContent = activeCount;
-      if (document.getElementById("itsmCountTotal")) document.getElementById("itsmCountTotal").textContent = datasetArray.filter(t => String(t.status).toUpperCase() === 'CLOSED' || String(t.status).toUpperCase() === 'RESOLVED').length;
+      if (document.getElementById("itsmCountTotal")) document.getElementById("itsmCountTotal").textContent = datasetArray.filter(t => String(t.status).toUpperCase().trim() === 'CLOSED' || String(t.status).toUpperCase().trim() === 'RESOLVED').length;
 
       if (datasetArray.length === 0) {
           timeline.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-style:italic;">No active technical incidents logged in support queue.</div>`;
@@ -644,9 +632,11 @@
 
       timeline.innerHTML = datasetArray.map(ticket => {
           const dateStr = new Date(ticket.created_at).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'}) + ' ' + new Date(ticket.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-          const pClass = String(ticket.priority).toLowerCase();
+          const pClass = String(ticket.priority).toLowerCase().trim();
+          
+          // Clean up status text checks defensively
+          const cleanStatusText = String(ticket.status || 'New').toUpperCase().trim();
 
-          // 🧠 DYNAMIC AGENT DROP-DOWN GENERATION MATRIX: Builds live database arrays options for every row card container
           let agentOptionsMarkup = `<option value="Unassigned" ${ticket.assigned_agent === 'Unassigned' ? 'selected' : ''}>Unassigned 👥</option>`;
           availableSystemAgentsList.forEach(agent => {
               agentOptionsMarkup += `<option value="${agent.full_name}" ${ticket.assigned_agent === agent.full_name ? 'selected' : ''}>${agent.full_name}</option>`;
@@ -665,13 +655,12 @@
 
                       <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
                           <select class="search-input" onchange="executeItsmPropertyStateChangeMutation('${ticket.id}', 'status', this.value)" style="height:34px; font-weight:700; cursor:pointer; width:180px;">
-                              <option value="New" ${ticket.status === 'New' ? 'selected' : ''}>New 🆕</option>
-                              <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress ⚙️</option>
-                              <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved ✓</option>
-                              <option value="Closed" ${ticket.status === 'Closed' ? 'selected' : ''}>Closed 🔒</option>
+                              <option value="New" ${cleanStatusText === 'NEW' ? 'selected' : ''}>New 🆕</option>
+                              <option value="In Progress" ${cleanStatusText === 'IN PROGRESS' ? 'selected' : ''}>In Progress ⚙️</option>
+                              <option value="Resolved" ${cleanStatusText === 'RESOLVED' ? 'selected' : ''}>Resolved ✓</option>
+                              <option value="Closed" ${cleanStatusText === 'CLOSED' ? 'selected' : ''}>Closed 🔒</option>
                           </select>
                           
-                          <!-- 🎯 PRODUCTION ACCESSIBILITY FIX: Plugs live staff parameters array straight onto card loops menus -->
                           <select class="search-input" onchange="executeItsmPropertyStateChangeMutation('${ticket.id}', 'assigned_agent', this.value)" style="height:34px; font-size:0.75rem; cursor:pointer; width:180px; font-weight:600;">
                               ${agentOptionsMarkup}
                           </select>
@@ -750,6 +739,7 @@
       });
   }
 </script>
+
 
 
 
