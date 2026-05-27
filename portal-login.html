@@ -1,22 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#10b981">
+  <!-- Chrome, Firefox, & Opera Mobile -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> 
+  <!-- Safari iOS Wrapper Engine Tracking -->
+  <meta name="msapplication-navbutton-color" content="#10b981"> 
+  <!-- Windows Phone Interface Target -->
+  <title>Customer Portal | filings4u</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
 
-    <meta name="theme-color" content="#10b981">                         <!-- Chrome, Firefox, & Opera Mobile -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Wrapper Engine Tracking -->
-    <meta name="msapplication-navbutton-color" content="#10b981">         <!-- Windows Phone Interface Target -->
-    <title>Login | filings4u Client Portal</title>
-    
-    <!-- GLOBAL CSS INTERFACE LINK -->
-    <link rel="stylesheet" href="assets/css/portal-global.css">
-    
-    <!-- PRODUCTION CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js" defer></script>
-    <script src="assets/js/portal-login.js" defer></script>
-    <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+  <!-- FIXED: Embedded explicit async/defer loading properties to prevent CORS preflight blocking -->
+  <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <link rel="stylesheet" href="assets/css/portal-custom.css">
+</head>
     
     <style>
         :root {
@@ -396,6 +398,130 @@
             <button class="access-modal-btn" id="closeAccessModalBtn" onclick="document.getElementById('accessDeniedModal').classList.remove('active')">Return to Authentication Terminal</button>
         </div>
     </div>
+
+<!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE - PART 2A -->
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    // 🚀 CRITICAL FIX: Block page refreshes immediately on line 1 to stop the blinking
+    e.preventDefault();
+
+    const client = window.supabaseClient;
+    if (!client) {
+      alert("Authentication Gateway Core Offline. Please reload the portal console.");
+      return;
+    }
+
+    const emailInputNode = document.getElementById('email');
+    const pwdInputNode = document.getElementById('password');
+    const authSubmitButton = document.getElementById('loginBtn');
+    const systemFeedbackBox = document.getElementById('errorMessage');
+
+    // Flush any leftover layout error decorations
+    if (typeof flushInterfaceFieldErrorStates === 'function') {
+      flushInterfaceFieldErrorStates();
+    }
+
+    // Input verification fallback boundaries
+    if (!emailInputNode || !emailInputNode.value.trim()) {
+      if (emailInputNode) { emailInputNode.classList.add('field-error'); emailInputNode.focus(); }
+      return;
+    }
+    if (!pwdInputNode || !pwdInputNode.value) {
+      if (pwdInputNode) { pwdInputNode.classList.add('field-error'); pwdInputNode.focus(); }
+      return;
+    }
+
+    if (authSubmitButton) {
+      authSubmitButton.disabled = true;
+      authSubmitButton.textContent = 'Verifying Security Parameters...';
+    }
+
+    // 🛡️ SECURITY SHIELD LAYER: Falls back gracefully if Turnstile blocks execution
+    let verifiedSecurityToken = null;
+    try {
+      if (typeof turnstile !== 'undefined' && typeof turnstile.getResponse === 'function') {
+        verifiedSecurityToken = turnstile.getResponse();
+        if (!verifiedSecurityToken) {
+          throw new Error("Security verification incomplete. Please interact with the security checkbox.");
+        }
+      }
+    } catch (securityValidationError) {
+      if (systemFeedbackBox) systemFeedbackBox.textContent = securityValidationError.message;
+      if (authSubmitButton) {
+        authSubmitButton.disabled = false;
+        authSubmitButton.textContent = 'Enter Secure Portal →';
+      }
+      return; // Stops execution safely before hitting database layers
+    }
+
+    // Call the database submission processing block passing input objects safely
+    executeSupabaseAuthenticationHandshake(emailInputNode.value.trim(), pwdInputNode.value, authSubmitButton, systemFeedbackBox, client);
+  });
+</script>
+
+
+<!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE - PART 2B -->
+<script>
+  /**
+ * 📡 SECURE SUPABASE ACCESS DISPATCH ENGINE
+ * Handles user database validation and routes profiles safely based on email suffixes
+ */
+async function executeSupabaseAuthenticationHandshake(emailValueStr, passwordValueStr, submitBtn, errBox, supabaseClient) {
+  // 🚀 FIXED: Guarantees it hooks directly into your validated global architecture instance client object
+  const client = supabaseClient || window.supabaseClient;
+  if (!client) {
+    console.error("Critical Connection Failure: Global project client node missing.");
+    if (errBox) errBox.textContent = "Gateway authentication offline. Please reload the console.";
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enter Secure Portal →'; }
+    return;
+  }
+
+  try {
+    const { data, error } = await client.auth.signInWithPassword({
+      email: emailValueStr,
+      password: passwordValueStr
+    });
+
+    if (error) throw error;
+
+    if (!data || !data.user || !data.user.email) {
+      throw new Error("Authentication response schema malformed. Retrying connection parameter sync...");
+    }
+
+    const verifiedUserEmail = data.user.email.toLowerCase().trim();
+    const currentUrlPath = window.location.pathname.toLowerCase();
+    
+    // Compute authorization privileges securely
+    const isCorporateStaffProfile = verifiedUserEmail.endsWith('@filings4u.com') || verifiedUserEmail === 'test-admin@filings4u.com';
+
+    // Execute definitive routing logic
+    if (currentUrlPath.includes('admin') || isCorporateStaffProfile) {
+      window.location.href = 'admin-dashboard.html';
+    } else {
+      window.location.href = 'client-dashboard.html';
+    }
+
+  } catch (authError) {
+    console.error("Authorization access fault caught:", authError.message);
+    
+    // Reactivate interface controls and flash error borders
+    const emailInputNode = document.getElementById('email');
+    const pwdInputNode = document.getElementById('password');
+    
+    if (emailInputNode) emailInputNode.classList.add('field-error');
+    if (pwdInputNode) pwdInputNode.classList.add('field-error');
+    
+    if (errBox) {
+      errBox.textContent = authError.message || "Invalid credential parameters provided.";
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enter Secure Portal →';
+    }
+  }
+}
+
+</script>
 
 </body>
 </html>
