@@ -205,3 +205,61 @@
         registerInteractionTrackers(); 
     } 
 })();
+
+  async function executeAdministrativeStaffSignOut() {
+      // 1. Establish direct link to the active Supabase client instance gate
+      const logoutGateClient = window.supabaseClient || window.supabase;
+      
+      console.log("Initializing secure platform log out sequence tracker...");
+
+      try {
+          // 2. Perform defensive cloud session clearance token check
+          if (logoutGateClient && logoutGateClient.auth) {
+              await logoutGateClient.auth.signOut();
+          }
+      } catch (authErr) {
+          // If the server network link fails, bypass it silently to guarantee frontend ejection
+          console.warn("Server-side session teardown deferred. Proceeding with absolute client-side local cache purge.");
+      } finally {
+          // 3. HARD PURGE: Force wipe all localized storage indices across current browser caches
+          if (typeof window.localStorage !== 'undefined') {
+              window.localStorage.clear();
+          }
+          if (typeof window.sessionStorage !== 'undefined') {
+              window.sessionStorage.clear();
+          }
+
+          // 4. COOKIE PURGE FLASH: Wipe out any platform auth tokens stored in cookies fields
+          document.cookie.split(";").forEach(cookieItem => {
+              const eqPos = cookieItem.indexOf("=");
+              const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
+              document.cookie = cookieName + "=;expires=Thu, 01 Jan 170 blank;path=/;";
+              document.cookie = cookieName + "=;expires=Thu, 01 Jan 170 blank;path=/;domain=" + window.location.hostname + ";";
+          });
+
+          // 5. IMMEDIATE REDIRECT EJECTION GATES
+          console.log("Wipe completed. Transferring profile to verification gate lines.");
+          window.location.replace('admin-login.html');
+      }
+  }
+
+  // --- WIRE UP HTML COMPONENT CLICK TRIGGERS AUTOMATICALLY ---
+  document.addEventListener("DOMContentLoaded", () => {
+      // Auto-binds this secure script engine to any button or link containing a 'logout' keyword property
+      document.querySelectorAll("button, a").forEach(domNode => {
+          const clickAttr = String(domNode.getAttribute("onclick") || "");
+          const hrefAttr = String(domNode.getAttribute("href") || "");
+          const textContent = String(domNode.textContent || "").toLowerCase();
+
+          if (clickAttr.includes("logout") || clickAttr.includes("signOut") || hrefAttr.includes("logout") || textContent.includes("log out") || textContent.includes("logout") || textContent.includes("sign out")) {
+              domNode.removeAttribute("onclick");
+              domNode.setAttribute("href", "javascript:void(0);");
+              domNode.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  executeAdministrativeStaffSignOut();
+              });
+              domNode.style.cursor = "pointer";
+          }
+      });
+  });
