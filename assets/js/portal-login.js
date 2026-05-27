@@ -1,4 +1,4 @@
-// assets/js/portal-login.js
+// assets/js/portal-login.js 
 
 // 🎯 ACCELERATION TRICK: Check local storage tokens instantly before making remote database calls
 const fastTokenCheck = localStorage.getItem("filings4u_secure_session_token");
@@ -22,11 +22,8 @@ async function startCustomerLoginEngine() {
     }
 
     const client = await waitForSupabaseClientEngine();
-    
+
     // Elements mapped directly to your portal-login.html layout IDs
-    const portalLoginForm = document.getElementById('loginForm');
-    const loginSubmitBtn = document.getElementById('loginBtn');
-    const globalErrorMessage = document.getElementById('errorMessage');
     const passwordToggleBtn = document.getElementById('passwordToggleBtn');
 
     async function evaluateCustomerRoute(userEmail) {
@@ -35,7 +32,6 @@ async function startCustomerLoginEngine() {
 
         // Intercept staff members who accidentally use the customer portal
         const isCorporateStaff = cleanedEmail.endsWith('@filings4u.com') || (cleanedEmail === 'test-admin@filings4u.com');
-        
         if (isCorporateStaff) {
             console.warn("Administrative profile detected inside customer landing path. Rerouting...");
             window.location.assign(`${fallbackUrl}/admin-dashboard.html`);
@@ -59,73 +55,22 @@ async function startCustomerLoginEngine() {
     }
 
     try {
-        const { data: { session } } = await client.auth.getSession();
-        
         // Auto-redirect if a valid customer session token already exists
+        const { data: { session } } = await client.auth.getSession();
         if (session && session.user) {
             await evaluateCustomerRoute(session.user.email);
             return;
-        }
-
-        if (portalLoginForm) {
-            portalLoginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const emailInput = document.getElementById('email');
-                const passwordInput = document.getElementById('password');
-                
-                if (!emailInput || !passwordInput) return;
-
-                // Clear previous validation styles
-                emailInput.classList.remove('field-error');
-                passwordInput.classList.remove('field-error');
-                if (globalErrorMessage) globalErrorMessage.innerText = "";
-
-                const email = emailInput.value.trim().toLowerCase();
-                const password = passwordInput.value;
-                let hasFormErrors = false;
-
-                if (!email) {
-                    emailInput.classList.add('field-error');
-                    hasFormErrors = true;
-                }
-                if (!password) {
-                    passwordInput.classList.add('field-error');
-                    hasFormErrors = true;
-                }
-                if (hasFormErrors) return;
-
-                if (loginSubmitBtn) {
-                    loginSubmitBtn.innerText = "Securing Connection...";
-                    loginSubmitBtn.disabled = true;
-                }
-
-                try {
-                    const result = await client.auth.signInWithPassword({ email, password });
-                    if (result.error) throw new Error(result.error.message);
-                    
-                    await evaluateCustomerRoute(result.data.user.email);
-                } catch (err) {
-                    console.warn("Auth exception caught:", err.message);
-                    
-                    emailInput.classList.add('field-error');
-                    passwordInput.classList.add('field-error');
-                    
-                    if (globalErrorMessage) {
-                        globalErrorMessage.innerText = `Login Failed: ${err.message}`;
-                    }
-                    
-                    if (loginSubmitBtn) {
-                        loginSubmitBtn.innerText = "Enter Secure Portal →";
-                        loginSubmitBtn.disabled = false;
-                    }
-                }
-            });
         }
     } catch (err) {
         console.error("Portal System Error:", err.message);
     }
 }
+
+// Ensure DOM structure completes loading safely before running configurations
+document.addEventListener("DOMContentLoaded", () => {
+    startCustomerLoginEngine();
+});
+
 
 // Ensure DOM structure completes loading safely before attaching events
 document.addEventListener("DOMContentLoaded", async () => {

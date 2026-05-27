@@ -5,7 +5,7 @@
 (function bootstrapGlobalSupabaseSystem() {
   "use strict";
   const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bwebm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
 
   // 🚀 FIXED THREAD ENGINE: Checks window space explicitly to guarantee single client mapping instances
   if (window.supabase && typeof window.supabase.createClient === 'function') {
@@ -157,7 +157,7 @@
 
   async function purgeSessionOnTimeout() {
     console.warn("Security Alert: Session idle for 15 minutes.");
-    const client = window.supabaseClient;
+    const client = window.SupabaseClient;
     if (client && client.auth) {
       try { await client.auth.signOut(); } catch (err) {}
     }
