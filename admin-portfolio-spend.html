@@ -414,8 +414,7 @@
         </main>
     </div>
 
-    <!-- CORE CONTROL PIPELINES SCRIPTS -->
-    <script src="assets/js/admin-engine.js"></script>
+    
     <script>
         function toggleSidebarAccordion(buttonElement) {
             buttonElement.classList.toggle('active');
@@ -458,5 +457,145 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
     </script>
+
+    <!-- ========================================================================== 
+🏛️ FILINGS4U FINANCIAL ANALYTICS (Part 1: Dynamic Expenditure Calculators)
+========================================================================== --> 
+<script>
+  // --- 1. ACCESS COMPATIBLE SINGLE INFRASTRUCTURE NETWORK ---
+  const spendAnalyticsCoreClient = window.supabaseClient || window.supabase;
+
+  // --- 2. REGISTRATION RUNTIME ENGINE LIFE-CYCLE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || spendAnalyticsCoreClient;
+          if (!client) return;
+
+          try {
+              // Strict Security Validation Gate Check: Confirm profile belongs to internal staff
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot reload historical revenue data blocks to compute metrics analytics
+              await recalculatePortfolioPlatformSpend(client);
+
+          } catch (err) {
+              console.error("Spend dashboard synchronization exception caught:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. QUANTIFY INVOICES DATASETS AND PARSE CATEGORICAL VALUES ---
+  async function recalculatePortfolioPlatformSpend(client) {
+      try {
+          const { data: billingLogs, error } = await client
+              .from('billing_history')
+              .select('service_title, amount_total, charge_date');
+
+          if (error) throw error;
+
+          // Establish clean analytical categories accumulators
+          let dotFmcsaSum = 0;
+          let secretaryStateSum = 0;
+          let taxFranchiseSum = 0;
+          let registeredAgentSum = 0;
+
+          // Monthly tracking map bucket indices for visualization loops
+          const monthlyVolumeBuckets = { month0: 0, month1: 0, month2: 0, month3: 0 };
+          const timeNow = new Date();
+
+          if (billingLogs && billingLogs.length > 0) {
+              billingLogs.forEach(row => {
+                  const amt = parseFloat(row.amount_total || 0);
+                  const title = String(row.service_title).toUpperCase();
+                  const rowDate = new Date(row.charge_date);
+
+                  // A. Parse string keywords tokens to evaluate expenditures category
+                  if (title.includes('TRUCKER') || title.includes('DOT') || title.includes('AUTHORITY') || title.includes('IFTA')) {
+                      dotFmcsaSum += amt;
+                  } else if (title.includes('FORMATION') || title.includes('LLC') || title.includes('CORPORATION') || title.includes('DBA')) {
+                      secretaryStateSum += amt;
+                  } else if (title.includes('TAX') || title.includes('FRANCHISE') || title.includes('INCOME')) {
+                      taxFranchiseSum += amt;
+                  } else {
+                      registeredAgentSum += amt;
+                  }
+
+                  // B. Distribute data chrolonogically into monthly buckets ranges
+                  const deltaMonths = (timeNow.getFullYear() - rowDate.getFullYear()) * 12 + (timeNow.getMonth() - rowDate.getMonth());
+                  if (deltaMonths === 0) monthlyVolumeBuckets.month3++;
+                  else if (deltaMonths === 1) monthlyVolumeBuckets.month2++;
+                  else if (deltaMonths === 2) monthlyVolumeBuckets.month1++;
+                  else if (deltaMonths === 3) monthlyVolumeBuckets.month0++;
+              });
+          }
+
+          // Force interface adjustments
+          updateSpendMetricListsUI(dotFmcsaSum, secretaryStateSum, taxFranchiseSum, registeredAgentSum);
+          updateTrendVisualizationBarsUI(monthlyVolumeBuckets);
+
+      } catch (err) {
+          console.warn("Analytics engine computation failure:", err.message);
+      }
+  }
+</script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U FINANCIAL ANALYTICS (Part 2: UI Chart Scalers & Updates)
+========================================================================== --> 
+<script>
+  // --- 1. UPDATE SPENDING CATEGORICAL TEXT LABELS ---
+  function updateSpendMetricListsUI(dotSum, stateSum, taxSum, agentSum) {
+      const listContainer = document.querySelector(".metric-list");
+      if (!listContainer) return;
+
+      listContainer.innerHTML = `
+          <li class="metric-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-color); font-size:0.88rem;">
+              <span class="metric-label" style="font-weight:600; color:var(--text-muted);">DOT/FMCSA Compliance</span> 
+              <span class="metric-value" style="font-weight:700; color:var(--text-dark);">$${dotSum.toFixed(2)}</span>
+          </li>
+          <li class="metric-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-color); font-size:0.88rem;">
+              <span class="metric-label" style="font-weight:600; color:var(--text-muted);">Secretary of State Fees</span> 
+              <span class="metric-value" style="font-weight:700; color:var(--text-dark);">$${stateSum.toFixed(2)}</span>
+          </li>
+          <li class="metric-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-color); font-size:0.88rem;">
+              <span class="metric-label" style="font-weight:600; color:var(--text-muted);">Tax &amp; Franchise Filings</span> 
+              <span class="metric-value" style="font-weight:700; color:var(--text-dark);">$${taxSum.toFixed(2)}</span>
+          </li>
+          <li class="metric-item" style="display:flex; justify-content:space-between; padding:10px 0; font-size:0.88rem;">
+              <span class="metric-label" style="font-weight:600; color:var(--text-muted);">Registered Agent Services</span> 
+              <span class="metric-value" style="font-weight:700; color:var(--text-dark);">$${agentSum.toFixed(2)}</span>
+          </li>
+      `;
+  }
+
+  // --- 2. DYNAMICALLY SCALE HTML GRAPH VOLUMETRIC GRAPH HEIGHTS ---
+  function updateTrendVisualizationBarsUI(bucketsObj) {
+      const chartContainer = document.querySelector(".bar-chart");
+      if (!chartContainer) return;
+
+      // Extract highest volumetric threshold value to calculate maximum height proportions
+      const rawVolumesArray = [bucketsObj.month0, bucketsObj.month1, bucketsObj.month2, bucketsObj.month3];
+      const highestPeakVolume = Math.max(...rawVolumesArray) || 1;
+
+      // Map mathematical percentage values directly onto style height dimensions attributes
+      const heightPercent0 = Math.round((bucketsObj.month0 / highestPeakVolume) * 100) || 15;
+      const heightPercent1 = Math.round((bucketsObj.month1 / highestPeakVolume) * 100) || 15;
+      const heightPercent2 = Math.round((bucketsObj.month2 / highestPeakVolume) * 100) || 15;
+      const heightPercent3 = Math.round((bucketsObj.month3 / highestPeakVolume) * 100) || 15;
+
+      chartContainer.innerHTML = `
+          <div class="bar" style="height:${heightPercent0}%; background:var(--text-dark); width:35px; border-radius:4px 4px 0 0; transition:height 0.4s ease-out;" title="Volume: ${bucketsObj.month0} orders"></div>
+          <div class="bar" style="height:${heightPercent1}%; background:var(--text-dark); width:35px; border-radius:4px 4px 0 0; transition:height 0.4s ease-out;" title="Volume: ${bucketsObj.month1} orders"></div>
+          <div class="bar" style="height:${heightPercent2}%; background:var(--text-dark); width:35px; border-radius:4px 4px 0 0; transition:height 0.4s ease-out;" title="Volume: ${bucketsObj.month2} orders"></div>
+          <div class="bar" style="height:${heightPercent3}%; background:var(--staff-red); width:35px; border-radius:4px 4px 0 0; transition:height 0.4s ease-out;" title="Volume: ${bucketsObj.month3} orders (Current Month)"></div>
+      `;
+  }
+</script>
+
 </body>
 </html>

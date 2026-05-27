@@ -368,7 +368,8 @@
                 <!-- ACCORDION 3 -->
                 <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
                 <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Billing Pipeline</a>
+                    <a href="admin-revenue-reconciliation.html" class="nav-item"><span>💰</span> Revenue Reconciliation</a>
                     <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
                     <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
                 </div>
@@ -471,8 +472,7 @@
         </main>
     </div>
 
-    <!-- CORE CONTROL PIPELINES SCRIPTS -->
-    <script src="assets/js/admin-engine.js"></script>
+  
     <script>
         function toggleSidebarAccordion(buttonElement) {
             buttonElement.classList.toggle('active');
@@ -515,5 +515,132 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
     </script>
+
+    <!-- ========================================================================== 
+🏛️ FILINGS4U REVENUE RECONCILIATION (Part 1: Dynamic Cash Flow Calculators)
+========================================================================== --> 
+<script>
+  // --- 1. ACCESS SHARED CENTRAL CONNECTIONS INFRASTRUCTURE ---
+  const revenueAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterReconciliationCache = [];
+
+  // --- 2. ENGINE TIMING LIFE-CYCLE CORE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || revenueAdminCoreClient;
+          if (!client) return;
+
+          try {
+              // Strict Security Validation Gate Check: Confirm profile belongs to internal staff
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot-reload dynamic calculation matrices rosters
+              await synchronizeRevenueLedgerInventory(client);
+              setupReconciliationSearchFilter();
+
+          } catch (err) {
+              console.error("Revenue systems initialization failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. RECOVER INVOICES DATASETS AND AGGREGATE PLATFORM STATS ---
+  async function synchronizeRevenueLedgerInventory(client) {
+      const targetTbody = document.querySelector(".admin-table-ledger tbody");
+      if (!targetTbody) return;
+
+      try {
+          const { data: billingLogs, error } = await client
+              .from('billing_history')
+              .select('id, invoice_number, service_title, amount_total, charge_date')
+              .order('charge_date', { ascending: false });
+
+          if (error) throw error;
+
+          masterReconciliationCache = billingLogs || [];
+
+          // Establish clean analytical date metrics variables
+          const currentTimeMarker = new Date();
+          const currentYearMarker = currentTimeMarker.getFullYear();
+          const currentMonthMarker = currentTimeMarker.getMonth();
+
+          let calculatedMtdGrossRevenue = 0;
+
+          masterReconciliationCache.forEach(row => {
+              const rowDateObj = new Date(row.charge_date);
+              const settledAmount = parseFloat(row.amount_total || 0);
+
+              // Match calendar Month-To-Date timeline boundaries
+              if (rowDateObj.getFullYear() === currentYearMarker && rowDateObj.getMonth() === currentMonthMarker) {
+                  calculatedMtdGrossRevenue += settledAmount;
+              }
+          });
+
+          // Inject calculated sums directly back onto your metric card text items
+          const cardTiles = document.querySelectorAll(".stat-card h2");
+          if (cardTiles.length >= 1) cardTiles[0].textContent = `$${calculatedMtdGrossRevenue.toFixed(2)}`;
+          if (cardTiles.length >= 2) cardTiles[1].textContent = `$${(calculatedMtdGrossRevenue * 0.15).toFixed(2)}`; // Mock 15% clear margin allocation
+
+          renderReconciliationTableRows(masterReconciliationCache);
+
+      } catch (err) {
+          console.error("Financial database extraction failure:", err.message);
+          targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Revenue Matrix Sync Failure.</td></tr>`;
+      }
+  }
+</script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U REVENUE RECONCILIATION (Part 2: UI Matrix Rendering Codes)
+========================================================================== --> 
+<script>
+  // --- 1. OUTPUT TRANSACTION ROWS NATIVELY ON PANEL LAYOUTS ---
+  function renderReconciliationTableRows(datasetArray) {
+      const targetTbody = document.querySelector(".admin-table-ledger tbody");
+      if (!targetTbody) return;
+
+      if (datasetArray.length === 0) {
+          targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic;">No settlement rows logged inside this historical reporting frame query.</td></tr>`;
+          return;
+      }
+
+      targetTbody.innerHTML = datasetArray.map(row => {
+          const settlementDate = new Date(row.charge_date).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'});
+          const cashAmountFormatted = parseFloat(row.amount_total || 0).toFixed(2);
+          
+          return `
+              <tr style="border-bottom:1px solid var(--border-color, #e2e8f0); font-size:0.88rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                  <td style="padding:14px 16px; font-family:monospace; font-weight:700; color:#475569;">#TXN-${row.invoice_number}</td>
+                  <td style="padding:14px 16px;"><strong style="color:var(--text-dark);">${row.service_title}</strong></td>
+                  <td style="padding:14px 16px;"><strong style="color:var(--emerald, #10b981);">$${cashAmountFormatted}</strong></td>
+                  <td style="padding:14px 16px; color:var(--text-muted);">${settlementDate}</td>
+                  <td style="padding:14px 16px;"><span class="status-pill settled" style="background:rgba(16,185,129,0.1); color:#10b981; font-weight:700; font-size:0.75rem; padding:4px 8px; border-radius:4px;">Settled</span></td>
+              </tr>
+          `;
+      }).join('');
+  }
+
+  // --- 2. LIVE SEARCH GRID KEYPRESS REGEX INTERCEPTOR ---
+  function setupReconciliationSearchFilter() {
+      const fieldInput = document.getElementById("adminGlobalSearchField");
+      if (!fieldInput) return;
+
+      fieldInput.addEventListener("input", (e) => {
+          const parsingToken = e.target.value.toLowerCase().trim();
+          
+          const filteredResults = masterReconciliationCache.filter(row => 
+              String(row.invoice_number).includes(parsingToken) ||
+              String(row.service_title).toLowerCase().includes(parsingToken)
+          );
+          
+          renderReconciliationTableRows(filteredResults);
+      });
+  }
+</script>
 </body>
 </html>

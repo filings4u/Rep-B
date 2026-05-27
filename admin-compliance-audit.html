@@ -421,7 +421,7 @@
     </div>
 
     <!-- CORE CONTROL PIPELINES SCRIPTS -->
-    <script src="assets/js/admin-engine.js"></script>
+
     <script>
         function toggleSidebarAccordion(buttonElement) {
             buttonElement.classList.toggle('active');
@@ -489,5 +489,161 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
     </script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U COMPLIANCE AUDIT CORES (Part 1: Aligned Roster Initializer)
+========================================================================== --> 
+<script>
+  // --- 1. GLOBAL WORKSPACE STORAGE STATES ---
+  const auditAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterAuditQueueArray = [];
+
+  // --- 2. ENGINE TIMING LIFE-CYCLE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || auditAdminCoreClient;
+          if (!client) return;
+
+          try {
+              // Perimeter Validation Gate Check: Ensure profile belongs to internal staff
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot-reload dynamic compliance queue lines from the unified core database table
+              await synchronizeComplianceAuditQueue(client);
+              setupAuditLiveSearchFilters();
+
+          } catch (err) {
+              console.error("Audit hub terminal bootstrap failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. RECOVER PENDING REVIEWS WITH FAIL-SAFE STATUS MATCHING ---
+  async function synchronizeComplianceAuditQueue(client) {
+      const displayTarget = document.querySelector(".admin-table-ledger tbody");
+      if (!displayTarget) return;
+
+      try {
+          // Pull raw rows directly from our newly unified master orders log
+          const { data: queue, error } = await client
+              .from('orders')
+              .select('*');
+
+          if (error) throw error;
+
+          // 🧠 SELF-REPAIRING PERIMETER: Defensively group any rows that are in audit, review, or pending stages
+          const rawRecordsList = queue || [];
+          masterAuditQueueArray = rawRecordsList.filter(row => {
+              const currentStatusText = String(row.status || row.tax_id_status || 'Lead Entry').toUpperCase().trim();
+              return currentStatusText === 'REVIEW STATE' || currentStatusText === 'PENDING' || currentStatusText === 'PENDING REVIEW';
+          });
+
+          renderComplianceAuditTableRows(masterAuditQueueArray);
+
+      } catch (err) {
+          console.error("Compliance database extraction failure:", err.message);
+          displayTarget.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Audit Database Sync Failure: ${err.message}</td></tr>`;
+      }
+  }
+</script>
+
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U COMPLIANCE AUDIT CORES (Part 2-A: Repaired Data Grid Render Matrix)
+========================================================================== --> 
+<script>
+  // --- 1. RENDER COMPLIANCE ROWS WITH ACTION CONTROLLERS ---
+  function renderComplianceAuditTableRows(datasetArray) {
+      const displayTarget = document.querySelector(".admin-table-ledger tbody");
+      if (!displayTarget) return;
+
+      if (datasetArray.length === 0) {
+          displayTarget.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic;">No corporate applications are currently pending document audit actions.</td></tr>`;
+          return;
+      }
+
+      displayTarget.innerHTML = datasetArray.map(row => {
+          const submissionDate = new Date(row.created_at || row.inserted_at || Date.now()).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'});
+          const currentPipelineState = row.status || row.tax_id_status || 'Review State'; 
+          
+          const clientCompanyTitle = row.company_name || 'Inbound Corporate Lead';
+          
+          // 🧠 FIX CONFIRMED: Realigned nonexistent 'inv' lookup array pointer safely onto row iterator context maps
+          const documentFilingType = row.service || row.service_title || row.requirement_name || 'Filing Service Package';
+
+          return `
+              <tr class="audit-queue-row" style="border-bottom:1px solid var(--border-color, #e2e8f0); font-size:0.88rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                  <td style="padding:14px 12px;"><strong>${clientCompanyTitle}</strong><br><small style="font-family:monospace; color:#94a3b8;">Ref ID: ${row.reference_id || 'N/A'}</small></td>
+                  <td style="padding:14px 12px; font-weight:600; color:var(--text-dark);">${documentFilingType}</td>
+                  <td style="padding:14px 12px; color:var(--text-muted);">${submissionDate}</td>
+                  <td style="padding:14px 12px;"><span style="color: #ed8936; font-weight: bold; text-transform:capitalize;">${currentPipelineState.toLowerCase().replace('_', ' ')}</span></td>
+                  <td style="padding:14px 12px;">
+                      <button class="btn-audit" style="background:var(--text-dark, #0f172a); color:#fff !important; border:0; padding:6px 14px; border-radius:6px; font-weight:700; font-size:0.75rem; cursor:pointer; display:inline-block;" 
+                          onclick="executeAdministrativeAuditApproval('${row.id}', '${documentFilingType}')">
+                          Approve Now ✓
+                      </button>
+                  </td>
+              </tr>`;
+      }).join('');
+  }
+</script>
+
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U COMPLIANCE AUDIT CORES (Part 2-B: Filters & Over-The-Air Approvals)
+========================================================================== --> 
+<script>
+  // --- 1. LIVE OPERATIONAL SEARCH FILTERS LOOKUPS ---
+  function setupAuditLiveSearchFilters() {
+      const filterInput = document.getElementById("adminGlobalSearchField");
+      if (!filterInput) return;
+
+      filterInput.addEventListener("input", (e) => {
+          const searchToken = e.target.value.toLowerCase().trim();
+          const filtered = masterAuditQueueArray.filter(row => {
+              const itemPackageDesc = String(row.service || row.service_title || '').toLowerCase();
+              return String(row.company_name || '').toLowerCase().includes(searchToken) || itemPackageDesc.includes(searchToken);
+          });
+          renderComplianceAuditTableRows(filtered);
+      });
+  }
+
+  // --- 2. MUTATE SYSTEM COMPLIANCE RECORD AND ARCHIVE STATUS ---
+  async function executeAdministrativeAuditApproval(recordId, requirementName) {
+      const client = window.supabaseClient || window.supabase || auditAdminCoreClient;
+      if (!client) return;
+
+      const triggerCheck = confirm("Confirm audit verification approval for: \"" + requirementName + "\"? This updates the customer's portal milestone indicators instantly.");
+      if (!triggerCheck) return;
+
+      try {
+          const { error } = await client
+              .from('orders')
+              .update({ 
+                  status: 'COMPLETED',
+                  tax_id_status: 'COMPLETED'
+              })
+              .eq('id', recordId);
+
+          if (error) throw error;
+
+          alert("Filing verified! Status updated over the air.");
+          if (typeof synchronizeComplianceAuditQueue === "function") {
+              await synchronizeComplianceAuditQueue(client); 
+          }
+
+      } catch (err) {
+          alert("Audit verification process aborted: " + err.message);
+      }
+  }
+</script>
+
+
+
 </body>
 </html>

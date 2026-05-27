@@ -276,5 +276,82 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
+<!-- SYSTEM CONTROL CONTROLLERS - KNOWLEDGE BASE ENGINE -->
+<script>
+  let loadedArticlesCache = [];
+
+  document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase;
+          if (!client) return;
+
+          try {
+              // Pull production support guides from database table matrix
+              const { data: articles, error } = await client
+                  .from('knowledge_base_articles')
+                  .select('*');
+
+              if (error) throw error;
+              
+              loadedArticlesCache = articles || [];
+              renderArticlesGrid(loadedArticlesCache);
+
+              // Wire live search input field change listeners
+              const searchInput = document.querySelector(".kb-search-hero .search-input");
+              if (searchInput) {
+                  searchInput.addEventListener("input", (e) => {
+                      const searchToken = e.target.value.toLowerCase().trim();
+                      const filtered = loadedArticlesCache.filter(art => 
+                          art.title.toLowerCase().includes(searchToken) || 
+                          art.summary.toLowerCase().includes(searchToken) ||
+                          art.body_content.toLowerCase().includes(searchToken)
+                      );
+                      renderArticlesGrid(filtered);
+                  });
+              }
+
+          } catch (err) {
+              console.error("Knowledge base engine lookup exception:", err.message);
+          }
+      }, 50);
+  });
+
+  function renderArticlesGrid(articlesList) {
+      const container = document.querySelector(".kb-grid");
+      if (!container) return;
+
+      if (articlesList.length === 0) {
+          container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#64748b;">No matching support articles found matching that token query.</div>`;
+          return;
+      }
+
+      // Group collections by category keys natively
+      const groups = { formation: [], compliance: [], wholesale: [] };
+      articlesList.forEach(a => { if (groups[a.category]) groups[a.category].push(a); });
+
+      container.innerHTML = `
+          <div class="kb-category-card">
+              <h3><span>🏢</span> Company Formation</h3>
+              <ul class="kb-article-links">
+                  ${groups.formation.map(a => `<li><a href="#" onclick="alert('${a.body_content}')">${a.title} &rarr;</a></li>`).join('') || '<li>No articles</li>'}
+              </ul>
+          </div>
+          <div class="kb-category-card">
+              <h3><span>🛡️</span> Ongoing Compliance</h3>
+              <ul class="kb-article-links">
+                  ${groups.compliance.map(a => `<li><a href="#" onclick="alert('${a.body_content}')">${a.title} &rarr;</a></li>`).join('') || '<li>No articles</li>'}
+              </ul>
+          </div>
+          <div class="kb-category-card">
+              <h3><span>🤝</span> Agency Wholesaling</h3>
+              <ul class="kb-article-links">
+                  ${groups.wholesale.map(a => `<li><a href="#" onclick="alert('${a.body_content}')">${a.title} &rarr;</a></li>`).join('') || '<li>No articles</li>'}
+              </ul>
+          </div>
+      `;
+  }
+</script>
+
+
 </body>
 </html>

@@ -405,216 +405,24 @@
         </main> 
     </div> 
 
-    <!-- PRODUCTION ENVIRONMENT TELEMETRY CONTROLLERS --> 
-    <script src="assets/js/admin-engine.js"></script> 
-    <script> 
-        // ========================================================================== 
-        // 🗂️ SIDEBAR ACCORDION TOGGLE CONTROLLER 
-        // ========================================================================== 
-        function toggleSidebarAccordion(triggerButton) { 
-            const targetPanel = triggerButton.nextElementSibling; 
-            const chevronSymbol = triggerButton.querySelector('.chevron'); 
-            
-            triggerButton.classList.toggle('active'); 
-            
-            if (targetPanel.style.maxHeight && targetPanel.style.maxHeight !== '0px') { 
-                targetPanel.style.maxHeight = '0px'; 
-                if (chevronSymbol) chevronSymbol.textContent = '▼'; 
-            } else { 
-                targetPanel.style.maxHeight = targetPanel.scrollHeight + 'px'; 
-                if (chevronSymbol) chevronSymbol.textContent = '▲'; 
-            } 
-        } 
-
-        // ========================================================================== 
-        // ⏱️ PRODUCTION ENVIRONMENT TELEMETRY CONTROLLERS 
-        // ========================================================================== 
-        const eventsList = document.getElementById('calendarEventsTargetList'); 
-        const tasksList = document.getElementById('taskManagerTargetList'); 
-
-        function getSupabaseClient() { 
-            return window.supabaseClient || window.supabase; 
-        } 
-
-        // ========================================================================== 
-        // 📅 CALENDAR TIMELINE REGISTRY OPERATIONS 
-        // ========================================================================== 
-        async function loadCalendarDeadlinesLog() { 
-            const client = getSupabaseClient(); 
-            if (!client) return; 
-            try { 
-                const { data, error } = await client 
-                    .from('platform_operational_calendar') 
-                    .select('*') 
-                    .order('deadline_date', { ascending: true }); 
-                if (error) throw error; 
-                if (!data || data.length === 0) { 
-                    eventsList.innerHTML = '<div style="padding:15px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No upcoming calendar items registered.</div>'; 
-                    return; 
-                } 
-                eventsList.innerHTML = data.map(evt => ` 
-                    <div class="ledger-item-row"> 
-                        <div> 
-                            <span style="background:rgba(193,82,84,0.08); color:var(--staff-red); padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.75rem; margin-right:8px;">${new Date(evt.deadline_date).toLocaleDateString()}</span> 
-                            <strong>${evt.event_title}</strong> 
-                        </div> 
-                        <button class="btn-delete-log" onclick="deleteCalendarRecord('${evt.id}')">✕</button> 
-                    </div> 
-                `).join(''); 
-            } catch (err) { 
-                console.error("Calendar fetch failure:", err.message); 
-            } 
+  <script>
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
         }
 
-        document.getElementById('calendarEventForm').addEventListener('submit', async (e) => { 
-            e.preventDefault(); 
-            const client = getSupabaseClient(); 
-            const title = document.getElementById('eventTitle').value.trim(); 
-            const date = document.getElementById('eventDate').value; 
-            if (!client || !title || !date) return; 
-            try { 
-                const { error } = await client 
-                    .from('platform_operational_calendar') 
-                    .insert({ event_title: title, deadline_date: date }); 
-                if (error) throw error; 
-                document.getElementById('calendarEventForm').reset(); 
-                loadCalendarDeadlinesLog(); 
-            } catch (err) { 
-                alert("Event Insertion Failed: " + err.message); 
-            } 
-        }); 
+        // Inline modal helpers map setup options
+        window.toggleInvoiceGenerationModal = function(showFlag) {
+            const modal = document.getElementById('invoice-modal-overlay');
+            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
+        };
 
-        window.deleteCalendarRecord = async function(recordUuid) { 
-            const client = getSupabaseClient(); 
-            if (!client) return; 
-            try { 
-                const { error } = await client 
-                    .from('platform_operational_calendar') 
-                    .delete() 
-                    .eq('id', recordUuid); 
-                if (error) throw error; 
-                loadCalendarDeadlinesLog(); 
-            } catch (err) { 
-                alert("Deletion Blocked: " + err.message); 
-                console.error(err.message); 
-            } 
-        }; 
-
-        // ========================================================================== 
-        // ✅ ACTION MANAGER TASK CONTROLLERS 
-        // ========================================================================== 
-        async function loadTaskManagerObjectiveStack() { 
-            const client = getSupabaseClient(); 
-            if (!client) return; 
-            try { 
-                const { data, error } = await client 
-                    .from('platform_task_manager') 
-                    .select('*') 
-                    .order('created_at', { ascending: false }); 
-                if (error) throw error; 
-                if (!data || data.length === 0) { 
-                    tasksList.innerHTML = '<div style="padding:15px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">Zero active operational actions logged.</div>'; 
-                    return; 
-                } 
-                tasksList.innerHTML = data.map(task => ` 
-                    <div class="ledger-item-row" style="${task.is_completed ? 'opacity: 0.5; background: #f8fafc;' : ''}"> 
-                        <div style="display:flex; align-items:center;"> 
-                            <input type="checkbox" class="task-checkbox" ${task.is_completed ? 'checked' : ''} onclick="toggleTaskCompletionState('${task.id}', ${task.is_completed})"> 
-                            <span style="${task.is_completed ? 'text-decoration: line-through;' : 'font-weight:600;'}">${task.task_message}</span> 
-                        </div> 
-                        <button class="btn-delete-log" onclick="deleteTaskManagerRecord('${task.id}')">✕</button> 
-                    </div> 
-                `).join(''); 
-            } catch (err) { 
-                console.error("Task Engine Sync Failure:", err.message); 
-            } 
-        } 
-
-        window.submitNewTaskManagerRecord = async function() { 
-            const client = getSupabaseClient(); 
-            const textInput = document.getElementById('newTaskTextField'); 
-            const message = textInput.value.trim(); 
-            if (!client || !message) return; 
-            try { 
-                const { error } = await client 
-                    .from('platform_task_manager') 
-                    .insert({ task_message: message, is_completed: false }); 
-                if (error) throw error; 
-                textInput.value = ''; 
-                loadTaskManagerObjectiveStack(); 
-            } catch (err) { 
-                alert("Action Pipeline Stalled: " + err.message); 
-            } 
-        }; 
-
-        window.toggleTaskCompletionState = async function(taskUuid, currentCondition) { 
-            const client = getSupabaseClient(); 
-            if (!client) return; 
-            try { 
-                const { error } = await client 
-                    .from('platform_task_manager') 
-                    .update({ is_completed: !currentCondition }) 
-                    .eq('id', taskUuid); 
-                if (error) throw error; 
-                loadTaskManagerObjectiveStack(); 
-            } catch (err) { 
-                alert("State Transformation Interrupted: " + err.message); 
-                console.error(err.message); 
-            } 
-        }; 
-
-        window.deleteTaskManagerRecord = async function(taskUuid) { 
-            const client = getSupabaseClient(); 
-            if (!client) return; 
-            try { 
-                const { error } = await client 
-                    .from('platform_task_manager') 
-                    .delete() 
-                    .eq('id', taskUuid); 
-                if (error) throw error; 
-                loadTaskManagerObjectiveStack(); 
-            } catch (err) { 
-                alert("Task Removal Blocked: " + err.message); 
-                console.error(err.message); 
-            } 
-        }; 
-
-        // ========================================================================== 
-        // 🔄 AUTOMATIC ENGINE SYNCHRONIZATION PIPELINE 
-        // ========================================================================== 
-        const syncMonitorInterval = setInterval(() => { 
-            if (getSupabaseClient()) { 
-                clearInterval(syncMonitorInterval); 
-                loadCalendarDeadlinesLog(); 
-                loadTaskManagerObjectiveStack(); 
-            } 
-        }, 100); 
-        setTimeout(() => clearInterval(syncMonitorInterval), 5000); 
-
-        // ==========================================================================
-// 🔍 REAL-TIME GLOBAL CROSS-GRID SEARCH CONTROLLER
-// ==========================================================================
-document.getElementById('adminGlobalSearchField').addEventListener('input', function(e) {
-    const searchQuery = e.target.value.toLowerCase().trim();
-    
-    // 1. Target all generated item rows inside both console columns
-    const allRows = document.querySelectorAll('.ledger-item-row');
-    
-    allRows.forEach(row => {
-        // Extract all plain text inside the row to check for a match
-        const rowText = row.textContent.toLowerCase();
-        
-        if (rowText.includes(searchQuery)) {
-            // Match found: restore visibility
-            row.style.setProperty('display', 'flex', 'important');
-        } else {
-            // No match: hide row cleanly
-            row.style.setProperty('display', 'none', 'important');
-        }
-    });
-});
-
-function toggleMobileSidebarMenuOverlay() {
+        function toggleMobileSidebarMenuOverlay() {
     // Only run toggle menu slide overrides if the viewport matches mobile parameters
     if (window.innerWidth > 992) return;
 
@@ -643,8 +451,210 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
+    </script>
 
-    </script> 
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE OPERATIONAL CALENDAR (Part 1: Timeline Core)
+========================================================================== --> 
+<script>
+  // --- 1. GLOBAL REAL-TIME CONTROL WORKSPACE CACHES ---
+  const calendarAdminCoreClient = window.supabaseClient || window.supabase;
+  let cachedCalendarEvents = [];
+  let cachedOperationalTasks = [];
+
+  // --- 2. ENGINE TIMING LIFE-CYCLE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || calendarAdminCoreClient;
+          if (!client) return;
+
+          try {
+              // Strict Access Control: Validate internal staff credentials
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot reload calendar deadlines and sticky notes pipelines
+              await synchronizeMasterCalendarData(client);
+              await synchronizeOperationalTasksData(client);
+
+          } catch (err) {
+              console.error("Calendar system boot failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. RECOVER COMPREHENSIVE CALENDAR DEADLINES ---
+  async function synchronizeMasterCalendarData(client) {
+      const target = document.getElementById("calendarEventsTargetList");
+      if (!target) return;
+
+      try {
+          const { data: events, error } = await client
+              .from('calendar_events')
+              .select('*')
+              .order('event_date', { ascending: true });
+
+          if (error) throw error;
+          cachedCalendarEvents = events || [];
+          renderCalendarTimelineWidgets(cachedCalendarEvents);
+
+      } catch (err) {
+          console.error("Calendar fetch crash:", err.message);
+          target.innerHTML = `<div style="text-align:center; color:var(--staff-red); padding:15px;">⚠️ Schedule pipeline sync failure.</div>`;
+      }
+  }
+
+  // --- 4. RENDER TIMELINE DATA SLOTS NATIVELY ---
+  function renderCalendarTimelineWidgets(datasetArray) {
+      const target = document.getElementById("calendarEventsTargetList");
+      if (!target) return;
+
+      if (datasetArray.length === 0) {
+          target.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No events or deadlines assigned to this workspace calendar.</div>`;
+          return;
+      }
+
+      target.innerHTML = datasetArray.map(evt => `
+          <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="max-width:75%;">
+                  <strong style="font-size:0.7rem; color:var(--staff-red); background:rgba(193,82,84,0.08); padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:4px;">
+                      ${new Date(evt.event_date + 'T00:00:00').toLocaleDateString([], {month:'2-digit', day:'2-digit', year:'numeric'})}
+                  </strong>
+                  <h4 style="margin:0; font-size:0.9rem; font-weight:700; color:var(--text-dark);">${evt.title}</h4>
+              </div>
+              <button type="button" style="background:none; border:none; color:var(--staff-red); font-weight:800; cursor:pointer; font-size:1.1rem; padding:5px;" onclick="executeCalendarEventVoid('${evt.id}')">✕</button>
+          </div>
+      `).join('');
+  }
+</script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE OPERATIONAL CALENDAR (Part 2: Task Manager Core)
+========================================================================== --> 
+<script>
+  // --- 1. HANDLE CALENDAR DEADLINE FORM INTAKE SUBMISSIONS ---
+  document.getElementById("calendarEventForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const client = window.supabaseClient || window.supabase || calendarAdminCoreClient;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      if (!client || !submitBtn) return;
+      submitBtn.disabled = true;
+
+      try {
+          const title = document.getElementById("eventTitle").value.trim();
+          const event_date = document.getElementById("eventDate").value;
+
+          const { error } = await client
+              .from('calendar_events')
+              .insert({ title, event_date });
+
+          if (error) throw error;
+          
+          document.getElementById("calendarEventForm").reset();
+          await synchronizeMasterCalendarData(client);
+
+      } catch (err) {
+          alert(`Event Addition Error: ${err.message}`);
+      } finally {
+          submitBtn.disabled = false;
+      }
+  });
+
+  // --- 2. RECOVER COMPREHENSIVE STICKY OBJECTIVE TASKS ---
+  async function synchronizeOperationalTasksData(client) {
+      const target = document.getElementById("taskManagerTargetList");
+      if (!target) return;
+
+      try {
+          const { data: tasks, error } = await client
+              .from('admin_sticky_tasks')
+              .select('*')
+              .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          cachedOperationalTasks = tasks || [];
+          renderOperationalTasksWidgets(cachedOperationalTasks);
+
+      } catch (err) {
+          console.error("Task list query error:", err.message);
+      }
+  }
+
+  // --- 3. RENDER TASKS DATA ROW ELEMENTS MATRIX ---
+  function renderOperationalTasksWidgets(datasetArray) {
+      const target = document.getElementById("taskManagerTargetList");
+      if (!target) return;
+
+      if (datasetArray.length === 0) {
+          target.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active operational tasks pending grid completion lines.</div>`;
+          return;
+      }
+
+      target.innerHTML = datasetArray.map(task => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid var(--border-color); font-size:0.85rem;">
+              <div style="display:flex; align-items:center; gap:8px; text-decoration:${task.is_completed ? 'line-through' : 'none'}; color:${task.is_completed ? 'var(--text-muted)' : 'var(--text-dark)'};">
+                  <input type="checkbox" ${task.is_completed ? 'checked' : ''} onchange="toggleOperationalTaskState('${task.id}', this.checked)" style="cursor:pointer;">
+                  <span>${task.task_text}</span>
+              </div>
+              <button type="button" style="background:none; border:none; color:#cbd5e1; font-weight:700; cursor:pointer;" onclick="executeOperationalTaskPurge('${task.id}')">✕</button>
+          </div>
+      `).join('');
+  }
+
+  // --- 4. TRANSMIT STICKY TASKS INTAKE LINES ---
+  async function submitNewTaskManagerRecord() {
+      const field = document.getElementById("newTaskTextField");
+      const client = window.supabaseClient || window.supabase || calendarAdminCoreClient;
+      if (!field || !field.value.trim() || !client) return;
+
+      const txt = field.value.trim();
+
+      try {
+          const { error } = await client
+              .from('admin_sticky_tasks')
+              .insert({ task_text: txt, is_completed: false });
+
+          if (error) throw error;
+          field.value = "";
+          await synchronizeOperationalTasksData(client);
+
+      } catch (err) {
+          console.error("Task submission failure:", err.message);
+      }
+  }
+
+  // --- 5. MUTATE TASK PROGRESS CHECKBOX STATE CORES ---
+  async function toggleOperationalTaskState(taskUuid, isCheckedBoolean) {
+      const client = window.supabaseClient || window.supabase || calendarAdminCoreClient;
+      if (!client) return;
+      await client.from('admin_sticky_tasks').update({ is_completed: isCheckedBoolean }).eq('id', taskUuid);
+      await synchronizeOperationalTasksData(client);
+  }
+
+  // --- 6. VOID CALENDAR DEADLINE ENTRIES ---
+  async function executeCalendarEventVoid(recordUuid) {
+      const client = window.supabaseClient || window.supabase || calendarAdminCoreClient;
+      if (client && confirm("Clear this filing deadline from active calendar schedules?")) {
+          await client.from('calendar_events').delete().eq('id', recordUuid);
+          await synchronizeMasterCalendarData(client);
+      }
+  }
+
+  // --- 7. VOID STICKY TASK ITEMS ---
+  async function executeOperationalTaskPurge(taskUuid) {
+      const client = window.supabaseClient || window.supabase || calendarAdminCoreClient;
+      if (client) {
+          await client.from('admin_sticky_tasks').delete().eq('id', taskUuid);
+          await synchronizeOperationalTasksData(client);
+      }
+  }
+</script>
+
 
     
 </body> 

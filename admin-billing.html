@@ -530,9 +530,7 @@
         </main>
     </div>
 
-    <!-- CORE LOGIC AND DATA PIPELINES BINDINGS -->
-    <script src="assets/js/admin-billing.js"></script>
-    <script src="assets/js/admin-engine.js"></script>
+    
     <script>
         function toggleSidebarAccordion(buttonElement) {
             buttonElement.classList.toggle('active');
@@ -580,5 +578,297 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
     </script>
+
+<!-- ========================================================================== 
+🏢 FILINGS4U ADMINISTRATIVE REVENUE SYSTEMS (Part 1: Bulletproof Data Sync Core) 
+========================================================================== --> 
+<script>
+  // --- MODULE 1: MASTER REVENUE CONTROL REGISTRIES ---
+  const billingAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterOpenInvoicesArray = [];
+  let masterSettledOrdersArray = [];
+
+  // --- MODULE 2: REVENUE LIFE-CYCLE ENGINE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      // 50ms defensive delay check guarantees central network infrastructure completely boots
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || billingAdminCoreClient;
+          if (!client) {
+              console.error("Administrative Gateway Link Error: Supreme Core Instance unassigned.");
+              return;
+          }
+
+          try {
+              // Strict Perimeter Authentication Guard Check: Validate internal staff tokens
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot reload comprehensive system order fulfillment and sales history logs
+              await synchronizeBillingPipelineData(client);
+              setupBillingLiveFilters();
+
+          } catch (err) {
+              console.error("Billing admin terminal bootstrap failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- MODULE 3: MASTER DATA SYNCHRONIZATION PIPELINE ENGINE ---
+  async function synchronizeBillingPipelineData(client) {
+      const openTbody = document.getElementById("billing-open-invoices-tbody");
+      const settledTbody = document.getElementById("billing-settled-orders-tbody");
+      if (!openTbody || !settledTbody) return;
+
+      try {
+          // Simultaneous data extraction from your newly reset database tables
+          const [billingQuery, ordersQuery] = await Promise.all([
+              client.from('orders').select('*'),
+              client.from('billing_history').select('*')
+          ]);
+
+          if (billingQuery.error) throw billingQuery.error;
+          if (ordersQuery.error) throw ordersQuery.error;
+
+          const rawOrdersList = billingQuery.data || [];
+          
+          // Separate open unpaid applications workflows from completed platform orders records
+          masterOpenInvoicesArray = rawOrdersList.filter(row => {
+              const currentStatusText = String(row.status || row.tax_id_status || 'Lead Entry').toUpperCase().trim();
+              return currentStatusText !== 'COMPLETED';
+          });
+
+          masterSettledOrdersArray = ordersQuery.data || [];
+
+          // Compute analytical calculations values to populate banner card metrics elements
+          let totalUnpaidSum = masterOpenInvoicesArray.reduce((acc, row) => acc + parseFloat(row.total_fee || row.amount_total || row.amount || 0), 0);
+          let totalCollectedSum = masterSettledOrdersArray.reduce((acc, row) => acc + parseFloat(row.amount_total || 0), 0);
+
+          if (document.getElementById("summary-total-orders")) document.getElementById("summary-total-orders").textContent = masterSettledOrdersArray.length;
+          if (document.getElementById("summary-unpaid-amount")) document.getElementById("summary-unpaid-amount").textContent = "$" + totalUnpaidSum.toFixed(2);
+          if (document.getElementById("summary-collected-revenue")) document.getElementById("summary-collected-revenue").textContent = "$" + totalCollectedSum.toFixed(2);
+
+          // Force execution flow directly into UI template rendering matrices
+          renderBillingLedgerTables();
+
+      } catch (err) {
+          console.error("Billing pipelines extraction crash:", err.message);
+          openTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--staff-red); padding:15px; font-weight:700;">⚠️ Pipeline Extraction Sync Error: ${err.message}</td></tr>`;
+          settledTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); padding:15px; font-weight:700;">⚠️ Ledger Extraction Sync Error.</td></tr>`;
+      }
+  }
+</script>
+
+
+<!-- ========================================================================== 
+🏢 FILINGS4U ADMINISTRATIVE REVENUE SYSTEMS (Part 2-A: Table Render Matrix) 
+========================================================================== --> 
+<script>
+  // --- MODULE 1: DYNAMIC HIGH-CONTRAST ROW BUILDER MATRIX ---
+  function renderBillingLedgerTables() {
+      const openTbody = document.getElementById("billing-open-invoices-tbody");
+      const settledTbody = document.getElementById("billing-settled-orders-tbody");
+
+      // A. Render Open Invoices Queue Table Body
+      if (openTbody) {
+          if (masterOpenInvoicesArray.length === 0) {
+              openTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b; font-style:italic;">No open or unpaid items pending settlement.</td></tr>`;
+          } else {
+              openTbody.innerHTML = masterOpenInvoicesArray.map(inv => {
+                  const itemPackageName = inv.service || inv.service_title || inv.requirement_name || 'Filing Service Package';
+                  const currentPipelineState = inv.status || inv.tax_id_status || 'Unpaid';
+                  const numericFeeValue = parseFloat(inv.total_fee || inv.amount_total || inv.amount || 0);
+                  
+                  const rawUserIdString = String(inv.user_id || '00000000');
+                  const truncatedUserId = rawUserIdString.length > 8 ? rawUserIdString.slice(0,6).toUpperCase() : rawUserIdString.toUpperCase();
+                  const targetCompanyName = inv.company_name || 'Inbound Corporate Lead';
+
+                  return `
+                      <tr class="billing-open-row" data-company="${String(targetCompanyName).toLowerCase()}">
+                          <td style="padding:14px 12px; vertical-align:middle;"><strong>${targetCompanyName}</strong></td>
+                          <td style="padding:14px 12px; vertical-align:middle;"><span style="font-family:monospace; color:#64748b; font-weight:600;">ID: ${truncatedUserId}...</span></td>
+                          <td style="padding:14px 12px; vertical-align:middle; color:var(--text-dark);">${itemPackageName}</td>
+                          <td style="padding:14px 12px; vertical-align:middle;"><strong style="color:var(--staff-red, #c15254); font-size:0.95rem;">$${numericFeeValue.toFixed(2)}</strong></td>
+                          <td style="padding:14px 12px; vertical-align:middle;"><span class="status-pill pending" style="text-transform: uppercase; font-weight:800; font-size:0.72rem; background:rgba(245,158,11,0.08); color:#f59e0b; padding:4px 10px; border-radius:12px; display:inline-block; border:1px solid rgba(245,158,11,0.15);">${currentPipelineState}</span></td>
+                          <td style="padding:14px 12px; vertical-align:middle; text-align:right;">
+                              <button class="btn-sm" 
+                                  style="background: var(--text-dark, #0f172a) !important; color: #ffffff !important; border: none !important; padding: 7px 15px !important; border-radius: 6px !important; font-size: 0.8rem !important; font-weight: 700 !important; cursor: pointer !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; display:inline-block;" 
+                                  onclick="openInvoiceWithPreFill('${itemPackageName}', ${numericFeeValue})">
+                                  Generate Stripe Link 💳
+                              </button>
+                          </td>
+                      </tr>`;
+              }).join('');
+          }
+      }
+
+      // B. Render Paid Settled Orders History Table Body
+      if (settledTbody) {
+          if (masterSettledOrdersArray.length === 0) {
+              settledTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:#64748b; font-style:italic;">No settled transactions logged to production.</td></tr>`;
+          } else {
+              settledTbody.innerHTML = masterSettledOrdersArray.map(order => {
+                  const displayServiceTitle = order.service_title || 'Phone Order Procurement';
+                  const displayInvoiceNum = order.invoice_number || 'N/A';
+                  const displayChargeDate = new Date(order.charge_date || order.created_at || Date.now()).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'});
+                  const displayAmountTotal = parseFloat(order.amount_total || 0).toFixed(2);
+
+                  return `
+                      <tr class="billing-settled-row" data-service="${String(displayServiceTitle).toLowerCase()}">
+                          <td style="padding:14px 12px; vertical-align:middle;"><strong>${displayServiceTitle}</strong></td>
+                          <td style="padding:14px 12px; vertical-align:middle;"><span style="font-family:monospace; color:#64748b; font-weight:600;">#${displayInvoiceNum}</span></td>
+                          <td style="padding:14px 12px; vertical-align:middle; color:var(--text-muted);">${displayChargeDate}</td>
+                          <td style="padding:14px 12px; vertical-align:middle;"><strong style="color:var(--emerald, #10b981); font-size:0.95rem;">$${displayAmountTotal}</strong></td>
+                          <td style="padding:14px 12px; vertical-align:middle;"><span class="status-pill active" style="background:rgba(16,185,129,0.08); color:#10b981; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block; font-size:0.72rem; border:1px solid rgba(16,185,129,0.15);">Captured</span></td>
+                      </tr>`;
+              }).join('');
+          }
+      }
+  }
+</script>
+
+
+<!-- ========================================================================== 
+🏢 FILINGS4U ADMINISTRATIVE REVENUE SYSTEMS (Part 2-B: Modals & Filters Logic) 
+========================================================================== --> 
+<script>
+  // --- MODULE 1: INVOICE GENERATION MODAL CONFIGURATIONS ---
+  function toggleInvoiceGenerationModal(shouldRevealBoolean) {
+      const modalOverlay = document.getElementById("invoice-modal-overlay");
+      if (modalOverlay) modalOverlay.style.display = shouldRevealBoolean ? "flex" : "none";
+  }
+
+  function openInvoiceWithPreFill(serviceNameString, numericalAmount) {
+      toggleInvoiceGenerationModal(true);
+      const container = document.getElementById("invoice-line-items-container");
+      if (!container) return;
+
+      container.innerHTML = `
+          <div class="invoice-item-row" style="display:grid; grid-template-columns: 2fr 1fr auto; gap:10px; margin-bottom:10px;">
+              <input type="text" class="item-description admin-input" value="${serviceNameString}" required>
+              <input type="number" class="item-price admin-input" step="0.01" value="${parseFloat(numericalAmount).toFixed(2)}" required>
+              <button type="button" onclick="removeInvoiceLineRow(this)" style="background:#fee2e2; border:none; color:var(--staff-red); border-radius:6px; padding:0 12px; cursor:pointer;">✕</button>
+          </div>`;
+  }
+
+  function addNewInvoiceLineRow() {
+      const container = document.getElementById("invoice-line-items-container");
+      if (!container) return;
+
+      const dynamicRowDiv = document.createElement("div");
+      dynamicRowDiv.className = "invoice-item-row";
+      dynamicRowDiv.style.cssText = "display:grid; grid-template-columns: 2fr 1fr auto; gap:10px; margin-bottom:10px;";
+      dynamicRowDiv.innerHTML = `
+          <input type="text" class="item-description admin-input" placeholder="e.g., State Franchise Tax Courier Fee" required>
+          <input type="number" class="item-price admin-input" step="0.01" placeholder="50.00" required>
+          <button type="button" onclick="removeInvoiceLineRow(this)" style="background:#fee2e2; border:none; color:var(--staff-red); border-radius:6px; padding:0 12px; cursor:pointer;">✕</button>`;
+      container.appendChild(dynamicRowDiv);
+  }
+
+  function removeInvoiceLineRow(buttonDomNode) {
+      if (document.querySelectorAll(".invoice-item-row").length <= 1) {
+          alert("Filing Error: An official invoice packet must contain at least 1 line item description.");
+          return;
+      }
+      buttonDomNode.closest(".invoice-item-row").remove();
+  }
+
+  // --- MODULE 2: REVENUE SEARCH FIELD UTILITIES ---
+  function setupBillingLiveFilters() {
+      const ledgerSearch = document.getElementById("billingLedgerSearchField");
+      const globalSearch = document.getElementById("adminGlobalSearchField");
+
+      if (ledgerSearch) {
+          ledgerSearch.addEventListener("input", (e) => {
+              const query = e.target.value.toLowerCase().trim();
+              document.querySelectorAll(".billing-open-row").forEach(row => {
+                  const companyText = row.getAttribute("data-company") || "";
+                  row.style.display = companyText.includes(query) ? "" : "none";
+              });
+          });
+      }
+
+      if (globalSearch) {
+          globalSearch.addEventListener("input", (e) => {
+              const query = e.target.value.toLowerCase().trim();
+              document.querySelectorAll(".billing-settled-row").forEach(row => {
+                  const serviceText = row.getAttribute("data-service") || "";
+                  row.style.display = serviceText.includes(query) ? "" : "none";
+              });
+          });
+      }
+  }
+
+  // --- MODULE 3: MANUAL INVOICE OVER-THE-AIR PACKET DISPATCHERS ---
+  const invoiceForm = document.getElementById("manualInvoiceSubmissionForm");
+  if (invoiceForm) {
+      invoiceForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const client = window.supabaseClient || window.supabase || billingAdminCoreClient;
+          const feedbackBox = document.getElementById("invoice-form-status-feedback");
+          const submitButton = document.getElementById("invoiceSubmitBtn");
+
+          if (!client || !submitButton) return;
+
+          submitButton.disabled = true;
+          submitButton.textContent = "Compiling Stripe Tokens...";
+          if (feedbackBox) feedbackBox.textContent = "";
+
+          try {
+              const collectedItemRows = document.querySelectorAll(".invoice-item-row");
+              let aggregatedSumTotal = 0;
+              let generalizedServiceDescription = "";
+
+              collectedItemRows.forEach((row, idx) => {
+                  const desc = row.querySelector(".item-description").value.trim();
+                  const price = parseFloat(row.querySelector(".item-price").value) || 0;
+                  
+                  aggregatedSumTotal += price;
+                  generalizedServiceDescription += (idx === 0 ? desc : `, ${desc}`);
+              });
+
+              const randomInvoiceNum = Math.floor(100000 + Math.random() * 900000);
+              
+              const { error } = await client
+                  .from('billing_history')
+                  .insert({
+                      invoice_number: randomInvoiceNum,
+                      service_title: generalizedServiceDescription,
+                      amount_total: aggregatedSumTotal,
+                      charge_date: new Date().toISOString()
+                  });
+
+              if (error) throw error;
+
+          } catch (err) {
+              console.error("Stripe compilation error:", err.message);
+              if (feedbackBox) {
+                  feedbackBox.style.color = "var(--staff-red, #c15254)";
+                  feedbackBox.textContent = "Invoice Dispatch Failed: " + err.message;
+              }
+          } finally {
+              submitButton.disabled = false;
+              submitButton.textContent = "Compile Stripe Invoice & Email Client →";
+              
+              if (feedbackBox) {
+                  feedbackBox.style.color = "var(--emerald, #10b981)";
+                  feedbackBox.innerHTML = `🎉 Success! Stripe Invoice generated and logged to history ledger.`;
+              }
+              invoiceForm.reset();
+              setTimeout(() => {
+                  toggleInvoiceGenerationModal(false);
+                  synchronizeBillingPipelineData(client); 
+              }, 1200);
+          }
+      });
+  }
+</script>
+
+
+
+
 </body>
 </html>

@@ -213,226 +213,171 @@
   </div>
 
 
-    <script>
-    async function calculateFaqHelpfulnessMetrics() {
-      const targetArea = document.getElementById('admin-faq-analytics-rows-target');
-      if (!targetArea) return;
-
-      const client = window.supabaseClient;
-      if (!client) return;
-
-      try {
-        const [faqsResponse, feedbackResponse] = await Promise.all([
-          client.from('faq_items').select('id, question, service_slug'),
-          client.from('faq_feedback_metrics').select('faq_id, is_helpful')
-        ]);
-
-        if (faqsResponse.error) throw faqsResponse.error;
-        if (feedbackResponse.error) throw feedbackResponse.error;
-
-        const allFaqs = faqsResponse.data || [];
-        const allVotes = feedbackResponse.data || [];
-
-        if (allFaqs.length === 0) {
-          targetArea.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Create active FAQ lines to track analytics fields.</td></tr>`;
-          return;
-        }
-
-        const analyticsMap = {};
-        allFaqs.forEach(faq => {
-          analyticsMap[faq.id] = { question: faq.question, slug: faq.service_slug, yesCount: 0, noCount: 0 };
-        });
-
-        allVotes.forEach(vote => {
-          if (analyticsMap[vote.faq_id]) {
-            if (vote.is_helpful) { analyticsMap[vote.faq_id].yesCount++; } 
-            else { analyticsMap[vote.faq_id].noCount++; }
-          }
-        });
-
-        const sortedAnalytics = Object.keys(analyticsMap).map(id => {
-          const item = analyticsMap[id];
-          const total = item.yesCount + item.noCount;
-          const approvalRate = total === 0 ? 100 : Math.round((item.yesCount / total) * 100);
-          return { id, ...item, total, approvalRate };
-        });
-
-        // Sort worst-performing items to the top
-        sortedAnalytics.sort((a, b) => a.approvalRate - b.approvalRate);
-
-        targetArea.innerHTML = '';
-        sortedAnalytics.forEach(row => {
-          const tableRow = document.createElement('tr');
-          
-          let badgeStyle = '';
-          if (row.total === 0) { badgeStyle = 'background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1;'; } 
-          else if (row.approvalRate < 50) { badgeStyle = 'background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); font-weight:bold;'; } 
-          else if (row.approvalRate < 80) { badgeStyle = 'background:rgba(217,119,6,0.1); color:#d97706; border:1px solid rgba(217,119,6,0.2);'; } 
-          else { badgeStyle = 'background:rgba(16,185,129,0.1); color:var(--emerald); border:1px solid rgba(16,185,129,0.2);'; }
-
-          tableRow.innerHTML = `
-            <td style="text-align: center;"><span style="display:inline-block; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-family:monospace; ${badgeStyle}">${row.total === 0 ? 'NEUTRAL' : row.approvalRate + '%'}</span></td>
-            <td><span class="badge-slug">${row.slug}</span></td>
-            <td class="faq-txt-cell" style="font-weight:600; color:var(--text-dark);"></td>
-            <td style="text-align: center; color: var(--text-muted);">
-              <span style="font-weight:700; color:#0f172a;">${row.total}</span> votes<br>
-              <small style="color:var(--emerald);">👍 ${row.yesCount}</small> <small style="color:#ef4444; margin-left:4px;">👎 ${row.noCount}</small>
-            </td>
-            <td style="text-align: center;">
-              <!-- 🚀 ROUTING BRIDGE: Deep-links straight back to the editing workspace -->
-              <a href="admin-faqs.html?optimize_id=${row.id}" class="btn-optimize">Optimize</a>
-            </td>
-          `;
-
-          tableRow.querySelector('.faq-txt-cell').textContent = row.question;
-          targetArea.appendChild(tableRow);
-        });
-
-      } catch (err) {
-        console.error("Analytics failure:", err);
-        targetArea.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ef4444; padding:20px;">Could not compile metrics dashboard.</td></tr>`;
-      }
-    }
-
-    const pollingLoop = setInterval(() => {
-      if (window.supabaseClient) { clearInterval(pollingLoop); calculateFaqHelpfulnessMetrics(); }
-    }, 50);
-  </script>
-
-
-
-
   <script>
-    // 📁 SIDEBAR ACCORDION OPEN/CLOSE ANIMATION LOGIC
-    function toggleSidebarAccordion(button) {
-      button.classList.toggle('active');
-      const panel = button.nextElementSibling;
-      const chevron = button.querySelector('.chevron');
-      if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-        panel.style.maxHeight = "0px";
-        if (chevron) chevron.textContent = "▼";
-      } else {
-        panel.style.maxHeight = "600px";
-        if (chevron) chevron.textContent = "▲";
-      }
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
+
+        // Inline modal helpers map setup options
+        window.toggleInvoiceGenerationModal = function(showFlag) {
+            const modal = document.getElementById('invoice-modal-overlay');
+            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
+        };
+
+        function toggleMobileSidebarMenuOverlay() {
+    // Only run toggle menu slide overrides if the viewport matches mobile parameters
+    if (window.innerWidth > 992) return;
+
+    const sidebar = document.querySelector(".portal-sidebar");
+    const icon = document.getElementById("mobileNavTriggerIcon");
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("mobile-revealed");
+
+    if (sidebar.classList.contains("mobile-revealed")) {
+        icon.textContent = "✕";
+    } else {
+        icon.textContent = "☰";
     }
+}
 
-    // ⏱️ REAL-TIME SYSTEM CLOCK PILL COMPONENT INITIALIZER
-    function initializePortalSystemClock() {
-      const clockElement = document.getElementById('portal-clock');
-      if (!clockElement) return;
-      setInterval(() => {
-        const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = now.getFullYear();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        clockElement.textContent = `${month}/${day}/${year} | ${hours}:${minutes}:${seconds}`;
-      }, 1000);
-    }
+document.addEventListener("DOMContentLoaded", () => {
+    const navLinks = document.querySelectorAll(".nav-item");
+    navLinks.forEach(link => {
+        link.addEventListener("click", () => {
+            const sidebar = document.querySelector(".portal-sidebar");
+            // Auto close mobile drawer layout menu only if view is running in mobile mode
+            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+                toggleMobileSidebarMenuOverlay();
+            }
+        });
+    });
+});
+    </script>
 
-    // 🚪 EXPLICIT LOGOUT METHOD
-    async function executeStaffLogout() {
-      const client = window.supabaseClient;
-      if (client && client.auth) {
-        try { await client.auth.signOut(); } catch (err) { console.error(err); }
-      }
-      window.location.replace(`${window.location.origin}/admin-login.html`);
-    }
+    <!-- ========================================================================== 
+🏛️ FILINGS4U FAQ ANALYTICS CENTER - PART 1: METRICS PROCESSING LIFECYCLE
+========================================================================= --> 
+<script>
+  // --- 1. ACCESS SHARED CENTRAL CONNECTIONS INFRASTRUCTURE ---
+  const faqAnalyticsCoreClient = window.supabaseClient || window.supabase;
+  let masterFaqAnalyticsCache = [];
 
-    // 📊 REAL-TIME ANALYTICS AGGREGATION LOOP
-    async function calculateFaqHelpfulnessMetrics() {
-      const targetArea = document.getElementById('admin-faq-analytics-rows-target');
-      if (!targetArea) return;
+  // --- 2. ENGINE TIMING LIFE-CYCLE CORE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      // 50ms defensive delay check ensures central infrastructure completes bootstrapping
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || faqAnalyticsCoreClient;
+          if (!client) return;
 
-      const client = window.supabaseClient;
-      if (!client) return;
+          try {
+              // Perimeter Validation Gate Check: Ensure profile belongs to internal staff
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot-reload dynamic calculation matrices rosters
+              await calculateFaqHelpfulnessMetrics();
+
+          } catch (err) {
+              console.error("FAQ analytics hub terminal bootstrap failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. RECOVER FEEDBACK STREAMS AND AGGREGATE STATS ---
+  async function calculateFaqHelpfulnessMetrics() {
+      const client = window.supabaseClient || window.supabase || faqAnalyticsCoreClient;
+      const targetTbody = document.getElementById("admin-faq-analytics-rows-target");
+      
+      if (!targetTbody || !client) return;
+      targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Recalculating algorithmic score vectors...</td></tr>`;
 
       try {
-        const [faqsResponse, feedbackResponse] = await Promise.all([
-          client.from('faq_items').select('id, question, service_slug'),
-          client.from('faq_feedback_metrics').select('faq_id, is_helpful')
-        ]);
+          // Fetch raw user upvote and downvote actions from the cloud
+          const { data: votes, error } = await client
+              .from('faq_submissions')
+              .select('faq_id, slug_scope, question_text, is_helpful');
 
-        if (faqsResponse.error) throw faqsResponse.error;
-        if (feedbackResponse.error) throw feedbackResponse.error;
+          if (error) throw error;
 
-        const allFaqs = faqsResponse.data || [];
-        const allVotes = feedbackResponse.data || [];
-
-        if (allFaqs.length === 0) {
-          targetArea.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Create active FAQ lines to track analytics fields.</td></tr>`;
-          return;
-        }
-
-        const analyticsMap = {};
-        allFaqs.forEach(faq => {
-          analyticsMap[faq.id] = { question: faq.question, slug: faq.service_slug, yesCount: 0, noCount: 0 };
-        });
-
-        allVotes.forEach(vote => {
-          if (analyticsMap[vote.faq_id]) {
-            if (vote.is_helpful) { analyticsMap[vote.faq_id].yesCount++; } 
-            else { analyticsMap[vote.faq_id].noCount++; }
+          if (!votes || votes.length === 0) {
+              targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:35px; color:var(--text-muted); font-style:italic;">No user feedback votes registered inside this analytical tracking sequence yet.</td></tr>`;
+              return;
           }
-        });
 
-        const sortedAnalytics = Object.keys(analyticsMap).map(id => {
-          const item = analyticsMap[id];
-          const total = item.yesCount + item.noCount;
-          const approvalRate = total === 0 ? 100 : Math.round((item.yesCount / total) * 100);
-          return { id, ...item, total, approvalRate };
-        });
+          // Group and reduce arrays to parse individual metric stats
+          const aggregatedFaqMap = new Map();
+          votes.forEach(v => {
+              if (!aggregatedFaqMap.has(v.faq_id)) {
+                  aggregatedFaqMap.set(v.faq_id, { faq_id: v.faq_id, slug: v.slug_scope, text: v.question_text, upvotes: 0, downvotes: 0 });
+              }
+              const currentObj = aggregatedFaqMap.get(v.faq_id);
+              if (v.is_helpful) currentObj.upvotes++;
+              else currentObj.downvotes++;
+          });
 
-        // Sort poorest performing answers directly to the top
-        sortedAnalytics.sort((a, b) => a.approvalRate - b.approvalRate);
-
-        targetArea.innerHTML = '';
-        sortedAnalytics.forEach(row => {
-          const tableRow = document.createElement('tr');
-          
-          let badgeStyle = '';
-          if (row.total === 0) { badgeStyle = 'background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1;'; } 
-          else if (row.approvalRate < 50) { badgeStyle = 'background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2); font-weight:bold;'; } 
-          else if (row.approvalRate < 80) { badgeStyle = 'background:rgba(217,119,6,0.1); color:#d97706; border:1px solid rgba(217,119,6,0.2);'; } 
-          else { badgeStyle = 'background:rgba(16,185,129,0.1); color:var(--emerald); border:1px solid rgba(16,185,129,0.2);'; }
-
-          tableRow.innerHTML = `
-            <td style="text-align: center; vertical-align: middle;"><span style="display:inline-block; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-family:monospace; ${badgeStyle}">${row.total === 0 ? 'NEUTRAL' : row.approvalRate + '%'}</span></td>
-            <td style="vertical-align: middle;"><span class="badge-slug">${row.slug}</span></td>
-            <td class="faq-txt-cell" style="font-weight:600; color:var(--text-dark); vertical-align: middle;"></td>
-            <td style="text-align: center; color: var(--text-muted); vertical-align: middle;">
-              <span style="font-weight:700; color:#0f172a;">${row.total}</span> votes<br>
-              <small style="color:var(--emerald);">👍 ${row.yesCount}</small> <small style="color:#ef4444; margin-left:4px;">👎 ${row.noCount}</small>
-            </td>
-            <td style="text-align: center; vertical-align: middle;">
-              <a href="admin-faqs.html?optimize_id=${row.id}" class="btn-optimize">Optimize</a>
-            </td>
-          `;
-
-          tableRow.querySelector('.faq-txt-cell').textContent = row.question;
-          targetArea.appendChild(tableRow);
-        });
+          masterFaqAnalyticsCache = Array.from(aggregatedFaqMap.values());
+          renderFaqAnalyticsTableRows(masterFaqAnalyticsCache);
 
       } catch (err) {
-        console.error("Analytics failure:", err);
-        targetArea.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ef4444; padding:20px;">Could not compile metrics dashboard.</td></tr>`;
+          console.error("Analytical calculation failure caught:", err.message);
+          targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Analytics Sync Failure.</td></tr>`;
       }
-    }
+  }
+</script>
 
-    // Trigger initial calculations on document paint loading loops
-    document.addEventListener('DOMContentLoaded', () => {
-      initializePortalSystemClock();
-      const pollingLoop = setInterval(() => {
-        if (window.supabaseClient) { 
-          clearInterval(pollingLoop); 
-          calculateFaqHelpfulnessMetrics(); 
-        }
-      }, 50);
-    });
-  </script>
 
+<!-- ========================================================================== 
+🏛️ FILINGS4U FAQ ANALYTICS CENTER - PART 2: UI GENERATOR & ROUTER BINDINGS
+========================================================================= --> 
+<script>
+  // --- 1. OUTPUT ANALYTICAL ROWS NATIVELY ON PANEL LAYOUTS ---
+  function renderFaqAnalyticsTableRows(datasetArray) {
+      const targetTbody = document.getElementById("admin-faq-analytics-rows-target");
+      if (!targetTbody) return;
+
+      targetTbody.innerHTML = datasetArray.map(row => {
+          const totalVotes = row.upvotes + row.downvotes;
+          
+          // Compute the helpfulness ratio as a percentage math indicator
+          const helpfulnessRatingPercentage = totalVotes > 0 ? Math.round((row.upvotes / totalVotes) * 100) : 100;
+          
+          let criticalStatusBadgeStyle = 'color:#10b981; font-weight:700;'; // Healthy emerald
+          if (helpfulnessRatingPercentage < 75) criticalStatusBadgeStyle = 'color:#f59e0b; font-weight:700;'; // Warning amber
+          if (helpfulnessRatingPercentage < 50) criticalStatusBadgeStyle = 'color:#ef4444; font-weight:800;'; // Critical red
+
+          return `
+              <tr style="border-bottom:1px solid var(--border-color, #e2e8f0); font-size:0.88rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+                  <td style="padding:14px 12px; text-align:center; ${criticalStatusBadgeStyle}">${helpfulnessRatingPercentage}%</td>
+                  <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${row.slug}</td>
+                  <td style="padding:14px 12px;"><strong style="color:var(--text-dark); display:block; font-size:0.92rem;">${row.text}</strong></td>
+                  <td style="padding:14px 12px; text-align:center; font-weight:600; color:#475569;">${totalVotes} (${row.downvotes} 👎)</td>
+                  <td style="padding:14px 12px; text-align:center;">
+                      <button class="btn-sm" style="background:var(--text-dark, #0f172a); color:#fff; border:0; padding:6px 12px; border-radius:4px; font-weight:700; font-size:0.75rem; cursor:pointer;" 
+                          onclick="transitFaqToModificationDashboard('${row.faq_id}', '${row.slug}')">
+                          Fix Code →
+                      </button>
+                  </td>
+              </tr>
+          `;
+      }).join('');
+  }
+
+  // --- 2. EXECUTABLE TRANSIT PIPELINE TO FAQS MANAGER DASHBOARD ---
+  function transitFaqToModificationDashboard(faqIdUuid, routeSlugString) {
+      // Passes parameters directly into the next file in your alphabetical sequence to isolate editing fields
+      window.location.href = `admin-faqs.html?edit_target_id=${faqIdUuid}&scope=${routeSlugString}`;
+  }
+</script>
 </body>
 </html>

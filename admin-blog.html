@@ -806,6 +806,240 @@
   }, 50);
 </script>
 
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMIN BLOG CORES (Part 1: Synchronization Initializer)
+========================================================================== --> 
+<script>
+  // --- 1. GLOBAL WORKSPACE STORAGE STATES ---
+  const blogAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterBlogCacheArray = [];
+  let currentlyEditingArticleUuid = null;
+
+  // --- 2. ENGINE TIMING LIFE-CYCLE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || blogAdminCoreClient;
+          if (!client) return;
+
+          try {
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot-reload active articles matrix grid logs
+              await synchronizeArticlesLedgerInventory(client);
+
+          } catch (err) {
+              console.error("Blog engine initialization failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. CHARACTER COUNT MATRIX SUMMARY INDICATOR ---
+  function evaluateSummaryCharacterCount(inputDomElement) {
+      const counterNode = document.getElementById("blog-summary-current-count");
+      if (counterNode) {
+          counterNode.textContent = inputDomElement.value.length;
+      }
+  }
+
+  // --- 4. SYNCHRONIZE INSIGHTS CATALOG FROM DATABASE ---
+  async function synchronizeArticlesLedgerInventory(client) {
+      const targetBox = document.getElementById("live-blog-rows-target");
+      if (!targetBox) return;
+
+      try {
+          const { data: posts, error } = await client
+              .from('blog_posts')
+              .select('*')
+              .order('created_at', { ascending: false });
+
+          if (error) throw error;
+
+          masterBlogCacheArray = posts || [];
+          renderArticlesCatalogRows(masterBlogCacheArray);
+
+      } catch (err) {
+          console.error("Database tracking inventory fetch failure:", err.message);
+          targetBox.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--staff-red); padding:20px;">静态 Core Target Missing.</td></tr>`;
+      }
+  }
+</script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMIN BLOG CORES (Part 2: UI Elements Table Render & Filters)
+========================================================================== --> 
+<script>
+  // --- 1. RENDER DATABASE CATALOG ROWS NATIVELY ---
+  function renderArticlesCatalogRows(datasetArray) {
+      const targetBox = document.getElementById("live-blog-rows-target");
+      if (!targetBox) return;
+
+      if (datasetArray.length === 0) {
+          targetBox.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">No matching articles.</td></tr>`;
+          return;
+      }
+
+      targetBox.innerHTML = datasetArray.map(row => `
+          <tr style="border-bottom:1px solid var(--border-color); font-size:0.85rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+              <td style="padding:12px; font-family:monospace; font-weight:700; color:#475569;">/${row.slug}</td>
+              <td style="padding:12px; font-weight:600; color:#0a1f44;">${row.category}</td>
+              <td style="padding:12px; max-width:400px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  <strong style="color:var(--text-dark); display:block; margin-bottom:2px;">${row.title}</strong>
+                  <span style="color:var(--text-muted); font-size:0.78rem;">${row.summary}</span>
+              </td>
+              <td style="padding:12px; text-align:center; white-space:nowrap;">
+                  <button class="btn-sm" style="background:var(--text-dark); padding:4px 8px; margin-right:4px; cursor:pointer;" onclick="enableArticleEditFormMutation('${row.id}')">Edit</button>
+                  <button class="btn-sm" style="background:var(--staff-red); padding:4px 8px; cursor:pointer;" onclick="executeArticleDeletionMutation('${row.id}')">Delete</button>
+              </td>
+          </tr>
+      `).join('');
+  }
+
+  // --- 2. LIVE RADIAL CONTENT SEARCH FILTER ---
+  function executeLiveBlogSearchFilter(queryTokenText) {
+      const parsedToken = queryTokenText.toLowerCase().trim();
+      const filtered = masterBlogCacheArray.filter(post => 
+          post.title.toLowerCase().includes(parsedToken) ||
+          post.summary.toLowerCase().includes(parsedToken) ||
+          post.content.toLowerCase().includes(parsedToken)
+      );
+      renderArticlesCatalogRows(filtered);
+  }
+
+  // --- 3. LOAD VALUE METRICS INTO FORM INPUTS FOR MUTATION ---
+  function enableArticleEditFormMutation(postUuid) {
+      const match = masterBlogCacheArray.find(p => p.id === postUuid);
+      if (!match) return;
+
+      currentlyEditingArticleUuid = postUuid;
+
+      document.getElementById("publisher-form-title").textContent = `Edit Existing Article [ID: ${postUuid.slice(0,6).toUpperCase()}]`;
+      document.getElementById("publishSubmitBtn").textContent = "Save Over-The-Air Structural Updates 💾";
+
+      document.getElementById("blogTitle").value = match.title;
+      document.getElementById("blogCategory").value = match.category;
+      document.getElementById("blogSlug").value = match.slug;
+      document.getElementById("blogSummary").value = match.summary;
+      document.getElementById("blogContent").value = match.content;
+
+      document.getElementById("blog-summary-current-count").textContent = match.summary.length;
+      document.getElementById("publisher-form-title").scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMIN BLOG CORES (Part 3: Form Processing & DB Mutators)
+========================================================================== --> 
+<script>
+  // --- 1. GLOBAL FORM TRANSACTION SUBMISSION FLOW CONTROL ---
+  document.getElementById("masterLongBlogForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const client = window.supabaseClient || window.supabase || blogAdminCoreClient;
+      const submitBtn = document.getElementById("publishSubmitBtn");
+      const feedback = document.getElementById("publishFeedbackMsg");
+
+      if (!client || !submitBtn || !feedback) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Processing Content Encryption Packet...";
+      feedback.textContent = "";
+
+      try {
+          const title = document.getElementById("blogTitle").value.trim();
+          const category = document.getElementById("blogCategory").value;
+          const slug = document.getElementById("blogSlug").value;
+          const summary = document.getElementById("blogSummary").value.trim();
+          const content = document.getElementById("blogContent").value.trim();
+          const fileInput = document.getElementById("blogImageFile");
+
+          let uploadedMediaUrlString = null;
+
+          if (fileInput && fileInput.files.length > 0) {
+              const fileTarget = fileInput.files[0];
+              const fileExtension = fileTarget.name.split('.').pop();
+              const uniqueFileName = `${Date.now()}_cover.${fileExtension}`;
+
+              const { data: uploadData, error: uploadError } = await client.storage
+                  .from('blog-media-vault')
+                  .upload(uniqueFileName, fileTarget, { cacheControl: '3600', upsert: true });
+
+              if (uploadError) throw uploadError;
+
+              const { data: publicUrlData } = client.storage
+                  .from('blog-media-vault')
+                  .getPublicUrl(uniqueFileName);
+
+              uploadedMediaUrlString = publicUrlData.publicUrl;
+          }
+
+          const payloadDataBundle = { title, category, slug, summary, content };
+          if (uploadedMediaUrlString) payloadDataBundle.cover_image_url = uploadedMediaUrlString;
+
+          if (currentlyEditingArticleUuid) {
+              const { error } = await client
+                  .from('blog_posts')
+                  .update(payloadDataBundle)
+                  .eq('id', currentlyEditingArticleUuid);
+
+              if (error) throw error;
+              feedback.style.color = "var(--emerald)";
+              feedback.textContent = "🎉 Article updated over the air!";
+          } else {
+              const { error } = await client
+                  .from('blog_posts')
+                  .insert([payloadDataBundle]);
+
+              if (error) throw error;
+              feedback.style.color = "var(--emerald)";
+              feedback.textContent = "🚀 Brand new column published live!";
+          }
+
+          currentlyEditingArticleUuid = null;
+          document.getElementById("masterLongBlogForm").reset();
+          document.getElementById("publisher-form-title").textContent = "Draft New Article";
+          document.getElementById("publishSubmitBtn").textContent = "Publish Article Globally 🚀";
+          document.getElementById("blog-summary-current-count").textContent = "0";
+
+          await synchronizeArticlesLedgerInventory(client);
+
+      } catch (err) {
+          console.error("Blog transmission failure caught:", err.message);
+          feedback.style.color = "var(--staff-red)";
+          feedback.textContent = `Content processing error: ${err.message}`;
+      } finally {
+          submitBtn.disabled = false;
+      }
+  });
+
+  // --- 2. PURGE DATA ENTRY MUTATION ACTION ---
+  async function executeArticleDeletionMutation(postUuid) {
+      const client = window.supabaseClient || window.supabase || blogAdminCoreClient;
+      if (!client) return;
+
+      const deleteConfirmationCheck = confirm("⚠️ Permanently delete this article?");
+      if (!deleteConfirmationCheck) return;
+
+      try {
+          const { error } = await client
+              .from('blog_posts')
+              .delete()
+              .eq('id', postUuid);
+
+          if (error) throw error;
+
+          alert("Item voided successfully.");
+          await synchronizeArticlesLedgerInventory(client);
+
+      } catch (err) {
+          alert(`Deletion request aborted: ${err.message}`);
+      }
+  }
+</script>
+
 
 </body>
 </html>

@@ -131,21 +131,8 @@
         </main>
     </div>
 
-    <!-- 🎯 SYSTEM RUNTIME CONTROLLER ENGINE LINK -->
-    <script src="assets/js/portal-engine.js"></script>
-    <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
-    </script>
-
-    <script>
+ 
+   <script>
     // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
     function toggleSidebarAccordion(buttonElement) {
         buttonElement.classList.toggle('active');
@@ -218,8 +205,169 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-
 </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase;
+          const timeline = document.getElementById("filingTimeline");
+          if (!client || !timeline) return;
+
+          try {
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) return;
+
+              const { data: filings, error } = await client
+                  .from('filing_orders')
+                  .select('*')
+                  .eq('client_id', session.user.id)
+                  .order('updated_at', { ascending: false });
+
+              if (error) throw error;
+
+              if (!filings || filings.length === 0) {
+                  timeline.innerHTML = `<div style="text-align:center; padding:30px; color:#888;">No active filings are in progress.</div>`;
+                  return;
+              }
+
+              timeline.innerHTML = filings.map(item => `
+                  <div class="timeline-item visual-card">
+                      <div class="timeline-header" style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                          <h4 style="margin:0; font-weight:700;">${item.service_title}</h4>
+                          <span class="status-pill ${String(item.status).toLowerCase()}">${item.status}</span>
+                      </div>
+                      <p style="margin:0; font-size:0.85rem; color:#64748b;">${item.status_description || 'In system parameter state review.'}</p>
+                      <small style="display:block; margin-top:6px; color:#94a3b8;">Updated: ${new Date(item.updated_at).toLocaleDateString()}</small>
+                  </div>
+              `).join('');
+          } catch (err) {
+              console.error("Timeline engine failure:", err);
+          }
+      }, 50);
+  });
+</script>
+
+<script>
+  // --- 1. GLOBAL WORKSPACE STORAGE STATES ---
+  let currentlySelectedFilingId = null;
+
+  // --- 2. ENGINE BOOTSTRAPPER LAUNCH OVER THE AIR ---
+  document.addEventListener('DOMContentLoaded', () => {
+      // 50ms defensive delay check ensures central infrastructure boots first
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase;
+          const leftTableBody = document.getElementById("productionFilingsTable");
+          
+          if (!leftTableBody) {
+              console.error("Layout Error: Target element #productionFilingsTable is missing from DOM.");
+              return;
+          }
+
+          if (!client) {
+              leftTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#ef4444; padding:20px;">Connection failure. Please reload the console.</td></tr>`;
+              return;
+          }
+
+          try {
+              // Ensure authenticated portal credentials exist
+              const { data: { session }, error: sessionError } = await client.auth.getSession();
+              if (sessionError || !session) {
+                  window.location.href = 'portal-login.html';
+                  return;
+              }
+
+              // Query all active filing records owned by this account
+              const { data: filings, error: dbError } = await client
+                  .from('filing_orders')
+                  .select('id, service_title, tracking_number, status')
+                  .eq('client_id', session.user.id)
+                  .order('updated_at', { ascending: false });
+
+              if (dbError) throw dbError;
+
+              // Handle empty database ledger states gracefully
+              if (!filings || filings.length === 0) {
+                  leftTableBody.innerHTML = `
+                      <tr>
+                          <td colspan="3" style="text-align:center; padding:40px; color:#64748b;">
+                              <strong>No Active Filing Operations Found</strong>
+                              <p style="margin:5px 0 0 0; font-size:0.85rem; color:#94a3b8;">Purchase a service to track corporate submittals.</p>
+                          </td>
+                      </tr>`;
+                  return;
+              }
+
+              // Render left table rows with a click handler to load specific milestone timelines
+              leftTableBody.innerHTML = filings.map(row => {
+                  const statusClass = String(row.status).toLowerCase().replace(/\s+/g, '-');
+                  return `
+                      <tr style="cursor:pointer;" onclick="loadMilestoneTimelineLogs('${row.id}', this)" class="filing-data-row">
+                          <td><strong style="color:#0a1f44;">${row.service_title}</strong></td>
+                          <td><span style="font-family:monospace; font-size:0.85rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${row.tracking_number || 'Pending Assignment'}</span></td>
+                          <td><span class="status-pill status-${statusClass}">${row.status}</span></td>
+                      </tr>
+                  `;
+              }).join('');
+
+          } catch (err) {
+              console.error("Filing operations master fetch error:", err);
+              leftTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#ef4444; padding:20px;">Failed to synchronize pipeline rosters.</td></tr>`;
+          }
+      }, 50);
+  });
+
+  // --- 3. DYNAMIC INTERACTIVE ROW DETAIL LOADER ---
+  async function loadMilestoneTimelineLogs(filingId, rowDomElement) {
+      const client = window.supabaseClient || window.supabase;
+      const timelineBox = document.getElementById("productionFilingTimeline");
+      
+      if (!timelineBox || !client) return;
+
+      // Visual UI Feedback: Add active class row highlighting to the selected line item
+      document.querySelectorAll(".filing-data-row").forEach(r => r.style.background = "");
+      rowDomElement.style.background = "#f0fdf4"; // Light emerald green canvas pop highlight
+
+      currentlySelectedFilingId = filingId;
+      timelineBox.innerHTML = `<div style="text-align:center; padding:30px; color:#888;">Fetching historic pipeline traces...</div>`;
+
+      try {
+          // Query all historic milestone changes associated with this specific transaction entry ID
+          const { data: logs, error: logError } = await client
+              .from('filing_milestones_history')
+              .select('milestone_title, message_description, created_at')
+              .eq('filing_order_id', filingId)
+              .order('created_at', { ascending: false });
+
+          if (logError) throw logError;
+
+          if (!logs || logs.length === 0) {
+              timelineBox.innerHTML = `
+                  <div class="timeline-item" style="text-align:center; padding:30px; color:#64748b;">
+                      <h4>Initial Processing Stage</h4>
+                      <p>Filing order created safely. Documents are undergoing initial format review prior to state submission channels.</p>
+                  </div>`;
+              return;
+          }
+
+          // Inject chronological trace elements dynamically onto the right-side dashboard card area
+          timelineBox.innerHTML = logs.map(log => `
+              <div class="timeline-item" style="border-left:2px solid #10b981; padding-left:15px; margin-bottom:20px; position:relative;">
+                  <div style="width:10px; height:10px; background:#10b981; border-radius:50%; position:absolute; left:-6px; top:5px;"></div>
+                  <h4 style="margin:0 0 4px 0; font-size:0.95rem; font-weight:700; color:#0a1f44;">${log.milestone_title}</h4>
+                  <p style="margin:0 0 6px 0; font-size:0.85rem; color:#475569; line-height:1.5;">${log.message_description}</p>
+                  <small style="color:#94a3b8; font-size:0.78rem;">Timestamp: ${new Date(log.created_at).toLocaleString()}</small>
+              </div>
+          `).join('');
+
+      } catch (err) {
+          console.error("Timeline history load crash:", err);
+          timelineBox.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;">Error retrieving historic tracing vectors.</div>`;
+      }
+  }
+</script>
+
+
 
 </body>
 </html>

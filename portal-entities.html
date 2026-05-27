@@ -120,16 +120,6 @@
         </main>
     </div>
 
-    <script src="assets/js/portal-engine.js"></script>
-    <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
-            else { panel.style.maxHeight = panel.scrollHeight + "px"; }
-        }
-    </script>
-
     <script>
     // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
     function toggleSidebarAccordion(buttonElement) {
@@ -202,9 +192,129 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
-
-
 </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase;
+          const tableBody = document.getElementById("entitiesTableBody");
+          if (!client || !tableBody) return;
+
+          try {
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'portal-login.html'; return; }
+
+              const { data: entities, error } = await client
+                  .from('entities')
+                  .select('*')
+                  .eq('owner_id', session.user.id)
+                  .order('entity_name', { ascending: true });
+
+              if (error) throw error;
+
+              if (!entities || entities.length === 0) {
+                  tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:#64748b;">No registered entities found.</td></tr>`;
+                  return;
+              }
+
+              tableBody.innerHTML = entities.map(ent => `
+                  <tr>
+                      <td><strong>${ent.entity_name}</strong></td>
+                      <td>${ent.state || 'DE'}</td>
+                      <td>${ent.structure_type || 'LLC'}</td>
+                      <td><span class="status-pill ${String(ent.status).toLowerCase()}">${ent.status || 'Active'}</span></td>
+                  </tr>
+              `).join('');
+          } catch (err) {
+              console.error("Entities fetch failure:", err);
+              tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">Failed to load data grids.</td></tr>`;
+          }
+      }, 50);
+  });
+</script>
+
+<script>
+  // --- 1. ACCESS SHARED GLOBAL DATABASE CONNECTIONS ---
+  const entityPortalClient = window.supabaseClient || window.supabase;
+
+  // --- 2. BOOTSTRAP ENTITY DATA ROSTER OVER THE AIR ---
+  document.addEventListener('DOMContentLoaded', () => {
+      // Minor delay check ensures central infrastructure boots first
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || entityPortalClient;
+          const tableBody = document.getElementById("entitiesTableBody");
+          
+          if (!tableBody) {
+              console.error("Layout Exception: #entitiesTableBody element missing from view DOM rendering.");
+              return;
+          }
+
+          if (!client) {
+              tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">Connection failure. Please reload the console.</td></tr>`;
+              return;
+          }
+
+          try {
+              // Ensure active, authenticated portal credentials exist
+              const { data: { session }, error: sessionError } = await client.auth.getSession();
+              if (sessionError || !session) {
+                  window.location.href = 'portal-login.html';
+                  return;
+              }
+
+              const clientUserUuid = session.user.id;
+
+              // Query all corporate profiles purchased by this client account ID
+              const { data: entityRecords, error: dbError } = await client
+                  .from('entities')
+                  .select('entity_name, state, structure_type, status')
+                  .eq('owner_id', clientUserUuid)
+                  .order('entity_name', { ascending: true });
+
+              if (dbError) throw dbError;
+
+              // Handle empty database ledger states gracefully
+              if (!entityRecords || entityRecords.length === 0) {
+                  tableBody.innerHTML = `
+                      <tr>
+                          <td colspan="4" style="text-align:center; padding:45px; color:#64748b;">
+                              <div style="font-size:1.5rem; margin-bottom:8px;">🏢</div>
+                              <strong>No Registered Entities Found</strong>
+                              <p style="margin:5px 0 0 0; font-size:0.85rem; color:#94a3b8;">You haven't formed a business entity under this account profile yet.</p>
+                          </td>
+                      </tr>`;
+                  return;
+              }
+
+              // Map data columns directly into your HTML table columns layout rows
+              tableBody.innerHTML = entityRecords.map(ent => {
+                  const cleanedStatus = (ent.status || 'Active').trim();
+                  const badgeModifierClass = cleanedStatus.toLowerCase().replace(/\s+/g, '-');
+                  
+                  return `
+                      <tr>
+                          <td><strong style="color:#0a1f44; font-size:0.95rem;">${ent.entity_name}</strong></td>
+                          <td><span style="font-weight:600; text-transform:uppercase; color:#475569;">${ent.state || 'DE'}</span></td>
+                          <td><span style="font-size:0.85rem; background:#f1f5f9; padding:4px 8px; border-radius:4px; font-weight:500;">${ent.structure_type || 'LLC'}</span></td>
+                          <td><span class="status-pill status-${badgeModifierClass}">${cleanedStatus}</span></td>
+                      </tr>
+                  `;
+              }).join('');
+
+          } catch (err) {
+              console.error("Master Entities Ledger Sync Exception caught:", err);
+              tableBody.innerHTML = `
+                  <tr>
+                      <td colspan="4" style="text-align:center; color:#ef4444; font-weight:600; padding:25px;">
+                          ⚠️ System Sync Error: Failed to retrieve historical database rosters.
+                      </td>
+                  </tr>`;
+          }
+      }, 50);
+  });
+</script>
+
 
 </body>
 </html>

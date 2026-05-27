@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#10b981">
+  <!-- Chrome, Firefox, & Opera Mobile -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> 
+  <!-- Safari iOS Wrapper Engine Tracking -->
+  <meta name="msapplication-navbutton-color" content="#10b981"> 
+  <!-- Windows Phone Interface Target -->
+  <title>Customer Portal | filings4u</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+
+  <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+  <!-- FIXED: Embedded explicit async/defer loading properties to prevent CORS preflight blocking -->
+  <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/portal-engine.js"></script>
+  
+  <link rel="stylesheet" href="assets/css/portal-custom.css">
+</head>
+
+
+<body>
+
+    <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
+    <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
+        <span id="mobileNavTriggerIcon">☰</span> 
+        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
+    </button>
+    
+    <div class="dashboard-wrapper">
+         <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: #2ecc71 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION 1: My Profile & Services -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    My Account <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="client-dashboard.html?v=4.1" class="nav-item"><span>📊</span> Dashboard Home</a>
+                    <a href="portal-entities.html?v=4.1" class="nav-item"><span>🏢</span> My Registered Entities</a>
+                    <a href="portal-services.html?v=4.1" class="nav-item"><span>🛠️</span> Order New Services</a>
+                </div>
+                
+                <!-- ACCORDION 2: Filings & Progress -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Filings & Compliance <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-filings.html?v=4.1" class="nav-item"><span>⚙️</span> Active Orders</a>
+                    <a href="portal-compliance.html?v=4.1" class="nav-item"><span>🛡️</span> Compliance Tracker</a>
+                    <a href="portal-vault.html?v=4.1" class="nav-item active"><span>📂</span> Document Vault</a>
+                </div>
+
+                <!-- ACCORDION 3: Financials -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Billing & Invoices <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-account.html" class="nav-item"><span>💰</span> My Account</a>
+                    <a href="portal-order-history.html" class="nav-item"><span>💸</span> Order History</a>
+                </div>
+
+                <!-- ACCORDION 4: Help Desk -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Support <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-chat.html?v=4.1" class="nav-item"><span>💬</span> Live Chat Support</a>
+                    <a href="portal-knowledgebase.html?v=4.1" class="nav-item"><span>📰</span> Help Resources</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <div class="secure-badge-container">
+                    <div class="secure-pulse-dot"></div>
+                    <span class="secure-badge-text">Secure Session</span>
+                </div>
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
+
+
+<!-- ========================================================================== 
+🏢 FILINGS4U MAIN CLIENT WORKSPACE (Unified Layout Container Lock) 
+========================================================================== --> 
+
+<main class="portal-main" style="width:100%; padding:30px 20px; box-sizing:border-box;">
+    <header class="portal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:30px;">
+        <div>
+            <h1 style="margin:0 0 5px 0; font-size:1.6rem; font-weight:800; color:#0a1f44;">Live Notifications Center</h1>
+            <p style="margin:0; font-size:0.9rem; color:#64748b;">Instant over-the-air tracking status updates injected by administration supervisors</p>
+        </div>
+        <div class="header-clock-pill">⏱️ <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+    </header>
+
+    <div class="visual-card" style="background:#ffffff; padding:25px; border:1px solid #e2e8f0; border-radius:8px; width:100%; box-sizing:border-box;">
+        <div id="liveNotificationsContainer" style="display:flex; flex-direction:column; gap:15px;">
+            <div style="text-align:center; padding:30px; color:#94a3b8;">Establishing real-time data synchronization lanes...</div>
+        </div>
+    </div>
+
+</main>
+
+    </div>
+
+
+<script>
+  let activeNotificationsChannel = null;
+
+  document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase;
+          if (!client) return;
+
+          try {
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = "portal-login.html"; return; }
+
+              const userUuid = session.user.id;
+
+              // Step A: Hot reload current state listings on viewport generation
+              await syncNotificationsUIView(client, userUuid);
+
+              // Step B: Set up real-time socket connections to capture new entries immediately
+              activeNotificationsChannel = client
+                  .channel(`realtime_alerts_${userUuid}`)
+                  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'portal_notifications', filter: `client_id=eq.${userUuid}` }, (payload) => {
+                      // Instantly insert the new notification at the top of the interface
+                      injectNotificationBubbleToUI(payload.new);
+                      triggerFlashAudioCue();
+                  })
+                  .subscribe();
+
+          } catch (err) {
+              console.error("Notification system runtime error:", err.message);
+          }
+      }, 50);
+  });
+
+  async function syncNotificationsUIView(client, userUuid) {
+      const container = document.getElementById("liveNotificationsContainer");
+      if (!container) return;
+
+      const { data: alerts, error } = await client
+          .from('portal_notifications')
+          .select('*')
+          .eq('client_id', userUuid)
+          .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!alerts || alerts.length === 0) {
+          container.innerHTML = `<div style="text-align:center; padding:30px; color:#64748b; font-weight:500;">No account notifications found logged to this corporate profile history.</div>`;
+          return;
+      }
+
+      container.innerHTML = alerts.map(alert => `
+          <div class="notification-alert-row" style="padding:15px; border:1px solid #e2e8f0; border-radius:6px; background:${alert.is_read ? '#ffffff' : '#f0fdf4'}; border-left:4px solid ${alert.is_read ? '#cbd5e1' : '#10b981'}; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                  <strong style="display:block; color:#0a1f44; font-size:0.95rem; margin-bottom:3px;">${alert.title}</strong>
+                  <p style="margin:0; color:#475569; font-size:0.88rem; line-height:1.4;">${alert.message}</p>
+                  <small style="color:#94a3b8; font-size:0.75rem; display:block; margin-top:5px;">Time logged: ${new Date(alert.created_at).toLocaleString()}</small>
+              </div>
+              ${!alert.is_read ? `<button class="btn-sm" style="background:#64748b; padding:4px 8px; font-size:0.75rem;" onclick="markNotificationAsRead('${alert.id}', this)">Dismiss</button>` : ''}
+          </div>
+      `).join('');
+  }
+
+  function injectNotificationBubbleToUI(newAlert) {
+      const container = document.getElementById("liveNotificationsContainer");
+      const placeholder = container.querySelector("div");
+      if (placeholder && placeholder.textContent.includes("No account notifications")) { container.innerHTML = ""; }
+
+      const rawHtmlDiv = document.createElement("div");
+      rawHtmlDiv.style.cssText = "padding:15px; border:1px solid #e2e8f0; border-radius:6px; background:#f0fdf4; border-left:4px solid #10b981; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;";
+      rawHtmlDiv.innerHTML = `
+          <div>
+              <strong style="display:block; color:#0a1f44; font-size:0.95rem; margin-bottom:3px;">${newAlert.title}</strong>
+              <p style="margin:0; color:#475569; font-size:0.88rem; line-height:1.4;">${newAlert.message}</p>
+              <small style="color:#94a3b8; font-size:0.75rem; display:block; margin-top:5px;">Time logged: ${new Date(newAlert.created_at).toLocaleString()}</small>
+          </div>
+          <button class="btn-sm" style="background:#64748b; padding:4px 8px; font-size:0.75rem;" onclick="markNotificationAsRead('${newAlert.id}', this)">Dismiss</button>
+      `;
+      container.insertBefore(rawHtmlDiv, container.firstChild);
+  }
+
+  async function markNotificationAsRead(alertId, buttonDomNode) {
+      const client = window.supabaseClient || window.supabase;
+      if (!client) return;
+      await client.from('portal_notifications').update({ is_read: true }).eq('id', alertId);
+      const row = buttonDomNode.closest(".notification-alert-row") || buttonDomNode.parentElement;
+      row.style.background = "#ffffff";
+      row.style.borderLeft = "4px solid #cbd5e1";
+      buttonDomNode.remove();
+  }
+
+  function triggerFlashAudioCue() {
+      console.log("🔊 Over-the-air flash sound alert triggered.");
+  }
+</script>
+
+
+
+
+
+
+</body>
+</html>

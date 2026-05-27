@@ -363,5 +363,142 @@
             }
         });
     </script>
+
+    <!-- ========================================================================== 
+🏛️ FILINGS4U STAFF LOGIN PERIMETER - PART 1: AUTHENTICATION INITIALIZER
+========================================================================== --> 
+<script>
+  // --- 1. ACCESS COMPATIBLE SINGLE CORE CLIENT INSTANCE ---
+  const adminLoginGatewayClient = window.supabaseClient || window.supabase;
+
+  // --- 2. ENGINE ENTRY POINT BOOTSTRAPPER ---
+  function startAdminLoginEngine() {
+      "use strict";
+      
+      const adminLoginForm = document.getElementById('adminLoginForm');
+      if (!adminLoginForm) return;
+
+      adminLoginForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const client = window.supabaseClient || window.supabase || adminLoginGatewayClient;
+          const emailInput = document.getElementById('email');
+          const passwordInput = document.getElementById('password');
+          const submitBtn = document.getElementById('loginBtn');
+          const errorMsgBox = document.getElementById('password-error');
+
+          if (!client || !emailInput || !passwordInput || !submitBtn || !errorMsgBox) return;
+
+          // Flush any previous input validation layout field-error decorations
+          emailInput.classList.remove('field-error');
+          passwordInput.classList.remove('field-error');
+          errorMsgBox.innerText = "";
+
+          const emailValue = emailInput.value.trim().toLowerCase();
+          const passwordValue = passwordInput.value;
+
+          let hasValidationErrors = false;
+          if (!emailValue) { emailInput.classList.add('field-error'); hasValidationErrors = true; }
+          if (!passwordValue) { passwordInput.classList.add('field-error'); hasValidationErrors = true; }
+          if (hasValidationErrors) return;
+
+          // Lock interactive submit mechanisms during active connection loops
+          submitBtn.disabled = true;
+          submitBtn.innerText = "Verifying Terminal Session...";
+
+          try {
+              // Action A: Attempt a fresh login session match via Supabase auth drivers
+              const { data, error: authError } = await client.auth.signInWithPassword({
+                  email: emailValue,
+                  password: passwordValue
+              });
+
+              if (authError) throw authError;
+
+              if (!data || !data.user || !data.user.email) {
+                  throw new Error("Authentication payload structure missing from system responses.");
+              }
+
+              const verifiedEmail = data.user.email.toLowerCase().trim();
+
+              // Action B: Enforce explicit perimeter checks to intercept standard clients
+              const isCorporateStaff = verifiedEmail.endsWith('@filings4u.com') || verifiedEmail === 'test-admin@filings4u.com';
+              
+              if (!isCorporateStaff) {
+                  // Generate an alert log entry to track unauthorized admin penetration attempts
+                  await logUnauthorizedPenetrationAlert(client, verifiedEmail);
+                  
+                  // Instantly terminate the unauthorized user cookie session parameters
+                  await client.auth.signOut();
+                  throw new Error("Access Denied: Customer accounts are rejected from this terminal panel landscape.");
+              }
+
+              // Route corporate profile straight through to the admin home console frame
+              window.location.assign('admin-dashboard.html');
+
+          } catch (err) {
+              console.warn("Security exception caught:", err.message);
+              emailInput.classList.add('field-error');
+              passwordInput.classList.add('field-error');
+              errorMsgBox.innerText = err.message || "Invalid terminal session variables provided.";
+              
+              submitBtn.disabled = false;
+              submitBtn.innerText = "Verify Terminal Session →";
+          }
+      });
+  }
+</script>
+
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U STAFF LOGIN PERIMETER - PART 2: PENETRATION LOGS & REDIRECTS
+========================================================================== --> 
+<script>
+  // --- 1. LOG UNAUTHORIZED PENETRATION ATTEMPTS ---
+  async function logUnauthorizedPenetrationAlert(client, rogueEmailStr) {
+      try {
+          await client.from('platform_security_telemetry_logs').insert({
+              action_type: 'BREACH_ATTEMPT',
+              actor_email: rogueEmailStr,
+              account_role: 'CLIENT_PROHIBITED',
+              message_details: `Standard client attempted penetration into internal staff terminal context landscape.`
+          });
+      } catch (telemetryError) {
+          console.warn("Security tracking loop dropped record write:", telemetryError.message);
+      }
+  }
+
+  // --- 2. AUTOMATIC PROFILE SESSION TRACKING OVERRIDES ---
+  document.addEventListener("DOMContentLoaded", () => {
+      // 100ms poller loop ensures global single-instance client registry exists before verification checks
+      const autoRedirectWatcher = setInterval(async () => {
+          const client = window.supabaseClient || window.supabase || adminLoginGatewayClient;
+          if (client) {
+              clearInterval(autoRedirectWatcher);
+              
+              try {
+                  const { data: { session } } = await client.auth.getSession();
+                  if (session && session.user && session.user.email) {
+                      const emailCheck = session.user.email.toLowerCase().trim();
+                      const isStaffActive = emailCheck.endsWith('@filings4u.com') || emailCheck === 'test-admin@filings4u.com';
+                      
+                      // Auto-redirect if a valid staff profile session already exists on the browser context
+                      if (isStaffActive) {
+                          window.location.assign('admin-dashboard.html');
+                      }
+                  }
+              } catch (sessionCheckError) {
+                  console.log("Stale login profile cleared safely.");
+              }
+          }
+      }, 100);
+      
+      // Fire sequential auth engine hook safely now that window parameters are established
+      if (typeof startAdminLoginEngine === "function") {
+          startAdminLoginEngine();
+      }
+  });
+</script>
+
 </body>
 </html>

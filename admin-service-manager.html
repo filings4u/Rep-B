@@ -396,70 +396,253 @@
         </main>
     </div>
 
-    <!-- CORE CONTROL TELEMETRY PIPELINES HOOK -->
-    <script src="assets/js/admin-engine.js"></script>
-    <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
 
-// Data hook mapping template for admin-service-manager.html
-async function hydrateFulfillmentPipelineRows() {
-    const client = window.supabaseClient;
-    const { data: tickets, error } = await client.from('user_filings_workspace').select('*');
-    const listNode = document.querySelector('.ticket-list');
-    
-    if (!error && tickets && listNode) {
-        listNode.innerHTML = tickets.map(t => `
-            <div class="ticket-row">
-                <div style="text-align:left;">
-                    <h3>${t.service_key.toUpperCase()} Core Structure Setup</h3>
-                    <span style="font-size:0.85rem; color:#64748b;">Entity Reference ID: #FIL-${t.id.substring(0,8).toUpperCase()} | Status: <strong>${t.status.toUpperCase()}</strong></span>
-                </div>
-                <div><span class="${t.status === 'paid' ? 'badge-active' : 'badge-pending'}">${t.status === 'paid' ? 'Ready to File' : 'Pending Payment'}</span></div>
-            </div>`).join('');
-    }
-}
+<script>
+  // --- 1. ACCESS COMPATIBLE SINGLE CORE CLIENT CONTEXT AREA ---
+  const masterAdminGatewayClient = window.supabaseClient || window.supabase;
+  function toggleSidebarAccordion(buttonElement) {
+      buttonElement.classList.toggle('active');
+      const panel = buttonElement.nextElementSibling;
+      if (panel && panel.style) {
+          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+              panel.style.maxHeight = "0px";
+          } else {
+              panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+      }
+  }
+
+  /**
+   * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
+   */
+  function toggleMobileSidebarMenuOverlay() {
+      if (window.innerWidth > 992) return;
+      const sidebar = document.querySelector(".portal-sidebar");
+      const icon = document.getElementById("mobileNavTriggerIcon");
+      if (!sidebar) return;
+      sidebar.classList.toggle("mobile-revealed");
+      if (sidebar.classList.contains("mobile-revealed")) {
+          if (icon) icon.textContent = "✕";
+      } else {
+          if (icon) icon.textContent = "☰";
+      }
+  }
+
+  // --- 2. UNIFIED LIFECYCLE CONTROLLER ENGINE ---
+  document.addEventListener("DOMContentLoaded", () => {
+      // 50ms defensive delay check ensures central script completes bootstrapping
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || masterAdminGatewayClient;
+          if (!client) {
+              console.error("Critical Failure: Administrative database bridge is offline.");
+              return;
+          }
+
+          // Hydrate metrics, dropdown lists, and real-time transaction logs
+          populateAdminClientDropdown(client);
+          streamLiveOperationalLedgers(client);
+
+      }, 50);
+
+      // Attach responsive closing triggers to mobile navigation links
+      document.querySelectorAll(".nav-item").forEach(link => {
+          link.addEventListener("click", () => {
+              const sidebar = document.querySelector(".portal-sidebar");
+              if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+                  toggleMobileSidebarMenuOverlay();
+              }
+          });
+      });
+  });
+
+  // --- 3. DYNAMIC SELECTION LOADER: POPULATE REGISTERED PROFILES ---
+  async function populateAdminClientDropdown(client) {
+      const dropdown = document.getElementById("adminClientDropdown");
+      if (!dropdown) return;
+
+      try {
+          // Extracts active corporate users directly from your client registry table
+          const { data: profiles, error } = await client
+              .from('orders')
+              .select('user_id, company_name')
+              .order('company_name', { ascending: true });
+
+          if (error) throw error;
+
+          if (!profiles || profiles.length === 0) {
+              dropdown.innerHTML = `<option value="">No active client accounts found on server</option>`;
+              return;
+          }
+
+          // Filter out duplicate user rows to keep options neat
+          const unifiedMap = new Map();
+          profiles.forEach(p => { if(p.user_id) unifiedMap.set(p.user_id, p.company_name || 'Unnamed Corporate Entity'); });
+
+          let dropdownOptionsMarkup = '<option value="">-- Choose Target Customer Account --</option>';
+          unifiedMap.forEach((companyName, userId) => {
+              dropdownOptionsMarkup += `<option value="${userId}">${companyName} [ID: ${userId.slice(0,6).toUpperCase()}]</option>`;
+          });
+
+          dropdown.innerHTML = dropdownOptionsMarkup;
+
+      } catch (err) {
+          console.warn("Dropdown profiles extraction failure:", err.message);
+          dropdown.innerHTML = `<option value="">Error pulling system accounts</option>`;
+      }
+  }
+</script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U WORKFLOW OPERATIONS (Part 1: Aligned Multi-Card Initializer)
+========================================================================== --> 
+<script>
+  // --- 1. GLOBAL REAL-TIME REPOSITORY STATES ---
+  const servicesAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterExecutionPipelineCache = [];
+
+  // Ghost firewall placeholders neutralize loose external home page function calls safely
+  window.streamLiveOperationalLedgers = window.streamLiveOperationalLedgers || function() { return; };
+  window.hydrateAdminDashboardMetrics = window.hydrateAdminDashboardMetrics || function() { return; };
+
+  // --- 2. ENGINE TIMING LIFE-CYCLE CONTROLLER INTIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      // 50ms defensive delay check ensures central config completes bootstrapping
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || servicesAdminCoreClient;
+          if (!client) return;
+
+          try {
+              // Session Perimeter Gate Guard Verification Check
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot-reload system order rows explicitly
+              await synchronizeServiceExecutionPipeline(client);
+              setupPipelineSearchFilter();
+
+          } catch (err) {
+              console.error("Fulfillment engine bootstrap failure caught:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. HARVEST COMPREHENSIVE SERVICE FILINGS JOBS ---
+  async function synchronizeServiceExecutionPipeline(client) {
+      const container = document.querySelector(".ticket-list");
+      if (!container) return;
+
+      try {
+          const { data: orders, error } = await client.from('orders').select('*');
+          if (error) throw error;
+
+          masterExecutionPipelineCache = orders || [];
+          renderServiceExecutionPipelineCards(masterExecutionPipelineCache);
+
+      } catch (err) {
+          console.error("Execution pipeline extraction crash:", err.message);
+          container.innerHTML = `<div style="text-align:center; color:var(--staff-red); padding:30px; font-weight:700;">⚠️ Fulfillment Stream Alignment Sync Error.</div>`;
+      }
+  }
+</script>
 
 
-function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
+<!-- ========================================================================== 
+🏛️ FILINGS4U WORKFLOW OPERATIONS (Part 2: Isolated Card Elements Renderer)
+========================================================================== --> 
+<script>
+  // --- 1. RENDER ROW ELEMENT CARDS NATIVELY WITHOUT CLOSURE OVERLAPS ---
+  function renderServiceExecutionPipelineCards(datasetArray) {
+      const container = document.querySelector(".ticket-list");
+      if (!container) return;
 
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
+      if (datasetArray.length === 0) {
+          container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">No active fulfillment orders match the filter constraints parameters.</div>`;
+          return;
+      }
 
-    sidebar.classList.toggle("mobile-revealed");
+      container.innerHTML = datasetArray.map(job => {
+          const formattedDate = new Date(job.created_at || job.inserted_at || Date.now()).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'});
+          const currentStatus = job.status || job.tax_id_status || 'Lead Entry';
+          
+          const stateCodeValue = String(job.state || job.jurisdiction_state || 'US').toUpperCase();
+          const productPackageName = job.service || job.service_title || 'Fulfillment Item';
 
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
+          return `
+              <div class="ticket-row" style="background:#ffffff; border:1px solid var(--border-color, #e2e8f0); border-radius:8px; padding:20px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                  <div style="text-align: left;">
+                      <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:6px;">
+                          ${stateCodeValue} JURISDICTION
+                      </span>
+                      <h3 style="margin:0 0 4px 0; font-size:1.1rem; font-weight:800; color:var(--text-dark, #0f172a);">${productPackageName}</h3>
+                      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+                          Client Target: <strong>${job.company_name}</strong> | Logged: ${formattedDate}
+                      </span>
+                      <br>
+                      <small style="font-family:monospace; color:#94a3b8; font-weight:600; font-size:0.72rem;">Tracking Reference ID: ${job.reference_id || 'N/A'}</small>
+                  </div>
+                  
+                  <!-- 🎯 FIX ENFORCED: Explicitly isolating event handlers passing row token unique values -->
+                  <div>
+                      <select class="search-input" style="height:36px; padding:0 10px !important; width:170px; background:#fff; font-size:0.8rem; font-weight:700; cursor:pointer;"
+                          onchange="executeAdministrativeStatusMutation('${job.id}', this.value)">
+                          <option value="Lead Entry" ${currentStatus === 'Lead Entry' ? 'selected' : ''}>Lead Entry</option>
+                          <option value="Fulfillment Lane" ${currentStatus === 'Fulfillment Lane' ? 'selected' : ''}>Fulfillment Lane</option>
+                          <option value="Review State" ${currentStatus === 'Review State' ? 'selected' : ''}>Review State</option>
+                          <option value="COMPLETED" ${currentStatus === 'COMPLETED' ? 'selected' : ''}>COMPLETED ✓</option>
+                      </select>
+                  </div>
+              </div>`;
+      }).join('');
+  }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
+  // --- 2. LIVE FIELDLOOKUP TEXT INPUT FILTER ENGINE ---
+  function setupPipelineSearchFilter() {
+      const fieldInput = document.getElementById("adminGlobalSearchField");
+      if (!fieldInput) return;
 
-    </script>
+      fieldInput.addEventListener("input", (e) => {
+          const parsingToken = e.target.value.toLowerCase().trim();
+          
+          const filteredResults = masterExecutionPipelineCache.filter(job => {
+              const packageDescText = String(job.service || job.service_title || '').toLowerCase();
+              return String(job.company_name).toLowerCase().includes(parsingToken) || packageDescText.includes(parsingToken);
+          });
+          
+          renderServiceExecutionPipelineCards(filteredResults);
+      });
+  }
 
-    
+  // --- 3. MUTATE SELECTION STATUS CODE VALUES OVER-THE-AIR ---
+  async function executeAdministrativeStatusMutation(recordId, selectedStatusString) {
+      const client = window.supabaseClient || window.supabase || servicesAdminCoreClient;
+      if (!client) return;
+
+      try {
+          // 🚀 DATA LOCK: Updates both alternative status fields simultaneously to satisfy cross-dashboard parameters
+          const { error } = await client
+              .from('orders')
+              .update({ 
+                  status: selectedStatusString,
+                  tax_id_status: selectedStatusString 
+              })
+              .eq('id', recordId);
+
+          if (error) throw error;
+          
+          console.log("Fulfill status row successfully changed onto: " + selectedStatusString);
+          await synchronizeServiceExecutionPipeline(client); // Hot-reload active workspace panels elements
+
+      } catch (err) {
+          alert("Pipeline mutation aborted: " + err.message);
+      }
+  }
+</script>
+
+
+
 </body>
 </html>

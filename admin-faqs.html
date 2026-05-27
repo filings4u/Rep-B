@@ -606,573 +606,297 @@
 
   </div>
 
-  <!-- ⚙️ BACKEND DATA CONTROLLERS EXECUTION DESK -->
   <script>
-    let dbClient = null;
-    const toast = document.getElementById('status-notification-toast');
-    const rowsTarget = document.getElementById('live-faq-rows-target');
+        function toggleSidebarAccordion(buttonElement) {
+            buttonElement.classList.toggle('active');
+            const panel = buttonElement.nextElementSibling;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
 
-    function notify(message, isSuccess = true) {
-      toast.textContent = message;
-      toast.className = `status-toast ${isSuccess ? 'status-success' : 'status-error'}`;
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 5000);
-    }
+        // Inline modal helpers map setup options
+        window.toggleInvoiceGenerationModal = function(showFlag) {
+            const modal = document.getElementById('invoice-modal-overlay');
+            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
+        };
 
-    // Connect Engine Infrastructure to your unified global systems instance
-    function verifyDatabaseConnection() {
-      if (window.supabaseClient) {
-        dbClient = window.supabaseClient;
-        return true;
-      }
-      return false;
-    }
-
-    // Retrieve active faq records from server instances
-// Retrieve active faq records from server instances
-async function loadFaqGridInventory() {
-  if (!dbClient && !verifyDatabaseConnection()) return;
-  
-  try {
-    const { data: rows, error } = await dbClient
-      .from('faq_items')
-      .select('*')
-      .order('service_slug', { ascending: true })
-      .order('sort_order', { ascending: true });
-
-    if (error) throw error;
-
-    if (!rows || rows.length === 0) {
-      rowsTarget.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px 10px;">No operational FAQs found in table. Formulate one to deploy.</td></tr>`;
-      return;
-    }
-
- rowsTarget.innerHTML = '';
-rows.forEach(row => {
-  const tableRow = document.createElement('tr');
-  
-  tableRow.innerHTML = `
-    <td style="font-weight:700; color:var(--text-dark); text-align:center;">${row.sort_order}</td>
-    <td>
-      <div style="display: flex !important; align-items: center !important; gap: 4px !important;">
-        <span class="badge-slug">${row.service_slug}</span>
-        <button class="btn-copy-slug" title="Copy Slug Layout String" style="background: none !important; border: none !important; cursor: pointer !important; padding: 2px !important; font-size: 0.75rem !important; opacity: 0.6;">📋</button>
-      </div>
-    </td>
-    <td>
-      <div class="faq-target-q" style="font-weight:700; margin-bottom:4px; color:var(--text-dark);"></div>
-      <div class="faq-target-a" style="color:var(--text-muted); font-size:0.8rem; line-height:1.4;"></div>
-    </td>
-    <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
-      <button class="btn-edit" style="background:none; border:none; color:var(--emerald); font-weight:600; font-size:0.75rem; cursor:pointer; padding:0; margin-right:8px;">Edit</button>
-      <button class="btn-delete" style="background:none; border:none; color:#ef4444; font-weight:600; font-size:0.75rem; cursor:pointer; padding:0;">Delete</button>
-    </td>
-  `;
-
-  // Bind raw text variables to block quote syntax breakout errors
-  tableRow.querySelector('.faq-target-q').textContent = row.question;
-  tableRow.querySelector('.faq-target-a').textContent = row.answer;
-
-  // 📋 FIXED CLIPBOARD ENGINE: Works across both localhost http and production https domains
-  const copyBtn = tableRow.querySelector('.btn-copy-slug');
-  copyBtn.addEventListener('click', () => {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      // Modern standard pipeline encryption path
-      navigator.clipboard.writeText(row.service_slug).then(() => {
-        copyBtn.textContent = '✅';
-        setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
-      }).catch(err => console.error("Clipboard failure:", err));
-    } else {
-      // Robust structural fallback path for legacy browsers and standard HTTP connections
-      const textNodeTextArea = document.createElement('textarea');
-      textNodeTextArea.value = row.service_slug;
-      textNodeTextArea.style.position = 'fixed'; 
-      document.body.appendChild(textNodeTextArea);
-      textNodeTextArea.select();
-      try {
-        document.execCommand('copy');
-        copyBtn.textContent = '✅';
-        setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
-      } catch (fallbackError) {
-        console.error("Alternative extraction matrix block failed:", fallbackError);
-      }
-      document.body.removeChild(textNodeTextArea);
-    }
-  });
-
-  // Safe parameters scope mapping listeners
-  tableRow.querySelector('.btn-edit').addEventListener('click', () => {
-    openFaqEditingSession(row.id, row.question, row.answer, row.service_slug, row.sort_order);
-  });
-
-  tableRow.querySelector('.btn-delete').addEventListener('click', () => {
-    dropDatabaseRow(row.id);
-  });
-
-  rowsTarget.appendChild(tableRow);
-});
-
-  } catch (err) {
-    console.error("Pipeline Sync Failure:", err);
-    rowsTarget.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444;">Could not pull data rows from Supabase. Ensure table structure is active.</td></tr>`;
-  }
-}
-
-
-    // Insert statement action handler routines
- async function handleFormSubmission(event) {
-  event.preventDefault();
-  if (!dbClient && !verifyDatabaseConnection()) return;
-
-  const submitBtn = event.target.querySelector('.btn-submit');
-  const isEditingMode = (activeEditingRowId !== null);
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = isEditingMode ? 'Updating Storage Layer...' : 'Pushing Data Row...';
-
-  const payload = {
-    question: document.getElementById('faq-question').value.trim(),
-    answer: document.getElementById('faq-answer').value.trim(),
-    service_slug: document.getElementById('faq-slug').value,
-    sort_order: parseInt(document.getElementById('faq-order').value, 10) || 1
-  };
-
-  try {
-    let queryResponseError = null;
-
-    if (isEditingMode) {
-      // Execute explicit structural patch routine updates
-      const { error } = await dbClient
-        .from('faq_items')
-        .update(payload)
-        .eq('id', activeEditingRowId);
-        
-      queryResponseError = error;
-    } else {
-      // Run normal raw entry injection blocks
-      const { error } = await dbClient
-        .from('faq_items')
-        .insert([payload]);
-        
-      queryResponseError = error;
-    }
-
-    if (queryResponseError) throw queryResponseError;
-
-    notify(isEditingMode ? "FAQ updated completely." : "FAQ record injected perfectly into active cloud state variables.");
-    
-    // Drop edit lock constraints and clear inputs out
-    closeFaqEditingSession();
-    
-    // Refresh display layout states
-    await loadFaqGridInventory();
-  } catch (err) {
-    notify(`Form execution error rejection: ${err.message || err}`, false);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = activeEditingRowId ? 'Save Record Changes' : 'Push Record Entry';
-  }
-}
-
-    // Clear record arrays row handler engine block
-    async function dropDatabaseRow(id) {
-      if (!confirm("Are you absolutely sure you want to drop this FAQ row variant item?")) return;
-      if (!dbClient && !verifyDatabaseConnection()) return;
-
-      try {
-        const { error } = await dbClient
-          .from('faq_items')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
-
-        notify("Selected table array data row deleted entirely.");
-        await loadFaqGridInventory();
-      } catch (err) {
-        notify(`Deletion failure routine: ${err.message || err}`, false);
-      }
-    }
-
-    // Polling sync loop ensures layout renders after the unified security check passes
-    const syncInterval = setInterval(() => {
-      if (verifyDatabaseConnection()) {
-        clearInterval(syncInterval);
-        loadFaqGridInventory();
-      }
-    }, 20);
-
-  (function() {
-      // FIXED: Swapped out placeholder domain string with your actual live project database URL
-      const supabaseUrl = 'https://lrbimrlbskjweynxlgas.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
-      
-      // Target global library context object natively generated by standard UMD bundles
-      if (typeof supabase !== 'undefined' && !window.supabase) {
-        window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-        console.log("🔥 Supabase central system connection mapping initialized successfully.");
-      } else if (typeof window.supabaseJs !== 'undefined' && !window.supabase) {
-        window.supabase = window.supabaseJs.createClient(supabaseUrl, supabaseAnonKey);
-        console.log("🔥 Supabase central system connection mapping initialized via fallback namespace.");
-      }
-    })();
-  </script>
-
-  <!-- 3. CENTRAL BUSINESS LOGIC ENGINE DISPATCHER -->
-  <script src="assets/js/admin-engine.js?v=refresh_fixed_ledger"></script>
-
-  <!-- 4. INTERACTIVE ACCORDION & REAL-TIME ALERTS ENGINE -->
-  <script>
-  /**
-   * 📁 SIDEBAR ACCORDION COLLAPSIBLE NAVIGATION HANDLERS
-   */
-  function toggleSidebarAccordion(buttonElement) {
-    buttonElement.classList.toggle('active');
-    const panel = buttonElement.nextElementSibling;
-    if (panel && panel.style) {
-      if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-        panel.style.maxHeight = "0px";
-      } else {
-        panel.style.maxHeight = panel.scrollHeight + "px";
-      }
-    }
-  }
-
-  /**
-   * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
-   */
-  function toggleMobileSidebarMenuOverlay() {
+        function toggleMobileSidebarMenuOverlay() {
+    // Only run toggle menu slide overrides if the viewport matches mobile parameters
     if (window.innerWidth > 992) return;
+
     const sidebar = document.querySelector(".portal-sidebar");
     const icon = document.getElementById("mobileNavTriggerIcon");
     if (!sidebar) return;
 
     sidebar.classList.toggle("mobile-revealed");
+
     if (sidebar.classList.contains("mobile-revealed")) {
-      if (icon) icon.textContent = "✕";
+        icon.textContent = "✕";
     } else {
-      if (icon) icon.textContent = "☰";
+        icon.textContent = "☰";
     }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const navLinks = document.querySelectorAll(".nav-item");
+    navLinks.forEach(link => {
+        link.addEventListener("click", () => {
+            const sidebar = document.querySelector(".portal-sidebar");
+            // Auto close mobile drawer layout menu only if view is running in mobile mode
+            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+                toggleMobileSidebarMenuOverlay();
+            }
+        });
+    });
+});
+    </script>
+
+    <!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE FAQS MATRIX (Part 1: Initializer & Sync Engines)
+========================================================================== --> 
+<script>
+  // --- 1. GLOBAL TERMINAL MEMORY MATRIX REGISTRIES ---
+  const faqAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterFaqsCacheArray = [];
+  let currentlyEditingFaqUuid = null;
+
+  // --- 2. ENGINE TIMING LIFE-CYCLE INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || faqAdminCoreClient;
+          if (!client) return;
+
+          try {
+              // Perimeter Validation Gate Check: Ensure profile belongs to internal staff
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot-reload active FAQ database records inventory
+              await synchronizeFaqsLedgerInventory(client);
+              checkForIncomingAnalyticsAuditTriggers();
+
+          } catch (err) {
+              console.error("FAQ master stack bootstrapping failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- 3. CHARACTER COUNT THRESHOLD LOGIC INDICATOR ---
+  function evaluateQuestionCharacterThreshold(inputDomNode) {
+      const currentCounterNode = document.getElementById("faq-current-count");
+      if (currentCounterNode) {
+          currentCounterNode.textContent = inputDomNode.value.length;
+      }
   }
 
-  /**
-   * 🧱 UNIFIED DOM LIFECYCLE CONTROLLER
-   * Ensures form fields physically exist in browser memory before attaching event listeners
-   */
-  document.addEventListener("DOMContentLoaded", () => {
-    const alertForm = document.getElementById('adminAlertForm');
-    const navLinks = document.querySelectorAll(".nav-item");
+  // --- 4. SYNCHRONIZE ROW INVENTORY DIRECTLY FROM SYSTEM CLOUDS ---
+  async function synchronizeFaqsLedgerInventory(client) {
+      const targetTbody = document.getElementById("live-faq-rows-target");
+      if (!targetTbody) return;
 
-    // 1. ATTACH THE REAL-TIME ALERT BROADCASTER PIPELINE SAFELY
-    if (alertForm) {
-      alertForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const client = window.supabase;
-        const statusBox = document.getElementById('alertStatus');
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const chosenUserEmail = document.getElementById('adminClientDropdown').value;
-        const noticeTitle = document.getElementById('alertTitle').value.trim();
-        const noticeMessage = document.getElementById('alertMessage').value.trim();
-
-        if (!statusBox || !submitBtn) return;
-
-        if (!chosenUserEmail || !noticeTitle || !noticeMessage) {
-          statusBox.style.color = "var(--staff-red, #ef4444)";
-          statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
-          return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Transmitting Wave Packet...";
-
-        try {
-          if (!client) {
-            throw new Error("Supabase system core driver script missing from window context memory arrays.");
-          }
-
-          const { error } = await client
-            .from('client_notifications')
-            .insert({
-              recipient_email: String(chosenUserEmail).toLowerCase().trim(),
-              title: noticeTitle,
-              message: noticeMessage,
-              is_read: false,
-              created_at: new Date().toISOString()
-            });
+      try {
+          const { data: faqs, error } = await client
+              .from('faqs')
+              .select('*')
+              .order('display_order', { ascending: true });
 
           if (error) throw error;
 
-          // Flash message live into the stream monitoring card box on screen
-          const liveCommsBox = document.getElementById("admin-inbox-live-stream-box");
-          if (liveCommsBox) {
-            const currentTime = new Date().toLocaleTimeString();
-            liveCommsBox.innerHTML = `<p style="margin:0 0 8px 0; color:#10b981; line-height:1.4;"><strong>[${currentTime}] Dispatched:</strong> To ${chosenUserEmail} - "${noticeTitle}"</p>` + liveCommsBox.innerHTML;
-          }
+          masterFaqsCacheArray = faqs || [];
+          renderFaqsLedgerMatrixTable(masterFaqsCacheArray);
 
-          statusBox.style.color = "var(--emerald, #10b981)";
-          statusBox.innerText = "🎉 Notification broadcast locked and delivered directly to customer feed!";
-          alertForm.reset();
-
-        } catch (err) {
-          console.error("Alert broadcast failed:", err.message);
-          statusBox.style.color = "var(--staff-red, #ef4444)";
-          statusBox.innerText = `Dispatch Failed: ${err.message}`;
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.innerText = "Push Real-Time Alert →";
-        }
-      });
-    }
-
-    // 2. ATTACH RESPONSIVE CLOSING TRIGGERS TO SIDEBAR LINKS
-    navLinks.forEach(link => {
-      link.addEventListener("click", () => {
-        const sidebar = document.querySelector(".portal-sidebar");
-        if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-          toggleMobileSidebarMenuOverlay();
-        }
-      });
-    });
-  });
-
-  </script>
-
-  <script>
-
-    async function executeStaffLogout() {
-    // Hooks directly into the client initiated by your unified script file
-    const client = window.supabaseClient;
-    if (client && client.auth) {
-      try {
-        await client.auth.signOut();
       } catch (err) {
-        console.error("Signout error caught:", err);
+          console.error("Database roster retrieval crash:", err.message);
+          targetTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Row pipeline synchronization offline.</td></tr>`;
       }
-    }
-    window.location.replace(`${window.location.origin}/admin-login.html`);
   }
-  </script>
+</script>
 
-  <script>
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE FAQS MATRIX (Part 2: UI Renderers & Filters)
+========================================================================== --> 
+<script>
+  // --- 1. OUTPUT MASTER DEADLOCK ROW DIRECTORIES NATIVELY ---
+  function renderFaqsLedgerMatrixTable(datasetArray) {
+      const targetTbody = document.getElementById("live-faq-rows-target");
+      if (!targetTbody) return;
 
-// Global memory layer variables to track editing matrix state parameters
-let activeEditingRowId = null;
+      if (datasetArray.length === 0) {
+          targetTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic;">No custom regulatory rows compiled inside this database scope view.</td></tr>`;
+          return;
+      }
 
-function openFaqEditingSession(id, question, answer, slug, order) {
-  activeEditingRowId = id;
+      targetTbody.innerHTML = datasetArray.map(row => `
+          <tr style="border-bottom:1px solid var(--border-color); font-size:0.85rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+              <td style="padding:12px; text-align:center; font-weight:700; color:var(--text-muted);">${row.display_order}</td>
+              <td style="padding:12px; font-family:monospace; font-weight:700; color:var(--text-muted);">/${row.slug_scope}</td>
+              <td style="padding:12px; max-width:420px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  <strong style="color:var(--text-dark); display:block; margin-bottom:2px;">${row.question}</strong>
+                  <span style="color:var(--text-muted); font-size:0.78rem;">${row.answer}</span>
+              </td>
+              <td style="padding:12px; text-align:center; white-space:nowrap;">
+                  <button type="button" class="btn-sm" style="background:var(--text-dark); padding:4px 10px; margin-right:4px; cursor:pointer;" onclick="enableFaqRecordRowEditForm('${row.id}')">Edit</button>
+                  <button type="button" class="btn-sm" style="background:var(--staff-red); padding:4px 10px; cursor:pointer;" onclick="executeFaqRecordDeletionMutation('${row.id}')">Void</button>
+              </td>
+          </tr>
+      `).join('');
+  }
 
-  document.getElementById('faq-question').value = question;
-  document.getElementById('faq-answer').value = answer;
-  document.getElementById('faq-slug').value = slug;
-  document.getElementById('faq-order').value = order;
-  
-  // Force character metric counter to analyze new values
-  evaluateQuestionCharacterThreshold(document.getElementById('faq-question'));
+  // --- 2. LIVE SELECTION GRID SEARCH FILTER ---
+  function executeLiveMatrixSearchFilter(queryTokenValue) {
+      const searchTokenParsed = queryTokenValue.toLowerCase().trim();
+      const filteredResults = masterFaqsCacheArray.filter(faq => 
+          faq.question.toLowerCase().includes(searchTokenParsed) ||
+          faq.answer.toLowerCase().includes(searchTokenParsed) ||
+          faq.slug_scope.toLowerCase().includes(searchTokenParsed)
+      );
+      renderFaqsLedgerMatrixTable(filteredResults);
+  }
 
-  const submitBtn = document.querySelector('.btn-submit');
-  submitBtn.textContent = 'Save Record Changes';
-  submitBtn.style.backgroundColor = 'var(--emerald)';
-
-  if (!document.getElementById('btn-cancel-edit')) {
-    const cancelBtn = document.createElement('button');
-    cancelBtn.id = 'btn-cancel-edit';
-    cancelBtn.type = 'button';
-    cancelBtn.textContent = 'Cancel Modifications';
-    cancelBtn.style.cssText = 'width:100% !important; background:#64748b !important; color:white !important; border:none !important; padding:10px !important; font-weight:700 !important; font-size:0.85rem !important; border-radius:6px !important; cursor:pointer !important; margin-top:8px !important;';
-    
-    // 🛡️ SECURITY SEALS: Ask user to confirm cancellation if text length holds content value
-    cancelBtn.onclick = function() {
-      const currentQ = document.getElementById('faq-question').value.trim();
-      const currentA = document.getElementById('faq-answer').value.trim();
+  // --- 3. 🎯 LINKED WITH ANALYTICS DESK: INTERCEPT INCOMING ROUTING TRIGGERS ---
+  function checkForIncomingAnalyticsAuditTriggers() {
+      const urlParameters = new URLSearchParams(window.location.search);
+      const incomingTargetFaqId = urlParameters.get("edit_target_id");
       
-      if (currentQ.length > 5 || currentA.length > 5) {
-        if (!confirm("Are you sure you want to discard unsaved updates? Current changes will be cleared out.")) return;
+      if (incomingTargetFaqId) {
+          // Fire hot-reload field focus modifier parameters
+          enableFaqRecordRowEditForm(incomingTargetFaqId);
+          displayOperationalStatusToast("🎯 Poor performing FAQ node locked. Ready for immediate text adjustment.");
       }
-      closeFaqEditingSession();
-    };
-    
-    document.getElementById('faq-injection-form').appendChild(cancelBtn);
   }
-  
-  document.getElementById('faq-question').focus();
-}
-
-
-function closeFaqEditingSession() {
-  activeEditingRowId = null;
-  
-  // Flush form matrix inputs cleanly
-  document.getElementById('faq-question').value = '';
-  document.getElementById('faq-answer').value = '';
-  document.getElementById('faq-slug').value = 'global';
-  document.getElementById('faq-order').value = '1';
-
-  // 🚀 AUTOMATION: Clear the search input box on session closing / edit completion
-  const searchBar = document.getElementById('adminGlobalSearchField');
-  if (searchBar) {
-    searchBar.value = '';
-    executeLiveMatrixSearchFilter(''); // Resets row visibilities instantly
-  }
-
-  // 📊 AUTOMATION: Reset the character counter tracking elements and warning styles cleanly
-  const countDisplay = document.getElementById('faq-current-count');
-  const warnPill = document.getElementById('faq-character-warn-pill');
-  if (countDisplay) {
-    countDisplay.textContent = '0';
-  }
-  if (warnPill) {
-    warnPill.style.color = '#64748b'; // Restores neutral gray color metrics
-  }
-
-  // Restore primary submit styles
-  const submitBtn = document.querySelector('.btn-submit');
-  submitBtn.textContent = 'Push Record Entry';
-  submitBtn.style.backgroundColor = 'var(--staff-red)';
-
-  const cancelBtn = document.getElementById('btn-cancel-edit');
-  if (cancelBtn) cancelBtn.remove();
-}
-
-
-/**
- * 🔍 LIVE MATRIX TABLE FUZZY KEYWORD FILTER SEARCH
- * Performs localized real-time input evaluations to screen displayed table rows
- */
-function executeLiveMatrixSearchFilter(searchQueryValue) {
-  const cleanTerm = searchQueryValue.toLowerCase().trim();
-  const tableRows = document.querySelectorAll('#live-faq-rows-target tr');
-
-  tableRows.forEach(row => {
-    // Skip status info or fallback rows missing appropriate data structures
-    if (row.cells.length < 4) return;
-
-    // Isolate textual content zones safely via specific grid indexes
-    const slugScopeText = row.cells[1].textContent.toLowerCase();
-    const entryBlockText = row.cells[2].textContent.toLowerCase();
-
-    // Check if search pattern is present inside any data node zones
-    const matchesQuery = slugScopeText.includes(cleanTerm) || entryBlockText.includes(cleanTerm);
-
-    // Dynamic visibility assignment routines
-    if (cleanTerm === "" || matchesQuery) {
-      row.style.display = "";
-    } else {
-      row.style.display = "none";
-    }
-  });
-}
-
-/**
- * 📊 MOBILE VIEWPORT CHARACTER LENGTH THRESHOLD WATCHER
- * Warns team if questions approach thresholds that layout templates break on
- */
-function evaluateQuestionCharacterThreshold(inputElementNode) {
-  const currentLength = inputElementNode.value.length;
-  const counterWrapper = document.getElementById('faq-character-warn-pill');
-  const numericDisplay = document.getElementById('faq-current-count');
-  
-  if (!counterWrapper || !numericDisplay) return;
-
-  // Realtime numerical node synchronization
-  numericDisplay.textContent = currentLength;
-
-  // Critical design constraint state alterations
-  if (currentLength >= 100) {
-    // Flash structural red warnings when crossing critical line wrapping breaks
-    counterWrapper.style.color = 'var(--staff-red)';
-    numericDisplay.textContent = `${currentLength} (Nearing length cap warning)`;
-  } else if (currentLength >= 75) {
-    // Warning yellow transitions
-    counterWrapper.style.color = '#d97706'; 
-  } else {
-    // Normal neutral grey operational state parameters
-    counterWrapper.style.color = '#64748b';
-  }
-}
-
-/**
- * 💾 SYSTEM AUTO-SAVE PERSISTENCE STORAGE CONTROLLER
- * Saves form input blocks in real time so unexpected refreshes do not delete workflows
- */
-function bindLiveFormCachePersistence() {
-  const qField = document.getElementById('faq-question');
-  const aField = document.getElementById('faq-answer');
-
-  if (!qField || !aField) return;
-
-  // 1. Recover content fragments out of browser storage arrays on document layout loads
-  if (!activeEditingRowId) {
-    if (localStorage.getItem('draft_faq_question')) {
-      qField.value = localStorage.getItem('draft_faq_question');
-      evaluateQuestionCharacterThreshold(qField);
-    }
-    if (localStorage.getItem('draft_faq_answer')) {
-      aField.value = localStorage.getItem('draft_faq_answer');
-    }
-  }
-
-  // 2. Realtime local database synchronization listeners
-  qField.addEventListener('input', () => {
-    if (!activeEditingRowId) localStorage.setItem('draft_faq_question', qField.value);
-  });
-
-  aField.addEventListener('input', () => {
-    if (!activeEditingRowId) localStorage.setItem('draft_faq_answer', aField.value);
-  });
-}
-
-// Wipe cache records cleanly upon explicit form clear configurations
-function clearPersistentDraftData() {
-  localStorage.removeItem('draft_faq_question');
-  localStorage.removeItem('draft_faq_answer');
-}
-
-// 🎯 Hook tracking initialization onto your DOM loading routines
-document.addEventListener('DOMContentLoaded', bindLiveFormCachePersistence);
-
-
-
-/**
- * 🔗 INCOMING ROUTING OPTIMIZATION BRIDGE TRACKER
- * Intercepts incoming URL variables to auto-trigger edit mode sessions instantly
- */
-async function checkIncomingOptimizationRouteParameters() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const targetId = urlParams.get('optimize_id');
-
-  if (!targetId || !window.supabaseClient) return;
-
-  try {
-    // Query individual record properties straight out of the table frame
-    const { data: faq, error } = await window.supabaseClient
-      .from('faq_items')
-      .select('*')
-      .eq('id', targetId)
-      .single();
-
-    if (error) throw error;
-    if (faq) {
-      // Initiate editing layout functions seamlessly
-      openFaqEditingSession(faq.id, faq.question, faq.answer, faq.service_slug, faq.sort_order);
-    }
-  } catch (err) {
-    console.error("Optimization link parsing failure:", err);
-  }
-}
-
-// Modify your existing connection watcher interval loop to check for deep links:
-const deepLinkSyncInterval = setInterval(() => {
-  if (window.supabaseClient && typeof loadFaqGridInventory === 'function') {
-    clearInterval(deepLinkSyncInterval);
-    // Fires after initialization rows render safely
-    setTimeout(checkIncomingOptimizationRouteParameters, 300);
-  }
-}, 50);
-
 </script>
 
 
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE FAQS MATRIX (Part 3: Form Processing & DB Mutators)
+========================================================================== --> 
+<script>
+  // --- 1. LOAD VALUE SELECTION PARAMETERS INTO FORM INPUTS FOR UPDATES ---
+  function enableFaqRecordRowEditForm(recordUuid) {
+      const matchedFaq = masterFaqsCacheArray.find(f => f.id === recordUuid);
+      if (!matchedFaq) return;
 
+      currentlyEditingFaqUuid = recordUuid;
+
+      // Swap Form Header Titles parameters
+      const formCardTitleNode = document.querySelector(".matrix-card .card-title");
+      const submitBtnNode = document.querySelector("#faq-injection-form .btn-submit");
+      
+      if (formCardTitleNode) formCardTitleNode.textContent = `Modify Record Row [ID: ${recordUuid.slice(0,6).toUpperCase()}]`;
+      if (submitBtnNode) {
+          submitBtnNode.textContent = "Save Over-The-Air Modifications 💾";
+          submitBtnNode.style.background = "#10b981";
+      }
+
+      // Populate input data fields natively
+      document.getElementById("faq-question").value = matchedFaq.question;
+      document.getElementById("faq-answer").value = matchedFaq.answer;
+      document.getElementById("faq-slug").value = matchedFaq.slug_scope;
+      document.getElementById("faq-order").value = matchedFaq.display_order;
+
+      // Reset character length warning metrics indicator
+      document.getElementById("faq-current-count").textContent = matchedFaq.question.length;
+      if (formCardTitleNode) formCardTitleNode.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // --- 2. GLOBAL FORM TRANSACTION OVERSIGHT SUBMISSION HANDLER ---
+  async function handleFormSubmission(event) {
+      event.preventDefault();
+      const client = window.supabaseClient || window.supabase || faqAdminCoreClient;
+      const submitBtn = document.querySelector("#faq-injection-form .btn-submit");
+
+      if (!client || !submitBtn) return;
+      submitBtn.disabled = true;
+
+      try {
+          const question = document.getElementById("faq-question").value.trim();
+          const answer = document.getElementById("faq-answer").value.trim();
+          const slug_scope = document.getElementById("faq-slug").value;
+          const display_order = parseInt(document.getElementById("faq-order").value) || 1;
+
+          const submissionPayloadDataBundle = { question, answer, slug_scope, display_order };
+
+          if (currentlyEditingFaqUuid) {
+              // Trigger row UPDATE transaction
+              const { error } = await client
+                  .from('faqs')
+                  .update(submissionPayloadDataBundle)
+                  .eq('id', currentlyEditingFaqUuid);
+
+              if (error) throw error;
+              displayOperationalStatusToast("🎉 Success! FAQ record parameters adjusted and synchronized globally.");
+          } else {
+              // Trigger row INSERT transaction
+              const { error } = await client
+                  .from('faqs')
+                  .insert([submissionPayloadDataBundle]);
+
+              if (error) throw error;
+              displayOperationalStatusToast("🚀 Success! New answer node appended live to database registries.");
+          }
+
+          // Reset complete layout form views context
+          currentlyEditingFaqUuid = null;
+          document.getElementById("faq-injection-form").reset();
+          
+          const defaultCardTitle = document.querySelector(".matrix-card .card-title");
+          if (defaultCardTitle) defaultCardTitle.textContent = "Append Record Row";
+          if (submitBtn) {
+              submitBtn.textContent = "Push Record Entry";
+              submitBtn.style.background = "";
+          }
+          document.getElementById("faq-current-count").textContent = "0";
+
+          await synchronizeFaqsLedgerInventory(client); // Hot-reload table listings
+
+      } catch (err) {
+          console.error("FAQ structural write error:", err.message);
+          alert(`Filing Aborted: ${err.message}`);
+      } finally {
+          submitBtn.disabled = false;
+      }
+  }
+
+  // --- 3. PURGE ROW DATA VECTOR FROM STORAGE LEDGER ---
+  async function executeFaqRecordDeletionMutation(recordUuid) {
+      const client = window.supabaseClient || window.supabase || faqAdminCoreClient;
+      if (!client) return;
+
+      const deleteConfirmationCheck = confirm("⚠️ Regulatory System Check: Are you absolutely certain you want to void and delete this FAQ row permanently from public view matrices?");
+      if (!deleteConfirmationCheck) return;
+
+      try {
+          const { error } = await client
+              .from('faqs')
+              .delete()
+              .eq('id', recordUuid);
+
+          if (error) throw error;
+
+          displayOperationalStatusToast("Item removed. Re-indexing data arrays...");
+          await synchronizeFaqsLedgerInventory(client);
+
+      } catch (err) {
+          alert(`Deletion intercept failure: ${err.message}`);
+      }
+  }
+
+  // --- 4. VISUAL NOTIFICATION FEEDBACK TOAST ---
+  function displayOperationalStatusToast(messageStr) {
+      const toastNode = document.getElementById("status-notification-toast");
+      if (toastNode) {
+          toastNode.textContent = messageStr;
+          toastNode.style.display = "block";
+          setTimeout(() => { toastNode.style.display = "none"; }, 4000);
+      }
+  }
+</script>
 </body>
 </html>

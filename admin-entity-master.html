@@ -388,7 +388,7 @@
                             </tr>
                         </thead>
                         <tbody id="adminEntityMasterTableBody">
-                            <tr><td colspan="5" class="table-loader" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">Connecting live formation vectors...</td></tr>
+                    
                         </tbody>
                     </table>
                 </div>
@@ -396,8 +396,7 @@
         </main>
     </div>
 
-    <!-- CORE TELEMETRY RECONCILIATION ENGINE TAG -->
-    <script src="assets/js/admin-engine.js"></script>
+    
     <script>
         // 📁 ACCORDION NAVIGATION FIXED CONTROLLER
         function toggleSidebarAccordion(buttonElement) {
@@ -485,5 +484,155 @@
             });
         });
     </script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U ENTITY MASTER REPOSITORY (Part 1: Persistent Synchronization)
+========================================================================== --> 
+<script>
+  // --- MODULE 1: GLOBAL PLATFORM MEMORY MATRIX REGISTRIES ---
+  const entityAdminMasterClient = window.supabaseClient || window.supabase;
+  let masterEntitiesRosterCache = [];
+  let persistentRenderIntervalLoop = null;
+
+  // --- MODULE 2: REVENUE LIFE-CYCLE INITIALIZATION ENGINE ---
+  document.addEventListener('DOMContentLoaded', () => {
+      // 50ms protective window ensures central setup completely boots first
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || entityAdminMasterClient;
+          if (!client) return;
+
+          try {
+              // Perimeter Access Control Validation Gate Check
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+
+              // Hot-reload global business formations directory lines
+              await synchronizeGlobalEntitiesLedger(client);
+              setupEntityMasterLiveFilters();
+
+          } catch (err) {
+              console.error("Entity master system boot failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- MODULE 3: RECOVER COMPREHENSIVE REVENUE HISTORY LOGS ---
+  async function synchronizeGlobalEntitiesLedger(client) {
+      try {
+          const { data: globalEntities, error } = await client
+              .from('orders')
+              .select('*');
+
+          if (error) throw error;
+
+          masterEntitiesRosterCache = globalEntities || [];
+          
+          // Clear any conflicting render intervals before establishing a fresh tracking loop
+          if (persistentRenderIntervalLoop) clearInterval(persistentRenderIntervalLoop);
+          
+          // 🚀 PERSISTENT PERSISTENCE WRAPPER: Enforces data grid visibility every 300 milliseconds 
+          // to instantly neutralize background script rewrites
+          persistentRenderIntervalLoop = setInterval(() => {
+              renderEntityMasterDirectoryRows(masterEntitiesRosterCache);
+          }, 300);
+
+      } catch (err) {
+          console.error("Global entities matrix extraction crash:", err.message);
+          const targetTbody = document.getElementById("adminEntityMasterTableBody");
+          if (targetTbody) {
+              targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Entity Master Directory Alignment Sync Error.</td></tr>`;
+          }
+      }
+  }
+</script>
+
+
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U ENTITY MASTER REPOSITORY (Part 2: Persistent Row Generation & Filters)
+========================================================================== --> 
+<script>
+  // --- MODULE 1: FORCE-INJECT REGISTERED ENTITY DATAS NATIVELY ---
+  function renderEntityMasterDirectoryRows(datasetArray) {
+      const targetTbody = document.getElementById("adminEntityMasterTableBody");
+      if (!targetTbody) return;
+
+      if (datasetArray.length === 0) {
+          // Verify to make sure we don't spam empty placeholders repeatedly
+          if (!targetTbody.innerHTML.includes("No corporate entity formations")) {
+              targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:35px; color:var(--text-muted); font-style:italic;">No corporate entity formations found matching current ledger filter scopes.</td></tr>`;
+          }
+          return;
+      }
+
+      // Compile design data nodes markup mapping standard parameter fallbacks
+      const generatedRowsHtmlMarkup = datasetArray.map(row => {
+          const currentStatusClean = (row.status || row.tax_id_status || 'Active').trim();
+          const badgeStyleClassModifier = currentStatusClean.toLowerCase().replace(/\s+/g, '-');
+          
+          const rawUserIdString = String(row.user_id || 'SYSTEM_SHELL');
+          const truncatedKeyText = rawUserIdString.length > 8 ? rawUserIdString.slice(0,8).toUpperCase() : rawUserIdString.toUpperCase();
+          
+          const formedStateCode = String(row.state || row.jurisdiction_state || row.state_code || 'DE').toUpperCase();
+          const productDescription = row.service || row.service_title || 'LLC Formation';
+          const businessStructureType = productDescription.toUpperCase().includes('CORP') ? 'C-CORP' : 'LLC';
+
+          return `
+              
+                  <td style="padding:14px 16px;"><strong style="color:var(--text-dark, #0f172a); font-size:0.95rem; display:block;">🏢 ${row.company_name || 'Inbound Corporate Lead'}</strong></td>
+                  <td style="padding:14px 16px; font-family:monospace; color:var(--text-muted); font-weight:600;"><span title="${rawUserIdString}">${truncatedKeyText}...</span></td>
+                  <td style="padding:14px 16px;"><span style="font-weight:700; text-transform:uppercase; color:#475569;">${formedStateCode}</span></td>
+                  <td style="padding:14px 16px;"><span style="font-size:0.8rem; background:#f1f5f9; padding:3px 8px; border-radius:4px; font-weight:600; color:#334155;">${businessStructureType}</span></td>
+                  <td style="padding:14px 16px; vertical-align:middle;">
+                      <span class="status-pill status-${badgeStyleClassModifier}" style="font-weight:700; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.3px;">
+                          ${currentStatusClean}
+                      </span>
+                  </td>
+              </tr>`;
+      }).join('');
+
+      // 🧠 DIRECT PROTECTION FORCE OVERRIDE: 
+      // If a background script has wiped the table inner HTML, override it and force re-inject instantly
+      if (targetTbody.innerHTML !== generatedRowsHtmlMarkup) {
+          targetTbody.innerHTML = generatedRowsHtmlMarkup;
+      }
+  }
+
+  // --- MODULE 2: LIVE SEARCH CONSOLE REGEX UTILITIES ---
+  function setupEntityMasterLiveFilters() {
+      const searchInputField = document.getElementById("adminGlobalSearchField");
+      if (!searchInputField) return;
+
+      searchInputField.addEventListener("input", (e) => {
+          const parsingSearchToken = e.target.value.toLowerCase().trim();
+          
+          const filteredResults = masterEntitiesRosterCache.filter(entity => {
+              const entityName = String(entity.company_name || '').toLowerCase();
+              const ownerId = String(entity.user_id || '').toLowerCase();
+              const state = String(entity.state || entity.jurisdiction_state || '').toLowerCase();
+              
+              return entityName.includes(parsingSearchToken) ||
+                     ownerId.includes(parsingSearchToken) ||
+                     state.includes(parsingSearchToken);
+          });
+          
+          // Clear active browser loop to let search filter input updates paint natively on views
+          if (persistentRenderIntervalLoop) clearInterval(persistentRenderIntervalLoop);
+          renderEntityMasterDirectoryRows(filteredResults);
+          
+          // Fall back to continuous loop if input field values are empty
+          if (!parsingSearchToken) {
+              persistentRenderIntervalLoop = setInterval(() => {
+                  renderEntityMasterDirectoryRows(masterEntitiesRosterCache);
+              }, 300);
+          }
+      });
+  }
+</script>
+
 </body>
 </html>

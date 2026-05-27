@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <meta name="theme-color" content="#10b981">                         <!-- Chrome, Firefox, & Opera Mobile -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Wrapper Engine Tracking -->
+    <meta name="msapplication-navbutton-color" content="#10b981">         <!-- Windows Phone Interface Target -->
+
+    
+    <title>Payment Methods | filings4u</title>
+    <link rel="stylesheet" href="assets/css/portal-custom.css">
+    <style>
+        .payment-card-strip { border: 1px solid var(--border-subtle); background:#ffffff; padding:16px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+        .billing-input-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:15px; }
+        .full-width-field { grid-column: span 2; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+     
+</head>
+<body>
+
+    <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
+    <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
+        <span id="mobileNavTriggerIcon">☰</span> 
+        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
+    </button>
+
+    <div class="dashboard-wrapper">
+        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: #2ecc71 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <!-- ACCORDION 1: My Profile & Services -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    My Account <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="client-dashboard.html?v=4.1" class="nav-item"><span>📊</span> Dashboard Home</a>
+                    <a href="portal-entities.html?v=4.1" class="nav-item"><span>🏢</span> My Registered Entities</a>
+                    <a href="portal-services.html?v=4.1" class="nav-item"><span>🛠️</span> Order New Services</a>
+                </div>
+                
+                <!-- ACCORDION 2: Filings & Progress -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Filings & Compliance <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-filings.html?v=4.1" class="nav-item"><span>⚙️</span> Active Orders</a>
+                    <a href="portal-compliance.html?v=4.1" class="nav-item"><span>🛡️</span> Compliance Tracker</a>
+                    <a href="portal-vault.html?v=4.1" class="nav-item active"><span>📂</span> Document Vault</a>
+                </div>
+
+                <!-- ACCORDION 3: Financials -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Billing & Invoices <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-account.html" class="nav-item"><span>💰</span> My Account</a>
+                    <a href="portal-invoices.html?v=4.1" class="nav-item"><span>💸</span> Order History</a>
+                </div>
+
+                <!-- ACCORDION 4: Help Desk -->
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)">
+                    Support <span class="chevron">▲</span>
+                </button>
+                <div class="accordion-panel" style="max-height: 600px;">
+                    <a href="portal-chat.html?v=4.1" class="nav-item"><span>💬</span> Live Chat Support</a>
+                    <a href="portal-knowledgebase.html?v=4.1" class="nav-item"><span>📰</span> Help Resources</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <div class="secure-badge-container">
+                    <div class="secure-pulse-dot"></div>
+                    <span class="secure-badge-text">Secure Session</span>
+                </div>
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
+
+        <!-- ========================================================================== 
+🏢 FILINGS4U UNIFIED MY ACCOUNT & FINANCIAL HUB (Part 1: Layout Framework) 
+========================================================================= --> 
+<main class="portal-main" style="width: 100% !important; max-width: 100% !important; margin: 0 auto !important; padding: 30px 20px !important; box-sizing: border-box !important;"> 
+    
+    <!-- SYSTEM WORKSPACE HEADER BRANDING --> 
+    <header class="portal-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; flex-wrap: wrap !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; border-bottom: 1px solid var(--border-color, #e2e8f0) !important; padding-bottom: 20px !important; margin-bottom: 35px !important;"> 
+        <div class="welcome-text" style="text-align: left !important;"> 
+            <h1 style="margin: 0 0 6px 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; color: #0a1f44 !important;">My Account &amp; Financial Hub</h1> 
+            <p style="margin: 0 !important; font-size: 0.9rem !important; color: #64748b !important;">Manage profile parameters, modify corporate cards, and view transactional historical invoices</p> 
+        </div> 
+
+        <!-- PRODUCTION SYSTEM UPPER-RIGHT CLOCK --> 
+        <div class="header-clock-pill" style="background: #ecfdf5 !important; border: 1px solid #a7f3d0 !important; padding: 10px 18px !important; border-radius: 30px !important; font-weight: 700 !important; font-size: 0.85rem !important; color: #10b981 !important; display: flex !important; align-items: center !important; gap: 8px !important; white-space: nowrap !important; margin-left: auto !important;"> 
+            <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span> 
+        </div> 
+    </header> 
+
+    <!-- ROW LEVEL 1: SECURE ACCOUNT IDENTITY PROFILE & GATEWAY CONNECTIONS -->
+    <section class="portal-content-layout" style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)) !important; gap: 25px !important; margin-bottom: 30px !important; width: 100% !important; box-sizing: border-box !important;">
+        
+        <!-- FORCED DISABLED PROFILE FIELDS -->
+        <div class="content-panel visual-card" style="padding: 25px !important; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <div class="panel-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
+                <h2 style="margin:0; font-size:1.15rem; font-weight:800; color:#0a1f44;">Corporate Profile Identity</h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:6px;">Registered Account Holder Name</label>
+                    <input type="text" id="lockedAccountName" class="search-input" style="width:100%; background:#f8fafc; color:#94a3b8; cursor:not-allowed; border:1px solid #e2e8f0; padding:12px; border-radius:6px; box-sizing:border-box;" readonly disabled value="Syncing credential ledger...">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:6px;">Primary Secure Authentication Email</label>
+                    <input type="email" id="lockedAccountEmail" class="search-input" style="width:100%; background:#f8fafc; color:#94a3b8; cursor:not-allowed; border:1px solid #e2e8f0; padding:12px; border-radius:6px; box-sizing:border-box;" readonly disabled value="Syncing user mapping...">
+                </div>
+                <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:6px; padding:12px; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.2rem;">🔒</span>
+                    <p style="margin:0; font-size:0.78rem; color:#b45309; line-height:1.4; font-weight:500;">To alter core profile identity labels or update your authenticated email architecture, please issue an administrative request ticket to our support team.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- STRIPE MERCHANT CARD LINKING FORM -->
+        <div class="content-panel visual-card" style="padding: 25px !important; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <div class="panel-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
+                <h2 style="margin:0; font-size:1.15rem; font-weight:800; color:#0a1f44;">Link Corporate Card</h2>
+            </div>
+            <form id="secureWalletTokenizationForm" class="billing-input-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                <div style="grid-column: span 2;">
+                    <input type="text" id="cardholderName" class="search-input" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:6px; box-sizing:border-box;" placeholder="Cardholder Full Name" required>
+                </div>
+                <div style="grid-column: span 2;">
+                    <input type="text" id="cardNumber" class="search-input" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:6px; box-sizing:border-box;" placeholder="Card Number (0000 0000 0000 0000)" maxlength="19" required>
+                </div>
+                <div>
+                    <input type="text" id="cardExpiry" class="search-input" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:6px; box-sizing:border-box;" placeholder="MM/YY" maxlength="5" required>
+                </div>
+                <div>
+                    <input type="text" id="cardCvc" class="search-input" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:6px; box-sizing:border-box;" placeholder="CVC" maxlength="4" required>
+                </div>
+                <button type="submit" id="walletLinkBtn" class="btn-sm" style="grid-column: span 2; padding:12px; font-weight:700; background:#10b981; color:#fff; border:0; border-radius:6px; cursor:pointer;">Authorize &amp; Link Instrument</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- ========================================================================== 
+🏢 FILINGS4U UNIFIED MY ACCOUNT & FINANCIAL HUB (Part 2: Ledger Lists) 
+========================================================================= --> 
+    <section class="portal-content-layout" style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)) !important; gap: 25px !important; margin-bottom: 30px !important; width: 100% !important; box-sizing: border-box !important;">
+        
+        <!-- ACTIVE CARDS LEDGER BLOCK -->
+        <div class="content-panel visual-card" style="padding: 25px !important; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <div class="panel-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
+                <h2 style="margin:0; font-size:1.15rem; font-weight:800; color:#0a1f44;">Saved Payment Methods</h2>
+            </div>
+            <div id="walletInstrumentsWrapper" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="text-align:center; padding:20px; color:#64748b; font-weight:500;">Reading system secure vaults...</div>
+            </div>
+        </div>
+
+        <!-- TRANSACTIONS RECEIPTS HISTORICAL INDEX -->
+        <div class="content-panel visual-card" style="padding: 25px !important; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <div class="panel-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
+                <h2 style="margin:0; font-size:1.15rem; font-weight:800; color:#0a1f44;">Historical Order Receipts</h2>
+            </div>
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                <table class="portal-table" style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="text-align:left; background:#f8fafc; border-bottom:2px solid #e2e8f0; font-size:0.8rem;">
+                            <th style="padding:10px;">Receipt ID</th>
+                            <th style="padding:10px;">Filing Item</th>
+                            <th style="padding:10px;">Total</th>
+                            <th style="padding:10px; text-align:right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productionInvoicesTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding:20px; color:#64748b; font-weight:500;">Syncing ledger logs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 🖨️ UPPER-LEFT LOGO RECEIPT CANVAS PRINT LAYER FOR HTML2PDF -->
+    <div id="pdf-receipt-compiler" style="display: none; padding: 50px; font-family: Arial, sans-serif; color: #000; background: #fff;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; width: 100%;">
+            <div style="text-align: left;">
+                <img src="images/logo.png" alt="filings4u Logo" style="height: 38px; width: auto; object-fit: contain; display: block; margin-bottom: 5px;">
+                <small style="font-weight: bold; letter-spacing: 0.5px; color: #64748b; text-transform: uppercase; font-size: 10px;">Official Transaction Receipt</small>
+            </div>
+            <div style="text-align: right; font-size: 11px; color: #475569; line-height: 1.4;">
+                <strong>filings4u Accounts Desk</strong><br>
+                <span>Billing Node: Stripe Production API</span><br>
+                <span id="receiptDateTarget" style="font-weight: 600; color: #10b981;">Date: --</span>
+            </div>
+        </div>
+        <hr style="border: 0; border-top: 2px solid #0a1f44; margin-bottom: 30px;">
+        <h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px; color: #0a1f44;">Payment Settlement Statement</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; text-align: left;">
+                    <th style="padding: 10px;">Line Item Description</th>
+                    <th style="padding: 10px; text-align: right;">Amount Processed</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="receiptServiceTarget" style="padding: 12px 10px; font-weight: bold; color: #1e293b;">--</td>
+                    <td id="receiptCostTarget" style="padding: 12px 10px; text-align: right; font-weight: bold; color: #1e293b;">$0.00</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="display: flex; justify-content: flex-end; width: 100%;">
+            <div style="text-align: right; width: 250px; font-size: 12px; line-height: 1.6;">
+                <div style="display: flex; justify-content: space-between;"><span>Payment Network:</span> <span id="receiptMethodTarget" style="font-weight:600;">Stripe Token</span></div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px; font-size: 14px; font-weight: 800; color: #10b981;"><span>Total Settled:</span> <span id="receiptTotalTarget">$0.00</span></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+    </div>
+
+    <script>
+    // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
+    function toggleSidebarAccordion(buttonElement) {
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+        } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+    }
+
+    // 🟢 AUTOMATIC ACCORDION & EMERALD LINK ACTIVE TRACKER
+    document.addEventListener("DOMContentLoaded", () => {
+        const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
+        
+        // Find every navigation link matching the exact current browser page filename
+        const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
+        
+        activeLinks.forEach(link => {
+            // 1. Wipe out any stale fallback active states on sister components
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            // 2. Pin the emerald line highlight exactly to the clicked link item
+            link.classList.add('active');
+            
+            // 3. Find the parent folder panel block containing this active sub-link
+            const matchingPanel = link.closest('.accordion-panel');
+            if (matchingPanel) {
+                // Force open the panel container box
+                matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
+                
+                // Find the button directly above the panel and toggle its chevron to "▲" (active)
+                const folderTriggerButton = matchingPanel.previousElementSibling;
+                if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
+                    folderTriggerButton.classList.add('active');
+                    const chevronSpan = folderTriggerButton.querySelector('.chevron');
+                    if (chevronSpan) chevronSpan.textContent = "▲";
+                }
+            }
+        });
+    });
+
+function toggleMobileSidebarMenuOverlay() {
+    // Only run toggle menu slide overrides if the viewport matches mobile parameters
+    if (window.innerWidth > 992) return;
+
+    const sidebar = document.querySelector(".portal-sidebar");
+    const icon = document.getElementById("mobileNavTriggerIcon");
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("mobile-revealed");
+
+    if (sidebar.classList.contains("mobile-revealed")) {
+        icon.textContent = "✕";
+    } else {
+        icon.textContent = "☰";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const navLinks = document.querySelectorAll(".nav-item");
+    navLinks.forEach(link => {
+        link.addEventListener("click", () => {
+            const sidebar = document.querySelector(".portal-sidebar");
+            // Auto close mobile drawer layout menu only if view is running in mobile mode
+            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+                toggleMobileSidebarMenuOverlay();
+            }
+        });
+    });
+});
+
+
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase;
+          const historyContainer = document.getElementById("billingHistoryTableBody");
+          if (!client || !historyContainer) return;
+
+          try {
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) return;
+
+              const { data: invoices, error } = await client
+                  .from('billing_history')
+                  .select('*')
+                  .eq('user_id', session.user.id)
+                  .order('charge_date', { ascending: false });
+
+              if (error) throw error;
+
+              historyContainer.innerHTML = invoices.map(inv => `
+                  <tr>
+                      <td>#${inv.invoice_number}</td>
+                      <td>${new Date(inv.charge_date).toLocaleDateString()}</td>
+                      <td>$${inv.amount_total}</td>
+                      <td><span class="status-pill status-${String(inv.payment_status).toLowerCase()}">${inv.payment_status}</span></td>
+                  </tr>
+              `).join('');
+          } catch (err) {
+              console.error("Invoice infrastructure crash:", err);
+          }
+      }, 50);
+  });
+</script>
+
+<!-- ========================================================================== 
+🏢 FILINGS4U UNIFIED MY ACCOUNT & FINANCIAL HUB (Part 3: Script Control Core) 
+========================================================================= --> 
+<script>
+  const accountHubClient = window.supabaseClient || window.supabase;
+
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || accountHubClient;
+          if (!client) return;
+
+          try {
+              const { data: { session }, error: sessionError } = await client.auth.getSession();
+              if (sessionError || !session) {
+                  window.location.href = 'portal-login.html';
+                  return;
+              }
+
+              const userProfileUuid = session.user.id;
+              const emailNode = document.getElementById("lockedAccountEmail");
+              const nameNode = document.getElementById("lockedAccountName");
+              
+              if (emailNode) emailNode.value = session.user.email;
+              if (nameNode) {
+                  const fallbackMetadataName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+                  nameNode.value = fallbackMetadataName.toUpperCase();
+              }
+
+              fetchSavedWalletCards(client, userProfileUuid);
+              fetchHistoricalOrderReceipts(client, userProfileUuid);
+
+          } catch (err) {
+              console.error("Account core bootstrapping exception caught:", err);
+          }
+      }, 50);
+  });
+
+  async function fetchSavedWalletCards(client, userUuid) {
+      const wrapper = document.getElementById("walletInstrumentsWrapper");
+      if (!wrapper) return;
+
+      try {
+          const { data: cards, error } = await client.from('customer_payment_methods').select('id, card_brand, last_four, expiry_date, is_default').eq('user_id', userUuid);
+          if (error) throw error;
+          if (!cards || cards.length === 0) {
+              wrapper.innerHTML = `<div style="text-align:center; padding:15px; font-size:0.85rem; color:#94a3b8; font-weight:500;">No billing instruments linked to this carrier profile.</div>`;
+              return;
+          }
+          wrapper.innerHTML = cards.map(card => `
+              <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid #e2e8f0; padding:12px; border-radius:6px; background:#fff;">
+                  <div>
+                      <strong style="font-size:0.9rem; display:block; color:#0a1f44;">${card.card_brand.toUpperCase()} Ending in ${card.last_four}</strong>
+                      <span style="font-size:0.75rem; color:#64748b;">Expires ${card.expiry_date}</span>
+                  </div>
+                  ${card.is_default 
+                      ? `<span style="background:#ecfdf5; color:#10b981; border:1px solid #a7f3d0; font-size:0.7rem; font-weight:700; padding:3px 8px; border-radius:10px;">Default</span>`
+                      : `<button onclick="makeCardDefaultInstrument('${card.id}', '${userUuid}')" style="background:none; border:0; color:#64748b; font-size:0.75rem; text-decoration:underline; cursor:pointer;">Make Default</button>`
+                  }
+              </div>
+          `).join('');
+      } catch (err) {
+          wrapper.innerHTML = `<div style="color:#ef4444; font-size:0.8rem;">Failed to compile payment vectors.</div>`;
+      }
+  }
+
+  async function fetchHistoricalOrderReceipts(client, userUuid) {
+      const tableBody = document.getElementById("productionInvoicesTableBody");
+      if (!tableBody) return;
+
+      try {
+          const { data: receipts, error } = await client.from('billing_history').select('id, invoice_number, service_title, amount_total, charge_date, card_meta_summary').eq('user_id', userUuid).order('charge_date', { ascending: false });
+          if (error) throw error;
+          if (!receipts || receipts.length === 0) {
+              tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#64748b; font-size:0.85rem;">No transaction receipts logged to this profile history.</td></tr>`;
+              return;
+          }
+          tableBody.innerHTML = receipts.map(rec => `
+              <tr style="border-bottom:1px solid #f1f5f9; font-size:0.85rem;">
+                  <td style="padding:12px 10px; font-family:monospace; font-weight:600; color:#475569;">#${rec.invoice_number}</td>
+                  <td style="padding:12px 10px; font-weight:700; color:#0a1f44;">${rec.service_title}</td>
+                  <td style="padding:12px 10px; font-weight:700; color:#10b981;">$${parseFloat(rec.amount_total).toFixed(2)}</td>
+                  <td style="padding:12px 10px; text-align:right;">
+                      <button class="btn-sm" style="padding:4px 10px; font-size:0.75rem; background:#0a1f44;" onclick="compileReceiptPdfCanvas('${rec.service_title}', ${rec.amount_total}, '${rec.charge_date}', '${rec.card_meta_summary || 'Stripe Account'}')">Print PDF ↓</button>
+                  </td>
+              </tr>
+          `).join('');
+      } catch (err) {
+          tableBody.innerHTML = `<tr><td colspan="4" style="color:#ef4444; text-align:center;">Receipt compilation cluster offline.</td></tr>`;
+      }
+  }
+
+  function compileReceiptPdfCanvas(serviceTitle, dollarAmount, rawDateString, cardMeta) {
+      const printTemplate = document.getElementById("pdf-receipt-compiler");
+      if (!printTemplate) return;
+
+      document.getElementById("receiptServiceTarget").textContent = serviceTitle;
+      document.getElementById("receiptCostTarget").textContent = `$${parseFloat(dollarAmount).toFixed(2)}`;
+      document.getElementById("receiptTotalTarget").textContent = `$${parseFloat(dollarAmount).toFixed(2)}`;
+      document.getElementById("receiptMethodTarget").textContent = cardMeta;
+      document.getElementById("receiptDateTarget").textContent = `Date: ${new Date(rawDateString).toLocaleDateString()}`;
+
+      const exportOptions = {
+          margin: 20, filename: `Receipt-${serviceTitle.replace(/\s+/g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+      };
+
+      printTemplate.style.display = 'block';
+      html2pdf().set(exportOptions).from(printTemplate).save().then(() => { printTemplate.style.display = 'none'; }).catch(err => { printTemplate.style.display = 'none'; });
+  }
+
+  document.getElementById("secureWalletTokenizationForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const client = window.supabaseClient || window.supabase;
+      const btn = document.getElementById("walletLinkBtn");
+      if (!client || !btn) return;
+
+      btn.disabled = true;
+      btn.textContent = "Tokenizing Instrument...";
+
+      try {
+          const { data: { session } } = await client.auth.getSession();
+          const numberValue = document.getElementById("cardNumber").value.replace(/\s+/g, '');
+          const brandDetermined = numberValue.startsWith('4') ? 'Visa' : 'Mastercard';
+
+          const { error } = await client.from('customer_payment_methods').insert({
+              user_id: session.user.id, card_brand: brandDetermined, last_four: numberValue.slice(-4), expiry_date: document.getElementById("cardExpiry").value, is_default: false
+          });
+          if (error) throw error;
+
+          alert("Success! Corporate card linked securely to infrastructure profile wallet.");
+          document.getElementById("secureWalletTokenizationForm").reset();
+          fetchSavedWalletCards(client, session.user.id);
+      } catch (err) {
+          alert(`Processor Tokenization Failure: ${err.message}`);
+      } finally {
+          btn.disabled = false; btn.textContent = "Authorize & Link Instrument";
+      }
+  });
+
+  async function makeCardDefaultInstrument(cardId, userUuid) {
+      const client = window.supabaseClient || window.supabase;
+      if (!client) return;
+      try {
+          await client.from('customer_payment_methods').update({ is_default: false }).eq('user_id', userUuid);
+          await client.from('customer_payment_methods').update({ is_default: true }).eq('id', cardId);
+          fetchSavedWalletCards(client, userUuid);
+      } catch (err) { console.error(err.message); }
+  }
+</script>
+
+
+
+</body>
+</html>

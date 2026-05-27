@@ -105,131 +105,159 @@
         </main>
     </div>
 
-    <!-- 🎯 MASTER INFRASTRUCTURE CONTROLLER ASSETS INJECTIONS -->
-    <script src="assets/js/portal-engine.js"></script>
-    <script>
-        // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
 
-        // 📤 SECURE LIVE REALTIME TRANSMISSION SYSTEM
-        async function dispatchClientLiveChatMessage() {
-            const field = document.getElementById("chatMessageTerminalInputField");
-            if (!field || !field.value.trim()) return;
+ <!-- ========================================================================== 
+🏢 FILINGS4U LIVE SUPPORT ENGINE (Production Unified Matrix Core)
+========================================================================== --> 
+<script>
+  // --- 1. GLOBAL REALTIME STORAGE CHANNELS ---
+  let productionChatChannel = null;
+  const globalChatGatewayClient = window.supabaseClient || window.supabase;
 
-            const textValue = field.value.trim();
+  // --- 2. INITIALIZE ENGINE SESSIONS AND SETUP LISTENERS ---
+  document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || globalChatGatewayClient;
+          const logBox = document.getElementById("portalChatMessagesLog");
+          
+          if (!client) {
+              if (logBox) logBox.innerHTML = `<div class="chat-bubble inbound">Gateway Core Offline. Please reload your console wall.</div>`;
+              return;
+          }
 
-            // 🚀 PIPES MESSAGE TO POSTGRES DISK AND BROADCAST CHANNELS SIMULTANEOUSLY via portal-chat-engine.js
-            if (typeof window.submitPortalChatMessagePayload === 'function') {
-                await window.submitPortalChatMessagePayload(textValue, 'client');
-                field.value = ""; // Safely flush input values upon delivery confirmation
-            } else {
-                // UI Fallback display if database configuration is completely offline
-                const logBox = document.getElementById("portalChatMessagesLog");
-                const bubble = document.createElement("div");
-                bubble.className = "chat-bubble outbound";
-                bubble.textContent = textValue;
-                logBox.appendChild(bubble);
-                field.value = "";
-                logBox.scrollTop = logBox.scrollHeight;
-            }
-        }
+          try {
+              const { data: { session }, error: sessionError } = await client.auth.getSession();
+              if (sessionError || !session) {
+                  window.location.href = 'portal-login.html';
+                  return;
+              }
 
-        // 📱 MOBILE DRAWER CONTROLLERS OVERRIDES
-        function toggleMobileSidebarMenuOverlay() {
-            if (window.innerWidth > 992) return;
-            const sidebar = document.querySelector(".portal-sidebar");
-            const icon = document.getElementById("mobileNavTriggerIcon");
-            if (!sidebar) return;
+              const currentCustomerUuid = session.user.id;
 
-            sidebar.classList.toggle("mobile-revealed");
-            if (sidebar.classList.contains("mobile-revealed")) {
-                icon.textContent = "✕";
-            } else {
-                icon.textContent = "☰";
-            }
-        }
+              // Action A: Recover Historical Logs from Postgres Table Disk
+              await fetchHistoricalChatLogs(client, currentCustomerUuid);
 
-        // 🟢 AUTOMATIC SESSIONS HYDRATION LOAD EXECUTION TRACKER
-        document.addEventListener("DOMContentLoaded", async () => {
-            // Force load chat history arrays matching this customer's account records automatically
-            const poller = setInterval(async () => {
-                const dbClient = window.supabaseClient || window.supabase;
-                if (dbClient) {
-                    clearInterval(poller);
-                    await fetchHistoricalChatLogs(dbClient);
-                }
-            }, 100);
+              // Action B: Establish Realtime Socket Listener Channel Matrix
+              productionChatChannel = client.channel(`support_room_${currentCustomerUuid}`);
+              
+              productionChatChannel
+                  .on('broadcast', { event: 'new_msg' }, (payload) => {
+                      // Intercept incoming admin messages over-the-air instantly
+                      appendRealtimeBubbleToDOM(payload.payload.message_content, payload.payload.sender_type);
+                  })
+                  .subscribe((status) => {
+                      if (status === 'SUBSCRIBED') {
+                          console.log("📡 Realtime Secure Support Chat Pipeline Connected Cleanly.");
+                      }
+                  });
 
-            // Bind smart sidebar link tracking highlights actions
-            const currentFileName = window.location.pathname.split("/").pop() || "portal-chat.html";
-            const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href^="${currentFileName}"]`);
-            activeLinks.forEach(link => {
-                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-                link.classList.add('active');
-                const matchingPanel = link.closest('.accordion-panel');
-                if (matchingPanel) {
-                    matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-                    const folderTriggerButton = matchingPanel.previousElementSibling;
-                    if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-                        folderTriggerButton.classList.add('active');
-                        const chevronSpan = folderTriggerButton.querySelector('.chevron');
-                        if (chevronSpan) chevronSpan.textContent = "▲";
-                    }
-                }
-            });
+          } catch (err) {
+              console.error("Chat bootstrapper error:", err.message);
+          }
+      }, 50);
 
-            // Mobile auto collapse binder
-            const navLinks = document.querySelectorAll(".nav-item");
-            navLinks.forEach(link => {
-                link.addEventListener("click", () => {
-                    const sidebar = document.querySelector(".portal-sidebar");
-                    if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                        toggleMobileSidebarMenuOverlay();
-                    }
-                });
-            });
-        });
+      // Accordion UI tracking highlights operations
+      initializeSidebarMenuHighlights();
+  });
 
-        // 📜 ASYNC LOAD DISK RECOVERY CHAT LOGS
-        async function fetchHistoricalChatLogs(dbClient) {
-            const logBox = document.getElementById("portalChatMessagesLog");
-            if (!dbClient || !logBox) return;
+  // --- 3. RECOVER HISTORICAL CHAT LOG RECORDS ---
+  async function fetchHistoricalChatLogs(client, userUuid) {
+      const logBox = document.getElementById("portalChatMessagesLog");
+      if (!logBox) return;
 
-            try {
-                const { data: { session } } = await dbClient.auth.getSession();
-                if (!session) return;
+      try {
+          const { data: messages, error } = await client
+              .from('chat_messages')
+              .select('sender_type, message_content')
+              .eq('client_id', userUuid)
+              .order('created_at', { ascending: true });
 
-                const { data: messages, error } = await dbClient
-                    .from('chat_messages')
-                    .select('*')
-                    .eq('client_id', session.user.id)
-                    .order('created_at', { ascending: true });
+          if (error) throw error;
 
-                if (error) throw error;
+          if (messages && messages.length > 0) {
+              logBox.innerHTML = ""; // Remove default prompt card frame
+              messages.forEach(msg => {
+                  appendRealtimeBubbleToDOM(msg.message_content, msg.sender_type);
+              });
+          }
+      } catch (err) {
+          console.warn("Could not synchronize historical logs ledger:", err.message);
+      }
+  }
 
-                if (messages && messages.length > 0) {
-                    logBox.innerHTML = ""; // Remove baseline default prompt
-                    messages.forEach(msg => {
-                        const alignment = msg.sender_type === 'client' ? 'outbound' : 'inbound';
-                        const bubble = document.createElement("div");
-                        bubble.className = `chat-bubble ${alignment}`;
-                        bubble.textContent = msg.message_content;
-                        logBox.appendChild(bubble);
-                    });
-                    logBox.scrollTop = logBox.scrollHeight;
-                }
-            } catch (err) {
-                console.warn("Could not load conversational arrays history rows:", err.message);
-            }
-        }
-    </script>
+  // --- 4. DISPATCH OUTBOUND MESSAGE ACTION CONTROL ---
+  async function dispatchClientLiveChatMessage() {
+      const field = document.getElementById("chatMessageTerminalInputField");
+      const client = window.supabaseClient || window.supabase || globalChatGatewayClient;
+      
+      if (!field || !field.value.trim() || !client) return;
+      const textRaw = field.value.trim();
+
+      try {
+          const { data: { session } } = await client.auth.getSession();
+          if (!session) return;
+
+          // Step A: Save permanently to database disk for admin archival tracking logs
+          const { error } = await client.from('chat_messages').insert({
+              client_id: session.user.id,
+              sender_type: 'client',
+              message_content: textRaw
+          });
+
+          if (error) throw error;
+
+          // Step B: Broadcast dynamically over-the-air to listening admin channels
+          if (productionChatChannel) {
+              await productionChatChannel.send({
+                  type: 'broadcast',
+                  event: 'new_msg',
+                  payload: { sender_type: 'client', message_content: textRaw }
+              });
+          }
+
+          // Step C: Render message instantly in user UI canvas layout and flush field
+          appendRealtimeBubbleToDOM(textRaw, 'client');
+          field.value = "";
+
+      } catch (err) {
+          console.error("Message transmission failure:", err.message);
+          alert("Message delivery failure. Check network infrastructure sockets.");
+      }
+  }
+
+  // --- 5. APPEND GRAPHIC BUBBLE DIRECTLY INTO VIEWPORT CANVAS ---
+  function appendRealtimeBubbleToDOM(textStr, senderTypeStr) {
+      const logBox = document.getElementById("portalChatMessagesLog");
+      if (!logBox) return;
+
+      const bubbleElement = document.createElement("div");
+      // Map 'client' sender to outbound layout alignment, map anything else to inbound admin
+      bubbleElement.className = `chat-bubble ${senderTypeStr === 'client' ? 'outbound' : 'inbound'}`;
+      bubbleElement.textContent = textStr;
+
+      logBox.appendChild(bubbleElement);
+      logBox.scrollTop = logBox.scrollHeight; // Force scroll focus down natively
+  }
+
+  // --- 6. STANDARD ACCOUNT INTERFACE SYSTEM UTILITIES ---
+  function initializeSidebarMenuHighlights() {
+      const currentFileName = window.location.pathname.split("/").pop() || "portal-chat.html";
+      const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href^="${currentFileName}"]`);
+      activeLinks.forEach(link => {
+          document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+          link.classList.add('active');
+          const matchingPanel = link.closest('.accordion-panel');
+          if (matchingPanel) {
+              matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
+              const folderTriggerButton = matchingPanel.previousElementSibling;
+              if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
+                  folderTriggerButton.classList.add('active');
+                  const chevronSpan = folderTriggerButton.querySelector('.chevron');
+                  if (chevronSpan) chevronSpan.textContent = "▲";
+              }
+          }
+      });
+  }
+</script>
 </body>
 </html>

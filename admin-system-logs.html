@@ -387,7 +387,7 @@
             </header>
 
             <div class="content-container">
-                <div class="portal-card" style="padding: 12px 0 !important; overflow: hidden;">
+                <div class="portal-card" id="adminSystemLogsTerminalWrapper" style="padding: 0 !important; overflow: hidden; background: transparent !important; backdrop-filter: blur(8px) !important; border: 1px solid #e2e8f0 !important; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); width: 100%;">
                     
                     <!-- Structured Unified Terminal Console Rows -->
                     <div class="log-entry-row">
@@ -420,7 +420,6 @@
     </div>
 
     <!-- CORE CONTROL PIPELINES SCRIPTS -->
-    <script src="assets/js/admin-engine.js"></script>
     <script>
         function toggleSidebarAccordion(buttonElement) {
             buttonElement.classList.toggle('active');
@@ -433,47 +432,155 @@
         }
     </script>
 
-       <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            // 🎯 FIXED: Corrected tracking handle to match interval name exactly and prevent code crash loops
-            const checkClient = setInterval(async () => {
-                const clientInstance = window.supabaseClient || window.supabase;
-                if (clientInstance) {
-                    clearInterval(checkClient); // Clean kill timer layout loops
-                    const container = document.querySelector('.portal-card');
-                    if (!container) return;
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE SECURITY TELEMETRY (Part 1: Initializer Sync Core)
+========================================================================== --> 
+<script>
+  // --- MODULE 1: GLOBAL CONNECTION STATE INFRASTRUCTURES ---
+  const logsAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterSystemLogsCache = [];
+  let realtimeLogsSubscriptionChannel = null;
 
-                    // 🎯 WIRED SYSTEM LOGS ENGINE: Fetches actual live auth entry events from table data rows
-                    const { data: logs, error } = await clientInstance
-                        .from('platform_security_telemetry_logs')
-                        .select('*')
-                        .order('recorded_at', { ascending: false })
-                        .limit(30);
+  // --- MODULE 2: ENGINE TIMING LIFE-CYCLE CONTROLLER INITIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || logsAdminCoreClient;
+          if (!client) return;
 
-                    if (!error && logs && logs.length > 0) {
-                        container.innerHTML = logs.map(l => {
-                            // Assign tag styling colors based on the role context parameter keys
-                            let typeStyle = "system"; // gray tag
-                            if (l.account_role === "ADMIN STAFF") typeStyle = "error"; // red badge styling tag
-                            if (l.action_type === "LOGIN" && l.account_role === "PORTAL CLIENT") typeStyle = "payment"; // emerald badge tag
+          try {
+              // Perimeter Validation Gate Check: Ensure profile belongs to internal staff
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+              
+              const staffEmail = session.user.email.toLowerCase().trim();
+              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
 
-                            // Generate production timestamp string mapping format
-                            const formattedTime = new Date(l.recorded_at).toISOString().replace('T', ' ').substring(0, 19);
-                            
-                            return `
-                                <div class="log-entry-row">
-                                    <span class="log-timestamp">${formattedTime}</span>
-                                    <span class="log-tag ${typeStyle}">${l.action_type} [${l.account_role}]</span>
-                                    <span class="log-message"><strong>${l.actor_email}</strong>: ${l.message_details}</span>
-                                </div>`;
-                        }).join('');
-                    } else if (error) {
-                        console.error("Logs hydration fail:", error.message);
-                    }
-                }
-            }, 100);
-        });
-    </script>
+              // Hot-reload current database logging cache rows
+              await synchronizeTelemetrySystemLogs(client);
+              setupLogsGlobalSearchFilter();
+
+              // Hook Realtime WebSocket channel to append new platform events instantly
+              realtimeLogsSubscriptionChannel = client
+                  .channel('live_telemetry_stream')
+                  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'platform_security_telemetry_logs' }, (payload) => {
+                      injectSingleTelemetryRowToUI(payload.new);
+                  })
+                  .subscribe();
+
+          } catch (err) {
+              console.error("Telemetry module initialization failure:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- MODULE 3: RECOVER COMPREHENSIVE VAULT RECORDS ---
+  async function synchronizeTelemetrySystemLogs(client) {
+      const container = document.querySelector(".portal-card");
+      if (!container) return;
+
+      try {
+          const { data: logs, error } = await client
+              .from('platform_security_telemetry_logs')
+              .select('*');
+
+          if (error) throw error;
+
+          // Local Memory Sorting Array: Arranges logs chronologically in the client browser frame fallback
+          masterSystemLogsCache = logs || [];
+          masterSystemLogsCache.sort((a, b) => {
+              const dateA = new Date(a.inserted_at || a.created_at || 0);
+              const dateB = new Date(b.inserted_at || b.created_at || 0);
+              return dateB - dateA; 
+          });
+
+          renderTelemetryLogsTerminalView(masterSystemLogsCache);
+
+      } catch (err) {
+          console.error("Logs database pipeline sync crash:", err.message);
+          container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--staff-red); font-weight:700;">⚠️ Telemetry index synchronization offline.</div>`;
+      }
+  }
+</script>
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE SECURITY TELEMETRY (Part 2-A: Repaired Light Row Compiler)
+========================================================================== --> 
+<script>
+  function buildTelemetryRowMarkupString(log) {
+      const rawDateValue = log.inserted_at || log.created_at || new Date().toISOString();
+      const timestamp = new Date(rawDateValue).toISOString().replace('T', ' ').slice(0, 19);
+      
+      const actionType = String(log.action_type || 'EVENT').toUpperCase();
+      const roleText = String(log.account_role || log.role || 'USER').toUpperCase();
+      const emailText = log.actor_email || log.email || 'system-node';
+      const detailsText = log.message_details || log.details || 'Filing log context metadata tracking update executed.';
+      
+      // Vivid color palettes optimized for white frosted glass themes
+      let tagBgColor = '#e2e8f0';
+      let tagTextColor = '#334155';
+
+      if (actionType.includes('PAYMENT') || actionType.includes('ORDER')) {
+          tagBgColor = '#d1fae5'; 
+          tagTextColor = '#065f46'; 
+      } else if (actionType.includes('BREACH') || actionType.includes('ERROR') || actionType.includes('FAIL')) {
+          tagBgColor = '#fee2e2'; 
+          tagTextColor = '#991b1b'; 
+      } else if (actionType.includes('AUTH') || actionType.includes('LOGIN') || actionType.includes('PROVISION')) {
+          tagBgColor = '#dbeafe'; 
+          tagTextColor = '#1e40af'; 
+      } else if (actionType.includes('RESET') || actionType.includes('SYSTEM')) {
+          // 🎯 FIXED SYNTAX: Completely removed loose comment syntax tags strings
+          tagBgColor = '#f3e8ff'; 
+          tagTextColor = '#6b21a8'; 
+      }
+
+      return `
+          <div class="log-entry-row" style="padding:12px 20px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:15px; font-family:monospace; font-size:0.88rem; background: transparent !important; color: #1e293b !important; width: 100%; box-sizing: border-box;">
+              <span class="log-timestamp" style="color:#64748b !important; white-space:nowrap; font-weight:600;">${timestamp}</span>
+              <span class="log-tag" style="padding:4px 10px; border-radius:4px; font-weight:800; font-size:0.72rem; text-transform:uppercase; background:${tagBgColor} !important; color:${tagTextColor} !important; border:1px solid rgba(0,0,0,0.03); white-space:nowrap;">
+                  ${roleText}: ${actionType}
+              </span>
+              <span class="log-message" style="color:#0f172a !important; text-align:left; word-break:break-word; flex:1; font-weight:500;">
+                  <strong style="color:#475569 !important;">[${emailText}]</strong> ${detailsText}
+              </span>
+          </div>`;
+  }
+</script>
+
+
+<!-- ========================================================================== 
+🏛️ FILINGS4U ADMINISTRATIVE SECURITY TELEMETRY (Part 2-B: Real-Time Injectors)
+========================================================================== --> 
+<script>
+  function renderTelemetryLogsTerminalView(datasetArray) {
+      const container = document.getElementById("adminSystemLogsTerminalWrapper");
+      if (!container) return;
+
+      if (datasetArray.length === 0) {
+          container.innerHTML = `<div style="text-align:center; padding:30px; color:#475569; font-style:italic; font-family:monospace;">No recorded operations logs or authentication traces logged to cloud schema.</div>`;
+          return;
+      }
+
+      container.innerHTML = datasetArray.map(log => buildTelemetryRowMarkupString(log)).join('');
+  }
+
+  function injectSingleTelemetryRowToUI(newLogObj) {
+      const container = document.getElementById("adminSystemLogsTerminalWrapper");
+      if (!container) return;
+      
+      const emptyCheck = container.querySelector("div");
+      if (emptyCheck && emptyCheck.textContent.includes("No recorded operations")) { container.innerHTML = ""; }
+
+      const temporaryWrapperDiv = document.createElement("div");
+      temporaryWrapperDiv.innerHTML = buildTelemetryRowMarkupString(newLogObj);
+      
+      container.insertBefore(temporaryWrapperDiv.firstChild, container.firstChild);
+  }
+</script>
+
+
+
 
 
 </body>
