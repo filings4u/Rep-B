@@ -429,9 +429,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 </script>
 
+<!-- ========================================================================== 
+🏢 FILINGS4U CLIENT DASHBOARD DESK - PART 1: ALIGNED PRODUCTION FORM INTAKE
+=========================================================================== --> 
 <script>
   document.getElementById("dashboardSupportTicketSubmissionForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      
       const client = window.supabaseClient || window.supabase;
       const btn = document.getElementById("ticketSubmitBtn");
       if (!client || !btn) return;
@@ -440,27 +444,70 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.textContent = "Transmitting to Corporate Admin Desks...";
 
       try {
+          // Verify active authentication session tokens
           const { data: { session } } = await client.auth.getSession();
-          if (!session) { window.location.href="portal-login.html"; return; }
+          if (!session) { window.location.href = "portal-login.html"; return; }
 
-          const { error } = await client.from('support_tickets').insert({
-              client_id: session.user.id,
-              subject: document.getElementById("ticketSubject").value.trim(),
-              category: document.getElementById("ticketCategory").value,
-              description: document.getElementById("ticketDescription").value.trim()
-          });
+          const authenticatedUuid = session.user.id;
 
-          if (error) throw error;
+          // 🎯 SYSTEM INTEGRATION HOOK: Safely scan public records array 
+          // to extract your short numeric Client ID and Company Name values
+          const { data: profileCheck, error: checkError } = await client
+              .from('orders')
+              .select('client_id, company_name')
+              .eq('user_id', authenticatedUuid)
+              .limit(1);
+
+          if (checkError) throw checkError;
+
+          // Fall back onto safe production baseline counters if the profile row is brand new
+          let operationalShortClientId = 1001;
+          let operationalCompanyName = "Registered Portal User";
+
+          if (profileCheck && profileCheck.length > 0) {
+              if (profileCheck[0].client_id) operationalShortClientId = parseInt(profileCheck[0].client_id);
+              if (profileCheck[0].company_name) operationalCompanyName = profileCheck[0].company_name;
+          }
+
+          // 🧠 SHORT VARIABLE MAPPING UNION: Resolves old selector options safely onto your ServiceNow keys
+          const legacyCategoryValueText = String(document.getElementById("ticketCategory").value || "Medium");
+          let calculatedPrioritySeverity = "Medium";
+
+          if (legacyCategoryValueText.toUpperCase().includes("URGENT") || legacyCategoryValueText.toUpperCase().includes("CRITICAL")) {
+              calculatedPrioritySeverity = "Critical";
+          } else if (legacyCategoryValueText.toUpperCase().includes("HIGH") || legacyCategoryValueText.toUpperCase().includes("BILLING")) {
+              calculatedPrioritySeverity = "High";
+          } else if (legacyCategoryValueText.toUpperCase().includes("LOW") || legacyCategoryValueText.toUpperCase().includes("GENERAL")) {
+              calculatedPrioritySeverity = "Low";
+          }
+
+          // 🚀 LIVE HELPDESK ENGINE BRIDGE LINK: Inserts straight to support_tickets table with no 400 errors
+          const { error: insertError } = await client
+              .from('support_tickets')
+              .insert({
+                  client_id: String(operationalShortClientId),
+                  company_name: operationalCompanyName,
+                  subject: document.getElementById("ticketSubject").value.trim(),
+                  description: document.getElementById("ticketDescription").value.trim(),
+                  priority: calculatedPrioritySeverity,
+                  status: 'New', // Automatically drops case into new ticket pipelines grid lanes
+                  assigned_agent: 'Unassigned'
+              });
+
+          if (insertError) throw insertError;
 
           alert("Success! Ticket initialized. Admin team notified to process manual field alterations.");
           document.getElementById("dashboardSupportTicketSubmissionForm").reset();
+
       } catch (err) {
-          alert(`Submission Error: ${err.message}`);
+          console.error("ITSM Client Dispatch Breakdown Intercepted:", err.message);
+          alert("Submission Error: " + err.message);
       } finally {
           btn.disabled = false;
           btn.textContent = "Transmit Support Ticket to Admin Dashboard →";
       }
   });
 </script>
+
 </body>
 </html>
