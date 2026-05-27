@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Admin Terminal Dashboard | filings4u Staff</title>
+    <meta name="theme-color" content="#c15254">
+
+    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <script src="assets/js/supabase-config.js"></script>
+    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
+
+    <style>
+        /* ==========================================================================
+           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important; /* Forces normal native scrolling rules */
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
+            margin-left: var(--sidebar-width) !important; 
+            width: calc(100% - var(--sidebar-width)) !important;
+            min-height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 20px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        /* ⏱️ Input-styled unified date/time pill element */
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            font-size: 0.82rem !important;
+            width: 220px !important;
+            outline: none !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            color: var(--text-dark) !important;
+        }
+
+        .search-input:focus {
+            background: var(--white) !important;
+            border-color: var(--emerald) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        /* CARD CAROUSELS SYSTEM CORES */
+        .stats-row {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+            gap: 20px !important;
+            margin-bottom: 30px !important;
+            width: 100% !important;
+        }
+
+        .stat-card {
+            background: var(--white) !important;
+            padding: 20px !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            box-sizing: border-box !important;
+        }
+
+        .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
+        .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
+
+        .dashboard-grid-layout {
+            display: grid !important;
+            grid-template-columns: 2fr 1fr !important;
+            gap: 24px !important;
+            align-items: start !important;
+            width: 100% !important;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+        }
+
+        .console-card {
+            background: var(--white) !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 24px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            margin-bottom: 24px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+   
+   @media (max-width: 991px) {
+    body, html { overflow-y: auto !important; }
+    .dashboard-wrapper { flex-direction: column !important; }
+    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
+    .portal-main { margin-left: 0 !important; width: 100% !important; }
+    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
+    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
+    .search-input { width: 100% !important; }
+    .content-container { padding: 20px !important; }
+    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+}
+
+   
+   </style>
+</head>
+<body style="background:#f8fafc; margin:0; font-family:sans-serif;">
+    <div class="portal-container" style="display:flex; min-height:100vh;">
+        <div id="desktopSidebarTarget"></div>
+
+        <main class="portal-main" style="flex:1; padding:30px; box-sizing:border-box;">
+            <header class="portal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                <div>
+                    <h1 style="margin:0; font-size:1.5rem; font-weight:800; color:#0f172a;">Compliance Fulfillment Operations</h1>
+                    <p style="margin:4px 0 0 0; font-size:0.85rem; color:#64748b;">Process client statutory deadlines, state formation packets, and update filing pipeline milestones.</p>
+                </div>
+                <div>
+                    <input type="text" id="adminTicketsGlobalSearch" class="search-input" placeholder="Search orders by title or ID..." style="width:260px; height:38px; padding:0 12px; border-radius:6px; border:1px solid #cbd5e1;">
+                </div>
+            </header>
+
+            <!-- Active Tickets Display Stream Wrapper -->
+            <div id="adminTicketsMasterTimelineGrid" style="display:flex; flex-direction:column; gap:14px; width:100%;">
+                <div style="text-align:center; padding:40px; color:#64748b; font-style:italic;">Querying real-time system filing tokens...</div>
+            </div>
+        </main>
+    </div>
+<script>
+  // --- MODULE 1: GLOBAL WORKSPACE BALANCES REPOSITORIES ---
+  const ticketsAdminCoreClient = window.supabaseClient || window.supabase;
+  let masterFulfillmentTicketsCache = [];
+
+  // --- MODULE 2: RUNTIME ENGINE LIFE-CYCLE INTIALIZER ---
+  document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+          const client = window.supabaseClient || window.supabase || ticketsAdminCoreClient;
+          if (!client) return;
+
+          try {
+              const { data: { session } } = await client.auth.getSession();
+              if (!session) { window.location.href = 'admin-login.html'; return; }
+
+              await synchronizeFulfillmentTicketsPipeline(client);
+              setupTicketsSearchFilters();
+
+          } catch (err) {
+              console.error("Fulfillment runtime init fault caught:", err.message);
+          }
+      }, 50);
+  });
+
+  // --- MODULE 3: EXTRACT LOGISTICS PIPELINES DIRECTLY FROM CLOUD VAULTS ---
+  async function synchronizeFulfillmentTicketsPipeline(client) {
+      const container = document.getElementById("adminTicketsMasterTimelineGrid");
+      if (!container) return;
+
+      try {
+          const { data: orders, error } = await client.from('orders').select('*');
+          if (error) throw error;
+
+          masterFulfillmentTicketsCache = orders || [];
+          masterFulfillmentTicketsCache.sort((a,b) => new Date(b.created_at || b.inserted_at || 0) - new Date(a.created_at || a.inserted_at || 0));
+
+          renderFulfillmentPipelineCards(masterFulfillmentTicketsCache);
+
+      } catch (err) {
+          container.innerHTML = `<div style="text-align:center; color:#ef4444; padding:25px; font-weight:700;">⚠️ Tickets stream sync failure: ${err.message}</div>`;
+      }
+  }
+
+  // --- MODULE 4: RENDER INTEGRATED OPERATION CONTROL CARDS VIEWS ---
+  function renderFulfillmentPipelineCards(datasetArray) {
+      const container = document.getElementById("adminTicketsMasterTimelineGrid");
+      if (!container) return;
+
+      if (datasetArray.length === 0) {
+          container.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-style:italic;">No platform filing orders are pending administrative execution.</div>`;
+          return;
+      }
+
+      container.innerHTML = datasetArray.map(ticket => {
+          const dateLogged = new Date(ticket.created_at || ticket.inserted_at || Date.now()).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'});
+          const activePipelineStage = ticket.status || ticket.tax_id_status || 'Lead Entry';
+          
+          const displayServiceTitle = ticket.service || ticket.service_title || 'Compliance Procurement Packet';
+          const formedStateAbbreviation = String(ticket.state || ticket.state_code || 'US').toUpperCase();
+
+          return `
+              <div class="ticket-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:22px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.01); width:100%; box-sizing:border-box;">
+                  <div style="text-align:left;">
+                      <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:4px; display:inline-block; margin-bottom:6px; letter-spacing:0.5px;">
+                          ${formedStateAbbreviation} REGULATORY FILING
+                      </span>
+                      <h3 style="margin:0 0 4px 0; font-size:1.15rem; font-weight:800; color:#0f172a;">${displayServiceTitle}</h3>
+                      <span style="font-size:0.88rem; color:#475569; font-weight:500;">
+                          Account Target: <strong>${ticket.company_name}</strong> | Linked Reference Code: <strong>${ticket.reference_id}</strong>
+                      </span>
+                      <small style="display:block; color:#94a3b8; font-family:monospace; margin-top:5px; font-weight:600; font-size:0.75rem;">Platform Client ID Reference Link: #<b>${ticket.client_id}</b> | Transacted Date: ${dateLogged}</small>
+                  </div>
+
+                  <!-- Dropdown Status Selectors Syncing Directly Back onto Client Checkboxes Lists -->
+                  <div>
+                      <select class="search-input" style="height:38px; width:180px; padding:0 10px !important; background:#ffffff; font-size:0.8rem; font-weight:700; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer;"
+                          onchange="mutateFulfillmentTicketStatusOnAir('${ticket.id}', this.value)">
+                          <option value="Lead Entry" ${activePipelineStage === 'Lead Entry' ? 'selected' : ''}>Lead Entry</option>
+                          <option value="Fulfillment Lane" ${activePipelineStage === 'Fulfillment Lane' ? 'selected' : ''}>Fulfillment Lane</option>
+                          <option value="Review State" ${activePipelineStage === 'Review State' ? 'selected' : ''}>Review State</option>
+                          <option value="COMPLETED" ${activePipelineStage === 'COMPLETED' ? 'selected' : ''}>COMPLETED ✓</option>
+                      </select>
+                  </div>
+              </div>`;
+      }).join('');
+  }
+
+  // --- MODULE 5: LIVE DROPDOWN SYNCHRONIZERS MUTATORS ---
+  async function mutateFulfillmentTicketStatusOnAir(recordId, targetStatusValue) {
+      const client = window.supabaseClient || window.supabase || ticketsAdminCoreClient;
+      if (!client) return;
+
+      try {
+          // 🚀 DATA LOCK SYNC: Modifies both status indicators inside public schema simultaneously 
+          // to trigger client portal tracking list updates instantly
+          const { error } = await client
+              .from('orders')
+              .update({
+                  status: targetStatusValue,
+                  tax_id_status: targetStatusValue
+              })
+              .eq('id', recordId);
+
+          if (error) throw error;
+          console.log(" Fulfill ticket record " + recordId + " successfully changed to: " + targetStatusValue);
+          
+          await synchronizeFulfillmentTicketsPipeline(client);
+
+      } catch (err) {
+          alert("Fulfillment pipeline modification aborted: " + err.message);
+      }
+  }
+
+  // --- MODULE 6: LIVE CONSOLE TRACK SEARCH FILTERS ---
+  function setupTicketsSearchFilters() {
+      const fieldInput = document.getElementById("adminTicketsGlobalSearch");
+      if (!fieldInput) return;
+
+      fieldInput.addEventListener("input", (e) => {
+          const parsingToken = e.target.value.toLowerCase().trim();
+          const filtered = masterFulfillmentTicketsCache.filter(t => {
+              const serviceText = String(t.service || t.service_title || '').toLowerCase();
+              return String(t.company_name || '').toLowerCase().includes(parsingToken) ||
+                     String(t.client_id || '').includes(parsingToken) ||
+                     serviceText.includes(parsingToken);
+          });
+          renderFulfillmentPipelineCards(filtered);
+      });
+  }
+</script>
+</body>
+</html>
