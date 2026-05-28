@@ -361,6 +361,97 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 </script>
 
+<!-- ========================================================================== 
+🏢 FILINGS4U CLIENT SUPPORT INTENTION ENGINE (Fixed Dynamic Form Ingest)
+=========================================================================== --> 
+<script>
+  document.getElementById("dashboardSupportTicketSubmissionForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const client = window.supabaseClient || window.supabase;
+      const btn = document.getElementById("ticketSubmitBtn");
+      if (!client || !btn) return;
+
+      // 1. Visually lock button indicators during cloud transit operations
+      btn.disabled = true;
+      btn.textContent = "Transmitting to Corporate Admin Desks...";
+
+      try {
+          // 2. Extract and verify active user token session parameters
+          const { data: { session }, error: authError } = await client.auth.getSession();
+          if (authError || !session) { window.location.href = "portal-login.html"; return; }
+
+          const authenticatedUuid = session.user.id;
+
+          // 🧠 3. COMPATIBILITY EXTRACTORS: Directly targets your specific HTML input elements properties
+          const rawSubject = document.getElementById("ticketSubject") || document.getElementById("subject") || document.querySelector("input[type='text']");
+          const rawCategory = document.getElementById("ticketCategory") || document.getElementById("category") || document.querySelector("select");
+          const rawDescription = document.getElementById("ticketDescription") || document.getElementById("description") || document.querySelector("textarea");
+
+          // Extract values defensively with default string fallbacks to block script breakage
+          const finalSubject = rawSubject ? rawSubject.value.trim() : "Portal Support Intake Request";
+          const finalCategoryText = rawCategory ? rawCategory.value : "Medium";
+          const finalDescription = rawDescription ? rawDescription.value.trim() : "";
+
+          if (!finalDescription) {
+              throw new Error("Filing Blocked: Please provide an issue description before submitting your support ticket.");
+          }
+
+          // 4. Retrieve short sequential Client tracking parameters matching this login token hash
+          const { data: profileCheck } = await client
+              .from('orders')
+              .select('client_id, company_name')
+              .eq('user_id', authenticatedUuid)
+              .limit(1);
+
+          let shortClientIdTracker = 1001;
+          let customerCompanyName = "Registered Portal User";
+
+          if (profileCheck && profileCheck.length > 0) {
+              if (profileCheck.client_id) shortClientIdTracker = parseInt(profileCheck.client_id);
+              if (profileCheck.company_name) customerCompanyName = profileCheck.company_name;
+          }
+
+          // 5. Align category selector strings down onto your ServiceNow priority columns schema
+          let calculatedPrioritySeverity = "Medium";
+          const lowerCategory = finalCategoryText.toLowerCase();
+          if (lowerCategory.includes("urgent") || lowerCategory.includes("critical")) {
+              calculatedPrioritySeverity = "Critical";
+          } else if (lowerCategory.includes("high") || lowerCategory.includes("billing")) {
+              calculatedPrioritySeverity = "High";
+          } else if (lowerCategory.includes("low") || lowerCategory.includes("general")) {
+              calculatedPrioritySeverity = "Low";
+          }
+
+          // 🚀 6. DIRECT CORES WRITE OUT: Transmit incident straight to your support_tickets table
+          const { error: insertError } = await client
+              .from('support_tickets')
+              .insert({
+                  client_id: String(shortClientIdTracker),
+                  company_name: customerCompanyName,
+                  subject: finalSubject,
+                  description: finalDescription,
+                  priority: calculatedPrioritySeverity,
+                  status: 'New',
+                  assigned_agent: 'Unassigned'
+              });
+
+          if (insertError) throw insertError;
+
+          // 🎯 PROMPT FLASH TRACE OVER THE AIR NATIVELY
+          alert("🎉 Success! Support case logged into live technical operations queues. Admin agents notified.");
+          document.getElementById("dashboardSupportTicketSubmissionForm").reset();
+
+      } catch (err) {
+          console.error("ITSM frontend submission loop dropped action:", err.message);
+          alert("Submission Blocked: " + err.message);
+      } finally {
+          btn.disabled = false;
+          btn.textContent = "Transmit Support Ticket to Admin Dashboard →";
+      }
+  });
+</script>
+
 
 <!-- ========================================================================== 
 🏢 FILINGS4U CUSTOMER PORTAL (Part 2: UI View Box Document Renderers)
