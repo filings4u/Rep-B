@@ -494,6 +494,33 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 </script>
 
+<script>
+    // 📊 READ METADATA PAYLOAD AND RENDER TO CUSTOMER VIEWPORT
+async function loadAndParseClientDashboardOrders(userUuid) {
+    const client = window.supabaseClient || window.supabase;
+    const { data: records, error } = await client
+        .from('orders')
+        .select('*')
+        .eq('user_id', userUuid);
+
+    if (error || !records) return;
+
+    records.forEach(order => {
+        const meta = order.collected_payload_metadata || {};
+        
+        // Dynamic breakdown extraction script loops
+        let attributesHtml = '';
+        for (const [key, value] of Object.entries(meta)) {
+            if(!key.startsWith('upsell_') && !key.startsWith('poa_')) {
+                const cleanLabel = key.replace('wiz_', '').replace(/_/g, ' ').toUpperCase();
+                attributesHtml += `<div style="font-size:0.85rem; padding:4px 0;"><strong>${cleanLabel}:</strong> ${value}</div>`;
+            }
+        }
+        console.log(`Fulfillment Details for Entity: ${order.company_name}`, attributesHtml);
+    });
+}
+
+</script>
 
 </body>
 </html>
