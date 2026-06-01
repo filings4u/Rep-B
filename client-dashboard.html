@@ -408,59 +408,32 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
 /**
  * ==========================================================================
- * 🛡️ PART 2: DATABASE NETWORK QUERY INTERCEPTOR (LOOP-PROOF)
+ * 🛡️ PART 2: THE UNIVERSAL CLIENT_ID REVERSE TRANSLATOR INTERCEPTOR
  * ==========================================================================
  */
-(function engageNetworkInterceptor() {
+(function engageReverseNetworkInterceptor() {
   "use strict";
   
   const originalFetch = window.fetch;
   window.fetch = function(resource, config) {
-    if (typeof resource === 'string' && resource.includes('/rest/v1/orders')) {
+    if (typeof resource === 'string') {
       
+      // 1. CATCH SELECT PARAMETERS: If an old script tries to select user_id, change it to client_id
       if (resource.includes('select=')) {
-        console.warn("🔧 Network Interceptor: Standardizing database request parameters.");
-        
-        // 1. Clean the target URL query string
-        let modifiedResource = resource;
+        console.warn("🔧 Reverse Interceptor: Translating 'user_id' lookup request into 'client_id' to match updated schema.");
+        resource = resource.replace(/\buser_id\b/g, 'client_id');
+      }
 
-        // Force fix any double modifications (like service_title_title) back to your true schema column
-        if (modifiedResource.includes('service_title_title')) {
-          modifiedResource = modifiedResource.replace(/service_title_title/g, 'service_title');
-        }
-        
-        // Prevent matching if 'service_title' is already explicitly built out
-        if (modifiedResource.includes('service') && !modifiedResource.includes('service_title')) {
-          modifiedResource = modifiedResource.replace(/\bservice\b/g, 'service_title');
-        }
-        
-        // Map other column structures safely
-        modifiedResource = modifiedResource.replace(/\bclient_id\b/g, 'user_id');
-        modifiedResource = modifiedResource.replace(/\breference_id\b/g, 'id');
-        modifiedResource = modifiedResource.replace(/\bclient_id=eq\b/g, 'user_id=eq');
-
-        // 2. Remove accidental duplicates completely from the string parameter block
-        const urlParts = modifiedResource.split('?');
-        if (urlParts.length > 1) {
-          const params = urlParts[1].split('&');
-          const cleanedParams = params.map(param => {
-            if (param.startsWith('select=')) {
-              const columns = param.replace('select=', '').split(',');
-              const uniqueColumns = [...new Set(columns.map(c => c.trim()))];
-              return 'select=' + uniqueColumns.join(',');
-            }
-            return param;
-          });
-          modifiedResource = urlParts[0] + '?' + cleanedParams.join('&');
-        }
-
-        resource = modifiedResource;
+      // 2. CATCH WHERE FILTERS: If an old script tries to filter by user_id=eq., rewrite it to client_id=eq.
+      if (resource.includes('user_id=eq.')) {
+        resource = resource.replace('user_id=eq.', 'client_id=eq.');
       }
     }
     return originalFetch.call(this, resource, config);
   };
 })();
 </script>
+
 
 <script>
 /**
