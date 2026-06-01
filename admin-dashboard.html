@@ -808,165 +808,134 @@
 <script>
 /**
  * ==========================================================================
- * 🛡️ SUPER ADMIN OPERATIONAL ENGINE SYNC LOGIC (DEEP DIAGNOSTIC TERMINAL)
+ * 🛡️ WORKSPACE ADMINISTRATIVE NOTIFICATION ENGINE (INTEGRATED DATA CORE)
  * ==========================================================================
  */
-(function runSuperAdminSyncEngine() {
+(function engageAdminNotificationSystem() {
   "use strict";
 
-  const UI = {
-    selector: document.getElementById('superAdminClientAppSelector'),
-    loadBtn: document.getElementById('superAdminLoadDataBtn'),
-    pipelineBox: document.getElementById('superAdminPipelineListOutput'),
-    notifyTitle: document.getElementById('adminNotifyTitle'),
-    notifyMessage: document.getElementById('adminNotifyMessage'),
-    notifyBtn: document.getElementById('adminNotifySubmitBtn')
+  // Cache mapping directly to your true, pre-existing HTML element IDs
+  const ADMIN_UI = {
+    form: document.getElementById('adminAlertForm'),
+    dropdown: document.getElementById('adminClientDropdown'),
+    titleInput: document.getElementById('alertTitle'),
+    messageInput: document.getElementById('alertMessage'),
+    statusMsg: document.getElementById('alertStatus')
   };
 
-  const adminEngineSyncLoop = setInterval(() => {
+  // Safe activation sync loop: waits for Supabase nodes to initialize cleanly
+  const syncLoop = setInterval(() => {
     const client = window.supabaseClient || window.supabase;
     if (client && client.from) {
-      clearInterval(adminEngineSyncLoop);
-      bootstrapAdminSyncPanel(client);
+      clearInterval(syncLoop);
+      bootstrapAdminWorkspace(client);
     }
   }, 100);
 
-    async function bootstrapAdminSyncPanel(client) {
-    try {
-      console.log("🔍 Admin Diagnostic: Extracting base user rows data pool...");
-      
-      let { data: appRecords, error } = await client.from('applications').select('*');
+  async function bootstrapAdminWorkspace(client) {
+    if (!ADMIN_UI.dropdown || !ADMIN_UI.form) return;
 
-      if (!appRecords || appRecords.length === 0) {
-        const { data: orderRecords } = await client.from('orders').select('*');
-        if (orderRecords) {
-          appRecords = orderRecords.map(order => ({
-            id: order.id,
-            user_id: order.user_id,
-            business_name: order.company_name
-          }));
+    try {
+      // 1. Fetch profiles straight from the applications table
+      const { data: apps, error } = await client.from('applications').select('id, business_name, user_id');
+      let selectRecords = apps || [];
+
+      // Fallback: If applications is empty, scan orders and deduplicate company records automatically
+      if (selectRecords.length === 0) {
+        const { data: orders } = await client.from('orders').select('id, user_id, company_name');
+        if (orders) {
+          const uniqueNames = new Set();
+          orders.forEach(order => {
+            const nameKey = (order.company_name || '').trim().toLowerCase();
+            if (nameKey && !uniqueNames.has(nameKey)) {
+              uniqueNames.add(nameKey);
+              selectRecords.push({
+                id: order.id,
+                user_id: order.user_id,
+                business_name: order.company_name
+              });
+            }
+          });
         }
       }
 
-      if (!appRecords || appRecords.length === 0) {
-        if (UI.selector) UI.selector.innerHTML = '<option value="">-- No Client Records Detected --</option>';
+      // 2. Populate your dropdown menu
+      if (selectRecords.length === 0) {
+        ADMIN_UI.dropdown.innerHTML = '<option value="">-- No Client Profiles Detected in DB --</option>';
         return;
       }
 
-      // 🎯 THE DUPLICATE BLOCKER: Filters out rows with duplicate company names instantly
-      const uniqueCompanyNames = new Set();
-      const pristineRecords = [];
-
-      appRecords.forEach(record => {
-        const nameKey = (record.business_name || record.company_name || '').trim().toLowerCase();
-        
-        // Only append the item to the dropdown menu if we haven't processed its name yet
-        if (nameKey && !uniqueCompanyNames.has(nameKey)) {
-          uniqueCompanyNames.add(nameKey);
-          pristineRecords.push(record);
-        }
+      ADMIN_UI.dropdown.innerHTML = '<option value="">-- Choose Target Account Profile --</option>';
+      selectRecords.forEach(row => {
+        const opt = document.createElement('option');
+        opt.value = row.id;
+        opt.setAttribute('data-uid', row.user_id || '');
+        opt.textContent = row.business_name || 'Unnamed Company Profile';
+        ADMIN_UI.dropdown.appendChild(opt);
       });
 
-      // Render the dropdown options using the pristine, unique data array
-      if (UI.selector) {
-        UI.selector.innerHTML = '<option value="">-- Choose Target Account Profile --</option>';
-        pristineRecords.forEach(row => {
-          const opt = document.createElement('option');
-          opt.value = row.id;
-          opt.setAttribute('data-uid', row.user_id || '');
-          opt.textContent = row.business_name || row.company_name || 'Unnamed Company';
-          UI.selector.appendChild(opt);
-        });
-      }
+      // 3. Bind form submit interception logic
+      ADMIN_UI.form.addEventListener('submit', (e) => handleFormDispatch(e, client));
 
-      if (UI.loadBtn) UI.loadBtn.addEventListener('click', () => loadTargetClientWorkflowList(client));
-      if (UI.notifyBtn) UI.notifyBtn.addEventListener('click', () => dispatchLiveNotificationToClient(client));
-
-    } catch (e) { 
-      console.error("Core System Exception intercepted during bootstrap:", e.message); 
+    } catch (err) {
+      console.error("Admin dashboard initialization crash caught safely:", err.message);
     }
   }
 
+  async function handleFormDispatch(event, client) {
+    event.preventDefault();
 
-  async function loadTargetClientWorkflowList(client) {
-    const appId = UI.selector.value;
-    if (!appId) { alert("Please select a target client profile account first."); return; }
+    const selectedOption = ADMIN_UI.dropdown.options[ADMIN_UI.dropdown.selectedIndex];
+    const targetUserUuid = selectedOption ? selectedOption.getAttribute('data-uid') : null;
+    const finalTitle = ADMIN_UI.titleInput.value.trim();
+    const finalMessage = ADMIN_UI.messageInput.value.trim();
+    const submitBtn = ADMIN_UI.form.querySelector("button[type='submit']");
 
-    UI.pipelineBox.innerHTML = '<div style="color:#64748b;">Loading active tracking timeline nodes...</div>';
-
-    // Query application_tracking first
-    let { data: steps, error } = await client
-      .from('application_tracking')
-      .select('*')
-      .eq('application_id', appId)
-      .order('step_order', { ascending: true });
-
-    // Fallback: If application_tracking fails or hasn't mapped steps, check user profile orders directly
-    if (error || !steps || steps.length === 0) {
-      console.warn("⚠️ Milestone configuration unmapped for this entry ID. Generating core framework.");
-      UI.pipelineBox.innerHTML = '<div style="color:#ef4444; font-weight:600; padding:10px; font-size:0.85rem;">No checkpoints configuration matched this table index key yet.</div>';
-      return;
+    // Input verification check blocks
+    if (!targetUserUuid) { 
+      flashInlineStatus("❌ Please select a valid target client profile.", "#c5221f", "#fce8e6"); 
+      return; 
+    }
+    if (!finalTitle || !finalMessage) { 
+      flashInlineStatus("❌ Notification header or body parameters cannot be blank.", "#c5221f", "#fce8e6"); 
+      return; 
     }
 
-    UI.pipelineBox.innerHTML = '';
-    
-    steps.forEach(step => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; background:#f8fafc; border:1px solid #e2e8f0; padding:10px; border-radius:4px; margin-bottom:5px; text-align:left; box-sizing: border-box;';
-      
-      row.innerHTML = `
-        <div>
-          <div style="font-size:0.85rem; font-weight:700; color:#0a1f44;">Step ${step.step_order}: ${step.title}</div>
-          <small style="color:#64748b;">${step.is_completed ? '✅ Completed' : '⏳ In Progress'}</small>
-        </div>
-        <button style="padding:4px 8px; font-size:0.75rem; font-weight:700; border:0; border-radius:3px; color:white; background:${step.is_completed ? '#ef4444' : '#10b981'}; cursor:pointer;">
-          ${step.is_completed ? 'Reset' : 'Fulfill'}
-        </button>
-      `;
+    try {
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Pushing Live Broadcast Alert..."; }
+      if (ADMIN_UI.statusMsg) { ADMIN_UI.statusMsg.style.display = 'none'; }
 
-      row.querySelector('button').addEventListener('click', async () => {
-        const nextState = !step.is_completed;
-        await client.from('application_tracking').update({ is_completed: nextState, completed_at: nextState ? new Date() : null }).eq('id', step.id);
-        
-        // Update either applications or orders status headers seamlessly based on presence tracking
-        await client.from('applications').update({ current_status: step.title }).eq('id', appId);
-        await client.from('orders').update({ status: step.title }).eq('id', appId);
-        
-        loadTargetClientWorkflowList(client);
+      // 4. Dispatch the alert row straight down into portal_notifications table
+      const { error: insertError } = await client.from('portal_notifications').insert({
+        user_id: targetUserUuid,
+        title: finalTitle,
+        message: finalMessage,
+        is_read: false,
+        is_archived: false
       });
 
-      UI.pipelineBox.appendChild(row);
-    });
+      if (insertError) throw insertError;
+
+      // SUCCESS: Display success alert badge message right inline inside your status div container
+      flashInlineStatus("🎉 Success! Notification drawer alert logged natively.", "#137333", "#e6f4ea");
+      ADMIN_UI.form.reset();
+
+    } catch (err) {
+      flashInlineStatus("❌ Transmission Dropped: " + err.message, "#c5221f", "#fce8e6");
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Push Real-Time Alert →"; }
+    }
   }
 
-  async function dispatchLiveNotificationToClient(client) {
-    const selectedOpt = UI.selector.options[UI.selector.selectedIndex];
-    const userUuid = selectedOpt ? selectedOpt.getAttribute('data-uid') : null;
-    const title = UI.notifyTitle.value.trim();
-    const msg = UI.notifyMessage.value.trim();
-
-    if (!userUuid) { alert("Broadcast Blocked: Could not resolve a valid User UID for this account row choice parameters."); return; }
-    if (!title || !msg) { alert("Broadcast Blocked: Description parameters text inputs cannot be blank."); return; }
-
-    UI.notifyBtn.disabled = true; UI.notifyBtn.textContent = "Broadcasting Message Over the Air...";
-
-    const { error } = await client.from('portal_notifications').insert({
-      user_id: userUuid,
-      title: title,
-      message: msg,
-      is_read: false,
-      is_archived: false
-    });
-
-    UI.notifyBtn.disabled = false; UI.notifyBtn.textContent = "Broadcast Live Notification to Client Drawer ⚡";
-
-    if (error) { alert("Transmission dropped: " + error.message); return; }
-    
-    alert("⚡ Broadcast Success! Client notification drawer alert logged.");
-    UI.notifyTitle.value = ''; UI.notifyMessage.value = '';
+  // Visual helper function to map beautiful inline alerts directly next to your inputs
+  function flashInlineStatus(text, textColor, bgColor) {
+    if (!ADMIN_UI.statusMsg) return;
+    ADMIN_UI.statusMsg.textContent = text;
+    ADMIN_UI.statusMsg.style.cssText = `display: block !important; padding: 10px !important; margin-bottom: 15px !important; border-radius: 6px !important; font-size: 0.85rem !important; font-weight: 700 !important; color: ${textColor} !important; background: ${bgColor} !important; text-align: left !important;`;
   }
 })();
 </script>
+
 
 
 
