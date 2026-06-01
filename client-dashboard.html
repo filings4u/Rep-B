@@ -408,29 +408,39 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
 /**
  * ==========================================================================
- * 🛡️ PART 2: ULTIMATE GLOBAL SCHEMA & ALIGNMENT LOCK INTERCEPTOR
+ * 🛡️ PART 2: LOW-LEVEL INTERACTION LOCK & CORE PARAMS INTERCEPTOR
  * ==========================================================================
  */
-(function engagePerfectNetworkInterceptor() {
+(function engageLowLevelNetworkLock() {
   "use strict";
-  
+
+  // 1. Hook into the browser's URL Parameter engine to block 'user_id' entries completely
+  const originalSet = URLSearchParams.prototype.set;
+  URLSearchParams.prototype.set = function(name, value) {
+    if (name === 'user_id') name = 'client_id';
+    if (typeof value === 'string' && value.includes('user_id')) {
+      value = value.replace(/\buser_id\b/g, 'client_id');
+    }
+    return originalSet.call(this, name, value);
+  };
+
+  const originalAppend = URLSearchParams.prototype.append;
+  URLSearchParams.prototype.append = function(name, value) {
+    if (name === 'user_id') name = 'client_id';
+    return originalAppend.call(this, name, value);
+  };
+
+  // 2. Ironclad fallback catch inside window.fetch to catch remaining raw text requests
   const originalFetch = window.fetch;
   window.fetch = function(resource, config) {
     if (typeof resource === 'string') {
-      
-      // 1. FORCE THE INWARD DATABASE TRANSLATION
-      // If any script (new or old) attempts to use user_id, force convert it to client_id
       if (resource.includes('user_id')) {
-        console.warn("🔧 System Interceptor: Converting legacy 'user_id' string reference into true schema 'client_id'.");
-        
-        // Convert query filters from user_id=eq. to client_id=eq.
+        console.warn("🔧 Deep Network Lock: Translating legacy parameters to 'client_id'.");
         resource = resource.replace(/user_id=eq\./g, 'client_id=eq.');
-        
-        // Convert explicit select field columns lists from user_id to client_id
         resource = resource.replace(/\buser_id\b/g, 'client_id');
       }
-
-      // 2. STABILIZE SELECT FIELDS TO PREVENT ACCIDENTAL REPLICATIONS OR TYPOS
+      
+      // Clean duplicate parameters out of select statements on the fly
       if (resource.includes('select=')) {
         const urlParts = resource.split('?');
         if (urlParts.length > 1) {
@@ -438,7 +448,6 @@ document.addEventListener("DOMContentLoaded", () => {
           const cleanedParams = params.map(param => {
             if (param.startsWith('select=')) {
               const columns = param.replace('select=', '').split(',');
-              // Strip extra word loops (like client_id_id or duplicates) dynamically
               const uniqueColumns = [...new Set(columns.map(c => c.trim()))];
               return 'select=' + uniqueColumns.join(',');
             }
@@ -452,6 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 })();
 </script>
+
 
 
 
