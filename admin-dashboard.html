@@ -809,13 +809,12 @@
 <script>
 /**
  * ==========================================================================
- * 🛡️ WORKSPACE ADMINISTRATIVE NOTIFICATION ENGINE (INTEGRATED DATA CORE)
+ * 🛡️ WORKSPACE ADMINISTRATIVE NOTIFICATION ENGINE (TRUE SCHEMA ALIGNED)
  * ==========================================================================
  */
 (function engageAdminNotificationSystem() {
   "use strict";
 
-  // Cache mapping directly to your true, pre-existing HTML element IDs
   const ADMIN_UI = {
     form: document.getElementById('adminAlertForm'),
     dropdown: document.getElementById('adminClientDropdown'),
@@ -824,7 +823,6 @@
     statusMsg: document.getElementById('alertStatus')
   };
 
-  // Safe activation sync loop: waits for Supabase nodes to initialize cleanly
   const syncLoop = setInterval(() => {
     const client = window.supabaseClient || window.supabase;
     if (client && client.from) {
@@ -837,11 +835,9 @@
     if (!ADMIN_UI.dropdown || !ADMIN_UI.form) return;
 
     try {
-      // 1. Fetch profiles straight from the applications table
-      const { data: apps, error } = await client.from('applications').select('id, business_name, user_id');
+      const { data: apps } = await client.from('applications').select('id, business_name, user_id');
       let selectRecords = apps || [];
 
-      // Fallback: If applications is empty, scan orders and deduplicate company records automatically
       if (selectRecords.length === 0) {
         const { data: orders } = await client.from('orders').select('id, user_id, company_name');
         if (orders) {
@@ -860,7 +856,6 @@
         }
       }
 
-      // 2. Populate your dropdown menu
       if (selectRecords.length === 0) {
         ADMIN_UI.dropdown.innerHTML = '<option value="">-- No Client Profiles Detected in DB --</option>';
         return;
@@ -875,11 +870,10 @@
         ADMIN_UI.dropdown.appendChild(opt);
       });
 
-      // 3. Bind form submit interception logic
       ADMIN_UI.form.addEventListener('submit', (e) => handleFormDispatch(e, client));
 
     } catch (err) {
-      console.error("Admin dashboard initialization crash caught safely:", err.message);
+      console.error("Admin dashboard initialization error:", err.message);
     }
   }
 
@@ -892,7 +886,6 @@
     const finalMessage = ADMIN_UI.messageInput.value.trim();
     const submitBtn = ADMIN_UI.form.querySelector("button[type='submit']");
 
-    // Input verification check blocks
     if (!targetUserUuid) { 
       flashInlineStatus("❌ Please select a valid target client profile.", "#c5221f", "#fce8e6"); 
       return; 
@@ -906,8 +899,8 @@
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Pushing Live Broadcast Alert..."; }
       if (ADMIN_UI.statusMsg) { ADMIN_UI.statusMsg.style.display = 'none'; }
 
-      // 4. FIXED: Changed 'client_id' -> 'user_id' to match your actual database schema map columns precisely
-      const { error: insertError } = await client.from('portal_notifications').insert({
+      // 🎯 FIXED: Changed table path target from 'portal_notifications' to your TRUE active table 'client_notifications'
+      const { error: insertError } = await client.from('client_notifications').insert({
         user_id: targetUserUuid,
         title: finalTitle,
         message: finalMessage,
@@ -917,7 +910,6 @@
 
       if (insertError) throw insertError;
 
-      // SUCCESS STATUS UPDATE
       flashInlineStatus("🎉 Success! Notification drawer alert logged natively.", "#137333", "#e6f4ea");
       ADMIN_UI.form.reset();
 
@@ -936,6 +928,7 @@
   }
 })();
 </script>
+
 
 
 
