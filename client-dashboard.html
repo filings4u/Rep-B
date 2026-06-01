@@ -408,59 +408,70 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
 /**
  * ==========================================================================
- * 🛡️ PART 2: LOW-LEVEL INTERACTION LOCK & CORE PARAMS INTERCEPTOR
+ * 🛡️ PART 2: THE GLOBAL REGEX VALUE RESOLVER NETWORK INTERCEPTOR (STABILIZED)
  * ==========================================================================
  */
-(function engageLowLevelNetworkLock() {
+(function engageRegexGlobalNetworkGate() {
   "use strict";
 
-  // 1. Hook into the browser's URL Parameter engine to block 'user_id' entries completely
-  const originalSet = URLSearchParams.prototype.set;
-  URLSearchParams.prototype.set = function(name, value) {
-    if (name === 'user_id') name = 'client_id';
-    if (typeof value === 'string' && value.includes('user_id')) {
-      value = value.replace(/\buser_id\b/g, 'client_id');
-    }
-    return originalSet.call(this, name, value);
-  };
-
-  const originalAppend = URLSearchParams.prototype.append;
-  URLSearchParams.prototype.append = function(name, value) {
-    if (name === 'user_id') name = 'client_id';
-    return originalAppend.call(this, name, value);
-  };
-
-  // 2. Ironclad fallback catch inside window.fetch to catch remaining raw text requests
   const originalFetch = window.fetch;
   window.fetch = function(resource, config) {
-    if (typeof resource === 'string') {
-      if (resource.includes('user_id')) {
-        console.warn("🔧 Deep Network Lock: Translating legacy parameters to 'client_id'.");
-        resource = resource.replace(/user_id=eq\./g, 'client_id=eq.');
-        resource = resource.replace(/\buser_id\b/g, 'client_id');
-      }
+    let requestStringUrl = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
+
+    // Intercept any outgoing request targeting your project database nodes
+    if (requestStringUrl && requestStringUrl.includes('lrbimrlbskjweynxlgas.supabase.co')) {
+      console.warn("🔧 Ultimate Schema Guard: Enforcing 'client_id' parameter matching dynamically.");
       
-      // Clean duplicate parameters out of select statements on the fly
-      if (resource.includes('select=')) {
-        const urlParts = resource.split('?');
-        if (urlParts.length > 1) {
-          const params = urlParts[1].split('&');
-          const cleanedParams = params.map(param => {
+      // 1. GLOBAL REGEX STRING REPLACEMENT VALVE
+      // This converts 'user_id' completely to 'client_id' no matter its parameter positioning string
+      requestStringUrl = requestStringUrl.replace(/user_id/g, 'client_id');
+
+      // 2. WIPE OUT DOUBLE MODIFICATION CONFLICTS
+      if (requestStringUrl.includes('service_title_title')) {
+        requestStringUrl = requestStringUrl.replace(/service_title_title/g, 'service_title');
+      }
+
+      // 3. DEDUPLICATE SELECT ATTRIBUTE LISTS SECURELY
+      if (requestStringUrl.includes('select=')) {
+        const querySplits = requestStringUrl.split('?');
+        if (querySplits.length > 1) {
+          const separateParams = querySplits[1].split('&');
+          const scrubbedParams = separateParams.map(param => {
             if (param.startsWith('select=')) {
-              const columns = param.replace('select=', '').split(',');
-              const uniqueColumns = [...new Set(columns.map(c => c.trim()))];
-              return 'select=' + uniqueColumns.join(',');
+              const items = param.replace('select=', '').split(',');
+              const cleanUniqueItems = [...new Set(items.map(i => i.trim()))];
+              return 'select=' + cleanUniqueItems.join(',');
             }
             return param;
           });
-          resource = urlParts[0] + '?' + cleanedParams.join('&');
+          // FIXED: Strictly target the first index string of the split address to prevent array-to-string corruption
+          requestStringUrl = querySplits[0] + '?' + scrubbedParams.join('&');
         }
       }
     }
+
+    // Apply the clean URL right back onto whatever resource type fetch is processing
+    if (typeof resource === 'string') {
+      resource = requestStringUrl;
+    } else if (resource && typeof resource === 'object') {
+      try {
+        resource = new Request(requestStringUrl, config || resource);
+      } catch (e) {
+        resource.url = requestStringUrl;
+      }
+    }
+
     return originalFetch.call(this, resource, config);
   };
 })();
 </script>
+
+
+
+
+
+
+
 
 
 
@@ -483,7 +494,7 @@ async function runApplicationTrackingPipeline(client, userId, timelineElement) {
 
     // Pull application container along with its general textual status name descriptor string
     let appQuery = client.from('applications').select('id, current_status').eq('is_active', true);
-    if (activeUid) appQuery = appQuery.eq('user_id', activeUid);
+    if (activeUid) appQuery = appQuery.eq('client_id', activeUid);
 
     const { data: app, error: appErr } = await appQuery.limit(1).maybeSingle();
     
@@ -907,7 +918,7 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
       if (!session) return;
       const uid = session.user.id;
 
-      let baseQuery = client.from('portal_notifications').select('*').eq('user_id', uid);
+      let baseQuery = client.from('portal_notifications').select('*').eq('client_id', uid);
       baseQuery = baseQuery.eq('is_archived', (modalFilterState === "archived"));
 
       const { data: notifications, error } = await baseQuery.order('created_at', { ascending: false });
@@ -1095,7 +1106,7 @@ client.auth.getSession().then(({ data: { session } }) => {
       const uid = session.user.id;
 
       // FIXED: Uses 'user_id' strictly instead of 'client_id' to match your true table column setup
-      let baseQuery = client.from('portal_notifications').select('*').eq('user_id', uid);
+      let baseQuery = client.from('portal_notifications').select('*').eq('client_id', uid);
       baseQuery = baseQuery.eq('is_archived', (activeFilterMode === "archived"));
 
       const { data: list, error } = await baseQuery.order('created_at', { ascending: false });

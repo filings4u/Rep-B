@@ -66,7 +66,7 @@
 
       let appQuery = client.from('applications').select('id').eq('is_active', true);
       if (authenticatedUserId) {
-        appQuery = appQuery.eq('user_id', authenticatedUserId);
+        appQuery = appQuery.eq('client_id', authenticatedUserId);
       }
 
       const { data: activeApp, error: appError } = await appQuery.limit(1).maybeSingle();
@@ -326,7 +326,7 @@ window.executePerimeterSecurityGate = function(clientInstance) {
 
       let appQuery = client.from('applications').select('id').eq('is_active', true);
       if (authenticatedUserId) {
-        appQuery = appQuery.eq('user_id', authenticatedUserId);
+        appQuery = appQuery.eq('client_id', authenticatedUserId);
       }
 
       const { data: activeApp, error: appError } = await appQuery.limit(1).maybeSingle();
@@ -442,7 +442,7 @@ ${step.title}${displayDate}`;timelineContainer.appendChild(rowElement);});}funct
     try {
       // If table calls fail due to missing fields, fallbacks keep the application responsive
       let query = client.from('orders').select('*');
-      if (globalUserId) query = query.eq('user_id', globalUserId);
+      if (globalUserId) query = query.eq('client_id', globalUserId);
 
       const { data: orders, error } = await query.order('created_at', { ascending: false });
 
@@ -495,7 +495,7 @@ ${step.title}${displayDate}`;timelineContainer.appendChild(rowElement);});}funct
   async function loadTimelinePipeline(client) {
     try {
       let query = client.from('applications').select('id').eq('is_active', true);
-      if (globalUserId) query = query.eq('user_id', globalUserId);
+      if (globalUserId) query = query.eq('client_id', globalUserId);
 
       const { data: app } = await query.limit(1).maybeSingle();
 
