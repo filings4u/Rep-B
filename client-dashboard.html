@@ -595,7 +595,6 @@ let globalProfileCompanyName = "Filing_Order";
     const client = window.supabaseClient || window.supabase || (typeof portalSupabaseInstance !== 'undefined' ? portalSupabaseInstance : null);
     if (client && client.auth) {
       clearInterval(syncLoop);
-      
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => bootstrapWorkspaceData(client));
       } else {
@@ -630,11 +629,11 @@ let globalProfileCompanyName = "Filing_Order";
         DOM.clientName.textContent = authUser.user.user_metadata?.first_name || authUser.user.email.split('@')[0];
       }
 
-      // FIX THE 400 ERROR PERMANENTLY: Use wildcard '*' so missing metadata columns won't reject the query
+      // FIXED: Swapped 'user_id' -> 'client_id' to match your native database columns exactly
       const { data: records, error: dbError } = await client
         .from('orders')
         .select('*')
-        .eq('user_id', userUuid);
+        .eq('client_id', userUuid);
 
       if (dbError) throw dbError;
       const activeRecords = records || [];
@@ -724,6 +723,7 @@ let globalProfileCompanyName = "Filing_Order";
 
 
 
+
 <script>
 /**
  * ==========================================================================
@@ -757,19 +757,19 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
         throw new Error("Please fill out issue description details.");
       }
 
-      // Fetch short sequential Client tracking identifiers
+      // FIXED: Uses 'client_id' matching your true PostgreSQL schema column structure
       const { data: profileCheck } = await client
         .from('orders')
         .select('client_id, company_name')
-        .eq('user_id', userUuid)
+        .eq('client_id', userUuid) 
         .limit(1);
 
       let shortClientIdTracker = 1001;
       let customerCompanyName = "Registered Portal User";
 
       if (profileCheck && profileCheck.length > 0) {
-        if (profileCheck.client_id) shortClientIdTracker = parseInt(profileCheck.client_id);
-        if (profileCheck.company_name) customerCompanyName = profileCheck.company_name;
+        if (profileCheck[0].client_id) shortClientIdTracker = parseInt(profileCheck[0].client_id);
+        if (profileCheck[0].company_name) customerCompanyName = profileCheck[0].company_name;
       }
 
       let calculatedPrioritySeverity = "Medium";
@@ -784,7 +784,7 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
 
       // Transmit straight to your support_tickets backend table
       const { error: insertError } = await client.from('support_tickets').insert({
-        client_id: String(shortClientIdTracker),
+        client_id: String(userUuid), // Stores your core user authenticated UUID hash natively
         company_name: customerCompanyName,
         subject: finalSubject,
         description: finalDescription,
@@ -794,19 +794,17 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
       });
 
       if (insertError) throw insertError;
-      
-      // SUCCESS: Flash inline badge instead of pop-up alert box
+
+      // SUCCESS: Flash inline badge next to header
       if (statusSlot) {
         statusSlot.textContent = "🎉 Success! Ticket Logged, your account specialist will be in touch.";
         statusSlot.style.cssText = "display: inline-block !important; font-size: 0.85rem !important; font-weight: 700 !important; background: #e6f4ea !important; color: #137333 !important; padding: 4px 10px !important; border-radius: 4px !important;";
         
-        // Clear success badge automatically after 6 seconds
         setTimeout(() => { statusSlot.style.display = 'none'; }, 6000);
       }
       DOM.ticketForm.reset();
 
     } catch (err) {
-      // ERROR HANDLER: Display error inline using a red theme badge
       if (statusSlot) {
         statusSlot.textContent = "❌ " + err.message;
         statusSlot.style.cssText = "display: inline-block !important; font-size: 0.85rem !important; font-weight: 700 !important; background: #fce8e6 !important; color: #c5221f !important; padding: 4px 10px !important; border-radius: 4px !important;";
@@ -818,6 +816,7 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
   });
 };
 </script>
+
 
 <script>
 /**
@@ -1065,14 +1064,24 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
     }
 
     // Real-time synchronization channel
-    client.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-      const uid = session.user.id;
-      
-      client.channel('drawer-sync-realtime-stream')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications', filter: `user_id=eq.${uid}` }, () => {
-          fetchAndRenderDrawerAlerts(client);
-        }).subscribe();
+client.auth.getSession().then(({ data: { session } }) => {
+      if (!session || !session.user) return;
+      const cid = session.user.id; // The user authentication ID is now mapped natively to client_id
+
+      client.channel(`client-hud-broadcast-stream-${cid}`)
+        .on(
+          'postgres_changes', 
+          { event: '*', schema: 'public', table: 'client_notifications' }, 
+          (payload) => {
+            if (payload.new && (payload.new.client_id === cid)) {
+              triggerActiveDataFetch(client);
+              if (typeof window.updateBadgeCounter === 'function') {
+                window.updateBadgeCounter(client, cid);
+              }
+            }
+          }
+        )
+        .subscribe();
     });
   }
 

@@ -809,7 +809,7 @@
 <script>
 /**
  * ==========================================================================
- * 🛡️ WORKSPACE ADMINISTRATIVE NOTIFICATION ENGINE (TRUE SCHEMA ALIGNED)
+ * 🛡️ WORKSPACE ADMINISTRATIVE NOTIFICATION ENGINE (UNIFIED client_id CORE)
  * ==========================================================================
  */
 (function engageAdminNotificationSystem() {
@@ -835,11 +835,12 @@
     if (!ADMIN_UI.dropdown || !ADMIN_UI.form) return;
 
     try {
-      const { data: apps } = await client.from('applications').select('id, business_name, user_id');
+      // Fetch profile identities directly matching your updated schema column
+      const { data: apps } = await client.from('applications').select('id, business_name, client_id');
       let selectRecords = apps || [];
 
       if (selectRecords.length === 0) {
-        const { data: orders } = await client.from('orders').select('id, user_id, company_name');
+        const { data: orders } = await client.from('orders').select('id, client_id, company_name');
         if (orders) {
           const uniqueNames = new Set();
           orders.forEach(order => {
@@ -848,7 +849,7 @@
               uniqueNames.add(nameKey);
               selectRecords.push({
                 id: order.id,
-                user_id: order.user_id,
+                client_id: order.client_id,
                 business_name: order.company_name
               });
             }
@@ -865,7 +866,8 @@
       selectRecords.forEach(row => {
         const opt = document.createElement('option');
         opt.value = row.id;
-        opt.setAttribute('data-uid', row.user_id || '');
+        // Pin the true profile uuid directly onto data-cid
+        opt.setAttribute('data-cid', row.client_id || '');
         opt.textContent = row.business_name || 'Unnamed Company Profile';
         ADMIN_UI.dropdown.appendChild(opt);
       });
@@ -881,12 +883,12 @@
     event.preventDefault();
 
     const selectedOption = ADMIN_UI.dropdown.options[ADMIN_UI.dropdown.selectedIndex];
-    const targetUserUuid = selectedOption ? selectedOption.getAttribute('data-uid') : null;
+    const targetClientUuid = selectedOption ? selectedOption.getAttribute('data-cid') : null;
     const finalTitle = ADMIN_UI.titleInput.value.trim();
     const finalMessage = ADMIN_UI.messageInput.value.trim();
     const submitBtn = ADMIN_UI.form.querySelector("button[type='submit']");
 
-    if (!targetUserUuid) { 
+    if (!targetClientUuid) { 
       flashInlineStatus("❌ Please select a valid target client profile.", "#c5221f", "#fce8e6"); 
       return; 
     }
@@ -899,9 +901,9 @@
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Pushing Live Broadcast Alert..."; }
       if (ADMIN_UI.statusMsg) { ADMIN_UI.statusMsg.style.display = 'none'; }
 
-      // 🎯 FIXED: Changed table path target from 'portal_notifications' to your TRUE active table 'client_notifications'
+      // Standardized write-out using client_id exclusively
       const { error: insertError } = await client.from('client_notifications').insert({
-        user_id: targetUserUuid,
+        client_id: targetClientUuid,
         title: finalTitle,
         message: finalMessage,
         is_read: false,
@@ -928,6 +930,7 @@
   }
 })();
 </script>
+
 
 
 
