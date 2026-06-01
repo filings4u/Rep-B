@@ -408,31 +408,51 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
 /**
  * ==========================================================================
- * 🛡️ PART 2: THE UNIVERSAL CLIENT_ID REVERSE TRANSLATOR INTERCEPTOR
+ * 🛡️ PART 2: ULTIMATE GLOBAL SCHEMA & ALIGNMENT LOCK INTERCEPTOR
  * ==========================================================================
  */
-(function engageReverseNetworkInterceptor() {
+(function engagePerfectNetworkInterceptor() {
   "use strict";
   
   const originalFetch = window.fetch;
   window.fetch = function(resource, config) {
     if (typeof resource === 'string') {
       
-      // 1. CATCH SELECT PARAMETERS: If an old script tries to select user_id, change it to client_id
-      if (resource.includes('select=')) {
-        console.warn("🔧 Reverse Interceptor: Translating 'user_id' lookup request into 'client_id' to match updated schema.");
+      // 1. FORCE THE INWARD DATABASE TRANSLATION
+      // If any script (new or old) attempts to use user_id, force convert it to client_id
+      if (resource.includes('user_id')) {
+        console.warn("🔧 System Interceptor: Converting legacy 'user_id' string reference into true schema 'client_id'.");
+        
+        // Convert query filters from user_id=eq. to client_id=eq.
+        resource = resource.replace(/user_id=eq\./g, 'client_id=eq.');
+        
+        // Convert explicit select field columns lists from user_id to client_id
         resource = resource.replace(/\buser_id\b/g, 'client_id');
       }
 
-      // 2. CATCH WHERE FILTERS: If an old script tries to filter by user_id=eq., rewrite it to client_id=eq.
-      if (resource.includes('user_id=eq.')) {
-        resource = resource.replace('user_id=eq.', 'client_id=eq.');
+      // 2. STABILIZE SELECT FIELDS TO PREVENT ACCIDENTAL REPLICATIONS OR TYPOS
+      if (resource.includes('select=')) {
+        const urlParts = resource.split('?');
+        if (urlParts.length > 1) {
+          const params = urlParts[1].split('&');
+          const cleanedParams = params.map(param => {
+            if (param.startsWith('select=')) {
+              const columns = param.replace('select=', '').split(',');
+              // Strip extra word loops (like client_id_id or duplicates) dynamically
+              const uniqueColumns = [...new Set(columns.map(c => c.trim()))];
+              return 'select=' + uniqueColumns.join(',');
+            }
+            return param;
+          });
+          resource = urlParts[0] + '?' + cleanedParams.join('&');
+        }
       }
     }
     return originalFetch.call(this, resource, config);
   };
 })();
 </script>
+
 
 
 <script>
