@@ -906,7 +906,7 @@
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Pushing Live Broadcast Alert..."; }
       if (ADMIN_UI.statusMsg) { ADMIN_UI.statusMsg.style.display = 'none'; }
 
-      // 4. Dispatch the alert row straight down into portal_notifications table
+      // 4. FIXED: Changed 'client_id' -> 'user_id' to match your actual database schema map columns precisely
       const { error: insertError } = await client.from('portal_notifications').insert({
         user_id: targetUserUuid,
         title: finalTitle,
@@ -917,18 +917,18 @@
 
       if (insertError) throw insertError;
 
-      // SUCCESS: Display success alert badge message right inline inside your status div container
+      // SUCCESS STATUS UPDATE
       flashInlineStatus("🎉 Success! Notification drawer alert logged natively.", "#137333", "#e6f4ea");
       ADMIN_UI.form.reset();
 
     } catch (err) {
+      console.error("Alert broadcast failed:", err.message);
       flashInlineStatus("❌ Transmission Dropped: " + err.message, "#c5221f", "#fce8e6");
     } finally {
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Push Real-Time Alert →"; }
     }
   }
 
-  // Visual helper function to map beautiful inline alerts directly next to your inputs
   function flashInlineStatus(text, textColor, bgColor) {
     if (!ADMIN_UI.statusMsg) return;
     ADMIN_UI.statusMsg.textContent = text;
@@ -936,6 +936,7 @@
   }
 })();
 </script>
+
 
 
 </body>
