@@ -1,34 +1,4 @@
-/**
- * ==========================================================================
- * 🛡️ SUPERBASE GLOBAL REWRITE INTERCEPTOR (SCHEMA MATCH ENFORCED)
- * ==========================================================================
- */
-(function engageNetworkInterceptor() {
-  "use strict";
-  
-  const originalFetch = window.fetch;
-  window.fetch = function(resource, config) {
-    if (typeof resource === 'string' && resource.includes('/rest/v1/orders')) {
-      
-      // 1. FIX SELECT COLUMNS: Swap frontend column names for your exact database columns
-      // Changes 'client_id' -> 'user_id'
-      // Changes 'reference_id' -> 'id'
-      // Changes 'service' -> 'service_title'
-      if (resource.includes('select=')) {
-        console.warn("🔧 Network Interceptor: Rewriting select columns to match Postgres schema columns.");
-        resource = resource.replace('client_id', 'user_id');
-        resource = resource.replace('reference_id', 'id');
-        resource = resource.replace('service', 'service_title');
-      }
 
-      // 2. FIX FILTER PARAMETER: Ensure the where filter maps to user_id
-      if (resource.includes('client_id=eq.')) {
-        resource = resource.replace('client_id=eq.', 'user_id=eq.');
-      }
-    }
-    return originalFetch.call(this, resource, config);
-  };
-})();
 
 /**
  * ==========================================================================

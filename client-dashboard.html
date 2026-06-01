@@ -412,57 +412,63 @@ document.addEventListener("DOMContentLoaded", () => {
  * ==========================================================================
  */
 (function engageRegexGlobalNetworkGate() {
-  "use strict";
+    "use strict";
+    const originalFetch = window.fetch;
+    
+    window.fetch = function(resource, config) {
+        let requestStringUrl = "";
+        let isObjectRequest = false;
 
-  const originalFetch = window.fetch;
-  window.fetch = function(resource, config) {
-    let requestStringUrl = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
-
-    // Intercept any outgoing request targeting your project database nodes
-    if (requestStringUrl && requestStringUrl.includes('lrbimrlbskjweynxlgas.supabase.co')) {
-      console.warn("🔧 Ultimate Schema Guard: Enforcing 'client_id' parameter matching dynamically.");
-      
-      // 1. GLOBAL REGEX STRING REPLACEMENT VALVE
-      // This converts 'user_id' completely to 'client_id' no matter its parameter positioning string
-      requestStringUrl = requestStringUrl.replace(/user_id/g, 'client_id');
-
-      // 2. WIPE OUT DOUBLE MODIFICATION CONFLICTS
-      if (requestStringUrl.includes('service_title_title')) {
-        requestStringUrl = requestStringUrl.replace(/service_title_title/g, 'service_title');
-      }
-
-      // 3. DEDUPLICATE SELECT ATTRIBUTE LISTS SECURELY
-      if (requestStringUrl.includes('select=')) {
-        const querySplits = requestStringUrl.split('?');
-        if (querySplits.length > 1) {
-          const separateParams = querySplits[1].split('&');
-          const scrubbedParams = separateParams.map(param => {
-            if (param.startsWith('select=')) {
-              const items = param.replace('select=', '').split(',');
-              const cleanUniqueItems = [...new Set(items.map(i => i.trim()))];
-              return 'select=' + cleanUniqueItems.join(',');
-            }
-            return param;
-          });
-          // FIXED: Strictly target the first index string of the split address to prevent array-to-string corruption
-          requestStringUrl = querySplits[0] + '?' + scrubbedParams.join('&');
+        // Safely extract the URL string regardless of input type
+        if (typeof resource === 'string') {
+            requestStringUrl = resource;
+        } else if (resource && typeof resource === 'object') {
+            requestStringUrl = resource.url || "";
+            isObjectRequest = true;
         }
-      }
-    }
 
-    // Apply the clean URL right back onto whatever resource type fetch is processing
-    if (typeof resource === 'string') {
-      resource = requestStringUrl;
-    } else if (resource && typeof resource === 'object') {
-      try {
-        resource = new Request(requestStringUrl, config || resource);
-      } catch (e) {
-        resource.url = requestStringUrl;
-      }
-    }
+        // Intercept any outgoing request targeting your project database nodes
+        if (requestStringUrl && requestStringUrl.includes('lrbimrlbskjweynxlgas.supabase.co')) {
+            console.warn("🔧 Ultimate Schema Guard: Enforcing 'client_id' parameter matching dynamically.");
+            
+            // 1. GLOBAL REGEX STRING REPLACEMENT VALVE
+            requestStringUrl = requestStringUrl.replace(/client_id/g, 'client_id');
+            
+            // 2. WIPE OUT DOUBLE MODIFICATION CONFLICTS
+            if (requestStringUrl.includes('service_title_title')) {
+                requestStringUrl = requestStringUrl.replace(/service_title_title/g, 'service_title');
+            }
+            
+            // 3. DEDUPLICATE SELECT ATTRIBUTE LISTS SECURELY
+            if (requestStringUrl.includes('select=')) {
+                const querySplits = requestStringUrl.split('?');
+                if (querySplits.length > 1) {
+                    const separateParams = querySplits[1].split('&');
+                    const scrubbedParams = separateParams.map(param => {
+                        if (param.startsWith('select=')) {
+                            const items = param.replace('select=', '').split(',');
+                            const cleanUniqueItems = [...new Set(items.map(i => i.trim()))];
+                            return 'select=' + cleanUniqueItems.join(',');
+                        }
+                        return param;
+                    });
+                    requestStringUrl = querySplits[0] + '?' + scrubbedParams.join('&');
+                }
+            }
 
-    return originalFetch.call(this, resource, config);
-  };
+            // Apply the clean URL safely back onto the resource object
+            if (!isObjectRequest) {
+                resource = requestStringUrl;
+            } else {
+                // To safely mutate a Request object's destination without stripping headers, 
+                // we pass the modified URL string as the resource, and the old request object 
+                // as the configuration basis. This forces a clean internal state clone.
+                resource = new Request(requestStringUrl, resource);
+            }
+        }
+
+        return originalFetch.call(this, resource, config);
+    };
 })();
 </script>
 
@@ -676,10 +682,18 @@ let globalProfileCompanyName = "Filing_Order";
         await window.renderDashboardPoaDocumentState(activeRecords);
       }
 
-    } catch (err) {
-      console.error("Dashboard engine exception handled cleanly:", err);
-      renderMockEntitiesAndMetrics(DOM);
-    }
+    } catch (error) {
+    // Prints the message and line number instantly to the console
+    console.error("❌ Dashboard Engine Crash Details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        stack: error.stack
+    });
+    
+    // Fallback safety net
+    renderMockEntitiesAndMetrics(); 
+}
   }
 
   function renderLiveMetricsAndEntitiesTable(records, DOM) {
@@ -906,7 +920,7 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
       if (!session) return;
       const uid = session.user.id;
       client.channel('embedded-hud-sync-channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications', filter: `user_id=eq.${uid}` }, () => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications', filter: `client_id=eq.${uid}` }, () => {
           triggerActiveDataFetch(client);
         }).subscribe();
     });
@@ -979,7 +993,7 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
             
             // Route message straight down into support ticket logging rows for admin view
             await client.from('support_tickets').insert({
-              user_id: uid,
+              client_id: uid,
               subject: `Reply to: ${item.title}`,
               description: replyText,
               priority: 'Medium',
@@ -1167,7 +1181,7 @@ client.auth.getSession().then(({ data: { session } }) => {
             
             // Route response text straight into the centralized support communication center table
             await client.from('support_tickets').insert({
-              user_id: uid,
+              client_id: uid,
               subject: `Reply to: ${item.title}`,
               description: textValue,
               priority: 'Medium',
