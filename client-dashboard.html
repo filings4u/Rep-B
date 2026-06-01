@@ -62,7 +62,7 @@
   })();
   </script>
 
-  
+
   <style>
   /* 🏁 UNIFORM TYPOGRAPHY & VIEWPORT SCALE SYNC OVERRIDES */
   html, body {
@@ -989,6 +989,183 @@ window.setupSupportFormEngine = function(client, userUuid, DOM) {
 })();
 </script>
 
+<script>
+/**
+ * ==========================================================================
+ * ⚙️ AUTOMATED INTERACTION TERMINAL: NOTIFICATIONS HUD DRAWER CONTROLLER
+ * ==========================================================================
+ */
+(function engageNotificationsDrawerController() {
+  "use strict";
+
+  const overlay = document.getElementById('integratedNotificationPanelOverlay');
+  const closeBtn = document.getElementById('closeIntegratedNotificationPanelBtn');
+  const scroller = document.getElementById('modalNotificationsScrollContainer');
+  const activeTab = document.getElementById('modalFilterActiveBtn');
+  const archiveTab = document.getElementById('modalFilterArchivedBtn');
+
+  let activeFilterMode = "active"; // active or archived
+
+  // Validation Check: Poll recursively to intercept your initialized Supabase connection
+  const checkLoop = setInterval(() => {
+    const client = window.supabaseClient || window.supabase;
+    if (client && client.from) {
+      clearInterval(checkLoop);
+      bindDrawerEventHandlers(client);
+    }
+  }, 100);
+
+  function bindDrawerEventHandlers(client) {
+    if (!overlay || !scroller) return;
+
+    // Modal drawer open operation trigger
+    const openDrawerAction = function(event) {
+      if (event) event.preventDefault();
+      console.log("🔔 Layout Trigger: Sliding Notification Drawer Open.");
+      overlay.style.setProperty('right', '0px', 'important');
+      fetchAndRenderDrawerAlerts(client);
+    };
+
+    // Core Interception Map: Safe fallback targets both matching structural anchor targets
+    const bellTriggers = [
+      document.getElementById('dashboardBellTriggerBtn'),
+      document.querySelector('.nav-bell-wrapper'),
+      document.querySelector('.nav-bell-icon')
+    ];
+
+    bellTriggers.forEach(targetNode => {
+      if (targetNode) {
+        targetNode.addEventListener('click', openDrawerAction);
+        targetNode.style.cursor = 'pointer';
+      }
+    });
+
+    // Close layout drawer operation trigger
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        overlay.style.setProperty('right', '-450px', 'important');
+      });
+    }
+
+    // Toggle Folders View Filters Strip UI Channels Layout
+    if (activeTab && archiveTab) {
+      activeTab.addEventListener('click', () => {
+        activeFilterMode = "active";
+        activeTab.style.cssText = "flex: 1; padding: 8px; background: #10b981; color: white; border: 0; border-radius: 4px; font-size: 0.8rem; font-weight: 700; cursor: pointer;";
+        archiveTab.style.cssText = "flex: 1; padding: 8px; background: #e2e8f0; color: #475569; border: 0; border-radius: 4px; font-size: 0.8rem; font-weight: 700; cursor: pointer;";
+        fetchAndRenderDrawerAlerts(client);
+      });
+
+      archiveTab.addEventListener('click', () => {
+        activeFilterMode = "archived";
+        archiveTab.style.cssText = "flex: 1; padding: 8px; background: #10b981; color: white; border: 0; border-radius: 4px; font-size: 0.8rem; font-weight: 700; cursor: pointer;";
+        activeTab.style.cssText = "flex: 1; padding: 8px; background: #e2e8f0; color: #475569; border: 0; border-radius: 4px; font-size: 0.8rem; font-weight: 700; cursor: pointer;";
+        fetchAndRenderDrawerAlerts(client);
+      });
+    }
+
+    // Real-time synchronization channel
+    client.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      const uid = session.user.id;
+      
+      client.channel('drawer-sync-realtime-stream')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications', filter: `user_id=eq.${uid}` }, () => {
+          fetchAndRenderDrawerAlerts(client);
+        }).subscribe();
+    });
+  }
+
+  async function fetchAndRenderDrawerAlerts(client) {
+    try {
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) return;
+      const uid = session.user.id;
+
+      // FIXED: Uses 'user_id' strictly instead of 'client_id' to match your true table column setup
+      let baseQuery = client.from('portal_notifications').select('*').eq('user_id', uid);
+      baseQuery = baseQuery.eq('is_archived', (activeFilterMode === "archived"));
+
+      const { data: list, error } = await baseQuery.order('created_at', { ascending: false });
+
+      if (error || !list || list.length === 0) {
+        scroller.innerHTML = `<div style="text-align: center; padding: 30px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; color: #64748b; font-size: 0.85rem;">No notification items inside this folder.</div>`;
+        return;
+      }
+
+      scroller.innerHTML = '';
+
+      list.forEach(item => {
+        const row = document.createElement('div');
+        const unreadIndicatorBorder = item.is_read ? '1px solid #e2e8f0' : '1.5px solid #10b981';
+        const itemBackgroundFill = item.is_read ? '#ffffff' : '#ecfdf5';
+
+        row.style.cssText = `background: ${itemBackgroundFill}; border: ${unreadIndicatorBorder}; padding: 15px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(10,31,68,0.02);`;
+        
+        row.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+            <div style="text-align: left;">
+              <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #0a1f44;">${item.title}</h4>
+              <small style="color: #64748b; font-size: 0.7rem;">${new Date(item.created_at).toLocaleDateString()}</small>
+            </div>
+            <span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; background: ${item.is_read ? '#cbd5e1' : '#10b981'}; color: ${item.is_read ? '#475569' : '#ffffff'};">${item.is_read ? 'Read' : 'New'}</span>
+          </div>
+          <p style="margin: 0; color: #334155; font-size: 0.85rem; line-height: 1.4; white-space: pre-wrap; text-align: left;">${item.message}</p>
+          
+          <!-- BRAND-MATCHED INTEGRATED CHAT CHANNELS REPLY DISPATCH CONSOLE -->
+          <div style="margin-top: 5px; display: flex; gap: 5px; box-sizing: border-box;">
+            <input type="text" class="reply-input-field" placeholder="Type response message parameters..." style="width: 100% !important; flex: 1 !important; padding: 6px 10px !important; font-size: 0.85rem !important; border: 1px solid #cbd5e1 !important; border-radius: 4px !important; outline: none !important; background: #ffffff !important; box-sizing: border-box !important;">
+            <button class="hud-reply-action" style="padding: 6px 12px !important; font-size: 0.85rem !important; background: #10b981 !important; color: white !important; border: 0 !important; border-radius: 4px !important; font-weight: 700 !important; cursor: pointer !important; box-sizing: border-box !important;">Send</button>
+          </div>
+
+          <div style="display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; justify-content: flex-end; margin-top: 4px;">
+            ${!item.is_read ? `<button class="hud-read-action" style="padding: 4px 8px; font-size: 0.7rem; background: #0a1f44; color: white; border: 0; border-radius: 3px; cursor: pointer; font-weight: 600;">Mark Read</button>` : ''}
+            <button class="hud-archive-action" style="padding: 4px 8px; font-size: 0.7rem; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 3px; cursor: pointer; font-weight: 600;">${item.is_archived ? 'Restore' : 'Archive'}</button>
+            <button class="hud-delete-action" style="padding: 4px 8px; font-size: 0.7rem; background: #fce8e6; color: #c5221f; border: 0; border-radius: 3px; cursor: pointer; font-weight: 600;">Delete</button>
+          </div>
+        `;
+
+        const readActionBtn = row.querySelector('.hud-read-action');
+        const archiveActionBtn = row.querySelector('.hud-archive-action');
+        const deleteActionBtn = row.querySelector('.hud-delete-action');
+        const replyBtn = row.querySelector('.hud-reply-action');
+        const replyInput = row.querySelector('.reply-input-field');
+
+        if (readActionBtn) readActionBtn.addEventListener('click', async () => { await client.from('portal_notifications').update({ is_read: true }).eq('id', item.id); });
+        if (archiveActionBtn) archiveActionBtn.addEventListener('click', async () => { await client.from('portal_notifications').update({ is_archived: !item.is_archived, is_read: true }).eq('id', item.id); });
+        if (deleteActionBtn) deleteActionBtn.addEventListener('click', async () => { if (confirm("Permanently delete this notification?")) { await client.from('portal_notifications').delete().eq('id', item.id); } });
+        
+        if (replyBtn && replyInput) {
+          replyBtn.addEventListener('click', async () => {
+            const textValue = replyInput.value.trim();
+            if (!textValue) return;
+            
+            replyBtn.disabled = true; replyBtn.textContent = "...";
+            
+            // Route response text straight into the centralized support communication center table
+            await client.from('support_tickets').insert({
+              user_id: uid,
+              subject: `Reply to: ${item.title}`,
+              description: textValue,
+              priority: 'Medium',
+              status: 'Open',
+              assigned_agent: 'Unassigned'
+            });
+
+            await client.from('portal_notifications').update({ is_read: true }).eq('id', item.id);
+            
+            replyInput.value = ''; replyBtn.disabled = false; replyBtn.textContent = "Send";
+            alert("🎉 Reply message context transmitted directly to messaging center dashboard channels!");
+          });
+        }
+
+        scroller.appendChild(row);
+      });
+
+    } catch (err) { console.error(err); }
+  }
+})();
+</script>
 
 
 
