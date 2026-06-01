@@ -958,17 +958,14 @@
   // Validation Check: Poll recursively to intercept your initialized Supabase connection
   const checkLoop = setInterval(() => {
     const client = window.supabaseClient || window.supabase;
-    if (client && client.auth) {
+    if (client && client.from) {
       clearInterval(checkLoop);
       bindDrawerEventHandlers(client);
     }
   }, 100);
 
   function bindDrawerEventHandlers(client) {
-    if (!overlay || !scroller) {
-      console.warn("⏳ HUD Elements unpainted; waiting on layout rendering nodes...");
-      return;
-    }
+    if (!overlay || !scroller) return;
 
     // Modal drawer open operation trigger
     const openDrawerAction = function(event) {
@@ -1016,7 +1013,7 @@
       });
     }
 
-    // Real-time synchronization channel: Forces drawer to refresh data instantly when updates hit database
+    // Real-time synchronization channel
     client.auth.getSession().then(({ data: { session } }) => {
       if (!session) return;
       const uid = session.user.id;
@@ -1034,13 +1031,14 @@
       if (!session) return;
       const uid = session.user.id;
 
+      // FIXED: Uses 'user_id' strictly instead of 'client_id' to match your true table column setup
       let baseQuery = client.from('portal_notifications').select('*').eq('user_id', uid);
       baseQuery = baseQuery.eq('is_archived', (activeFilterMode === "archived"));
 
       const { data: list, error } = await baseQuery.order('created_at', { ascending: false });
 
       if (error || !list || list.length === 0) {
-        scroller.innerHTML = `<div style="text-align: center; padding: 30px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; color: #64748b; font-size: 0.85rem;">No notification items unread inside this view folder.</div>`;
+        scroller.innerHTML = `<div style="text-align: center; padding: 30px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; color: #64748b; font-size: 0.85rem;">No notification items inside this folder.</div>`;
         return;
       }
 
@@ -1065,8 +1063,8 @@
           
           <!-- BRAND-MATCHED INTEGRATED CHAT CHANNELS REPLY DISPATCH CONSOLE -->
           <div style="margin-top: 5px; display: flex; gap: 5px; box-sizing: border-box;">
-            <input type="text" class="reply-input-field" placeholder="Type response message parameters..." style="flex: 1; padding: 6px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; background: #ffffff;">
-            <button class="hud-reply-action" style="padding: 6px 12px; font-size: 0.85rem; background: #10b981; color: white; border: 0; border-radius: 4px; font-weight: 700; cursor: pointer;">Send</button>
+            <input type="text" class="reply-input-field" placeholder="Type response message parameters..." style="width: 100% !important; flex: 1 !important; padding: 6px 10px !important; font-size: 0.85rem !important; border: 1px solid #cbd5e1 !important; border-radius: 4px !important; outline: none !important; background: #ffffff !important; box-sizing: border-box !important;">
+            <button class="hud-reply-action" style="padding: 6px 12px !important; font-size: 0.85rem !important; background: #10b981 !important; color: white !important; border: 0 !important; border-radius: 4px !important; font-weight: 700 !important; cursor: pointer !important; box-sizing: border-box !important;">Send</button>
           </div>
 
           <div style="display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; justify-content: flex-end; margin-top: 4px;">
@@ -1084,7 +1082,7 @@
 
         if (readActionBtn) readActionBtn.addEventListener('click', async () => { await client.from('portal_notifications').update({ is_read: true }).eq('id', item.id); });
         if (archiveActionBtn) archiveActionBtn.addEventListener('click', async () => { await client.from('portal_notifications').update({ is_archived: !item.is_archived, is_read: true }).eq('id', item.id); });
-        if (deleteActionBtn) deleteActionBtn.addEventListener('click', async () => { if (confirm("Permanently delete this notification item?")) { await client.from('portal_notifications').delete().eq('id', item.id); } });
+        if (deleteActionBtn) deleteActionBtn.addEventListener('click', async () => { if (confirm("Permanently delete this notification?")) { await client.from('portal_notifications').delete().eq('id', item.id); } });
         
         if (replyBtn && replyInput) {
           replyBtn.addEventListener('click', async () => {
@@ -1093,7 +1091,7 @@
             
             replyBtn.disabled = true; replyBtn.textContent = "...";
             
-            // Route message directly down into your main communication tickets system center
+            // Route response text straight into the centralized support communication center table
             await client.from('support_tickets').insert({
               user_id: uid,
               subject: `Reply to: ${item.title}`,
@@ -1103,7 +1101,6 @@
               assigned_agent: 'Unassigned'
             });
 
-            // Auto flag notification as read upon completing communication reply loop
             await client.from('portal_notifications').update({ is_read: true }).eq('id', item.id);
             
             replyInput.value = ''; replyBtn.disabled = false; replyBtn.textContent = "Send";
@@ -1118,6 +1115,7 @@
   }
 })();
 </script>
+
 
 
 
