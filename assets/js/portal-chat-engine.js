@@ -67,7 +67,7 @@ window.submitPortalChatMessagePayload = async function(msgContent, trackingRole 
 
         // 2. Log transactions directly to relational schema tables for persistence
         await dbClient.from('chat_messages').insert({
-            client_id: activePortalUserId,
+            user_id: activePortalUserId,
             sender_type: trackingRole,
             message_content: messagePackage.msg
         });

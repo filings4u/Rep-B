@@ -650,7 +650,7 @@
                           <span class="badge prio-${pClass}" style="margin-left:5px; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">${ticket.priority} Severity</span>
                           <h3 style="margin:4px 0; font-size:1.2rem; font-weight:800; color:#0f172a;">${ticket.subject}</h3>
                           <p style="margin:2px 0 8px 0; font-size:0.9rem; color:#334155; word-break:break-word;">${ticket.description}</p>
-                          <small style="color:#64748b; font-weight:600; font-size:0.78rem;">🏢 Account: <b>${ticket.company_name}</b> | Client ID: <b>#${ticket.client_id}</b> | Logged: ${dateStr}</small>
+                          <small style="color:#64748b; font-weight:600; font-size:0.78rem;">🏢 Account: <b>${ticket.company_name}</b> | Client ID: <b>#${ticket.user_id}</b> | Logged: ${dateStr}</small>
                       </div>
 
                       <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
@@ -690,7 +690,7 @@
           const agnt = document.getElementById("formAgent").value;
 
           const { error } = await client.from('support_tickets').insert({
-              client_id: cId, company_name: cName, subject: sub, description: desc, priority: prio, assigned_agent: agnt
+              user_id: cId, company_name: cName, subject: sub, description: desc, priority: prio, assigned_agent: agnt
           });
           if (error) throw error;
 
@@ -733,7 +733,7 @@
           const filtered = masterItsmTicketsArray.filter(t => {
               return String(t.subject || '').toLowerCase().includes(parsingToken) || 
                      String(t.description || '').toLowerCase().includes(parsingToken) || 
-                     String(t.client_id || '').includes(parsingToken);
+                     String(t.user_id || '').includes(parsingToken);
           });
           renderItsmIncidentsTimelineGrid(filtered);
       });

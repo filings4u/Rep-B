@@ -30,7 +30,7 @@ async function initiateStripePaymentSession(serviceName, processingPrice, stateP
                     },
                     quantity: 1,
                 }],
-                client_id: userSession.user.id,
+                user_id: userSession.user.id,
                 metadata: {
                     service: serviceName,
                     state: selectedStateCode,

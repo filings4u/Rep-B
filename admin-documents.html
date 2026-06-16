@@ -554,10 +554,10 @@ document.addEventListener("DOMContentLoaded", () => {
           let optionsMarkup = '<option value="">-- Select Target Account (Upload Destination) --</option>';
           const unifiedMap = new Map();
 
-          // Action A: If rows exist, map them tightly around short client_id numbers
+          // Action A: If rows exist, map them tightly around short user_id numbers
           if (profiles && profiles.length > 0) {
               profiles.forEach(p => {
-                  const idKey = p.client_id || p.id;
+                  const idKey = p.user_id || p.id;
                   if (idKey) {
                       unifiedMap.set(String(idKey), p.company_name || 'Active Customer Account');
                   }
@@ -659,7 +659,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tableBody.innerHTML = datasetArray.map(doc => {
           const fileSizeKb = (parseInt(doc.file_size_bytes || 0) / 1024).toFixed(1);
           const archivedDate = new Date(doc.created_at).toLocaleDateString([], {month:'2-digit', day:'2-digit', year:'numeric'});
-          const cleanClientDisplayId = String(doc.client_id).includes('-') ? String(doc.client_id).slice(0,6).toUpperCase() : doc.client_id;
+          const cleanClientDisplayId = String(doc.user_id).includes('-') ? String(doc.user_id).slice(0,6).toUpperCase() : doc.user_id;
           
           return `
               <tr style="border-bottom:1px solid #e2e8f0; font-size:0.85rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
@@ -699,7 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
               const { error: dbError } = await client
                   .from('client_documents_vault')
                   .insert({
-                      client_id: isUuid ? 1001 : parseInt(selectedClientId),
+                      user_id: isUuid ? 1001 : parseInt(selectedClientId),
                       document_display_name: file.name,
                       storage_path: structuralStoragePath,
                       file_size_bytes: file.size,

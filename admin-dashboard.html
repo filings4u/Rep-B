@@ -362,6 +362,7 @@
                 </div>
 
             </nav>
+        
             <!-- ==========================================================================
 🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
 =========================================================================== -->
@@ -646,71 +647,102 @@
 <!-- ========================================================================== 
 🏢 ADMIN CORE CONSOLE SYSTEM - PART 2: REAL-TIME NOTIFICATION PACKET DISPATCHER
 ========================================================================= --> 
+<!-- ========================================================================== 🏢 ADMIN CORE CONSOLE SYSTEM - PART 2: REAL-TIME NOTIFICATION PACKET DISPATCHER ========================================================================= --> 
+<!-- ========================================================================== 🏢 ADMIN CORE CONSOLE SYSTEM - PART 2: REAL-TIME NOTIFICATION PACKET DISPATCHER ========================================================================= --> 
+<!-- ========================================================================== 🏢 ADMIN CORE CONSOLE SYSTEM - PART 2: REAL-TIME NOTIFICATION PACKET DISPATCHER ========================================================================= --> 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-      const alertForm = document.getElementById('adminAlertForm');
-      if (!alertForm) return;
+document.addEventListener("DOMContentLoaded", () => {
+  const alertForm = document.getElementById('adminAlertForm');
+  if (!alertForm) return;
 
-      alertForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const client = window.supabaseClient || window.supabase;
-          const statusBox = document.getElementById('alertStatus');
-          const submitBtn = e.target.querySelector('button[type="submit"]');
-          
-          const chosenUserUuid = document.getElementById('adminClientDropdown').value;
-          const noticeTitle = document.getElementById('alertTitle').value.trim();
-          const noticeMessage = document.getElementById('alertMessage').value.trim();
+  alertForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Safely link with your Unified Engine's client declarations
+    const client = window.supabaseClient || window.supabase || window.masterAdminGatewayClient;
+    const statusBox = document.getElementById('alertStatus');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    // 🛡️ PERIMETER GUARD LAYER: Isolate elements securely
+    const dropdownMenu = document.getElementById('adminClientDropdown');
+    const titleField = document.getElementById('alertTitle');
+    const messageField = document.getElementById('alertMessage');
 
-          if (!statusBox || !submitBtn) return;
-          if (!chosenUserUuid || !noticeTitle || !noticeMessage) {
-              statusBox.style.color = "var(--staff-red, #c15254)";
-              statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
-              return;
-          }
+    if (!statusBox || !submitBtn || !dropdownMenu || !titleField || !messageField) {
+      console.error("DOM Matrix Error: Essential input nodes missing from active layout map.");
+      return;
+    }
 
-          submitBtn.disabled = true;
-          submitBtn.innerText = "Transmitting Wave Packet...";
+    // 🛡️ LINE 858 REPAIR MATRIX: Secure check for dropdown index bounds
+    if (dropdownMenu.selectedIndex === -1 || !dropdownMenu.options[dropdownMenu.selectedIndex]) {
+      statusBox.style.color = "var(--staff-red, #c15254)";
+      statusBox.innerText = "Validation Warning: Wait for the client roster to finish loading.";
+      return;
+    }
 
-          try {
-              if (!client) throw new Error("Database core driver missing from active memory window context.");
+    const chosenUserUuid = dropdownMenu.value;
+    const noticeTitle = titleField.value.trim();
+    const noticeMessage = messageField.value.trim();
 
-              // 🚀 WIRE LINK: Targets portal_notifications using User UUID to sync customer dashboard feeds
-              const { error } = await client
-                  .from('portal_notifications')
-                  .insert({
-                      client_id: chosenUserUuid,
-                      title: noticeTitle,
-                      message: noticeMessage,
-                      is_read: false
-                  });
+    // Prevent submission on placeholder option
+    if (!chosenUserUuid) {
+      statusBox.style.color = "var(--staff-red, #c15254)";
+      statusBox.innerText = "Validation Warning: Please select a target corporate entity.";
+      return;
+    }
 
-              if (error) throw error;
+    if (!noticeTitle || !noticeMessage) {
+      statusBox.style.color = "var(--staff-red, #c15254)";
+      statusBox.innerText = "Validation Warning: Complete all notice parameters fields.";
+      return;
+    }
 
-              // Flash message locally into your Communications Stream monitor box
-              const liveCommsBox = document.getElementById("admin-inbox-live-stream-box");
-              if (liveCommsBox) {
-                  const currentTime = new Date().toLocaleTimeString();
-                  const selectionMenu = document.getElementById('adminClientDropdown');
-                  const clientEmailLabel = selectionMenu.options[selectionMenu.selectedIndex].text;
-                  
-                  liveCommsBox.innerHTML = `<p style="margin:0 0 8px 0; color:#10b981; font-size:0.82rem; line-height:1.4;"><strong>[${currentTime}] Dispatched:</strong> To ${clientEmailLabel} - "${noticeTitle}"</p>` + liveCommsBox.innerHTML;
-              }
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Transmitting Wave Packet...";
 
-              statusBox.style.color = "var(--emerald, #10b981)";
-              statusBox.innerText = "🎉 Broadcast locked! Pushed live to customer screen and dispatched to inbox.";
-              alertForm.reset();
+    try {
+      if (!client) throw new Error("Database core driver missing from active memory window context.");
 
-          } catch (err) {
-              console.error("Alert broadcast failed:", err.message);
-              statusBox.style.color = "var(--staff-red, #c15254)";
-              statusBox.innerText = `Dispatch Failed: ${err.message}`;
-          } finally {
-              submitBtn.disabled = false;
-              submitBtn.innerText = "Push Real-Time Alert →";
-          }
-      });
+      // 🚀 VERIFIED BACKEND PACKET INSERTION
+      const { error } = await client
+        .from('notifications') 
+        .insert({
+          user_id: chosenUserUuid, 
+          title: noticeTitle,
+          message: noticeMessage,
+          is_read: false
+        });
+
+      if (error) throw error;
+
+      // Flash message safely into your Communications Stream monitor box
+      const liveCommsBox = document.getElementById("admin-inbox-live-stream-box");
+      if (liveCommsBox) {
+        const currentTime = new Date().toLocaleTimeString();
+        // Safe extraction of text node value to prevent runtime crashes
+        const clientEmailLabel = dropdownMenu.options[dropdownMenu.selectedIndex].text;
+        
+        liveCommsBox.innerHTML = `<p style="margin:0 0 8px 0; color:#10b981; font-size:0.82rem; line-height:1.4;"><strong>[${currentTime}] Dispatched:</strong> To ${clientEmailLabel} - "${noticeTitle}"</p>` + liveCommsBox.innerHTML;
+      }
+
+      statusBox.style.color = "var(--emerald, #10b981)";
+      statusBox.innerText = "🎉 Broadcast locked! Pushed live to customer screen.";
+      alertForm.reset();
+
+    } catch (err) {
+      console.error("Alert broadcast failed:", err.message);
+      statusBox.style.color = "var(--staff-red, #c15254)";
+      statusBox.innerText = `Dispatch Failed: ${err.message}`;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Push Real-Time Alert →";
+    }
   });
+});
 </script>
+
+
+
 
 <!-- ========================================================================== 
 🏢 ADMIN CORE CONSOLE SYSTEM - PART 3: METRICS DATA MAPPING & INSPECTOR MODALS
@@ -809,7 +841,7 @@
 <script>
 /**
  * ==========================================================================
- * 🛡️ WORKSPACE ADMINISTRATIVE NOTIFICATION ENGINE (UNIFIED client_id CORE)
+ * 🛡️ WORKSPACE ADMINISTRATIVE NOTIFICATION ENGINE (REFACTORED USER CORE)
  * ==========================================================================
  */
 (function engageAdminNotificationSystem() {
@@ -817,12 +849,13 @@
 
   const ADMIN_UI = {
     form: document.getElementById('adminAlertForm'),
-    dropdown: document.getElementById('adminClientDropdown'),
+    dropdown: document.getElementById('adminClientDropdown'), // Kept HTML reference target matching your DOM
     titleInput: document.getElementById('alertTitle'),
     messageInput: document.getElementById('alertMessage'),
     statusMsg: document.getElementById('alertStatus')
   };
 
+  // Poll for the Supabase client availability
   const syncLoop = setInterval(() => {
     const client = window.supabaseClient || window.supabase;
     if (client && client.from) {
@@ -835,12 +868,25 @@
     if (!ADMIN_UI.dropdown || !ADMIN_UI.form) return;
 
     try {
-      // Fetch profile identities directly matching your updated schema column
-      const { data: apps } = await client.from('applications').select('id, business_name, client_id');
+      // 1. Fetch profiles matching the unified user_id schema
+      const { data: apps, error: appError } = await client
+        .from('applications')
+        .select('id, business_name, user_id')
+        .not('user_id', 'is', null);
+
+      if (appError) throw appError;
+
       let selectRecords = apps || [];
 
+      // Fallback to orders table if applications are vacant
       if (selectRecords.length === 0) {
-        const { data: orders } = await client.from('orders').select('id, client_id, company_name');
+        const { data: orders, error: orderError } = await client
+          .from('orders')
+          .select('id, user_id, company_name')
+          .not('user_id', 'is', null);
+
+        if (orderError) throw orderError;
+
         if (orders) {
           const uniqueNames = new Set();
           orders.forEach(order => {
@@ -849,7 +895,7 @@
               uniqueNames.add(nameKey);
               selectRecords.push({
                 id: order.id,
-                client_id: order.client_id,
+                user_id: order.user_id,
                 business_name: order.company_name
               });
             }
@@ -857,21 +903,25 @@
         }
       }
 
+      // 2. Render dropdown options cleanly
       if (selectRecords.length === 0) {
-        ADMIN_UI.dropdown.innerHTML = '<option value="">-- No Client Profiles Detected in DB --</option>';
+        ADMIN_UI.dropdown.innerHTML = '<option value="">-- No Account Profiles Detected in DB --</option>';
         return;
       }
 
       ADMIN_UI.dropdown.innerHTML = '<option value="">-- Choose Target Account Profile --</option>';
+      
       selectRecords.forEach(row => {
+        if (!row.user_id || row.user_id.trim() === "") return;
+
         const opt = document.createElement('option');
         opt.value = row.id;
-        // Pin the true profile uuid directly onto data-cid
-        opt.setAttribute('data-cid', row.client_id || '');
-        opt.textContent = row.business_name || 'Unnamed Company Profile';
+        opt.setAttribute('data-uid', row.user_id); // Securely bind the user UUID
+        opt.textContent = row.business_name || 'Unnamed Account Profile';
         ADMIN_UI.dropdown.appendChild(opt);
       });
 
+      // Bind submission dispatcher
       ADMIN_UI.form.addEventListener('submit', (e) => handleFormDispatch(e, client));
 
     } catch (err) {
@@ -880,46 +930,64 @@
   }
 
   async function handleFormDispatch(event, client) {
-    event.preventDefault();
+    event.preventDefault(); 
+  event.stopPropagation(); 
 
     const selectedOption = ADMIN_UI.dropdown.options[ADMIN_UI.dropdown.selectedIndex];
-    const targetClientUuid = selectedOption ? selectedOption.getAttribute('data-cid') : null;
+    const targetUserUuid = selectedOption ? selectedOption.getAttribute('data-uid') : null;
     const finalTitle = ADMIN_UI.titleInput.value.trim();
     const finalMessage = ADMIN_UI.messageInput.value.trim();
     const submitBtn = ADMIN_UI.form.querySelector("button[type='submit']");
 
-    if (!targetClientUuid) { 
-      flashInlineStatus("❌ Please select a valid target client profile.", "#c5221f", "#fce8e6"); 
-      return; 
+    // Validation layers
+    if (!targetUserUuid) {
+      flashInlineStatus("❌ Please select a valid target profile.", "#c5221f", "#fce8e6");
+      return;
     }
-    if (!finalTitle || !finalMessage) { 
-      flashInlineStatus("❌ Notification header or body parameters cannot be blank.", "#c5221f", "#fce8e6"); 
-      return; 
+
+    if (!finalTitle || !finalMessage) {
+      flashInlineStatus("❌ Notification header or body parameters cannot be blank.", "#c5221f", "#fce8e6");
+      return;
     }
 
     try {
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Pushing Live Broadcast Alert..."; }
-      if (ADMIN_UI.statusMsg) { ADMIN_UI.statusMsg.style.display = 'none'; }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Pushing Live Broadcast Alert...";
+      }
+      if (ADMIN_UI.statusMsg) {
+        ADMIN_UI.statusMsg.style.display = 'none';
+      }
 
-      // Standardized write-out using client_id exclusively
-      const { error: insertError } = await client.from('client_notifications').insert({
-        client_id: targetClientUuid,
-        title: finalTitle,
-        message: finalMessage,
-        is_read: false,
-        is_archived: false
-      });
+      // Fetch the recipient email dynamically from auth profiles if needed, 
+      // or substitute placeholder system mapping as expected by your non-null table constraint
+      const fallbackEmail = `${targetUserUuid}@system-notification.internal`;
+
+      // 3. Target the updated table: user_notifications
+      const { error: insertError } = await client
+        .from('user_notifications')
+        .insert({
+          user_id: targetUserUuid, 
+          recipient_email: fallbackEmail, // Satisfies your 'NOT NULL' schema rule
+          title: finalTitle,
+          message: finalMessage,
+          is_read: false,
+          created_at: new Date().toISOString()
+        });
 
       if (insertError) throw insertError;
 
-      flashInlineStatus("🎉 Success! Notification drawer alert logged natively.", "#137333", "#e6f4ea");
+      flashInlineStatus("🎉 Success! Notification logged natively in user_notifications.", "#137333", "#e6f4ea");
       ADMIN_UI.form.reset();
 
     } catch (err) {
       console.error("Alert broadcast failed:", err.message);
       flashInlineStatus("❌ Transmission Dropped: " + err.message, "#c5221f", "#fce8e6");
     } finally {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Push Real-Time Alert →"; }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Push Real-Time Alert →";
+      }
     }
   }
 
@@ -930,6 +998,8 @@
   }
 })();
 </script>
+
+
 
 
 <script>

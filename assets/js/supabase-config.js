@@ -1,108 +1,138 @@
+/** 
+ * ========================================================================== 
+ * 📋 APPLICATION TRACKING CARD ENGINE (GLOBAL SCOPE FIXED) 
+ * ========================================================================== 
+ */ 
 
+// Safer global HTML string sanitizer
+const escapeTimelineHTML = (str) => { 
+    if (!str) return ''; 
+    return String(str) 
+        .replace(/&/g, '&amp;') 
+        .replace(/</g, '&lt;') 
+        .replace(/>/g, '&gt;') 
+        .replace(/"/g, '&quot;') 
+        .replace(/'/g, '&#39;'); 
+};
 
-/**
- * ==========================================================================
- * 📋 APPLICATION TRACKING CARD ENGINE (WITH SYSTEM SAFETY PATCHES)
- * ==========================================================================
- */
-(function initializeTrackingCardTimeline() {
-  "use strict";
+// EXPOSED TO WINDOW: Now supabase-config.js can see and execute this cleanly!
+window.startTimelineTrackingPipeline = async function(client) { 
+    const timelineContainer = document.getElementById('filingTimeline');
+    if (!timelineContainer) return; 
 
-  // Prevent supabase-config.js from crashing the screen if it can't find this function
-  if (typeof window.executePerimeterSecurityGate !== 'function') {
-    window.executePerimeterSecurityGate = function() {
-      console.log("🚀 Pre-flight patch: executePerimeterSecurityGate stabilized.");
-    };
-  }
+    try { 
+        timelineContainer.classList.add('portal-timeline-wrapper'); 
 
-  const timelineContainer = document.getElementById('filingTimeline');
-  let activeAppId = null;
+        const { data: userData } = await client.auth.getUser(); 
+        const authenticatedUserId = userData?.user?.id; 
 
-  // Wait safely for your system's global client connection to spin up
-  const bootLoop = setInterval(() => {
-    const client = window.supabaseClient;
-    if (client) {
-      clearInterval(bootLoop);
-      startTimelineTrackingPipeline(client);
-    }
-  }, 100);
+        let appQuery = client.from('applications').select('id, business_name').eq('is_active', true); 
+        if (authenticatedUserId) { 
+            appQuery = appQuery.eq('user_id', authenticatedUserId); 
+        } 
 
-  async function startTimelineTrackingPipeline(client) {
-    try {
-      if (!timelineContainer) return;
+        const { data: activeApp, error: appError } = await appQuery.limit(1).maybeSingle(); 
+        if (appError || !activeApp) { 
+            window.renderVisualMockData(); 
+            return; 
+        } 
 
-      const { data: userData } = await client.auth.getUser();
-      const authenticatedUserId = userData?.user?.id;
+        const dynamicHeaderLabel = document.getElementById("timelineApplicationTargetName"); 
+        if (dynamicHeaderLabel && activeApp.business_name) { 
+            dynamicHeaderLabel.textContent = escapeTimelineHTML(activeApp.business_name); 
+        } 
 
-      let appQuery = client.from('applications').select('id').eq('is_active', true);
-      if (authenticatedUserId) {
-        appQuery = appQuery.eq('client_id', authenticatedUserId);
-      }
+        // Bind the active ID globally so our interface helpers can reference it
+        window.activeAppId = activeApp.id; 
+        await window.refreshTimelineUI(client); 
 
-      const { data: activeApp, error: appError } = await appQuery.limit(1).maybeSingle();
+        // Standard, clean realtime connection registration
+        client 
+            .channel(`dashboard-realtime-pipeline-${activeApp.id}`) 
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'application_tracking', 
+                filter: `application_id=eq.${activeApp.id}` 
+            }, () => { 
+                window.refreshTimelineUI(client); 
+            }) 
+            .subscribe(); 
 
-      if (appError || !activeApp) {
-        renderVisualMockData();
-        return;
-      }
+    } catch (err) { 
+        console.error("Timeline setup critical error caught:", err); 
+        window.renderVisualMockData(); 
+    } 
+};
 
-      activeAppId = activeApp.id;
-      await refreshTimelineUI(client);
+window.refreshTimelineUI = async function(client) { 
+    const timelineContainer = document.getElementById('filingTimeline');
+    if (!window.activeAppId || !timelineContainer) return; 
 
-      client
-        .channel(`dashboard-realtime-pipeline-${activeAppId}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'application_tracking', filter: `application_id=eq.${activeAppId}` }, () => { refreshTimelineUI(client); })
-        .subscribe();
+    const { data: steps, error } = await client 
+        .from('application_tracking') 
+        .select('*') 
+        .eq('application_id', window.activeAppId) 
+        .order('step_order', { ascending: true }); 
 
-    } catch (err) {
-      renderVisualMockData();
-    }
-  }
+    if (error || !steps || steps.length === 0) { 
+        window.renderVisualMockData(); 
+        return; 
+    } 
+    window.drawTimelineUI(steps); 
+};
 
-  async function refreshTimelineUI(client) {
-    if (!activeAppId || !timelineContainer) return;
-    const { data: steps, error } = await client.from('application_tracking').select('*').eq('application_id', activeAppId).order('step_order', { ascending: true });
+window.drawTimelineUI = function(steps) { 
+    const timelineContainer = document.getElementById('filingTimeline');
+    if (!timelineContainer) return; 
     
-    if (error || !steps || steps.length === 0) {
-      renderVisualMockData();
-      return;
-    }
-    drawTimelineUI(steps);
-  }
+    timelineContainer.innerHTML = ''; 
+    let activePulseAssigned = false; 
 
-  function drawTimelineUI(steps) {
-    timelineContainer.innerHTML = '';
-    steps.forEach(step => {
-      const isDone = step.is_completed;
-      const stepColor = isDone ? '#0070f3' : '#ccc';
-      const textColor = isDone ? '#333' : '#888';
-      const displayDate = step.completed_at ? new Date(step.completed_at).toLocaleDateString() : 'Pending';
+    steps.forEach(step => { 
+        const isDone = step.is_completed; 
+        const stepColor = isDone ? '#10b981' : '#cbd5e1'; 
+        const textColor = isDone ? '#0f172a' : '#64748b'; 
+        const displayDate = step.completed_at ? new Date(step.completed_at).toLocaleDateString() : 'In Progress'; 
+        let pulseClass = ''; 
 
-      const rowElement = document.createElement('div');
-      rowElement.style.cssText = 'display: flex; align-items: flex-start; margin-bottom: 16px; font-family: sans-serif;';
-      rowElement.innerHTML = `
-        <div style="margin-right: 12px; display: flex; align-items: center; justify-content: center; padding-top: 4px;">
-          <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${stepColor}; transition: background 0.3s ease;"></div>
-        </div>
-        <div style="color: ${textColor}; text-align: left;">
-          <div style="font-size: 14px; font-weight: 500;">${step.title}</div>
-          <small style="color: #999; font-size: 11px;">${displayDate}</small>
-        </div>
-      `;
-      timelineContainer.appendChild(rowElement);
-    });
-  }
+        if (!isDone && !activePulseAssigned) { 
+            pulseClass = 'timeline-pulse-dot'; 
+            activePulseAssigned = true; 
+        } 
 
-  function renderVisualMockData() {
-    const demoSteps = [
-      { title: "Application Form Submitted", is_completed: true, completed_at: new Date() },
-      { title: "Document & Identity Verification", is_completed: true, completed_at: new Date() },
-      { title: "State Agent Legal Review", is_completed: false, completed_at: null },
-      { title: "Filing Completion & Dispatch", is_completed: false, completed_at: null }
-    ];
-    drawTimelineUI(demoSteps);
-  }
-})();
+        const rowElement = document.createElement('div'); 
+        rowElement.className = 'portal-timeline-item'; 
+        rowElement.style.display = 'flex';
+        rowElement.style.marginBottom = '12px';
+        rowElement.innerHTML = ` 
+            <div style="margin-right: 16px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; width: 14px; height: 14px; margin-top: 3px;"> 
+                <div class="${pulseClass}" style="width: 12px; height: 12px; border-radius: 50%; background-color: ${stepColor}; box-sizing: border-box; transition: background 0.3s ease;"></div> 
+            </div> 
+            <div style="color: ${textColor}; text-align: left; padding-top: 1px;"> 
+                <div style="font-size: 14px; font-weight: 500; line-height: 1.4;">${escapeTimelineHTML(step.title)}</div> 
+                <small style="color: #94a3b8; font-size: 11px; font-weight: 400;">${escapeTimelineHTML(displayDate)}</small> 
+            </div> 
+        `; 
+        timelineContainer.appendChild(rowElement); 
+    }); 
+};
+
+window.renderVisualMockData = function() { 
+    const timelineContainer = document.getElementById('filingTimeline');
+    if (!timelineContainer) return; 
+    
+    timelineContainer.innerHTML = ` 
+        <div class="timeline-empty-card" style="padding: 20px; text-align: center; border: 1px dashed #e2e8f0; border-radius: 8px;"> 
+            <div class="icon-badge" style="font-size: 1.5rem; margin-bottom: 8px;">🚀</div> 
+            <h4 style="margin: 0 0 4px 0; color: #0a1f44;">Start Your First Business Filing</h4> 
+            <p style="margin: 0 0 12px 0; font-size: 0.85rem; color: #64748b;">You do not have any active tracking timelines. Form an entity now to view progress.</p> 
+            <a href="portal-services.html" style="display: inline-block; background: #10b981; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Begin Setup Wizard</a> 
+        </div> 
+    `; 
+};
+
+
 
 
 
@@ -125,10 +155,10 @@ window.executePerimeterSecurityGate = function(clientInstance) {
       if (tableName === 'orders') {
         const originalEqMethod = queryBuilder.eq;
         queryBuilder.eq = function(columnName, criteriaValue) {
-          // Dynamically change user_id to client_id for the orders table query
+          // Dynamically change user_id to user_id for the orders table query
           if (columnName === 'user_id') {
-            console.warn("🔧 Query Interceptor: Automatically fixing 'user_id' filter to 'client_id' on orders table call.");
-            return originalEqMethod.call(this, 'client_id', criteriaValue);
+            console.warn("🔧 Query Interceptor: Automatically fixing 'user_id' filter to 'user_id' on orders table call.");
+            return originalEqMethod.call(this, 'user_id', criteriaValue);
           }
           return originalEqMethod.apply(this, arguments);
         };
@@ -296,7 +326,7 @@ window.executePerimeterSecurityGate = function(clientInstance) {
 
       let appQuery = client.from('applications').select('id').eq('is_active', true);
       if (authenticatedUserId) {
-        appQuery = appQuery.eq('client_id', authenticatedUserId);
+        appQuery = appQuery.eq('user_id', authenticatedUserId);
       }
 
       const { data: activeApp, error: appError } = await appQuery.limit(1).maybeSingle();
@@ -378,32 +408,38 @@ ${step.title}${displayDate}`;timelineContainer.appendChild(rowElement);});}funct
     }
   }, 100);
 
-  /**
-   * Orchestrates the loading and synchronization of workspace interfaces
-   */
-  async function launchDashboardEngine(client) {
-    try {
-      // 1. Get the securely authenticated user payload
-      const { data: authData } = await client.auth.getUser();
-      const user = authData?.user;
-
-      if (user) {
-        globalUserId = user.id;
+/** 
+ * Orchestrates the loading and synchronization of workspace interfaces
+ * Hardened to prevent multi-page layout crashes
+ */
+async function launchDashboardEngine(client) {
+  try {
+    // 1. Get the securely authenticated user payload
+    const { data: authData } = await client.auth.getUser();
+    const user = authData?.user;
+    
+    if (user) {
+      globalUserId = user.id;
+      
+      // Guarded Mutation: Only update the client name element if it exists in the current view layout
+      if (DOM && DOM.clientName) {
         DOM.clientName.textContent = user.user_metadata?.first_name || user.email.split('@')[0];
       }
-
-      // 2. Fetch data fields from respective tables
-      await loadMetricCountsAndEntities(client);
-      await loadTimelinePipeline(client);
-      
-      // 3. Connect event listener triggers for administrative tracking structures
-      setupFormSubmissions(client);
-      setupSearchFilters();
-
-    } catch (criticalErr) {
-      console.error("Dashboard Engine encountered a tracking exception:", criticalErr);
     }
+
+    // 2. Fetch data fields from respective tables safely with structural wrappers
+    await loadMetricCountsAndEntities(client);
+    await loadTimelinePipeline(client);
+
+    // 3. Connect event listener triggers for administrative tracking structures
+    setupFormSubmissions(client);
+    setupSearchFilters();
+
+  } catch (criticalErr) {
+    console.error("Dashboard Engine encountered a tracking exception:", criticalErr);
   }
+}
+
 
   /**
    * Pulls metrics and loads company rows directly into your table container
@@ -412,7 +448,7 @@ ${step.title}${displayDate}`;timelineContainer.appendChild(rowElement);});}funct
     try {
       // If table calls fail due to missing fields, fallbacks keep the application responsive
       let query = client.from('orders').select('*');
-      if (globalUserId) query = query.eq('client_id', globalUserId);
+      if (globalUserId) query = query.eq('user_id', globalUserId);
 
       const { data: orders, error } = await query.order('created_at', { ascending: false });
 
@@ -465,7 +501,7 @@ ${step.title}${displayDate}`;timelineContainer.appendChild(rowElement);});}funct
   async function loadTimelinePipeline(client) {
     try {
       let query = client.from('applications').select('id').eq('is_active', true);
-      if (globalUserId) query = query.eq('client_id', globalUserId);
+      if (globalUserId) query = query.eq('user_id', globalUserId);
 
       const { data: app } = await query.limit(1).maybeSingle();
 
@@ -532,7 +568,7 @@ ${step.title}${displayDate}`;timelineContainer.appendChild(rowElement);});}funct
         subject: document.getElementById('ticketSubject').value,
         category: document.getElementById('ticketCategory').value,
         description: document.getElementById('ticketDescription').value,
-        created_at: new Date()
+        created_at: new Date().toISOString()
       };
 
       try {
@@ -573,28 +609,49 @@ ${step.title}${displayDate}`;timelineContainer.appendChild(rowElement);});}funct
     });
   }
 
-  /* --- ARCHITECTURAL PLATFORM PREVIEW FALLBACKS (WHEN TABLES ARE VACANT) --- */
+/* --- ARCHITECTURAL PLATFORM PREVIEW FALLBACKS (WHEN TABLES ARE VACANT) --- */ 
+function renderMockEntitiesAndMetrics() {
+  // Safe DOM Node Check Layer: Verify existence before modification 
+  if (DOM.countEntities) DOM.countEntities.textContent = "1"; 
+  if (DOM.countPending) DOM.countPending.textContent = "1"; 
+  if (DOM.countActions) DOM.countActions.textContent = "0"; 
+  if (DOM.complianceStatus) DOM.complianceStatus.textContent = "100%"; 
 
-  function renderMockEntitiesAndMetrics() {
-    DOM.countEntities.textContent = "1";
-    DOM.countPending.textContent = "1";
-    DOM.countActions.textContent = "0";
-    DOM.complianceStatus.textContent = "100%";
+  // Fixed Structural Bug: Removed stray closing div tag that corrupts table layout 
+  if (DOM.entitiesTableBody) { 
+    DOM.entitiesTableBody.innerHTML = ` 
+      <tr> 
+        <td style="font-weight:600; color:#0a1f44;">Acme Holdings LLC</td> 
+        <td><span style="text-transform: uppercase; font-weight:700;">DE</span></td> 
+        <td style="color:#64748b;">Annual Franchise Tax Filing</td> 
+        <td><span style="background:#fef7e0; color:#b06000; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">In Review</span></td> 
+      </tr> 
+    `; 
+  } else { 
+    console.log("Layout Sync Notice: #entitiesTableBody is absent on this specific workspace path."); 
+  } 
+} 
 
-    DOM.entitiesTableBody.innerHTML = `
-      </div>
-      <tr>
-        <td style="font-weight:600; color:#0a1f44;">Acme Holdings LLC</td>
-        <td><span style="text-transform: uppercase; font-weight:700;">DE</span></td>
-        <td style="color:#64748b;">Annual Franchise Tax Filing</td>
-        <td><span style="background:#fef7e0; color:#b06000; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">In Review</span></td>
-      </tr>
-    `;
-  }
+function renderMockTimeline() { 
+  const defaultSteps = [ 
+    { id: 'm1', step_order: 1, title: "Application Form Submitted", is_completed: true, completed_at: new Date() }, 
+    { id: 'm2', step_order: 2, title: "Document & Identity Verification", is_completed: true, completed_at: new Date() }, 
+    { id: 'm3', step_order: 3, title: "State Agent Legal Review", is_completed: false, completed_at: null }, 
+    { id: 'm4', step_order: 4, title: "Filing Completion & Dispatch", is_completed: false, completed_at: null } 
+  ]; 
 
-  function renderMockTimeline() {
-    const defaultSteps = [
-      { title: "Application Form Submitted", is_completed: true, completed_at: new Date() },
-      { title: "Document & Identity Verification", is_completed: true, completed_at: new Date() },
-      { title: "State Agent Legal Review", is_completed: false, completed_at: null },
-{ title: "Filing Completion & Dispatch", is_completed: false, completed_at: null }];buildTimelineDOM(defaultSteps);}})();
+  // ✅ FIXED SYNCHRONIZATION: Redirect targeting loop to the valid rendering function name
+  if (typeof drawTrackingTimelineUI === 'function') { 
+    // Dynamically locate the timeline layout container element
+    const timelineContainer = document.getElementById("filingTimeline");
+    drawTrackingTimelineUI(defaultSteps, timelineContainer, "State Agent Legal Review"); 
+  } else if (typeof buildTimelineDOM === 'function') {
+    buildTimelineDOM(defaultSteps);
+  } else { 
+    console.warn("Layout Exception: Both drawTrackingTimelineUI and buildTimelineDOM references are missing from context runtime."); 
+  } 
+} 
+
+// Safely close the root execution wrapper initialization safely
+})();
+

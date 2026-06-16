@@ -621,7 +621,7 @@
           // Pull raw rows directly from our newly unified master orders log table
           const { data: accounts, error } = await client
               .from('orders')
-              .select('client_id, company_name');
+              .select('user_id, company_name');
 
           if (error) throw error;
 
@@ -629,13 +629,13 @@
           const unifiedMap = new Map();
           if (accounts) {
               accounts.forEach(row => {
-                  if (row.client_id) {
-                      unifiedMap.set(parseInt(row.client_id), row.company_name || 'Active Corporate Client');
+                  if (row.user_id) {
+                      unifiedMap.set(parseInt(row.user_id), row.company_name || 'Active Corporate Client');
                   }
               });
           }
 
-          masterCrmThreadsCache = Array.from(unifiedMap, ([client_id, company_name]) => ({ client_id, company_name }));
+          masterCrmThreadsCache = Array.from(unifiedMap, ([user_id, company_name]) => ({ user_id, company_name }));
           
           if (masterCrmThreadsCache.length === 0) {
               rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.82rem; font-style:italic;">No active clients registered inside platform directories.</div>`;
@@ -661,9 +661,9 @@
                style="padding:14px; border-bottom:1px solid var(--border-color, #e2e8f0); cursor:pointer; display:flex; flex-direction:column; gap:4px; width:100%; box-sizing:border-box; transition:background 0.1s;"
                onmouseover="this.style.background='#f8fafc'" 
                onmouseout="this.style.background='none'"
-               onclick="activateSelectedClientChatStream('${row.client_id}')">
+               onclick="activateSelectedClientChatStream('${row.user_id}')">
                <strong style="color:var(--text-dark, #0f172a); display:block; font-size:0.9rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">🏢 ${row.company_name}</strong>
-               <small style="font-family:monospace; color:#1e40af; font-size:0.78rem; display:block; font-weight:700; letter-spacing:0.3px;">ACCOUNT ID: #${row.client_id}</small>
+               <small style="font-family:monospace; color:#1e40af; font-size:0.78rem; display:block; font-weight:700; letter-spacing:0.3px;">ACCOUNT ID: #${row.user_id}</small>
           </div>
       `).join('');
   }
@@ -676,7 +676,7 @@
       const parsingToken = searchBox.value.toLowerCase().trim();
       const filtered = masterCrmThreadsCache.filter(row => 
           String(row.company_name).toLowerCase().includes(parsingToken) ||
-          String(row.client_id).includes(parsingToken)
+          String(row.user_id).includes(parsingToken)
       );
       renderChatSidebarList(filtered);
   }
@@ -715,7 +715,7 @@
               event: 'INSERT', 
               schema: 'public', 
               table: 'chat_messages',
-              filter: 'client_id=eq.' + activeSelectedClientIdNumber
+              filter: 'user_id=eq.' + activeSelectedClientIdNumber
           }, (payload) => {
               appendSingleChatMessageBubbleToUI(payload.new);
           })
@@ -738,7 +738,7 @@
           const { data: messages, error } = await client
               .from('chat_messages')
               .select('*')
-              .eq('client_id', activeSelectedClientIdNumber)
+              .eq('user_id', activeSelectedClientIdNumber)
               .order('created_at', { ascending: true });
 
           if (error) throw error;
@@ -764,7 +764,7 @@
       const metaStyle = `font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 4px; text-align: ${isAdmin ? 'right' : 'left'}; font-weight: 600;`;
       
       const readableTime = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const senderLabel = isAdmin ? 'Fulfillment Staff' : `Client #${msg.client_id}`;
+      const senderLabel = isAdmin ? 'Fulfillment Staff' : `Client #${msg.user_id}`;
 
       return `
           <div style="${wrapperStyle}">
@@ -788,7 +788,7 @@
           const { error } = await client
               .from('chat_messages')
               .insert({
-                  client_id: activeSelectedClientIdNumber,
+                  user_id: activeSelectedClientIdNumber,
                   sender_type: 'admin',
                   message_content: outgoingContent
               });

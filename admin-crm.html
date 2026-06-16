@@ -704,7 +704,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- MODULE 4: DYNAMIC INLINE EDIT VALUE PRE-FILL DISPATCHER ---
   function enableCrmAccountInlineEditForm(clientId) {
-      const match = cachedCrmRecordsArray.find(r => parseInt(r.client_id) === parseInt(clientId));
+      const match = cachedCrmRecordsArray.find(r => parseInt(r.user_id) === parseInt(clientId));
       if (!match) return;
 
       currentTargetSelectedClientId = clientId; 
@@ -739,9 +739,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (cachedCrmRecordsArray.length === 0) {
               cachedCrmRecordsArray = [
-                  { client_id: 1001, reference_id: 'CRM-1001', company_name: 'Roseland Logistics LLC', service: 'LLC Formation', status: 'Fulfillment Lane', created_at: new Date().toISOString() },
-                  { client_id: 1002, reference_id: 'CRM-1002', company_name: 'Swift Hauling Inc', service: 'Process Agent (BOC-3)', status: 'Review State', created_at: new Date().toISOString() },
-                  { client_id: 1003, reference_id: 'CRM-1003', company_name: 'Titan Fleet Systems', service: 'Trucker Authority', status: 'Lead Entry', created_at: new Date().toISOString() }
+                  { user_id: 1001, reference_id: 'CRM-1001', company_name: 'Roseland Logistics LLC', service: 'LLC Formation', status: 'Fulfillment Lane', created_at: new Date().toISOString() },
+                  { user_id: 1002, reference_id: 'CRM-1002', company_name: 'Swift Hauling Inc', service: 'Process Agent (BOC-3)', status: 'Review State', created_at: new Date().toISOString() },
+                  { user_id: 1003, reference_id: 'CRM-1003', company_name: 'Titan Fleet Systems', service: 'Trucker Authority', status: 'Lead Entry', created_at: new Date().toISOString() }
               ];
           }
 
@@ -772,7 +772,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!tbody) return;
 
       tbody.innerHTML = datasetArray.map(row => {
-          const numericDisplayId = row.client_id || 1001;
+          const numericDisplayId = row.user_id || 1001;
           const trackingUniqueKey = row.id || numericDisplayId;
           const pipelineState = row.status || row.tax_id_status || 'Lead Entry';
           const computedProductTitle = row.service || row.service_title || row.requirement_name || 'Manual Profile Entry';
@@ -839,7 +839,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       state: stateInput,
                       total_fee: evaluatedPriceValue
                   })
-                  .eq('client_id', parseInt(currentTargetSelectedClientId));
+                  .eq('user_id', parseInt(currentTargetSelectedClientId));
 
               if (updateError) throw updateError;
               feedback.style.color = "#10b981";
@@ -857,7 +857,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   if (authData && authData.user) generatedUserUuid = authData.user.id;
               } catch (authErr) { console.warn("Authentication invitation deferred to local failover channels."); }
 
-              const currentIds = cachedCrmRecordsArray.map(o => parseInt(o.client_id || 1000));
+              const currentIds = cachedCrmRecordsArray.map(o => parseInt(o.user_id || 1000));
               const nextIdGuess = currentIds.length > 0 ? (Math.max(...currentIds) + 1) : 1001;
 
               const { error: dbError } = await client.from('orders').insert({
@@ -899,7 +899,7 @@ document.addEventListener("DOMContentLoaded", () => {
               const serviceValue = row.service || row.service_title || '';
               return String(row.company_name || '').toLowerCase().includes(parsingToken) ||
                      String(serviceValue).toLowerCase().includes(parsingToken) ||
-                     String(row.client_id || '').includes(parsingToken);
+                     String(row.user_id || '').includes(parsingToken);
           });
           renderCrmRosterDataGrid(filtered);
       });
@@ -910,11 +910,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const client = window.supabaseClient || window.supabase || crmClientMasterGate;
       if (!client || !confirm("⚠️ Void this customer record permanently?")) return;
       try {
-          const columnSelector = String(recordId).includes('-') ? 'id' : 'client_id';
+          const columnSelector = String(recordId).includes('-') ? 'id' : 'user_id';
           await client.from('orders').delete().eq(columnSelector, String(recordId).includes('-') ? recordId : parseInt(recordId));
           await synchronizeMasterCrmLedger(client); 
       } catch (err) {
-          cachedCrmRecordsArray = cachedCrmRecordsArray.filter(r => String(r.id || r.client_id) !== String(recordId));
+          cachedCrmRecordsArray = cachedCrmRecordsArray.filter(r => String(r.id || r.user_id) !== String(recordId));
           renderCrmRosterDataGrid(cachedCrmRecordsArray);
       }
   }

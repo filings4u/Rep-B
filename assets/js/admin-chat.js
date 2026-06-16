@@ -63,7 +63,7 @@
             const { data: records, error } = await client
                 .from('chat_messages')
                 .select('*')
-                .eq('client_id', clientId)
+                .eq('user_id', userId)
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
@@ -125,7 +125,7 @@
             }
 
             await client.from('chat_messages').insert({
-                client_id: currentlySelectedClientUuid,
+                user_id: currentlySelectedClientUuid,
                 sender_type: 'admin',
                 message_content: typedMessage
             });
