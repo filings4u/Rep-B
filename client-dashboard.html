@@ -1219,5 +1219,154 @@ statusSlot.style.cssText = "display: inline-block !important; font-size: 0.85rem
 })();
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[Client Workspace] Fetching verified customer session data...");
+
+  try {
+    // 1. Initialize your failsafe backend connection picker
+    let supabaseClient = window.supabase || window.supabaseClient || window.sb;
+    if (!supabaseClient) throw new Error("Database library connection context missing.");
+
+    // 2. Fetch the active user's cryptographic context session parameters
+    const sessionCheck = await supabaseClient.auth.getSession();
+    const userUuid = sessionCheck.data?.session?.user?.id;
+
+    if (!userUuid) {
+      console.warn("[Security Intercept] No active user session found. Routing to login gateway...");
+      window.location.href = "login.html";
+      return;
+    }
+
+    // 3. 🟢 THE DYNAMIC CLIENT LOOKUP: Query ONLY rows matching this specific user context UUID
+    const { data: clientOrders, error } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .eq('user_id', userUuid)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // 4. INJECT PROFILE VALUES DIRECTLY INTO CLIENT SIDE PANEL CARDS
+    if (clientOrders && clientOrders.length > 0) {
+      const activeFiling = clientOrders[0]; // Grab the latest filing parameters record
+      
+      // Update typography elements on your dashboard interface canvas slots
+      const companyTitleNode = document.getElementById("client-dashboard-company-name");
+      const accountCodeNode = document.getElementById("client-dashboard-account-number");
+      const serviceStatusNode = document.getElementById("client-dashboard-service-status");
+      
+      if (companyTitleNode) companyTitleNode.textContent = activeFiling.company_name || "Enterprise Profile";
+      if (accountCodeNode) accountCodeNode.textContent = activeFiling.tracking_number || "F4U-PENDING";
+      if (serviceStatusNode) {
+        serviceStatusNode.innerHTML = `<span class="badge-status-validated">● ${activeFiling.status.toUpperCase().replace('_', ' ')}</span>`;
+      }
+      
+      console.log("[Client UI Success] Account tracking matrices successfully hydrated.");
+    }
+
+  } catch (err) {
+    console.error("[Client Dashboard Fatal Pipeline Exception]", err);
+  }
+});
+
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[Client Workspace] Fetching live managed entities data profile...");
+
+  try {
+    let supabaseClient = window.supabase || window.supabaseClient || window.sb;
+    if (!supabaseClient) throw new Error("Database client connection reference is uninitialized.");
+
+    // 1. Fetch current authenticated customer user context
+    const sessionCheck = await supabaseClient.auth.getSession();
+    const userUuid = sessionCheck.data?.session?.user?.id;
+
+    if (!userUuid) {
+      console.warn("[Session Lockout] Redirecting guest back to portal login...");
+      return;
+    }
+
+    // 2. Query your live production orders table matching this specific client
+    const { data: customerOrders, error } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .eq('user_id', userUuid)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // 3. TARGET THE TABLE BODY CONTAINER SLOT
+    // ⚠️ Ensure your HTML table body element features this exact id tag attribute: id="client-managed-entities-table-body"
+    const entitiesTableBody = document.getElementById("client-managed-entities-table-body");
+    if (!entitiesTableBody) {
+      console.warn("Table container #client-managed-entities-table-body node was not discovered on-page.");
+      return;
+    }
+
+    // Clear out the dummy placeholder rows ("Acme Holdings LLC", "DE", etc.) completely
+    entitiesTableBody.innerHTML = "";
+
+    if (!customerOrders || customerOrders.length === 0) {
+      // Graceful fallback line if they don't have active files yet
+      entitiesTableBody.innerHTML = `
+        <tr>
+          <td colspan="4" style="padding: 20px; text-align: center; color: var(--slate, #64748b); font-size: 0.9rem; font-weight: 500;">
+            No managed corporate entities or filings discovered.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    // 4. LOOP OVER LIVE PURCHASE manifests RECORDS AND INJECT RAW VALUES
+    customerOrders.forEach((orderRow) => {
+      const tr = document.createElement("tr");
+      tr.style.cssText = "border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; color: var(--navy);";
+
+      // 🟢 JSONB FIELD PARSING PROTECTION: Safely peel the state variables out of your payload cell
+      const metaPayload = orderRow.collected_payload_metadata || {};
+      const stateOfFormationCode = metaPayload.state_of_formation || "US";
+      
+      // Determine user-friendly status badge background classes dynamically
+      let statusBadgeStyle = "background: #fef3c7; color: #d97706;"; // Default Warning Amber (In Review)
+      const cleanStatus = (orderRow.status || "in_review").toLowerCase();
+      
+      if (cleanStatus.includes("validated") || cleanStatus.includes("paid") || cleanStatus.includes("active")) {
+        statusBadgeStyle = "background: rgba(16, 185, 129, 0.1); color: #10b981;"; // Success Emerald
+      }
+
+      // Format row item cell columns layout templates precisely matching your desktop borders layout framework
+      tr.innerHTML = `
+        <td style="padding: 16px 0; font-weight: 700; text-align: left; color: #0a1f44;">
+          ${orderRow.company_name || "Filing Under Review"}
+        </td>
+        <td style="padding: 16px 0; font-weight: 600; text-align: left; font-family: monospace; text-transform: uppercase; color: #475569;">
+          ${stateOfFormationCode}
+        </td>
+        <td style="padding: 16px 0; text-align: left; color: #475569;">
+          ${orderRow.service_title || "Corporate Filing Document"}
+        </td>
+        <td style="padding: 16px 0; text-align: right;">
+          <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; ${statusBadgeStyle}">
+            ${cleanStatus.replace('_', ' ')}
+          </span>
+        </td>
+      `;
+
+      entitiesTableBody.appendChild(tr);
+    });
+
+    console.log(`[Dashboard Sync Success] Successfully rendered ${customerOrders.length} active entity row elements.`);
+
+  } catch (globalEngineError) {
+    console.error("[Fatal Client Dashboard Pipeline Exception Caught]", globalEngineError);
+  }
+});
+
+</script>
+
 </body>
 </html>
