@@ -1,88 +1,134 @@
 // ============================================================================
-// 📁 MODULE CARD: FIXED OPERATIONAL GLOBAL SALES LEDGER MATRIX
+// 📁 MODULE CARD: INTEGRATED ACCORDION OVERLAY & SALES LEDGER SYSTEM
 // ============================================================================
 (function() {
   "use strict";
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    console.log("[Admin Ledger Hub] Initializing synchronized sales rows...");
+  // --- 1. GLOBAL WINDOW HOOK: EMPOWERS THE ACCORDION CLICKS ---
+  window.toggleSidebarAccordion = function(buttonElement) {
+    if (!buttonElement) return;
+    
+    buttonElement.classList.toggle('active');
+    const panel = buttonElement.nextElementSibling;
+    const chevron = buttonElement.querySelector(".chevron") || buttonElement.querySelector("span:last-child");
+
+    if (panel && panel.style) {
+      if (panel.style.maxHeight && panel.style.maxHeight !== "0px" && panel.style.maxHeight !== "") {
+        panel.style.maxHeight = "0px";
+        if (chevron) chevron.textContent = "▼";
+      } else {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+        if (chevron) chevron.textContent = "▲";
+      }
+    }
+  };
+
+  // --- 2. UNIFIED SERVER SYNCHRONIZER ENGINE ---
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(async () => {
+      const client = window.supabaseClient || window.supabase;
+      if (!client) {
+        console.error("Database driver reference could not be located on mount.");
+        return;
+      }
+      
+      // Execute data streaming pipeline passes
+      streamLiveOperationalLedgers(client);
+      hydrateRecentActivityLogs(client);
+    }, 50);
+  });
+
+  // --- 3. DYNAMIC LEDGER HYDRATION PIPELINE ---
+  async function streamLiveOperationalLedgers(client) {
+    const targetBox = document.getElementById("admin-global-sales-target-box");
+    if (!targetBox) return;
 
     try {
-      let supabaseClient = window.supabase || window.supabaseClient || window.sb;
-      if (!supabaseClient) throw new Error("Database initialization connection context dropped.");
-
-      // 1. Fetch complete order sets live from the central schema orders tracking row
-      const { data: globalMasterLedger, error } = await supabaseClient
+      // Pull records down cleanly from your production orders data table
+      const { data: databaseOrders, error } = await client
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const adminGridTableBody = document.getElementById("admin-global-sales-target-box");
-      if (!adminGridTableBody) return;
-
-      adminGridTableBody.innerHTML = ""; // Wipe loading indicators cleanly
-
-      if (!globalMasterLedger || globalMasterLedger.length === 0) {
-        adminGridTableBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--text-muted);">No active corporate filing manifests logged to server data rows.</td></tr>`;
+      if (!databaseOrders || databaseOrders.length === 0) {
+        targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--text-muted);">No corporate sales records discovered inside data layers.</td></tr>`;
         return;
       }
 
-      globalMasterLedger.forEach((rowItem) => {
-        const tr = document.createElement("tr");
-        tr.style.cssText = "border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; color: var(--text-dark);";
+      targetBox.innerHTML = ""; // Wipe loading messages cleanly
 
-        // 🟢 DEEP NESTED DATA EXTRACTION: Pull variables from your JSONB metadata block safely
+      databaseOrders.forEach((rowItem) => {
+        const tr = document.createElement("tr");
+        tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark);";
+
+        // Parse jsonb payload parameters safely
         const meta = rowItem.collected_payload_metadata || {};
         
-        // COLUMN A: Filing Entity (Fallback gracefully to proposed names)
-        const filingEntityName = rowItem.company_name || meta.legal_entity_name || "Unnamed Proposed Entity";
-        
-        // COLUMN B: Customer Email
-        const customerEmailAddress = meta.email || rowItem.email || "Not Provided";
-        
-        // COLUMN C: Tier / Plan (Extract chosen tier or default to package description)
-        const rawTierLabel = rowItem.plan_tier || meta.selected_package_title || "Standard Tier";
-        const cleanTierDisplay = rawTierLabel.replace(/[^a-zA-Z0-9\s()]/g, " ").toUpperCase();
+        const legalCompanyName = rowItem.company_name || meta.legal_entity_name || "Unnamed Proposed Entity";
+        const customerEmail = meta.email || rowItem.email || "Not Provided";
+        const planTierLabel = rowItem.plan_tier || meta.selected_package_title || "Standard Tier";
 
         tr.innerHTML = `
-          <td style="padding: 14px 16px; font-weight: 700; color: #0a1f44; text-align: left;">
-            ${filingEntityName}
+          <td style="padding: 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${legalCompanyName}</td>
+          <td style="padding: 12px; color: var(--text-muted); font-family: monospace; text-align: left;">${customerEmail}</td>
+          <td style="padding: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; text-align: left; font-size: 0.75rem;">
+            ${rowItem.service_title || 'Compliance Filing'} <span style="color: var(--staff-red);">(${planTierLabel.toUpperCase()})</span>
           </td>
-          <td style="padding: 14px 16px; font-family: monospace; color: var(--text-muted); text-align: left;">
-            ${customerEmailAddress}
-          </td>
-          <td style="padding: 14px 16px; color: #475569; font-weight: 600; text-transform: uppercase; text-align: left; font-size: 0.75rem;">
-            ${rowItem.service_title || 'Compliance Update'} <span style="color: var(--staff-red);">(${cleanTierDisplay})</span>
-          </td>
-          <td style="padding: 14px 16px; font-weight: 700; color: #10b981; text-align: left;">
-            $${parseFloat(rowItem.total_fee || 0).toFixed(2)}
-          </td>
-          <td style="padding: 14px 16px; text-align: right;">
-            <!-- 🟢 UPDATED ACTION ROUTING: Dispatches workers to the comprehensive customer audit card page -->
-            <button type="button" class="btn-admin-action-view" onclick="window.navigateToAdminProfileViewCard('${rowItem.tracking_number || ''}', '${encodeURIComponent(customerEmailAddress)}')" style="cursor: pointer; background: #0a1f44; color: #ffffff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; transition: background 0.2s;">
-              <i class="fa-solid fa-user-gear"></i> Inspect
+          <td style="padding: 12px; font-weight: 700; color: var(--emerald); text-align: left;">$${parseFloat(rowItem.total_fee || 0).toFixed(2)}</td>
+          <td style="padding: 12px; text-align: right;">
+            <button type="button" onclick="window.navigateToAdminProfileViewCard('${rowItem.tracking_number || ''}', '${encodeURIComponent(customerEmail)}')" style="cursor: pointer; background: var(--text-dark, #0f172a); color: #ffffff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
+              View
             </button>
           </td>
         `;
 
-        adminGridTableBody.appendChild(tr);
+        targetBox.appendChild(tr);
       });
 
-    } catch (adminErr) {
-      console.error("[Fatal Ledger Rendering Interception Exception]", adminErr);
+    } catch (err) {
+      console.error("Sales ledger streaming error intercept:", err);
+      targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--staff-red); font-weight: 600;">✕ Failed to sync sales records.</td></tr>`;
     }
-  });
+  }
 
-  // ========================================================
-  // 🎯 ROUTER OVERRIDE: TARGETS INDIVIDUAL CUSTOMER PROFILES
-  // ========================================================
+  // --- 4. STREAM ACTIVITY MESSAGE TRACKERS ---
+  async function hydrateRecentActivityLogs(client) {
+    const staffEmailLog = document.getElementById("liveStaffEmailDisplayLog");
+    const commsStreamBox = document.getElementById("admin-inbox-live-stream-box");
+    
+    try {
+      const sessionCheck = await client.auth.getSession();
+      const staffEmail = sessionCheck.data?.session?.user?.email || "internal-operator@filings4u.com";
+      
+      if (staffEmailLog) {
+        staffEmailLog.innerHTML = `<i class="fa-solid fa-user-shield"></i> Operator Session: ${staffEmail}`;
+      }
+
+      // Query recent support messages matrix to hydrate Communications Stream panel box
+      const { data: supportMessages } = await client
+        .from('support_tickets')
+        .select('subject, created_at')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (commsStreamBox && supportMessages && supportMessages.length > 0) {
+        let streamMarkup = "";
+        supportMessages.forEach(msg => {
+          const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          streamMarkup += `<p style="margin: 0 0 8px 0; line-height: 1.4;">📬 <strong>[${time}] Ticket:</strong> ${msg.subject}</p>`;
+        });
+        commsStreamBox.innerHTML = streamMarkup;
+      }
+    } catch(e) {
+      console.warn("Log environment hydration deferred.");
+    }
+  }
+
+  // Global routing path redirection execution channel
   window.navigateToAdminProfileViewCard = function(trackingToken, customerEmail) {
     if (!trackingToken) return;
-    console.log(`[Admin Control] Launching profile overview dossier card for token: ${trackingToken}`);
-    
-    // Direct link to the brand new profile viewer interface layout
     window.location.href = `admin-profile-view.html?token=${encodeURIComponent(trackingToken)}&email=${customerEmail}`;
   };
 })();

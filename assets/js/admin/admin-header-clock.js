@@ -30,9 +30,11 @@
       clockOutputNode.textContent = `${datePart} | ${timePart}`;
     }, 1000);
 
-    // Safeguard circuit to clear intervals if memory states are refreshed
-    window.addEventListener("unload", () => {
-      clearInterval(clockIntervalId);
-    });
+// Locate this bottom block inside assets/js/admin/admin-header-clock.js and swap out window.unload:
+// 🟢 CLEAN PERFORMANCE INTERCEPT: Swaps legacy unload tracking for standard-compliant pagehide commands
+window.addEventListener("pagehide", () => {
+  clearInterval(clockIntervalId);
+});
+
   }
 })();

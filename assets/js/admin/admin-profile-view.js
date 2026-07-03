@@ -1,71 +1,98 @@
 // ============================================================================
-// 📁 MODULE CARD: COMPREHENSIVE CUSTOMER dossier PROFILE INSPECTOR ENGINE
+// 📁 MODULE CARD: FIXED CUSTOMER DOSSIER WIRE CONTROLLER ENGINE
 // ============================================================================
 (function() {
   "use strict";
 
   document.addEventListener("DOMContentLoaded", () => {
-    initializeDossierInspectorEngine();
+    // 50ms defensive delay check ensures central config completes bootstrapping
+    setTimeout(() => {
+      initializeLiveDossierInspector();
+    }, 100);
   });
 
-  async function initializeDossierInspectorEngine() {
+  async function initializeLiveDossierInspector() {
     const urlParams = new URLSearchParams(window.location.search);
     const trackingToken = urlParams.get('token');
     const fallbackEmail = urlParams.get('email');
 
+    // Element Target Coordinates
+    const headerNode = document.getElementById("view-company-header");
+    const nameNode = document.getElementById("view-company-name");
+    const accountNode = document.getElementById("view-account-number");
+    const einNode = document.getElementById("view-ein");
+    const emailNode = document.getElementById("view-email");
+    const addressNode = document.getElementById("view-address");
+    const stateNode = document.getElementById("view-state");
+    const serviceNode = document.getElementById("view-service");
+    const statusPill = document.getElementById("view-status-pill");
+
     if (!trackingToken && !fallbackEmail) {
-      alert("System Redirect: No authentic profile coordinates specified in active navigation links.");
-      window.location.href = "admin-dashboard.html";
+      if (headerNode) headerNode.textContent = "Profile Link Invalid";
       return;
     }
 
     try {
-      let supabaseClient = window.supabase || window.supabaseClient || window.sb;
-      if (!supabaseClient) throw new Error("Supabase integration reference offline.");
-
-      console.log(`[Inspector Engine] Retrieving dossier record payload for token: ${trackingToken}`);
-
-      // 1. DYNAMIC DATABASE FETCH: Scans your live orders table using the tracking key
-      let query = supabaseClient.from('orders').select('*');
-      
-      if (trackingToken) {
-        query = query.eq('tracking_number', trackingToken);
-      } else {
-        query = query.eq('email', fallbackEmail);
-      }
-
-      const { data: recordRow, error } = await query.maybeSingle();
-      if (error) throw error;
-
-      if (!recordRow) {
-        document.getElementById("view-company-header").textContent = "Account Not Discovered";
+      // Look up your failsafe central database wrapper connection
+      let supabaseClient = window.supabaseClient || window.supabase || window.sb;
+      if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+        if (headerNode) headerNode.textContent = "Database Connection Delayed";
         return;
       }
 
-      // 2. PARSE THE COMPREHENSIVE NESTED METADATA FIELDS SECURELY
+      console.log(`[Inspector Engine] Fetching rows matching token: ${trackingToken}`);
+
+      // 1. QUERY THE ORDERS REPOSITORY DYNAMICALLY
+      let orderQuery = supabaseClient.from('orders').select('*');
+      
+      if (trackingToken && trackingToken !== "null") {
+        orderQuery = orderQuery.eq('tracking_number', trackingToken);
+      } else {
+        orderQuery = orderQuery.eq('email', decodeURIComponent(fallbackEmail));
+      }
+
+      const { data: recordRow, error: orderError } = await orderQuery.maybeSingle();
+      if (orderError) throw orderError;
+
+      if (!recordRow) {
+        if (headerNode) headerNode.textContent = "Profile Record Vacant";
+        return;
+      }
+
+      // 2. 🟢 PEEL WIZARD VALUES NATIVELY FROM THE CENTRAL JSONB METADATA CELL
       const metadata = recordRow.collected_payload_metadata || {};
 
-      const derivedCompanyName = recordRow.company_name || metadata.legal_entity_name || "Unnamed Corporate Entity";
-      const derivedEin = metadata.taxpayer_ein || "Not Provided";
-      const derivedEmail = metadata.email || recordRow.email || "Not Provided";
-      const derivedAddress = metadata.office_address_street || metadata.office_address || "Not Provided";
-      const derivedState = metadata.state_of_formation || recordRow.state || "US";
+      const finalCompanyName = recordRow.company_name || metadata.legal_entity_name || "Filing Under Review";
+      const finalEin = metadata.taxpayer_ein || "Not Provided";
+      const finalEmail = metadata.email || recordRow.email || "Not Provided";
+      
+      // Clean empty physical office coordinates strings
+      const street = metadata.office_address_street || "";
+      const city = metadata.office_address_city || "";
+      const zip = metadata.office_address_zip || "";
+      const combinedAddress = `${street} ${city} ${zip}`.trim().replace(/\s+/g, ' ');
+      const finalAddress = combinedAddress || metadata.office_address || "Not Provided";
+      
+      const finalState = metadata.state_of_formation || recordRow.state_of_formation || recordRow.state || "US";
+      const finalService = recordRow.service_title || metadata.selected_package_title || "Fulfillment Compliance Service";
+      const finalFee = parseFloat(recordRow.total_fee) || parseFloat(metadata.financials_subtotal) || 0;
 
-      // 3. INJECT THE REAL WIZARD VALUES LIVE ONTO THE SCREEN CANVAS
-      document.getElementById("view-company-header").textContent = derivedCompanyName;
-      document.getElementById("view-company-name").textContent = derivedCompanyName;
-      document.getElementById("view-account-number").textContent = recordRow.tracking_number || "F4U-DIRECT";
-      document.getElementById("view-ein").textContent = derivedEin;
-      document.getElementById("view-email").textContent = derivedEmail;
-      document.getElementById("view-address").textContent = derivedAddress;
-      document.getElementById("view-state").textContent = derivedState.toUpperCase();
-      document.getElementById("view-service").textContent = `${recordRow.service_title} ($${parseFloat(recordRow.total_fee).toFixed(2)})`;
+      // 3. INJECT PRODUCTION PARAMETERS DIRECTLY ONTO CELL BORDERS LAYOUT
+      if (headerNode) headerNode.textContent = finalCompanyName;
+      if (nameNode) nameNode.textContent = finalCompanyName;
+      if (accountNode) accountNode.textContent = recordRow.tracking_number || "F4U-DIRECT";
+      if (einNode) einNode.textContent = finalEin;
+      if (emailNode) emailNode.textContent = finalEmail;
+      if (addressNode) addressNode.textContent = finalAddress;
+      if (stateNode) stateNode.textContent = finalState.toUpperCase();
+      if (serviceNode) serviceNode.textContent = `${finalService} ($${finalFee.toFixed(2)})`;
 
-      // Status Pill Pill Rendering Controls
-      const statusPill = document.getElementById("view-status-pill");
+      // 4. BALANCE STATUS BADGE DECORATIONS
       if (statusPill) {
-        statusPill.textContent = (recordRow.status || "paid_validated").replace('_', ' ');
-        if (String(recordRow.status).toLowerCase().includes("paid") || String(recordRow.status).toLowerCase().includes("validated")) {
+        const cleanStatus = (recordRow.status || "paid_validated").toLowerCase();
+        statusPill.textContent = cleanStatus.toUpperCase().replace('_', ' ');
+        
+        if (cleanStatus.includes("paid") || cleanStatus.includes("validated") || cleanStatus.includes("active")) {
           statusPill.style.background = "rgba(16, 185, 129, 0.1)";
           statusPill.style.color = "#10b981";
         } else {
@@ -74,15 +101,9 @@
         }
       }
 
-      // 4. RENDER A RAW CLEAN DATA LOG FOR ADMIN ASSISTANCE OPERATIONS
-      const dumpNode = document.getElementById("view-raw-json-dump");
-      if (dumpNode) {
-        dumpNode.textContent = JSON.stringify({ record_table_row: recordRow, collected_metadata: metadata }, null, 2);
-      }
-
     } catch (err) {
-      console.error("[Inspector Error Callback Block Exception Triggered]", err);
-      document.getElementById("view-company-header").textContent = "Connection Interrupted";
+      console.error("[Fatal Profile Wire Exception Caught]", err);
+      if (headerNode) headerNode.textContent = "Data Sync Timeout";
     }
   }
 })();

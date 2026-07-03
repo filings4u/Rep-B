@@ -5,7 +5,10 @@
   "use strict";
 
   document.addEventListener("DOMContentLoaded", () => {
-    hydrateAdminMetricsRow();
+    // 🟢 DELAY PATCH: Postpones boot checks to let the central config file load cleanly
+    setTimeout(() => {
+      hydrateAdminMetricsRow();
+    }, 100);
   });
 
   async function hydrateAdminMetricsRow() {
@@ -13,12 +16,14 @@
     const activeNode = document.getElementById("stat-active-users");
     const pendingNode = document.getElementById("stat-pending-filings");
 
-    // Failsafe database reference connection picker
-    let supabaseClient = window.supabase || window.supabaseClient || window.sb;
-    if (!supabaseClient) return;
+    // 🟢 SECURITY LOOKUP FIX: Maps safely to verified, ready backend database client pools
+    let supabaseClient = window.supabaseClient || window.supabase || window.sb;
+    if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+      console.warn("[Metrics Gateway Delay] Database client layer not ready. Yielding thread context.");
+      return;
+    }
 
     try {
-      // 1. QUERY THE COMPLETE ORDERS HISTORY MATRIX FROM CORES SCHEMAS
       const { data: globalLedger, error } = await supabaseClient
         .from('orders')
         .select('total_fee, status');
@@ -34,25 +39,20 @@
           const fee = parseFloat(row.total_fee) || 0;
           const currentStatus = (row.status || "").toLowerCase();
 
-          // Calculate aggregated revenue for successful transactions
           if (currentStatus.includes("paid") || currentStatus.includes("validated") || currentStatus.includes("active")) {
             aggregatePlatformRevenue += fee;
             activeEntitiesCount++;
           }
 
-          // Count pending audits or reviews
           if (currentStatus.includes("review") || currentStatus.includes("pending") || currentStatus.includes("queued")) {
             pendingAuditsCount++;
           }
         });
       }
 
-      // 2. INJECT REAL-TIME VALUES INTO STYLED METRICS SLOTS
       if (revNode) revNode.textContent = `$${aggregatePlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       if (activeNode) activeNode.textContent = activeEntitiesCount.toLocaleString('en-US');
       if (pendingNode) pendingNode.textContent = pendingAuditsCount.toLocaleString('en-US');
-
-      console.log("[Metrics Synchronizer] Base operational cards successfully hydrated.");
 
     } catch (metricError) {
       console.error("[Fatal Metrics Hydration Pass Exception]", metricError);
