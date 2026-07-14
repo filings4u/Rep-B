@@ -419,6 +419,58 @@
             .chat-users-panel { width: 80px !important; }
             .search-users-box, .user-meta-block { display: none !important; }
         }
+
+        /* ✨ SMOOTH SLIDE-IN POP-UP CHAT BUBBLE ANIMATION */
+@keyframes bubbleSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-bubble, .admin-chat-row-bubble {
+  animation: bubbleSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  transform-origin: bottom right;
+}
+
+.chat-bubble.inbound {
+  transform-origin: bottom left !important;
+}
+
+/* 🌀 SPINNER BUTTON ANIMATION CORE */
+@keyframes buttonSpinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+.f4u-btn-spinner {
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 50% !important;
+  border-top-color: #ffffff !important;
+  animation: buttonSpinnerRotate 0.6s linear infinite !important;
+  display: inline-block !important;
+}
+
+/* 🖼️ CLICKABLE INLINE PREVIEW THUMBNAILS */
+.chat-inline-thumbnail-preview {
+  display: block !important;
+  max-width: 240px !important;
+  max-height: 180px !important;
+  border-radius: 6px !important;
+  margin-top: 6px !important;
+  cursor: pointer !important;
+  transition: opacity 0.15s ease !important;
+  border: 1px solid rgba(0,0,0,0.05) !important;
+}
+.chat-inline-thumbnail-preview:hover {
+  opacity: 0.9 !important;
+}
+
     </style>
 </head>
 <body>
@@ -467,423 +519,708 @@
 
             </nav>
 
-            
-           <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
+
+<!-- ========================================================================== 
+     🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework) 
+     =========================================================================== --> 
+<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;"> 
+  <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container --> 
+  <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;"> 
+    <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div> 
+    <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span> 
+  </div> 
+  <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button> 
+</div> 
+
+<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR --> 
+<script> 
+(function injectIsolatedTerminatorPipeline() { 
+  "use strict"; 
+  const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn"); 
+  if (!triggerBtn) return; 
+
+  triggerBtn.addEventListener("click", async (e) => { 
+    e.preventDefault(); 
+    e.stopPropagation(); 
+    triggerBtn.disabled = true; 
+    triggerBtn.textContent = "Wiping Security Cache..."; 
+
+    // FIXED: Multi-Instance Polyfill lookup array safeguards against backend session signout failures
+    const coreClient = window.supabaseClient || 
+                       window.supabase || 
+                       window.chatAdminCoreClient || 
+                       window.f4uWizardSupabaseInstance; 
+
+    console.log("Terminal logout initialized via self-contained trigger..."); 
     
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
+    try { 
+      if (coreClient && coreClient.auth && typeof coreClient.auth.signOut === "function") { 
+        // Attempt over-the-air backend session tear-down 
+        await coreClient.auth.signOut(); 
+      } 
+    } catch (authErr) { 
+      console.warn("Server session clear deferred. Proceeding with hard client wipe.", authErr.message); 
+    } finally { 
+      // 1. HARD WIPE BROWSER CACHE REGISTRIES 
+      if (typeof window.localStorage !== 'undefined') { 
+        window.localStorage.clear(); 
+      } 
+      if (typeof window.sessionStorage !== 'undefined') { 
+        window.sessionStorage.clear(); 
+      } 
 
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
-      "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
+      // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS 
+      document.cookie.split(";").forEach(cookieItem => { 
+        const eqPos = cookieItem.indexOf("="); 
+        const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim(); 
+        document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; 
+        document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";"; 
+      }); 
 
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
-
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
-
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
-
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
+      // 3. IMMEDIATE RE-ROUTING GATE 
+      console.log("Purge complete. Transferring terminal to login gateway."); 
+      window.location.replace('admin-login.html'); 
+    } 
+  }); 
+})(); 
 </script>
-
         </aside>
 
-        <!-- 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div style="text-align: left;">
-                    <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Customer Communication Desk</h1>
-                </div>
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
-                    </div>
-                </div>
-            </header>
+<!-- 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH --> 
+<main class="portal-main"> 
+  <header class="portal-header"> 
+    <div style="text-align: left;"> 
+      <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Customer Communication Desk</h1> 
+    </div> 
+    <div class="header-actions-wrapper"> 
+      <div class="header-clock-pill"> 
+        <!-- FIXED: Decoded raw visual string token symbols directly -->
+        <span>⏱️</span> 
+        <span id="portal-clock">00/00/0000 | 00:00:00</span> 
+      </div> 
+    </div> 
+  </header> 
 
-            <!-- 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION -->
-            <div class="chat-layout-container">
-                <!-- LEFT USERS COLUMN FEED -->
-                <aside class="chat-users-panel">
-                    <div class="search-users-box">
-                        <input type="text" id="userFeedFilterField" class="user-search-input" placeholder="Search clients..." onkeyup="filterUsersFeed()">
-                    </div>
-                    <div class="users-scrollable-feed" id="adminUsersFeedContainer">
-                        <!-- Dynamic list of accounts loaded here -->
-                        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">Loading live accounts feed...</div>
-                    </div>
-                </aside>
+  <!-- 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION --> 
+  <div class="chat-layout-container"> 
+    
+    <!-- LEFT USERS COLUMN FEED --> 
+    <aside class="chat-users-panel"> 
+      <div class="search-users-box"> 
+        <!-- FIXED: Safe query check inline pattern ensures typing never throws reference exceptions -->
+        <input type="text" id="userFeedFilterField" class="user-search-input" placeholder="Search clients..." onkeyup="if(typeof window.filterUsersFeed === 'function') { window.filterUsersFeed(); }"> 
+      </div> 
+      <div class="users-scrollable-feed" id="adminUsersFeedContainer"> 
+        <!-- Dynamic list of accounts loaded here --> 
+        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">Loading live accounts feed...</div> 
+      </div> 
+    </aside> 
 
-                <!-- RIGHT MAIN MESSAGE THREAD -->
-                <section class="chat-thread-panel">
-                    <div class="messages-timeline-scroll" id="adminChatMessagesLog">
-                        <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">
-                            Select a client row on the left panel to connect streaming text thread nodes.
-                        </div>
-                    </div>
+    <!-- RIGHT MAIN MESSAGE THREAD --> 
+    <section class="chat-thread-panel"> 
+      <div class="messages-timeline-scroll" id="adminChatMessagesLog"> 
+        <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;"> 
+          Select a client row on the left panel to connect streaming text thread nodes. 
+        </div> 
+      </div> 
+      <div class="chat-input-footer-tray"> 
+        <div class="tray-form-grid"> 
+          <!-- Keydown handler handles your text box keyboard loops cleanly -->
+          <textarea id="adminChatMessageInputField" class="tray-textarea-input" placeholder="Type your secure response message payload here... (Press Enter to Send)" onkeydown="if(typeof window.handleAdminChatKeyOptions === 'function') { window.handleAdminChatKeyOptions(event); }" disabled></textarea> 
+          <button id="adminChatSendButton" class="btn-send" onclick="if(typeof window.dispatchAdminResponseChatMessage === 'function') { window.dispatchAdminResponseChatMessage(); }" disabled>Send</button> 
+        </div> 
+      </div> 
+    </section> 
 
-                    <div class="chat-input-footer-tray">
-                        <div class="tray-form-grid">
-                            <textarea id="adminChatMessageInputField" class="tray-textarea-input" placeholder="Type your secure response message payload here... (Press Enter to Send)" onkeydown="handleAdminChatKeyOptions(event)" disabled></textarea>
-                            <button id="adminChatSendButton" class="btn-send" onclick="dispatchAdminResponseChatMessage()" disabled>Send</button>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
+  </div> 
+</main>
 
 <!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE REAL-TIME CHAT - PART 1: SIDEPANEL FIXED INITIALIZER
-========================================================================== --> 
+     🏢 FILINGS4U ADMINISTRATIVE LIVE DESK CORE - PART 1: FULL-PAGE CHAT SYSTEM 
+     ========================================================================== --> 
+
 <script>
-  // --- MODULE 1: GLOBAL WORKSPACE MEMORY MATRIX REGISTER ---
-  const chatAdminCoreClient = window.supabaseClient || window.supabase;
-  let masterCrmThreadsCache = [];
-  let activeSelectedClientIdNumber = null;
-  let realtimeChatSubscriptionChannel = null;
+// --- 1. GLOBAL WORKSPACE STORAGE CHANNELS ---
+let activeSelectedClientId = null;
+let realtimeChatSubscriptionChannel = null;
+const chatAdminCoreClient = window.supabaseClient || window.supabase || window.f4uWizardSupabaseInstance;
 
-  // --- MODULE 2: RUNTIME ENGINE LIFE-CYCLE INITIALIZER ---
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || chatAdminCoreClient;
-          if (!client) return;
+// --- 2. RUNTIME ENGINE LIFE-CYCLE INITIALIZER ---
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(async () => {
+    // Standard polyfill lookup array maps across all active scripts safely
+    const client = window.supabaseClient || window.supabase || chatAdminCoreClient || window.f4uWizardSupabaseInstance;
+    const rosterContainer = document.getElementById("adminUsersFeedContainer");
 
-          try {
-              // Perimeter Authentication Access Guard Check
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+    if (!client) {
+      if (rosterContainer) rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Database Link Offline</div>`;
+      return;
+    }
 
-              // Hot-reload left-hand user thread accounts directories lines
-              await synchronizeChatThreadsRoster(client);
+    try {
+      // Perimeter Authentication Access Guard Check
+      const { data: { session }, error: authErr } = await client.auth.getSession();
+      if (authErr || !session) {
+        window.location.href = 'admin-login.html';
+        return;
+      }
 
-          } catch (err) {
-              console.error("Administrative chat module boot crash caught:", err.message);
+      const staffEmail = String(session.user.email || '').toLowerCase().trim();
+      const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+      if (!isVerifiedStaff) {
+        window.location.href = 'portal-login.html';
+        return;
+      }
+
+      // Action A: Initialize the live unread list feed roster from the custom database View
+      await window.synchronizeChatThreadsRoster();
+
+      // Action B: Bind Live Global Real-time Notification Channels
+      console.log("[Admin Desk] Activating global postgres_changes message interception network...");
+      client
+        .channel('global_admin_roster_watcher')
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'chat_messages' 
+        }, (payload) => {
+          console.log("[Admin Intercept] New message row logged on backend:", payload.new);
+          
+          // Play a crisp notification chime if an unattended client transmits data over the air
+          if (String(payload.new.sender_type).toLowerCase() === 'client') {
+            try {
+              new Audio("https://jsdelivr.net").play().catch(() => {});
+            } catch (soundErr) {
+              console.log("[Audio Block] Chime suppressed until UI click engagement.");
+            }
           }
-      }, 50);
+
+          // Dynamic view sorting: update active window or refresh unread count bars instantly
+          if (activeSelectedClientId === payload.new.client_id) {
+            window.loadActiveThreadViewportPanel(activeSelectedClientId);
+          } else {
+            window.synchronizeChatThreadsRoster();
+          }
+        })
+        .subscribe();
+
+    } catch (err) {
+      console.error("Administrative chat runtime boot crash:", err.message);
+    }
+  }, 50);
+
+  // Synchronize System Header Pill Clock
+  function initializeHeaderClockTick() {
+    const clock = document.getElementById("portal-clock");
+    if (!clock) return;
+    const now = new Date();
+    clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString();
+  }
+  setInterval(initializeHeaderClockTick, 1000);
+  initializeHeaderClockTick();
+});
+
+// --- 3. SYNCHRONIZE LEFT CONTACT THREADS NATIVELY ---
+window.synchronizeChatThreadsRoster = async function() {
+  const rosterContainer = document.getElementById("adminUsersFeedContainer");
+  const client = window.supabaseClient || window.supabase || chatAdminCoreClient || window.f4uWizardSupabaseInstance;
+  
+  if (!rosterContainer || !client) return;
+
+  try {
+    // FIXED: Reads data directly from your SQL view layout mapping to account for real string UUIDs and unread counts
+    const { data: threads, error } = await client
+      .from('admin_chat_threads_view')
+      .select('*')
+      .order('last_message_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Cache thread data globally on the window context loop to facilitate search query parsing
+    window.masterCrmThreadsCache = threads || [];
+
+    if (window.masterCrmThreadsCache.length === 0) {
+      rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
+      return;
+    }
+
+    window.renderChatSidebarList(window.masterCrmThreadsCache);
+
+  } catch (err) {
+    console.error("Roster synchronization failure:", err.message);
+    rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
+  }
+};
+
+// --- 4. PRINT ACTIVE THREAD CARDS TO SIDEBAR DIRECTORIES ---
+window.renderChatSidebarList = function(datasetArray) {
+  const rosterContainer = document.getElementById("adminUsersFeedContainer");
+  if (!rosterContainer) return;
+
+  rosterContainer.innerHTML = datasetArray.map(row => {
+    const isSelected = activeSelectedClientId === row.client_id;
+    const shortUuid = String(row.client_id || '').substring(0, 8).toUpperCase();
+    
+    // Check if the record holds an embedded metadata string payload block text context to display a clean preview
+    let msgPreview = row.last_message_content || 'No text content.';
+    if (msgPreview.includes("Name:")) {
+      msgPreview = "📋 [New Room Handshake Onboarding Metadata]";
+    } else if (msgPreview.length > 38) {
+      msgPreview = msgPreview.substring(0, 35) + "...";
+    }
+
+    // Build the visual badge indicator layout block if unread logs exist
+    const unreadCountBadge = row.unread_count > 0 
+      ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` 
+      : '';
+
+    const backgroundStyles = isSelected 
+      ? "background: rgba(16, 185, 129, 0.08) !important; border-left: 4px solid #ef4444 !important;" 
+      : "background: none;";
+
+    return `
+      <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.client_id}')" onmouseover="if('${isSelected}' === 'false') this.style.background='#f1f5f9'" onmouseout="if('${isSelected}' === 'false') this.style.background='none'">
+        <div style="display:flex; justify-content:between; width:100%; align-items:center; box-sizing:border-box;">
+          <strong style="color:#0a1f44; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">👤 Session Profile: ${shortUuid}</strong>
+          ${unreadCountBadge}
+        </div>
+        <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${msgPreview}</small>
+      </div>
+    `;
+  }).join('');
+};
+
+// --- 5. SEARCH ENGINE FILTER INTERCEPTOR ---
+window.filterUsersFeed = function() {
+  const searchBox = document.getElementById("userFeedFilterField");
+  if (!searchBox || !window.masterCrmThreadsCache) return;
+
+  const parsingToken = searchBox.value.toLowerCase().trim();
+  
+  const filtered = window.masterCrmThreadsCache.filter(row => 
+    String(row.client_id).toLowerCase().includes(parsingToken) || 
+    String(row.last_message_content).toLowerCase().includes(parsingToken)
+  );
+
+  window.renderChatSidebarList(filtered);
+};
+</script>
+
+
+<!-- ========================================================================== 
+     🏢 FILINGS4U ADMINISTRATIVE LIVE DESK CORE - PART 2: MESSAGE STREAM CHANNELS
+     ========================================================================== --> 
+<script>
+// --- MODULE 1: COMPREHENSIVE VIEWPORT TIMELINE RETRIEVAL ENGINE ---
+window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
+  const client = window.supabaseClient || window.supabase || window.chatAdminCoreClient || window.f4uWizardSupabaseInstance;
+  const textarea = document.getElementById("adminChatMessageInputField");
+  const sendButton = document.getElementById("adminChatSendButton");
+  const msgLogBox = document.getElementById("adminChatMessagesLog");
+
+  if (!client || !textarea || !sendButton || !msgLogBox) return;
+
+  // FIXED: Retain the true 36-character string UUID instead of running parseInt() numbers conversion
+  activeSelectedClientId = stringClientUuid;
+
+  // Unlock input interfaces states instantly on screen layout components
+  textarea.disabled = false;
+  sendButton.disabled = false;
+  textarea.placeholder = `Type professional broker response to Session ID: ${stringClientUuid.substring(0,8).toUpperCase()}...`;
+  textarea.focus();
+
+  // Highlight selection rows by updating live background presentation containers
+  if (typeof window.renderChatSidebarList === "function" && window.masterCrmThreadsCache) {
+    window.renderChatSidebarList(window.masterCrmThreadsCache);
+  }
+
+  try {
+    // ATOMIC SECURITY UPDATE: Reset unread count records on backend for this specific client channel loop
+    await client
+      .from('chat_messages')
+      .update({ is_read_by_admin: true })
+      .eq('client_id', stringClientUuid);
+
+    // Refresh layout bars to clear out unread alert badges visually
+    if (typeof window.synchronizeChatThreadsRoster === "function") {
+      window.synchronizeChatThreadsRoster();
+    }
+
+    console.log(`[Admin Timeline] Querying chat logs history for user: ${stringClientUuid}`);
+    
+    // Fetch historical data matrix lines ordered chronologically from database disk
+    const { data: messages, error } = await client
+      .from('chat_messages')
+      .select('*')
+      .eq('client_id', stringClientUuid)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Reset timeline scroll canvas view cleanly before printing elements
+    msgLogBox.innerHTML = "";
+
+    if (messages && messages.length > 0) {
+      messages.forEach(msg => {
+        window.appendSingleChatMessageBubbleToUI(msg);
+      });
+    } else {
+      msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic;">Empty dialogue matrix logs context.</div>`;
+    }
+    
+    // Auto shift scroll panel down to lock position natively
+    msgLogBox.scrollTop = msgLogBox.scrollHeight;
+
+  } catch (err) {
+    console.error("[Admin Timeline Exception] Storage retrieval failed:", err.message);
+    msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700;">⚠️ Timeline Connection Offline.</div>`;
+  }
+};
+
+// --- MODULE 2: GRAPHIC CHAT BUBBLE CONSTRUCTION INJECTOR ---
+window.appendSingleChatMessageBubbleToUI = function(msgRowObject) {
+  const msgLogBox = document.getElementById("adminChatMessagesLog");
+  if (!msgLogBox || !msgRowObject) return;
+
+  const bubbleRow = document.createElement("div");
+  const currentSender = String(msgRowObject.sender_type || '').toLowerCase();
+  
+  // Maps client to left-hand inbound alignment, maps admin/broker responses to right-hand outbound style
+  const isClient = currentSender === 'client';
+  
+  const bubbleStyles = isClient
+    ? "margin-right: auto; background: #edf2f7; color: #0f172a; border-bottom-left-radius: 2px;"
+    : "margin-left: auto; background: #0a1f44; color: #ffffff; border-bottom-right-radius: 2px;";
+
+  bubbleRow.style.cssText = `
+    max-width: 80% !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    word-break: break-word !important;
+    line-height: 1.45 !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+    clear: both !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+    ${bubbleStyles}
+  `;
+
+  // Render text data strings and support line breaks perfectly across profiles
+  bubbleRow.innerText = msgRowObject.message_content;
+  msgLogBox.appendChild(bubbleRow);
+  
+  // Force frame focus shift instantly
+  msgLogBox.scrollTop = msgLogBox.scrollHeight;
+};
+
+// --- MODULE 3: DISPATCH AGENT BROKER RESPONSE PAYLOAD ---
+window.dispatchAdminResponseChatMessage = async function() {
+  const textarea = document.getElementById("adminChatMessageInputField");
+  const client = window.supabaseClient || window.supabase || window.chatAdminCoreClient || window.f4uWizardSupabaseInstance;
+  const currentTargetUuid = activeSelectedClientId;
+
+  if (!textarea || !currentTargetUuid || !client) return;
+
+  const contentRaw = textarea.value.trim();
+  if (!contentRaw) return;
+
+  // Clear entry fields instantly on screen to provide snappy interactions
+  textarea.value = "";
+
+  // Optimistic UI Append pass
+  window.appendSingleChatMessageBubbleToUI({
+    sender_type: 'admin',
+    message_content: contentRaw
   });
 
-  // --- MODULE 3: SYNCHRONIZE LEFT CONTACT THREADS NATIVELY ---
-  async function synchronizeChatThreadsRoster(client) {
-      // 🎯 TARGET LINK FIXED: Hooking directly onto your exact HTML container ID selector
-      const rosterContainer = document.getElementById("adminUsersFeedContainer");
-                              
-      if (!rosterContainer) {
-          console.warn("Real-time Chat Error: Could not locate the element #adminUsersFeedContainer inside your HTML layout.");
-          return;
-      }
+  try {
+    console.log(`[Admin Send] Committing response line to Client UUID: ${currentTargetUuid}`);
+    
+    // FIXED: Insert explicitly routes parameters matching your table structure metrics definitions
+    const { error } = await client
+      .from('chat_messages')
+      .insert({
+        client_id: currentTargetUuid,
+        sender_type: 'admin',
+        message_content: contentRaw,
+        is_read_by_admin: true
+      });
 
-      try {
-          // Pull raw rows directly from our newly unified master orders log table
-          const { data: accounts, error } = await client
-              .from('orders')
-              .select('user_id, company_name');
-
-          if (error) throw error;
-
-          // Deduplicate rows to prevent duplicate cards for a single client ID
-          const unifiedMap = new Map();
-          if (accounts) {
-              accounts.forEach(row => {
-                  if (row.user_id) {
-                      unifiedMap.set(parseInt(row.user_id), row.company_name || 'Active Corporate Client');
-                  }
-              });
-          }
-
-          masterCrmThreadsCache = Array.from(unifiedMap, ([user_id, company_name]) => ({ user_id, company_name }));
-          
-          if (masterCrmThreadsCache.length === 0) {
-              rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.82rem; font-style:italic;">No active clients registered inside platform directories.</div>`;
-              return;
-          }
-
-          // 🚀 DIRECT FORCE RE-INJECTION: Clear placeholder text and map short numeric cards onto the UI
-          renderChatSidebarList(masterCrmThreadsCache);
-
-      } catch (err) {
-          console.error("Left chat list processing crash:", err.message);
-          rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:var(--staff-red); font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
-      }
-  }
-
-  // --- MODULE 4: PRINT SIDEBAR ITEMS TO WINDOW LAYOUT ---
-  function renderChatSidebarList(datasetArray) {
-      const rosterContainer = document.getElementById("adminUsersFeedContainer");
-      if (!rosterContainer) return;
-
-      rosterContainer.innerHTML = datasetArray.map(row => `
-          <div class="chat-user-thread-card" 
-               style="padding:14px; border-bottom:1px solid var(--border-color, #e2e8f0); cursor:pointer; display:flex; flex-direction:column; gap:4px; width:100%; box-sizing:border-box; transition:background 0.1s;"
-               onmouseover="this.style.background='#f8fafc'" 
-               onmouseout="this.style.background='none'"
-               onclick="activateSelectedClientChatStream('${row.user_id}')">
-               <strong style="color:var(--text-dark, #0f172a); display:block; font-size:0.9rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">🏢 ${row.company_name}</strong>
-               <small style="font-family:monospace; color:#1e40af; font-size:0.78rem; display:block; font-weight:700; letter-spacing:0.3px;">ACCOUNT ID: #${row.user_id}</small>
-          </div>
-      `).join('');
-  }
-
-  // --- MODULE 5: MATCH ACTIVE HTML INTERCEPTOR KEYUPS ---
-  function filterUsersFeed() {
-      const searchBox = document.getElementById("userFeedFilterField");
-      if (!searchBox) return;
-
-      const parsingToken = searchBox.value.toLowerCase().trim();
-      const filtered = masterCrmThreadsCache.filter(row => 
-          String(row.company_name).toLowerCase().includes(parsingToken) ||
-          String(row.user_id).includes(parsingToken)
-      );
-      renderChatSidebarList(filtered);
-  }
-</script>
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE REAL-TIME CHAT - PART 2: MESSAGE STREAM CHANNELS
-========================================================================== --> 
-<script>
-  async function activateSelectedClientChatStream(numericClientId) {
-      const client = window.supabaseClient || window.supabase || chatAdminCoreClient;
-      const textNode = document.getElementById("adminChatMessageInputField");
-      const sendBtn = document.getElementById("adminChatSendButton");
-
-      if (!client || !textNode || !sendBtn) return;
-
-      activeSelectedClientIdNumber = parseInt(numericClientId);
-
-      // Open input interfaces layout states elements
-      textNode.disabled = false;
-      sendBtn.disabled = false;
-      textNode.placeholder = "Type compliance response for Client #" + activeSelectedClientIdNumber + "...";
-      textNode.focus();
-
-      // Wipe out any lingering message web socket channels cleanly before subscribing
-      if (realtimeChatSubscriptionChannel) {
-          client.removeChannel(realtimeChatSubscriptionChannel);
-      }
-
-      await hotReloadActiveChatTimelineLog(client);
-
-      // Hook real-time WebSockets to capture incoming user message payloads instantly
-      realtimeChatSubscriptionChannel = client
-          .channel('live_chat_poller_' + activeSelectedClientIdNumber)
-          .on('postgres_changes', { 
-              event: 'INSERT', 
-              schema: 'public', 
-              table: 'chat_messages',
-              filter: 'user_id=eq.' + activeSelectedClientIdNumber
-          }, (payload) => {
-              appendSingleChatMessageBubbleToUI(payload.new);
-          })
-          .subscribe();
-  }
-</script>
-
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE REAL-TIME CHAT - PART 3: ROW TIMELINE INJECTORS
-========================================================================== --> 
-<script>
-  async function hotReloadActiveChatTimelineLog(client) {
-      const logBox = document.getElementById("adminChatMessagesLog");
-      if (!logBox) return;
-
-      logBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem;">Extracting secure conversation logs...</div>`;
-
-      try {
-          const { data: messages, error } = await client
-              .from('chat_messages')
-              .select('*')
-              .eq('user_id', activeSelectedClientIdNumber)
-              .order('created_at', { ascending: true });
-
-          if (error) throw error;
-
-          if (!messages || messages.length === 0) {
-              logBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No messages exchanged with Client #${activeSelectedClientIdNumber} yet. Start the conversation below.</div>`;
-              return;
-          }
-
-          logBox.innerHTML = messages.map(msg => buildMessageBubbleMarkup(msg)).join('');
-          scrollTerminalTimelineToAbsoluteBottom();
-
-      } catch (err) {
-          logBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--staff-red); font-size:0.85rem;">⚠️ Conversation pipeline retrieval failure.</div>`;
-      }
-  }
-
-  function buildMessageBubbleMarkup(msg) {
-      const isAdmin = String(msg.sender_type).toLowerCase() === 'admin';
-      
-      const alignSide = isAdmin ? 'margin-left: auto; background: #0f172a; color: #ffffff;' : 'margin-right: auto; background: #f1f5f9; color: #0f172a;';
-      const wrapperStyle = `max-width: 70%; padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; font-weight: 500; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); word-break: break-word; ${alignSide}`;
-      const metaStyle = `font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 4px; text-align: ${isAdmin ? 'right' : 'left'}; font-weight: 600;`;
-      
-      const readableTime = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const senderLabel = isAdmin ? 'Fulfillment Staff' : `Client #${msg.user_id}`;
-
-      return `
-          <div style="${wrapperStyle}">
-              ${msg.message_content}
-              <span style="${metaStyle}">${senderLabel} • ${readableTime}</span>
-          </div>`;
-  }
-
-  async function dispatchAdminResponseChatMessage() {
-      const client = window.supabaseClient || window.supabase || chatAdminCoreClient;
-      const inputField = document.getElementById("adminChatMessageInputField");
-      
-      if (!client || !inputField || !activeSelectedClientIdNumber) return;
-
-      const outgoingContent = inputField.value.trim();
-      if (!outgoingContent) return;
-
-      inputField.value = ""; 
-
-      try {
-          const { error } = await client
-              .from('chat_messages')
-              .insert({
-                  user_id: activeSelectedClientIdNumber,
-                  sender_type: 'admin',
-                  message_content: outgoingContent
-              });
-
-          if (error) throw error;
-
-          const logBox = document.getElementById("adminChatMessagesLog");
-          if (logBox && logBox.innerHTML.includes("No messages exchanged")) {
-              await hotReloadActiveChatTimelineLog(client);
-          }
-
-      } catch (err) {
-          alert("Message transmission failure: " + err.message);
-      }
-  }
-
-  function appendSingleChatMessageBubbleToUI(newMsgObj) {
-      const logBox = document.getElementById("adminChatMessagesLog");
-      if (!logBox) return;
-
-      if (logBox.innerHTML.includes("No messages exchanged") || logBox.innerHTML.includes("Extracting secure")) {
-          logBox.innerHTML = "";
-      }
-
-      const temporaryBubbleDiv = document.createElement("div");
-      temporaryBubbleDiv.innerHTML = buildMessageBubbleMarkup(newMsgObj);
-      logBox.appendChild(temporaryBubbleDiv.firstElementChild);
-      
-      scrollTerminalTimelineToAbsoluteBottom();
-  }
-
-  function scrollTerminalTimelineToAbsoluteBottom() {
-      const logBox = document.getElementById("adminChatMessagesLog");
-      if (logBox) logBox.scrollTop = logBox.scrollHeight;
-  }
-
-  function handleAdminChatKeyOptions(event) {
-      if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault();
-          dispatchAdminResponseChatMessage();
-      }
-  }
-</script>
-
-
-
-  <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
-
-        // Inline modal helpers map setup options
-        window.toggleInvoiceGenerationModal = function(showFlag) {
-            const modal = document.getElementById('invoice-modal-overlay');
-            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
-        };
-
-        function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
-
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
+    if (error) throw error;
+    
+    // Quick roster sync to refresh active message summary fields text snippets
+    if (typeof window.synchronizeChatThreadsRoster === "function") {
+      window.synchronizeChatThreadsRoster();
     }
+
+  } catch (err) {
+    console.error("[Admin Send Fault] Message delivery rejected by Postgres cluster:", err.message);
+    alert("Response dropped. Check infrastructure network status logs context.");
+  }
+};
+
+// --- MODULE 4: HANDS-FREE KEYBOARD ENTER OPTIONS INTERCEPTOR ---
+window.handleAdminChatKeyOptions = function(keyEvent) {
+  // If the admin user strikes Enter without holding down Shift key, execute submission instantly
+  if (keyEvent.key === 'Enter' && !keyEvent.shiftKey) {
+    keyEvent.preventDefault();
+    window.dispatchAdminResponseChatMessage();
+  }
+};
+</script>
+
+
+<!-- ========================================================================== 
+     🏢 FILINGS4U ADMINISTRATIVE LIVE DESK CORE - PART 3: ROW TIMELINE INJECTORS
+     ========================================================================== --> 
+<script>
+// --- MODULE 1: COMPREHENSIVE VIEWPORT TIMELINE RETRIEVAL ENGINE ---
+window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
+  const client = window.supabaseClient || window.supabase || window.chatAdminCoreClient || window.f4uWizardSupabaseInstance;
+  const textarea = document.getElementById("adminChatMessageInputField");
+  const sendButton = document.getElementById("adminChatSendButton");
+  const msgLogBox = document.getElementById("adminChatMessagesLog");
+
+  if (!client || !textarea || !sendButton || !msgLogBox) return;
+
+  // FIXED: Lock onto your true 36-character string UUID cleanly
+  window.activeSelectedClientId = stringClientUuid;
+
+  // Open input text area interfaces instantly on screen layout elements
+  textarea.disabled = false;
+  sendButton.disabled = false;
+  textarea.placeholder = `Type response to Client: ${stringClientUuid.substring(0,8).toUpperCase()}...`;
+  textarea.focus();
+
+  msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem;">Extracting secure conversation logs...</div>`;
+
+  try {
+    // ATOMIC ACCESS UPDATE: Clear unread alert flags on the backend for this client row instantly
+    await client
+      .from('chat_messages')
+      .update({ is_read_by_admin: true })
+      .eq('client_id', stringClientUuid);
+
+    // Refresh roster counters dynamically to wipe away red unread numbers layout badges
+    if (typeof window.synchronizeChatThreadsRoster === "function") {
+      window.synchronizeChatThreadsRoster();
+    }
+
+    // Fetch message history ordered chronologically
+    const { data: messages, error } = await client
+      .from('chat_messages')
+      .select('*')
+      .eq('client_id', stringClientUuid)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    msgLogBox.innerHTML = "";
+
+    if (messages && messages.length > 0) {
+      messages.forEach(msg => {
+        // Skip background automated system handshake parameters
+        if (String(msg.message_content).startsWith("System Notice:")) return;
+        window.appendSingleChatMessageBubbleToUI(msg);
+      });
+    } else {
+      msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No messages exchanged with this user yet.</div>`;
+    }
+    
+    window.scrollTerminalTimelineToAbsoluteBottom();
+
+  } catch (err) {
+    console.error("[Admin Timeline Exception] Storage retrieval failed:", err.message);
+    msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:red; font-size:0.85rem;">⚠️ Conversation pipeline retrieval failure.</div>`;
+  }
+};
+
+// --- MODULE 2: GRAPHIC CHAT BUBBLE MARKUP CONSTRUCTOR ---
+window.buildMessageBubbleMarkup = function(msgRow) {
+  const currentSender = String(msgRow.sender_type || '').toLowerCase();
+  const isAdminResponse = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'broker' || currentSender === 'staff';
+  
+  const alignSide = isAdminResponse 
+    ? 'margin-left: auto; background: #0a1f44; color: #ffffff;' 
+    : 'margin-right: auto; background: #f1f5f9; color: #0f172a;';
+
+  const wrapperStyle = `max-width: 75%; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); word-break: break-word; display: block; clear: both; ${alignSide}`;
+  const metaStyle = `font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 4px; text-align: ${isAdminResponse ? 'right' : 'left'}; font-weight: 600;`;
+  
+  const readableTime = msgRow.created_at 
+    ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const senderLabel = isAdminResponse ? 'Fulfillment Staff' : 'Client Customer';
+
+  // Check if content string parameter holds an explicit graphic attachment web link
+  const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
+  const match = msgRow.message_content.match(imageRegex);
+  
+  let bodyMarkup = msgRow.message_content;
+  if (match) {
+    const imageUrl = match[1];
+    const plainText = msgRow.message_content.replace(imageUrl, '').trim();
+    const textHtml = plainText ? `<div style="margin-bottom:6px;">${plainText}</div>` : '';
+    bodyMarkup = `${textHtml}<img src="${imageUrl}" class="chat-inline-thumbnail-preview" onclick="window.open('${imageUrl}', '_blank')">`;
+  }
+
+  return `
+    <div style="${wrapperStyle}" class="admin-chat-row-bubble">
+      ${bodyMarkup}
+      <span style="${metaStyle}">${senderLabel} • ${readableTime}</span>
+    </div>`;
+};
+
+
+
+// --- MODULE 3: APPEND GRAPHIC BUBBLE DIRECTLY INTO TIMELINE FEED ---
+window.appendSingleChatMessageBubbleToUI = function(newMsgObj) {
+  const logBox = document.getElementById("adminChatMessagesLog");
+  if (!logBox) return;
+
+  if (logBox.innerHTML.includes("exchanged with this user") || logBox.innerHTML.includes("Extracting secure")) {
+    logBox.innerHTML = "";
+  }
+
+  const temporaryBubbleDiv = document.createElement("div");
+  temporaryBubbleDiv.innerHTML = window.buildMessageBubbleMarkup(newMsgObj);
+  logBox.appendChild(temporaryBubbleDiv.firstElementChild);
+  
+  window.scrollTerminalTimelineToAbsoluteBottom();
+};
+
+// --- MODULE 4: DISPATCH AGENT BROKER RESPONSE PAYLOAD ---
+window.dispatchAdminResponseChatMessage = async function() {
+  const textarea = document.getElementById("adminChatMessageInputField");
+  const client = window.supabaseClient || window.supabase || window.chatAdminCoreClient || window.f4uWizardSupabaseInstance;
+  const currentTargetUuid = window.activeSelectedClientId;
+
+  if (!textarea || !currentTargetUuid || !client) return;
+
+  const contentRaw = textarea.value.trim();
+  if (!contentRaw) return;
+
+  textarea.value = "";
+
+  // Optimistic UI Append pass containing your structural style meta tags
+  window.appendSingleChatMessageBubbleToUI({
+    sender_type: 'admin',
+    message_content: contentRaw,
+    created_at: new Date().toISOString()
+  });
+
+  try {
+    console.log(`[Admin Send] Committing response line to Client UUID: ${currentTargetUuid}`);
+    
+    // FIXED: Routes rows explicitly using your verified table keys to clear database validations
+    const { error } = await client
+      .from('chat_messages')
+      .insert({
+        client_id: currentTargetUuid,
+        sender_type: 'admin',
+        message_content: contentRaw,
+        is_read_by_admin: true
+      });
+
+    if (error) throw error;
+    
+    if (typeof window.synchronizeChatThreadsRoster === "function") {
+      window.synchronizeChatThreadsRoster();
+    }
+
+  } catch (err) {
+    console.error("[Admin Send Fault] Message delivery rejected:", err.message);
+    alert("Response dropped. Check infrastructure network status logs context.");
+  }
+};
+
+// --- MODULE 5: UTILITY SCROLL TERMINAL FRAME SHIFTERS ---
+window.scrollTerminalTimelineToAbsoluteBottom = function() {
+  const logBox = document.getElementById("adminChatMessagesLog");
+  if (logBox) logBox.scrollTop = logBox.scrollHeight;
+};
+
+window.handleAdminChatKeyOptions = function(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    window.dispatchAdminResponseChatMessage();
+  }
+};
+</script>
+
+
+<!-- ========================================================================== 
+     🏢 FILINGS4U ADMINDESK INTERFACE SYSTEM UTILITIES (Hardened Layout Locks)
+     =========================================================================== --> 
+<script>
+// --- MODULE 1: RESPONSIVE SIDEBAR ACCORDION HANDLERS ---
+function toggleSidebarAccordion(buttonElement) {
+  if (!buttonElement) return;
+  buttonElement.classList.toggle('active');
+  const panel = buttonElement.nextElementSibling;
+  
+  if (panel) {
+    if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+      panel.style.maxHeight = "0px";
+    } else {
+      panel.style.maxHeight = panel.scrollHeight + "px";
+    }
+  }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-    </script>
+// --- MODULE 2: INLINE ACCOUNT MODAL VIEW CONTROLLERS ---
+window.toggleInvoiceGenerationModal = function(showFlag) {
+  const modal = document.getElementById('invoice-modal-overlay');
+  if (modal) {
+    modal.style.display = showFlag ? 'flex' : 'none';
+  }
+};
 
+// --- MODULE 3: MOBILE LAYOUT DRAWER REVEAL WRAPPERS ---
+function toggleMobileSidebarMenuOverlay() {
+  // Only execute toggle shifts if the layout viewport matches mobile boundaries
+  if (window.innerWidth > 992) return;
+  
+  const sidebar = document.querySelector(".portal-sidebar");
+  const icon = document.getElementById("mobileNavTriggerIcon");
+  
+  if (!sidebar || !icon) return;
+  
+  sidebar.classList.toggle("mobile-revealed");
+  
+  // FIXED: Standard crisp decoded button values to stop rendering layout crashes
+  if (sidebar.classList.contains("mobile-revealed")) {
+    icon.textContent = "✕";
+  } else {
+    icon.textContent = "☰";
+  }
+}
+
+// --- MODULE 4: ISOLATED USER CLICK INTERCEPTORS ---
+document.addEventListener("DOMContentLoaded", () => {
+  // FIXED: Explicitly narrow the click listeners down to true navigation links (.portal-nav-link)
+  // to prevent chat thread card clicks (.chat-user-thread-card) from crashing the mobile view!
+  const navLinks = document.querySelectorAll(".portal-sidebar .nav-item, .portal-sidebar a");
+  
+  navLinks.forEach(link => {
+    link.addEventListener("click", (event) => {
+      const sidebar = document.querySelector(".portal-sidebar");
+      
+      // Auto collapse the mobile menu overlay tray ONLY if navigating away on small viewports
+      if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
+        // Enforce a brief layout boundary timeout to ensure data routes clear before slide animation begins
+        setTimeout(() => {
+          if (sidebar.classList.contains("mobile-revealed")) {
+            toggleMobileSidebarMenuOverlay();
+          }
+        }, 150);
+      }
+    });
+  });
+});
+</script>
 </body>
 </html>

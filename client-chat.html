@@ -107,167 +107,471 @@
                     </div>
                 </div>
                 <!-- Input Console Panel Bar -->
-                <div class="chat-input-bar">
-                    <input type="text" id="chatMessageTerminalInputField" class="search-input" style="flex-grow: 1; width: auto;" placeholder="Type your compliance message detail here..." onkeydown="if(event.key === 'Enter') dispatchClientLiveChatMessage()">
-                    <button class="btn-sm" style="height: 38px; padding: 0 20px;" onclick="dispatchClientLiveChatMessage()">Send Message</button>
-                </div>
+               <!-- ========================================================================== 
+     📎 UPGRADED MULTILINE INPUT TRUNK PANEL WITH FILE UPLOAD WELL
+     ========================================================================== --> 
+<div class="chat-input-bar-wrapper" style="width: 100% !important; box-sizing: border-box !important; background: #f8fafc !important; border-top: 1px solid #e2e8f0 !important; display: flex !important; flex-direction: column !important;">
+  
+  <!-- 📁 ATTACHMENT INDICATOR STRIPE BADGE (Hidden until file is picked) -->
+  <div id="wizardAttachmentBadgeStrip" style="display: none !important; align-items: center !important; justify-content: space-between !important; padding: 6px 16px !important; background: #f1f5f9 !important; border-bottom: 1px solid #e2e8f0 !important; font-size: 0.75rem !important; color: #1e40af !important; font-weight: 600 !important; box-sizing: border-box !important;">
+    <span style="display: inline-flex !important; align-items: center !important; gap: 6px !important;">
+      📄 Selected Document: <span id="wizardAttachmentFileName" style="color: #0f172a !important; font-family: monospace !important;">file.pdf</span>
+    </span>
+    <button type="button" onclick="window.clearSelectedAttachmentPayload()" style="background: none !important; border: none !important; color: #ef4444 !important; font-weight: 700 !important; cursor: pointer !important; padding: 0 4px !important; font-size: 0.85rem !important;">✕ Remove</button>
+  </div>
+
+  <!-- 💬 ACTIONS INPUT TRAY BAR -->
+  <div class="chat-input-bar" style="padding: 12px 16px !important; display: flex !important; gap: 10px !important; align-items: flex-end !important; box-sizing: border-box !important; width: 100% !important;">
+    
+    <!-- INVISIBLE BROWSER FILE CAPTURER NODE -->
+    <input type="file" id="wizardChatFileUploadInput" style="display: none !important;" onchange="window.handleLocalFileSelectionEvent(this)">
+    
+    <!-- 📎 PAPERCLIP VECTOR ACCENT BUTTON -->
+    <button type="button" onclick="document.getElementById('wizardChatFileUploadInput').click()" style="height: 42px !important; width: 42px !important; min-width: 42px !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 6px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; transition: all 0.15s ease !important; margin: 0 !important; box-sizing: border-box !important; padding: 0 !important; font-size: 1.15rem !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;" onmouseover="this.style.borderColor='#0a1f44'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#ffffff';">
+      📎
+    </button>
+    
+    <!-- MULTI-LINE TEXTAREA CANVAS -->
+    <textarea 
+      id="chatMessageTerminalInputField" 
+      class="search-input" 
+      style="flex-grow: 1 !important; width: auto !important; height: 42px !important; min-height: 42px !important; max-height: 120px !important; padding: 10px 12px !important; border: 1px solid #cbd5e1 !important; border-radius: 6px !important; font-size: 0.875rem !important; outline: none !important; font-weight: 500 !important; background: #ffffff !important; transition: border-color 0.15s ease !important; box-sizing: border-box !important; resize: none !important; font-family: inherit !important; line-height: 1.4 !important; margin: 0 !important;" 
+      placeholder="Type your compliance message detail here... (Press Enter to Send)" 
+      onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); dispatchClientLiveChatMessage(); }"></textarea>
+    
+    <!-- TRANSMISSION SUBMIT BUTTON -->
+    <button 
+      class="btn-sm" 
+      style="height: 42px !important; padding: 0 22px !important; background: #0a1f44 !important; color: #ffffff !important; font-weight: 600 !important; font-size: 0.875rem !important; border: none !important; border-radius: 6px !important; cursor: pointer !important; transition: background 0.15s ease !important; margin: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;" 
+      onclick="dispatchClientLiveChatMessage()">Send Message</button>
+  </div>
+</div>
+
             </div>
         </main>
     </div>
 
 
- <!-- ========================================================================== 
-🏢 FILINGS4U LIVE SUPPORT ENGINE (Production Unified Matrix Core)
-========================================================================== --> 
+<!-- ========================================================================== 
+     🏢 FILINGS4U LIVE SUPPORT ENGINE (Production Unified Matrix Core - FIXED) 
+     ========================================================================== --> 
+
+
 <script>
-  // --- 1. GLOBAL REALTIME STORAGE CHANNELS ---
-  let productionChatChannel = null;
-  const globalChatGatewayClient = window.supabaseClient || window.supabase;
+// --- 1. GLOBAL REALTIME STORAGE CHANNELS ---
+let productionChatChannel = null;
+const globalChatGatewayClient = window.supabaseClient || window.supabase;
 
-  // --- 2. INITIALIZE ENGINE SESSIONS AND SETUP LISTENERS ---
-  document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || globalChatGatewayClient;
-          const logBox = document.getElementById("portalChatMessagesLog");
-          
-          if (!client) {
-              if (logBox) logBox.innerHTML = `<div class="chat-bubble inbound">Gateway Core Offline. Please reload your console wall.</div>`;
-              return;
-          }
+// --- 2. INITIALIZE ENGINE SESSIONS AND SETUP LISTENERS ---
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(async () => {
+    const client = window.supabaseClient || window.supabase || globalChatGatewayClient;
+    const logBox = document.getElementById("portalChatMessagesLog");
+    
+    if (!client) {
+      if (logBox) logBox.innerHTML = `<div class="chat-bubble inbound">Gateway Core Offline. Please reload your console wall.</div>`;
+      return;
+    }
 
-          try {
-              const { data: { session }, error: sessionError } = await client.auth.getSession();
-              if (sessionError || !session) {
-                  window.location.href = 'client-dashboard.html';
-                  return;
-              }
-
-              const currentCustomerUuid = session.user.id;
-
-              // Action A: Recover Historical Logs from Postgres Table Disk
-              await fetchHistoricalChatLogs(client, currentCustomerUuid);
-
-              // Action B: Establish Realtime Socket Listener Channel Matrix
-              productionChatChannel = client.channel(`support_room_${currentCustomerUuid}`);
-              
-              productionChatChannel
-                  .on('broadcast', { event: 'new_msg' }, (payload) => {
-                      // Intercept incoming admin messages over-the-air instantly
-                      appendRealtimeBubbleToDOM(payload.payload.message_content, payload.payload.sender_type);
-                  })
-                  .subscribe((status) => {
-                      if (status === 'SUBSCRIBED') {
-                          console.log("📡 Realtime Secure Support Chat Pipeline Connected Cleanly.");
-                      }
-                  });
-
-          } catch (err) {
-              console.error("Chat bootstrapper error:", err.message);
-          }
-      }, 50);
-
-      // Accordion UI tracking highlights operations
-      initializeSidebarMenuHighlights();
-  });
-
-  // --- 3. RECOVER HISTORICAL CHAT LOG RECORDS ---
-  async function fetchHistoricalChatLogs(client, userUuid) {
-      const logBox = document.getElementById("portalChatMessagesLog");
-      if (!logBox) return;
-
-      try {
-          const { data: messages, error } = await client
-              .from('chat_messages')
-              .select('sender_type, message_content')
-              .eq('user_id', userUuid)
-              .order('created_at', { ascending: true });
-
-          if (error) throw error;
-
-          if (messages && messages.length > 0) {
-              logBox.innerHTML = ""; // Remove default prompt card frame
-              messages.forEach(msg => {
-                  appendRealtimeBubbleToDOM(msg.message_content, msg.sender_type);
-              });
-          }
-      } catch (err) {
-          console.warn("Could not synchronize historical logs ledger:", err.message);
-      }
-  }
-
-  // --- 4. DISPATCH OUTBOUND MESSAGE ACTION CONTROL ---
-  async function dispatchClientLiveChatMessage() {
-      const field = document.getElementById("chatMessageTerminalInputField");
-      const client = window.supabaseClient || window.supabase || globalChatGatewayClient;
+    try {
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
       
-      if (!field || !field.value.trim() || !client) return;
-      const textRaw = field.value.trim();
-
-      try {
-          const { data: { session } } = await client.auth.getSession();
-          if (!session) return;
-
-          // Step A: Save permanently to database disk for admin archival tracking logs
-          const { error } = await client.from('chat_messages').insert({
-              user_id: session.user.id,
-              sender_type: 'client',
-              message_content: textRaw
-          });
-
-          if (error) throw error;
-
-          // Step B: Broadcast dynamically over-the-air to listening admin channels
-          if (productionChatChannel) {
-              await productionChatChannel.send({
-                  type: 'broadcast',
-                  event: 'new_msg',
-                  payload: { sender_type: 'client', message_content: textRaw }
-              });
-          }
-
-          // Step C: Render message instantly in user UI canvas layout and flush field
-          appendRealtimeBubbleToDOM(textRaw, 'client');
-          field.value = "";
-
-      } catch (err) {
-          console.error("Message transmission failure:", err.message);
-          alert("Message delivery failure. Check network infrastructure sockets.");
+      if (sessionError || !session) {
+        window.location.href = 'client-dashboard.html';
+        return;
       }
-  }
 
-  // --- 5. APPEND GRAPHIC BUBBLE DIRECTLY INTO VIEWPORT CANVAS ---
-  function appendRealtimeBubbleToDOM(textStr, senderTypeStr) {
-      const logBox = document.getElementById("portalChatMessagesLog");
-      if (!logBox) return;
+      // ========================================================================= 
+      // CRITICAL TRACE FIX: LOCK DOWN CONTINUOUS USER IDENTITY CHANNEL
+      // ========================================================================= 
+      // 1. Prioritize any existing, verified tracking key already saved inside local storage wells
+      let currentCustomerUuid = localStorage.getItem("f4u_user_id");
 
-      const bubbleElement = document.createElement("div");
-      // Map 'client' sender to outbound layout alignment, map anything else to inbound admin
-      bubbleElement.className = `chat-bubble ${senderTypeStr === 'client' ? 'outbound' : 'inbound'}`;
-      bubbleElement.textContent = textStr;
+      if (!currentCustomerUuid || currentCustomerUuid === "null" || currentCustomerUuid === "undefined") {
+        // 2. Fall back to the current authenticated session token string if storage is empty
+        currentCustomerUuid = session.user.id;
+      }
 
-      logBox.appendChild(bubbleElement);
-      logBox.scrollTop = logBox.scrollHeight; // Force scroll focus down natively
-  }
+      // 3. Last-resort fallback: if both are empty or unstable, generate a true static UUID anchor
+      if (!currentCustomerUuid || currentCustomerUuid === "null" || currentCustomerUuid === "undefined") {
+        currentCustomerUuid = crypto.randomUUID();
+      }
 
-  // --- 6. STANDARD ACCOUNT INTERFACE SYSTEM UTILITIES ---
-  function initializeSidebarMenuHighlights() {
-      const currentFileName = window.location.pathname.split("/").pop() || "client-chat.html";
-      const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href^="${currentFileName}"]`);
-      activeLinks.forEach(link => {
-          document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-          link.classList.add('active');
-          const matchingPanel = link.closest('.accordion-panel');
-          if (matchingPanel) {
-              matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-              const folderTriggerButton = matchingPanel.previousElementSibling;
-              if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-                  folderTriggerButton.classList.add('active');
-                  const chevronSpan = folderTriggerButton.querySelector('.chevron');
-                  if (chevronSpan) chevronSpan.textContent = "▲";
-              }
+      // 4. Lock the selected ID back into local storage permanently to survive refreshes and dashboard reloads
+      localStorage.setItem("f4u_user_id", currentCustomerUuid);
+      window.clientSessionUserId = currentCustomerUuid; // Maintain active window workspace sync
+
+      console.log(`[Portal Engine Connected] Thread Channel Locked under client ID: ${currentCustomerUuid}`);
+
+      // Action A: Recover Historical Logs from Postgres Table Disk matching your locked ID
+      await fetchHistoricalChatLogs(client, currentCustomerUuid);
+
+      // Action B: Establish Real-time Postgres Database Synchronization Pipeline
+      console.log(`[Portal Engine] Spawning active database wire for channel context: ${currentCustomerUuid}`);
+      
+      if (productionChatChannel) {
+        client.removeChannel(productionChatChannel);
+      }
+
+      // Listens specifically to database updates matching your locked, single client identity token
+      productionChatChannel = client
+        .channel(`support_room_wire_${currentCustomerUuid}`)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'chat_messages', 
+          filter: `client_id=eq.${currentCustomerUuid}` 
+        }, (payload) => {
+          console.log("[Portal Socket Tick] Over-the-air mutation packet received:", payload.new);
+          
+          const incomingSender = String(payload.new.sender_type || '').toLowerCase();
+          if (incomingSender === 'admin' || incomingSender === 'agent' || incomingSender === 'broker') {
+            appendRealtimeBubbleToDOM(payload.new.message_content, 'admin');
           }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log("📡 Realtime Secure Support Chat Pipeline Connected Cleanly via Postgres Channel Engine.");
+          }
+        });
+
+    } catch (err) {
+      console.error("Chat bootstrapper error:", err.message);
+    }
+  }, 50);
+
+  // Accordion UI tracking highlights operations 
+  initializeSidebarMenuHighlights();
+});
+
+
+// --- 3. RECOVER HISTORICAL CHAT LOG RECORDS ---
+async function fetchHistoricalChatLogs(client, userUuid) {
+  const logBox = document.getElementById("portalChatMessagesLog");
+  if (!logBox) return;
+
+  try {
+    // FIXED: Changed query column filter from 'user_id' to 'client_id' to align with database architecture constraints
+    const { data: messages, error } = await client
+      .from('chat_messages')
+      .select('sender_type, message_content, created_at')
+      .eq('client_id', userUuid)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    if (messages && messages.length > 0) {
+      logBox.innerHTML = ""; // Remove default initial placeholder greeting text elements cleanly
+      
+      messages.forEach(msg => {
+        // EXPLICIT FILTER PASS: Ignore background automation alerts or trigger setup configuration strings
+        if (String(msg.message_content).startsWith("System Notice:")) return;
+        
+        appendRealtimeBubbleToDOM(msg.message_content, msg.sender_type);
       });
+    }
+  } catch (err) {
+    console.warn("Could not synchronize historical logs ledger:", err.message);
   }
+}
+
+// --- FIXED: UPGRADED OUTBOUND DISPATCH ACTION CONTROLLER WITH STORAGE UPLOADS ---
+async function dispatchClientLiveChatMessage() {
+  const field = document.getElementById("chatMessageTerminalInputField");
+  const client = window.supabaseClient || window.supabase || globalChatGatewayClient || window.f4uWizardSupabaseInstance;
+  
+  if (!field || !client) return;
+
+  let textRaw = field.value.trim();
+  
+  // Safely extract the cached file object from window memory storage
+  const pendingFileObj = window.activePendingFileObject ? window.activePendingFileObject[0] : null;
+
+  // Hard exit pass if the client typed nothing AND chose no document
+  if (!textRaw && !pendingFileObj) return;
+
+  // Flush text input interface elements instantly to protect snappy layout speeds
+  field.value = "";
+
+  // 1. ATTACHMENT PIPELINE CHECK: If a file exists, stream it up first
+  if (pendingFileObj) {
+    console.log(`[Storage Pipeline] Uploading binary asset: ${pendingFileObj.name}`);
+    
+    // Clear out the footer badge strip indicator layout immediately to prevent double submissions
+    if (typeof window.clearSelectedAttachmentPayload === "function") {
+      window.clearSelectedAttachmentPayload();
+    }
+
+    try {
+      const uniquePathToken = `${window.clientSessionUserId || 'anonymous'}/${Date.now()}_${pendingFileObj.name}`;
+      
+      // Post the binary file packet directly up to your attached storage bucket location
+      const { data: uploadResult, error: uploadErr } = await client
+        .storage
+        .from('chat-attachments')
+        .upload(uniquePathToken, pendingFileObj, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadErr) throw uploadErr;
+
+      // Extract the publicly readable URL path string asset parameter
+      const { data: publicUrlData } = client
+        .storage
+        .from('chat-attachments')
+        .getPublicUrl(uniquePathToken);
+
+      const uploadedAssetUrl = publicUrlData.publicUrl;
+      console.log(`[Storage Success] Asset uploaded to bucket cleanly: ${uploadedAssetUrl}`);
+
+      // Reformat message body strings based on layout data composition
+      if (!textRaw) {
+        textRaw = `📎 Attached Document [${pendingFileObj.name}]: ${uploadedAssetUrl}`;
+      } else {
+        textRaw += `\n\n📎 Attached Document [${pendingFileObj.name}]: ${uploadedAssetUrl}`;
+      }
+
+    } catch (uploadException) {
+      console.error("[Storage Failure] Upload process rejected by Supabase node:", uploadException.message);
+      appendRealtimeBubbleToDOM("⚠️ Document upload failed. Please verify folder permissions.", 'admin');
+      return;
+    }
+  }
+
+  // 2. DATABASE LOG RECORD COMMIT
+  try {
+    const currentCustomerUuid = localStorage.getItem("f4u_user_id") || window.clientSessionUserId;
+    if (!currentCustomerUuid) return;
+
+    // Optimistically print message block nodes straight into user view screen canvas
+    appendRealtimeBubbleToDOM(textRaw, 'client');
+
+    const { error } = await client
+      .from('chat_messages')
+      .insert({
+        client_id: currentCustomerUuid,
+        sender_type: 'client',
+        message_content: textRaw,
+        is_read_by_admin: false
+      });
+
+    if (error) throw error;
+    console.log("[Portal Sync Success] Message record securely saved to Postgres disk.");
+
+  } catch (err) {
+    console.error("Message transmission failure:", err.message);
+    alert("Message delivery failure. Check network infrastructure sockets.");
+  }
+}
+
+
+// --- 5. APPEND GRAPHIC BUBBLE DIRECTLY INTO VIEWPORT CANVAS ---
+// --- FIXED: PARSES STRINGS AND EXPANDS ENCRYPTED ASSETS INTO CLICKABLE IMAGES ---
+function appendRealtimeBubbleToDOM(textStr, senderTypeStr) {
+  const logBox = document.getElementById("portalChatMessagesLog");
+  if (!logBox) return;
+
+  const bubbleElement = document.createElement("div");
+  const parsedSender = String(senderTypeStr || '').toLowerCase();
+  
+  if (parsedSender === 'client') {
+    bubbleElement.className = "chat-bubble outbound";
+  } else {
+    bubbleElement.className = "chat-bubble inbound";
+  }
+  
+  // 🖼️ IMAGE DECODER REGEX: Check if text contains a link ending in jpg, jpeg, png, gif, or webp
+  const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
+  const match = textStr.match(imageRegex);
+
+  if (match) {
+    const imageUrl = match[1];
+    // Remove the long raw URL string text from visible view text layers
+    const plainText = textStr.replace(imageUrl, '').trim();
+    
+    bubbleElement.innerHTML = plainText ? `<div style="margin-bottom:6px;">${plainText}</div>` : '';
+    
+    const imgNode = document.createElement("img");
+    imgNode.src = imageUrl;
+    imgNode.className = "chat-inline-thumbnail-preview";
+    imgNode.onclick = () => window.open(imageUrl, '_blank');
+    bubbleElement.appendChild(imgNode);
+  } else {
+    bubbleElement.textContent = textStr;
+  }
+  
+  logBox.appendChild(bubbleElement);
+  setTimeout(() => { logBox.scrollTop = logBox.scrollHeight; }, 10);
+}
+
+// Add this fetch block inside client-chat.html where a new conversation triggers (isRoomEmpty === true)
+if (isRoomEmpty) {
+  // Replace this placeholder link with your actual Supabase Edge Function or live Resend integration routing endpoint
+  fetch("https://supabase.co", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      admin_inbox: "support@filings4u.com",
+      client_id: currentCustomerUuid,
+      preview_text: textRaw
+    })
+  }).catch(e => console.log("Background email log deferred."));
+}
+
+
+// --- UPGRADED ACTIONS DISPATCH WITH ANIMATED UPLOAD SPINNER & WAIT-TIME TRIGGERS ---
+async function dispatchClientLiveChatMessage() {
+  const field = document.getElementById("chatMessageTerminalInputField");
+  const sendBtn = document.querySelector(".chat-input-bar button");
+  const client = window.supabaseClient || window.supabase || globalChatGatewayClient || window.f4uWizardSupabaseInstance;
+  
+  if (!field || !client) return;
+  let textRaw = field.value.trim();
+  const pendingFileObj = window.activePendingFileObject ? window.activePendingFileObject : null;
+
+  if (!textRaw && !pendingFileObj) return;
+  field.value = "";
+
+  // 🌀 TURN ON LOADING SPINNER IF AN ATTACHMENT IS FLOATING INSIDE THE BUFFER
+  let originalButtonContent = "";
+  if (pendingFileObj && sendBtn) {
+    originalButtonContent = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = `<div class="f4u-btn-spinner"></div>`;
+  }
+
+  if (pendingFileObj) {
+    if (typeof window.clearSelectedAttachmentPayload === "function") {
+      window.clearSelectedAttachmentPayload();
+    }
+    try {
+      const uniquePathToken = `${window.clientSessionUserId || 'anonymous'}/${Date.now()}_${pendingFileObj.name}`;
+      const { data: uploadResult, error: uploadErr } = await client.storage.from('chat-attachments').upload(uniquePathToken, pendingFileObj, { cacheControl: '3600', upsert: false });
+      if (uploadErr) throw uploadErr;
+
+      const { data: publicUrlData } = client.storage.from('chat-attachments').getPublicUrl(uniquePathToken);
+      const uploadedAssetUrl = publicUrlData.publicUrl;
+
+      if (!textRaw) {
+        textRaw = `${uploadedAssetUrl}`;
+      } else {
+        textRaw += ` \n${uploadedAssetUrl}`;
+      }
+    } catch (uploadException) {
+      console.error("[Storage Failure]", uploadException.message);
+      appendRealtimeBubbleToDOM("⚠️ Document upload failed.", 'admin');
+      if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = originalButtonContent; }
+      return;
+    }
+  }
+
+  // Restore button state elements
+  if (sendBtn && originalButtonContent) {
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = originalButtonContent;
+  }
+
+  try {
+    const currentCustomerUuid = localStorage.getItem("f4u_user_id") || window.clientSessionUserId;
+    if (!currentCustomerUuid) return;
+
+    // Check if this is the first message being sent in this session to fire the wait message
+    const isRoomEmpty = document.querySelectorAll("#portalChatMessagesLog .chat-bubble").length <= 1;
+
+    appendRealtimeBubbleToDOM(textRaw, 'client');
+
+    const { error } = await client.from('chat_messages').insert({
+      client_id: currentCustomerUuid,
+      sender_type: 'client',
+      message_content: textRaw,
+      is_read_by_admin: false
+    });
+
+    if (error) throw error;
+
+    // ⏱️ AUTOMATED WAIT-TIME RESPONSE TRIGGER
+    if (isRoomEmpty) {
+      setTimeout(() => {
+        const waitTimeText = "⏱️ System Notice: An expert filings4u compliance broker has been alerted. Current estimated response wait time is under 4 minutes. Thank you for your patience!";
+        appendRealtimeBubbleToDOM(waitTimeText, 'admin');
+      }, 1200);
+    }
+
+  } catch (err) {
+    console.error("Message transmission failure:", err.message);
+  }
+}
+
+
+// --- 6. STANDARD ACCOUNT INTERFACE SYSTEM UTILITIES ---
+function initializeSidebarMenuHighlights() {
+  const currentFileName = window.location.pathname.split("/").pop() || "client-chat.html";
+  const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href^="${currentFileName}"]`);
+  
+  activeLinks.forEach(link => {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    link.classList.add('active');
+    
+    const matchingPanel = link.closest('.accordion-panel');
+    if (matchingPanel) {
+      matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
+      const folderTriggerButton = matchingPanel.previousElementSibling;
+      if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
+        folderTriggerButton.classList.add('active');
+        const chevronSpan = folderTriggerButton.querySelector('.chevron');
+        if (chevronSpan) chevronSpan.textContent = "▲";
+      }
+    }
+  });
+}
 </script>
+
+<script>
+    /** 
+ * Module: Wizard UI File Selection Pipeline 
+ * Target: Executes automatically when a user clicks the paperclip icon and selects a file. 
+ */ 
+window.handleLocalFileSelectionEvent = function(inputNodeReference) { 
+  if (!inputNodeReference.files || inputNodeReference.files.length === 0) return; 
+
+  // Stash the raw browser file parameters inside global state window memory explicitly 
+  window.activePendingFileObject = inputNodeReference.files[0]; 
+
+  const badgeStrip = document.getElementById("wizardAttachmentBadgeStrip"); 
+  const labelNode = document.getElementById("wizardAttachmentFileName"); 
+
+  if (badgeStrip && labelNode) { 
+    labelNode.innerText = window.activePendingFileObject.name; 
+    badgeStrip.style.setProperty("display", "flex", "important"); 
+  } 
+  console.log(`[File Selection] File prepared for upload pipeline: ${window.activePendingFileObject.name}`); 
+}; 
+
+/** 
+ * Clears the selected file and hides the confirmation indicator badge completely. 
+ */ 
+window.clearSelectedAttachmentPayload = function() { 
+  window.activePendingFileObject = null; 
+
+  const fileInput = document.getElementById("wizardChatFileUploadInput"); 
+  if (fileInput) { 
+    fileInput.value = ""; 
+  } 
+
+  const badgeStrip = document.getElementById("wizardAttachmentBadgeStrip"); 
+  if (badgeStrip) { 
+    badgeStrip.style.setProperty("display", "none", "important"); 
+  } 
+  console.log("[File Selection] Local attachment payload cleared and input form refreshed."); 
+};
+
+</script>
+
+
+
+
+
+
 </body>
 </html>
