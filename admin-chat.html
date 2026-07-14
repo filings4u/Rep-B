@@ -675,49 +675,50 @@ document.addEventListener('DOMContentLoaded', () => {
       // Action A: Initialize the live unread list feed roster from the custom database View
       await window.synchronizeChatThreadsRoster();
 
-      // Action B: Bind Live Global Real-time Notification Channels
-      console.log("[Admin Desk] Activating global postgres_changes message interception network...");
-      client
-        .channel('global_admin_roster_watcher')
+      // Action B: Bind Live Global Real-time Notification Channels 
+      console.log("[Admin Desk] Activating global postgres_changes message interception network..."); 
+      
+      client.channel('global_admin_roster_watcher') 
         .on('postgres_changes', { 
           event: 'INSERT', 
           schema: 'public', 
           table: 'chat_messages' 
-        }, (payload) => {
-          console.log("[Admin Intercept] New message row logged on backend:", payload.new);
+        }, (payload) => { 
           
-          // Play a crisp notification chime if an unattended client transmits data over the air
-          if (String(payload.new.sender_type).toLowerCase() === 'client') {
-            try {
-              new Audio("https://jsdelivr.net").play().catch(() => {});
-            } catch (soundErr) {
-              console.log("[Audio Block] Chime suppressed until UI click engagement.");
-            }
-          }
+          if (String(payload.new.sender_type).toLowerCase() === 'client') { 
+            // FIXED URL: Wrapped a reliable, fully qualified alert chime audio file target path string
+            try { 
+              new Audio("https://cdn.jsdelivr.net/jpm/simple-notification-sounds@1.0.0/dist/audio/alert.mp3").play().catch(() => {}); 
+            } catch(e) {} 
+            
+            // 🚨 TRIGGER TAB FLASHING ALERT INTERCEPTOR: Blinks browser title bar instantly! 
+            if (typeof window.triggerActiveBrowserTabFlashAlert === "function") { 
+              window.triggerActiveBrowserTabFlashAlert(payload.new.client_id); 
+            } 
+          } 
 
-          // Dynamic view sorting: update active window or refresh unread count bars instantly
-          if (activeSelectedClientId === payload.new.client_id) {
-            window.loadActiveThreadViewportPanel(activeSelectedClientId);
-          } else {
-            window.synchronizeChatThreadsRoster();
-          }
+          if (activeSelectedClientId === payload.new.client_id) { 
+            window.loadActiveThreadViewportPanel(activeSelectedClientId); 
+          } else { 
+            window.synchronizeChatThreadsRoster(); 
+          } 
         })
-        .subscribe();
+        .subscribe(); 
 
-    } catch (err) {
-      console.error("Administrative chat runtime boot crash:", err.message);
-    }
-  }, 50);
+    } catch (err) { 
+      console.error("Administrative chat runtime boot crash:", err.message); 
+    } 
+  }, 50); 
 
-  // Synchronize System Header Pill Clock
-  function initializeHeaderClockTick() {
-    const clock = document.getElementById("portal-clock");
-    if (!clock) return;
-    const now = new Date();
-    clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString();
-  }
-  setInterval(initializeHeaderClockTick, 1000);
-  initializeHeaderClockTick();
+  // Synchronize System Header Pill Clock 
+  function initializeHeaderClockTick() { 
+    const clock = document.getElementById("portal-clock"); 
+    if (!clock) return; 
+    const now = new Date(); 
+    clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString(); 
+  } 
+  setInterval(initializeHeaderClockTick, 1000); 
+  initializeHeaderClockTick(); 
 });
 
 // --- 3. SYNCHRONIZE LEFT CONTACT THREADS NATIVELY ---
@@ -1038,6 +1039,40 @@ window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
 };
 
 // --- MODULE 2: GRAPHIC CHAT BUBBLE MARKUP CONSTRUCTOR ---
+// =========================================================================
+// 💬 MASTER TIMELINE MARKUP CONSTRUCTOR & TAB FLASH NOTIFICATION CONTROLLER
+// =========================================================================
+
+// --- AUTOMATED BROWSER TAB FLASH ALERTS TRACKER ENGINE ---
+window.f4uTabNotificationIntervalInstance = null;
+window.originalBrowserTabTitleString = document.title;
+
+window.triggerActiveBrowserTabFlashAlert = function(clientLabel) {
+  if (window.f4uTabNotificationIntervalInstance) return; // Prevent alert spamming loops
+  
+  let toggleAlertFlag = true;
+  const shortIdLabel = String(clientLabel || '').substring(0, 8).toUpperCase();
+  
+  window.f4uTabNotificationIntervalInstance = setInterval(() => {
+    document.title = toggleAlertFlag 
+      ? `🚨 NEW CHAT (#${shortIdLabel})` 
+      : `💬 ${window.originalBrowserTabTitleString}`;
+    toggleAlertFlag = !toggleAlertFlag;
+  }, 1000);
+};
+
+// Clear the flashing tab notice automatically once an admin user clicks into the text entry area box
+document.addEventListener("click", () => {
+  const inputEl = document.getElementById("adminChatMessageInputField");
+  if (document.activeElement === inputEl && window.f4uTabNotificationIntervalInstance) {
+    clearInterval(window.f4uTabNotificationIntervalInstance);
+    window.f4uTabNotificationIntervalInstance = null;
+    document.title = window.originalBrowserTabTitleString;
+    console.log("[Tab Alert Sync] Focus state activated. Flashing title alert cleared.");
+  }
+});
+
+// --- MAIN GRAPHIC CHAT BUBBLE TEMPLATE GENERATOR ---
 window.buildMessageBubbleMarkup = function(msgRow) {
   const currentSender = String(msgRow.sender_type || '').toLowerCase();
   const isAdminResponse = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'broker' || currentSender === 'staff';
@@ -1052,30 +1087,27 @@ window.buildMessageBubbleMarkup = function(msgRow) {
 
   let bodyMarkup = msgRow.message_content;
 
-  // =========================================================================
-  // 📋 FIXED: LEAD DATA CAPTURE EXPANSION WIDGET
-  // =========================================================================
-  // If the record maps to an onboarding system string, expand it into a beautiful data presentation card card layout
-  if (bodyMarkup.includes("System Notice:") || bodyMarkup.includes("Name:")) {
+  // 📋 FEATURE 1: EXPAND INTAKE FORM INTO AN INTEGRATED HIGH-DENSITY PROFILE CARD
+  if (bodyMarkup.includes("System Notice:") || bodyMarkup.includes("Name:") || bodyMarkup.includes("Email:")) {
     return `
-      <div style="margin-right: auto; width: 100%; max-width: 420px; background: #edf2f7; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; box-sizing: border-box; clear: both; margin-bottom: 12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #cbd5e1;">
+      <div style="margin-right: auto !important; width: 100% !important; max-width: 440px !important; background: #edf2f7 !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 16px !important; box-sizing: border-box !important; clear: both !important; margin-bottom: 12px !important; text-align: left !important; animation: f4uBubbleSlideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #cbd5e1; box-sizing: border-box;">
           <span style="font-size:1.15rem;">📋</span>
-          <strong style="color:#0a1f44; font-size:0.875rem; text-transform:uppercase; letter-spacing:0.5px;">New Web Lead Contact Intake Profile</strong>
+          <strong style="color:#0a1f44; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; font-weight: 800;">New Customer Lead Contact Intake Profile</strong>
         </div>
-        <pre style="margin: 0; font-family: monospace; font-size: 0.825rem; line-height: 1.45; color: #334155; white-space: pre-wrap; font-weight: 700;">${bodyMarkup}</pre>
-        <span style="font-size:0.65rem; color:#94a3b8; display:block; margin-top:8px; font-weight:600;">System Handshake Verified • ${readableTime}</span>
+        <pre style="margin: 0; font-family: monospace; font-size: 0.825rem; line-height: 1.5; color: #334155; white-space: pre-wrap; font-weight: 700; text-align: left;">${bodyMarkup}</pre>
+        <span style="font-size:0.65rem; color:#94a3b8; display:block; margin-top:8px; font-weight:600;">Handshake Verified &bull; fillings4u Backend Core &bull; ${readableTime}</span>
       </div>
     `;
   }
 
-  // Graphic attachment thumbnail expander passthrough logics
+  // 🖼️ FEATURE 2: CLICKABLE IMAGE ATTACHMENT EXPANSIONS PASSTHROUGH
   const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
   const match = bodyMarkup.match(imageRegex);
   if (match) {
     const imageUrl = match[1]; 
     const plainText = bodyMarkup.replace(imageUrl, '').trim();
-    const textHtml = plainText ? `<div style="margin-bottom:6px;">${plainText}</div>` : '';
+    const textHtml = plainText ? `<div style="margin-bottom:6px; text-align: left;">${plainText}</div>` : '';
     bodyMarkup = `${textHtml}<img src="${imageUrl}" class="chat-inline-thumbnail-preview" onclick="window.open('${imageUrl}', '_blank')">`;
   }
 
