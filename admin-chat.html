@@ -1046,33 +1046,42 @@ window.buildMessageBubbleMarkup = function(msgRow) {
     ? 'margin-left: auto; background: #0a1f44; color: #ffffff;' 
     : 'margin-right: auto; background: #f1f5f9; color: #0f172a;';
 
-  const wrapperStyle = `max-width: 75%; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); word-break: break-word; display: block; clear: both; ${alignSide}`;
+  const wrapperStyle = `max-width: 75%; padding: 12px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; display: block; clear: both; box-shadow: 0 1px 2px rgba(0,0,0,0.01); word-break: break-word; ${alignSide}`;
   const metaStyle = `font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 4px; text-align: ${isAdminResponse ? 'right' : 'left'}; font-weight: 600;`;
-  
-  const readableTime = msgRow.created_at 
-    ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const senderLabel = isAdminResponse ? 'Fulfillment Staff' : 'Client Customer';
-
-  // Check if content string parameter holds an explicit graphic attachment web link
-  const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
-  const match = msgRow.message_content.match(imageRegex);
-  
   let bodyMarkup = msgRow.message_content;
+
+  // =========================================================================
+  // 📋 FIXED: LEAD DATA CAPTURE EXPANSION WIDGET
+  // =========================================================================
+  // If the record maps to an onboarding system string, expand it into a beautiful data presentation card card layout
+  if (bodyMarkup.includes("System Notice:") || bodyMarkup.includes("Name:")) {
+    return `
+      <div style="margin-right: auto; width: 100%; max-width: 420px; background: #edf2f7; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; box-sizing: border-box; clear: both; margin-bottom: 12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #cbd5e1;">
+          <span style="font-size:1.15rem;">📋</span>
+          <strong style="color:#0a1f44; font-size:0.875rem; text-transform:uppercase; letter-spacing:0.5px;">New Web Lead Contact Intake Profile</strong>
+        </div>
+        <pre style="margin: 0; font-family: monospace; font-size: 0.825rem; line-height: 1.45; color: #334155; white-space: pre-wrap; font-weight: 700;">${bodyMarkup}</pre>
+        <span style="font-size:0.65rem; color:#94a3b8; display:block; margin-top:8px; font-weight:600;">System Handshake Verified • ${readableTime}</span>
+      </div>
+    `;
+  }
+
+  // Graphic attachment thumbnail expander passthrough logics
+  const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
+  const match = bodyMarkup.match(imageRegex);
   if (match) {
-    const imageUrl = match[1];
-    const plainText = msgRow.message_content.replace(imageUrl, '').trim();
+    const imageUrl = match[1]; 
+    const plainText = bodyMarkup.replace(imageUrl, '').trim();
     const textHtml = plainText ? `<div style="margin-bottom:6px;">${plainText}</div>` : '';
     bodyMarkup = `${textHtml}<img src="${imageUrl}" class="chat-inline-thumbnail-preview" onclick="window.open('${imageUrl}', '_blank')">`;
   }
 
-  return `
-    <div style="${wrapperStyle}" class="admin-chat-row-bubble">
-      ${bodyMarkup}
-      <span style="${metaStyle}">${senderLabel} • ${readableTime}</span>
-    </div>`;
+  return `<div style="${wrapperStyle}" class="admin-chat-row-bubble">${bodyMarkup}<span style="${metaStyle}">${isAdminResponse ? 'Fulfillment Staff' : 'Client Customer'} • ${readableTime}</span></div>`;
 };
+
 
 
 
