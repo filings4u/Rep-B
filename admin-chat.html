@@ -672,64 +672,54 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-    // Action A: Initialize the live unread list feed roster from the custom database View 
-    await window.synchronizeChatThreadsRoster(); 
+      // Action A: Initialize the live unread list feed roster from the custom database View
+      await window.synchronizeChatThreadsRoster();
 
-    // Action B: Bind Live Global Real-time Notification Channels 
-    console.log("[Admin Desk] Activating global postgres_changes message interception network..."); 
-    
-    client.channel('global_admin_roster_watcher') 
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'chat_messages' 
-      }, (payload) => { 
-        
-        if (String(payload.new.sender_type).toLowerCase() === 'client') { 
-          // FIXED UNIFICATION: Invokes your clean, unbroken audio chimes loop player!
-          if (typeof window.playIncomingSupportAlertChime === "function") {
-            window.playIncomingSupportAlertChime();
-          } else {
-            // Self-contained inline fallback pass if the module build timing is delayed
-            try { 
-              const soundNotificationWorker = new Audio("https://cdn.jsdelivr.net/npm/simple-notification-sounds@1.0.0/dist/audio/alert.mp3");
-              soundNotificationWorker.volume = 0.85;
-              soundNotificationWorker.play().catch(() => {}); 
-            } catch(e) {} 
-          }
+      // Action B: Bind Live Global Real-time Notification Channels 
+      console.log("[Admin Desk] Activating global postgres_changes message interception network..."); 
+      
+      client.channel('global_admin_roster_watcher') 
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'chat_messages' 
+        }, (payload) => { 
           
-          // 🚨 TRIGGER TAB FLASHING ALERT INTERCEPTOR: Blinks browser title bar instantly! 
-          if (typeof window.triggerActiveBrowserTabFlashAlert === "function") { 
-            window.triggerActiveBrowserTabFlashAlert(payload.new.client_id); 
+          if (String(payload.new.sender_type).toLowerCase() === 'client') { 
+            // FIXED URL: Wrapped a reliable, fully qualified alert chime audio file target path string
+            try { 
+              new Audio("https://cdn.jsdelivr.net/jpm/simple-notification-sounds@1.0.0/dist/audio/alert.mp3").play().catch(() => {}); 
+            } catch(e) {} 
+            
+            // 🚨 TRIGGER TAB FLASHING ALERT INTERCEPTOR: Blinks browser title bar instantly! 
+            if (typeof window.triggerActiveBrowserTabFlashAlert === "function") { 
+              window.triggerActiveBrowserTabFlashAlert(payload.new.client_id); 
+            } 
           } 
-        } 
 
-        // If the admin user is actively viewing this specific customer's conversation timeline, refresh it instantly
-        if (window.activeSelectedClientId === payload.new.client_id) { 
-          window.loadActiveThreadViewportPanel(window.activeSelectedClientId); 
-        } else { 
-          // Otherwise, refresh the unread indicators and badge counters on the left sidebar list roster
-          window.synchronizeChatThreadsRoster(); 
-        } 
-      }) 
-      .subscribe(); 
+          if (activeSelectedClientId === payload.new.client_id) { 
+            window.loadActiveThreadViewportPanel(activeSelectedClientId); 
+          } else { 
+            window.synchronizeChatThreadsRoster(); 
+          } 
+        })
+        .subscribe(); 
 
-  } catch (err) { 
-    console.error("Administrative chat runtime boot crash:", err.message); 
+    } catch (err) { 
+      console.error("Administrative chat runtime boot crash:", err.message); 
+    } 
+  }, 50); 
+
+  // Synchronize System Header Pill Clock 
+  function initializeHeaderClockTick() { 
+    const clock = document.getElementById("portal-clock"); 
+    if (!clock) return; 
+    const now = new Date(); 
+    clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString(); 
   } 
-}, 50); 
-
-// Synchronize System Header Pill Clock 
-function initializeHeaderClockTick() { 
-  const clock = document.getElementById("portal-clock"); 
-  if (!clock) return; 
-  const now = new Date(); 
-  clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString(); 
-} 
-setInterval(initializeHeaderClockTick, 1000); 
-initializeHeaderClockTick(); 
+  setInterval(initializeHeaderClockTick, 1000); 
+  initializeHeaderClockTick(); 
 });
-
 
 // --- 3. SYNCHRONIZE LEFT CONTACT THREADS NATIVELY ---
 window.synchronizeChatThreadsRoster = async function() {
