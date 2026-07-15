@@ -827,39 +827,34 @@ window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
   
   if (!client || !textarea || !sendButton || !msgLogBox) return;
 
-  // Lock the active global user identity token pointer safely
-  window.activeSelectedClientId = stringClientUuid;
+  // FIXED: Explicitly preserve the raw, clean 36-character string UUID tracking token
+  window.activeSelectedClientId = String(stringClientUuid).trim();
   
   // Unlock typing input interface states instantly on screen layout elements
   textarea.disabled = false; 
   sendButton.disabled = false;
-  textarea.placeholder = `Type response to Client: ${stringClientUuid.substring(0,8).toUpperCase()}...`;
+  textarea.placeholder = `Type response to Client: ${window.activeSelectedClientId.substring(0,8).toUpperCase()}...`;
   textarea.focus();
-
-  // Highlight selection rows by updating live background presentation containers
-  if (typeof window.renderChatSidebarList === "function" && window.masterCrmThreadsCache) {
-    window.renderChatSidebarList(window.masterCrmThreadsCache);
-  }
 
   try {
     // ATOMIC SECURITY UPDATE: Reset unread count records on backend for this specific client channel loop
     await client
       .from('chat_messages')
       .update({ is_read_by_admin: true })
-      .eq('client_id', stringClientUuid);
+      .eq('client_id', window.activeSelectedClientId);
 
-    // Refresh layout bars to clear out unread alert badges visually
+    // Refresh roster counters dynamically to wipe away red unread numbers layout badges
     if (typeof window.synchronizeChatThreadsRoster === "function") {
       window.synchronizeChatThreadsRoster();
     }
 
-    console.log(`[Admin Timeline] Querying chat logs history for user: ${stringClientUuid}`);
+    console.log(`[Admin Timeline] Querying chat logs history for user: ${window.activeSelectedClientId}`);
     
     // Fetch historical data matrix lines ordered chronologically from database disk
     const { data: messages, error } = await client
       .from('chat_messages')
       .select('*')
-      .eq('client_id', stringClientUuid)
+      .eq('client_id', window.activeSelectedClientId)
       .order('created_at', { ascending: true });
 
     if (error) throw error;
@@ -869,21 +864,21 @@ window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
 
     if (messages && messages.length > 0) {
       messages.forEach(msg => {
-        // FIXED UNIFICATION: Removed the broken skip filter so the initial handshake is 
-        // allowed to pass through and render the high-density Intake Profile Card!
+        // FIXED UNIFICATION: Hand records directly to the constructor layout nodes
         window.appendSingleChatMessageBubbleToUI(msg);
       });
     } else {
-      msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic;">No messages exchanged with this user yet.</div>`;
+      msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
     }
     
     window.scrollTerminalTimelineToAbsoluteBottom();
 
   } catch (err) {
     console.error("[Admin Timeline Exception] Storage retrieval failed:", err.message);
-    msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700;">⚠️ Timeline Connection Offline.</div>`;
+    msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
   }
 };
+
 // =========================================================================
 // 🪟 MODULE 2: GRAPHIC CHAT BUBBLE MARKUP CONSTRUCTOR & TAB FLASHING
 // =========================================================================
@@ -947,7 +942,7 @@ window.buildMessageBubbleMarkup = function(msgRow) {
   const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
   const match = bodyMarkup.match(imageRegex);
   if (match) {
-    const imageUrl = match[1];
+    const imageUrl = match;
     const plainText = bodyMarkup.replace(imageUrl, '').trim();
     const textHtml = plainText ? `<div style="margin-bottom:6px; text-align: left;">${plainText}</div>` : '';
     bodyMarkup = `${textHtml}<img src="${imageUrl}" class="chat-inline-thumbnail-preview" onclick="window.open('${imageUrl}', '_blank')">`;
@@ -955,6 +950,7 @@ window.buildMessageBubbleMarkup = function(msgRow) {
 
   return `<div style="${wrapperStyle}" class="admin-chat-row-bubble">${bodyMarkup}<span style="${metaStyle}">${isAdminResponse ? 'Fulfillment Staff' : 'Client Customer'} • ${readableTime}</span></div>`;
 };
+
 // =========================================================================
 // 🧱 MODULE 3: DIRECT DOM INJECTION & TIMELINE FRAME SHIFTERS
 // =========================================================================
@@ -985,10 +981,8 @@ window.dispatchAdminResponseChatMessage = async function() {
   const contentRaw = textarea.value.trim();
   if (!contentRaw) return;
 
-  // Clear entry fields instantly on screen to provide snappy interactions
   textarea.value = "";
 
-  // Optimistic UI Append pass containing your structural style meta tags
   window.appendSingleChatMessageBubbleToUI({
     sender_type: 'admin',
     message_content: contentRaw,
@@ -1015,12 +1009,12 @@ window.dispatchAdminResponseChatMessage = async function() {
 
   } catch (err) {
     console.error("[Admin Send Fault] Message delivery rejected by Postgres cluster:", err.message);
-    alert("Response dropped. Check infrastructure network status status.");
+    alert("Response dropped. Check infrastructure network status.");
   }
 };
 
 // =========================================================================
-// ⚙️ MODULE 5: UTILITY SCROLL TERMINAL & KEY OPTIONS INTERCEPTORS
+// ⚙️ MODULE 5: UTILITY SCROLL TERMINAL & REAL-TIME SOUND ALERTS
 // =========================================================================
 window.scrollTerminalTimelineToAbsoluteBottom = function() {
   const logBox = document.getElementById("adminChatMessagesLog");
@@ -1033,7 +1027,25 @@ window.handleAdminChatKeyOptions = function(event) {
     window.dispatchAdminResponseChatMessage();
   }
 };
+
+// --- INITIALIZE REAL-TIME AUDIO HOOKS (CLEAN UNBROKEN VARIABLE RESOLUTION) ---
+// Note: Browsers block autoplay audio until a user first interacts with the page layout canvas.
+// This block ensures everything prepares cleanly behind the scenes.
+window.playIncomingSupportAlertChime = function() {
+  try {
+    // FIXED: Formatted into a single continuous URL string with zero character spacing breaks
+    const audioAssetUrl = "https://jsdelivr.net";
+    const soundNotificationWorker = new Audio(audioAssetUrl);
+    soundNotificationWorker.volume = 0.85;
+    soundNotificationWorker.play().catch((e) => {
+      console.log("[Audio Engine] Autoplay audio playback deferred until initial page click gesture.");
+    });
+  } catch (err) {
+    console.error("[Audio Engine Fault]", err.message);
+  }
+};
 </script>
+
 
 
 
