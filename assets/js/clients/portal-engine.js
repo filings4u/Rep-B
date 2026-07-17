@@ -204,13 +204,6 @@ function initializeAutomatedVaultSyncEngine(client, userId) {
     .subscribe();
 }
 
-function loadClientTelemetryMocks() {
-  renderEntitiesPreviewTable([
-    { entity_name: "Apex Venture Operations LLC", state: "DE", structure_type: "LLC", status: "Active" },
-    { entity_name: "Horizon Global Trade Group", state: "TX", structure_type: "LLC", status: "Pending" }
-  ]);
-}
-
 function renderEntitiesPreviewTable(dataset) {
   const tableBody = document.getElementById("entitiesTableBody");
   if (!tableBody) return;
