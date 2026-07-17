@@ -1,102 +1,124 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+       /**
+         * 📁 ENGINE MECHANICS 1: ACCORDION INTERRUPTORS & EXPANSIONS (MUTUAL EXCLUSION LOCK)
+         */
+        function toggleSidebarAccordion(buttonElement) {
+            if (!buttonElement) return;
+            
+            const isTargetAlreadyOpen = buttonElement.classList.contains('active');
+            const menuSidebarRoot = buttonElement.closest('.sidebar-accordion-menu');
+            
+            // 🛑 MUTUAL EXCLUSION VALVE: Loop and completely retract any sibling dropdown panels
+            if (menuSidebarRoot) {
+                const allTriggers = menuSidebarRoot.querySelectorAll('.accordion-trigger');
+                allTriggers.forEach(trigger => {
+                    trigger.classList.remove('active');
+                    const chevronNode = trigger.querySelector('.chevron');
+                    if (chevronNode) chevronNode.textContent = "▼";
+                    
+                    const openPanel = trigger.nextElementSibling;
+                    if (openPanel && openPanel.classList.contains('accordion-panel')) {
+                        openPanel.style.maxHeight = "0px";
+                    }
+                });
+            }
+            
+            // If the element clicked wasn't already active, rotate active indicators and compute height
+            if (!isTargetAlreadyOpen) {
+                buttonElement.classList.add('active');
+                const targetChevron = buttonElement.querySelector('.chevron');
+                if (targetChevron) targetChevron.textContent = "▲";
+                
+                const targetPanel = buttonElement.nextElementSibling;
+                if (targetPanel && targetPanel.classList.contains('accordion-panel')) {
+                    targetPanel.style.maxHeight = targetPanel.scrollHeight + "px";
+                }
+            }
+        }
 
-    fetchDashboardAggregateMetrics(session.user.id, session.user.email);
-    fetchComplianceDeadlinesData(session.user.id);
-    initializeRealtimeDashboardFeed(session.user.id);
-});
+        function toggleMobileSidebarMenuOverlay() {
+            if (window.innerWidth > 992) return;
+            const sidebar = document.querySelector(".portal-sidebar");
+            const icon = document.getElementById("mobileNavTriggerIcon");
+            if (!sidebar) return;
+            sidebar.classList.toggle("mobile-revealed");
+            if (sidebar.classList.contains("mobile-revealed")) {
+                if (icon) icon.textContent = "✕";
+            } else {
+                if (icon) icon.textContent = "☰";
+            }
+        }
 
-// Single-Trip Multi-Aggregation Metrics Generator
-async function fetchDashboardAggregateMetrics(userId, userEmail) {
-    // Total Active Entities
-    const { count: entitiesCount } = await supabase
-        .from('entities')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+        document.addEventListener("DOMContentLoaded", () => {
+            const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
+            const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
+            
+            activeLinks.forEach(link => {
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
+                
+                const matchingPanel = link.closest('.accordion-panel');
+                if (matchingPanel) {
+                    matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
+                    const folderTriggerButton = matchingPanel.previousElementSibling;
+                    if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
+                        folderTriggerButton.classList.add('active');
+                        const chevronSpan = folderTriggerButton.querySelector('.chevron');
+                        if (chevronSpan) chevronSpan.textContent = "▲";
+                    }
+                }
+            });
 
-    // Total Active Orders in Execution
-    const { count: filingsCount } = await supabase
-        .from('user_filings')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_email', userEmail)
-        .not('status', 'in', '("Completed","Cancelled")');
+            // Live workspace system clock engine
+            setInterval(() => {
+                const clockNode = document.getElementById("portal-clock");
+                if (clockNode) {
+                    const now = new Date();
+                    clockNode.textContent = now.toLocaleDateString() + " | " + now.toLocaleTimeString();
+                }
+            }, 1000);
+        });
 
-    // Total Urgent Deadlines (Matches your exact schema status flags)
-    const { count: alertsCount } = await supabase
-        .from('compliance_deadlines')
-        .select('*', { count: 'exact', head: true })
-        .eq('owner_id', userId)
-        .eq('status', 'PENDING_ACTION');
-
-    document.getElementById("statActiveEntities").textContent = entitiesCount || 0;
-    document.getElementById("statOngoingFilings").textContent = filingsCount || 0;
-    document.getElementById("statComplianceAlerts").textContent = alertsCount || 0;
-}
-
-// Populate Compliance Timelines Matrix on Home Page
-async function fetchComplianceDeadlinesData(userId) {
-    const target = document.getElementById("complianceTimelineTarget");
-    if (!target) return;
-
-    // Queries explicit columns: owner_id, requirement_name, state_authority
-    const { data: deadlines, error } = await supabase
-        .from('compliance_deadlines')
-        .select('id, requirement_name, state_authority, due_date, status')
-        .eq('owner_id', userId)
-        .order('due_date', { ascending: true })
-        .limit(5);
-
-    if (error || !deadlines || deadlines.length === 0) {
-        target.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted)">🎉 Excellent status! No outstanding compliance requirements detected.</p>`;
-        return;
-    }
-
-    target.innerHTML = deadlines.map(item => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #f1f5f9; font-size:0.85rem;">
-            <div>
-                <span style="font-weight:700; color:var(--text-dark); display:block;">${item.requirement_name}</span>
-                <span style="color:var(--text-muted); font-size:0.75rem;">Jurisdiction: ${item.state_authority} | Due: ${new Date(item.due_date).toLocaleDateString()}</span>
-            </div>
-            <span style="padding:4px 8px; border-radius:4px; font-weight:800; font-size:0.65rem; background:${item.status === 'PENDING_ACTION' ? '#fee2e2' : '#edf2f7'}; color:${item.status === 'PENDING_ACTION' ? '#ef4444' : '#475569'}">
-                ${item.status.replace('_', ' ')}
-            </span>
-        </div>
-    `).join('');
-}
-
-function initializeRealtimeDashboardFeed(userId) {
+// Global pointer reference to expose method smoothly to core streams
+window.refreshDashboardLiveActionLog = async function(userId) {
     const feedTarget = document.getElementById("realtimeNotificationFeedTarget");
     if (!feedTarget) return;
 
-    async function reloadFeed() {
-        const { data: list } = await supabase
-            .from('portal_notifications')
-            .select('title, message, created_at')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(4);
+    const { data: list, error } = await supabase
+        .from('portal_notifications')
+        .select('id, title, message, ticket_id, is_read, created_at')
+        .eq('user_id', userId)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-        if (!list || list.length === 0) {
-            feedTarget.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted)">No recent alerts available.</p>`;
-            return;
-        }
-
-        feedTarget.innerHTML = list.map(n => `
-            <div style="background:#f8fafc; border-left:3px solid var(--emerald); padding:10px; border-radius:4px; font-size:0.8rem;">
-                <strong style="display:block; color:var(--text-dark);">${n.title}</strong>
-                <span style="color:var(--text-muted); display:block; margin:2px 0 4px;">${n.message}</span>
-                <small style="color:#94a3b8; font-size:0.65rem;">${new Date(n.created_at).toLocaleTimeString()}</small>
-            </div>
-        `).join('');
+    if (error || !list || list.length === 0) {
+        feedTarget.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted)">No active notification logging history found.</p>`;
+        return;
     }
 
-    reloadFeed();
+    feedTarget.innerHTML = list.map(n => {
+        // Build clear target route strings if a ticket reference key is present
+        const applicationRouteURI = n.ticket_id ? `client-ticket.html?id=${n.ticket_id}` : `javascript:void(0);`;
+        const actionLabelTag = n.ticket_id ? `<span style="display:inline-block; margin-top:6px; font-weight:800; color:var(--emerald); font-size:0.7rem; text-transform:uppercase;">View Ticket Operations ➔</span>` : '';
+        
+        return `
+            <a href="${applicationRouteURI}" onclick="markNotificationRecordAsRead('${n.id}')" style="text-decoration:none !important; display:block !important;">
+                <div style="background:${n.is_read ? '#f8fafc' : '#ffffff'} !important; border-left:3px solid ${n.is_read ? '#cbd5e1' : 'var(--emerald)'} !important; border: 1px solid var(--border-color); padding:12px; border-radius:6px; font-size:0.8rem; box-shadow:0 1px 2px rgba(0,0,0,0.01);">
+                    <div style="display:flex; justify-content:between; align-items:center;">
+                        <strong style="flex:1; color:var(--text-dark);">${n.title}</strong>
+                        ${!n.is_read ? `<span style="width:6px; height:6px; background:#ef4444; border-radius:50%;"></span>` : ''}
+                    </div>
+                    <span style="color:var(--text-muted); display:block; margin-top:4px; font-size:0.75rem; line-height:1.3;">${n.message}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                        ${actionLabelTag}
+                        <small style="color:#94a3b8; font-size:0.65rem;">${new Date(n.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>
+                    </div>
+                </div>
+            </a>
+        `;
+    }).join('');
+};
 
-    supabase
-        .channel(`public:portal_notifications_home:${userId}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'portal_notifications', filter: `user_id=eq.${userId}` }, () => {
-            reloadFeed();
-        })
-        .subscribe();
+async function markNotificationRecordAsRead(notificationId) {
+    await supabase.from('portal_notifications').update({ is_read: true }).eq('id', notificationId);
 }
