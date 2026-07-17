@@ -98,17 +98,17 @@ window.refreshDashboardLiveActionLog = async function (userId) {
     const feedTarget = document.getElementById("realtimeNotificationFeedTarget");
     if (!feedTarget) return;
 
-    // 🎯 CRITICAL REPAIR: Changed table query from portal_notifications to your active user_notifications table layout
+    // 🎯 LIVE ALIGNMENT FIXED: Reads from portal_notifications using user_id filtering constraints
     const { data: list, error } = await window.supabaseInstance
-        .from('user_notifications') 
+        .from('portal_notifications') 
         .select('id, title, message, is_read, created_at')
-        .eq('owner_id', userId) // Swapped user_id for owner_id relational rule
+        .eq('user_id', userId) 
+        .eq('is_archived', false)
         .order('created_at', { ascending: false })
         .limit(5);
 
     if (error) {
         console.error("Feed Query Transaction Failure:", error);
-        feedTarget.innerHTML = `<p style="font-size:0.85rem; color:#ef4444; padding:10px 0;">Stream sync paused: check console properties.</p>`;
         return;
     }
 
@@ -132,6 +132,7 @@ window.refreshDashboardLiveActionLog = async function (userId) {
         `;
     }).join('');
 };
+
 
 
 function renderFilingsTimelineWidget(dataset) {
