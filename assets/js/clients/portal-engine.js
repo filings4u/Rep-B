@@ -70,16 +70,19 @@ function initLiveSystemClock() {
 // 🌐 CORRECTED SUPABASE REALTIME BROADCAST CHANNELS SETUP
 // ========================================================================== //
 function initializeRealtimeBroadcastNetwork(session) {
-  "use strict";
+    "use strict";
 
-  // Explicitly pull from the globally running window instance
-  const activeClient = window.supabaseClient || window.supabase;
+    // 🎯 CRITICAL FIX: Point this directly to your running dashboard connection instance
+    const activeClient = window.supabaseInstance || window.supabaseClient || window.supabase;
 
-  // Safety abort tracking: Stops terminal crashes if script sequence delays occur
-  if (!activeClient || typeof activeClient.channel !== 'function') {
-    console.warn("⚠️ Realtime Channel Intercept: Active client system instance not ready.");
-    return;
-  }
+    // Safety abort tracking: Stops terminal crashes if script sequence delays occur
+    if (!activeClient || typeof activeClient.channel !== 'function') {
+        console.warn("⚠️ Realtime Channel Intercept: Active client system instance not ready.");
+        return;
+    }
+    
+    // ... rest of your broadcast mapping logic stays exactly the same
+
 
   // CRITICAL REPAIR: Safely read user context straight from verified session payload or global placeholder
   const userInstance = session?.user || activeClientSessionUser;
