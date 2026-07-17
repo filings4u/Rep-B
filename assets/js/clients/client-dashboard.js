@@ -34,49 +34,60 @@ window.addEventListener("supabaseEngineReady", function (engineEvent) {
  * 📡 DATABASE ACCESS DISPATCH: NUMERICAL ACCOUNT METRICS
  * Gathers aggregate counts across entities, filings, and compliance tracking loops.
  */
+/**
+ * 📡 DATABASE ACCESS DISPATCH: NUMERICAL ACCOUNT METRICS
+ * Gathers aggregate counts across entities, filings, and compliance tracking loops.
+ */
 async function fetchDashboardNumericalMetricPills(userId) {
-  "use strict";
+    "use strict";
 
-  const statEntities = document.getElementById("statActiveEntities");
-  const statFilings = document.getElementById("statOngoingFilings");
-  const statAlerts = document.getElementById("statComplianceAlerts");
+    const statEntities = document.getElementById("statActiveEntities");
+    const statFilings = document.getElementById("statOngoingFilings");
+    const statAlerts = document.getElementById("statComplianceAlerts");
 
-  // Only execute database transaction blocks if output viewport nodes exist in active layout
-  if (!statEntities || !statFilings || !statAlerts) return;
+    if (!statEntities || !statFilings || !statAlerts) return;
 
-  try {
-    // 1. Count Active Registered Corporate Entities
-    const { count: entityCount, error: entityErr } = await window.supabaseInstance
-      .from('registered_entities')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', 'active');
-    if (entityErr) throw entityErr;
-    statEntities.textContent = entityCount !== null ? entityCount : 0;
+    try {
+        // 1. Count Active Registered Corporate Entities (Using owner_id relational constraint)
+        const { count: entityCount, error: entityErr } = await window.supabaseInstance
+            .from('entities')
+            .select('*', { count: 'exact', head: true })
+            .eq('owner_id', userId)
+            .eq('status', 'active');
 
-    // 2. Count Ongoing Active Orders / Filings
-    const { count: filingCount, error: filingErr } = await window.supabaseInstance
-      .from('client_filings')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', 'processing');
-    if (filingErr) throw filingErr;
-    statFilings.textContent = filingCount !== null ? filingCount : 0;
+        if (entityErr) throw entityErr;
+        statEntities.textContent = entityCount !== null ? entityCount : 0;
 
-    // 3. Count Urgent Compliance Alerts
-    const { count: alertCount, error: alertErr } = await window.supabaseInstance
-      .from('compliance_tracks')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('is_urgent', true);
-    if (alertErr) throw alertErr;
-    statAlerts.textContent = alertCount !== null ? alertCount : 0;
+        // 2. Fetch User Email to Query Orders from user_filings
+        const { data: { user } } = await window.supabaseInstance.auth.getUser();
+        if (user && user.email) {
+            const { count: filingCount, error: filingErr } = await window.supabaseInstance
+                .from('user_filings')
+                .select('*', { count: 'exact', head: true })
+                .eq('customer_email', user.email)
+                .eq('status', 'processing');
 
-  } catch (dbMetricException) {
-    console.error("💥 Dashboard Metrics Database Failure:", dbMetricException);
-    throw new Error(`Database Metric Query Exception: [${dbMetricException.code}] ${dbMetricException.message}`);
-  }
+            if (filingErr) throw filingErr;
+            statFilings.textContent = filingCount !== null ? filingCount : 0;
+        } else {
+            statFilings.textContent = 0;
+        }
+
+        // 3. Count Urgent Compliance Alerts (Table: compliance_deadlines, Column: owner_id, Status: urgent)
+        const { count: alertCount, error: alertErr } = await window.supabaseInstance
+            .from('compliance_deadlines')
+            .select('*', { count: 'exact', head: true })
+            .eq('owner_id', userId)
+            .eq('status', 'urgent');
+
+        if (alertErr) throw alertErr;
+        statAlerts.textContent = alertCount !== null ? alertCount : 0;
+
+    } catch (dbMetricException) {
+        console.error("💥 Dashboard Metrics Database Failure:", dbMetricException);
+    }
 }
+
 
 /**
  * 📝 DATA INTERFACE RENDERER: LIVE FEED HISTORY TIMELINE
