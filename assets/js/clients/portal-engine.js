@@ -148,17 +148,16 @@ function handleIncomingStateSync(data) {
   }
 }
 
-
-// ==========================================================================
+// ========================================================================== //
 // 🔄 SECURE REAL-TIME GRID SYNCHRONIZATION (REFACTORED USER_ID CORE)
-// ==========================================================================
+// ========================================================================== //
 async function syncAccountTelemetryGrid() {
   const activeClient = window.supabaseClient || window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
   if (!activeClient || !activeClientSessionUser) return;
 
   try {
     const [ent, fil] = await Promise.all([
-      // ✅ FIX 1: Swapped legacy owner_id column for your unified user_id schema
+      // Swapped legacy owner_id column for your unified user_id schema
       activeClient.from('entities').select('*').eq('user_id', activeClientSessionUser.id),
       activeClient.from('filing_orders').select('*').eq('user_id', activeClientSessionUser.id)
     ]);
@@ -168,35 +167,50 @@ async function syncAccountTelemetryGrid() {
 
     // Render database data or fall back to layout mocks if rows are completely vacant
     if (ent.data && ent.data.length > 0) {
-      renderEntitiesPreviewTable(ent.data);
+      if (typeof renderEntitiesPreviewTable === 'function') {
+        renderEntitiesPreviewTable(ent.data);
+      }
     } else {
-      loadClientTelemetryMocks();
+      if (typeof loadClientTelemetryMocks === 'function') loadClientTelemetryMocks();
     }
 
     if (fil.data && fil.data.length > 0) {
-      renderFilingsTimelineWidget(fil.data);
+      if (typeof renderFilingsTimelineWidget === 'function') {
+        renderFilingsTimelineWidget(fil.data);
+      }
     } else {
       // Inject clean empty placeholder status states if no orders exist yet
       const timeline = document.getElementById("filingTimeline");
-      if (timeline) timeline.innerHTML = `<p style="color: #64748b; font-size: 0.88rem;">No active filing tracking history in your dashboard timeline.</p>`;
+      if (timeline) {
+        timeline.innerHTML = `<p style="color: #64748b; font-size: 0.88rem;">No active filing tracking history in your dashboard timeline.</p>`;
+      }
     }
 
-    // ✅ AUTOMATED DOCUMENT VAULT SYNC INSTANCE INITIATION
+    // AUTOMATED DOCUMENT VAULT SYNC INSTANCE INITIATION
     // Automatically runs background tracking lookups for files pushed from your admin workspace panel
-    initializeAutomatedVaultSyncEngine(activeClient, activeClientSessionUser.id);
+    if (typeof initializeAutomatedVaultSyncEngine === 'function') {
+      initializeAutomatedVaultSyncEngine(activeClient, activeClientSessionUser.id);
+    }
 
   } catch (err) {
     console.error("Database tracking sync layer dropped out:", err.message);
-    loadClientTelemetryMocks();
+    if (typeof loadClientTelemetryMocks === 'function') loadClientTelemetryMocks();
   }
 }
 
-// 📁 THE LIVE DOCUMENT VAULT REAL-TIME SUBSCRIBER ENGINE
+
+// ========================================================================== //
+// 📁 THE LIVE DOCUMENT VAULT REAL-TIME SUBSCRIBER ENGINE & INTERFACE LAYOUTS
+// ========================================================================== //
+
+/**
+ * 📁 INITIALIZE AUTOMATED VAULT SYNC ENGINE
+ * Set up a real-time replication listener on the document vault table
+ */
 function initializeAutomatedVaultSyncEngine(client, userId) {
   const documentTableBody = document.getElementById("clientVaultTableLayoutBody");
   if (!documentTableBody) return;
 
-  // Set up a real-time replication listener on the document vault table
   client
     .channel('live-client-vault-sync-stream')
     .on(
@@ -209,7 +223,7 @@ function initializeAutomatedVaultSyncEngine(client, userId) {
       },
       async (payload) => {
         console.log("📂 File Sync Action Logged by Admin Desk:", payload);
-        
+
         // Dynamic UI fetch block to update the user's files instantly
         const { data: files } = await client
           .from('client_documents_vault')
@@ -241,12 +255,19 @@ function initializeAutomatedVaultSyncEngine(client, userId) {
     .subscribe();
 }
 
+/**
+ * 🛠️ LOAD CLIENT TELEMETRY MOCKS
+ * Injects sandbox preview datasets into view components if network state layers encounter blocks
+ */
 function loadClientTelemetryMocks() {
-  renderEntitiesPreviewTable([
-    { entity_name: "Apex Venture Operations LLC", state: "DE", structure_type: "LLC", status: "Active" },
-    { entity_name: "Horizon Global Trade Group", state: "TX", structure_type: "LLC", status: "Pending" }
-  ]);
+  if (typeof renderEntitiesPreviewTable === 'function') {
+    renderEntitiesPreviewTable([
+      { entity_name: "Apex Venture Operations LLC", state: "DE", structure_type: "LLC", status: "Active" },
+      { entity_name: "Horizon Global Trade Group", state: "TX", structure_type: "LLC", status: "Pending" }
+    ]);
+  }
 }
+
 
 function renderEntitiesPreviewTable(dataset) {
   const tableBody = document.getElementById("entitiesTableBody");
