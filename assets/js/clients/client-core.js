@@ -31,7 +31,7 @@ window.isProtectedPage = true;
         if (!session) {
             console.warn("⚠️ No active user session detected. Redirecting to login portal context...");
             // If a random user tries to open this page directly without logging in, send them back to login page:
-            window.location.href = "get-started.html"; 
+            window.location.href = "portal.filings4u.com/get-started.html"; 
             return;
         }
 
