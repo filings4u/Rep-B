@@ -3,7 +3,17 @@
  * 📋 APPLICATION TRACKING CARD ENGINE (GLOBAL SCOPE FIXED) 
  * ========================================================================== 
  */ 
+// Fire the core handshake event down the pipeline
+const handshakeEvent = new CustomEvent("supabaseEngineReady", {
+    detail: { session: session }
+});
+window.dispatchEvent(handshakeEvent);
 
+// 🎯 CRITICAL SYSTEM BINDING: Run your tracking card timeline engine automatically!
+if (typeof window.startTimelineTrackingPipeline === 'function') {
+    console.log("🎬 Initiating timeline tracking pipelines for active session...");
+    window.startTimelineTrackingPipeline(window.supabaseInstance);
+}
 // Safer global HTML string sanitizer
 const escapeTimelineHTML = (str) => { 
     if (!str) return ''; 
