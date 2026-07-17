@@ -1,124 +1,160 @@
-       /**
-         * 📁 ENGINE MECHANICS 1: ACCORDION INTERRUPTORS & EXPANSIONS (MUTUAL EXCLUSION LOCK)
-         */
-        function toggleSidebarAccordion(buttonElement) {
-            if (!buttonElement) return;
-            
-            const isTargetAlreadyOpen = buttonElement.classList.contains('active');
-            const menuSidebarRoot = buttonElement.closest('.sidebar-accordion-menu');
-            
-            // 🛑 MUTUAL EXCLUSION VALVE: Loop and completely retract any sibling dropdown panels
-            if (menuSidebarRoot) {
-                const allTriggers = menuSidebarRoot.querySelectorAll('.accordion-trigger');
-                allTriggers.forEach(trigger => {
-                    trigger.classList.remove('active');
-                    const chevronNode = trigger.querySelector('.chevron');
-                    if (chevronNode) chevronNode.textContent = "▼";
-                    
-                    const openPanel = trigger.nextElementSibling;
-                    if (openPanel && openPanel.classList.contains('accordion-panel')) {
-                        openPanel.style.maxHeight = "0px";
-                    }
-                });
-            }
-            
-            // If the element clicked wasn't already active, rotate active indicators and compute height
-            if (!isTargetAlreadyOpen) {
-                buttonElement.classList.add('active');
-                const targetChevron = buttonElement.querySelector('.chevron');
-                if (targetChevron) targetChevron.textContent = "▲";
-                
-                const targetPanel = buttonElement.nextElementSibling;
-                if (targetPanel && targetPanel.classList.contains('accordion-panel')) {
-                    targetPanel.style.maxHeight = targetPanel.scrollHeight + "px";
-                }
-            }
-        }
+/**
+ * 📊 CLIENT HOME DASHBOARD METRICS & FEED DRIVER
+ * Isolated from core routing layers. Runs when client-core validation passes.
+ */
+window.addEventListener("supabaseEngineReady", function (engineEvent) {
+  "use strict";
 
-        function toggleMobileSidebarMenuOverlay() {
-            if (window.innerWidth > 992) return;
-            const sidebar = document.querySelector(".portal-sidebar");
-            const icon = document.getElementById("mobileNavTriggerIcon");
-            if (!sidebar) return;
-            sidebar.classList.toggle("mobile-revealed");
-            if (sidebar.classList.contains("mobile-revealed")) {
-                if (icon) icon.textContent = "✕";
-            } else {
-                if (icon) icon.textContent = "☰";
-            }
-        }
+  if (!engineEvent || !engineEvent.detail || !engineEvent.detail.session) {
+    throw new Error("Core Handshake Exception: Dashboard metrics loader missing valid session validation.");
+  }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
-            const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
-            
-            activeLinks.forEach(link => {
-                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-                link.classList.add('active');
-                
-                const matchingPanel = link.closest('.accordion-panel');
-                if (matchingPanel) {
-                    matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-                    const folderTriggerButton = matchingPanel.previousElementSibling;
-                    if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-                        folderTriggerButton.classList.add('active');
-                        const chevronSpan = folderTriggerButton.querySelector('.chevron');
-                        if (chevronSpan) chevronSpan.textContent = "▲";
-                    }
-                }
-            });
+  const session = engineEvent.detail.session;
+  const currentUserId = session.user.id;
 
-            // Live workspace system clock engine
-            setInterval(() => {
-                const clockNode = document.getElementById("portal-clock");
-                if (clockNode) {
-                    const now = new Date();
-                    clockNode.textContent = now.toLocaleDateString() + " | " + now.toLocaleTimeString();
-                }
-            }, 1000);
-        });
+  // Hydrate metric panels and live activity records
+  fetchDashboardNumericalMetricPills(currentUserId);
+  window.refreshDashboardLiveActionLog(currentUserId);
 
-// Global pointer reference to expose method smoothly to core streams
-window.refreshDashboardLiveActionLog = async function(userId) {
-    const feedTarget = document.getElementById("realtimeNotificationFeedTarget");
-    if (!feedTarget) return;
+  // Bind an explicit real-time channel to sync the notification feed layout on changes
+  window.supabaseInstance
+    .channel(`realtime:dashboard_feed_stream:${currentUserId}`)
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'portal_notifications', 
+      filter: `user_id=eq.${currentUserId}` 
+    }, function () {
+      window.refreshDashboardLiveActionLog(currentUserId);
+    })
+    .subscribe();
+});
 
-    const { data: list, error } = await supabase
-        .from('portal_notifications')
-        .select('id, title, message, ticket_id, is_read, created_at')
-        .eq('user_id', userId)
-        .eq('is_archived', false)
-        .order('created_at', { ascending: false })
-        .limit(5);
+/**
+ * 📡 DATABASE ACCESS DISPATCH: NUMERICAL ACCOUNT METRICS
+ * Gathers aggregate counts across entities, filings, and compliance tracking loops.
+ */
+async function fetchDashboardNumericalMetricPills(userId) {
+  "use strict";
 
-    if (error || !list || list.length === 0) {
-        feedTarget.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted)">No active notification logging history found.</p>`;
-        return;
+  const statEntities = document.getElementById("statActiveEntities");
+  const statFilings = document.getElementById("statOngoingFilings");
+  const statAlerts = document.getElementById("statComplianceAlerts");
+
+  // Only execute database transaction blocks if output viewport nodes exist in active layout
+  if (!statEntities || !statFilings || !statAlerts) return;
+
+  try {
+    // 1. Count Active Registered Corporate Entities
+    const { count: entityCount, error: entityErr } = await window.supabaseInstance
+      .from('registered_entities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'active');
+    if (entityErr) throw entityErr;
+    statEntities.textContent = entityCount !== null ? entityCount : 0;
+
+    // 2. Count Ongoing Active Orders / Filings
+    const { count: filingCount, error: filingErr } = await window.supabaseInstance
+      .from('client_filings')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'processing');
+    if (filingErr) throw filingErr;
+    statFilings.textContent = filingCount !== null ? filingCount : 0;
+
+    // 3. Count Urgent Compliance Alerts
+    const { count: alertCount, error: alertErr } = await window.supabaseInstance
+      .from('compliance_tracks')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_urgent', true);
+    if (alertErr) throw alertErr;
+    statAlerts.textContent = alertCount !== null ? alertCount : 0;
+
+  } catch (dbMetricException) {
+    console.error("💥 Dashboard Metrics Database Failure:", dbMetricException);
+    throw new Error(`Database Metric Query Exception: [${dbMetricException.code}] ${dbMetricException.message}`);
+  }
+}
+
+/**
+ * 📝 DATA INTERFACE RENDERER: LIVE FEED HISTORY TIMELINE
+ * Flushes layout strings dynamically based on rows returned. Exposed to global scope hooks.
+ */
+window.refreshDashboardLiveActionLog = async function (userId) {
+  "use strict";
+
+  if (!userId) {
+    throw new Error("Data Integrity Exception: Notification feed mapping failed due to invalid userId parameters.");
+  }
+
+  const feedTarget = document.getElementById("realtimeNotificationFeedTarget");
+  if (!feedTarget) return;
+
+  const { data: list, error } = await window.supabaseInstance
+    .from('portal_notifications')
+    .select('id, title, message, ticket_id, is_read, created_at')
+    .eq('user_id', userId)
+    .eq('is_archived', false)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error("Feed Query Transaction Failure:", error);
+    throw new Error(`Database Feed Exception: [${error.code}] ${error.message}`);
+  }
+
+  if (!list || list.length === 0) {
+    feedTarget.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); padding:10px 0;">No active notification logging history found.</p>`;
+    return;
+  }
+
+  feedTarget.innerHTML = list.map(n => {
+    if (!n.id || !n.title || !n.message || !n.created_at) {
+      throw new Error(`Data Integrity Exception: Failed parsing corrupted log row parameter matching identity: ${n.id || 'Unknown'}`);
     }
 
-    feedTarget.innerHTML = list.map(n => {
-        // Build clear target route strings if a ticket reference key is present
-        const applicationRouteURI = n.ticket_id ? `client-ticket.html?id=${n.ticket_id}` : `javascript:void(0);`;
-        const actionLabelTag = n.ticket_id ? `<span style="display:inline-block; margin-top:6px; font-weight:800; color:var(--emerald); font-size:0.7rem; text-transform:uppercase;">View Ticket Operations ➔</span>` : '';
-        
-        return `
-            <a href="${applicationRouteURI}" onclick="markNotificationRecordAsRead('${n.id}')" style="text-decoration:none !important; display:block !important;">
-                <div style="background:${n.is_read ? '#f8fafc' : '#ffffff'} !important; border-left:3px solid ${n.is_read ? '#cbd5e1' : 'var(--emerald)'} !important; border: 1px solid var(--border-color); padding:12px; border-radius:6px; font-size:0.8rem; box-shadow:0 1px 2px rgba(0,0,0,0.01);">
-                    <div style="display:flex; justify-content:between; align-items:center;">
-                        <strong style="flex:1; color:var(--text-dark);">${n.title}</strong>
-                        ${!n.is_read ? `<span style="width:6px; height:6px; background:#ef4444; border-radius:50%;"></span>` : ''}
-                    </div>
-                    <span style="color:var(--text-muted); display:block; margin-top:4px; font-size:0.75rem; line-height:1.3;">${n.message}</span>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-                        ${actionLabelTag}
-                        <small style="color:#94a3b8; font-size:0.65rem;">${new Date(n.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>
-                    </div>
-                </div>
-            </a>
-        `;
-    }).join('');
+    const applicationRouteURI = n.ticket_id ? `client-ticket.html?id=${encodeURIComponent(n.ticket_id)}` : `javascript:void(0);`;
+    const actionLabelTag = n.ticket_id ? `<span style="display:inline-block; margin-top:6px; font-weight:800; color:var(--emerald); font-size:0.7rem; text-transform:uppercase;">View Ticket Operations ➔</span>` : '';
+    const formattedTime = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    return `
+      <a href="${applicationRouteURI}" onclick="markNotificationRecordAsRead('${n.id}')" style="text-decoration:none !important; display:block !important; width:100%;">
+        <div style="background:${n.is_read ? '#f8fafc' : '#ffffff'} !important; border-left:3px solid ${n.is_read ? '#cbd5e1' : 'var(--emerald)'} !important; border: 1px solid var(--border-color); padding:12px; border-radius:6px; font-size:0.8rem; box-shadow:0 1px 2px rgba(0,0,0,0.01); box-sizing:border-box;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <strong style="flex:1; color:var(--text-dark);">${n.title}</strong>
+            ${!n.is_read ? `<span style="width:6px; height:6px; background:#ef4444; border-radius:50%; margin-left:8px; flex-shrink:0;"></span>` : ''}
+          </div>
+          <span style="color:var(--text-muted); display:block; margin-top:4px; font-size:0.75rem; line-height:1.3; word-break:break-word;">${n.message}</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; width:100%;">
+            ${actionLabelTag}
+            <small style="color:#94a3b8; font-size:0.65rem; margin-left:auto;">${formattedTime}</small>
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
 };
 
-async function markNotificationRecordAsRead(notificationId) {
-    await supabase.from('portal_notifications').update({ is_read: true }).eq('id', notificationId);
-}
+/**
+ * ⚡ INSTANT ROW MUTATION: SET READ MARKERS
+ * Dispatches a specific record status transformation explicitly.
+ */
+window.markNotificationRecordAsRead = async function (notificationId) {
+  "use strict";
+
+  if (!notificationId) {
+    throw new Error("Interaction Exception: Target notificationId parameter missing.");
+  }
+
+  const { error } = await window.supabaseInstance
+    .from('portal_notifications')
+    .update({ is_read: true })
+    .eq('id', notificationId);
+
+  if (error) {
+    console.error("Marker Transaction Failure:", error);
+    throw new Error(`Database Operation Exception: [${error.code}] ${error.message}`);
+  }
+};

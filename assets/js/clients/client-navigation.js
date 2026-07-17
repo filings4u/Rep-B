@@ -1,37 +1,76 @@
-function toggleSidebarAccordion(buttonElement) {
-    const isCurrentlyActive = buttonElement.classList.contains("active");
-    const activeGroupContainer = buttonElement.closest(".accordion-group");
-    const structuralPanel = activeGroupContainer.querySelector(".accordion-panel");
-    
-    // Mutual Exclusion Implementation: Collapse all open siblings
-    document.querySelectorAll(".accordion-trigger").forEach(trigger => {
-        trigger.classList.remove("active");
-        const panel = trigger.closest(".accordion-group").querySelector(".accordion-panel");
-        if (panel) panel.style.maxHeight = null;
-    });
+/**
+ * 🏢 INTERFACE NAVIGATION MATRIX DRIVER
+ * Manages sidebars, layout accordion tabs, and navigation highlighting.
+ */
+(function initializeNavigationFramework() {
+  "use strict";
 
-    // Expand targeted selection if it wasn't open before
-    if (!isCurrentlyActive) {
-        buttonElement.classList.add("active");
-        structuralPanel.style.maxHeight = structuralPanel.scrollHeight + "px";
-    }
-}
+  // Expose toggle logic directly to inline onclick parameters cleanly
+  window.toggleSidebarAccordion = function (buttonElement) {
+    if (!buttonElement) return;
+    const isTargetAlreadyOpen = buttonElement.classList.contains('active');
+    const menuSidebarRoot = buttonElement.closest('.sidebar-accordion-menu');
 
-// Track and resolve current navigation active visual nodes
-document.addEventListener("DOMContentLoaded", () => {
-    const browserPath = window.location.pathname.split("/").pop();
-    const targetedLink = document.querySelector(`.sidebar-accordion-menu a[href="${browserPath}"]`);
-    
-    if (targetedLink) {
-        // Enforce parent element open properties
-        targetedLink.classList.add("active");
-        const matchingAccordionGroup = targetedLink.closest(".accordion-group");
-        const matchingTrigger = matchingAccordionGroup.querySelector(".accordion-trigger");
-        
-        if (matchingTrigger) {
-            matchingTrigger.classList.add("active");
-            const structuralPanel = matchingAccordionGroup.querySelector(".accordion-panel");
-            structuralPanel.style.maxHeight = structuralPanel.scrollHeight + "px";
+    // Retract any open sibling accordion panels safely
+    if (menuSidebarRoot) {
+      menuSidebarRoot.querySelectorAll('.accordion-trigger').forEach(trigger => {
+        trigger.classList.remove('active');
+        const chevronNode = trigger.querySelector('.chevron');
+        if (chevronNode) chevronNode.textContent = "▼";
+        const openPanel = trigger.nextElementSibling;
+        if (openPanel && openPanel.classList.contains('accordion-panel')) {
+          openPanel.style.maxHeight = "0px";
         }
+      });
     }
-});
+
+    // Expand the selected sidebar folder if it wasn't already open
+    if (!isTargetAlreadyOpen) {
+      buttonElement.classList.add('active');
+      const targetChevron = buttonElement.querySelector('.chevron');
+      if (targetChevron) targetChevron.textContent = "▲";
+      const targetPanel = buttonElement.nextElementSibling;
+      if (targetPanel && targetPanel.classList.contains('accordion-panel')) {
+        targetPanel.style.maxHeight = targetPanel.scrollHeight + "px";
+      }
+    }
+  };
+
+  // Expose mobile responsive overlay layout toggle parameters
+  window.toggleMobileSidebarMenuOverlay = function () {
+    if (window.innerWidth > 992) return;
+    const sidebar = document.querySelector(".portal-sidebar");
+    const icon = document.getElementById("mobileNavTriggerIcon");
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("mobile-revealed");
+    if (icon) {
+      icon.textContent = sidebar.classList.contains("mobile-revealed") ? "✕" : "☰";
+    }
+  };
+
+  // Sync menu link highlights with current route on document compile
+  document.addEventListener("DOMContentLoaded", function () {
+    const rawPath = window.location.pathname.replace(/\/$/, "");
+    const baseName = rawPath.split("/").pop() || "client-dashboard.html";
+    const currentRouteToken = baseName.split("?")[0].split("#")[0];
+
+    document.querySelectorAll(`.sidebar-accordion-menu a[href="${CSS.escape(currentRouteToken)}"]`).forEach(link => {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      link.classList.add('active');
+
+      const matchingPanel = link.closest('.accordion-panel');
+      if (matchingPanel) {
+        matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
+        const folderTrigger = matchingPanel.previousElementSibling;
+        if (folderTrigger && folderTrigger.classList.contains('accordion-trigger')) {
+          folderTrigger.classList.add('active');
+          const chevronSpan = folderTrigger.querySelector('.chevron');
+          if (chevronSpan) chevronSpan.textContent = "▲";
+        }
+      }
+    });
+  });
+})();
+
+
