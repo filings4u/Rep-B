@@ -414,7 +414,9 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault(); 
         
         // 🎯 FIX: Dynamically read the initialized instance at runtime submission moment
-        const client = window.supabaseClient || window.supabase; 
+        // 🎯 FIX: Dynamically read the correct initialized global instance property
+        const client = window.supabaseInstance || window.supabaseClient || window.supabase;
+
         
         const emailInputNode = document.getElementById('email'); 
         const pwdInputNode = document.getElementById('password'); 
@@ -511,14 +513,18 @@ async function executeSupabaseAuthenticationHandshake(emailValueStr, passwordVal
         const currentUrlPath = window.location.pathname.toLowerCase(); 
         
         // Compute authorization privileges securely 
-        const isCorporateStaffProfile = verifiedUserEmail.endsWith('@filings4u.com') || verifiedUserEmail === 'test-admin@filings4u.com'; 
-        
-        // Execute definitive routing logic 
-        if (currentUrlPath.includes('admin') || isCorporateStaffProfile) { 
-            window.location.href = 'admin-dashboard.html'; 
-        } else { 
-            window.location.href = 'client-dashboard.html'; 
-        } 
+          // 1. Compute authorization privileges securely based strictly on email profile rules
+        const isCorporateStaffProfile = verifiedUserEmail.endsWith('@filings4u.com') || verifiedUserEmail === 'test-admin@filings4u.com';
+
+        // 2. Execute definitive role-based routing layout forks
+        if (isCorporateStaffProfile) {
+            console.log("💼 Staff Identity Confirmed. Routing to Admin console workspace...");
+            window.location.href = 'admin-dashboard.html';
+        } else {
+            console.log("👤 Client Identity Confirmed. Routing to purchase metrics dashboard...");
+            window.location.href = 'client-dashboard.html';
+        }
+
     } catch (authError) { 
         console.error("Authorization access fault caught:", authError.message); 
         
