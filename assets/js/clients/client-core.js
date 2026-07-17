@@ -1,8 +1,11 @@
 /**
- * ==========================================================================
- * 📋 APPLICATION TRACKING CARD ENGINE (GLOBAL SCOPE DECLARED)
- * ==========================================================================
+ * 🔐 CLIENT PORTAL CORE INITIALIZATION ENGINE
+ * Orchestrates Supabase connectivity, handles session authentication handshakes,
+ * and boots the application tracking card timeline engine.
  */
+window.SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co"; 
+window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"; 
+window.isProtectedPage = true; 
 
 // 1. Safe global HTML string sanitizer
 const escapeTimelineHTML = (str) => {
@@ -41,11 +44,9 @@ window.startTimelineTrackingPipeline = async function(client) {
             dynamicHeaderLabel.textContent = escapeTimelineHTML(activeApp.business_name);
         }
 
-        // Bind the active ID globally so our interface helpers can reference it
         window.activeAppId = activeApp.id;
         await window.refreshTimelineUI(client);
 
-        // Standard, clean realtime connection registration
         client
             .channel(`dashboard-realtime-pipeline-${activeApp.id}`)
             .on('postgres_changes', { 
@@ -132,19 +133,51 @@ window.renderVisualMockData = function() {
     `;
 };
 
-// 🎯 3. CRITICAL EXECUTION POSITION PLACEMENT
-// Fire the core handshake event down the pipeline
-const handshakeEvent = new CustomEvent("supabaseEngineReady", { detail: { session: session } });
-window.dispatchEvent(handshakeEvent);
+// 3. CORE AUTHENTICATION EXECUTION HANDSHAKE LOOP
+(async function () {
+    "use strict";
 
-// Now that all methods are loaded in memory, executing this will boot successfully!
-if (typeof window.startTimelineTrackingPipeline === 'function') {
-    console.log("🎬 Initiating timeline tracking pipelines for active session...");
-    window.startTimelineTrackingPipeline(window.supabaseInstance);
-}
+    try {
+        if (typeof window.supabase === 'undefined') {
+            console.error("❌ Supabase CDN dependency missing.");
+            return;
+        }
 
+        // Instantiate global unified connection instance
+        window.supabaseInstance = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        console.log("⚡ Supabase core transport pipeline successfully established.");
 
+        // Await the local storage token handshake completely
+        const { data, error } = await window.supabaseInstance.auth.getSession();
+        if (error) throw error;
 
+        const session = data?.session;
+
+        // If no token exists in local storage, kick them out securely
+        if (!session) {
+            console.warn("⚠️ No active user session verified. Routing back to login...");
+            window.location.replace("portal-login.html");
+            return;
+        }
+
+        console.log("🚀 Real active user session verified! User email identity:", session.user.email);
+
+        // Fire the core handshake event down the pipeline cleanly
+        const handshakeEvent = new CustomEvent("supabaseEngineReady", {
+            detail: { session: session }
+        });
+        window.dispatchEvent(handshakeEvent);
+
+        // 🎯 CRITICAL SYSTEM BINDING FIXED: Safe initialization inside the validated variable scope block
+        if (typeof window.startTimelineTrackingPipeline === 'function') {
+            console.log("🎬 Initiating timeline tracking pipelines for active session...");
+            window.startTimelineTrackingPipeline(window.supabaseInstance);
+        }
+
+    } catch (coreInitException) {
+        console.error("💥 Core Infrastructure Exception on initialization:", coreInitException);
+    }
+})();
 
 
 
