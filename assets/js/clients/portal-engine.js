@@ -1,137 +1,101 @@
 /**
  * 🚀 filings4u Customer Portal Engine
  * Standardized Production Module with Supabase Realtime Broadcast Routing
- * PART 1: CORE HOOKS, DATA LIFECYCLES & SYSTEM CLOCK
  */
+
 let activeClientSessionUser = null;
 let realtimeTelemetryChannel = null;
 
-// =========================================================================
-// 🚀 EVENT-DRIVEN LIFECYCLE HOOKS
-// =========================================================================
-
-// Standalone UI elements compile instantly without waiting on network buffers
-document.addEventListener("DOMContentLoaded", () => {
-  initLiveSystemClock();
+document.addEventListener("DOMContentLoaded", async () => {
+    initLiveSystemClock();
+    await initializePortalSession();
+    initializeRealtimeBroadcastNetwork();
 });
 
-// Centralized handoff: Listens directly to the core.js authentication gates
-window.addEventListener("supabaseEngineReady", async (handshakeEvent) => {
-  const verifiedSession = handshakeEvent.detail.session;
-  
-  if (!verifiedSession || !verifiedSession.user) {
-    console.warn("⚠️ Portal Engine: Session payload missing at handshake frame.");
-    if (typeof loadClientTelemetryMocks === 'function') loadClientTelemetryMocks();
-    return;
-  }
-
-  console.log("📡 Portal Engine: Handshake verified. Booting database-dependent layouts...");
-
-  // Capture user tracking context globally
-  activeClientSessionUser = verifiedSession.user;
-
-  // Hydrate interface profile displays
-  const nameField = document.getElementById("clientNameField");
-  if (nameField) {
-    nameField.textContent = activeClientSessionUser.email;
-  }
-
-  // Safely trigger data grids down the asset file
-  try {
-    if (typeof syncAccountTelemetryGrid === 'function') {
-      await syncAccountTelemetryGrid();
-    }
-  } catch (gridError) {
-    console.error("Non-fatal error updating telemetry data layouts:", gridError);
-  }
-
-  // Launch secure broadcast communication streams
-  if (typeof initializeRealtimeBroadcastNetwork === 'function') {
-    initializeRealtimeBroadcastNetwork(verifiedSession);
-  }
-});
-
-// =========================================================================
-// 🕒 STANDALONE INTERFACE SYSTEMS
-// =========================================================================
 function initLiveSystemClock() {
-  const clockElement = document.getElementById("client-clock");
-  if (!clockElement) return;
-
-  setInterval(() => {
-    const now = new Date();
-    clockElement.textContent = `${now.toLocaleDateString('en-US')} | ${now.toLocaleTimeString('en-US', { hour12: false })}`;
-  }, 1000);
-  console.log("🕒 Core Clock active and synced.");
+    const clockElement = document.getElementById("client-clock");
+    if (!clockElement) return;
+    setInterval(() => {
+        const now = new Date();
+        clockElement.textContent = `${now.toLocaleDateString('en-US')} | ${now.toLocaleTimeString('en-US', { hour12: false })}`;
+    }, 1000);
 }
 
+async function initializePortalSession() {
+    if (typeof supabase === 'undefined') {
+        loadClientTelemetryMocks();
+        return;
+    }
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session) {
+            window.location.href = "portal-login.html";
+            return;
+        }
+        activeClientSessionUser = session.user;
+        const nameField = document.getElementById("clientNameField");
+        if (nameField) nameField.textContent = activeClientSessionUser.email;
+        
+        await syncAccountTelemetryGrid();
+    } catch (err) {
+        loadClientTelemetryMocks();
+    }
+}
 
-// ========================================================================== //
+// ==========================================================================
 // 🌐 CORRECTED SUPABASE REALTIME BROADCAST CHANNELS SETUP
-// ========================================================================== //
-function initializeRealtimeBroadcastNetwork(session) {
+// ==========================================================================
+function initializeRealtimeBroadcastNetwork() {
     "use strict";
 
-    // 🎯 CRITICAL FIX: Point this directly to your running dashboard connection instance
-    const activeClient = window.supabaseInstance || window.supabaseClient || window.supabase;
-
+    // 🎯 FIX: Explicitly pull from the globally running window instance
+    const activeClient = window.supabaseClient || window.supabase;
+    
     // Safety abort tracking: Stops terminal crashes if script sequence delays occur
     if (!activeClient || typeof activeClient.channel !== 'function') {
         console.warn("⚠️ Realtime Channel Intercept: Active client system instance not ready.");
         return;
     }
-    
-    // ... rest of your broadcast mapping logic stays exactly the same
 
+    // Fallback assignment matching variable scope footprints if session cache values lag
+    const userInstance = activeClientSessionUser || (activeClient.auth ? activeClient.auth.user : null);
+    if (!userInstance) return;
 
-  // CRITICAL REPAIR: Safely read user context straight from verified session payload or global placeholder
-  const userInstance = session?.user || activeClientSessionUser;
-  if (!userInstance || !userInstance.id) {
-    console.warn("⚠️ Realtime Channel Intercept: Operational tracking credentials missing.");
-    return;
-  }
+    // Open connection channel targeting the active client's unique user UUID
+    realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${userInstance.id}`);
 
-  // Open connection channel targeting the active client's unique user UUID
-  realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${userInstance.id}`);
-
-  realtimeTelemetryChannel
-    .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
-      console.log('⚡ Realtime state sync received:', payload);
-      if (typeof handleIncomingStateSync === 'function') {
-        handleIncomingStateSync(payload.payload);
-      }
-    })
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('📡 Synchronized cleanly to Supabase Realtime Broadcast Network');
-      }
-    });
+    realtimeTelemetryChannel
+        .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
+            console.log('⚡ Realtime state sync received:', payload);
+            if (typeof handleIncomingStateSync === 'function') {
+                handleIncomingStateSync(payload.payload);
+            }
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('📡 Synchronized cleanly to Supabase Realtime Broadcast Network');
+            }
+        });
 }
 
-// ========================================================================== //
-// 🚀 PIPELINE TRANSMISSION & MUTATION HANDLERS
-// ========================================================================== //
-
-/**
- * 🚀 DISPATCH LIVE PIPELINE MUTATION DATA OVER THE AIR
- */
+// 🚀 DISPATCH LIVE PIPELINE MUTATION DATA OVER THE AIR
 async function dispatchOrderViaBroadcast() {
   const targetState = document.getElementById("stateRateField")?.value || "DE";
   const totalCost = document.getElementById("ledgTotal")?.textContent || "1.00";
   
-  const payloadBundle = { 
-    service: typeof nameStr !== 'undefined' ? nameStr : "Portal Service Item", 
-    state: targetState, 
-    total: totalCost, 
-    timestamp: new Date().toISOString() 
+  const payloadBundle = {
+    service: typeof nameStr !== 'undefined' ? nameStr : "Portal Service Item",
+    state: targetState,
+    total: totalCost,
+    timestamp: new Date().toISOString()
   };
 
   if (realtimeTelemetryChannel) {
     // Broadcast updates seamlessly across all open admin and user dashboards
-    await realtimeTelemetryChannel.send({ 
-      type: 'broadcast', 
-      event: 'pipeline_mutation', 
-      payload: payloadBundle 
+    await realtimeTelemetryChannel.send({
+      type: 'broadcast',
+      event: 'pipeline_mutation',
+      payload: payloadBundle
     });
     alert(`Order logged. Telemetry payload broadcasted to pipeline: State ${targetState}`);
   } else {
@@ -139,11 +103,8 @@ async function dispatchOrderViaBroadcast() {
   }
 }
 
-/**
- * ⚡ HANDLE INCOMING STATE SYNC
- * Dynamic runtime interface manipulation updates counters immediately when secondary user files an item
- */
 function handleIncomingStateSync(data) {
+  // Dynamic runtime interface manipulation updates counters immediately when secondary user files an item
   const pendingCounter = document.getElementById("countPending");
   if (pendingCounter) {
     let currentCount = parseInt(pendingCounter.textContent, 10) || 0;
@@ -151,16 +112,16 @@ function handleIncomingStateSync(data) {
   }
 }
 
-// ========================================================================== //
+// ==========================================================================
 // 🔄 SECURE REAL-TIME GRID SYNCHRONIZATION (REFACTORED USER_ID CORE)
-// ========================================================================== //
+// ==========================================================================
 async function syncAccountTelemetryGrid() {
   const activeClient = window.supabaseClient || window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
   if (!activeClient || !activeClientSessionUser) return;
 
   try {
     const [ent, fil] = await Promise.all([
-      // Swapped legacy owner_id column for your unified user_id schema
+      // ✅ FIX 1: Swapped legacy owner_id column for your unified user_id schema
       activeClient.from('entities').select('*').eq('user_id', activeClientSessionUser.id),
       activeClient.from('filing_orders').select('*').eq('user_id', activeClientSessionUser.id)
     ]);
@@ -170,50 +131,35 @@ async function syncAccountTelemetryGrid() {
 
     // Render database data or fall back to layout mocks if rows are completely vacant
     if (ent.data && ent.data.length > 0) {
-      if (typeof renderEntitiesPreviewTable === 'function') {
-        renderEntitiesPreviewTable(ent.data);
-      }
+      renderEntitiesPreviewTable(ent.data);
     } else {
-      if (typeof loadClientTelemetryMocks === 'function') loadClientTelemetryMocks();
+      loadClientTelemetryMocks();
     }
 
     if (fil.data && fil.data.length > 0) {
-      if (typeof renderFilingsTimelineWidget === 'function') {
-        renderFilingsTimelineWidget(fil.data);
-      }
+      renderFilingsTimelineWidget(fil.data);
     } else {
       // Inject clean empty placeholder status states if no orders exist yet
       const timeline = document.getElementById("filingTimeline");
-      if (timeline) {
-        timeline.innerHTML = `<p style="color: #64748b; font-size: 0.88rem;">No active filing tracking history in your dashboard timeline.</p>`;
-      }
+      if (timeline) timeline.innerHTML = `<p style="color: #64748b; font-size: 0.88rem;">No active filing tracking history in your dashboard timeline.</p>`;
     }
 
-    // AUTOMATED DOCUMENT VAULT SYNC INSTANCE INITIATION
+    // ✅ AUTOMATED DOCUMENT VAULT SYNC INSTANCE INITIATION
     // Automatically runs background tracking lookups for files pushed from your admin workspace panel
-    if (typeof initializeAutomatedVaultSyncEngine === 'function') {
-      initializeAutomatedVaultSyncEngine(activeClient, activeClientSessionUser.id);
-    }
+    initializeAutomatedVaultSyncEngine(activeClient, activeClientSessionUser.id);
 
   } catch (err) {
     console.error("Database tracking sync layer dropped out:", err.message);
-    if (typeof loadClientTelemetryMocks === 'function') loadClientTelemetryMocks();
+    loadClientTelemetryMocks();
   }
 }
 
-
-// ========================================================================== //
-// 📁 THE LIVE DOCUMENT VAULT REAL-TIME SUBSCRIBER ENGINE & INTERFACE LAYOUTS
-// ========================================================================== //
-
-/**
- * 📁 INITIALIZE AUTOMATED VAULT SYNC ENGINE
- * Set up a real-time replication listener on the document vault table
- */
+// 📁 THE LIVE DOCUMENT VAULT REAL-TIME SUBSCRIBER ENGINE
 function initializeAutomatedVaultSyncEngine(client, userId) {
   const documentTableBody = document.getElementById("clientVaultTableLayoutBody");
   if (!documentTableBody) return;
 
+  // Set up a real-time replication listener on the document vault table
   client
     .channel('live-client-vault-sync-stream')
     .on(
@@ -226,7 +172,7 @@ function initializeAutomatedVaultSyncEngine(client, userId) {
       },
       async (payload) => {
         console.log("📂 File Sync Action Logged by Admin Desk:", payload);
-
+        
         // Dynamic UI fetch block to update the user's files instantly
         const { data: files } = await client
           .from('client_documents_vault')
@@ -258,19 +204,12 @@ function initializeAutomatedVaultSyncEngine(client, userId) {
     .subscribe();
 }
 
-/**
- * 🛠️ LOAD CLIENT TELEMETRY MOCKS
- * Injects sandbox preview datasets into view components if network state layers encounter blocks
- */
 function loadClientTelemetryMocks() {
-  if (typeof renderEntitiesPreviewTable === 'function') {
-    renderEntitiesPreviewTable([
-      { entity_name: "Apex Venture Operations LLC", state: "DE", structure_type: "LLC", status: "Active" },
-      { entity_name: "Horizon Global Trade Group", state: "TX", structure_type: "LLC", status: "Pending" }
-    ]);
-  }
+  renderEntitiesPreviewTable([
+    { entity_name: "Apex Venture Operations LLC", state: "DE", structure_type: "LLC", status: "Active" },
+    { entity_name: "Horizon Global Trade Group", state: "TX", structure_type: "LLC", status: "Pending" }
+  ]);
 }
-
 
 function renderEntitiesPreviewTable(dataset) {
   const tableBody = document.getElementById("entitiesTableBody");

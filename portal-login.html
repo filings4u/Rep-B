@@ -402,84 +402,51 @@
 <!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE - PART 2A --> 
 <script> 
 document.addEventListener("DOMContentLoaded", () => {
-    const loginFormNode = document.getElementById('loginForm');
+  const loginFormNode = document.getElementById('loginForm');
+  if (!loginFormNode) return;
+
+  loginFormNode.addEventListener('submit', async (e) => {
+    // 🚀 CRITICAL LINE 1 REPAIR: Block the browser refresh immediately.
+    // Putting this on line 1 prevents the form from blinking under any circumstance.
+    e.preventDefault(); 
+
+    const emailInputNode = document.getElementById('email');
+    const pwdInputNode = document.getElementById('password');
+    const authSubmitButton = document.getElementById('loginBtn');
+    const systemFeedbackBox = document.getElementById('errorMessage');
+
+    // 🎯 INDEPENDENT GATEWAY LOOKUP: Safely look for or build the client connection
+    let client = window.supabaseInstance || window.supabaseClient || window.supabase;
     
-    if (!loginFormNode) {
-        console.warn("⚠️ Layout Intercept: #loginForm element missing from active viewport wrapper layout.");
+    if (!client && typeof window.supabase !== 'undefined') {
+        // Fallback: Build a dedicated connection context if core.js hasn't mounted it yet
+        const url = window.SUPABASE_URL || "https://supabase.co";
+        const anon = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+        window.supabaseInstance = window.supabase.createClient(url, anon);
+        client = window.supabaseInstance;
+    }
+
+    if (!client) {
+        if (systemFeedbackBox) systemFeedbackBox.textContent = "Gateway Offline: Supabase library not detected.";
         return;
     }
 
-    loginFormNode.addEventListener('submit', async (e) => { 
-        // 🚀 CRITICAL FIX: Block page refreshes immediately on line 1 to stop the blinking 
-        e.preventDefault(); 
-        
-        // 🎯 FIX: Dynamically read the initialized instance at runtime submission moment
-        // 🎯 FIX: Dynamically read the correct initialized global instance property
-        const client = window.supabaseInstance || window.supabaseClient || window.supabase;
+    // Basic Input Verification 
+    if (!emailInputNode || !emailInputNode.value.trim() || !pwdInputNode || !pwdInputNode.value) {
+        if (systemFeedbackBox) systemFeedbackBox.textContent = "Please fill in all credential fields.";
+        return;
+    }
 
-        
-        const emailInputNode = document.getElementById('email'); 
-        const pwdInputNode = document.getElementById('password'); 
-        const authSubmitButton = document.getElementById('loginBtn'); 
-        const systemFeedbackBox = document.getElementById('errorMessage'); 
+    if (authSubmitButton) {
+        authSubmitButton.disabled = true;
+        authSubmitButton.textContent = 'Verifying Security Parameters...';
+    }
 
-        if (!client) { 
-            console.error("Gateway Offline: window.supabaseClient instance is not ready yet.");
-            if (systemFeedbackBox) {
-                systemFeedbackBox.textContent = "Authentication Gateway Engine initializing. Please wait 1 second and retry."; 
-            }
-            return; 
-        } 
-
-        // Flush any leftover layout error decorations if matching function exists
-        if (typeof flushInterfaceFieldErrorStates === 'function') { 
-            flushInterfaceFieldErrorStates(); 
-        } 
-
-        // Input verification fallback boundaries 
-        let hasFormValidationErrors = false;
-        if (!emailInputNode || !emailInputNode.value.trim()) { 
-            if (emailInputNode) emailInputNode.classList.add('field-error'); 
-            hasFormValidationErrors = true;
-        } 
-        if (!pwdInputNode || !pwdInputNode.value) { 
-            if (pwdInputNode) pwdInputNode.classList.add('field-error'); 
-            hasFormValidationErrors = true;
-        } 
-        
-        if (hasFormValidationErrors) {
-            if (emailInputNode && !emailInputNode.value.trim()) emailInputNode.focus();
-            else if (pwdInputNode) pwdInputNode.focus();
-            return;
-        }
-
-        if (authSubmitButton) { 
-            authSubmitButton.disabled = true; 
-            authSubmitButton.textContent = 'Verifying Security Parameters...'; 
-        } 
-
-        // 🛡️ SECURITY SHIELD LAYER: Falls back gracefully if Turnstile blocks execution 
-        let verifiedSecurityToken = null; 
-        try { 
-            if (typeof turnstile !== 'undefined' && typeof turnstile.getResponse === 'function') { 
-                verifiedSecurityToken = turnstile.getResponse(); 
-                if (!verifiedSecurityToken) { 
-                    throw new Error("Security verification incomplete. Please interact with the security checkbox."); 
-                } 
-            } 
-        } catch (securityValidationError) { 
-            if (systemFeedbackBox) systemFeedbackBox.textContent = securityValidationError.message; 
-            if (authSubmitButton) { 
-                authSubmitButton.disabled = false; 
-                authSubmitButton.textContent = 'Enter Secure Portal →'; 
-            } 
-            return; // Stops execution safely before hitting database layers 
-        } 
-
-        // Call the database submission processing block passing input objects safely 
-        executeSupabaseAuthenticationHandshake(emailInputNode.value.trim(), pwdInputNode.value, authSubmitButton, systemFeedbackBox, client); 
-    }); 
+    // Forward variables safely into your handshake function
+    executeSupabaseAuthenticationHandshake(emailInputNode.value.trim(), pwdInputNode.value, authSubmitButton, systemFeedbackBox, client);
+  });
 });
+
 </script> 
 
 <!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE - PART 2B --> 
