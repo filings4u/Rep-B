@@ -1,146 +1,148 @@
-/** 
- * ========================================================================== 
- * 📋 APPLICATION TRACKING CARD ENGINE (GLOBAL SCOPE FIXED) 
- * ========================================================================== 
- */ 
-// Fire the core handshake event down the pipeline
-const handshakeEvent = new CustomEvent("supabaseEngineReady", {
-    detail: { session: session }
-});
-window.dispatchEvent(handshakeEvent);
+/**
+ * ==========================================================================
+ * 📋 APPLICATION TRACKING CARD ENGINE (GLOBAL SCOPE DECLARED)
+ * ==========================================================================
+ */
 
-// 🎯 CRITICAL SYSTEM BINDING: Run your tracking card timeline engine automatically!
-if (typeof window.startTimelineTrackingPipeline === 'function') {
-    console.log("🎬 Initiating timeline tracking pipelines for active session...");
-    window.startTimelineTrackingPipeline(window.supabaseInstance);
-}
-// Safer global HTML string sanitizer
-const escapeTimelineHTML = (str) => { 
-    if (!str) return ''; 
-    return String(str) 
-        .replace(/&/g, '&amp;') 
-        .replace(/</g, '&lt;') 
-        .replace(/>/g, '&gt;') 
-        .replace(/"/g, '&quot;') 
-        .replace(/'/g, '&#39;'); 
+// 1. Safe global HTML string sanitizer
+const escapeTimelineHTML = (str) => {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 };
 
-// EXPOSED TO WINDOW: Now supabase-config.js can see and execute this cleanly!
-window.startTimelineTrackingPipeline = async function(client) { 
+// 2. EXPOSED TO WINDOW: Core Timeline Orchestration Engine
+window.startTimelineTrackingPipeline = async function(client) {
     const timelineContainer = document.getElementById('filingTimeline');
-    if (!timelineContainer) return; 
+    if (!timelineContainer) return;
 
-    try { 
-        timelineContainer.classList.add('portal-timeline-wrapper'); 
+    try {
+        timelineContainer.classList.add('portal-timeline-wrapper');
+        const { data: userData } = await client.auth.getUser();
+        const authenticatedUserId = userData?.user?.id;
 
-        const { data: userData } = await client.auth.getUser(); 
-        const authenticatedUserId = userData?.user?.id; 
+        let appQuery = client.from('applications').select('id, business_name').eq('is_active', true);
+        if (authenticatedUserId) {
+            appQuery = appQuery.eq('user_id', authenticatedUserId);
+        }
 
-        let appQuery = client.from('applications').select('id, business_name').eq('is_active', true); 
-        if (authenticatedUserId) { 
-            appQuery = appQuery.eq('user_id', authenticatedUserId); 
-        } 
+        const { data: activeApp, error: appError } = await appQuery.limit(1).maybeSingle();
+        if (appError || !activeApp) {
+            window.renderVisualMockData();
+            return;
+        }
 
-        const { data: activeApp, error: appError } = await appQuery.limit(1).maybeSingle(); 
-        if (appError || !activeApp) { 
-            window.renderVisualMockData(); 
-            return; 
-        } 
-
-        const dynamicHeaderLabel = document.getElementById("timelineApplicationTargetName"); 
-        if (dynamicHeaderLabel && activeApp.business_name) { 
-            dynamicHeaderLabel.textContent = escapeTimelineHTML(activeApp.business_name); 
-        } 
+        const dynamicHeaderLabel = document.getElementById("timelineApplicationTargetName");
+        if (dynamicHeaderLabel && activeApp.business_name) {
+            dynamicHeaderLabel.textContent = escapeTimelineHTML(activeApp.business_name);
+        }
 
         // Bind the active ID globally so our interface helpers can reference it
-        window.activeAppId = activeApp.id; 
-        await window.refreshTimelineUI(client); 
+        window.activeAppId = activeApp.id;
+        await window.refreshTimelineUI(client);
 
         // Standard, clean realtime connection registration
-        client 
-            .channel(`dashboard-realtime-pipeline-${activeApp.id}`) 
+        client
+            .channel(`dashboard-realtime-pipeline-${activeApp.id}`)
             .on('postgres_changes', { 
                 event: '*', 
                 schema: 'public', 
                 table: 'application_tracking', 
                 filter: `application_id=eq.${activeApp.id}` 
-            }, () => { 
-                window.refreshTimelineUI(client); 
-            }) 
-            .subscribe(); 
+            }, () => {
+                window.refreshTimelineUI(client);
+            })
+            .subscribe();
 
-    } catch (err) { 
-        console.error("Timeline setup critical error caught:", err); 
-        window.renderVisualMockData(); 
-    } 
+    } catch (err) {
+        console.error("Timeline setup critical error caught:", err);
+        window.renderVisualMockData();
+    }
 };
 
-window.refreshTimelineUI = async function(client) { 
+window.refreshTimelineUI = async function(client) {
     const timelineContainer = document.getElementById('filingTimeline');
-    if (!window.activeAppId || !timelineContainer) return; 
+    if (!window.activeAppId || !timelineContainer) return;
 
-    const { data: steps, error } = await client 
-        .from('application_tracking') 
-        .select('*') 
-        .eq('application_id', window.activeAppId) 
-        .order('step_order', { ascending: true }); 
+    const { data: steps, error } = await client
+        .from('application_tracking')
+        .select('*')
+        .eq('application_id', window.activeAppId)
+        .order('step_order', { ascending: true });
 
-    if (error || !steps || steps.length === 0) { 
-        window.renderVisualMockData(); 
-        return; 
-    } 
-    window.drawTimelineUI(steps); 
+    if (error || !steps || steps.length === 0) {
+        window.renderVisualMockData();
+        return;
+    }
+
+    window.drawTimelineUI(steps);
 };
 
-window.drawTimelineUI = function(steps) { 
+window.drawTimelineUI = function(steps) {
     const timelineContainer = document.getElementById('filingTimeline');
-    if (!timelineContainer) return; 
-    
-    timelineContainer.innerHTML = ''; 
-    let activePulseAssigned = false; 
+    if (!timelineContainer) return;
 
-    steps.forEach(step => { 
-        const isDone = step.is_completed; 
-        const stepColor = isDone ? '#10b981' : '#cbd5e1'; 
-        const textColor = isDone ? '#0f172a' : '#64748b'; 
-        const displayDate = step.completed_at ? new Date(step.completed_at).toLocaleDateString() : 'In Progress'; 
-        let pulseClass = ''; 
+    timelineContainer.innerHTML = '';
+    let activePulseAssigned = false;
 
-        if (!isDone && !activePulseAssigned) { 
-            pulseClass = 'timeline-pulse-dot'; 
-            activePulseAssigned = true; 
-        } 
+    steps.forEach(step => {
+        const isDone = step.is_completed;
+        const stepColor = isDone ? '#10b981' : '#cbd5e1';
+        const textColor = isDone ? '#0f172a' : '#64748b';
+        const displayDate = step.completed_at ? new Date(step.completed_at).toLocaleDateString() : 'In Progress';
 
-        const rowElement = document.createElement('div'); 
-        rowElement.className = 'portal-timeline-item'; 
+        let pulseClass = '';
+        if (!isDone && !activePulseAssigned) {
+            pulseClass = 'timeline-pulse-dot';
+            activePulseAssigned = true;
+        }
+
+        const rowElement = document.createElement('div');
+        rowElement.className = 'portal-timeline-item';
         rowElement.style.display = 'flex';
         rowElement.style.marginBottom = '12px';
-        rowElement.innerHTML = ` 
-            <div style="margin-right: 16px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; width: 14px; height: 14px; margin-top: 3px;"> 
-                <div class="${pulseClass}" style="width: 12px; height: 12px; border-radius: 50%; background-color: ${stepColor}; box-sizing: border-box; transition: background 0.3s ease;"></div> 
-            </div> 
-            <div style="color: ${textColor}; text-align: left; padding-top: 1px;"> 
-                <div style="font-size: 14px; font-weight: 500; line-height: 1.4;">${escapeTimelineHTML(step.title)}</div> 
-                <small style="color: #94a3b8; font-size: 11px; font-weight: 400;">${escapeTimelineHTML(displayDate)}</small> 
-            </div> 
-        `; 
-        timelineContainer.appendChild(rowElement); 
-    }); 
+        rowElement.innerHTML = `
+            <div style="margin-right: 16px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; width: 14px; height: 14px; margin-top: 3px;">
+                <div class="${pulseClass}" style="width: 12px; height: 12px; border-radius: 50%; background-color: ${stepColor}; box-sizing: border-box; transition: background 0.3s ease;"></div>
+            </div>
+            <div style="color: ${textColor}; text-align: left; padding-top: 1px;">
+                <div style="font-size: 14px; font-weight: 500; line-height: 1.4;">${escapeTimelineHTML(step.title)}</div>
+                <small style="color: #94a3b8; font-size: 11px; font-weight: 400;">${escapeTimelineHTML(displayDate)}</small>
+            </div>
+        `;
+        timelineContainer.appendChild(rowElement);
+    });
 };
 
-window.renderVisualMockData = function() { 
+window.renderVisualMockData = function() {
     const timelineContainer = document.getElementById('filingTimeline');
-    if (!timelineContainer) return; 
-    
-    timelineContainer.innerHTML = ` 
-        <div class="timeline-empty-card" style="padding: 20px; text-align: center; border: 1px dashed #e2e8f0; border-radius: 8px;"> 
-            <div class="icon-badge" style="font-size: 1.5rem; margin-bottom: 8px;">🚀</div> 
-            <h4 style="margin: 0 0 4px 0; color: #0a1f44;">Start Your First Business Filing</h4> 
-            <p style="margin: 0 0 12px 0; font-size: 0.85rem; color: #64748b;">You do not have any active tracking timelines. Form an entity now to view progress.</p> 
-            <a href="portal-services.html" style="display: inline-block; background: #10b981; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Begin Setup Wizard</a> 
-        </div> 
-    `; 
+    if (!timelineContainer) return;
+
+    timelineContainer.innerHTML = `
+        <div class="timeline-empty-card" style="padding: 20px; text-align: center; border: 1px dashed #e2e8f0; border-radius: 8px; width: 100%; box-sizing: border-box;">
+            <div class="icon-badge" style="font-size: 1.5rem; margin-bottom: 8px;">🚀</div>
+            <h4 style="margin: 0 0 4px 0; color: #0c2340; font-weight: 700;">Start Your First Business Filing</h4>
+            <p style="margin: 0 0 12px 0; font-size: 0.85rem; color: #64748b;">You do not have any active tracking timelines. Form an entity now to view progress.</p>
+            <a href="portal-services.html" style="display: inline-block; background: #10b981; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Begin Setup Wizard</a>
+        </div>
+    `;
 };
+
+// 🎯 3. CRITICAL EXECUTION POSITION PLACEMENT
+// Fire the core handshake event down the pipeline
+const handshakeEvent = new CustomEvent("supabaseEngineReady", { detail: { session: session } });
+window.dispatchEvent(handshakeEvent);
+
+// Now that all methods are loaded in memory, executing this will boot successfully!
+if (typeof window.startTimelineTrackingPipeline === 'function') {
+    console.log("🎬 Initiating timeline tracking pipelines for active session...");
+    window.startTimelineTrackingPipeline(window.supabaseInstance);
+}
+
 
 
 
