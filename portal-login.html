@@ -451,39 +451,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE - PART 2B --> 
 <script> 
+
+
 /** 
  * 📡 SECURE SUPABASE ACCESS DISPATCH ENGINE 
  * Handles user database validation and routes profiles safely based on email suffixes 
  */ 
-async function executeSupabaseAuthenticationHandshake(emailValueStr, passwordValueStr, submitBtn, errBox, supabaseClient) { 
-    // 🚀 FIXED: Guarantees it hooks directly into your validated global architecture instance client object 
-    const client = supabaseClient || window.supabaseClient || window.supabase; 
-    if (!client) { 
-        console.error("Critical Connection Failure: Global project client node missing."); 
-        if (errBox) errBox.textContent = "Gateway authentication offline. Please reload the console."; 
-        if (submitBtn) { 
-            submitBtn.disabled = false; 
-            submitBtn.textContent = 'Enter Secure Portal →'; 
-        } 
-        return; 
-    } 
+
+async function executeSupabaseAuthenticationHandshake(emailValueStr, passwordValueStr, submitBtn, errBox, supabaseClient) {
+    "use strict";
     
-    try { 
-        const { data, error } = await client.auth.signInWithPassword({ email: emailValueStr, password: passwordValueStr }); 
-        if (error) throw error; 
+    // 🎯 CRITICAL REPAIR: Bind the login execution directly to your unified global engine object name
+    const client = window.supabaseInstance || supabaseClient || window.supabaseClient || window.supabase;
+    
+    if (!client) {
+        console.error("Critical Connection Failure: Global project client node missing.");
+        if (errBox) errBox.textContent = "Gateway authentication offline. Please reload the console.";
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enter Secure Portal →';
+        }
+        return;
+    }
+
+    try {
+        // Authenticate credentials against your live Supabase authentication database layers
+        const { data, error } = await client.auth.signInWithPassword({ 
+            email: emailValueStr, 
+            password: passwordValueStr 
+        });
         
-        if (!data || !data.user || !data.user.email) { 
-            throw new Error("Authentication response schema malformed. Retrying connection parameter sync..."); 
-        } 
-        
-        const verifiedUserEmail = data.user.email.toLowerCase().trim(); 
-        const currentUrlPath = window.location.pathname.toLowerCase(); 
-        
-        // Compute authorization privileges securely 
-          // 1. Compute authorization privileges securely based strictly on email profile rules
+        if (error) throw error;
+        if (!data || !data.user || !data.user.email) {
+            throw new Error("Authentication response schema malformed. Retrying connection parameter sync...");
+        }
+
+        const verifiedUserEmail = data.user.email.toLowerCase().trim();
+
+        // 🎯 Compute authorization privileges securely based strictly on email profile rules
         const isCorporateStaffProfile = verifiedUserEmail.endsWith('@filings4u.com') || verifiedUserEmail === 'test-admin@filings4u.com';
 
-        // 2. Execute definitive role-based routing layout forks
         if (isCorporateStaffProfile) {
             console.log("💼 Staff Identity Confirmed. Routing to Admin console workspace...");
             window.location.href = 'admin-dashboard.html';
@@ -492,24 +499,22 @@ async function executeSupabaseAuthenticationHandshake(emailValueStr, passwordVal
             window.location.href = 'client-dashboard.html';
         }
 
-    } catch (authError) { 
-        console.error("Authorization access fault caught:", authError.message); 
-        
-        // Reactivate interface controls and flash error borders 
-        const emailInputNode = document.getElementById('email'); 
-        const pwdInputNode = document.getElementById('password'); 
-        if (emailInputNode) emailInputNode.classList.add('field-error'); 
-        if (pwdInputNode) pwdInputNode.classList.add('field-error'); 
-        
-        if (errBox) { 
-            errBox.textContent = authError.message || "Invalid credential parameters provided."; 
-        } 
-        if (submitBtn) { 
-            submitBtn.disabled = false; 
-            submitBtn.textContent = 'Enter Secure Portal →'; 
-        } 
-    } 
-} 
+    } catch (authError) {
+        console.error("Authorization access fault caught:", authError.message);
+        const emailInputNode = document.getElementById('email');
+        const pwdInputNode = document.getElementById('password');
+        if (emailInputNode) emailInputNode.classList.add('field-error');
+        if (pwdInputNode) pwdInputNode.classList.add('field-error');
+        if (errBox) {
+            errBox.textContent = authError.message || "Invalid credential parameters provided.";
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enter Secure Portal →';
+        }
+    }
+}
+
 </script>
 </body>
 </html>
