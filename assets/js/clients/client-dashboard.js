@@ -49,9 +49,6 @@ window.addEventListener("supabaseEngineReady", function (engineEvent) {
 /**
  * 📡 DATABASE ACCESS DISPATCH: NUMERICAL ACCOUNT METRICS
  */
-/**
- * 📡 DATABASE ACCESS DISPATCH: NUMERICAL ACCOUNT METRICS
- */
 async function fetchDashboardNumericalMetricPills(userId, userEmail) {
     "use strict";
     const statEntities = document.getElementById("statActiveEntities");
@@ -61,32 +58,37 @@ async function fetchDashboardNumericalMetricPills(userId, userEmail) {
     if (!statEntities || !statFilings || !statAlerts) return;
 
     try {
-        // Pill 1: Active Entities (Table: entities, Column: owner_id)
+        // Pill 1: Active Entities (Reading root metrics straight from your true orders schema)
         const { count: entityCount, error: entityErr } = await window.supabaseInstance
-            .from('entities')
+            .from('orders')
             .select('*', { count: 'exact', head: true })
-            .eq('owner_id', userId); // Removed status restriction to capture all active dashboard profiles
+            .eq('user_id', userId)
+            .eq('status', 'Fulfillment Lane');
         if (entityErr) throw entityErr;
         statEntities.textContent = entityCount !== null ? entityCount : 0;
 
-        // Pill 2: Ongoing Filings (Table: user_filings, Column: customer_email)
+        // Pill 2: Ongoing Filings (Reading root metrics straight from your true orders schema)
         const { count: filingCount, error: filingErr } = await window.supabaseInstance
-            .from('user_filings')
+            .from('orders')
             .select('*', { count: 'exact', head: true })
-            .eq('customer_email', userEmail); // Removed 'processing' constraint to dynamically count your live timeline rows
+            .eq('email', userEmail)
+            .eq('tax_id_status', 'Fulfillment Lane');
         if (filingErr) throw filingErr;
         statFilings.textContent = filingCount !== null ? filingCount : 0;
 
-        // Pill 3: Urgent Deadlines (Table: compliance_deadlines, Column: owner_id)
+        // Pill 3: Urgent Deadlines / Tracking counters fallback loop
         const { count: alertCount, error: alertErr } = await window.supabaseInstance
             .from('compliance_deadlines')
             .select('*', { count: 'exact', head: true })
-            .eq('owner_id', userId); // Reads total tracks currently running for the client profile
+            .eq('owner_id', userId);
         if (alertErr) throw alertErr;
         statAlerts.textContent = alertCount !== null ? alertCount : 0;
 
     } catch (dbMetricException) {
         console.error("💥 Dashboard Metrics Database Failure:", dbMetricException);
+        statEntities.textContent = 0;
+        statFilings.textContent = 0;
+        statAlerts.textContent = 0;
     }
 }
 
