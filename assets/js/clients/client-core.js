@@ -1,3 +1,6 @@
+// 🛡️ GLOBAL SECURITY FLAG: Tells portal-engine.js that this dashboard requires a login session
+window.isProtectedPage = true; 
+
 /**
  * 🔐 CLIENT PORTAL CORE INITIALIZATION ENGINE
  * Orchestrates Supabase connectivity, global state initialization, 
