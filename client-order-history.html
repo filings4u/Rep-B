@@ -3,456 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Order History & Invoices | filings4u</title>
-
-    <meta name="theme-color" content="#10b981">                         <!-- Chrome, Firefox, & Opera Mobile -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Wrapper Engine Tracking -->
-    <meta name="msapplication-navbutton-color" content="#10b981">         <!-- Windows Phone Interface Target -->
-    
-    <link rel="stylesheet" href="assets/css/client-custom.css">
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+    <title>Order History & Settings | filings4u</title>
+    <meta name="theme-color" content="#10b981">
+    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
+    <link rel="stylesheet" href="assets/css/client.css">
+    <link rel="stylesheet" href="assets/css/client-toggle.css">
 </head>
 <body>
-    <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
-    <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
-        <span id="mobileNavTriggerIcon">☰</span> 
-        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
-    </button>
-    
     <div class="dashboard-wrapper">
-   <!-- 🏢 UNIFORM DEEP NAVY ENTERPRISE SIDEBAR CONTAINER --> 
-<aside class="portal-sidebar" style="background: #0a1f44; width: 280px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; font-family: system-ui, sans-serif;"> 
-    
-    <!-- BRAND IDENTITY BLOCK (MATCHED BACKGROUND) --> 
-    <div class="sidebar-brand-block" style="padding: 24px 20px; background: #0a1f44; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;"> 
-        <img src="images/logo.png" alt="filings4u" style="height: 38px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto 12px auto !important;"> 
-        
-        <!-- SYSTEM EMERALD ACCENT BADGE --> 
-        <div style="display: flex; justify-content: center;"> 
-            <div class="admin-badge" style="background: rgba(16, 185, 129, 0.12) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.25) !important; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;">Client Account</div> 
-        </div> 
-    </div> 
-
-    <!-- NAVIGATION ACCORDION MATRIX --> 
-    <nav class="sidebar-accordion-menu" style="flex: 1; padding: 16px 12px; background: #0a1f44; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"> 
-        
-        <!-- ACCORDION 1: ACCOUNT PROFILE (CLEAN NAVY PANEL OVERRIDE) --> 
-        <div class="accordion-group"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">My Account <span class="chevron" style="color: #10b981;">▲</span></button> 
-            
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-dashboard.html" class="nav-item active" style="color: #ffffff; background: rgba(16, 185, 129, 0.15); border-left: 3px solid #10b981; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 0 6px 6px 0; display: block; font-weight: 600;">📊 Dashboard Home</a> 
-                <a href="client-entities.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🏢 My Registered Entities</a> 
-                <a href="client-services.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛠️ Order New Services</a> 
-            </div> 
-        </div>
-        <!-- ACCORDION 2: FILINGS & COMPLIANCE (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Filings & Compliance <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-filings.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">⚙️ Active Orders</a> 
-                <a href="client-compliance.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛡️ Compliance Tracker</a> 
-                <a href="client-vault.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📂 Document Vault</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 3: FINANCIALS (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Billing & Invoices <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-account.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💰 My Account</a> 
-                <a href="client-order-history.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💸 Order History</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 4: HELP DESK (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Support <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-chat.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💬 Live Chat Support</a> 
-                <a href="client-knowledgebase.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📰 Help Resources</a> 
-            </div> 
-        </div> 
-    </nav> 
-
-    <!-- SIDEBAR FOOTER SECURITY CONTROLS (NAVY ACCENT MATCH) --> 
-    <div class="sidebar-footer-lock" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; background: #0a1f44;"> 
-        <div class="secure-badge-container" style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #94a3b8; font-weight: 600;"> 
-            <div class="secure-pulse-dot" style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div> 
-            <span class="secure-badge-text">Secure Session Active</span> 
-        </div> 
-        <button id="portalLogoutBtn" class="logout-btn" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ffffff; font-weight: 700; font-size: 0.9rem; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'; this.style.borderColor='rgba(239,68,68,0.3)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ffffff';">Log Out</button> 
-    </div> 
-</aside>
-
-<!-- ========================================================================== 
-🏢 FILINGS4U STANDALONE HISTORICAL ORDER HISTORY CONSOLE (Part 1: Layout Core) 
-========================================================================= --> 
-<main class="portal-main" style="width: 100% !important; max-width: 100% !important; margin: 0 auto !important; padding: 30px 20px !important; box-sizing: border-box !important;"> 
-    
- <!-- 🧱 NATURAL SCROLLING MAIN WORKSPACE HEADER --> 
-    <header class="portal-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; flex-wrap: wrap !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; border-bottom: 1px solid var(--border-color, #e2e8f0) !important; padding-bottom: 20px !important; margin-bottom: 35px !important;"> 
-        <div class="welcome-text" style="text-align: left !important;"> 
-            <h1 style="margin: 0 0 6px 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; color: #0a1f44 !important;">Welcome Back, <span id="clientNameField">Client</span></h1> 
-            <p style="margin: 0 !important; font-size: 0.9rem !important; color: #64748b !important;">Manage your company business filings and compliance status</p> 
-        </div> 
-
-        <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX --> 
-        <div class="header-actions-wrapper" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-end !important; gap: 15px !important; flex-wrap: wrap !important; max-width: 100% !important;"> 
-            <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; box-sizing: border-box !important;"> 
-                <!-- CHANGE THE href SELECTION TO PREVENT LEAVING THE PAGE -->
-<a href="javascript:void(0);" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important;">
-  <span class="nav-bell-icon" style="font-size: 1.3rem !important; color: #0a1f44 !important; cursor: pointer !important;">🔔</span>
-  <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.65rem !important; font-weight: 800 !important; padding: 2px 6px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-</a>
-
-            </div> 
-
-            <div class="header-actions-wrapper">
-                    <div class="header-clock-pill"><span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
+                    </div>
                 </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
+                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
+                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-account.html" class="nav-item">💰 My Account</a>
+                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+                    </div>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock"><button id="portalLogoutBtn" class="logout-btn">Log Out</button></div>
+        </aside>
 
-            <div style="box-sizing: border-box !important;"> 
-                <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 12px 18px !important; border: 1px solid var(--border-color, #e2e8f0) !important; border-radius: 6px !important; font-size: 0.9rem !important; outline: none !important; min-width: 260px !important; color: #0a1f44 !important; box-sizing: border-box !important;"> </div> 
-        </div> 
-    </header> 
+        <!-- 🖥️ MAIN CONTENT PANE -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>Order Ledger & Account Profile</h1>
+                    <p>Track your past platform purchases and update account credentials</p>
+                </div>
+                <div class="header-clock-pill"><span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+            </header>
 
-    <!-- 📐 FULL-WIDTH COMPACT HISTORICAL ARCHIVE LEDGER --> 
-    <div class="portal-content-layout" style="width: 100% !important; max-width: 100% !important; display: block !important; box-sizing: border-box !important;"> 
-        <div class="content-panel visual-card" style="width: 100% !important; min-width: 100% !important; box-sizing: border-box !important; background: #ffffff; padding: 25px !important; border: 1px solid #e2e8f0; border-radius: 8px;"> 
-            <div class="panel-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
-                <h2 style="margin:0; font-size:1.15rem; font-weight:800; color:#0a1f44;">Permanent Purchases Registry</h2>
-            </div> 
-            <div class="table-responsive" style="width: 100% !important; overflow-x: auto !important;"> 
-                <table class="portal-table" style="width: 100% !important; min-width: 100% !important; border-collapse: collapse;"> 
-                    <thead> 
-                        <tr style="text-align: left; background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;"> 
-                            <th style="padding: 12px 16px;">Invoice / ID</th> 
-                            <th style="padding: 12px 16px;">Settlement Date</th> 
-                            <th style="padding: 12px 16px;">Service Package</th> 
-                            <th style="padding: 12px 16px;">Total Fee Paid</th> 
-                            <th style="padding: 12px 16px; text-align: right;">Action</th> 
-                        </tr> 
-                    </thead> 
-                    <tbody id="standaloneHistoryTableBody"> 
-                        <tr> 
-                            <td colspan="5" style="text-align:center; padding:35px; color:#64748b; font-weight:500;">
-                                Connecting permanent accounting nodes...
-                            </td> 
-                        </tr> 
-                    </tbody> 
-                </table> 
-            </div> 
-        </div> 
+            <div class="content-container">
+                <div class="dashboard-grid-layout">
+                    <!-- LEFT COLUMN: PAST PURCHASES -->
+                    <div>
+                        <div class="console-card">
+                            <h2>Historical Purchase Orders</h2>
+                            <div id="historicalOrdersTargetStack" style="display: flex !important; flex-direction: column !important; gap: 12px !important;">
+                                <p style="font-size: 0.82rem !important; color: var(--text-muted) !important;">Loading order history matrix logs...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: UPDATE ACCOUNT SETTINGS -->
+                    <div>
+                        <div class="console-card">
+                            <h2>Profile Parameters Configuration</h2>
+                            <form id="profileCredentialsForm" style="display: flex !important; flex-direction: column !important; gap: 14px !important;">
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">First Name</label>
+                                    <input type="text" id="profileFirstNameInput" class="search-input" style="width: 100% !important;" required>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">Last Name</label>
+                                    <input type="text" id="profileLastNameInput" class="search-input" style="width: 100% !important;" required>
+                                </div>
+                                <button type="submit" style="background: var(--text-dark) !important; color: white !important; border: none !important; border-radius: 6px !important; padding: 12px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important;">
+                                    Save Parameter Set
+                                </button>
+                            </form>
+                            <div id="profileMutateMessageFeedback" style="margin-top:10px; font-size:0.75rem; font-weight:700; color:var(--emerald); display:none;">Profile changes synced successfully!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- 🖨️ HIDDEN UPPER-LEFT LOGO RECEIPT CANVAS PRINT LAYER FOR HTML2PDF -->
-    <div id="pdf-receipt-compiler" style="display: none; padding: 50px; font-family: Arial, sans-serif; color: #000; background: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; width: 100%;">
-            <div style="text-align: left;">
-                <img src="images/logo.png" alt="filings4u Logo" style="height: 38px; width: auto; object-fit: contain; display: block; margin-bottom: 5px;">
-                <small style="font-weight: bold; letter-spacing: 0.5px; color: #64748b; text-transform: uppercase; font-size: 10px;">Official Transaction Receipt</small>
-            </div>
-            <div style="text-align: right; font-size: 11px; color: #475569; line-height: 1.4;">
-                <strong>filings4u Accounts Desk</strong><br>
-                <span>Billing Node: Stripe Live API</span><br>
-                <span id="receiptDateTarget" style="font-weight: 600; color: #10b981;">Date: --</span>
-            </div>
-        </div>
-        <hr style="border: 0; border-top: 2px solid #0a1f44; margin-bottom: 30px;">
-        <h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px; color: #0a1f44;">Payment Settlement Statement</h2>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px;">
-            <thead>
-                <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; text-align: left;">
-                    <th style="padding: 10px;">Line Item Description</th>
-                    <th style="padding: 10px; text-align: right;">Amount Processed</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td id="receiptServiceTarget" style="padding: 12px 10px; font-weight: bold; color: #1e293b;">--</td>
-                    <td id="receiptCostTarget" style="padding: 12px 10px; text-align: right; font-weight: bold; color: #1e293b;">$0.00</td>
-                </tr>
-            </tbody>
-        </table>
-        <div style="display: flex; justify-content: flex-end; width: 100%;">
-            <div style="text-align: right; width: 250px; font-size: 12px; line-height: 1.6;">
-                <div style="display: flex; justify-content: space-between;"><span>Payment Network:</span> <span id="receiptMethodTarget" style="font-weight:600;">Stripe Token Instance</span></div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px; font-size: 14px; font-weight: 800; color: #10b981;"><span>Total Settled:</span> <span id="receiptTotalTarget">$0.00</span></div>
-            </div>
-        </div>
-    </div>
-</main>
-
-    </div>
-
-   
-    <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") { panel.style.maxHeight = "0px"; } 
-            else { panel.style.maxHeight = panel.scrollHeight + "px"; }
-        }
-
-        // 📊 Live pipeline fetching function mapped to production engines
-        async function fetchClientInvoiceLedgerRecords() {
-            const container = document.getElementById("productionInvoicesTableBody");
-            if (typeof supabaseClient === 'undefined' || !container) return;
-
-            try {
-                const { data: { session } } = await window.supabaseClient.auth.getSession();
-                if (!session) return;
-
-                // Query from live production table filing_orders
-                const { data: orders, error } = await window.supabaseClient
-                    .from('filing_orders')
-                    .select('*')
-                    .eq('user_id', session.user.id)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                if (!orders || orders.length === 0) {
-                    container.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:30px;">No transaction records logged to this profile.</td></tr>`;
-                    return;
-                }
-
-                container.innerHTML = orders.map(row => {
-                    const dateObj = new Date(row.created_at);
-                    const formattedDate = dateObj.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    const shortSessionId = row.stripe_session_id ? row.stripe_session_id.substring(0, 14) + "..." : "Direct Balance";
-                    return `
-                        <tr>
-                            <td><strong>${row.service_title}</strong></td>
-                            <td style="font-weight:600; color:var(--brand-primary);">${row.target_state}</td>
-                            <td style="font-family:monospace; font-size:0.8rem; color:var(--text-muted);">${shortSessionId}</td>
-                            <td style="font-weight:700; color:var(--brand-primary);">$${parseFloat(row.total_amount).toFixed(2)}</td>
-                            <td>${formattedDate}</td>
-                        </tr>
-                    `;
-                }).join('');
-
-            } catch (err) {
-                console.error("Invoices component hydration failure:", err.message);
-                container.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Relational tables compiling fallback rows...</td></tr>`;
-            }
-        }
-
-        // Run hydration immediately when the window context is verified
-        const initCheckLoop = setInterval(() => {
-            if (window.supabaseClient) {
-                clearInterval(initCheckLoop);
-                fetchClientInvoiceLedgerRecords();
-                
-                // Keep sidebar tracking indicators mathematically synchronized
-                const currentFileName = window.location.pathname.split("/").pop() || "client-invoices.html";
-                const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
-                activeLinks.forEach(link => {
-                    link.classList.add('active');
-                    const panel = link.closest('.accordion-panel');
-                    if (panel) {
-                        panel.style.maxHeight = panel.scrollHeight + "px";
-                        const trigger = panel.previousElementSibling;
-                        if (trigger) trigger.classList.add('active');
-                    }
-                });
-            }
-        }, 150);
-
-function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
-
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-
-
-    </script>
-
-    <script>
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase;
-          const historyContainer = document.getElementById("billingHistoryTableBody");
-          if (!client || !historyContainer) return;
-
-          try {
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) return;
-
-              const { data: invoices, error } = await client
-                  .from('billing_history')
-                  .select('*')
-                  .eq('user_id', session.user.id)
-                  .order('charge_date', { ascending: false });
-
-              if (error) throw error;
-
-              historyContainer.innerHTML = invoices.map(inv => `
-                  <tr>
-                      <td>#${inv.invoice_number}</td>
-                      <td>${new Date(inv.charge_date).toLocaleDateString()}</td>
-                      <td>$${inv.amount_total}</td>
-                      <td><span class="status-pill status-${String(inv.payment_status).toLowerCase()}">${inv.payment_status}</span></td>
-                  </tr>
-              `).join('');
-          } catch (err) {
-              console.error("Invoice infrastructure crash:", err);
-          }
-      }, 50);
-  });
-</script>
-
-<!-- ========================================================================== 
-🏢 FILINGS4U STANDALONE HISTORICAL ORDER HISTORY CONSOLE (Part 2: Script Core) 
-========================================================================= --> 
-<script>
-  // --- 1. ACCESS COMPATIBLE SINGLE INFRASTRUCTURE NETWORK ---
-  const orderHistoryMasterClient = window.supabaseClient || window.supabase;
-
-  // --- 2. REGISTRATION RUNTIME ENGINE LIFECYCLE INITIALIZER ---
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || orderHistoryMasterClient;
-          const targetTableBody = document.getElementById("standaloneHistoryTableBody");
-          if (!targetTableBody) return;
-
-          if (!client) {
-              targetTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ef4444; padding:20px;">Connection Offline. Please reload your console window.</td></tr>`;
-              return;
-          }
-
-          try {
-              // Confirm authorized portal cookie session variables exist
-              const { data: { session }, error: sessionError } = await client.auth.getSession();
-              if (sessionError || !session) {
-                  window.location.href = 'portal-login.html';
-                  return;
-              }
-
-              // Extract all complete transactional historical lines from the 'billing_history' ledger table
-              const { data: records, error: dbError } = await client
-                  .from('billing_history')
-                  .select('id, invoice_number, service_title, amount_total, charge_date, card_meta_summary')
-                  .eq('user_id', session.user.id)
-                  .order('charge_date', { ascending: false });
-
-              if (dbError) throw dbError;
-
-              // ✅ REAL-TIME LEDGER HISTORICAL RECORDS FEED SYNC HOOK
-client
-  .channel('live-client-history-ledger-stream')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'billing_history', filter: `user_id=eq.${session.user.id}` },
-    async () => {
-      console.log("📊 Transaction Table Change Logged by Admin! Re-hydrating grid...");
-      // Trigger a clean, isolated re-run of your order loader function
-      if (typeof fetchClientInvoiceLedgerRecords === 'function') fetchClientInvoiceLedgerRecords();
-    }
-  )
-  .subscribe();
-
-
-              // Safe Empty Table boundary routing rules
-              if (!records || records.length === 0) {
-                  targetTableBody.innerHTML = `
-                      <tr>
-                          <td colspan="5" style="text-align:center; padding:45px; color:#64748b;">
-                              <div style="font-size:1.6rem; margin-bottom:8px;">📦</div>
-                              <strong>No Finalized Transactions Registered</strong>
-                              <p style="margin:5px 0 0 0; font-size:0.85rem; color:#94a3b8;">When you order corporate submittals, your records and printable invoices will index automatically here.</p>
-                          </td>
-                      </tr>`;
-                  return;
-              }
-
-              // Map arrays directly into structured template data rows columns natively
-              targetTableBody.innerHTML = records.map(rec => {
-                  const calendarDateFormatted = new Date(rec.charge_date).toLocaleDateString([], {month:'2-digit', day:'2-digit', year:'numeric'});
-                  const feePaidFormatted = parseFloat(rec.amount_total || 0).toFixed(2);
-                  
-                  return `
-                      <tr style="border-bottom:1px solid #f1f5f9; font-size:0.9rem; transition: background 0.1s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-                          <td style="padding:14px 16px; font-family:monospace; font-weight:600; color:#475569;">#${rec.invoice_number || 'INV-'+rec.id.slice(0,6).toUpperCase()}</td>
-                          <td style="padding:14px 16px; color:#1e293b;">${calendarDateFormatted}</td>
-                          <td style="padding:14px 16px;"><strong style="color:#0a1f44;">${rec.service_title}</strong></td>
-                          <td style="padding:14px 16px;"><strong style="color:#10b981;">$${feePaidFormatted}</strong></td>
-                          <td style="padding:14px 16px; text-align:right; vertical-align:middle;">
-                              <button class="btn-sm" style="padding:6px 12px; font-size:0.8rem; background:#0a1f44; color:#ffffff; border:0; border-radius:4px; font-weight:700; cursor:pointer;" 
-                                  onclick="streamReceiptCanvasPdf('${rec.service_title}', ${rec.amount_total}, '${rec.charge_date}', '${rec.card_meta_summary || 'Stripe Account'}')">
-                                  Print Receipt ↓
-                              </button>
-                          </td>
-                      </tr>
-                  `;
-              }).join('');
-
-          } catch (err) {
-              console.error("Order history structural load exception caught:", err.message);
-              targetTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ef4444; font-weight:600; padding:20px;">⚠️ Internal Gateway Server Sync Error. Failed to index row records.</td></tr>`;
-          }
-      }, 50);
-  });
-
-  // --- 3. DYNAMICALLY BUILD UPPER-LEFT RECEIPT FILE CHANNELS ---
-  function streamReceiptCanvasPdf(serviceTitleStr, decimalAmountValue, timelineDateStr, methodSummaryDetails) {
-      const targetCanvasTemplate = document.getElementById("pdf-receipt-compiler");
-      if (!targetCanvasTemplate) return;
-
-      // Update canvas tags inner texts structures safely before execution loops
-      document.getElementById("receiptServiceTarget").textContent = serviceTitleStr;
-      document.getElementById("receiptCostTarget").textContent = `$${parseFloat(decimalAmountValue).toFixed(2)}`;
-      document.getElementById("receiptTotalTarget").textContent = `$${parseFloat(decimalAmountValue).toFixed(2)}`;
-      document.getElementById("receiptMethodTarget").textContent = methodSummaryDetails;
-      document.getElementById("receiptDateTarget").textContent = `Date: ${new Date(timelineDateStr).toLocaleDateString()}`;
-
-      // Config layouts properties explicit targeting html2pdf modules bounds
-      const compilerOptions = {
-          margin: 20,
-          filename: `Receipt-${serviceTitleStr.replace(/\s+/g, '_')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-      };
-
-      // Unhide compilation frame layer, track execution buffer streams, and clear canvas safely
-      targetCanvasTemplate.style.display = 'block';
-      html2pdf().set(compilerOptions).from(targetCanvasTemplate).save().then(() => {
-          targetCanvasTemplate.style.display = 'none';
-      }).catch(err => {
-          console.error("PDF engine tracking fault intercepted:", err);
-          targetCanvasTemplate.style.display = 'none';
-      });
-  }
-</script>
-
-
+    <script src="assets/js/clients/client-core.js"></script>
+    <script src="assets/js/clients/client-navigation.js"></script>
+    <script src="assets/js/clients/client-toggle.js"></script>
+    <script src="assets/js/clients/client-order-history.js"></script>
 </body>
 </html>

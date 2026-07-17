@@ -3,575 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#10b981"> <!-- Chrome, Firefox, & Opera Mobile -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Status Bar -->
-    <meta name="msapplication-navbutton-color" content="#10b981"> <!-- Windows Phone Status Bar -->
-    <title>Support Chat | filings4u</title>
-    <link rel="stylesheet" href="assets/css/client-custom.css">
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+    <title>Live Operations Chat Desk | filings4u</title>
+    <meta name="theme-color" content="#10b981">
+    <link rel="stylesheet" href="assets/css/client.css">
+    <link rel="stylesheet" href="assets/css/client-toggle.css">
+    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <script src="assets/js/portal-chat-engine.js"></script>
 </head>
 <body>
-    <!-- 📱 MOBILE FLOATING TOP NAVIGATION TOGGLE TRIGGER BUTTON -->
-    <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
-        <span id="mobileNavTriggerIcon">☰</span> <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
-    </button>
-
     <div class="dashboard-wrapper">
-      <!-- 🏢 UNIFORM DEEP NAVY ENTERPRISE SIDEBAR CONTAINER --> 
-<aside class="portal-sidebar" style="background: #0a1f44; width: 280px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; font-family: system-ui, sans-serif;"> 
-    
-    <!-- BRAND IDENTITY BLOCK (MATCHED BACKGROUND) --> 
-    <div class="sidebar-brand-block" style="padding: 24px 20px; background: #0a1f44; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;"> 
-        <img src="images/logo.png" alt="filings4u" style="height: 38px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto 12px auto !important;"> 
-        
-        <!-- SYSTEM EMERALD ACCENT BADGE --> 
-        <div style="display: flex; justify-content: center;"> 
-            <div class="admin-badge" style="background: rgba(16, 185, 129, 0.12) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.25) !important; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;">Client Account</div> 
-        </div> 
-    </div> 
+        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.15) !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
+                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
+                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-account.html" class="nav-item">💰 My Account</a>
+                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+                    </div>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
 
-    <!-- NAVIGATION ACCORDION MATRIX --> 
-    <nav class="sidebar-accordion-menu" style="flex: 1; padding: 16px 12px; background: #0a1f44; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"> 
-        
-        <!-- ACCORDION 1: ACCOUNT PROFILE (CLEAN NAVY PANEL OVERRIDE) --> 
-        <div class="accordion-group"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">My Account <span class="chevron" style="color: #10b981;">▲</span></button> 
-            
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-dashboard.html" class="nav-item active" style="color: #ffffff; background: rgba(16, 185, 129, 0.15); border-left: 3px solid #10b981; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 0 6px 6px 0; display: block; font-weight: 600;">📊 Dashboard Home</a> 
-                <a href="client-entities.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🏢 My Registered Entities</a> 
-                <a href="client-services.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛠️ Order New Services</a> 
-            </div> 
-        </div>
-        <!-- ACCORDION 2: FILINGS & COMPLIANCE (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Filings & Compliance <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-filings.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">⚙️ Active Orders</a> 
-                <a href="client-compliance.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛡️ Compliance Tracker</a> 
-                <a href="client-vault.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📂 Document Vault</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 3: FINANCIALS (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Billing & Invoices <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-account.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💰 My Account</a> 
-                <a href="client-order-history.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💸 Order History</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 4: HELP DESK (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Support <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-chat.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💬 Live Chat Support</a> 
-                <a href="client-knowledgebase.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📰 Help Resources</a> 
-            </div> 
-        </div> 
-    </nav> 
-
-    <!-- SIDEBAR FOOTER SECURITY CONTROLS (NAVY ACCENT MATCH) --> 
-    <div class="sidebar-footer-lock" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; background: #0a1f44;"> 
-        <div class="secure-badge-container" style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #94a3b8; font-weight: 600;"> 
-            <div class="secure-pulse-dot" style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div> 
-            <span class="secure-badge-text">Secure Session Active</span> 
-        </div> 
-        <button id="portalLogoutBtn" class="logout-btn" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ffffff; font-weight: 700; font-size: 0.9rem; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'; this.style.borderColor='rgba(239,68,68,0.3)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ffffff';">Log Out</button> 
-    </div> 
-</aside>
-
-        <!-- 🧱 MAIN SCROLL WORKSPACE DISPLAY AREA -->
-        <main class="portal-main">
-            <header class="portal-header">
+        <!-- 🖥️ CHAT ROOM LAYER INTERFACE MATRIX -->
+        <main class="portal-main" style="display:flex !important; flex-direction:column !important; height:100vh !important;">
+            <header class="portal-header" style="flex-shrink: 0 !important;">
                 <div class="welcome-text">
-                    <h1>Filing Help Desk Support</h1>
-                    <p>Live messaging terminal connected directly to your dedicated filings4u corporate representative</p>
+                    <h1>Operations Support Desk</h1>
+                    <p>Live text communication channel with your assigned compliance specialists</p>
                 </div>
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
-                    </div>
-                </div>
+                <div class="header-clock-pill"><span id="portal-clock">00/00/0000 | 00:00:00</span></div>
             </header>
-            
-            <div class="chat-window-pane">
-                <!-- Messages Box Scroll Canvas Wrapper -->
-                <div class="chat-messages-log" id="portalChatMessagesLog">
-                    <div class="chat-bubble inbound">
-                        Hello! Thank you for connecting with filings4u corporate support team. How can I assist you with your active entity filings, agency accounts, or state corporate renewals today?
+
+            <!-- CONVERSATION TERMINAL BOX PANEL -->
+            <div style="flex:1 !important; display:flex !important; flex-direction:column !important; background:white !important; margin:20px !important; border:1px solid var(--border-color) !important; border-radius:8px !important; overflow:hidden !important;">
+                
+                <!-- LIVE CONVERSATION VIEWPORT -->
+                <div id="chatMessageViewport" style="flex:1 !important; padding:25px !important; overflow-y:auto !important; display:flex !important; flex-direction:column !important; gap:14px !important; background:#fafafa !important;">
+                    <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">Securing network communication line...</p>
+                </div>
+
+                <!-- DIRECT INPUT DISPATCH CONTROLS MODULE -->
+                <div style="padding:15px !important; border-top:1px solid var(--border-color) !important; background:#f8fafc !important;">
+                    <div style="display:flex !important; gap:10px !important; align-items:center !important;">
+                        <input type="text" id="chatMessageTextInput" placeholder="Type message or response to compliance desk..." style="flex:1 !important; padding:12px !important; border:1px solid var(--border-color) !important; border-radius:6px !important; font-size:0.85rem !important;" disabled>
+                        <button id="chatMessageSendBtn" style="background:var(--emerald) !important; color:white !important; border:none !important; font-weight:700 !important; font-size:0.85rem !important; padding:12px 24px !important; border-radius:6px !important; cursor:pointer !important;" disabled>Send Message</button>
                     </div>
                 </div>
-                <!-- Input Console Panel Bar -->
-               <!-- ========================================================================== 
-     📎 UPGRADED MULTILINE INPUT TRUNK PANEL WITH FILE UPLOAD WELL
-     ========================================================================== --> 
-<div class="chat-input-bar-wrapper" style="width: 100% !important; box-sizing: border-box !important; background: #f8fafc !important; border-top: 1px solid #e2e8f0 !important; display: flex !important; flex-direction: column !important;">
-  
-  <!-- 📁 ATTACHMENT INDICATOR STRIPE BADGE (Hidden until file is picked) -->
-  <div id="wizardAttachmentBadgeStrip" style="display: none !important; align-items: center !important; justify-content: space-between !important; padding: 6px 16px !important; background: #f1f5f9 !important; border-bottom: 1px solid #e2e8f0 !important; font-size: 0.75rem !important; color: #1e40af !important; font-weight: 600 !important; box-sizing: border-box !important;">
-    <span style="display: inline-flex !important; align-items: center !important; gap: 6px !important;">
-      📄 Selected Document: <span id="wizardAttachmentFileName" style="color: #0f172a !important; font-family: monospace !important;">file.pdf</span>
-    </span>
-    <button type="button" onclick="window.clearSelectedAttachmentPayload()" style="background: none !important; border: none !important; color: #ef4444 !important; font-weight: 700 !important; cursor: pointer !important; padding: 0 4px !important; font-size: 0.85rem !important;">✕ Remove</button>
-  </div>
-
-  <!-- 💬 ACTIONS INPUT TRAY BAR -->
-  <div class="chat-input-bar" style="padding: 12px 16px !important; display: flex !important; gap: 10px !important; align-items: flex-end !important; box-sizing: border-box !important; width: 100% !important;">
-    
-    <!-- INVISIBLE BROWSER FILE CAPTURER NODE -->
-    <input type="file" id="wizardChatFileUploadInput" style="display: none !important;" onchange="window.handleLocalFileSelectionEvent(this)">
-    
-    <!-- 📎 PAPERCLIP VECTOR ACCENT BUTTON -->
-    <button type="button" onclick="document.getElementById('wizardChatFileUploadInput').click()" style="height: 42px !important; width: 42px !important; min-width: 42px !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 6px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; transition: all 0.15s ease !important; margin: 0 !important; box-sizing: border-box !important; padding: 0 !important; font-size: 1.15rem !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;" onmouseover="this.style.borderColor='#0a1f44'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#ffffff';">
-      📎
-    </button>
-    
-    <!-- MULTI-LINE TEXTAREA CANVAS -->
-    <textarea 
-      id="chatMessageTerminalInputField" 
-      class="search-input" 
-      style="flex-grow: 1 !important; width: auto !important; height: 42px !important; min-height: 42px !important; max-height: 120px !important; padding: 10px 12px !important; border: 1px solid #cbd5e1 !important; border-radius: 6px !important; font-size: 0.875rem !important; outline: none !important; font-weight: 500 !important; background: #ffffff !important; transition: border-color 0.15s ease !important; box-sizing: border-box !important; resize: none !important; font-family: inherit !important; line-height: 1.4 !important; margin: 0 !important;" 
-      placeholder="Type your compliance message detail here... (Press Enter to Send)" 
-      onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); dispatchClientLiveChatMessage(); }"></textarea>
-    
-    <!-- TRANSMISSION SUBMIT BUTTON -->
-    <button 
-      class="btn-sm" 
-      style="height: 42px !important; padding: 0 22px !important; background: #0a1f44 !important; color: #ffffff !important; font-weight: 600 !important; font-size: 0.875rem !important; border: none !important; border-radius: 6px !important; cursor: pointer !important; transition: background 0.15s ease !important; margin: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;" 
-      onclick="dispatchClientLiveChatMessage()">Send Message</button>
-  </div>
-</div>
 
             </div>
         </main>
     </div>
 
-
-<!-- ========================================================================== 
-     🏢 FILINGS4U LIVE SUPPORT ENGINE (Production Unified Matrix Core - FIXED) 
-     ========================================================================== --> 
-
-
-<script>
-// --- 1. GLOBAL REALTIME STORAGE CHANNELS ---
-let productionChatChannel = null;
-const globalChatGatewayClient = window.supabaseClient || window.supabase;
-
-// --- 2. INITIALIZE ENGINE SESSIONS AND SETUP LISTENERS ---
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(async () => {
-    const client = window.supabaseClient || window.supabase || globalChatGatewayClient;
-    const logBox = document.getElementById("portalChatMessagesLog");
-    
-    if (!client) {
-      if (logBox) logBox.innerHTML = `<div class="chat-bubble inbound">Gateway Core Offline. Please reload your console wall.</div>`;
-      return;
-    }
-
-    try {
-      const { data: { session }, error: sessionError } = await client.auth.getSession();
-      
-      if (sessionError || !session) {
-        window.location.href = 'client-dashboard.html';
-        return;
-      }
-
-      // ========================================================================= 
-      // CRITICAL TRACE FIX: LOCK DOWN CONTINUOUS USER IDENTITY CHANNEL
-      // ========================================================================= 
-      // 1. Prioritize any existing, verified tracking key already saved inside local storage wells
-      let currentCustomerUuid = localStorage.getItem("f4u_user_id");
-
-      if (!currentCustomerUuid || currentCustomerUuid === "null" || currentCustomerUuid === "undefined") {
-        // 2. Fall back to the current authenticated session token string if storage is empty
-        currentCustomerUuid = session.user.id;
-      }
-
-      // 3. Last-resort fallback: if both are empty or unstable, generate a true static UUID anchor
-      if (!currentCustomerUuid || currentCustomerUuid === "null" || currentCustomerUuid === "undefined") {
-        currentCustomerUuid = crypto.randomUUID();
-      }
-
-      // 4. Lock the selected ID back into local storage permanently to survive refreshes and dashboard reloads
-      localStorage.setItem("f4u_user_id", currentCustomerUuid);
-      window.clientSessionUserId = currentCustomerUuid; // Maintain active window workspace sync
-
-      console.log(`[Portal Engine Connected] Thread Channel Locked under client ID: ${currentCustomerUuid}`);
-
-      // Action A: Recover Historical Logs from Postgres Table Disk matching your locked ID
-      await fetchHistoricalChatLogs(client, currentCustomerUuid);
-
-      // Action B: Establish Real-time Postgres Database Synchronization Pipeline
-      console.log(`[Portal Engine] Spawning active database wire for channel context: ${currentCustomerUuid}`);
-      
-      if (productionChatChannel) {
-        client.removeChannel(productionChatChannel);
-      }
-
-      // Listens specifically to database updates matching your locked, single client identity token
-      productionChatChannel = client
-        .channel(`support_room_wire_${currentCustomerUuid}`)
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'chat_messages', 
-          filter: `client_id=eq.${currentCustomerUuid}` 
-        }, (payload) => {
-          console.log("[Portal Socket Tick] Over-the-air mutation packet received:", payload.new);
-          
-          const incomingSender = String(payload.new.sender_type || '').toLowerCase();
-          if (incomingSender === 'admin' || incomingSender === 'agent' || incomingSender === 'broker') {
-            appendRealtimeBubbleToDOM(payload.new.message_content, 'admin');
-          }
-        })
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log("📡 Realtime Secure Support Chat Pipeline Connected Cleanly via Postgres Channel Engine.");
-          }
-        });
-
-    } catch (err) {
-      console.error("Chat bootstrapper error:", err.message);
-    }
-  }, 50);
-
-  // Accordion UI tracking highlights operations 
-  initializeSidebarMenuHighlights();
-});
-
-
-// --- 3. RECOVER HISTORICAL CHAT LOG RECORDS ---
-async function fetchHistoricalChatLogs(client, userUuid) {
-  const logBox = document.getElementById("portalChatMessagesLog");
-  if (!logBox) return;
-
-  try {
-    // FIXED: Changed query column filter from 'user_id' to 'client_id' to align with database architecture constraints
-    const { data: messages, error } = await client
-      .from('chat_messages')
-      .select('sender_type, message_content, created_at')
-      .eq('client_id', userUuid)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-
-    if (messages && messages.length > 0) {
-      logBox.innerHTML = ""; // Remove default initial placeholder greeting text elements cleanly
-      
-      messages.forEach(msg => {
-        // EXPLICIT FILTER PASS: Ignore background automation alerts or trigger setup configuration strings
-        if (String(msg.message_content).startsWith("System Notice:")) return;
-        
-        appendRealtimeBubbleToDOM(msg.message_content, msg.sender_type);
-      });
-    }
-  } catch (err) {
-    console.warn("Could not synchronize historical logs ledger:", err.message);
-  }
-}
-
-// --- FIXED: UPGRADED OUTBOUND DISPATCH ACTION CONTROLLER WITH STORAGE UPLOADS ---
-async function dispatchClientLiveChatMessage() {
-  const field = document.getElementById("chatMessageTerminalInputField");
-  const client = window.supabaseClient || window.supabase || globalChatGatewayClient || window.f4uWizardSupabaseInstance;
-  
-  if (!field || !client) return;
-
-  let textRaw = field.value.trim();
-  
-  // Safely extract the cached file object from window memory storage
-  const pendingFileObj = window.activePendingFileObject ? window.activePendingFileObject[0] : null;
-
-  // Hard exit pass if the client typed nothing AND chose no document
-  if (!textRaw && !pendingFileObj) return;
-
-  // Flush text input interface elements instantly to protect snappy layout speeds
-  field.value = "";
-
-  // 1. ATTACHMENT PIPELINE CHECK: If a file exists, stream it up first
-  if (pendingFileObj) {
-    console.log(`[Storage Pipeline] Uploading binary asset: ${pendingFileObj.name}`);
-    
-    // Clear out the footer badge strip indicator layout immediately to prevent double submissions
-    if (typeof window.clearSelectedAttachmentPayload === "function") {
-      window.clearSelectedAttachmentPayload();
-    }
-
-    try {
-      const uniquePathToken = `${window.clientSessionUserId || 'anonymous'}/${Date.now()}_${pendingFileObj.name}`;
-      
-      // Post the binary file packet directly up to your attached storage bucket location
-      const { data: uploadResult, error: uploadErr } = await client
-        .storage
-        .from('chat-attachments')
-        .upload(uniquePathToken, pendingFileObj, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadErr) throw uploadErr;
-
-      // Extract the publicly readable URL path string asset parameter
-      const { data: publicUrlData } = client
-        .storage
-        .from('chat-attachments')
-        .getPublicUrl(uniquePathToken);
-
-      const uploadedAssetUrl = publicUrlData.publicUrl;
-      console.log(`[Storage Success] Asset uploaded to bucket cleanly: ${uploadedAssetUrl}`);
-
-      // Reformat message body strings based on layout data composition
-      if (!textRaw) {
-        textRaw = `📎 Attached Document [${pendingFileObj.name}]: ${uploadedAssetUrl}`;
-      } else {
-        textRaw += `\n\n📎 Attached Document [${pendingFileObj.name}]: ${uploadedAssetUrl}`;
-      }
-
-    } catch (uploadException) {
-      console.error("[Storage Failure] Upload process rejected by Supabase node:", uploadException.message);
-      appendRealtimeBubbleToDOM("⚠️ Document upload failed. Please verify folder permissions.", 'admin');
-      return;
-    }
-  }
-
-  // 2. DATABASE LOG RECORD COMMIT
-  try {
-    const currentCustomerUuid = localStorage.getItem("f4u_user_id") || window.clientSessionUserId;
-    if (!currentCustomerUuid) return;
-
-    // Optimistically print message block nodes straight into user view screen canvas
-    appendRealtimeBubbleToDOM(textRaw, 'client');
-
-    const { error } = await client
-      .from('chat_messages')
-      .insert({
-        client_id: currentCustomerUuid,
-        sender_type: 'client',
-        message_content: textRaw,
-        is_read_by_admin: false
-      });
-
-    if (error) throw error;
-    console.log("[Portal Sync Success] Message record securely saved to Postgres disk.");
-
-  } catch (err) {
-    console.error("Message transmission failure:", err.message);
-    alert("Message delivery failure. Check network infrastructure sockets.");
-  }
-}
-
-
-// --- 5. APPEND GRAPHIC BUBBLE DIRECTLY INTO VIEWPORT CANVAS ---
-// --- FIXED: PARSES STRINGS AND EXPANDS ENCRYPTED ASSETS INTO CLICKABLE IMAGES ---
-function appendRealtimeBubbleToDOM(textStr, senderTypeStr) {
-  const logBox = document.getElementById("portalChatMessagesLog");
-  if (!logBox) return;
-
-  const bubbleElement = document.createElement("div");
-  const parsedSender = String(senderTypeStr || '').toLowerCase();
-  
-  if (parsedSender === 'client') {
-    bubbleElement.className = "chat-bubble outbound";
-  } else {
-    bubbleElement.className = "chat-bubble inbound";
-  }
-  
-  // 🖼️ IMAGE DECODER REGEX: Check if text contains a link ending in jpg, jpeg, png, gif, or webp
-  const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
-  const match = textStr.match(imageRegex);
-
-  if (match) {
-    const imageUrl = match[1];
-    // Remove the long raw URL string text from visible view text layers
-    const plainText = textStr.replace(imageUrl, '').trim();
-    
-    bubbleElement.innerHTML = plainText ? `<div style="margin-bottom:6px;">${plainText}</div>` : '';
-    
-    const imgNode = document.createElement("img");
-    imgNode.src = imageUrl;
-    imgNode.className = "chat-inline-thumbnail-preview";
-    imgNode.onclick = () => window.open(imageUrl, '_blank');
-    bubbleElement.appendChild(imgNode);
-  } else {
-    bubbleElement.textContent = textStr;
-  }
-  
-  logBox.appendChild(bubbleElement);
-  setTimeout(() => { logBox.scrollTop = logBox.scrollHeight; }, 10);
-}
-
-// Add this fetch block inside client-chat.html where a new conversation triggers (isRoomEmpty === true)
-if (isRoomEmpty) {
-  // Replace this placeholder link with your actual Supabase Edge Function or live Resend integration routing endpoint
-  fetch("https://supabase.co", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      admin_inbox: "support@filings4u.com",
-      client_id: currentCustomerUuid,
-      preview_text: textRaw
-    })
-  }).catch(e => console.log("Background email log deferred."));
-}
-
-
-// --- UPGRADED ACTIONS DISPATCH WITH ANIMATED UPLOAD SPINNER & WAIT-TIME TRIGGERS ---
-async function dispatchClientLiveChatMessage() {
-  const field = document.getElementById("chatMessageTerminalInputField");
-  const sendBtn = document.querySelector(".chat-input-bar button");
-  const client = window.supabaseClient || window.supabase || globalChatGatewayClient || window.f4uWizardSupabaseInstance;
-  
-  if (!field || !client) return;
-  let textRaw = field.value.trim();
-  const pendingFileObj = window.activePendingFileObject ? window.activePendingFileObject : null;
-
-  if (!textRaw && !pendingFileObj) return;
-  field.value = "";
-
-  // 🌀 TURN ON LOADING SPINNER IF AN ATTACHMENT IS FLOATING INSIDE THE BUFFER
-  let originalButtonContent = "";
-  if (pendingFileObj && sendBtn) {
-    originalButtonContent = sendBtn.innerHTML;
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = `<div class="f4u-btn-spinner"></div>`;
-  }
-
-  if (pendingFileObj) {
-    if (typeof window.clearSelectedAttachmentPayload === "function") {
-      window.clearSelectedAttachmentPayload();
-    }
-    try {
-      const uniquePathToken = `${window.clientSessionUserId || 'anonymous'}/${Date.now()}_${pendingFileObj.name}`;
-      const { data: uploadResult, error: uploadErr } = await client.storage.from('chat-attachments').upload(uniquePathToken, pendingFileObj, { cacheControl: '3600', upsert: false });
-      if (uploadErr) throw uploadErr;
-
-      const { data: publicUrlData } = client.storage.from('chat-attachments').getPublicUrl(uniquePathToken);
-      const uploadedAssetUrl = publicUrlData.publicUrl;
-
-      if (!textRaw) {
-        textRaw = `${uploadedAssetUrl}`;
-      } else {
-        textRaw += ` \n${uploadedAssetUrl}`;
-      }
-    } catch (uploadException) {
-      console.error("[Storage Failure]", uploadException.message);
-      appendRealtimeBubbleToDOM("⚠️ Document upload failed.", 'admin');
-      if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = originalButtonContent; }
-      return;
-    }
-  }
-
-  // Restore button state elements
-  if (sendBtn && originalButtonContent) {
-    sendBtn.disabled = false;
-    sendBtn.innerHTML = originalButtonContent;
-  }
-
-  try {
-    const currentCustomerUuid = localStorage.getItem("f4u_user_id") || window.clientSessionUserId;
-    if (!currentCustomerUuid) return;
-
-    // Check if this is the first message being sent in this session to fire the wait message
-    const isRoomEmpty = document.querySelectorAll("#portalChatMessagesLog .chat-bubble").length <= 1;
-
-    appendRealtimeBubbleToDOM(textRaw, 'client');
-
-    const { error } = await client.from('chat_messages').insert({
-      client_id: currentCustomerUuid,
-      sender_type: 'client',
-      message_content: textRaw,
-      is_read_by_admin: false
-    });
-
-    if (error) throw error;
-
-    // ⏱️ AUTOMATED WAIT-TIME RESPONSE TRIGGER
-    if (isRoomEmpty) {
-      setTimeout(() => {
-        const waitTimeText = "⏱️ System Notice: An expert filings4u compliance broker has been alerted. Current estimated response wait time is under 4 minutes. Thank you for your patience!";
-        appendRealtimeBubbleToDOM(waitTimeText, 'admin');
-      }, 1200);
-    }
-
-  } catch (err) {
-    console.error("Message transmission failure:", err.message);
-  }
-}
-
-
-// --- 6. STANDARD ACCOUNT INTERFACE SYSTEM UTILITIES ---
-function initializeSidebarMenuHighlights() {
-  const currentFileName = window.location.pathname.split("/").pop() || "client-chat.html";
-  const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href^="${currentFileName}"]`);
-  
-  activeLinks.forEach(link => {
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    link.classList.add('active');
-    
-    const matchingPanel = link.closest('.accordion-panel');
-    if (matchingPanel) {
-      matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-      const folderTriggerButton = matchingPanel.previousElementSibling;
-      if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-        folderTriggerButton.classList.add('active');
-        const chevronSpan = folderTriggerButton.querySelector('.chevron');
-        if (chevronSpan) chevronSpan.textContent = "▲";
-      }
-    }
-  });
-}
-</script>
-
-<script>
-    /** 
- * Module: Wizard UI File Selection Pipeline 
- * Target: Executes automatically when a user clicks the paperclip icon and selects a file. 
- */ 
-window.handleLocalFileSelectionEvent = function(inputNodeReference) { 
-  if (!inputNodeReference.files || inputNodeReference.files.length === 0) return; 
-
-  // Stash the raw browser file parameters inside global state window memory explicitly 
-  window.activePendingFileObject = inputNodeReference.files[0]; 
-
-  const badgeStrip = document.getElementById("wizardAttachmentBadgeStrip"); 
-  const labelNode = document.getElementById("wizardAttachmentFileName"); 
-
-  if (badgeStrip && labelNode) { 
-    labelNode.innerText = window.activePendingFileObject.name; 
-    badgeStrip.style.setProperty("display", "flex", "important"); 
-  } 
-  console.log(`[File Selection] File prepared for upload pipeline: ${window.activePendingFileObject.name}`); 
-}; 
-
-/** 
- * Clears the selected file and hides the confirmation indicator badge completely. 
- */ 
-window.clearSelectedAttachmentPayload = function() { 
-  window.activePendingFileObject = null; 
-
-  const fileInput = document.getElementById("wizardChatFileUploadInput"); 
-  if (fileInput) { 
-    fileInput.value = ""; 
-  } 
-
-  const badgeStrip = document.getElementById("wizardAttachmentBadgeStrip"); 
-  if (badgeStrip) { 
-    badgeStrip.style.setProperty("display", "none", "important"); 
-  } 
-  console.log("[File Selection] Local attachment payload cleared and input form refreshed."); 
-};
-
-</script>
-
-
-
-
-
-
+    <script src="assets/js/clients/client-core.js"></script>
+    <script src="assets/js/clients/client-navigation.js"></script>
+    <script src="assets/js/clients/client-toggle.js"></script>
+    <script src="assets/js/clients/client-chat.js"></script>
 </body>
 </html>

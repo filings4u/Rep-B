@@ -1,646 +1,96 @@
-<!DOCTYPE html> 
-<html lang="en"> 
-<head> 
-    <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-    <meta name="mobile-web-app-capable" content="yes"> 
-    <meta name="theme-color" content="#10b981"> 
-    <!-- Mobile Navigation Theme Controls --> 
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> 
-    <meta name="msapplication-navbutton-color" content="#10b981"> 
-    <title>Secure Document Vault | filings4u</title> 
-    
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE --> 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script> 
-    <script src="https://www.cloudflare.com/turnstile/v0/api.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <link rel="stylesheet" href="assets/css/client-custom.css">
-
-    <style>
-        :root {
-            --emerald: #10b981;
-            --navy: #0a1f44;
-            --slate: #64748b;
-        }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #f8fafc;
-            margin: 0;
-            padding: 0;
-            color: var(--navy);
-        }
-        .dashboard-nav {
-            background: var(--navy);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
-        .dashboard-container {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-            box-sizing: border-box;
-        }
-        .dashboard-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 12px rgba(10,31,68,0.01);
-            text-align: left;
-            transition: all 0.2s ease;
-        }
-        .dashboard-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(10, 31, 68, 0.05);
-        }
-        .btn-action {
-            background: var(--emerald);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
-        .btn-action:hover {
-            opacity: 0.9;
-        }
-        .btn-logout {
-            background: transparent;
-            color: #cbd5e1;
-            border: 1px solid #475569;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .btn-logout:hover {
-            color: white;
-            border-color: white;
-        }
-        #pdf-print-template {
-            display: none;
-        }
-    </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secure Document Vault | filings4u</title>
+    <meta name="theme-color" content="#10b981">
+    <link rel="icon" type="image/png" href="images/fav.png">
+    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="assets/css/client.css">
+    <link rel="stylesheet" href="assets/css/client-toggle.css">
 </head>
-
-
 <body>
-
-    <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
-    <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
-        <span id="mobileNavTriggerIcon">☰</span> 
-        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
-    </button>
-
     <div class="dashboard-wrapper">
-  <!-- 🏢 UNIFORM DEEP NAVY ENTERPRISE SIDEBAR CONTAINER --> 
-<aside class="portal-sidebar" style="background: #0a1f44; width: 280px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; font-family: system-ui, sans-serif;"> 
-    
-    <!-- BRAND IDENTITY BLOCK (MATCHED BACKGROUND) --> 
-    <div class="sidebar-brand-block" style="padding: 24px 20px; background: #0a1f44; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;"> 
-        <img src="images/logo.png" alt="filings4u" style="height: 38px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto 12px auto !important;"> 
-        
-        <!-- SYSTEM EMERALD ACCENT BADGE --> 
-        <div style="display: flex; justify-content: center;"> 
-            <div class="admin-badge" style="background: rgba(16, 185, 129, 0.12) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.25) !important; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;">Client Account</div> 
-        </div> 
-    </div> 
+        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.15) !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
+                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
+                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-account.html" class="nav-item">💰 My Account</a>
+                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+                    </div>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
 
-    <!-- NAVIGATION ACCORDION MATRIX --> 
-    <nav class="sidebar-accordion-menu" style="flex: 1; padding: 16px 12px; background: #0a1f44; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"> 
-        
-        <!-- ACCORDION 1: ACCOUNT PROFILE (CLEAN NAVY PANEL OVERRIDE) --> 
-        <div class="accordion-group"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">My Account <span class="chevron" style="color: #10b981;">▲</span></button> 
-            
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-dashboard.html" class="nav-item active" style="color: #ffffff; background: rgba(16, 185, 129, 0.15); border-left: 3px solid #10b981; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 0 6px 6px 0; display: block; font-weight: 600;">📊 Dashboard Home</a> 
-                <a href="client-entities.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🏢 My Registered Entities</a> 
-                <a href="client-services.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛠️ Order New Services</a> 
-            </div> 
-        </div>
-        <!-- ACCORDION 2: FILINGS & COMPLIANCE (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Filings & Compliance <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-filings.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">⚙️ Active Orders</a> 
-                <a href="client-compliance.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛡️ Compliance Tracker</a> 
-                <a href="client-vault.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📂 Document Vault</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 3: FINANCIALS (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Billing & Invoices <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-account.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💰 My Account</a> 
-                <a href="client-order-history.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💸 Order History</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 4: HELP DESK (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Support <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-chat.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💬 Live Chat Support</a> 
-                <a href="client-knowledgebase.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📰 Help Resources</a> 
-            </div> 
-        </div> 
-    </nav> 
-
-    <!-- SIDEBAR FOOTER SECURITY CONTROLS (NAVY ACCENT MATCH) --> 
-    <div class="sidebar-footer-lock" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; background: #0a1f44;"> 
-        <div class="secure-badge-container" style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #94a3b8; font-weight: 600;"> 
-            <div class="secure-pulse-dot" style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div> 
-            <span class="secure-badge-text">Secure Session Active</span> 
-        </div> 
-        <button id="portalLogoutBtn" class="logout-btn" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ffffff; font-weight: 700; font-size: 0.9rem; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'; this.style.borderColor='rgba(239,68,68,0.3)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ffffff';">Log Out</button> 
-    </div> 
-</aside>
-
-        <!-- 🧱 MAIN SCROLL ZONE AREA WORKSPACE -->
+        <!-- 🖥️ PRIMARY SCROLLABLE VIEWPORT -->
         <main class="portal-main">
             <header class="portal-header">
                 <div class="welcome-text">
                     <h1>Secure Document Vault</h1>
-                    <p>Encrypted cloud storage repo infrastructure for statutory formation records</p>
+                    <p>Access your stored corporate charters, EIN approval letters, certificates, and filed receipts</p>
                 </div>
                 <div class="header-actions-wrapper">
                     <div class="header-clock-pill"><span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+                    <div><input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search archive records..."></div>
                 </div>
             </header>
 
-            <div class="portal-content-layout">
-                <!-- DRAG ZONE FORM -->
-                <div class="content-panel visual-card">
-                    <div class="panel-header"><h2>Upload Manifest Records</h2></div>
-                    <div class="drag-zone-box" id="dropZoneElement">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">📤</div>
-                        <h3>Drag and drop filing documents here</h3>
-                        <p style="color:var(--text-muted); font-size:0.8rem; margin:5px 0 0 0;">or click this container panel to browse device assets</p>
-                        <input type="file" id="nativeFileInput" multiple style="display:none;">
-                        <div class="progress-container" id="progContainer"><div class="progress-bar" id="pBar"></div></div>
+            <div class="content-container">
+                <div class="console-card">
+                    <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; border-bottom: 1px solid #f1f5f9 !important; padding-bottom: 14px !important; margin-bottom: 20px !important;">
+                        <h2 style="margin:0 !important;">Verified Corporate Certificates Archive</h2>
+                        <!-- UPLOAD DIRECTLY INTO THE CORES VAULT BUCKET SYSTEM -->
+                        <label style="background: var(--text-dark); color: white; padding: 8px 14px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                            📤 Upload File Record
+                            <input type="file" id="directVaultUploadInput" style="display: none;">
+                        </label>
                     </div>
-                </div>
-
-                <!-- FILE LISTINGS -->
-                <div class="content-panel visual-card">
-                    <div class="panel-header"><h2>Managed Vault Inventory</h2></div>
-                    <div class="tight-scroll-area" style="max-height: 480px;" id="vaultInventoryContainer">
-                        <!-- Populated by engine upload routine pipelines -->
-                        <div class="file-listing-strip">
-                            <div>
-                                <strong style="font-size:0.85rem; display:block;">Delaware_Formation_Certificate.pdf</strong>
-                                <span style="font-size:0.7rem; color:var(--text-muted);">142 KB • Verified Corporate Record</span>
-                            </div>
-                            <a href="#" class="file-link-btn">Download</a>
-                        </div>
+                    
+                    <div id="vaultDocumentsContainerTarget" style="display: grid !important; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important; gap: 20px !important;">
+                        <p style="font-size: 0.82rem !important; color: var(--text-muted) !important;">Decrypting client secure folder paths indices matrix...</p>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-<!-- 🎯 SYSTEM RUNTIME CONTROLLER ENGINE LINKS -->
-<script src="assets/js/portal-engine.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const box = document.getElementById("dropZoneElement");
-  const input = document.getElementById("nativeFileInput");
-  if (!box) return;
-
-  box.addEventListener("click", () => input.click());
-  box.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    box.classList.add("hovering");
-  });
-  box.addEventListener("dragleave", () => box.classList.remove("hovering"));
-  box.addEventListener("drop", (e) => {
-    e.preventDefault();
-    box.classList.remove("hovering");
-    if (e.dataTransfer.files.length) uploadVaultAssetSequence(e.dataTransfer.files);
-  });
-  input.addEventListener("change", (e) => {
-    if (e.target.files.length) uploadVaultAssetSequence(e.target.files);
-  });
-
-  // Hydrate files directory on initial screen load
-  fetchClientVaultDirectory();
-});
-
-// 📤 SECURE PRODUCTION UPLOAD PIPELINE
-async function uploadVaultAssetSequence(filesList) {
-  if (typeof supabase === 'undefined') {
-    alert("Supabase infrastructure offline. Upload aborted.");
-    return;
-  }
-  
-  const pCont = document.getElementById("progContainer");
-  const bar = document.getElementById("pBar");
-  if (pCont) pCont.style.display = "block";
-  if (bar) bar.style.width = "0%";
-
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      // ✅ FIX 1: Direct path routing correction to stop 404 navigation crashes
-      window.location.href = "portal-login.html";
-      return;
-    }
-    
-    const clientUuid = session.user.id;
-
-    for (let i = 0; i < filesList.length; i++) {
-      const targetFile = filesList[i];
-      // 🛡️ CRITICAL: Path string layout matching your storage bucket architecture
-      const secureStoragePath = `${clientUuid}/${Date.now()}_${targetFile.name}`;
-
-      // 1. Direct upload to the private 'vault' Storage Bucket
-      const { data: storageObject, error: storageError } = await supabase.storage
-        .from('vault')
-        .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
-
-      if (storageError) throw storageError;
-
-      // 2. ✅ FIX 2: Swapped out table target client_vault and column uploaded_by for your unified schema fields
-      const { error: dbError } = await supabase
-        .from('client_documents_vault')
-        .insert({
-          user_id: clientUuid, // Standard binary UUID key relation matching RLS policies
-          file_name: targetFile.name,
-          file_url: secureStoragePath, // Stores file reference path for signed URL token creation
-          created_at: new Date().toISOString() // Enforced compliant timestamp string formatting
-        });
-
-      if (dbError) throw dbError;
-
-      // Smoothly animate loading bar metrics
-      if (bar) {
-        let percentComplete = Math.round(((i + 1) / filesList.length) * 100);
-        bar.style.width = percentComplete + "%";
-      }
-    }
-
-    alert("All files encrypted and loaded to your secure folder successfully.");
-    await fetchClientVaultDirectory(); // Refresh directory list display view layout
-    
-  } catch (err) {
-    console.error("Vault critical transmission fault caught:", err.message);
-    alert(`Upload failed: ${err.message}`);
-  } finally {
-    if (pCont) {
-      setTimeout(() => pCont.style.display = "none", 1000);
-    }
-  }
-}
-
-// 📂 RENDER SECURE FILE DIRECTORY ROWS
-async function fetchClientVaultDirectory() {
-  const container = document.getElementById("vaultInventoryContainer");
-  if (typeof supabase === 'undefined' || !container) return;
-
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    // ✅ FIX 3: Querying matching structural user_id parameters from client_documents_vault
-    const { data: records, error } = await supabase
-      .from('client_documents_vault')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    if (!records || records.length === 0) {
-      container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.85rem;">Your secure vault folder is empty.</p>`;
-      return;
-    }
-
-    container.innerHTML = records.map(file => {
-      return `
-        <div class="file-listing-strip" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f1f5f9;">
-          <div>
-            <strong style="font-size:0.85rem; display:block; color: #1e293b;">${file.file_name}</strong>
-            <span style="font-size:0.7rem; color: #64748b;">Secure Encrypted Vault Asset</span>
-          </div>
-          <a href="#" class="file-link-btn" style="color: #2563eb; text-decoration: none; font-weight: 700; font-size: 0.85rem;" onclick="requestSecureDownloadToken('${file.file_url}')">Download ↓</a>
-        </div>
-      `;
-    }).join('');
-
-  } catch (err) {
-    console.error("Directory hydration error:", err.message);
-  }
-}
-
-// 🔗 GENERATE EXPIRED SIGNED URL FOR EXTRA PROTECTION
-async function requestSecureDownloadToken(bucketPath) {
-  if (typeof supabase === 'undefined') return;
-  try {
-    // Generates an authenticated storage link that self-destructs after 60 seconds
-    const { data, error } = await supabase.storage
-      .from('vault')
-      .createSignedUrl(bucketPath, 60);
-
-    if (error) throw error;
-    window.open(data.signedUrl, '_blank');
-  } catch (err) {
-    console.error(err);
-    alert("Authorization token expired or file missing. Could not generate download link.");
-  }
-}
-
-function toggleSidebarAccordion(buttonElement) {
-  buttonElement.classList.toggle('active');
-  const panel = buttonElement.nextElementSibling;
-  if (panel && panel.style) {
-    if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-      panel.style.maxHeight = "0px";
-    } else {
-      panel.style.maxHeight = panel.scrollHeight + "px";
-    }
-  }
-}
-</script>
-
-
-    <script>
-    // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
-    function toggleSidebarAccordion(buttonElement) {
-        buttonElement.classList.toggle('active');
-        const panel = buttonElement.nextElementSibling;
-        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-            panel.style.maxHeight = "0px";
-        } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-    }
-
-    // 🟢 AUTOMATIC ACCORDION & EMERALD LINK ACTIVE TRACKER
-    document.addEventListener("DOMContentLoaded", () => {
-        const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
-        
-        // Find every navigation link matching the exact current browser page filename
-        const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
-        
-        activeLinks.forEach(link => {
-            // 1. Wipe out any stale fallback active states on sister components
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            
-            // 2. Pin the emerald line highlight exactly to the clicked link item
-            link.classList.add('active');
-            
-            // 3. Find the parent folder panel block containing this active sub-link
-            const matchingPanel = link.closest('.accordion-panel');
-            if (matchingPanel) {
-                // Force open the panel container box
-                matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-                
-                // Find the button directly above the panel and toggle its chevron to "▲" (active)
-                const folderTriggerButton = matchingPanel.previousElementSibling;
-                if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-                    folderTriggerButton.classList.add('active');
-                    const chevronSpan = folderTriggerButton.querySelector('.chevron');
-                    if (chevronSpan) chevronSpan.textContent = "▲";
-                }
-            }
-        });
-    });
-
- function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
-
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-
-</script>
-
-<body>
-  <!-- Top Navigation Header Component -->
-  <nav class="dashboard-nav">
-    <div style="display: flex; align-items: center; gap: 15px;">
-      <img src="images/logo.png" alt="filings4u" style="height: 28px; filter: brightness(0) invert(1);">
-      <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">Client Portal</span>
-    </div>
-    <!-- ✅ FIX 1: Linked to your global logout routine handler method name -->
-    <button onclick="executeSecureLogout(event)" class="btn-logout">Logout</button>
-  </nav>
-
-  <!-- 🖨️ UPDATED LOGO PDF PRINT CANVAS -->
-  <div id="pdf-print-template" style="display: none; padding: 40px; font-family: Georgia, serif; color: #000; background: #fff;">
-    <!-- 🏢 TWO-COLUMN UPPER-LEFT BRANDING HEADER -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; width: 100%;">
-      <!-- UPPER LEFT CORNER BRANDING POSITION -->
-      <div style="text-align: left;">
-        <img src="images/logo.png" alt="filings4u Logo" style="height: 40px; width: auto; object-fit: contain; display: block; margin-bottom: 5px;">
-        <small style="font-weight: bold; font-family: Arial, sans-serif; letter-spacing: 0.5px; color: #64748b; text-transform: uppercase; font-size: 10px;">Official Corporate Record Document</small>
-      </div>
-      <!-- RIGHT-BALANCED COMPLIANCE DESK METADATA -->
-      <div style="text-align: right; font-family: Arial, sans-serif; font-size: 11px; color: #475569; line-height: 1.4;">
-        <strong>Filing Infrastructure Division</strong><br>
-        <span>Fulfillment Hub Security Stack</span><br>
-        <span id="pdf-timestamp-target" style="font-style: italic; color: #10b981; font-weight: 600;">Filing Authorization Date: --</span>
-      </div>
-    </div>
-    <!-- MAIN CENTRAL LEGAL TITLE -->
-    <h1 style="text-align: center; text-transform: uppercase; letter-spacing: 1px; font-size: 19px; margin-bottom: 25px; font-family: Arial, sans-serif; font-weight: 800; color: #0a1f44;">
-      Limited Power of Attorney &amp; Corporate Authorization
-    </h1>
-    <hr style="border: 0; border-top: 1.5px solid #000; margin-bottom: 30px;">
-    <!-- RUNTIME DATA-INJECTED INSTRUMENT DISPLAY BODY -->
-    <div id="pdf-text-target" style="font-size: 12.5px; line-height: 1.8; white-space: pre-wrap; text-align: justify; color: #1e293b;">--</div>
-  </div>
-
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(async () => {
-      const client = window.supabaseClient || window.supabase;
-      const vaultGrid = document.getElementById("vaultDocumentGrid");
-      
-      if (!client || !vaultGrid) return;
-      
-      try {
-        const { data: { session } } = await client.auth.getSession();
-        if (!session) return;
-
-        const { data: documents, error } = await client
-          .from('client_documents_vault')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // ✅ FIX 2: Updated property keys from document_display_name/storage_path to file_name/file_url
-        vaultGrid.innerHTML = documents.map(doc => `
-          <div class="document-pill visual-card" style="padding:15px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #f1f5f9;">
-            <div style="display: flex; align-items: center;">
-              <span style="font-size:1.5rem; margin-right:10px;">📄</span>
-              <strong style="color: #1e293b; font-size: 0.88rem;">${doc.file_name}</strong>
-            </div>
-            <button class="btn-sm" style="color: #2563eb; font-weight: 700; background: none; border: none; cursor: pointer;" onclick="generateSecureDocumentDownload('${doc.file_url}')">Download ↓</button>
-          </div>
-        `).join('');
-
-      } catch (err) {
-        console.error("Vault mapping engine crash:", err);
-      }
-    }, 50);
-  });
-
-  async function generateSecureDocumentDownload(storagePath) {
-    const client = window.supabaseClient || window.supabase;
-    if (!client) return;
-    
-    // ✅ FIX 3: Changed bucket name target from 'secure-vault' to match your true storage identity 'vault'
-    const { data, error } = await client.storage.from('vault').createSignedUrl(storagePath, 60);
-    
-    if (error) {
-      console.error(error);
-      alert("Document download token expired or file unmapped. Please refresh.");
-      return;
-    }
-    window.open(data.signedUrl, '_blank');
-  }
-  </script>
-
-  <script>
-  // --- 1. GLOBAL WORKSPACE STATES ---
-  let recoveredPoaDocumentText = "";
-  let globalProfileCompanyName = "Filing_Order";
-
-  // --- 2. RETRIEVE ACTIVE USER ACCOUNT SESSION AND FETCH DATA ---
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(async () => {
-      const client = window.supabaseClient || window.supabase;
-      const poaViewBox = document.getElementById('dashboard-poa-view');
-      const downloadButton = document.getElementById('download-btn');
-      
-      if (!client) {
-        if (poaViewBox) poaViewBox.innerText = "Vault Gateway Core Offline. Please reload your portal browser console.";
-        return;
-      }
-
-      try {
-        const { data: { session }, error: sessionError } = await client.auth.getSession();
-        if (sessionError || !session) {
-          window.location.href = 'portal-login.html';
-          return;
-        }
-
-        const userId = session.user.id;
-
-        // SECTION A: QUERY POWER OF ATTORNEY TEXT VALUES FROM WIZARD FLOW
-        const { data: orderRecords, error: dbError } = await client
-          .from('orders')
-          .select('signed_poa_document_text, company_name, created_at')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (dbError) throw dbError;
-
-        if (orderRecords && orderRecords.signed_poa_document_text) {
-          recoveredPoaDocumentText = orderRecords.signed_poa_document_text;
-          globalProfileCompanyName = orderRecords.company_name || "Filing_Order";
-
-          if (poaViewBox) poaViewBox.innerText = recoveredPoaDocumentText;
-          if (downloadButton) downloadButton.removeAttribute('disabled');
-
-          const textTarget = document.getElementById('pdf-text-target');
-          const timestampTarget = document.getElementById('pdf-timestamp-target');
-          
-          if (textTarget) textTarget.innerText = recoveredPoaDocumentText;
-          if (timestampTarget) {
-            const formattedDate = new Date(orderRecords.created_at).toLocaleDateString([], { month: 'long', day: '2-digit', year: 'numeric' });
-            timestampTarget.innerText = `Filing Authorization Date: ${formattedDate}`;
-          }
-        } else {
-          if (poaViewBox) poaViewBox.innerText = "No signed Power of Attorney document records found tracking this account profile.";
-        }
-
-      } catch (err) {
-        console.error("Vault mapping engine crash:", err);
-        if (poaViewBox) poaViewBox.innerText = "System error syncing secure documentation logs. Please refresh your browser window.";
-      }
-    }, 50);
-  });
-
-  // --- 3. EXECUTABLE PDF COMPILATION HANDLING ---
-  function downloadDocumentAsPDF() {
-    if (!recoveredPoaDocumentText) return;
-    const targetElement = document.getElementById('pdf-print-template');
-    if (!targetElement) return;
-
-    const exportConfigOptions = {
-      margin: 15,
-      filename: `POA-${globalProfileCompanyName.replace(/\s+/g, '_')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-    };
-
-    targetElement.style.display = 'block';
-
-    html2pdf().set(exportConfigOptions).from(targetElement).save().then(() => {
-      targetElement.style.display = 'none';
-    }).catch((err) => {
-      console.error("PDF engine compiler failure:", err);
-      targetElement.style.display = 'none';
-    });
-  }
-
-  // --- 4. BACKWARD COMPATIBILITY ACCESS TRIGGER CONTROLLER ---
-  function executeSecureLogout(event) {
-    event.preventDefault();
-    // Redirects click event straight to your robust central sign-out routine inside client-engine.js
-    const clickSimBtn = document.getElementById("portalLogoutBtn");
-    if (clickSimBtn) {
-      clickSimBtn.click();
-    } else {
-      window.location.href = "portal-login.html";
-    }
-  }
-  </script>
-
-
+    <script src="assets/js/clients/client-core.js"></script>
+    <script src="assets/js/clients/client-navigation.js"></script>
+    <script src="assets/js/clients/client-toggle.js"></script>
+    <script src="assets/js/clients/client-vault.js"></script>
 </body>
 </html>

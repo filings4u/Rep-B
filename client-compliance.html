@@ -3,502 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <meta name="theme-color" content="#10b981">                         <!-- Chrome, Firefox, & Opera Mobile -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Wrapper Engine Tracking -->
-    <meta name="msapplication-navbutton-color" content="#10b981">         <!-- Windows Phone Interface Target -->
-
-    
-    <title>Compliance Tracker | filings4u</title>
-    <link rel="stylesheet" href="assets/css/client-custom.css">
+    <title>Compliance Calendar Tracker | filings4u</title>
+    <meta name="theme-color" content="#10b981">
+    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    
+    <link rel="stylesheet" href="assets/css/client.css">
+    <link rel="stylesheet" href="assets/css/client-toggle.css">
 </head>
 <body>
-
-    <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
-    <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
-        <span id="mobileNavTriggerIcon">☰</span> 
-        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
-    </button>
-
     <div class="dashboard-wrapper">
-      <!-- 🏢 UNIFORM DEEP NAVY ENTERPRISE SIDEBAR CONTAINER --> 
-<aside class="portal-sidebar" style="background: #0a1f44; width: 280px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; font-family: system-ui, sans-serif;"> 
-    
-    <!-- BRAND IDENTITY BLOCK (MATCHED BACKGROUND) --> 
-    <div class="sidebar-brand-block" style="padding: 24px 20px; background: #0a1f44; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;"> 
-        <img src="images/logo.png" alt="filings4u" style="height: 38px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto 12px auto !important;"> 
-        
-        <!-- SYSTEM EMERALD ACCENT BADGE --> 
-        <div style="display: flex; justify-content: center;"> 
-            <div class="admin-badge" style="background: rgba(16, 185, 129, 0.12) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.25) !important; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;">Client Account</div> 
-        </div> 
-    </div> 
-
-    <!-- NAVIGATION ACCORDION MATRIX --> 
-    <nav class="sidebar-accordion-menu" style="flex: 1; padding: 16px 12px; background: #0a1f44; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"> 
-        
-        <!-- ACCORDION 1: ACCOUNT PROFILE (CLEAN NAVY PANEL OVERRIDE) --> 
-        <div class="accordion-group"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">My Account <span class="chevron" style="color: #10b981;">▲</span></button> 
-            
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-dashboard.html" class="nav-item active" style="color: #ffffff; background: rgba(16, 185, 129, 0.15); border-left: 3px solid #10b981; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 0 6px 6px 0; display: block; font-weight: 600;">📊 Dashboard Home</a> 
-                <a href="client-entities.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🏢 My Registered Entities</a> 
-                <a href="client-services.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛠️ Order New Services</a> 
-            </div> 
-        </div>
-        <!-- ACCORDION 2: FILINGS & COMPLIANCE (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Filings & Compliance <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-filings.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">⚙️ Active Orders</a> 
-                <a href="client-compliance.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛡️ Compliance Tracker</a> 
-                <a href="client-vault.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📂 Document Vault</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 3: FINANCIALS (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Billing & Invoices <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-account.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💰 My Account</a> 
-                <a href="client-order-history.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💸 Order History</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 4: HELP DESK (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Support <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-chat.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💬 Live Chat Support</a> 
-                <a href="client-knowledgebase.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📰 Help Resources</a> 
-            </div> 
-        </div> 
-    </nav> 
-
-    <!-- SIDEBAR FOOTER SECURITY CONTROLS (NAVY ACCENT MATCH) --> 
-    <div class="sidebar-footer-lock" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; background: #0a1f44;"> 
-        <div class="secure-badge-container" style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #94a3b8; font-weight: 600;"> 
-            <div class="secure-pulse-dot" style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div> 
-            <span class="secure-badge-text">Secure Session Active</span> 
-        </div> 
-        <button id="portalLogoutBtn" class="logout-btn" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ffffff; font-weight: 700; font-size: 0.9rem; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'; this.style.borderColor='rgba(239,68,68,0.3)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ffffff';">Log Out</button> 
-    </div> 
-</aside>
-
-      <!-- ========================================================================== 
-🏢 FILINGS4U COMPLIANCE MATRIX WORKSPACE (Production Full-Width Frame Lock) 
-========================================================================== --> 
-<main class="portal-main" style="width: 100% !important; max-width: 100% !important; margin: 0 auto !important; padding: 30px 20px !important; box-sizing: border-box !important;"> 
-    
- <!-- 🧱 NATURAL SCROLLING MAIN WORKSPACE HEADER --> 
-    <header class="portal-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; flex-wrap: wrap !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; border-bottom: 1px solid var(--border-color, #e2e8f0) !important; padding-bottom: 20px !important; margin-bottom: 35px !important;"> 
-        <div class="welcome-text" style="text-align: left !important;"> 
-            <h1 style="margin: 0 0 6px 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; color: #0a1f44 !important;">Welcome Back, <span id="clientNameField">Client</span></h1> 
-            <p style="margin: 0 !important; font-size: 0.9rem !important; color: #64748b !important;">Manage your company business filings and compliance status</p> 
-        </div> 
-
-        <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX --> 
-        <div class="header-actions-wrapper" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-end !important; gap: 15px !important; flex-wrap: wrap !important; max-width: 100% !important;"> 
-            <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; box-sizing: border-box !important;"> 
-                <!-- CHANGE THE href SELECTION TO PREVENT LEAVING THE PAGE -->
-<a href="javascript:void(0);" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important;">
-  <span class="nav-bell-icon" style="font-size: 1.3rem !important; color: #0a1f44 !important; cursor: pointer !important;">🔔</span>
-  <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.65rem !important; font-weight: 800 !important; padding: 2px 6px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-</a>
-
-            </div> 
-
-            <div class="header-actions-wrapper">
-                    <div class="header-clock-pill"><span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
+                    </div>
                 </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
+                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
+                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-account.html" class="nav-item">💰 My Account</a>
+                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+                    </div>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock"><button id="portalLogoutBtn" class="logout-btn">Log Out</button></div>
+        </aside>
 
-            <div style="box-sizing: border-box !important;"> 
-                <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 12px 18px !important; border: 1px solid var(--border-color, #e2e8f0) !important; border-radius: 6px !important; font-size: 0.9rem !important; outline: none !important; min-width: 260px !important; color: #0a1f44 !important; box-sizing: border-box !important;"> </div> 
-        </div> 
-    </header> 
+        <!-- 🖥️ SCROLLABLE VIEWPORT -->
+        <main class="portal-main">
+            <header class="portal-header">
+                <div class="welcome-text">
+                    <h1>State Compliance Monitor</h1>
+                    <p>Track statutory renewal markers, structural annual tracking terms, and state actions</p>
+                </div>
+                <div class="header-clock-pill"><span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+            </header>
 
-    <!-- 📐 FULL-WIDTH COMPLIANCE LEDGER CONTAINER --> 
-    <div class="portal-content-layout" style="width: 100% !important; max-width: 100% !important; display: block !important; box-sizing: border-box !important;"> 
-        <!-- FORCED FULL WIDTH STRUCTURE OVERRIDE CARD --> 
-        <div class="content-panel visual-card" style="width: 100% !important; min-width: 100% !important; box-sizing: border-box !important; background: #ffffff; padding: 25px !important; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"> 
-            <div class="panel-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
-                <h2 style="margin:0; font-size:1.25rem; font-weight:800; color:#0a1f44;">Upcoming Statutory Obligations</h2>
-            </div> 
-            <div class="table-responsive tight-scroll-area" style="width: 100% !important; overflow-x: auto !important;"> 
-                <table class="portal-table" style="width: 100% !important; min-width: 100% !important; border-collapse: collapse;"> 
-                    <thead> 
-                        <tr style="text-align: left; background: #f8fafc; border-bottom: 2px solid #e2e8f0;"> 
-                            <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 0.85rem; text-transform: uppercase;">Requirement Description</th> 
-                            <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 0.85rem; text-transform: uppercase;">State Authority</th> 
-                            <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 0.85rem; text-transform: uppercase;">Filing Deadline</th> 
-                            <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 0.85rem; text-transform: uppercase;">Operational Risk Status</th> 
-                        </tr> 
-                    </thead> 
-                    <tbody id="complianceMatrixTableBody"> 
-                        <tr> 
-                            <td colspan="4" style="text-align:center; padding:35px; color:#64748b; font-weight:600;">
-                                Syncing secure database clusters...
-                            </td> 
-                        </tr> 
-                    </tbody> 
-                </table> 
-            </div> 
-        </div> 
+            <div class="content-container">
+                <div class="console-card">
+                    <h2>Outstanding Regulatory Deadlines Calendar</h2>
+                    <div id="complianceMasterTargetStack" style="display: flex !important; flex-direction: column !important; gap: 16px !important;">
+                        <p style="font-size: 0.85rem !important; color: var(--text-muted) !important;">Parsing state timeline rules safely...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-</main>
 
-    </div>
-
- <script>
-// 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
-function toggleSidebarAccordion(buttonElement) {
-  buttonElement.classList.toggle('active');
-  const panel = buttonElement.nextElementSibling;
-  if (panel && panel.style) {
-    if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-      panel.style.maxHeight = "0px";
-    } else {
-      panel.style.maxHeight = panel.scrollHeight + "px";
-    }
-  }
-}
-
-// 🟢 AUTOMATIC ACCORDION & EMERALD LINK ACTIVE TRACKER
-document.addEventListener("DOMContentLoaded", () => {
-  const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
-  const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
-  
-  activeLinks.forEach(link => {
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    link.classList.add('active');
-    const matchingPanel = link.closest('.accordion-panel');
-    if (matchingPanel) {
-      matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-      const folderTriggerButton = matchingPanel.previousElementSibling;
-      if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-        folderTriggerButton.classList.add('active');
-        const chevronSpan = folderTriggerButton.querySelector('.chevron');
-        if (chevronSpan) chevronSpan.textContent = "▲";
-      }
-    }
-  });
-});
-
-function toggleMobileSidebarMenuOverlay() {
-  if (window.innerWidth > 992) return;
-  const sidebar = document.querySelector(".portal-sidebar");
-  const icon = document.getElementById("mobileNavTriggerIcon");
-  if (!sidebar) return;
-  sidebar.classList.toggle("mobile-revealed");
-  if (sidebar.classList.contains("mobile-revealed")) {
-    icon.textContent = "✕";
-  } else {
-    icon.textContent = "☰";
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const navLinks = document.querySelectorAll(".nav-item");
-  navLinks.forEach(link => {
-    link.addEventListener("click", () => {
-      const sidebar = document.querySelector(".portal-sidebar");
-      if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-        toggleMobileSidebarMenuOverlay();
-      }
-    });
-  });
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(async () => {
-    const client = window.supabaseClient || window.supabase;
-    const complianceList = document.getElementById("complianceTrackerList");
-    if (!client || !complianceList) return;
-
-    try {
-      const { data: { session } } = await client.auth.getSession();
-      if (!session) return;
-
-      // ✅ FIX 1: Swapped legacy owner_id column for your unified user_id column schema
-      const { data: deadlines, error } = await client
-        .from('compliance_deadlines')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('due_date', { ascending: true });
-
-      if (error) throw error;
-
-      complianceList.innerHTML = deadlines.map(task => `
-        <div class="compliance-row visual-card" style="display:flex; align-items:center; justify-content:space-between; padding:15px; margin-bottom:10px; border: 1px solid #e2e8f0; border-radius: 6px;">
-          <div>
-            <strong style="display:block; color: #0a1f44;">${task.company_name} - ${task.filing_requirement}</strong>
-            <span style="font-size:0.8rem; color:#ef4444; font-weight: 600;">Due Date: ${new Date(task.due_date).toLocaleDateString()}</span>
-          </div>
-          <span class="status-pill status-${String(task.status).toLowerCase()}">${task.status}</span>
-        </div>
-      `).join('');
-    } catch (err) {
-      console.error("Compliance engine tracking crash:", err);
-    }
-  }, 50);
-});
-</script>
-
-<script>
-// --- 1. ACCESS SHARED GLOBAL DATABASE CONNECTIONS ---
-const complianceCoreClient = window.supabaseClient || window.supabase;
-
-// --- 2. ENGINE INITIALIZATION LAUNCH ---
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(async () => {
-    const client = window.supabaseClient || window.supabase || complianceCoreClient;
-    const matrixBody = document.getElementById("complianceMatrixTableBody");
-    if (!matrixBody) {
-      console.error("Layout Exception: Target viewport element #complianceMatrixTableBody missing from DOM.");
-      return;
-    }
-    if (!client) {
-      matrixBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">Connection failure. Please reload the console.</td></tr>`;
-      return;
-    }
-
-    try {
-      const { data: { session }, error: sessionError } = await client.auth.getSession();
-      if (sessionError || !session) {
-        window.location.href = 'portal-login.html';
-        return;
-      }
-
-      // ✅ FIX 2: Swapped legacy owner_id column for your unified user_id column schema
-      const { data: deadlines, error: dbError } = await client
-        .from('compliance_deadlines')
-        .select('id, requirement_name, state_authority, due_date, created_at, status')
-        .eq('user_id', session.user.id)
-        .order('due_date', { ascending: true });
-
-      if (dbError) throw dbError;
-
-      if (!deadlines || deadlines.length === 0) {
-        matrixBody.innerHTML = `
-          <tr>
-            <td colspan="4" style="text-align:center; padding:45px; color:#64748b;">
-              <strong>Your Corporate Profile is Fully Compliant</strong>
-              <p style="margin:5px 0 0 0; font-size:0.85rem; color:#94a3b8;">No current statutory filings or franchise fees are owed to regional agencies.</p>
-            </td>
-          </tr>`;
-        return;
-      }
-
-      // --- 3. RUN TIME-BASED CALCULATIONS & RENDERING OVER THE AIR ---
-      matrixBody.innerHTML = deadlines.map(task => {
-        const uploadDateTime = new Date(task.created_at);
-        const statutoryDeadline = new Date(task.due_date);
-        const activeClockNow = new Date();
-        
-        const timeDeltaMilliseconds = statutoryDeadline.getTime() - activeClockNow.getTime();
-        const remainingDaysUntilLimit = Math.ceil(timeDeltaMilliseconds / (1000 * 60 * 60 * 24));
-        
-        const isWithinFourWeeks = remainingDaysUntilLimit <= 28 && remainingDaysUntilLimit > 0;
-        const isOverdue = remainingDaysUntilLimit <= 0;
-
-        let operationalStatusPill = '';
-        let operationalActionCellButton = '';
-
-        if (isOverdue) {
-          operationalStatusPill = `<span class="status-pill strict-critical" style="background:#fef2f2; color:#ef4444; border:1px solid #fee2e2; font-weight:700; padding:4px 10px; border-radius:12px;">Overdue Risk</span>`;
-        } else if (isWithinFourWeeks) {
-          operationalStatusPill = `<span class="status-pill critical-alert" style="background:#fffbeb; color:#d97706; border:1px solid #fef3c7; font-weight:700; padding:4px 10px; border-radius:12px;">${remainingDaysUntilLimit} Days Left</span>`;
-        } else {
-          operationalStatusPill = `<span class="status-pill compliant-good" style="background:#ecfdf5; color:#10b981; border:1px solid #d1fae5; font-weight:600; padding:4px 10px; border-radius:12px;">Compliant</span>`;
-        }
-
-        if (isWithinFourWeeks || isOverdue || String(task.status).toUpperCase() === 'PENDING_ACTION') {
-          operationalActionCellButton = `
-            <div style="margin-top:8px;">
-              <button class="btn-sm" style="background:#10b981; color:#fff; border:0; padding:6px 12px; border-radius:4px; font-weight:700; font-size:0.8rem; cursor:pointer;" onclick="routeFilingToWizard('${task.id}', '${encodeURIComponent(task.requirement_name)}', '${task.state_authority}')">
-                Renew Now →
-              </button>
-            </div> `;
-        }
-
-        return `
-          <tr style="border-bottom:1px solid #e2e8f0;">
-            <td style="padding:15px 10px;">
-              <strong style="color:#0a1f44; font-size:0.95rem; display:block;">${task.requirement_name}</strong>
-              <small style="color:#94a3b8; font-size:0.75rem;">System Processing Lock Engaged: ${uploadDateTime.toLocaleString([], {month:'2-digit', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'})}</small>
-            </td>
-            <td><span style="font-weight:500; color:#475569;">${task.state_authority || 'State Agency'}</span></td>
-            <td><strong style="color:#1e293b;">${statutoryDeadline.toLocaleDateString([], {month:'2-digit', day:'2-digit', year:'numeric'})}</strong></td>
-            <td>
-              <div>${operationalStatusPill}</div>
-              ${operationalActionCellButton}
-            </td>
-          </tr> `;
-      }).join('');
-    } catch (err) {
-      console.error("Compliance Engine Pipeline sync exception:", err);
-      matrixBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">⚠️ Master Database synchronization error. Please retry.</td></tr>`;
-    }
-  }, 50);
-});
-
-// --- 4. EXECUTABLE TRANSIT PIPELINE TO WIZARD INTERFACE ---
-function routeFilingToWizard(recordId, itemEscapedName, stateCodeStr) {
-  const client = window.supabaseClient || window.supabase;
-  if (!client) return;
-
-  client.auth.getSession().then(({ data: { session } }) => {
-    if (!session) {
-      window.location.href = "portal-login.html";
-      return;
-    }
-
-    const trackingPayloadString = `?uid=${session.user.id}` + 
-      `&compliance_id=${recordId}` + 
-      `&service=${itemEscapedName}` + 
-      `&state=${encodeURIComponent(stateCodeStr)}` + 
-      `&flow_context=renewal_mutation`;
-
-    // ✅ FIX 3: Redirect route string updated to point safely to your client checkout wizard
-    window.location.href = `wizard.html${trackingPayloadString}`;
-  });
-}
-</script>
-
-
-<script>
-// --- 1. ACCESS VALIDATED CENTRAL NETWORK GATEWAY ---
-const complianceMatrixClient = window.supabaseClient || window.supabase;
-
-// --- 2. ENGINE TIMING BOOTSTRAPPER OVER THE AIR ---
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(async () => {
-    const client = window.supabaseClient || window.supabase || complianceMatrixClient;
-    const targetTableBody = document.getElementById("complianceMatrixTableBody");
-    
-    if (!targetTableBody) {
-      console.error("Critical Render Failure: Table target wrapper element missing from dashboard viewport.");
-      return;
-    }
-    if (!client) {
-      targetTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; font-weight:700; padding:25px;">Gateway Core Disconnected. Please refresh the browser.</td></tr>`;
-      return;
-    }
-
-    try {
-      // Extract verified customer session context profile
-      const { data: { session }, error: sessionError } = await client.auth.getSession();
-      if (sessionError || !session) {
-        window.location.href = 'portal-login.html';
-        return;
-      }
-
-      // ✅ FIX 1: Swapped legacy owner_id query filter for your verified user_id schema column field
-      const { data: coreDeadlines, error: dbError } = await client
-        .from('compliance_deadlines')
-        .select('id, requirement_name, state_authority, due_date, created_at, status')
-        .eq('user_id', session.user.id)
-        .order('due_date', { ascending: true });
-
-      if (dbError) throw dbError;
-
-      // Empty Table Boundary Safe Handling
-      if (!coreDeadlines || coreDeadlines.length === 0) {
-        targetTableBody.innerHTML = `
-          <tr>
-            <td colspan="4" style="text-align:center; padding:50px; color:#64748b;">
-              <div style="font-size:1.8rem; margin-bottom:10px;">🛡️</div>
-              <strong style="font-size:1rem; color:#0a1f44;">Your Corporate Identity is Fully Compliant</strong>
-              <p style="margin:5px 0 0 0; font-size:0.85rem; color:#94a3b8;">No statutory filings or registration adjustments are requested by state agencies.</p>
-            </td>
-          </tr>`;
-        return;
-      }
-
-      // --- 3. DYNAMIC PRODUCTION CALCULATION LOOP RUNTIME ---
-      targetTableBody.innerHTML = coreDeadlines.map(task => {
-        const adminUploadTimestamp = new Date(task.created_at);
-        const legalStatutoryDeadline = new Date(task.due_date);
-        const systemClockNow = new Date();
-        
-        // Compute absolute calendar delta metrics
-        const calculationTimeDifference = legalStatutoryDeadline.getTime() - systemClockNow.getTime();
-        const absoluteRemainingDays = Math.ceil(calculationTimeDifference / (1000 * 60 * 60 * 24));
-        
-        // Compute 4-week threshold tracking boundary rule lines (28 Days)
-        const isUnderFourWeekThreshold = absoluteRemainingDays <= 28 && absoluteRemainingDays > 0;
-        const isAccountDelinquent = absoluteRemainingDays <= 0;
-
-        let customStatusPillBadge = '';
-        let dynamicRenewalActionCell = '';
-
-        if (isAccountDelinquent) {
-          customStatusPillBadge = `<span style="background:#fef2f2; color:#ef4444; border:1px solid #fee2e2; font-weight:700; padding:5px 12px; border-radius:20px; font-size:0.8rem; display:inline-block;">Critical Delinquency</span>`;
-        } else if (isUnderFourWeekThreshold) {
-          customStatusPillBadge = `<span style="background:#fffbeb; color:#d97706; border:1px solid #fef3c7; font-weight:700; padding:5px 12px; border-radius:20px; font-size:0.8rem; display:inline-block;">Action Needed (${absoluteRemainingDays} Days Left)</span>`;
-        } else {
-          customStatusPillBadge = `<span style="background:#ecfdf5; color:#10b981; border:1px solid #d1fae5; font-weight:600; padding:5px 12px; border-radius:20px; font-size:0.8rem; display:inline-block;">Compliant / Active</span>`;
-        }
-
-        // ACTION BUTTON DISPLAY LOGIC: Renders the action path for pending or upcoming items
-        if (isUnderFourWeekThreshold || isAccountDelinquent || String(task.status).toUpperCase() === 'PENDING_ACTION') {
-          dynamicRenewalActionCell = `
-            <div style="margin-top:10px;">
-              <button class="btn-action-trigger" style="background:#10b981; color:#ffffff; border:0; padding:8px 16px; border-radius:6px; font-weight:700; font-size:0.8rem; cursor:pointer; transition:all 0.2s; box-shadow: 0 1px 2px rgba(16,185,129,0.2);" onclick="dispatchRenewalSessionRoute('${task.id}', '${encodeURIComponent(task.requirement_name)}', '${task.state_authority}')">
-                Renew Now →
-              </button>
-            </div> `;
-        }
-
-        return `
-          <tr style="border-bottom:1px solid #e2e8f0; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-            <td style="padding:18px 16px; vertical-align:middle;">
-              <strong style="color:#0a1f44; font-size:1rem; display:block; margin-bottom:4px;">${task.requirement_name}</strong>
-              <span style="color:#94a3b8; font-size:0.75rem; display:block;">Admin Upload Marker: ${adminUploadTimestamp.toLocaleString([], {month:'2-digit', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
-            </td>
-            <td style="padding:18px 16px; color:#475569; font-weight:500; vertical-align:middle;">${task.state_authority || 'Regional Agency'}</td>
-            <td style="padding:18px 16px; color:#1e293b; font-weight:700; vertical-align:middle;">${legalStatutoryDeadline.toLocaleDateString([], {month:'2-digit', day:'2-digit', year:'numeric'})}</td>
-            <td style="padding:18px 16px; vertical-align:middle;">
-              <div>${customStatusPillBadge}</div>
-              ${dynamicRenewalActionCell}
-            </td>
-          </tr> `;
-      }).join('');
-
-    } catch (err) {
-      console.error("Compliance matrix mapping engine exception caught:", err);
-      targetTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; font-weight:600; padding:25px;">⚠️ Pipeline Connection Error: Failed to synchronize historical data logs.</td></tr>`;
-    }
-  }, 50);
-});
-
-// --- 4. EXECUTABLE REDIRECT TRANSIT CONSOLE PIPELINE ---
-function dispatchRenewalSessionRoute(recordId, escapedServiceName, targetStateAuthority) {
-  const client = window.supabaseClient || window.supabase;
-  if (!client) return;
-
-  client.auth.getSession().then(({ data: { session } }) => {
-    if (!session) {
-      window.location.href = "portal-login.html";
-      return;
-    }
-
-    const routeDestQueryParameters = `?uid=${session.user.id}` + 
-      `&compliance_target_id=${recordId}` + 
-      `&service=${escapedServiceName}` + 
-      `&state=${encodeURIComponent(targetStateAuthority)}` + 
-      `&checkout_profile=renewal_mutation`;
-
-    // ✅ FIX 2: Corrected redirection target URL to point securely to client checkout module pages
-    window.location.href = `wizard.html${routeDestQueryParameters}`;
-  });
-}
-</script>
+    <script src="assets/js/clients/client-core.js"></script>
+    <script src="assets/js/clients/client-navigation.js"></script>
+    <script src="assets/js/clients/client-toggle.js"></script>
+    <script src="assets/js/clients/client-compliance.js"></script>
 </body>
 </html>

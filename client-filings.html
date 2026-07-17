@@ -3,416 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <meta name="theme-color" content="#10b981">                         <!-- Chrome, Firefox, & Opera Mobile -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> <!-- Safari iOS Wrapper Engine Tracking -->
-    <meta name="msapplication-navbutton-color" content="#10b981">         <!-- Windows Phone Interface Target -->
-    
-    <title>Active Orders | filings4u</title>
-    <link rel="stylesheet" href="assets/css/client-custom.css">
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+    <title>Active Orders Tracking | filings4u</title>
+    <meta name="theme-color" content="#10b981">
+    <link rel="icon" type="image/png" href="images/fav.png">
+    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    
+    <link rel="stylesheet" href="assets/css/client.css">
+    <link rel="stylesheet" href="assets/css/client-toggle.css">
 </head>
 <body>
-    <!-- 🎯 PLACED IMMEDIATELY AT OUTSIDE LAYOUT HOOK LINE ROOT -->
-    <button id="mobileNavToggleBtn" class="mobile-nav-toggle-btn" onclick="toggleMobileSidebarMenuOverlay()">
-        <span id="mobileNavTriggerIcon">☰</span> 
-        <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">Menu</span>
-    </button>
-
     <div class="dashboard-wrapper">
-    <!-- 🏢 UNIFORM DEEP NAVY ENTERPRISE SIDEBAR CONTAINER --> 
-<aside class="portal-sidebar" style="background: #0a1f44; width: 280px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; font-family: system-ui, sans-serif;"> 
-    
-    <!-- BRAND IDENTITY BLOCK (MATCHED BACKGROUND) --> 
-    <div class="sidebar-brand-block" style="padding: 24px 20px; background: #0a1f44; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: center;"> 
-        <img src="images/logo.png" alt="filings4u" style="height: 38px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto 12px auto !important;"> 
-        
-        <!-- SYSTEM EMERALD ACCENT BADGE --> 
-        <div style="display: flex; justify-content: center;"> 
-            <div class="admin-badge" style="background: rgba(16, 185, 129, 0.12) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.25) !important; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;">Client Account</div> 
-        </div> 
-    </div> 
+        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand-block">
+                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.15) !important;">Client Account</div></div>
+            </div>
+            <nav class="sidebar-accordion-menu">
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
+                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
+                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-account.html" class="nav-item">💰 My Account</a>
+                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
+                    </div>
+                </div>
+                <div class="accordion-group">
+                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
+                    <div class="accordion-panel">
+                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+                    </div>
+                </div>
+            </nav>
+            <div class="sidebar-footer-lock">
+                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
 
-    <!-- NAVIGATION ACCORDION MATRIX --> 
-    <nav class="sidebar-accordion-menu" style="flex: 1; padding: 16px 12px; background: #0a1f44; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"> 
-        
-        <!-- ACCORDION 1: ACCOUNT PROFILE (CLEAN NAVY PANEL OVERRIDE) --> 
-        <div class="accordion-group"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">My Account <span class="chevron" style="color: #10b981;">▲</span></button> 
-            
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-dashboard.html" class="nav-item active" style="color: #ffffff; background: rgba(16, 185, 129, 0.15); border-left: 3px solid #10b981; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 0 6px 6px 0; display: block; font-weight: 600;">📊 Dashboard Home</a> 
-                <a href="client-entities.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🏢 My Registered Entities</a> 
-                <a href="client-services.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛠️ Order New Services</a> 
-            </div> 
-        </div>
-        <!-- ACCORDION 2: FILINGS & COMPLIANCE (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Filings & Compliance <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-filings.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">⚙️ Active Orders</a> 
-                <a href="client-compliance.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">🛡️ Compliance Tracker</a> 
-                <a href="client-vault.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📂 Document Vault</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 3: FINANCIALS (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Billing & Invoices <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-account.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💰 My Account</a> 
-                <a href="client-order-history.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💸 Order History</a> 
-            </div> 
-        </div> 
-
-        <!-- ACCORDION 4: HELP DESK (NAVY OVERRIDE) --> 
-        <div class="accordion-group" style="margin-top: 10px;"> 
-            <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)" style="width: 100%; text-align: left; background: none; border: none; color: #ffffff; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Support <span class="chevron" style="color: #10b981;">▲</span></button> 
-            <div class="accordion-panel" style="max-height: 600px; background: #0a1f44; display: flex; flex-direction: column; gap: 2px; padding-left: 4px; margin-top: 4px;"> 
-                <a href="client-chat.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">💬 Live Chat Support</a> 
-                <a href="client-knowledgebase.html" class="nav-item" style="color: #94a3b8; text-decoration: none; font-size: 0.95rem; padding: 8px 12px; border-radius: 6px; display: block;">📰 Help Resources</a> 
-            </div> 
-        </div> 
-    </nav> 
-
-    <!-- SIDEBAR FOOTER SECURITY CONTROLS (NAVY ACCENT MATCH) --> 
-    <div class="sidebar-footer-lock" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; background: #0a1f44;"> 
-        <div class="secure-badge-container" style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #94a3b8; font-weight: 600;"> 
-            <div class="secure-pulse-dot" style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div> 
-            <span class="secure-badge-text">Secure Session Active</span> 
-        </div> 
-        <button id="portalLogoutBtn" class="logout-btn" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ffffff; font-weight: 700; font-size: 0.9rem; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'; this.style.borderColor='rgba(239,68,68,0.3)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='#ffffff';">Log Out</button> 
-    </div> 
-</aside>
-
-        <!-- 🧱 MAIN INDEPENDENT CONTROLLABLE SCROLL AREA -->
+        <!-- 🖥️ PRIMARY SCROLLABLE VIEWPORT -->
         <main class="portal-main">
             <header class="portal-header">
                 <div class="welcome-text">
-                    <h1>Active State Application Orders</h1>
-                    <p>Live progress tracking updates and historical milestone records</p>
+                    <h1>Active Filing Orders</h1>
+                    <p>Real-time lifecycle monitoring for state filings, EIN configurations, and corporate requests</p>
                 </div>
                 <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span>
-                        <span id="portal-clock">00/00/0000 | 00:00:00</span>
-                    </div>
+                    <div class="header-clock-pill"><span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
+                    <div><input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search orders matrix..."></div>
                 </div>
             </header>
 
-            <div class="portal-content-layout">
-                <!-- LEFT COLUMN: MAIN ORDERS LEDGER LIST -->
-                <div class="content-panel visual-card">
-                    <div class="panel-header">
-                        <h2>Filing Operations Status</h2>
-                    </div>
-                    <!-- Contained tight-scroll boundaries to completely block viewport breakaways -->
-                    <div class="table-responsive tight-scroll-area" style="max-height: 500px;">
-                        <table class="portal-table">
-                            <thead>
-                                <tr>
-                                    <th>Service Applied</th>
-                                    <th>Filing ID</th>
-                                    <th>Pipeline Stage</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productionFilingsTable">
-                                <tr><td colspan="3" class="table-loader">Querying state databases...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- RIGHT COLUMN: TARGET LOG UPDATE DETAILS -->
-                <div class="content-panel visual-card">
-                    <div class="panel-header">
-                        <h2>Milestone Logs</h2>
-                    </div>
-                    <div class="tight-scroll-area" style="max-height: 500px;" id="productionFilingTimeline">
-                        <div class="timeline-item">
-                            <h4>Select Row</h4>
-                            <p>Click any active transaction row to populate historical pipeline trace logs.</p>
-                        </div>
+            <div class="content-container">
+                <div class="console-card">
+                    <h2>Live Order Pipeline Execution Status</h2>
+                    <div id="activeOrdersListTarget" style="display: flex !important; flex-direction: column !important; gap: 20px !important;">
+                        <p style="font-size: 0.82rem !important; color: var(--text-muted) !important;">Fetching live workflow tracking parameters from admin deployment queues...</p>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
- 
-   <script>
-    // 📁 ACCORDION NAVIGATION COLLAPSIBLE ACTIONS
-    function toggleSidebarAccordion(buttonElement) {
-        buttonElement.classList.toggle('active');
-        const panel = buttonElement.nextElementSibling;
-        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-            panel.style.maxHeight = "0px";
-        } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-    }
-
-    // 🟢 AUTOMATIC ACCORDION & EMERALD LINK ACTIVE TRACKER
-    document.addEventListener("DOMContentLoaded", () => {
-        const currentFileName = window.location.pathname.split("/").pop() || "client-dashboard.html";
-        
-        // Find every navigation link matching the exact current browser page filename
-        const activeLinks = document.querySelectorAll(`.sidebar-accordion-menu a[href="${currentFileName}"]`);
-        
-        activeLinks.forEach(link => {
-            // 1. Wipe out any stale fallback active states on sister components
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            
-            // 2. Pin the emerald line highlight exactly to the clicked link item
-            link.classList.add('active');
-            
-            // 3. Find the parent folder panel block containing this active sub-link
-            const matchingPanel = link.closest('.accordion-panel');
-            if (matchingPanel) {
-                // Force open the panel container box
-                matchingPanel.style.maxHeight = matchingPanel.scrollHeight + "px";
-                
-                // Find the button directly above the panel and toggle its chevron to "▲" (active)
-                const folderTriggerButton = matchingPanel.previousElementSibling;
-                if (folderTriggerButton && folderTriggerButton.classList.contains('accordion-trigger')) {
-                    folderTriggerButton.classList.add('active');
-                    const chevronSpan = folderTriggerButton.querySelector('.chevron');
-                    if (chevronSpan) chevronSpan.textContent = "▲";
-                }
-            }
-        });
-    });
-
-function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
-
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase;
-          const timeline = document.getElementById("filingTimeline");
-          if (!client || !timeline) return;
-
-          try {
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) return;
-
-              const { data: filings, error } = await client
-                  .from('filing_orders')
-                  .select('*')
-                  .eq('user_id', session.user.id)
-                  .order('updated_at', { ascending: false });
-
-              if (error) throw error;
-
-              // ✅ REAL-TIME TIMELINE STATE RE-HYDRATION HOOK
-client
-  .channel('live-client-timeline-tracking-stream')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'filing_orders', filter: `user_id=eq.${session.user.id}` },
-    () => {
-      console.log("⚙️ Timeline Processing Mutation Dispatched by Admin! Reloading view element cards...");
-      // Re-trigger your safe background loader loop function natively
-      if (typeof fetchClientFilingsTimeline === 'function') fetchClientFilingsTimeline();
-    }
-  )
-  .subscribe();
-
-
-              if (!filings || filings.length === 0) {
-                  timeline.innerHTML = `<div style="text-align:center; padding:30px; color:#888;">No active filings are in progress.</div>`;
-                  return;
-              }
-
-              timeline.innerHTML = filings.map(item => `
-                  <div class="timeline-item visual-card">
-                      <div class="timeline-header" style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                          <h4 style="margin:0; font-weight:700;">${item.service_title}</h4>
-                          <span class="status-pill ${String(item.status).toLowerCase()}">${item.status}</span>
-                      </div>
-                      <p style="margin:0; font-size:0.85rem; color:#64748b;">${item.status_description || 'In system parameter state review.'}</p>
-                      <small style="display:block; margin-top:6px; color:#94a3b8;">Updated: ${new Date(item.updated_at).toLocaleDateString()}</small>
-                  </div>
-              `).join('');
-          } catch (err) {
-              console.error("Timeline engine failure:", err);
-          }
-      }, 50);
-  });
-</script>
-
-<script>
-  // --- 1. GLOBAL WORKSPACE STORAGE STATES ---
-  let currentlySelectedFilingId = null;
-
-  // --- 2. ENGINE BOOTSTRAPPER LAUNCH OVER THE AIR ---
-  document.addEventListener('DOMContentLoaded', () => {
-      // 50ms defensive delay check ensures central infrastructure boots first
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase;
-          const leftTableBody = document.getElementById("productionFilingsTable");
-          
-          if (!leftTableBody) {
-              console.error("Layout Error: Target element #productionFilingsTable is missing from DOM.");
-              return;
-          }
-
-          if (!client) {
-              leftTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#ef4444; padding:20px;">Connection failure. Please reload the console.</td></tr>`;
-              return;
-          }
-
-          try {
-              // Ensure authenticated portal credentials exist
-              const { data: { session }, error: sessionError } = await client.auth.getSession();
-              if (sessionError || !session) {
-                  window.location.href = 'portal-login.html';
-                  return;
-              }
-
-              // Query all active filing records owned by this account
-              const { data: filings, error: dbError } = await client
-                  .from('filing_orders')
-                  .select('id, service_title, tracking_number, status')
-                  .eq('user_id', session.user.id)
-                  .order('updated_at', { ascending: false });
-
-              if (dbError) throw dbError;
-
-              // Handle empty database ledger states gracefully
-              if (!filings || filings.length === 0) {
-                  leftTableBody.innerHTML = `
-                      <tr>
-                          <td colspan="3" style="text-align:center; padding:40px; color:#64748b;">
-                              <strong>No Active Filing Operations Found</strong>
-                              <p style="margin:5px 0 0 0; font-size:0.85rem; color:#94a3b8;">Purchase a service to track corporate submittals.</p>
-                          </td>
-                      </tr>`;
-                  return;
-              }
-
-              // Render left table rows with a click handler to load specific milestone timelines
-              leftTableBody.innerHTML = filings.map(row => {
-                  const statusClass = String(row.status).toLowerCase().replace(/\s+/g, '-');
-                  return `
-                      <tr style="cursor:pointer;" onclick="loadMilestoneTimelineLogs('${row.id}', this)" class="filing-data-row">
-                          <td><strong style="color:#0a1f44;">${row.service_title}</strong></td>
-                          <td><span style="font-family:monospace; font-size:0.85rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${row.tracking_number || 'Pending Assignment'}</span></td>
-                          <td><span class="status-pill status-${statusClass}">${row.status}</span></td>
-                      </tr>
-                  `;
-              }).join('');
-
-          } catch (err) {
-              console.error("Filing operations master fetch error:", err);
-              leftTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#ef4444; padding:20px;">Failed to synchronize pipeline rosters.</td></tr>`;
-          }
-      }, 50);
-  });
-
-  // --- 3. DYNAMIC INTERACTIVE ROW DETAIL LOADER ---
-  async function loadMilestoneTimelineLogs(filingId, rowDomElement) {
-      const client = window.supabaseClient || window.supabase;
-      const timelineBox = document.getElementById("productionFilingTimeline");
-      
-      if (!timelineBox || !client) return;
-
-      // Visual UI Feedback: Add active class row highlighting to the selected line item
-      document.querySelectorAll(".filing-data-row").forEach(r => r.style.background = "");
-      rowDomElement.style.background = "#f0fdf4"; // Light emerald green canvas pop highlight
-
-      currentlySelectedFilingId = filingId;
-      timelineBox.innerHTML = `<div style="text-align:center; padding:30px; color:#888;">Fetching historic pipeline traces...</div>`;
-
-      try {
-          // Query all historic milestone changes associated with this specific transaction entry ID
-          const { data: logs, error: logError } = await client
-              .from('filing_milestones_history')
-              .select('milestone_title, message_description, created_at')
-              .eq('filing_order_id', filingId)
-              .order('created_at', { ascending: false });
-
-          if (logError) throw logError;
-
-          if (!logs || logs.length === 0) {
-              timelineBox.innerHTML = `
-                  <div class="timeline-item" style="text-align:center; padding:30px; color:#64748b;">
-                      <h4>Initial Processing Stage</h4>
-                      <p>Filing order created safely. Documents are undergoing initial format review prior to state submission channels.</p>
-                  </div>`;
-              return;
-          }
-
-          // Inject chronological trace elements dynamically onto the right-side dashboard card area
-          timelineBox.innerHTML = logs.map(log => `
-              <div class="timeline-item" style="border-left:2px solid #10b981; padding-left:15px; margin-bottom:20px; position:relative;">
-                  <div style="width:10px; height:10px; background:#10b981; border-radius:50%; position:absolute; left:-6px; top:5px;"></div>
-                  <h4 style="margin:0 0 4px 0; font-size:0.95rem; font-weight:700; color:#0a1f44;">${log.milestone_title}</h4>
-                  <p style="margin:0 0 6px 0; font-size:0.85rem; color:#475569; line-height:1.5;">${log.message_description}</p>
-                  <small style="color:#94a3b8; font-size:0.78rem;">Timestamp: ${new Date(log.created_at).toLocaleString()}</small>
-              </div>
-          `).join('');
-
-          // ✅ REAL-TIME SUB-TIMELINE MILESTONE RE-HYDRATION HOOK
-const activeSyncChannelName = `live-milestones-stream-${filingId}`;
-// Clear old ghost listeners if the client shifts rows
-client.removeChannel(client.channel(activeSyncChannelName));
-
-client
-  .channel(activeSyncChannelName)
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'filing_milestones_history', filter: `filing_order_id=eq.${filingId}` },
-    () => {
-      console.log("🔔 Fresh Milestone Track Logged by Admin Desk! Re-rendering item view...");
-      // Quietly reload the active row's timeline data view frame instantly
-      loadMilestoneTimelineLogs(filingId, rowDomElement);
-    }
-  )
-  .subscribe();
-
-
-      } catch (err) {
-          console.error("Timeline history load crash:", err);
-          timelineBox.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;">Error retrieving historic tracing vectors.</div>`;
-      }
-  }
-</script>
-
-
-
+    <script src="assets/js/clients/client-core.js"></script>
+    <script src="assets/js/clients/client-navigation.js"></script>
+    <script src="assets/js/clients/client-toggle.js"></script>
+    <script src="assets/js/clients/client-filings.js"></script>
 </body>
 </html>
