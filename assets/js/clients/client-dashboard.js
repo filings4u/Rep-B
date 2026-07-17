@@ -65,7 +65,7 @@ async function fetchDashboardNumericalMetricPills(userId, userEmail) {
 
         // 🎯 CRITICAL SECURITY FIX: Front-end script only triggers a generic cloud broker function path link!
         // No tables, no columns, and no database filters are visible in the public browser script.
-        const response = await fetch("https://supabase.co", {
+        const response = await fetch("https://lrbimrlbskjweynxlgas.supabase.co", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${session.access_token}`,
