@@ -372,27 +372,36 @@ document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
     // --- 1. DYNAMIC CORE CLIENT FACTORY ---
+     // --- 1. DYNAMIC CORE CLIENT FACTORY ---
     function resolveAdminClientInstance() {
-        let client = window.supabaseInstance || window.supabaseClient || window.supabase;
+        let client = window.supabaseInstance || window.supabaseClient;
 
-        // If lagging or uninitialized, instantly build the isolated administrative connection channel inline
-        if ((!client || typeof client.from !== 'function') && typeof supabase !== 'undefined') {
-            const URL = "https://lrbimrlbskjweynxlgas.supabase.co";
-            const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1Mj40NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-            
-            client = supabase.createClient(URL, KEY, {
-                auth: { 
-                    persistSession: true, 
-                    autoRefreshToken: true, 
-                    detectSessionInUrl: true, 
-                    storageKey: "filings4u_admin_session_token" // 🔒 ISOLATED ADMINISTRATIVE COOKIE KEY
-                }
-            });
-            window.supabaseInstance = client;
-            window.supabaseClient = client;
+        // Force a perfectly isolated, un-truncated connection matrix
+        if (!client || typeof client.from !== 'function') {
+            const explicitUrl = "https://lrbimrlbskjweynxlgas.supabase.co";
+            const explicitKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+
+            const factoryLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+
+            if (factoryLibrary && typeof factoryLibrary.createClient === 'function') {
+                console.log("📡 [Admin Login Perimeter] Initializing isolated database connection channel...");
+                
+                client = factoryLibrary.createClient(explicitUrl, explicitKey, {
+                    auth: { 
+                        persistSession: true, 
+                        autoRefreshToken: true, 
+                        detectSessionInUrl: true, 
+                        storageKey: "filings4u_admin_session_token" 
+                    }
+                });
+
+                window.supabaseInstance = client;
+                window.supabaseClient = client;
+            }
         }
         return client;
     }
+
 
     // --- 2. ENGINE ENTRY POINT BOOTSTRAPPER ---
     function startAdminLoginEngine() {
