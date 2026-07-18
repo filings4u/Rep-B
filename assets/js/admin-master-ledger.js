@@ -62,20 +62,24 @@
             return;
         }
 
-        try {
-            const { data: records, error } = await client
-                .from('entities')
-                .select('*')
-                .order('created_at', { ascending: false });
+      // Inside streamLiveOperationalLedgers():
+try {
+    const { data: records, error } = await client
+        .from('entities')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-            if (error) throw error;
+    if (error) throw error;
 
-            if (!records || records.length === 0) {
-                targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--text-muted);">No corporate registry data discovered inside table records.</td></tr>`;
-                return;
-            }
+    // ✅ If records is null, undefined, or empty, clear the loader and display an explicit note
+    if (!records || records.length === 0) {
+        targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 500;">No corporate entity master records found inside database layers.</td></tr>`;
+        return;
+    }
+    
+    targetBox.innerHTML = ""; // Clear loader and proceed to render loops
+    // ... rest of records.forEach loop logic
 
-            targetBox.innerHTML = "";
             
             records.forEach((rowItem) => {
                 const tr = document.createElement("tr");

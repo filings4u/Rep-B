@@ -38,31 +38,38 @@ async function syncAccountTelemetryGrid() {
         if (ent.error) throw ent.error;
         if (alr.error) throw alr.error;
 
-        // 📊 TARGET METRICS PILLS (Matched precisely to your dashboard layout node IDs)
-        const entityCountBox = document.getElementById('statActiveEntities');
-        const filingCountBox = document.getElementById('statOngoingFilings');
-        const alertsCountBox = document.getElementById('statComplianceAlerts');
+// Around line 25 inside syncAccountTelemetryGrid():
+const entityCountBox = document.getElementById('statActiveEntities');
+const filingCountBox = document.getElementById('statOngoingFilings');
+const alertsCountBox = document.getElementById('statComplianceAlerts');
 
-        // Dynamically process Ongoing Filing counts from your authentic public.applications dataset
-        const totalActiveEntities = ent.data ? ent.data.length : 0;
-        const totalOngoingFilings = appsResult.data ? appsResult.data.filter(a => a.current_status !== 'Completed').length : 0;
-        const totalAlertsCount = alr.data ? alr.data.length : 0;
+// Set counters to 0 immediately if no rows exist
+if (entityCountBox) entityCountBox.textContent = ent.data ? ent.data.length : '0';
+if (filingCountBox) filingCountBox.textContent = fil.data ? fil.data.length : '0';
+if (alertsCountBox) alertsCountBox.textContent = alr.data ? alr.data.length : '0';
 
-        if (entityCountBox) entityCountBox.textContent = totalActiveEntities;
-        if (filingCountBox) filingCountBox.textContent = totalOngoingFilings;
-        if (alertsCountBox) alertsCountBox.textContent = totalAlertsCount;
+// 📋 HYDRATE CORPORATE ENTITIES TABLE
+const tableBody = document.getElementById("entitiesTableBody");
+if (tableBody) {
+    if (ent.data && ent.data.length > 0) {
+        renderEntitiesPreviewTable(ent.data);
+    } else {
+        // ✅ Prevent freeze if table is empty
+        tableBody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">No corporate profiles registered under this account yet.</td></tr>`;
+    }
+}
 
-        // 📋 HYDRATE REGISTERED CORPORATE ENTITIES LEDGER TABLE
-        if (ent.data && ent.data.length > 0) {
-            if (typeof renderEntitiesPreviewTable === 'function') {
-                renderEntitiesPreviewTable(ent.data);
-            }
-        } else {
-            const tableBody = document.getElementById("entitiesTableBody");
-            if (tableBody) {
-                tableBody.innerHTML = `<tr><td colspan="4" style="padding: 16px; text-align: center; color: #64748b;">No corporate profiles registered under this account profile.</td></tr>`;
-            }
-        }
+// ⏳ HYDRATE FILINGS TIMELINE
+const timeline = document.getElementById("filingTimeline");
+if (timeline) {
+    if (fil.data && fil.data.length > 0) {
+        renderFilingsTimelineWidget(fil.data);
+    } else {
+        // ✅ Prevent freeze if timeline is empty
+        timeline.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; padding: 12px 0; margin: 0;">No active compliance filings pending tracking review loops.</p>`;
+    }
+}
+
 
         // ⏳ TRIGGER TRACKING TIMELINE ENGINE INITIATION PASS
         if (typeof window.startTimelineTrackingPipeline === 'function') {
