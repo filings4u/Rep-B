@@ -486,57 +486,70 @@ document.addEventListener("DOMContentLoaded", () => {
  * 📡 SECURE SUPABASE ACCESS DISPATCH ENGINE 
  * Handles user database validation and routes profiles safely based on email suffixes 
  */ 
-async function executeSupabaseAuthenticationHandshake(emailValueStr, passwordValueStr, submitBtn, errBox, supabaseClient) { 
-    // 🚀 FIXED: Guarantees it hooks directly into your validated global architecture instance client object 
-    const client = supabaseClient || window.supabaseClient || window.supabase; 
-    if (!client) { 
-        console.error("Critical Connection Failure: Global project client node missing."); 
-        if (errBox) errBox.textContent = "Gateway authentication offline. Please reload the console."; 
-        if (submitBtn) { 
-            submitBtn.disabled = false; 
-            submitBtn.textContent = 'Enter Secure Portal →'; 
-        } 
-        return; 
-    } 
-    
-    try { 
-        const { data, error } = await client.auth.signInWithPassword({ email: emailValueStr, password: passwordValueStr }); 
-        if (error) throw error; 
+// ✅ REPLACE WITH THIS PRODUCTION-READY WORKAROUND PASS:
+async function executeSupabaseAuthenticationHandshake(emailValue, passwordValue) {
+    "use strict";
+
+    // Explicitly target authentic client connections first
+    let activeClient = window.supabaseInstance || window.supabaseClient;
+
+    // 🚀 CRITICAL RULE: If the client is uninitialized or is just the generic CDN helper object, create a custom instance immediately
+    if (!activeClient || typeof activeClient.from !== 'function') {
+        const targetProjectUrl = "https://lrbimrlbskjweynxlgas.supabase.co";
+        const targetAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
         
-        if (!data || !data.user || !data.user.email) { 
-            throw new Error("Authentication response schema malformed. Retrying connection parameter sync..."); 
-        } 
+        const factoryLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+
+        if (factoryLibrary && typeof factoryLibrary.createClient === 'function') {
+            console.log("🔧 Login Engine: Building fresh database transport link inline...");
+            activeClient = factoryLibrary.createClient(targetProjectUrl, targetAnonKey, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    storageKey: "filings4u_secure_session_token"
+                }
+            });
+            window.supabaseInstance = activeClient;
+            window.supabaseClient = activeClient;
+        }
+    }
+
+    // Abort if the external CDN script was never parsed by the browser layout
+    if (!activeClient || !activeClient.auth || typeof activeClient.auth.signInWithPassword !== 'function') {
+        console.error("❌ Critical Validation Failure: Supabase authentic database driver layers are offline.");
+        alert("The remote login server configuration cannot be found. Please check your network connectivity and reload the portal.");
+        return;
+    }
+
+    try {
+        console.log(`🔐 Initiating clean handshake transmission packet to: lrbimrlbskjweynxlgas.supabase.co...`);
         
-        const verifiedUserEmail = data.user.email.toLowerCase().trim(); 
-        const currentUrlPath = window.location.pathname.toLowerCase(); 
+        // Execute password verification against the verified project instance
+        const { data, error } = await activeClient.auth.signInWithPassword({
+            email: emailValue.trim(),
+            password: passwordValue
+        });
+
+        if (error) throw error;
+
+        console.log("🚀 Auth connection verified. Determining workspace dashboard route...");
         
-        // Compute authorization privileges securely 
-        const isCorporateStaffProfile = verifiedUserEmail.endsWith('@filings4u.com') || verifiedUserEmail === 'test-admin@filings4u.com'; 
-        
-        // Execute definitive routing logic 
-        if (currentUrlPath.includes('admin') || isCorporateStaffProfile) { 
-            window.location.href = 'admin-dashboard.html'; 
-        } else { 
-            window.location.href = 'client-dashboard.html'; 
-        } 
-    } catch (authError) { 
-        console.error("Authorization access fault caught:", authError.message); 
-        
-        // Reactivate interface controls and flash error borders 
-        const emailInputNode = document.getElementById('email'); 
-        const pwdInputNode = document.getElementById('password'); 
-        if (emailInputNode) emailInputNode.classList.add('field-error'); 
-        if (pwdInputNode) pwdInputNode.classList.add('field-error'); 
-        
-        if (errBox) { 
-            errBox.textContent = authError.message || "Invalid credential parameters provided."; 
-        } 
-        if (submitBtn) { 
-            submitBtn.disabled = false; 
-            submitBtn.textContent = 'Enter Secure Portal →'; 
-        } 
-    } 
-} 
+        // Match user role paths based on corporate domain email signatures
+        if (emailValue.toLowerCase().endsWith('@filings4u.com')) {
+            window.location.replace("admin-dashboard.html");
+        } else {
+            window.location.replace("client-dashboard.html");
+        }
+
+    } catch (handshakeException) {
+        console.error("Authorization access fault caught:", handshakeException.message || handshakeException);
+        alert(`Login Failed: ${handshakeException.message || "Invalid account credentials provided."}`);
+    }
+}
+
+
+
 </script>
 </body>
 </html>
