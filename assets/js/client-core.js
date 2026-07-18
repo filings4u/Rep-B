@@ -16,33 +16,43 @@ window.escapeTimelineHTML = window.escapeTimelineHTML || ((str) => {
 
 
 // ========================================================================== //
-// 🔄 SECURE REAL-TIME GRID SYNCHRONIZATION (SCHEMA MATCHED)                  //
+// 🔄 SECURE REAL-TIME GRID SYNCHRONIZATION (EXPLICIT SCHEMA ALIGNED)         //
 // ========================================================================== //
 async function syncAccountTelemetryGrid() {
-    // Resolve from the active production client instance specifically
+    "use strict";
+
     const activeClient = window.supabaseInstance || window.supabaseClient;
     const currentUser = window.activeClientSessionUser;
     
+    // Guard tracking initialization bounds
     if (!activeClient || !currentUser) return;
 
     try {
-        // Query counters and data arrays concurrently to clear layout placeholder ellipses
-        const [ent, fil, alr] = await Promise.all([
-            activeClient.from('entities').select('*').eq('user_id', currentUser.id),
-            activeClient.from('filing_orders').select('*').eq('user_id', currentUser.id),
-            activeClient.from('portal_notifications').select('id').eq('user_id', currentUser.id).eq('is_read', false)
+        // Query counters, master entity listings, and notification tallies concurrently
+        const [ent, alr, appsResult] = await Promise.all([
+            activeClient.from('entities').select('*').eq('owner_id', currentUser.id),
+            activeClient.from('portal_notifications').select('id').eq('user_id', currentUser.id).eq('is_read', false),
+            activeClient.from('applications').select('id, current_status').eq('user_id', currentUser.id)
         ]);
 
-        // 📊 TARGET WIDGET STATISTICAL PILLS (Matched directly to your layout card nodes)
+        if (ent.error) throw ent.error;
+        if (alr.error) throw alr.error;
+
+        // 📊 TARGET METRICS PILLS (Matched precisely to your dashboard layout node IDs)
         const entityCountBox = document.getElementById('statActiveEntities');
         const filingCountBox = document.getElementById('statOngoingFilings');
         const alertsCountBox = document.getElementById('statComplianceAlerts');
 
-        if (entityCountBox) entityCountBox.textContent = ent.data ? ent.data.length : '0';
-        if (filingCountBox) filingCountBox.textContent = fil.data ? fil.data.length : '0';
-        if (alertsCountBox) alertsCountBox.textContent = alr.data ? alr.data.length : '0';
+        // Dynamically process Ongoing Filing counts from your authentic public.applications dataset
+        const totalActiveEntities = ent.data ? ent.data.length : 0;
+        const totalOngoingFilings = appsResult.data ? appsResult.data.filter(a => a.current_status !== 'Completed').length : 0;
+        const totalAlertsCount = alr.data ? alr.data.length : 0;
 
-        // 📋 INJECT REGISTERED CORPORATE ENTITIES LEDGER ROWS
+        if (entityCountBox) entityCountBox.textContent = totalActiveEntities;
+        if (filingCountBox) filingCountBox.textContent = totalOngoingFilings;
+        if (alertsCountBox) alertsCountBox.textContent = totalAlertsCount;
+
+        // 📋 HYDRATE REGISTERED CORPORATE ENTITIES LEDGER TABLE
         if (ent.data && ent.data.length > 0) {
             if (typeof renderEntitiesPreviewTable === 'function') {
                 renderEntitiesPreviewTable(ent.data);
@@ -54,27 +64,21 @@ async function syncAccountTelemetryGrid() {
             }
         }
 
-        // ⏳ INJECT URGENT COMPLIANCE TIMELINES WIDGET CARDS
-        if (fil.data && fil.data.length > 0) {
-            if (typeof renderFilingsTimelineWidget === 'function') {
-                renderFilingsTimelineWidget(fil.data);
-            }
-        } else {
-            const timeline = document.getElementById("filingTimeline");
-            if (timeline) {
-                timeline.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; padding: 12px 0;">No active compliance filings pending trace verification loops.</p>`;
-            }
+        // ⏳ TRIGGER TRACKING TIMELINE ENGINE INITIATION PASS
+        if (typeof window.startTimelineTrackingPipeline === 'function') {
+            await window.startTimelineTrackingPipeline(activeClient);
         }
 
-        // 📁 INITIATE FILE VAULT SYNCHRONIZATION CHANNELS
+        // 📁 INITIATE THE BACKGROUND AUTOMATED DOCUMENT REPLICATION GATE
         if (typeof initializeAutomatedVaultSyncEngine === 'function') {
             initializeAutomatedVaultSyncEngine(activeClient, currentUser.id);
         }
 
     } catch (err) {
-        console.error("Database tracking sync layer dropped out:", err.message);
+        console.error("❌ [Core Grid Fault] Database tracking sync layer dropped out:", err.message || err);
     }
 }
+
 
 
 // 3. THE LIVE DOCUMENT VAULT REAL-TIME SUBSCRIBER ENGINE
@@ -82,50 +86,48 @@ function initializeAutomatedVaultSyncEngine(client, userId) {
     const documentTableBody = document.getElementById("clientVaultTableLayoutBody");
     if (!documentTableBody) return;
 
-    // Set up a real-time replication listener on the document vault table
+    const pullVaultRows = async () => {
+        // Query from your real vault tracking engine matching your schema table keys
+        const { data: files } = await client
+            .from('client_vault')
+            .select('*')
+            .eq('uploaded_by', userId)
+            .order('created_at', { ascending: false });
+
+        if (!files || files.length === 0) {
+            documentTableBody.innerHTML = `<tr><td colspan="3" style="padding: 16px; text-align: center; color: #64748b;">No corporate files vaulted yet.</td></tr>`;
+            return;
+        }
+
+        documentTableBody.innerHTML = files.map(file => {
+            const fileDate = new Date(file.created_at).toLocaleDateString();
+            // Calculate a human-readable file size calculation matrix on the fly
+            const displaySize = file.file_size_bytes ? `${(file.file_size_bytes / 1024).toFixed(1)} KB` : 'PDF Asset';
+            
+            return `
+                <tr class="animated-sync-fade-in-row">
+                    <td style="font-weight: 600; color: #1e293b; padding: 12px 8px;">${window.escapeTimelineHTML(file.file_name || 'vaulted_document.pdf')} (${displaySize})</td>
+                    <td style="color: #64748b; padding: 12px 8px;">${fileDate}</td>
+                    <td style="padding: 12px 8px;">
+                        <a href="https://supabase.co{file.storage_bucket_path}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: none;">
+                            Download Asset ↓
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    };
+
+    // Execute immediate render pass
+    pullVaultRows();
+
+    // Map a permanent multi-plex replication listener pass targeting your real vault asset row slots
     client
         .channel('live-client-vault-sync-stream')
-        .on(
-            'postgres_changes',
-            {
-                event: '*', // Listen for all INSERTS, UPDATES, or DELETES pushed from the admin panel
-                schema: 'public',
-                table: 'client_documents_vault',
-                filter: `user_id=eq.${userId}`
-            },
-            async (payload) => {
-                console.log("📂 File Sync Action Logged by Admin Desk:", payload);
-                
-                // Dynamic UI fetch block to update the user's files instantly
-                const { data: files } = await client
-                    .from('client_documents_vault')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false });
-
-                if (!files || files.length === 0) {
-                    documentTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #64748b;">No documents vaulted yet.</td></tr>`;
-                    return;
-                }
-
-                documentTableBody.innerHTML = files.map(file => {
-                    const fileDate = new Date(file.created_at).toLocaleDateString();
-                    return `
-                        <tr class="animated-sync-fade-in-row">
-                            <td style="font-weight: 600; color: #1e293b;">${file.file_name || 'vaulted_document.pdf'}</td>
-                            <td style="color: #64748b;">${fileDate}</td>
-                            <td>
-                                <a href="${file.file_url}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: none;">
-                                    Download File ↓
-                                </a>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-        )
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'client_vault', filter: `uploaded_by=eq.${userId}` }, pullVaultRows)
         .subscribe();
 }
+
 
 // 4. INTERFACE RENDER COMPONENT GENERATORS
 function renderEntitiesPreviewTable(dataset) {
@@ -134,10 +136,10 @@ function renderEntitiesPreviewTable(dataset) {
     
     tableBody.innerHTML = dataset.map(ent => `
         <tr>
-            <td style="padding: 12px 8px;"><strong>${ent.entity_name || 'Unnamed Corp'}</strong></td>
-            <td style="padding: 12px 8px; color: #475569;">${ent.state || 'DE'}</td>
-            <td style="padding: 12px 8px; color: #475569;">${ent.structure_type || 'LLC'}</td>
-            <td style="padding: 12px 8px;"><span class="status-pill active" style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${ent.status || 'Active'}</span></td>
+            <td style="padding: 12px 8px;"><strong>${window.escapeTimelineHTML(ent.entity_name || 'Unnamed Corp')}</strong></td>
+            <td style="padding: 12px 8px;"><span style="text-transform: uppercase; font-weight: 700;">${window.escapeTimelineHTML(ent.state_jurisdiction || 'DE')}</span></td>
+            <td style="padding: 12px 8px; color: #475569;">${window.escapeTimelineHTML(ent.structure_type || 'LLC')}</td>
+            <td style="padding: 12px 8px;"><span class="status-pill active" style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${window.escapeTimelineHTML(ent.status || 'Active')}</span></td>
         </tr>
     `).join('');
 }
