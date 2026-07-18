@@ -1,6 +1,7 @@
-// ============================================================================ //
-// 📁 LEDGER MODULAR COMPONENT: GLOBAL CORPORATE SALES PRICING MATRIX          //
-// ============================================================================ //
+/**
+ * 📁 FILE PATH: admin-sales-ledger.js
+ * Responsibility: Fetch Production Entity Records globally and control flyout detail modals
+ */
 (function() {
     "use strict";
 
@@ -8,133 +9,107 @@
         syncGlobalSalesPricingLedger();
     });
 
-async function syncGlobalSalesPricingLedger() {
-    const targetBox = document.getElementById("admin-global-sales-target-box");
-    if (!targetBox) return;
-
-    // 🚀 FAIL-SAFE INITIALIZATION BYPASS CHANNEL
-    let client = window.supabaseInstance || window.supabaseClient;
-
-    if (!client || typeof client.from !== 'function') {
-        const currentLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-        
-        if (currentLibrary && typeof currentLibrary.createClient === 'function') {
-            console.log("🔧 [Admin Ledger] Building fresh database fail-safe connection inline...");
-            
-            const targetUrl = "https://lrbimrlbskjweynxlgas.supabase.co";
-            const targetKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-            
-            client = currentLibrary.createClient(targetUrl, targetKey, {
-                auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: "filings4u_secure_session_token" }
-            });
-
-            // Hydrate the global namespaces immediately to unlock sister dashboard scripts
-            window.supabaseInstance = client;
-            window.supabaseClient = client;
-        }
-    }
-
-    // Fall back to polling interval loop if the factory library completely failed to load on the network
-    if (!client || typeof client.from !== 'function') {
-        console.warn("⚠️ Sales Ledger Intercept: Active client system instance not ready. Retrying loop...");
-        setTimeout(syncGlobalSalesPricingLedger, 150);
-        return;
-    }
-
-    try {
-        const { data: salesLedger, error } = await client
-            .from('orders')
-            .select('company_name, service_title, plan_tier, total_fee, tracking_number, collected_payload_metadata')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        if (!salesLedger || salesLedger.length === 0) {
-            targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--text-muted);">No corporate sales records discovered inside data layers.</td></tr>`;
+    async function syncGlobalSalesPricingLedger() {
+        // 🚀 Poll live against the window namespace until your connection driver is active
+        if (!window.supabaseInstance || typeof window.supabaseInstance.from !== 'function') {
+            setTimeout(syncGlobalSalesPricingLedger, 150);
             return;
         }
 
-        targetBox.innerHTML = "";
-        
-        salesLedger.forEach(row => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem;";
+        const targetBox = document.getElementById("admin-global-sales-target-box");
+        if (!targetBox) return;
+
+        const client = window.supabaseInstance;
+
+        try {
+            // Fetch every corporate entity row globally across the platform
+            const { data: entities, error } = await client
+                .from('entities')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (!entities || entities.length === 0) {
+                targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--text-muted);">No corporate entity master records found inside database layers.</td></tr>`;
+                return;
+            }
+
+            targetBox.innerHTML = ""; // Clear out stale interface elements securely
             
-            const metadata = row.collected_payload_metadata || {};
-            const clientEmailAddress = metadata.wiz_client_email || metadata.email || "Not Provided";
+            entities.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem;";
+                
+                // Set standing structural status badges matching your admin styling parameters
+                let badgeBg = '#e2e8f0';
+                let badgeColor = '#475569';
+                if (row.status === 'Active' || row.status === 'Good Standing') {
+                    badgeBg = '#e6f4ea';
+                    badgeColor = '#137333';
+                }
 
-            // Inside your admin row generation loop:
-tr.innerHTML = `
-    <td style="padding: 12px; font-weight: 700; color: var(--text-dark);">${row.company_name || 'Filing Profile Target'}</td>
-    <td style="padding: 12px; color: var(--text-muted); font-family: monospace;">${clientEmailAddress}</td>
-    <td style="padding: 12px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); font-size: 0.75rem;">
-        ${row.service_title || 'Compliance Filing'} <span style="color: var(--staff-red);">(${row.plan_tier || 'Starter'})</span>
-    </td>
-    <td style="padding: 12px; font-weight: 700; color: var(--emerald);">$${parseFloat(row.total_fee || 0).toFixed(2)}</td>
-    <td style="padding: 12px; text-align: right;">
-        <!-- ✅ MAP ATTRIBUTES TO INLINE LINK HANDLER -->
-        <button type="button" 
-            onclick="window.executeAdminInspectorFlyoutRowLink(this)" 
-            data-title="${row.service_title || 'General Filing'}"
-            data-token="${row.tracking_number || ''}"
-            data-company="${row.company_name || 'Filing Target'}"
-            data-amount="${parseFloat(row.total_fee || 0)}"
-            style="cursor: pointer; background: var(--text-dark); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
-            <i class="fa-solid fa-folder-open"></i> View Row
-        </button>
-    </td>
-`;
+                tr.innerHTML = `
+                    <td style="padding: 12px; font-weight: 700; color: var(--text-dark);">${window.escapeTimelineHTML(row.entity_name || 'Filing Target')}</td>
+                    <td style="padding: 12px; color: var(--text-muted); font-family: monospace; text-transform: uppercase; font-weight: bold;">
+                        ${window.escapeTimelineHTML(row.state_jurisdiction || 'DE')}
+                    </td>
+                    <td style="padding: 12px; font-weight: 600; color: var(--text-muted);">
+                        ${window.escapeTimelineHTML(row.structure_type || 'LLC')}
+                    </td>
+                    <td style="padding: 12px;"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">${window.escapeTimelineHTML(row.status || 'Active')}</span></td>
+                    <td style="padding: 12px; text-align: right;">
+                        
+                            <i class="fa-solid fa-folder-open"></i> View Row
+                        </button>
+                    </td>
+                `;
+                targetBox.appendChild(tr);
+            });
 
-            targetBox.appendChild(tr);
-        });
-
-    } catch (ledgerError) {
-        console.error("[Fatal Sales Ledger Execution Interception]", ledgerError);
-        targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: #ef4444; font-weight: 600;">✕ Data sync failed to hydrate rows.</td></tr>`;
+        } catch (ledgerError) {
+            console.error("[Fatal Sales Ledger Execution Interception]", ledgerError);
+            targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: #ef4444; font-weight: 600;">✕ Data sync failed to hydrate rows.</td></tr>`;
+        }
     }
-}
 
+    // --- MODAL DISPLAY SYSTEM CONTROL LOGIC ---
+    window.executeAdminInspectorFlyoutRowLink = function(buttonNode) {
+        if (!buttonNode) return;
+        
+        const company = buttonNode.getAttribute("data-company");
+        const jurisdiction = buttonNode.getAttribute("data-jurisdiction");
+        const structure = buttonNode.getAttribute("data-structure");
+        const status = buttonNode.getAttribute("data-status");
+        const entityId = buttonNode.getAttribute("data-entity-id");
+        
+        window.revealFilingDetailModal(company, jurisdiction, structure, status, entityId);
+    };
+
+    window.revealFilingDetailModal = function(company, jurisdiction, structure, status, entityId) {
+        const modal = document.getElementById("filingDetailModal");
+        const targetHeader = document.getElementById("modalHeaderFilingTitle");
+        const displayTarget = document.getElementById("modalMetadataDisplayTarget");
+        
+        if (!modal || !displayTarget) return;
+        if (targetHeader) targetHeader.textContent = company;
+        
+        displayTarget.innerHTML = `
+            <div style="line-height: 1.6; display: flex; flex-direction: column; gap: 10px; text-align: left; font-family: sans-serif;">
+                <div><strong>Target Corporate Client:</strong> <span style="font-weight: 600; color: var(--text-dark);">${window.escapeTimelineHTML(company)}</span></div>
+                <div><strong>State Jurisdiction Area:</strong> <span style="text-transform: uppercase; font-weight: 700;">${window.escapeTimelineHTML(jurisdiction)}</span></div>
+                <div><strong>Fulfillment Entity Structure:</strong> <span>${window.escapeTimelineHTML(structure)}</span></div>
+                <div><strong>Standing Profile Status:</strong> <span style="font-weight: 700; color: #10b981;">${window.escapeTimelineHTML(status)}</span></div>
+                <div><strong>Database Reference Token:</strong> <span style="font-family: monospace; font-size: 0.75rem; color: #64748b;">${entityId}</span></div>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0;">
+                <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4;">This operational database object payload is compiled, synchronized, and mirrored live from your production public.entities schema architecture.</div>
+            </div>
+        `;
+        modal.style.display = "flex";
+    };
+
+    window.closeFilingDetailModal = function() {
+        const modal = document.getElementById("filingDetailModal");
+        if (modal) modal.style.display = "none";
+    };
 })();
-
-// ============================================================================ //
-// 📁 MODULE CARD: CORE METRICS DATA MAPPING & INSPECTOR MODALS CONTROLLER      //
-// ============================================================================ //
-
-// --- MODAL DISPLAY SYSTEM CONTROL LOGIC ---
-window.executeAdminInspectorFlyoutRowLink = function(buttonNode) {
-    // 🟢 FIXED ALIGNMENT: Removed non-existent buttonElement lookup to clean crash trace loops
-    if (!buttonNode) return;
-    
-    const title = buttonNode.getAttribute("data-title");
-    const token = buttonNode.getAttribute("data-token");
-    const company = buttonNode.getAttribute("data-company");
-    const amount = parseFloat(buttonNode.getAttribute("data-amount")) || 0;
-    
-    window.revealFilingDetailModal(title, token, company, amount);
-};
-
-window.revealFilingDetailModal = function(title, trackingNum, company, amount) {
-    const modal = document.getElementById("filingDetailModal");
-    const targetHeader = document.getElementById("modalHeaderFilingTitle");
-    const displayTarget = document.getElementById("modalMetadataDisplayTarget");
-    
-    if (!modal || !displayTarget) return;
-    if (targetHeader) targetHeader.textContent = company;
-    
-    displayTarget.innerHTML = `
-        <div style="line-height: 1.6; display: flex; flex-direction: column; gap: 10px; text-align: left;">
-            <div><strong>Target Corporate Client:</strong> <span style="font-weight: 600; color: var(--text-dark);">${company}</span></div>
-            <div><strong>Fulfillment Descriptor Line:</strong> <span>${title}</span></div>
-            <div><strong>F4U Processing Token:</strong> <span style="font-family: monospace; font-weight: 700;">${trackingNum}</span></div>
-            <div><strong>Settled Price Value:</strong> <span style="color: #10b981; font-weight: 700;">$${amount.toFixed(2)}</span></div>
-            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0;">
-            <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4;">This operational database object payload is compiled, synchronized, and mirrored live from your production ledger architecture.</div>
-        </div>
-    `;
-    modal.style.display = "flex";
-};
-
-window.closeFilingDetailModal = function() {
-    const modal = document.getElementById("filingDetailModal");
-    if (modal) modal.style.display = "none";
-};
