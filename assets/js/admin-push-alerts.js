@@ -13,18 +13,17 @@
         const alertForm = document.getElementById("adminAlertForm");
         const feedbackStatus = document.getElementById("alertStatus");
 
-        // 🎯 CRITICAL SYSTEM REPAIR: Delay execution until core transport pipeline fires handshake event
-        if (!window.supabaseInstance) {
-            console.warn("⚠️ Alerts Engine Intercept: Database transport node offline. Hooking handler listener context...");
-            
-            window.addEventListener("supabaseEngineReady", () => {
-                console.log("🔄 Alerts Engine Delayed Handshake: Database layer synchronized. Hydrating dropdown selectors...");
-                initializeAdminNotificationSystem();
-            });
+        // 🚀 FIXED ALIGNMENT: Isolate authenticated instances and bypass CDN constructor objects
+        const client = window.supabaseInstance || window.supabaseClient;
+
+        // If the workspace form template exists but the backend instance is still loading, wait and retry
+        if (alertForm && (!client || typeof client.from !== 'function')) {
+            console.warn("⚠️ Alerts Engine Intercept: Target client initialization lagging. Polling system context...");
+            setTimeout(initializeAdminNotificationSystem, 150);
             return;
         }
 
-        const client = window.supabaseInstance;
+        // Quiet exit if this code runs on an administrative screen lacking the notifications layout block
         if (!alertForm) return;
 
         // 1. POPULATE DROPDOWN FIELD WITH ACTIVE REVENUE ACCOUNT ENTRIES
@@ -69,7 +68,6 @@
             const targetUserId = clientDropdown.value;
             const selectedOption = clientDropdown.options[clientDropdown.selectedIndex];
             const targetUserEmail = selectedOption ? selectedOption.getAttribute('data-email') : '';
-            
             const titleValue = document.getElementById("alertTitle").value.trim();
             const messageValue = document.getElementById("alertMessage").value.trim();
             const submitBtn = alertForm.querySelector("button[type='submit']");

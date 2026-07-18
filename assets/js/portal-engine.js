@@ -247,38 +247,45 @@ function toggleSidebarAccordion(buttonElement) {
   }
 }
 
-// ==========================================================================
-// 🛑 SECURE SIGN-OUT ROUTE CONTROLLER ACTION (SAFE BINDING)
-// ==========================================================================
+// ========================================================================== //
+// 🛑 SECURE SIGN-OUT ROUTE CONTROLLER ACTION (SAFE BINDING)                  //
+// ========================================================================== //
 document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.getElementById("portalLogoutBtn");
-  if (logoutBtn) {
-    logoutBtn.onclick = null;
-    logoutBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      console.log("🔒 Logout sequence initiated. Cleaning local token parameters...");
-      
-      logoutBtn.disabled = true;
-      logoutBtn.textContent = "Logging out...";
+    // 🚀 FIXED ALIGNMENT: Check for either the standard portal button OR the admin logout node layout
+    const logoutBtn = document.getElementById("portalLogoutBtn") || document.getElementById("adminLogoutBtn");
 
-      const activeClient = window.supabaseClient || window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-      if (activeClient && activeClient.auth) {
-        try {
-          await activeClient.auth.signOut();
-        } catch (err) {
-          console.warn("Supabase clean exit skipped:", err.message);
-        }
-      }
+    if (logoutBtn) {
+        logoutBtn.onclick = null;
+        logoutBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            console.log("🔐 Logout sequence initiated. Cleaning local token parameters...");
+            
+            logoutBtn.disabled = true;
+            logoutBtn.textContent = "Logging out...";
 
-      localStorage.removeItem("filings4u_secure_session_token");
-      sessionStorage.clear();
+            // Resolve authenticated database instances specifically
+            const activeClient = window.supabaseInstance || window.supabaseClient;
 
-      // ✅ FIX 2: Redirect cleanly back to the absolute main website portal path destination
-      const targetRedirect = "https://filings4u.com";
-      window.location.replace(targetRedirect);
-    });
-    console.log("✅ Secure logout listener successfully locked onto client DOM button.");
-  } else {
-    console.warn("⚠️ Client logout button target (#portalLogoutBtn) not found in current DOM layout.");
-  }
+            if (activeClient && activeClient.auth) {
+                try {
+                    await activeClient.auth.signOut();
+                } catch (err) {
+                    console.warn("Supabase clean exit skipped:", err?.message || err);
+                }
+            }
+
+            // Flush secure browser state footprints
+            localStorage.removeItem("filings4u_secure_session_token");
+            sessionStorage.clear();
+
+            // Force browser layout re-route replacing page traversal historical traces
+            const targetRedirect = "portal-login.html";
+            window.location.replace(targetRedirect);
+        });
+        
+        console.log("✅ Secure logout listener successfully locked onto client DOM button.");
+    } else {
+        // Quiet debug log instead of a warning since this script runs across multi-route paths
+        console.log("[Portal Engine] Skipping logout binding: No matching button target in current layout context.");
+    }
 });

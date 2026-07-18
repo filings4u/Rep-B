@@ -12,18 +12,15 @@
         const targetBox = document.getElementById("admin-global-sales-target-box");
         if (!targetBox) return;
 
-        // 🎯 CRITICAL SYSTEM REPAIR: Delay execution until core transport pipeline fires handshake
-        if (!window.supabaseInstance) {
-            console.warn("⚠️ Sales Ledger Intercept: Active client system instance not ready. Hooking listener context...");
-            
-            window.addEventListener("supabaseEngineReady", () => {
-                console.log("🔄 Sales Ledger Delayed Handshake: Database layer synchronized. Hydrating matrix rows...");
-                syncGlobalSalesPricingLedger();
-            });
+        // 🚀 FIXED ALIGNMENT: Explicitly isolate verified instances and drop library constructor fallbacks
+        const client = window.supabaseInstance || window.supabaseClient;
+
+        // Asynchronously poll the runtime environment if your configuration script is still initializing
+        if (!client || typeof client.from !== 'function') {
+            console.warn("⚠️ Sales Ledger Intercept: Active client system instance not ready. Retrying loop...");
+            setTimeout(syncGlobalSalesPricingLedger, 150);
             return;
         }
-
-        const client = window.supabaseInstance;
 
         try {
             // Fetch every active order entry row cleanly using the verified client
@@ -44,7 +41,7 @@
             salesLedger.forEach(row => {
                 const tr = document.createElement("tr");
                 tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem;";
-
+                
                 const metadata = row.collected_payload_metadata || {};
                 const clientEmailAddress = metadata.wiz_client_email || metadata.email || "Not Provided";
 
@@ -52,8 +49,7 @@
                     <td style="padding: 12px; font-weight: 700; color: var(--text-dark);">${row.company_name || 'Filing Profile Target'}</td>
                     <td style="padding: 12px; color: var(--text-muted); font-family: monospace;">${clientEmailAddress}</td>
                     <td style="padding: 12px; text-transform: uppercase; font-weight: 600; color: var(--text-muted); font-size: 0.75rem;">
-                        ${row.service_title || 'Compliance Filing'} 
-                        <span style="color: var(--staff-red);">(${row.plan_tier || 'Starter'})</span>
+                        ${row.service_title || 'Compliance Filing'} <span style="color: var(--staff-red);">(${row.plan_tier || 'Starter'})</span>
                     </td>
                     <td style="padding: 12px; font-weight: 700; color: var(--emerald);">$${parseFloat(row.total_fee || 0).toFixed(2)}</td>
                     <td style="padding: 12px; text-align: right;">
@@ -64,13 +60,6 @@
                 `;
                 targetBox.appendChild(tr);
             });
-
-            // Bind global fallback button action controller triggers
-            window.executeAdminActionReview = function(trackingToken) {
-                if (!trackingToken) return;
-                console.log(`[Admin Desk Action Triggered] Reviewing tracking number: ${trackingToken}`);
-                window.location.href = `admin-service-manager.html?token=${encodeURIComponent(trackingToken)}`;
-            };
 
         } catch (ledgerError) {
             console.error("[Fatal Sales Ledger Execution Interception]", ledgerError);
