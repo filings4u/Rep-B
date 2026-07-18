@@ -1,82 +1,91 @@
 /**
- * 🚀 filings4u Customer Portal Engine
- * Standardized Production Module with Supabase Realtime Broadcast Routing
+ * 📁 FILE PATH: assets/js/portal-engine.js
+ * Responsibility: Platform Broadcast Multi-Plexing Network Channels & Messaging Hooks
  */
-
-let activeClientSessionUser = null;
-let realtimeTelemetryChannel = null;
-
-document.addEventListener("DOMContentLoaded", async () => {
-    initLiveSystemClock();
-    await initializePortalSession();
-    initializeRealtimeBroadcastNetwork();
-});
-
-function initLiveSystemClock() {
-    const clockElement = document.getElementById("client-clock");
-    if (!clockElement) return;
-    setInterval(() => {
-        const now = new Date();
-        clockElement.textContent = `${now.toLocaleDateString('en-US')} | ${now.toLocaleTimeString('en-US', { hour12: false })}`;
-    }, 1000);
-}
-
-async function initializePortalSession() {
-    if (typeof supabase === 'undefined') {
-        loadClientTelemetryMocks();
-        return;
-    }
-    try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error || !session) {
-            window.location.href = "portal-login.html";
-            return;
-        }
-        activeClientSessionUser = session.user;
-        const nameField = document.getElementById("clientNameField");
-        if (nameField) nameField.textContent = activeClientSessionUser.email;
-        
-        await syncAccountTelemetryGrid();
-    } catch (err) {
-        loadClientTelemetryMocks();
-    }
-}
-
-// ==========================================================================
-// 🌐 CORRECTED SUPABASE REALTIME BROADCAST CHANNELS SETUP
-// ==========================================================================
-function initializeRealtimeBroadcastNetwork() {
+(function() {
     "use strict";
 
-    // 🎯 FIX: Explicitly pull from the globally running window instance
-    const activeClient = window.supabaseClient || window.supabase;
-    
-    // Safety abort tracking: Stops terminal crashes if script sequence delays occur
-    if (!activeClient || typeof activeClient.channel !== 'function') {
-        console.warn("⚠️ Realtime Channel Intercept: Active client system instance not ready.");
-        return;
+    document.addEventListener("DOMContentLoaded", () => {
+        initializeRealtimeBroadcastNetwork();
+    });
+
+    async function initializeRealtimeBroadcastNetwork() {
+        // 🚀 THE BREAKOUT FIX: Evaluate the shared database property dynamically to stop loop freezes
+        let activeClient = window.supabaseInstance || window.supabaseClient;
+
+        if (!activeClient || typeof activeClient.channel !== 'function') {
+            const currentLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+
+            if (currentLibrary && typeof currentLibrary.createClient === 'function') {
+                console.log("🔧 [Portal Engine] Building fresh database fail-safe connection channel inline...");
+                const targetUrl = "https://lrbimrlbskjweynxlgas.supabase.co";
+                const targetKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+                
+                activeClient = currentLibrary.createClient(targetUrl, targetKey, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true,
+                        storageKey: "filings4u_secure_session_token"
+                    }
+                });
+                window.supabaseInstance = activeClient;
+                window.supabaseClient = activeClient;
+            }
+        }
+
+        // If the library isn't loaded on the window yet, delay and check again
+        if (!activeClient || typeof activeClient.channel !== 'function') {
+            console.warn("⚠️ Realtime Channel Intercept: Active client system instance not ready. Polling...");
+            setTimeout(initializeRealtimeBroadcastNetwork, 200);
+            return;
+        }
+
+        // 🛡️ SECURITY PATH INTERCEPTOR: Exit cleanly if loaded inside an admin panel interface path
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath.includes('admin-') || currentPath.includes('/admin')) {
+            console.log("📡 [Realtime Engine] Bypassing client-specific websocket channel mapping on admin dashboard layouts.");
+            return;
+        }
+
+        try {
+            let userInstance = window.activeClientSessionUser;
+
+            if (!userInstance && activeClient.auth && typeof activeClient.auth.getUser === 'function') {
+                const { data: { user }, error } = await activeClient.auth.getUser();
+                if (!error && user) userInstance = user;
+            }
+
+            if (!userInstance || !userInstance.id) {
+                console.log("[Realtime Engine] Postponing connection: User session context unverified. Retrying...");
+                setTimeout(initializeRealtimeBroadcastNetwork, 400);
+                return;
+            }
+
+            window.realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${userInstance.id}`);
+
+            window.realtimeTelemetryChannel
+                .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
+                    console.log('⚡ Realtime state sync received:', payload);
+                    const pendingCounter = document.getElementById("countPending");
+                    if (pendingCounter) {
+                        let currentCount = parseInt(pendingCounter.textContent, 10) || 0;
+                        pendingCounter.textContent = currentCount + 1;
+                    }
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('📡 Synchronized cleanly to Supabase Realtime Broadcast Network');
+                    }
+                });
+
+        } catch (realtimeSetupException) {
+            console.error("[Fatal Realtime Setup Interception Failure]", realtimeSetupException);
+        }
     }
+})();
 
-    // Fallback assignment matching variable scope footprints if session cache values lag
-    const userInstance = activeClientSessionUser || (activeClient.auth ? activeClient.auth.user : null);
-    if (!userInstance) return;
 
-    // Open connection channel targeting the active client's unique user UUID
-    realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${userInstance.id}`);
-
-    realtimeTelemetryChannel
-        .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
-            console.log('⚡ Realtime state sync received:', payload);
-            if (typeof handleIncomingStateSync === 'function') {
-                handleIncomingStateSync(payload.payload);
-            }
-        })
-        .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-                console.log('📡 Synchronized cleanly to Supabase Realtime Broadcast Network');
-            }
-        });
-}
 
 // 🚀 DISPATCH LIVE PIPELINE MUTATION DATA OVER THE AIR
 async function dispatchOrderViaBroadcast() {
