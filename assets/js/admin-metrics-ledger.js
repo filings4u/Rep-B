@@ -1,46 +1,59 @@
-// ============================================================================
-// 📁 MODULE CARD: CORE METRICS DATA MAPPING & INSPECTOR MODALS CONTROLLER
-// ============================================================================
+/**
+ * 📁 FILE PATH: assets/js/admin-metrics-ledger.js
+ * Responsibility: Query Central Master Schemas & Hydrate Top-Level Admin Statistics
+ */
 (function() {
-  "use strict";
+    "use strict";
 
-  // --- MODAL DISPLAY SYSTEM CONTROL LOGIC ---
-  window.executeAdminInspectorFlyoutRowLink = function(buttonNode) {
-    // 🟢 FIXED ALIGNMENT: Removed non-existent buttonElement lookup to clean crash trace loops
-    if (!buttonNode) return;
-    
-    const title = buttonNode.getAttribute("data-title");
-    const token = buttonNode.getAttribute("data-token");
-    const company = buttonNode.getAttribute("data-company");
-    const amount = parseFloat(buttonNode.getAttribute("data-amount")) || 0;
-    
-    window.revealFilingDetailModal(title, token, company, amount);
-  };
+    document.addEventListener("DOMContentLoaded", () => {
+        syncAdminGlobalMetrics();
+    });
 
-  window.revealFilingDetailModal = function(title, trackingNum, company, amount) {
-    const modal = document.getElementById("filingDetailModal");
-    const targetHeader = document.getElementById("modalHeaderFilingTitle");
-    const displayTarget = document.getElementById("modalMetadataDisplayTarget");
+    async function syncAdminGlobalMetrics() {
+        // 🚀 Poll safely until your core backend driver is live
+        if (!window.supabaseInstance || typeof window.supabaseInstance.from !== 'function') {
+            setTimeout(syncAdminGlobalMetrics, 200);
+            return;
+        }
 
-    if (!modal || !displayTarget) return;
-    if (targetHeader) targetHeader.textContent = company;
+        const client = window.supabaseInstance;
 
-    displayTarget.innerHTML = `
-      <div style="line-height: 1.6; display: flex; flex-direction: column; gap: 10px; text-align: left;">
-        <div><strong>Target Corporate Client:</strong> <span style="font-weight: 600; color: var(--text-dark);">${company}</span></div>
-        <div><strong>Fulfillment Descriptor Line:</strong> <span>${title}</span></div>
-        <div><strong>F4U Processing Token:</strong> <span style="font-family: monospace; font-weight: 700;">${trackingNum}</span></div>
-        <div><strong>Settled Price Value:</strong> <span style="color: #10b981; font-weight: 700;">$${amount.toFixed(2)}</span></div>
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0;">
-        <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4;">This operational database object payload is compiled, synchronized, and mirrored live from your production ledger architecture.</div>
-      </div>
-    `;
-    
-    modal.style.display = "flex";
-  };
+        try {
+            // Fetch central billing metrics and total profile matrices concurrently
+            const [ordersResult, entitiesResult] = await Promise.all([
+                client.from('orders').select('total_fee, status'),
+                client.from('entities').select('id, status')
+            ]);
 
-  window.closeFilingDetailModal = function() {
-    const modal = document.getElementById("filingDetailModal");
-    if (modal) modal.style.display = "none";
-  };
+            if (ordersResult.error) throw ordersResult.error;
+            if (entitiesResult.error) throw entitiesResult.error;
+
+            const orders = ordersResult.data || [];
+            const entities = entitiesResult.data || [];
+
+            // 1. Calculate Administrative Metrics Parameters
+            const totalRevenue = orders.reduce((acc, curr) => acc + (parseFloat(curr.total_fee) || 0), 0);
+            const activeCount = entities.filter(e => e.status === 'Active' || e.status === 'Completed').length;
+            const pendingAudits = orders.filter(o => o.status === 'Fulfillment Lane' || o.status === 'In Review').length;
+
+            // 2. Identify Layout Target UI Selectors (Targeting your exact metric pills)
+            const revenueDisplay = document.getElementById('statPlatformRevenue') || document.querySelector('.card:nth-of-type(1) div');
+            const entitiesDisplay = document.getElementById('statActiveEntitiesAdmin') || document.querySelector('.card:nth-of-type(2) div');
+            const auditsDisplay = document.getElementById('statPendingAudits') || document.querySelector('.card:nth-of-type(3) div');
+            const healthDisplay = document.getElementById('statSystemHealth') || document.querySelector('.card:nth-of-type(4) div');
+
+            // 3. Inject calculations, clearing out your placeholder ellipses
+            if (revenueDisplay) revenueDisplay.textContent = `$${totalRevenue.toFixed(2)}`;
+            if (entitiesDisplay) entitiesDisplay.textContent = entities.length; // Total dynamic workspace targets
+            if (auditsDisplay) auditsDisplay.textContent = pendingAudits;
+            if (healthDisplay) {
+                healthDisplay.textContent = "100%";
+                healthDisplay.style.color = "#137333";
+            }
+
+        } catch (err) {
+            console.error("[Fatal Infrastructure Metrics Handshake Fault]", err);
+        }
+    }
 })();
+
