@@ -1,96 +1,311 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
-    <title>Ticket Workspace Room | filings4u</title>
-    <meta name="theme-color" content="#10b981">
-    <link rel="icon" type="image/png" href="images/fav.png">
-    <link rel="stylesheet" href="assets/css/client.css">
-    <link rel="stylesheet" href="assets/css/client-toggle.css">
-    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script></head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Support Tickets Center | filings4u Portal</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --sidebar-width: 260px; --staff-red: #c15254; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM ACCORDION SHEET */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE GEOMETRY */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    
+    @media (min-width: 1200px) {
+      .content-container { grid-template-columns: 380px 1fr; }
+    }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    
+    /* INTAKE FORM LAYOUT RULES */
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
+    .form-group textarea { height: 110px; resize: vertical; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: var(--white); border-color: var(--emerald); }
+    
+    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; box-sizing: border-box; }
+    .action-btn:hover { background: #1e293b; }
+  </style>
+</head>
 <body>
-    <div class="dashboard-wrapper">
-        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important;">
-                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important;">Client Account</div></div>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Client Account</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <div class="accordion-group">
+          <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+          <div class="accordion-panel">
+            <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+            <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+          </div>
+        </div>
+        <div class="accordion-group">
+          <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Billing & Support <span class="chevron">▲</span> </button>
+          <div class="accordion-panel" style="max-height: 400px;">
+            <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+            <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+            <a href="client-ticket.html" class="nav-item active" style="color:var(--emerald); font-weight:700;">🎫 Support Tickets</a>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Helpdesk Support Tickets</h1>
+          <p>Open formal diagnostic requests, log service override inquiries, and audit historical resolutions</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Panel Left: Support Ticket Intake Form -->
+        <div class="console-card">
+          <h2>Create Support Ticket</h2>
+          <form id="supportTicketIntakeForm">
+            <div class="form-group">
+              <label>Subject / Issue Focus</label>
+              <input type="text" id="ticketSubject" required placeholder="e.g., EIN Filing Status Discrepancy">
             </div>
-            <nav class="sidebar-accordion-menu">
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
-                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
-                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
-                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
-                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-account.html" class="nav-item">💰 My Account</a>
-                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
-                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
-                    </div>
-                </div>
-            </nav>
-            <div class="sidebar-footer-lock"><button id="portalLogoutBtn" class="logout-btn">Log Out</button></div>
-        </aside>
-
-        <!-- 🖥️ MAIN WORKSPACE VIEWPORT -->
-        <main class="portal-main" style="display:flex !important; flex-direction:column !important; height:100vh !important;">
-            <header class="portal-header" style="flex-shrink:0 !important; border-bottom:1px solid var(--border-color) !important;">
-                <div class="welcome-text">
-                    <span style="font-size:0.65rem; background:#10b981; color:white; padding:2px 6px; border-radius:4px; font-weight:800; text-transform:uppercase;">Ticket Room</span>
-                    <h1 id="ticketWorkspaceSubjectField" style="margin-top:4px !important;">Resolving Support Parameters...</h1>
-                    <p>Direct message stream with your assigned admin case manager</p>
-                </div>
-                <div class="header-clock-pill"><span id="portal-clock">00/00/0000 | 00:00:00</span></div>
-            </header>
-
-            <!-- CHAT TIMELINE CONTAINER BOX -->
-            <div style="flex:1 !important; display:flex !important; flex-direction:column !important; background:white !important; margin:20px !important; border:1px solid var(--border-color) !important; border-radius:8px !important; overflow:hidden !important;">
-                <div id="ticketMessagesTimelineViewport" style="flex:1 !important; padding:25px !important; overflow-y:auto !important; display:flex !important; flex-direction:column !important; gap:14px !important; background:#fafafa !important;">
-                    <p style="color:var(--text-muted); font-size:0.85rem; text-align:center;">Synchronizing operational message history arrays...</p>
-                </div>
-
-                <!-- ACTIONS CONTROLS COMPONENT INPUT MODULE -->
-                <div style="padding:15px !important; border-top:1px solid var(--border-color) !important; background:#f8fafc !important;">
-                    <div style="display:flex !important; gap:10px !important; align-items:center !important;">
-                        <input type="text" id="ticketWorkspaceInputField" placeholder="Submit update to case file specialist..." style="flex:1 !important; padding:12px !important; border:1px solid var(--border-color) !important; border-radius:6px !important; font-size:0.85rem !important;" disabled>
-                        <button id="ticketWorkspaceSendButton" style="background:var(--emerald) !important; color:white !important; border:none !important; font-weight:700 !important; font-size:0.85rem !important; padding:12px 24px !important; border-radius:6px !important; cursor:pointer !important;" disabled>Send Update</button>
-                    </div>
-                </div>
+            <div class="form-group">
+              <label>Urgency Tier Classification</label>
+              <select id="ticketPriority" required>
+                <option value="standard" selected>Standard Enquiry</option>
+                <option value="high">High Priority Urgent</option>
+              </select>
             </div>
-        </main>
-    </div>
+            <div class="form-group">
+              <label>Elaborate Detailed Problem Description</label>
+              </textarea>
+            </div>
+            <div id="ticket-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px; text-align:left;"></div>
+            <button type="submit" class="action-btn" id="ticketSubmitBtn">Dispatch Helpdesk Ticket ➔</button>
+          </form>
+        </div>
 
-   <!-- 2. Authentication token bridge handles login session states -->
-<script src="assets/js/client-core.js"></script>
+        <!-- Panel Right: Active Account Tickets Timeline -->
+        <div class="console-card">
+          <h2>Your Support Interconnection History Ledger</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Ticket Subject Focus</th>
+                  <th style="padding:12px !important;">Urgency</th>
+                  <th style="padding:12px !important;">Created On</th>
+                  <th style="padding:12px !important; text-align:right !important;">Lifecycle Status</th>
+                </tr>
+              </thead>
+              <tbody id="client-tickets-ledger-target-box">
+                <tr><td colspan="4" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Synchronizing ticketing metrics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-<!-- 3. Dashboard metrics logic processes table grids -->
-<script src="assets/js/client-dashboard.js"></script>
+  <script src="assets/js/supabase-config.js"></script>
 
-<!-- 4. Realtime peripheral broadcast tracking handlers -->
-<script src="assets/js/client-engine.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
-    <script src="assets/js/client-navigation.js"></script>
-    <script src="assets/js/client-toggle.js"></script>
+      // 1. Resolve Document Component Controls
+      const ticketForm   = document.getElementById("supportTicketIntakeForm");
+      const subjectInput = document.getElementById("ticketSubject");
+      const prioritySel  = document.getElementById("ticketPriority");
+      const bodyTextarea = document.getElementById("ticketBody");
+      const formStatus   = document.getElementById("ticket-form-status");
+      const submitBtn    = document.getElementById("ticketSubmitBtn");
+      const ledgerTable  = document.getElementById("client-tickets-ledger-target-box");
+
+      if (!ticketForm || !subjectInput || !prioritySel || !bodyTextarea || !formStatus || !submitBtn || !ledgerTable) {
+        throw new Error("✕ Critical UI Error: Form controls or historical dashboard table targets are unassigned.");
+      }
+
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        ledgerTable.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase connection layer missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
+      }
+
+      // 3. Authenticate Active User Portal Session Profile Layers [0.1]
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !session) {
+        window.location.href = "portal-login.html";
+        return;
+      }
+
+      const clientSessionEmail = session.user.email;
+
+      // --- STAGE 1: READ AND FETCH USER TICKETS INDEX ---
+      async function streamClientSupportTicketsLedger() {
+        try {
+          console.log(`📡 [Support Center] Querying tickets matching account holder: [${clientSessionEmail}]`);
+
+          // 🟢 DIRECT CLIENT FETCH: Extract support requests filtered cleanly by verified user email
+          const { data: tickets, error: fetchError } = await client
+            .from('support_tickets')
+            .select('id, subject, priority, status, created_at')
+            .eq('email', clientSessionEmail)
+            .order('created_at', { ascending: false });
+
+          if (fetchError) throw fetchError;
+
+          if (!tickets || tickets.length === 0) {
+            ledgerTable.innerHTML = `<tr><td colspan="4" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No support tickets opened under your account profile yet.</td></tr>`;
+            return;
+          }
+
+          ledgerTable.innerHTML = "";
+
+          tickets.forEach(ticketRow => {
+            const trNode = document.createElement("tr");
+            trNode.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const subject  = ticketRow.subject || "General Support Enquiry";
+            const urgency  = String(ticketRow.priority || 'standard').toUpperCase();
+            const status   = String(ticketRow.status || 'open').toUpperCase();
+            const dateStr  = new Date(ticketRow.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+
+            let priorityBadgeColor = "background:#f1f5f9; color:#475569;";
+            if (urgency === 'HIGH') priorityBadgeColor = "background:#fffbe6; color:#b45309;";
+
+            let statusColor = "color: var(--text-dark); font-weight:700;";
+            if (status === 'OPEN' || status === 'PENDING') statusColor = "color: var(--staff-red); font-weight:700;";
+            if (status === 'RESOLVED' || status === 'CLOSED') statusColor = "color: var(--emerald); font-weight:700;";
+
+            trNode.innerHTML = `
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeTicketHtml(subject)}</td>
+              <td style="padding:14px 12px;"><span style="${priorityBadgeColor} font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; letter-spacing:0.5px;">${escapeTicketHtml(urgency)}</span></td>
+              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:600;">${dateStr}</td>
+              <td style="padding:14px 12px; text-align:right; ${statusColor}">${escapeTicketHtml(status)}</td>
+            `;
+
+            ledgerTable.appendChild(trNode);
+          });
+
+        } catch (queryFault) {
+          console.error("✕ Support Tickets Sync Aborted:", queryFault.message);
+          ledgerTable.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+        }
+      }
+
+      // --- STAGE 2: HANDLE NEW SUPPORT CASE FORM INTAKE SUBMISSIONS ---
+      ticketForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        formStatus.style.display = "none";
+        formStatus.textContent = "";
+
+        const subject     = subjectInput.value.trim();
+        const urgencyTier = prioritySel.value;
+        const explanation = bodyTextarea.value.trim();
+
+        if (!subject || !urgencyTier || !explanation) {
+          formStatus.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatus.textContent = "✕ Validation Error: All fields and case descriptions are required.";
+          return;
+        }
+
+        const originalBtnLabel = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Opening Diagnostics Log...";
+
+        try {
+          console.log(`📡 [Support Center] Dispatching new ticket parameter row to public.support_tickets...`);
+
+          // 🟢 DIRECT DB INSERTION: Save entry straight to your public support_tickets data grid table [0.1]
+          const { error: insertError } = await client
+            .from('support_tickets')
+            .insert([
+              {
+                email: clientSessionEmail,
+                subject: subject,
+                priority: urgencyTier,
+                description: explanation,
+                status: 'open',
+                created_at: new Date().toISOString()
+              }
+            ]);
+
+          if (insertError) throw insertError;
+
+          console.log("✅ [Support Center] Support log recompiled and appended successfully.");
+          formStatus.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          formStatus.textContent = "✓ Support ticket logged successfully! Our compliance desk will investigate your parameters.";
+
+          ticketForm.reset();
+          await streamClientSupportTicketsLedger();
+
+        } catch (postFault) {
+          console.error("✕ Ticket submission loop broke:", postFault.message);
+          formStatus.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatus.textContent = `✕ Submission Aborted: ${postFault.message}`;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnLabel;
+        }
+      });
+
+      function escapeTicketHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      function toggleSidebarAccordion(buttonElement) {
+        if (!buttonElement) return;
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel) {
+          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        }
+      }
+      window.toggleSidebarAccordion = toggleSidebarAccordion;
+
+      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+        window.location.replace("portal-login.html");
+      });
+
+      await streamClientSupportTicketsLedger();
+    });
+  </script>
 </body>
 </html>

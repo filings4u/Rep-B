@@ -1,102 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Operations Chat Desk | filings4u</title>
-    <meta name="theme-color" content="#10b981">
-    <link rel="icon" type="image/png" href="images/fav.png">
-    <link rel="stylesheet" href="assets/css/client.css">
-    <link rel="stylesheet" href="assets/css/client-toggle.css">
-    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Live Chat Support | filings4u Portal</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL STYLE MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow: hidden !important; }
+    .dashboard-wrapper { display: flex !important; height: 100vh !important; width: 100% !important; position: relative !important; }
     
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* 🖥️ PRIMARY DISPLAY CANVAS CONTAINER STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 15px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; box-sizing: border-box !important; width: 100% !important; height: 75px !important; }
+    
+    /* 💬 CHAT HUB CHANNELS SYSTEM VIEWPORTS */
+    .chat-layout-container { display: flex !important; flex-direction: column !important; flex: 1 !important; width: 100% !important; height: calc(100vh - 75px) !important; background: var(--white) !important; box-sizing: border-box !important; }
+    .messages-timeline-scroll { flex: 1 !important; overflow-y: auto !important; padding: 30px !important; background: #fdfdfd !important; box-sizing: border-box !important; }
+    
+    .msg-row { display: flex !important; margin-bottom: 20px !important; width: 100% !important; }
+    .msg-row.client-sent { justify-content: flex-end !important; }
+    .msg-row.staff-sent { justify-content: flex-start !important; }
+    .msg-bubble { max-width: 65% !important; padding: 12px 18px !important; border-radius: 12px !important; font-size: 0.9rem !important; line-height: 1.45 !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; text-align: left; word-break: break-word; }
+    .msg-row.client-sent .msg-bubble { background: var(--text-dark) !important; color: #ffffff !important; border-bottom-right-radius: 2px !important; }
+    .msg-row.staff-sent .msg-bubble { background: #f1f5f9 !important; color: var(--text-dark) !important; border-bottom-left-radius: 2px !important; border: 1px solid var(--border-color) !important; }
+    .msg-timestamp { font-size: 0.68rem !important; opacity: 0.6; display: block !important; margin-top: 4px !important; text-align: right !important; }
+    
+    .chat-input-footer-tray { padding: 20px 30px !important; border-top: 1px solid var(--border-color) !important; background: var(--white) !important; box-sizing: border-box !important; }
+    .tray-form-grid { display: flex !important; gap: 12px !important; width: 100% !important; }
+    .tray-textarea-input { flex: 1 !important; padding: 12px 16px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.92rem !important; outline: none !important; resize: none !important; font-family: inherit !important; height: 44px !important; box-sizing: border-box !important; color: var(--text-dark) !important; background: #f8fafc !important; }
+    .tray-textarea-input:focus { background: #fff !important; border-color: var(--emerald) !important; }
+    .btn-send { background: var(--text-dark) !important; color: white !important; border: none !important; padding: 0 24px !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 0.88rem !important; cursor: pointer !important; height: 44px !important; box-sizing: border-box !important; }
+    
+    @media (max-width: 991px) {
+      .portal-sidebar { display: none !important; }
+      .portal-main { margin-left: 0 !important; width: 100% !important; }
+      .chat-layout-container { height: calc(100vh - 75px) !important; }
+    }
+  </style>
 </head>
 <body>
-    <div class="dashboard-wrapper">
-        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.15) !important;">Client Account</div></div>
-            </div>
-            <nav class="sidebar-accordion-menu">
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
-                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
-                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
-                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
-                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-account.html" class="nav-item">💰 My Account</a>
-                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
-                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
-                    </div>
-                </div>
-            </nav>
-            <div class="sidebar-footer-lock">
-                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
-            </div>
-        </aside>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Client Account</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <div class="accordion-group">
+          <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+          <div class="accordion-panel">
+            <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+            <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+          </div>
+        </div>
+        <div class="accordion-group">
+          <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Billing & Support <span class="chevron">▲</span> </button>
+          <div class="accordion-panel" style="max-height: 400px;">
+            <a href="client-chat.html" class="nav-item active" style="color:var(--emerald); font-weight:700;">💬 Live Chat Support</a>
+            <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+      </div>
+    </aside>
 
-        <!-- 🖥️ CHAT ROOM LAYER INTERFACE MATRIX -->
-        <main class="portal-main" style="display:flex !important; flex-direction:column !important; height:100vh !important;">
-            <header class="portal-header" style="flex-shrink: 0 !important;">
-                <div class="welcome-text">
-                    <h1>Operations Support Desk</h1>
-                    <p>Live text communication channel with your assigned compliance specialists</p>
-                </div>
-                <div class="header-clock-pill"><span id="portal-clock">00/00/0000 | 00:00:00</span></div>
-            </header>
+    <main class="portal-main">
+      <header class="portal-header">
+        <div style="text-align: left;">
+          <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Secure Corporate Support Helpdesk</h1>
+        </div>
+      </header>
 
-            <!-- CONVERSATION TERMINAL BOX PANEL -->
-            <div style="flex:1 !important; display:flex !important; flex-direction:column !important; background:white !important; margin:20px !important; border:1px solid var(--border-color) !important; border-radius:8px !important; overflow:hidden !important;">
-                
-                <!-- LIVE CONVERSATION VIEWPORT -->
-                <div id="chatMessageViewport" style="flex:1 !important; padding:25px !important; overflow-y:auto !important; display:flex !important; flex-direction:column !important; gap:14px !important; background:#fafafa !important;">
-                    <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">Securing network communication line...</p>
-                </div>
+      <div class="chat-layout-container">
+        <!-- Message Timeline Board Viewport -->
+        <div class="messages-timeline-scroll" id="clientChatMessagesLog">
+          <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">Connecting to helpdesk messaging tracks...</div>
+        </div>
+        
+        <!-- Input Response Footer Tray -->
+        <div class="chat-input-footer-tray">
+          <div class="tray-form-grid">
+            <textarea id="clientChatMessageInputField" class="tray-textarea-input" placeholder="Type your query message payload here... (Press Enter to Send)" onkeydown="if(typeof window.handleClientChatKeyOptions === 'function') { window.handleClientChatKeyOptions(event); }"></textarea>
+            <button id="clientChatSendButton" class="btn-send" onclick="if(typeof window.dispatchClientChatMessage === 'function') { window.dispatchAdminResponseChatMessage(); }">Send</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-                <!-- DIRECT INPUT DISPATCH CONTROLS MODULE -->
-                <div style="padding:15px !important; border-top:1px solid var(--border-color) !important; background:#f8fafc !important;">
-                    <div style="display:flex !important; gap:10px !important; align-items:center !important;">
-                        <input type="text" id="chatMessageTextInput" placeholder="Type message or response to compliance desk..." style="flex:1 !important; padding:12px !important; border:1px solid var(--border-color) !important; border-radius:6px !important; font-size:0.85rem !important;" disabled>
-                        <button id="chatMessageSendBtn" style="background:var(--emerald) !important; color:white !important; border:none !important; font-weight:700 !important; font-size:0.85rem !important; padding:12px 24px !important; border-radius:6px !important; cursor:pointer !important;" disabled>Send Message</button>
-                    </div>
-                </div>
+  <script src="assets/js/supabase-config.js"></script>
 
-            </div>
-        </main>
-    </div>
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
-    <!-- 2. Authentication token bridge handles login session states -->
-<script src="assets/js/client-core.js"></script>
+      // 1. Resolve Document Canvas and Interface Hooks
+      const msgLogBox     = document.getElementById("clientChatMessagesLog");
+      const textInputField = document.getElementById("clientChatMessageInputField");
+      const sendButton    = document.getElementById("clientChatSendButton");
 
-<!-- 3. Dashboard metrics logic processes table grids -->
-<script src="assets/js/client-dashboard.js"></script>
+      if (!msgLogBox || !textInputField || !sendButton) {
+        throw new Error("✕ Critical UI Error: Chat logs container frames or form inputs are missing from layout trees.");
+      }
 
-<!-- 4. Realtime peripheral broadcast tracking handlers -->
-<script src="assets/js/portal-engine.js"></script>
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        msgLogBox.innerHTML = `<div style="text-align:center; padding:24px; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure connection missing.</div>`;
+        throw new Error("✕ Initialization Error: Database driver references evaluate to unassigned.");
+      }
 
-    <script src="assets/js/client-navigation.js"></script>
-    <script src="assets/js/client-toggle.js"></script>
+      // 3. Authenticate Active User Session Profile Layers [0.1]
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !session) {
+        window.location.href = "portal-login.html";
+        return;
+      }
+
+      // Explicitly lock tracking logs down to the user's authentic identity string UUID token
+      const clientActiveUserId = String(session.user.id).trim();
+
+      // --- STAGE 1: DYNAMIC TIMELINE STREAM LOAD PROTOCOLS ---
+      async function streamClientChatTimelineLogs() {
+        try {
+          console.log(`📡 [Chat Engine] Querying messaging logs matching thread path token: [${clientActiveUserId}]`);
+
+          // 🟢 DIRECT REALTIME FETCH: Extract conversation entries belonging exclusively to this authenticated account
+          const { data: messages, error: fetchError } = await client
+            .from('chat_messages')
+            .select('*')
+            .eq('client_id', clientActiveUserId)
+            .order('created_at', { ascending: true });
+
+          if (fetchError) throw fetchError;
+
+          msgLogBox.innerHTML = "";
+
+          if (messages && messages.length > 0) {
+            messages.forEach(msgRow => {
+              window.appendSingleChatMessageBubbleToUI(msgRow);
+            });
+          } else {
+            msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">Welcome! Send your first secure support message query to initialize communications.</div>`;
+          }
+          window.scrollChatTimelineToAbsoluteBottom();
+
+        } catch (fault) {
+          console.error("✕ Conversation Timeline Extraction Broken:", fault.message);
+          msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--staff-red); font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Interrupted.</div>`;
+        }
+      }
+
+      // --- STAGE 2: ATTACH LIVE REALTIME POSTGRES CHANGES BROADCASTS TRACKS ---
+      console.log("[Chat Engine] Activating real-time row insertion monitoring listener...");
+      
+      client.channel(`client_room_${clientActiveUserId}`)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'chat_messages', 
+          filter: `client_id=eq.${clientActiveUserId}` 
+        }, (payload) => {
+          console.log("📡 [Chat Engine] Inbound streaming packet caught: ", payload.new);
+          window.appendSingleChatMessageBubbleToUI(payload.new);
+        })
+        .subscribe();
+      // --- STAGE 3: MESSAGE DISPATCH TRANSMISSION PROTOCOLS ---
+      window.dispatchClientChatMessage = async function() {
+        const rawText = textInputField.value.trim();
+        if (!rawText) return;
+
+        textInputField.disabled = true;
+        sendButton.disabled = true;
+
+        try {
+          console.log(`📡 [Chat Engine] Transmitting client response package into database rows...`);
+          
+          // 🟢 DIRECT DB INSERTION: Log the user message payload into the public schema chat rows matrix
+          const { error: insertError } = await client
+            .from('chat_messages')
+            .insert([{
+              client_id: clientActiveUserId,
+              message_content: rawText,
+              sender_type: 'client',
+              is_read_by_admin: false,
+              is_read_by_client: true,
+              created_at: new Date().toISOString()
+            }]);
+
+          if (insertError) throw insertError;
+          textInputField.value = "";
+
+        } catch (postFault) {
+          console.error("✕ Message pipeline insertion rejected:", postFault.message);
+          alert(`✕ Message Transmission Refused: ${postFault.message}`);
+        } finally {
+          textInputField.disabled = false;
+          sendButton.disabled = false;
+          textInputField.focus();
+          window.scrollChatTimelineToAbsoluteBottom();
+        }
+      };
+
+      // --- STAGE 4: GRAPHIC TIMELINE TEXT INTERFACE CONSTRUCTORS ---
+      window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+        const currentSender = String(msgRow.sender_type || '').toLowerCase();
+        const isClientSent = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
+        
+        const rowWrapper = document.createElement("div");
+        rowWrapper.className = isClientSent ? "msg-row client-sent" : "msg-row staff-sent";
+
+        const readableTime = msgRow.created_at 
+          ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+          : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+        const secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
+
+        rowWrapper.innerHTML = `
+          <div class="msg-bubble">
+            <div>${secureCleanText}</div>
+            <span class="msg-timestamp">${readableTime}</span>
+          </div>
+        `;
+        msgLogBox.appendChild(rowWrapper);
+        window.scrollChatTimelineToAbsoluteBottom();
+      };
+
+      window.handleClientChatKeyOptions = function(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          window.dispatchClientChatMessage();
+        }
+      };
+
+      window.scrollChatTimelineToAbsoluteBottom = function() {
+        if (msgLogBox) msgLogBox.scrollTop = msgLogBox.scrollHeight;
+      };
+
+      // 🔒 SECURE ANTI-XSS OUTPUT ESCAPE SANITIZER MATRIX [0.1]
+      window.escapeClientChatMarkup = function(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      };
+
+      function toggleSidebarAccordion(buttonElement) {
+        if (!buttonElement) return;
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel) {
+          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        }
+      }
+      window.toggleSidebarAccordion = toggleSidebarAccordion;
+
+      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+        window.location.replace("portal-login.html");
+      });
+
+      // Execute thread load layout hydration sequence immediately
+      await streamClientChatTimelineLogs();
+    });
+  </script>
 </body>
 </html>

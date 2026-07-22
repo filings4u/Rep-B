@@ -1,94 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Knowledgebase Support Center | filings4u</title>
-    <meta name="theme-color" content="#10b981">
-    <link rel="icon" type="image/png" href="images/fav.png">
-    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="assets/css/client.css">
-    <link rel="stylesheet" href="assets/css/client-toggle.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Knowledgebase & FAQ Help Center | filings4u Portal</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2 crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM ACCORDION SHEET */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-shadow: none !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE GEOMETRY */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; max-width: 900px; margin: 0 auto; }
+    
+    /* FAQ CONTAINER CARDS */
+    .kb-search-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box; }
+    .kb-search-field { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; }
+    .kb-search-field:focus { background: var(--white); border-color: var(--emerald); }
+    
+    .faq-item-node { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; overflow: hidden; box-sizing: border-box; text-align: left; }
+    .faq-question-trigger { width: 100%; padding: 16px 20px; background: none; border: none; text-align: left; font-size: 0.92rem; font-weight: 700; color: var(--text-dark); cursor: pointer; display: flex; justify-content: space-between; align-items: center; outline: none; }
+    .faq-question-trigger:hover { background: #f8fafc; }
+    .faq-answer-panel { max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: #ffffff; }
+    .faq-answer-inner { padding: 0 20px 20px 20px; font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; }
+    .faq-chevron { transition: transform 0.2s ease; font-size: 0.8rem; color: var(--text-muted); }
+    .faq-item-node.open-active .faq-chevron { transform: rotate(180deg); color: var(--emerald); }
+  </style>
 </head>
 <body>
-    <div class="dashboard-wrapper">
-        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important;">Client Account</div></div>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Client Account</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <div class="accordion-group">
+          <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+          <div class="accordion-panel">
+            <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+            <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+          </div>
+        </div>
+        <div class="accordion-group">
+          <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Billing & Support <span class="chevron">▲</span> </button>
+          <div class="accordion-panel" style="max-height: 400px;">
+            <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+            <a href="client-knowledgebase.html" class="nav-item active" style="color:var(--emerald); font-weight:700;">📰 Help Resources</a>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Knowledgebase & FAQ Matrix</h1>
+          <p>Explore dynamic setup guidelines, compliance processing articles, and operational solutions</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Live Instant Search Bar Slat -->
+        <div class="kb-search-card">
+          <input type="text" id="kbSearchInputField" class="kb-search-field" placeholder="Type terms to filter resources live... (e.g., EIN, Articles, Amendment)">
+        </div>
+
+        <!-- Dynamic FAQ Targets Stack Box -->
+        <div id="client-faqs-stream-wrapper">
+          <div style="padding:40px; text-align:center; color:var(--text-muted); font-weight:600; font-style:italic;">Assembling reference directories...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Document Component Hooks
+      const faqsWrapper = document.getElementById("client-faqs-stream-wrapper");
+      const searchBox   = document.getElementById("kbSearchInputField");
+
+      if (!faqsWrapper || !searchBox) {
+        throw new Error("✕ Critical UI Error: Dynamic FAQ targets wrapper or search bars are missing from structural layout.");
+      }
+
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        faqsWrapper.innerHTML = `<div style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</div>`;
+        throw new Error("✕ Initialization Error: Database configuration layer reference is unassigned.");
+      }
+
+      // Cache array to maintain fast instant text string comparisons
+      let localHistoricalFaqsCache = [];
+
+      // --- STAGE 1: READ MASTER PUBLIC HELP DESK ARTICLES ---
+      async function streamGlobalKnowledgebaseMatrix() {
+        try {
+          console.log("📡 [Knowledgebase Engine] Syncing article lines from public.faqs...");
+          
+          // 🟢 DIRECT REREPLICATION SELECTION: Extract support materials from base schema rows
+          const { data: records, error: fetchError } = await client
+            .from('faqs')
+            .select('id, question, answer, category')
+            .order('question', { ascending: true });
+
+          if (fetchError) throw fetchError;
+
+          localHistoricalFaqsCache = records || [];
+          renderFilteredFaqsStack(localHistoricalFaqsCache);
+
+        } catch (fault) {
+          console.error("✕ FAQs Synchronization Exception:", fault.message);
+          faqsWrapper.innerHTML = `<div style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</div>`;
+        }
+      }
+
+      // --- STAGE 2: PRINT ACCORDION CARDS NODES UNTO DOM ---
+      function renderFilteredFaqsStack(datasetArray) {
+        if (!datasetArray || datasetArray.length === 0) {
+          faqsWrapper.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No support documentation or help articles match your filtered search terms.</div>`;
+          return;
+        }
+
+        faqsWrapper.innerHTML = "";
+
+        datasetArray.forEach(faqItem => {
+          const nodeRow = document.createElement("div");
+          nodeRow.className = "faq-item-node";
+
+          const cleanQuestion = faqItem.question || "Untitled Support Spec";
+          const cleanAnswer   = faqItem.answer || "No copy text documented.";
+          const cleanCategory = String(faqItem.category || "General").toUpperCase();
+
+          nodeRow.innerHTML = `
+            <button class="faq-question-trigger">
+              <span style="font-weight:700; color:var(--text-dark); padding-right:12px;"><span style="font-size:10px; padding:2px 6px; background:#f1f5f9; color:#64748b; border-radius:4px; margin-right:8px; font-weight:800; letter-spacing:0.5px;">${escapeKbHtml(cleanCategory)}</span> ${escapeKbHtml(cleanQuestion)}</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer-panel">
+              <div class="faq-answer-inner">${escapeKbHtml(cleanAnswer)}</div>
             </div>
-            <nav class="sidebar-accordion-menu">
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
-                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
-                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
-                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
-                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-account.html" class="nav-item">💰 My Account</a>
-                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
-                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
-                    </div>
-                </div>
-            </nav>
-            <div class="sidebar-footer-lock"><button id="portalLogoutBtn" class="logout-btn">Log Out</button></div>
-        </aside>
+          `;
 
-        <!-- 🖥️ MAIN VIEWPORT HUB -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div class="welcome-text">
-                    <h1>Platform Knowledge Center</h1>
-                    <p>Search corporate regulations guides, state compliance rules, and structural document resources</p>
-                </div>
-                <div class="header-clock-pill"><span id="portal-clock">00/00/0000 | 00:00:00</span></div>
-            </header>
+          // Inner Toggle Trigger Event Logic
+          const triggerBtn = nodeRow.querySelector(".faq-question-trigger");
+          const panelBox   = nodeRow.querySelector(".faq-answer-panel");
 
-            <div class="content-container">
-                <!-- REALTIME LOCALIZED SEARCH PARAMETER MATRIX BAR -->
-                <div style="background: white !important; padding: 20px !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; margin-bottom: 24px !important; display: flex !important; gap: 15px !important; align-items: center !important;">
-                    <span style="font-size: 1.2rem;">🔍</span>
-                    <input type="text" id="knowledgebaseLocalQueryField" class="search-input" placeholder="Search regulatory guides or filing steps..." style="flex: 1 !important; width: auto !important;">
-                </div>
+          triggerBtn.addEventListener("click", () => {
+            const isActive = nodeRow.classList.toggle("open-active");
+            if (isActive) {
+              panelBox.style.maxHeight = panelBox.scrollHeight + "px";
+            } else {
+              panelBox.style.maxHeight = "0px";
+            }
+          });
 
-                <!-- HELP CENTER CATALOG TARGET GRID -->
-                <div id="knowledgebaseArticlesLayoutTargetGrid" style="display: grid !important; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important; gap: 24px !important;">
-                    <p style="font-size: 0.82rem !important; color: var(--text-muted) !important;">Indexing documentation files parameters matrices...</p>
-                </div>
-            </div>
-        </main>
-    </div>
+          faqsWrapper.appendChild(nodeRow);
+        });
+      }
 
-<!-- 2. Authentication token bridge handles login session states -->
-<script src="assets/js/client-core.js"></script>
+      // --- STAGE 3: INTERCEPT KEY INPUTS & EXECUTE INSTANT ROW FILTERS ---
+      searchBox.addEventListener("keyup", () => {
+        const queryToken = searchBox.value.toLowerCase().trim();
+        
+        if (!queryToken) {
+          renderFilteredFaqsStack(localHistoricalFaqsCache);
+          return;
+        }
 
-<!-- 3. Dashboard metrics logic processes table grids -->
-<script src="assets/js/client-dashboard.js"></script>
+        const filteredRowsMatch = localHistoricalFaqsCache.filter(item => {
+          return String(item.question).toLowerCase().includes(queryToken) ||
+                 String(item.answer).toLowerCase().includes(queryToken) ||
+                 String(item.category).toLowerCase().includes(queryToken);
+        });
 
-<!-- 4. Realtime peripheral broadcast tracking handlers -->
-<script src="assets/js/client-engine.js"></script>
+        renderFilteredFaqsStack(filteredRowsMatch);
+      });
 
-    <script src="assets/js/client-navigation.js"></script>
-    <script src="assets/js/client-toggle.js"></script>
+      function escapeKbHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      function toggleSidebarAccordion(buttonElement) {
+        if (!buttonElement) return;
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel) {
+          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        }
+      }
+      window.toggleSidebarAccordion = toggleSidebarAccordion;
+
+      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+        window.location.replace("portal-login.html");
+      });
+
+      await streamGlobalKnowledgebaseMatrix();
+    });
+  </script>
 </body>
 </html>

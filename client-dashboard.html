@@ -1,216 +1,389 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Customer Portal Dashboard | filings4u</title>
-    <meta name="theme-color" content="#10b981">
-    <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
-    <meta name="msapplication-navbutton-color" content="#10b981">
-    <link rel="icon" type="image/png" href="images/fav.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Customer Portal Dashboard | filings4u</title>
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
+  <meta name="msapplication-navbutton-color" content="#10b981">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
-    <!-- External Dependencies Load Legally -->
-    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
-        <!-- 1. Database base driver logic -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
     
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* 🖥️ PRIMARY CONTENT AREA STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 16px !important; }
+    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
+    .search-input { padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; }
     
-    <link rel="stylesheet" href="assets/css/client.css">
-    <link rel="stylesheet" href="assets/css/client-toggle.css">
+    .nav-bell-wrapper { position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important; }
+    .document-vault-download-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+    .document-vault-download-btn:hover { background: var(--text-dark); color: white; }
+    
+    .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
+    .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
+  </style>
 </head>
 
 <body>
-    <div class="dashboard-wrapper">
-        <!-- 🏢 LOCKED STATIONARY SIDEBAR PANEL -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge" style="background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; border: 1px solid rgba(16, 185, 129, 0.15) !important;">Client Account</div></div>
+  <div class="dashboard-wrapper">
+    <!-- 📁 STATIONARY PORTAL SIDEBAR -->
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Client Account</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <div class="accordion-group">
+          <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+          <div class="accordion-panel">
+            <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+            <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+            <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
+          </div>
+        </div>
+        <div class="accordion-group">
+          <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
+          <div class="accordion-panel">
+            <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
+            <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
+            <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
+          </div>
+        </div>
+        <div class="accordion-group">
+          <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Support <span class="chevron">▼</span> </button>
+          <div class="accordion-panel">
+            <a href="client-account.html" class="nav-item">💰 My Account</a>
+            <a href="client-order-history.html" class="nav-item">💸 Order History</a>
+            <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
+            <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
+          <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
+          <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Secure Connected</span>
+        </div>
+        <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+      </div>
+    </aside>
+
+    <!-- 🖥️ PRIMARY CONTENT AREA -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Welcome Back, <span id="clientNameField">Client</span></h1>
+          <p>Manage your company business filings and compliance status parameters</p>
+        </div>
+        <div class="header-actions-wrapper">
+          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; margin-right: 5px !important; box-sizing: border-box !important;">
+            <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed">
+              <span class="nav-bell-icon" style="font-size: 1.3rem !important; cursor: pointer !important;">🔔</span>
+              <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.65rem !important; font-weight: 800 !important; padding: 2px 6px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
+            </a>
+          </div>
+          <div class="header-clock-pill">
+            <span>⏱️</span>
+            <span id="portal-clock">Synchronizing system framework clock...</span>
+          </div>
+          <div>
+            <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities...">
+          </div>
+        </div>
+      </header>
+
+      <!-- OUTER CONTENT GRID PANELS -->
+      <div style="margin-top: 32px; padding: 0 40px; box-sizing: border-box; width: 100%;">
+        
+        <!-- 📊 TOP BLOCK: NUMERICAL STATISTICAL PILLS -->
+        <div style="display: flex; gap: 28px; margin-bottom: 32px; flex-wrap: wrap; width: 100%;">
+          <!-- Active Entities Card -->
+          <div style="flex: 1; min-width: 240px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
+            <h3 style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; margin: 0 0 12px 0; letter-spacing: 0.05em; text-align: left; font-weight: 700;">Active Entities</h3>
+            <div id="statActiveEntities" style="font-size: 1.8rem; font-weight: 700; color: #0f172a; text-align: left;">0</div>
+          </div>
+          <!-- Ongoing Filings Card -->
+          <div style="flex: 1; min-width: 240px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
+            <h3 style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; margin: 0 0 12px 0; letter-spacing: 0.05em; text-align: left; font-weight: 700;">Ongoing Filings</h3>
+            <div id="statOngoingFilings" style="font-size: 1.8rem; font-weight: 700; color: #0f172a; text-align: left;">0</div>
+          </div>
+          <!-- Compliance Alerts Card -->
+          <div style="flex: 1; min-width: 240px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
+            <h3 style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; margin: 0 0 12px 0; letter-spacing: 0.05em; text-align: left; font-weight: 700;">Compliance Alerts</h3>
+            <div id="statComplianceAlerts" style="font-size: 1.8rem; font-weight: 700; color: #ef4444; text-align: left;">0</div>
+          </div>
+        </div>
+
+        <!-- 🔄 MIDDLE BLOCK: DATAGRIDS & TIMELINES -->
+        <div style="display: flex; gap: 28px; margin-bottom: 32px; flex-wrap: wrap; width: 100%;">
+          <!-- Left Panel: Live Registered Entities Workspace Grid Layout -->
+          <div style="flex: 2; min-width: 400px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
+            <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700; text-align: left;">Registered Corporate Entities Ledger</h3>
+            <div style="overflow-x: auto; width: 100%;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b;">
+                    <th style="padding: 8px;">Entity Corporate Name</th>
+                    <th style="padding: 8px;">Filing Description</th>
+                    <th style="padding: 8px;">Plan Tier</th>
+                    <th style="padding: 8px; text-align: right;">Standing Status</th>
+                  </tr>
+                </thead>
+                <tbody id="entitiesTableBody">
+                  <tr><td colspan="4" style="color: #94a3b8; padding: 12px 8px;">Streaming verified telemetry layers...</td></tr>
+                </tbody>
+              </table>
             </div>
-            <nav class="sidebar-accordion-menu">
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
-                        <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
-                        <a href="client-services.html" class="nav-item">🛠️ Order New Services</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Filings & Compliance <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-filings.html" class="nav-item">⚙️ Active Orders</a>
-                        <a href="client-compliance.html" class="nav-item">🛡️ Compliance Tracker</a>
-                        <a href="client-vault.html" class="nav-item">📂 Document Vault</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Billing & Invoices <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-account.html" class="nav-item">💰 My Account</a>
-                        <a href="client-order-history.html" class="nav-item">💸 Order History</a>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Support & Resources <span class="chevron">▼</span> </button>
-                    <div class="accordion-panel">
-                        <a href="client-chat.html" class="nav-item">💬 Live Chat Support</a>
-                        <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
-                    </div>
-                </div>
-            </nav>
-            <div class="sidebar-footer-lock">
-                <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-                    <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-                    <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Secure Connected</span>
-                </div>
-                <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
+          </div>
+          <!-- Right Panel: Urgent Compliance Timelines Activity Widget -->
+          <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
+            <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700; text-align: left;">Urgent Consultation Timelines</h3>
+            <div id="filingTimeline" style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">Scanning active compliance tracks...</div>
             </div>
-        </aside>
-<!-- 🖥️ PRIMARY CONTENT AREA -->
-<main class="portal-main">
-  <header class="portal-header">
-    <div class="welcome-text">
-      <h1>Welcome Back, <span id="clientNameField">Client</span></h1>
-      <p>Manage your company business filings and compliance status</p>
-    </div>
-    
-    <div class="header-actions-wrapper">
-      <!-- 🔔 REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
-      <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; margin-right: 5px !important; box-sizing: border-box !important;">
-        <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important;">
-          <span class="nav-bell-icon" style="font-size: 1.3rem !important; cursor: pointer !important;">🔔</span>
-          <!-- Added missing id target link rule for badge calculations -->
-          <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.65rem !important; font-weight: 800 !important; padding: 2px 6px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-        </a>
-      </div>
-      
-      <!-- ⏱️ PORTAL CLOCK SYSTEM CONTAINER -->
-      <div class="header-clock-pill">
-        <span>⏱️</span>
-        <span id="portal-clock">Establishing internal synchronized framework clock...</span>
-      </div>
-      
-      <div>
-        <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities...">
-      </div>
-    </div>
-  </header>
-
-  <!-- Outer Wrapper Spacing Container Grid -->
-  <div style="margin-top: 32px; padding: 0 10px;">
-    
-    <!-- 📊 TOP BLOCK: NUMERICAL STATISTICAL PILLS -->
-    <div style="display: flex; gap: 28px; margin-bottom: 32px; flex-wrap: wrap;">
-      <!-- Active Entities Card -->
-      <div style="flex: 1; min-width: 250px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <h3 style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; margin: 0 0 12px 0; letter-spacing: 0.05em;">Active Entities</h3>
-        <div id="statActiveEntities" style="font-size: 1.8rem; font-weight: 700; color: #0f172a;">...</div>
-      </div>
-      
-      <!-- Ongoing Filings Card -->
-      <div style="flex: 1; min-width: 250px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <h3 style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; margin: 0 0 12px 0; letter-spacing: 0.05em;">Ongoing Filings</h3>
-        <div id="statOngoingFilings" style="font-size: 1.8rem; font-weight: 700; color: #0f172a;">...</div>
-      </div>
-      
-      <!-- Compliance Alerts Card -->
-      <div style="flex: 1; min-width: 250px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <h3 style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; margin: 0 0 12px 0; letter-spacing: 0.05em;">Compliance Alerts</h3>
-        <div id="statComplianceAlerts" style="font-size: 1.8rem; font-weight: 700; color: #ef4444;">...</div>
-      </div>
-    </div>
-
-    <!-- 🔄 MIDDLE BLOCK: DATAGRIDS & TIMELINES -->
-    <div style="display: flex; gap: 28px; margin-bottom: 32px; flex-wrap: wrap;">
-      <!-- Left Panel: Live Registered Entities Workspace Grid Layout -->
-      <div style="flex: 2; min-width: 400px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700;">Registered Corporate Entities Ledger</h3>
-        <div style="overflow-x: auto; width: 100%;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
-            <thead>
-              <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b;">
-                <th style="padding: 8px;">Entity Corporate Name</th>
-                <th style="padding: 8px;">Jurisdiction</th>
-                <th style="padding: 8px;">Structure</th>
-                <th style="padding: 8px;">Standing Status</th>
-              </tr>
-            </thead>
-            <!-- 🎯 JAVASCRIPT TARGET INJECTION ENGINE NODE -->
-            <tbody id="entitiesTableBody">
-              <tr><td colspan="4" style="color: #94a3b8; padding: 12px 8px;">Streaming verified telemetry layers...</td></tr>
-            </tbody>
-          </table>
+          </div>
         </div>
-      </div>
 
-      <!-- Right Panel: Urgent Compliance Timelines Activity Widget -->
-      <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700;">Urgent Compliance Timelines</h3>
-        <!-- 🎯 JAVASCRIPT TARGET INJECTION ENGINE NODE -->
-        <div id="filingTimeline" style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">Scanning active compliance tracks...</div>
+        <!-- 📁 LOWER BLOCK: LIVE ACTION LOGS & SECURE FILE VAULTS -->
+        <div style="display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 40px; width: 100%;" id="notifications-anchor">
+          <!-- Left Panel: Secure Automated File Vault Storage Box -->
+          <div style="flex: 2; min-width: 400px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
+            <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700; text-align: left;">Secure Corporate Document Vault</h3>
+            <div style="overflow-x: auto; width: 100%;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b;">
+                    <th style="padding: 8px;">Vaulted Asset File Item</th>
+                    <th style="padding: 8px;">Storage Reference Identifier</th>
+                    <th style="padding: 8px; text-align: right;">Action Core</th>
+                  </tr>
+                </thead>
+                <tbody id="clientVaultTableLayoutBody">
+                  <tr><td colspan="3" style="color: #94a3b8; padding: 12px 8px;">Establishing absolute replication sync stream...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Right Panel: Live Action Log Notification Feed Stream Panel -->
+          <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
+            <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700; text-align: left;">Live Action Push Alerts</h3>
+            <div id="realtimeNotificationFeedTarget" style="display: flex; flex-direction: column; gap: 12px;">
+              <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">Establishing continuous state sync...</p>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- 📁 LOWER BLOCK: LIVE ACTION LOGS & SECURE FILE VAULTS -->
-    <div style="display: flex; gap: 28px; flex-wrap: wrap;" id="notifications-anchor">
-      <!-- Left Panel: Secure Automated File Vault Storage Box -->
-      <div style="flex: 2; min-width: 400px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700;">Secure Corporate Document Vault</h3>
-        <div style="overflow-x: auto; width: 100%;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
-            <thead>
-              <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b;">
-                <th style="padding: 8px;">Vaulted Asset File Item</th>
-                <th style="padding: 8px;">Date Issued</th>
-                <th style="padding: 8px;">Action Core</th>
-              </tr>
-            </thead>
-            <!-- 🎯 JAVASCRIPT TARGET INJECTION ENGINE NODE -->
-            <tbody id="clientVaultTableLayoutBody">
-              <tr><td colspan="3" style="color: #94a3b8; padding: 12px 8px;">Establishing absolute replication sync stream...</td></tr>
-            </tbody>
-          </table>
-        </div>
       </div>
-
-      <!-- Right Panel: Live Action Log Notification Feed Stream Panel -->
-      <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <h3 style="font-size: 1rem; color: #0f172a; margin: 0 0 16px 0; font-weight: 700;">Live Action Log</h3>
-        <!-- 🎯 JAVASCRIPT TARGET INJECTION ENGINE NODE -->
-        <div id="realtimeNotificationFeedTarget" style="display: flex; flex-direction: column; gap: 12px;">
-          <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">Establishing continuous state sync...</p>
-        </div>
-      </div>
-    </div>
-
+    </main>
   </div>
-</main>
+  <!-- ========================================================================== ⚙️ PORTAL REPLICATION BACKEND CORE SYSTEM INTEGRATIONS ========================================================================== -->
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
+      // 1. Resolve Document Interface Hooks
+      const clientNameField = document.getElementById("clientNameField");
+      const activeEntsEl     = document.getElementById("statActiveEntities");
+      const ongoingFilingsEl = document.getElementById("statOngoingFilings");
+      const complianceAlertsEl = document.getElementById("statComplianceAlerts");
+      const entitiesTable    = document.getElementById("entitiesTableBody");
+      const timelineBox      = document.getElementById("filingTimeline");
+      const vaultTable       = document.getElementById("clientVaultTableLayoutBody");
+      const pushAlertsFeed   = document.getElementById("realtimeNotificationFeedTarget");
+      const unreadBadge      = document.getElementById("globalNavUnreadCounterBadge");
 
-<!-- 1. The Global Library Context Factory Engine Core -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        entitiesTable.innerHTML = `<tr><td colspan="4" style="color:var(--staff-red); font-weight:700;">✕ System Error: Supabase connection manager missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
+      }
 
-<!-- 2. The Configuration setup creates window.supabaseInstance immediately -->
-<script src="assets/js/supabase-config.js"></script>
+      // 3. Authenticate User Session Profile Layers [0.1]
+      const { data: { session }, error: sessionErr } = await client.auth.getSession();
+      if (sessionErr || !session) {
+        window.location.href = "portal-login.html";
+        return;
+      }
 
-<!-- 3. The Authentication engine can now safely query session tokens -->
-<script src="assets/js/client-engine.js"></script>
+      const clientEmail = session.user.email;
+      if (clientNameField) {
+        clientNameField.textContent = clientEmail.split("@")[0];
+      }
 
-<!-- 4. The Sync layer maps tables to the initialized instance -->
-<script src="assets/js/client-core.js"></script>
+      async function runPortalDashboardHydration() {
+        try {
+          console.log(`📡 [Client Portal] Compiling user telemetry rows for: [${clientEmail}]`);
 
-<!-- 5. Tickers, clocks, and websockets register last -->
-<script src="assets/js/client-dashboard.js"></script>
+          // 🟢 DIRECT CONCURRENT DATA STREAMS: Fetch records across portal boundaries concurrently via Promise pools
+          const [ordersRes, docsRes, apptsRes, alertsRes] = await Promise.all([
+            client.from('orders').select('*').eq('email', clientEmail),
+            client.from('order_documents').select('*').eq('user_email', clientEmail),
+            client.from('appointments').select('*').eq('user_email', clientEmail),
+            client.from('notifications').select('*').eq('recipient_email', clientEmail)
+          ]);
 
-<!-- 6. Non-critical peripheral navigation files -->
-<script src="assets/js/client-navigation.js"></script>
-<script src="assets/js/client-toggle.js"></script>
+          if (ordersRes.error) throw ordersRes.error;
+          if (docsRes.error)   throw docsRes.error;
+          if (apptsRes.error)  throw apptsRes.error;
+          if (alertsRes.error) throw alertsRes.error;
 
-    
+          const ordersData = ordersRes.data || [];
+          const docsData   = docsRes.data || [];
+          const apptsData  = apptsRes.data || [];
+          const alertsData = alertsRes.data || [];
+
+          // Tabulate Aggregated Scoring Pillars
+          const activeEntitiesCount = ordersData.filter(o => String(o.status).toLowerCase() === 'paid' || String(o.status).toLowerCase() === 'approved').length;
+          const unreadAlertsCount   = alertsData.filter(a => a.is_unread === true).length;
+
+          if (activeEntsEl)       activeEntsEl.textContent = activeEntitiesCount.toString();
+          if (ongoingFilingsEl)   ongoingFilingsEl.textContent = ordersData.filter(o => String(o.status).toLowerCase() !== 'paid' && String(o.status).toLowerCase() !== 'approved').length.toString();
+          if (complianceAlertsEl) complianceAlertsEl.textContent = unreadAlertsCount.toString();
+
+          // Handle Top Action Navigation Badge Updates
+          if (unreadBadge) {
+            if (unreadAlertsCount > 0) {
+              unreadBadge.textContent = unreadAlertsCount.toString();
+              unreadBadge.style.display = "block";
+            } else {
+              unreadBadge.style.display = "none";
+            }
+          }
+          // --- STEP 1: HYDRATE ENTITIES LEDGER ---
+          if (ordersData.length === 0) {
+            entitiesTable.innerHTML = `<tr><td colspan="4" style="color:var(--text-muted); padding:16px 8px; font-style:italic;">No entity registration profiles logged onto this account.</td></tr>`;
+          } else {
+            entitiesTable.innerHTML = ordersData.map(order => `
+              <tr style="border-bottom:1px solid var(--border-color); background:#ffffff;">
+                <td style="padding:12px 8px; font-weight:700; color:var(--text-dark);">${escapeClientHtml(order.company_name || 'Asset Formation Lane')}</td>
+                <td style="padding:12px 8px; color:var(--text-muted); font-weight:600;">${escapeClientHtml(order.service_title)}</td>
+                <td style="padding:12px 8px; font-family:monospace; font-size:0.75rem;"><span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700; color:#475569;">${escapeClientHtml(String(order.plan_tier).toUpperCase())}</span></td>
+                <td style="padding:12px 8px; text-align:right; font-weight:800; color:var(--emerald);">${escapeClientHtml(String(order.status).toUpperCase())}</td>
+              </tr>
+            `).join('');
+          }
+
+          // --- STEP 2: HYDRATE CONSULTATION CALENDAR TIMELINES ---
+          if (apptsData.length === 0) {
+            timelineBox.innerHTML = `<div style="font-size:0.85rem; color:var(--text-muted); font-style:italic;">No upcoming consultation appointments are reserved.</div>`;
+          } else {
+            timelineBox.innerHTML = apptsData.map(appt => `
+              <div class="timeline-event-row">
+                <div style="font-weight:700; color:var(--text-dark); margin-bottom:2px;">📅 ${escapeClientHtml(appt.title)}</div>
+                <div style="font-family:monospace; font-size:0.75rem; color:var(--text-muted); font-weight:600;">${new Date(appt.appointment_date).toLocaleString()}</div>
+              </div>
+            `).join('');
+          }
+
+          // --- STEP 3: HYDRATE BINARY VAULT RECOVERY PATHS ---
+          if (docsData.length === 0) {
+            vaultTable.innerHTML = `<tr><td colspan="3" style="color:var(--text-muted); padding:16px 8px; font-style:italic;">No files or state certificates dispatched to your profile vault yet.</td></tr>`;
+          } else {
+            vaultTable.innerHTML = docsData.map(doc => {
+              const pathKey = doc.storage_file_path;
+              return `
+                <tr style="border-bottom:1px solid var(--border-color); background:#ffffff;">
+                  <td style="padding:12px 8px; font-weight:700; color:var(--text-dark);">${escapeClientHtml(doc.document_name)}</td>
+                  <td style="padding:12px 8px; font-family:monospace; font-size:0.75rem; color:var(--text-muted); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeClientHtml(pathKey)}">${escapeClientHtml(pathKey)}</td>
+                  <td style="padding:12px 8px; text-align:right;">
+                    <button class="document-vault-download-btn download-trigger" data-path="${pathKey}">Download Copy</button>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+
+            // Bind secure read signatures to vault rows [0.1]
+            vaultTable.querySelectorAll(".download-trigger").forEach(btn => {
+              btn.addEventListener("click", async function() {
+                const filePath = this.getAttribute("data-path");
+                try {
+                  console.log(`📡 [Portal Storage] Requesting temporary access signature token for: [${filePath}]`);
+                  const { data: urlData, error: urlError } = await client.storage.from('llc-vault').createSignedUrl(filePath, 60);
+                  if (urlError) throw urlError;
+                  window.open(urlData.signedUrl, '_blank');
+                } catch (err) {
+                  alert(`✕ Read Request Denied: ${err.message}`);
+                }
+              });
+            });
+          }
+
+          // --- STEP 4: HYDRATE ADMIN STRIP NOTIFICATION FIELDS ---
+          if (alertsData.length === 0) {
+            pushAlertsFeed.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); font-style:italic;">Your operational activity logs are clear.</p>`;
+          } else {
+            pushAlertsFeed.innerHTML = alertsData.map(alert => `
+              <div class="action-alert-strip" style="${alert.is_unread ? 'border-color:var(--staff-red); background:#fef2f2; color:#991b1b;' : 'border-color:var(--border-color); background:#f8fafc; color:var(--text-dark);'}">
+                <div style="font-weight:800; margin-bottom:2px;">🔔 ${escapeClientHtml(alert.title)}</div>
+                <div style="font-weight:500; font-size:0.78rem; line-height:1.4; opacity:0.9;">${escapeClientHtml(alert.message)}</div>
+              </div>
+            `).join('');
+          }
+
+        } catch (dashboardException) {
+          console.error("✕ Customer Dashboard Compilation Interrupted:", dashboardException.message);
+          entitiesTable.innerHTML = `<tr><td colspan="4" style="color:var(--staff-red); font-weight:700;">✕ Critical Sync Failure: Refresh browser window.</td></tr>`;
+        }
+      }
+
+      function escapeClientHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      function toggleSidebarAccordion(buttonElement) {
+        if (!buttonElement) return;
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel) {
+          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        }
+      }
+      window.toggleSidebarAccordion = toggleSidebarAccordion;
+
+      // Initialize System Clock Pill Tickers
+      function runHeaderPortalClockTick() {
+        const clock = document.getElementById("portal-clock");
+        if (clock) clock.textContent = new Date().toLocaleString();
+      }
+      setInterval(runHeaderPortalClockTick, 1000);
+      runHeaderPortalClockTick();
+
+      // Hook local storage clearance to Log Out button triggers safely
+      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+        window.location.replace("portal-login.html");
+      });
+
+      await runPortalDashboardHydration();
+    });
+  </script>
 </body>
 </html>
-
