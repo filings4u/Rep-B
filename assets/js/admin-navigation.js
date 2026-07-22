@@ -1,7 +1,6 @@
 /**
- * 📁 FILE PATH: assets/js/admin-navigation.js
- * Responsibility: Mobile Navbar Row (Far-Left Logo, Far-Right Toggle with 3 Lines)
- * Supporting: Full Accordion Collapsible Logic preservation in Mobile View
+ * 📁 FILE PATH: assets/js/admin-navigation.js (Part 1)
+ * Responsibility: Mobile Header CSS Styles & Core Layout Overrides
  */
 (function() {
   "use strict";
@@ -12,18 +11,11 @@
 
   function initializeAccordionMobileNavigationRow() {
     const portalSidebar = document.querySelector(".portal-sidebar");
-    
-    if (!portalSidebar) {
-      console.error("✕ Navigation Error: Missing core '.portal-sidebar' layout template wrapper node.");
-      return;
-    }
+    if (!portalSidebar) return;
 
-    // ============================================================================ //
-    // 🧱 STAGE 1: INJECT CLEAN ROW CSS STYLES WITH ACCORDION PRESERVATION        //
-    // ============================================================================ //
+    // Inject the responsive stylesheet overrides directly into the page head
     const inlineMobileStyles = document.createElement("style");
     inlineMobileStyles.textContent = `
-      /* Clear mobile navbar row wrapper layout styles */
       .mobile-navbar-row {
         display: none;
         width: 100% !important;
@@ -39,19 +31,9 @@
         z-index: 2000 !important;
         height: 70px !important;
       }
-
-      .mobile-logo-box {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-      }
-
-      .mobile-logo-box img {
-        height: 32px !important;
-        width: auto !important;
-      }
-
-      /* Clean far-right same-row menu toggle button action with 3 lines */
+      .mobile-logo-box { display: flex !important; align-items: center !important; }
+      .mobile-logo-box img { height: 32px !important; width: auto !important; }
+      
       .mobile-menu-action-toggle {
         background: #0f172a !important;
         color: #ffffff !important;
@@ -64,83 +46,59 @@
         height: 38px !important;
         display: inline-flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        box-sizing: border-box !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
         gap: 8px !important;
       }
-
-      /* Structural 3-line hamburger layout icon grid box */
       .hamburger-icon-lines {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        width: 14px;
-        height: 10px;
+        display: flex; flex-direction: column; justify-content: space-between;
+        width: 14px; height: 10px;
       }
-
       .hamburger-icon-lines span {
-        display: block;
-        width: 100%;
-        height: 2px;
-        background-color: #ffffff;
-        border-radius: 1px;
-        transition: transform 0.2s, opacity 0.2s;
+        display: block; width: 100%; height: 2px;
+        background-color: #ffffff; border-radius: 1px;
       }
-
-      /* Mobile drop-down vertical stack wrapper grid */
       .mobile-expanded-links-wrapper {
-        display: none;
-        position: fixed !important;
-        top: 70px !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: calc(100vh - 70px) !important;
-        background: #ffffff !important;
+        display: none; position: fixed !important;
+        top: 70px !important; left: 0 !important; width: 100vw !important;
+        height: calc(100vh - 70px) !important; background: #ffffff !important;
         box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05) !important;
-        z-index: 1999 !important;
-        padding: 16px 20px !important;
-        box-sizing: border-box !important;
-        overflow-y: auto !important;
+        z-index: 1999 !important; padding: 16px 20px !important;
+        box-sizing: border-box !important; overflow-y: auto !important;
       }
-
-      .mobile-expanded-links-wrapper.active {
-        display: block !important;
-      }
-
-      /* Reinject native layout styles for accordion elements inside mobile view */
+      .mobile-expanded-links-wrapper.active { display: block !important; }
+      
+      /* Mobile Accordion Component Framework Elements Layout */
       .mobile-expanded-links-wrapper .accordion-trigger {
-        margin-top: 8px !important;
-        background: #f8fafc !important;
+        width: 100% !important; background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important; padding: 10px 14px !important;
+        font-size: 0.72rem !important; font-weight: 700 !important;
+        color: #475569 !important; text-transform: uppercase !important;
+        display: flex !important; align-items: center !important;
+        justify-content: space-between !important; cursor: pointer !important;
+        border-radius: 6px !important; margin-top: 10px !important; outline: none !important;
       }
-
       .mobile-expanded-links-wrapper .accordion-panel {
-        padding-left: 8px !important;
+        max-height: 0; overflow: hidden !important;
+        transition: max-height 0.25s ease-out !important;
+        padding-left: 8px !important; box-sizing: border-box !important;
       }
-
-      /* 📱 STRICT Breakpoint: Override layout scaling rules under 991px screen width */
+      .mobile-expanded-links-wrapper .nav-item {
+        display: flex !important; align-items: center !important; gap: 8px !important;
+        padding: 10px 12px !important; color: #475569 !important; text-decoration: none !important;
+        font-size: 0.85rem !important; font-weight: 600 !important;
+        border-radius: 6px !important; margin-top: 4px !important;
+      }
+      .mobile-expanded-links-wrapper .nav-item.active {
+        background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important;
+      }
       @media (max-width: 991px) {
-        .mobile-navbar-row {
-          display: flex !important;
-        }
-        .portal-sidebar {
-          display: none !important;
-        }
-        .portal-header {
-          display: none !important;
-        }
-        .portal-main {
-          margin-left: 0 !important;
-          margin-top: 70px !important; /* Displaces content cleanly below fixed row header */
-          width: 100% !important;
-        }
+        .mobile-navbar-row { display: flex !important; }
+        .portal-sidebar, .portal-header { display: none !important; }
+        .portal-main { margin-left: 0 !important; margin-top: 70px !important; width: 100% !important; }
       }
     `;
     document.head.appendChild(inlineMobileStyles);
-
     // ============================================================================ //
-    // 🏗️ STAGE 2: ASSEMBLE COMPONENT ROW TREE AND CLONE SIDEBAR NAV CLUSTER       //
+    // 🏗️ STAGE 2: ASSEMBLE COMPONENT ROW TREE AND CLONE DESKTOP LINKS OVER        //
     // ============================================================================ //
     // 1. Build main mobile header navigation parent row element wrapper
     const mobileNavbarRow = document.createElement("div");
@@ -171,19 +129,19 @@
     `;
     mobileNavbarRow.appendChild(toggleButton);
 
-    // 4. Build mobile drop-down menu container wrapper
+    // 4. Build mobile drop-down menu container wrapper panel grid
     const linksDropdownStack = document.createElement("div");
     linksDropdownStack.className = "mobile-expanded-links-wrapper";
 
-    // ✅ FIXED ACTION: Pull and clone the original nav element cluster to preserve accordion logic completely
+    // Clone the menu cluster directly to preserve the accordion nodes tree
     const sidebarNavMenuSource = portalSidebar.querySelector(".sidebar-accordion-menu");
     if (sidebarNavMenuSource) {
       const clonedNavMenu = sidebarNavMenuSource.cloneNode(true);
       linksDropdownStack.appendChild(clonedNavMenu);
 
-      // Re-bind the layout link active triggers inside the cloned node element structure
-      const clonedNavItems = clonedNavMenu.querySelectorAll(".nav-item");
-      clonedNavItems.forEach(item => {
+      // Re-bind click handlers inside the cloned layout stream to close the panel on select
+      const mobileNavItems = clonedNavMenu.querySelectorAll(".nav-item");
+      mobileNavItems.forEach(item => {
         item.addEventListener("click", () => {
           linksDropdownStack.classList.remove("active");
           resetToggleButtonToDefaultState(toggleButton);
@@ -194,13 +152,42 @@
     // Append built nodes securely to your body container wrapper layers
     document.body.appendChild(mobileNavbarRow);
     document.body.appendChild(linksDropdownStack);
+    // ============================================================================ //
+    // 🎛️ STAGE 3: BIND ACCORDIONS DIRECTLY & ATTACH MENU TOGGLE SWITCH RUNTIMES    //
+    // ============================================================================ //
+    if (sidebarNavMenuSource) {
+      const mobileTriggers = linksDropdownStack.querySelectorAll(".accordion-trigger");
+      
+      mobileTriggers.forEach(triggerBtn => {
+        // Strip out old desktop parameters to stop function collisions
+        triggerBtn.removeAttribute("onclick");
+        
+        const chevron = triggerBtn.querySelector(".chevron");
+        if (chevron) chevron.textContent = "▼";
 
-    // ============================================================================ //
-    // 🎛️ STAGE 3: ATTACH CLICK STATE EVENT SWITCH TO TOGGLE MENU BUTTONS          //
-    // ============================================================================ //
+        triggerBtn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          this.classList.toggle("active");
+          
+          const panel = this.nextElementSibling;
+          const indicator = this.querySelector(".chevron");
+          
+          if (panel && panel.style) {
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+              panel.style.maxHeight = "0px";
+              if (indicator) indicator.textContent = "▼";
+            } else {
+              panel.style.maxHeight = panel.scrollHeight + "px";
+              if (indicator) indicator.textContent = "▲";
+            }
+          }
+        });
+      });
+    }
+
+    // Toggle menu dropdown open or closed on far-right header button clicks
     toggleButton.addEventListener("click", (e) => {
       e.stopPropagation();
-      
       if (linksDropdownStack.classList.contains("active")) {
         linksDropdownStack.classList.remove("active");
         resetToggleButtonToDefaultState(toggleButton);
@@ -214,17 +201,17 @@
       const label = btn.querySelector(".toggle-button-label-text");
       if (label) label.textContent = "Menu";
       btn.style.background = "#0f172a";
-      document.body.style.overflow = ""; // Restores scroll
+      document.body.style.overflow = ""; 
     }
 
     function setToggleButtonToActiveCloseState(btn) {
       const label = btn.querySelector(".toggle-button-label-text");
       if (label) label.textContent = "Close";
-      btn.style.background = "#c15254"; // Matches admin dashboard accent styling
-      document.body.style.overflow = "hidden"; // Locks screen background scroll
+      btn.style.background = "#c15254"; 
+      document.body.style.overflow = "hidden"; 
     }
 
-    // Close the navigation drop area automatically if general desktop layout canvas area is clicked
+    // Auto-close dropdown if you click outside the open container
     document.addEventListener("click", (e) => {
       if (!linksDropdownStack.contains(e.target) && !toggleButton.contains(e.target)) {
         linksDropdownStack.classList.remove("active");
@@ -239,6 +226,6 @@
       }
     }, { passive: true });
 
-    console.log("✅ Mobile accordion navigation row compiled with three horizontal line icons.");
+    console.log("✅ Mobile navigation row compiled completely with active accordions.");
   }
 })();
