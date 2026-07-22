@@ -83,11 +83,16 @@
     </aside>
 
     <main class="portal-main">
-      <header class="portal-header">
+          <header class="portal-header">
         <div style="text-align: left;">
           <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Secure Corporate Support Helpdesk</h1>
         </div>
+        <!-- UPGRADED: Added a dedicated end session button trigger element slate -->
+        <div>
+          <button id="f4uEndChatSessionBtn" style="background:#fef2f2 !important; color:var(--staff-red) !important; border:1px solid rgba(193,82,84,0.2) !important; padding:10px 16px !important; border-radius:8px !important; font-size:0.82rem !important; font-weight:700 !important; cursor:pointer !important; transition:all 0.15s ease !important;" onmouseover="this.style.background='var(--staff-red)', this.style.color='#ffffff'" onmouseout="this.style.background='#fef2f2', this.style.color='var(--staff-red)'">🛑 End Chat Session</button>
+        </div>
       </header>
+
 
       <div class="chat-layout-container">
         <!-- Message Timeline Board Viewport -->
@@ -273,6 +278,85 @@
           }
         }
       }
+
+            // --- STAGE 5: TRANSCRIPT GENERATION & AUTOMATED SESSION CLOSURE ---
+      const endChatBtn = document.getElementById("f4uEndChatSessionBtn");
+
+      if (endChatBtn) {
+        endChatBtn.addEventListener("click", async () => {
+          // 1. Prompt for user confirmation before breaking active database streams
+          const confirmClose = confirm("Are you sure you want to end this support session? This will compile your complete chat transcript history for your records.");
+          if (!confirmClose) return;
+
+          const originalText = endChatBtn.textContent;
+          endChatBtn.disabled = true;
+          endChatBtn.textContent = "Compiling Transcript...";
+
+          try {
+            console.log(`📡 [Transcript Engine] Querying complete message matrix for session trace: [${clientActiveUserId}]`);
+
+            // Fetch the entire chat log history cleanly sorted chronologically
+            const { data: logHistory, error: fetchError } = await client
+              .from('chat_messages')
+              .select('sender_type, message_content, created_at')
+              .eq('client_id', clientActiveUserId)
+              .order('created_at', { ascending: true });
+
+            if (fetchError) throw fetchError;
+
+            // 2. Format chronological text document parameters
+            let transcriptTextOutput = `==================================================\n`;
+            transcriptTextOutput += `📂 OFFICIAL FILINGS4U SUPPORT CHAT TRANSCRIPT\n`;
+            transcriptTextOutput += `👤 Client Session Reference Key: ${clientActiveUserId}\n`;
+            transcriptTextOutput += `📅 Compiled On: ${new Date().toLocaleString()}\n`;
+            transcriptTextOutput += `==================================================\n\n`;
+
+            if (!logHistory || logHistory.length === 0) {
+              transcriptTextOutput += `[System Note] No messages were exchanged during this support workspace session.\n`;
+            } else {
+              logHistory.forEach(msg => {
+                const timestamp = new Date(msg.created_at).toLocaleString();
+                const senderLabel = String(msg.sender_type).toUpperCase() === 'CLIENT' ? 'CLIENT' : 'FILINGS4U AGENT';
+                transcriptTextOutput += `[${timestamp}] ${senderLabel}:\n${msg.message_content}\n\n`;
+              });
+            }
+
+            transcriptTextOutput += `\n==================================================\n`;
+            transcriptTextOutput += `🏁 END OF CHAT TRANSCRIPT SESSION LOG\n`;
+            transcriptTextOutput += `==================================================\n`;
+
+            // 3. Mount an ad-hoc virtual anchor node to compile a zero-friction local browser download [0.1]
+            const blobDataStream = new Blob([transcriptTextOutput], { type: 'text/plain;charset=utf-8;' });
+            const temporaryDownloadUrl = URL.createObjectURL(blobDataStream);
+            
+            const virtualAnchorNode = document.createElement("a");
+            virtualAnchorNode.href = temporaryDownloadUrl;
+            virtualAnchorNode.setAttribute("download", `filings4u_chat_transcript_${clientActiveUserId.substring(0,8)}.txt`);
+            virtualAnchorNode.style.display = "none";
+            
+            document.body.appendChild(virtualAnchorNode);
+            virtualAnchorNode.click();
+            
+            // 4. Safely tear down virtual nodes and redirect to clear viewports
+            document.body.removeChild(virtualAnchorNode);
+            URL.revokeObjectURL(temporaryDownloadUrl);
+
+            console.log("✅ [Transcript Engine] File compiled and transferred to browser storage successfully.");
+            alert("✓ Success! Your chat transcript has been saved to your downloads folder. Returning to the main account screen.");
+            
+            // Hard wipe local session routing locks and route the user home
+            window.location.replace("client-dashboard.html");
+
+          } catch (err) {
+            console.error("✕ Failed to compile conversational transcript elements:", err.message);
+            alert(`✕ Transcript Error: ${err.message}`);
+          } finally {
+            endChatBtn.disabled = false;
+            endChatBtn.textContent = originalText;
+          }
+        });
+      }
+
       window.toggleSidebarAccordion = toggleSidebarAccordion;
 
       document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
