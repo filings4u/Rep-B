@@ -1,926 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Customer CRM Portal | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Customer CRM Matrix | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
-    <!-- 🚀 PLATFORM PRODUCTION INFRASTRUCTURE DEPENDENCIES -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
+    /* SIDEBAR DEFINITION */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
     
-    <style>
-        /* ==========================================================================
-           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-            transition: max-height 0.25s ease-out !important;
-        }
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-        /* 🖥️ PRIMARY SCROLLABLE MAIN CONTENT REGION */
-        .portal-main {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            margin-left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width)) !important;
-            min-height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-        .portal-header {
-            background: var(--white) !important;
-            padding: 20px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-        .search-input {
-            padding: 10px 16px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 10px !important;
-            font-size: 0.82rem !important;
-            width: 220px !important;
-            outline: none !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            color: var(--text-dark) !important;
-        }
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-        /* FIXED: Table container context layer prevents border cropping layout breaks */
-        .table-responsive-wrapper {
-            width: 100% !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-        }
-        .crm-table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            background: var(--white) !important;
-            font-size: 0.85rem !important;
-        }
-        .crm-table th {
-            background: #f8fafc;
-            padding: 14px 18px;
-            text-align: left;
-            font-weight: 700;
-            color: var(--text-muted);
-            border-bottom: 2px solid var(--border-color);
-            text-transform: uppercase;
-            font-size: 0.72rem;
-        }
-        .crm-table td {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-dark);
-        }
-        .crm-table tr:last-child td {
-            border-bottom: none;
-        }
-        .crm-btn {
-            padding: 10px 18px !important;
-            border: none !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.82rem !important;
-            cursor: pointer !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-            box-sizing: border-box !important;
-        }
-        .crm-btn.primary {
-            background: var(--text-dark) !important;
-            color: #fff !important;
-        }
-        .crm-modal {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(10, 31, 68, 0.4) !important;
-            backdrop-filter: blur(4px) !important;
-            -webkit-backdrop-filter: blur(4px) !important;
-            display: none;
-            align-items: center !important;
-            justify-content: center !important;
-            z-index: 10000 !important;
-        }
-        .modal-box {
-            background: #fff !important;
-            padding: 30px !important;
-            border-radius: 10px !important;
-            width: 90% !important;
-            max-width: 450px !important;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
-            box-sizing: border-box !important;
-        }
-        @media (max-width: 991px) {
-            .portal-sidebar { display: none !important; }
-            .portal-main { margin-left: 0 !important; width: 100% !important; }
-            .portal-header { flex-direction: column !important; gap: 15px !important; padding: 15px !important; }
-            .header-actions-wrapper { width: 100% !important; flex-direction: column !important; gap: 10px !important; }
-            .search-input, .header-clock-pill, .crm-btn.primary { width: 100% !important; text-align: center !important; justify-content: center !important; }
-        }
-    </style>
+    /* WORKSPACE FRAME */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 12px !important; }
+    .search-input { padding: 10px 16px !important; border: 1px solid var(--border-color) !important; border-radius: 10px !important; font-size: 0.82rem !important; width: 260px !important; outline: none !important; background: #f8fafc !important; box-sizing: border-box !important; height: 40px !important; color: var(--text-dark) !important; }
+    .search-input:focus { background: var(--white) !important; border-color: var(--emerald) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+  </style>
 </head>
 <body>
-       <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-     <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
-
-            </nav>
-          <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
-
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
-      "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
-
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
-
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
-
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
-
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
-</script>
-
-        </aside>
-
-        
-
-        <!-- Main Scrolling Content Panel -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div>
-                    <h1 style="margin:0; font-size:1.5rem; font-weight:800; color:var(--text-dark);">Account Management CRM</h1>
-                    <p style="margin:4px 0 0 0; font-size:0.82rem; color:var(--text-muted);">Synchronize profile states, register over-the-phone clients, and trigger invite tokens.</p>
-                </div>
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">⏱️ <span id="portal-clock">00/00/0000 | 00:00:00</span></div>
-                    <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search accounts...">
-                    <button class="crm-btn primary" onclick="openCleanRegistrationModal()" style="cursor: pointer !important;">+ Register New Account</button>
-
-                </div>
-            </header>
-
-            <div class="content-container">
-                <div style="overflow-x: auto; width: 100%;">
-                    <div class="table-responsive-wrapper">
-                        <table class="crm-table">
-                            <thead>
-                                <tr>
-                                    <th>User Reference ID</th>
-                                    <th>Filing Key</th>
-                                    <th>Corporate Entity Block</th>
-                                    <th>Registration Pipeline State</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="crmTableBody">
-                                <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">Querying real-time workspace vectors...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-<!-- ========================================================================== 
-🏢 FILINGS4U EXPANDED SERVICE REGISTRATION (Part 1: Expanded 30-Service Form Modal)
-=========================================================================== --> 
-<div id="registrationModal" class="crm-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:99999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
-    <div style="background:#ffffff; width:100%; max-width:850px; max-height:94vh; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display:flex; flex-direction:column; overflow:hidden;">
-        
-        <!-- HEADER ROW BAR -->
-        <div style="background:#0f172a; color:#ffffff; padding:20px 24px; display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:#ffffff;">Provision Account &amp; Corporate Compliance Service</h3>
-            <button onclick="closeRegistrationModal()" style="background:none; border:none; color:#ffffff; font-size:1.4rem; cursor:pointer; line-height:1;" aria-label="Close Registration Dialog">✕</button>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span></button>
+        <div class="accordion-panel">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
         </div>
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 600px;">
+          <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
+          <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+          <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+          <a href="admin-entity-master.html" class="nav-item"></a><span>🏢</span> Entity Master Ledger</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
 
-        <!-- SCROLLABLE 11-FIELD DATA INPUT LAYER -->
-        <form id="crmRegistrationForm" onsubmit="executeAdminCustomerProvisioning(event)" style="padding:25px; overflow-y:auto; display:grid; grid-template-columns: repeat(12, 1fr); gap:14px; text-align:left; box-sizing:border-box; margin:0;">
-            
-            <div style="grid-column: span 12;"><h4 style="margin:0; font-size:0.9rem; font-weight:800; color:#0a1f44; border-bottom:1px solid #e2e8f0; padding-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">1. Client Credentials &amp; Business Title</h4></div>
-            
-            <div style="grid-column: span 6;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Company / Corporate Legal Name</label>
-                <input type="text" id="crm_company_name" class="search-input" style="width:100% !important;" placeholder="e.g. Paramount Logistics LLC" required>
-            </div>
-            <div style="grid-column: span 6;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Client Full Personal Name</label>
-                <input type="text" id="crm_full_name" class="search-input" style="width:100% !important;" placeholder="John Doe" required>
-            </div>
-            <div style="grid-column: span 6;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Primary Verification Email Address</label>
-                <input type="email" id="crm_email" class="search-input" style="width:100% !important;" placeholder="name@domain.com" required>
-            </div>
-            <div style="grid-column: span 6;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Temporary Portal Password</label>
-                <input type="password" id="crm_password" class="search-input" style="width:100% !important;" placeholder="Minimum 6 characters" required>
-            </div>
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Customer CRM Profile Matrix</h1>
+          <p>Global portfolio client communication and identity tracking ledger</p>
+        </div>
+        <div class="header-actions-wrapper">
+          <input type="text" id="crmGlobalSearchField" class="search-input" placeholder="Filter profiles by email or company...">
+        </div>
+      </header>
 
-            <!-- 🎯 COMPLETE SYSTEM SERVICE CATALOG ALLOCATION DROPDOWN -->
-            <div style="grid-column: span 12; margin-top:5px;"><h4 style="margin:0; font-size:0.9rem; font-weight:800; color:#0a1f44; border-bottom:1px solid #e2e8f0; padding-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">2. Core Service &amp; Compliance Target Mapping</h4></div>
-            <div style="grid-column: span 12;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Link Primary Compliance Service Action</label>
-                <select id="crm_service_allocation" class="search-input" style="width:100% !important; background:#f8fafc; height:40px; cursor:pointer;" required>
-                    <optgroup label="Corporate Formations &amp; Structures">
-                        <option value="LLC Formation" selected>LLC Formation Setup Package ($149.00)</option>
-                        <option value="Corporations (C/S-Corp)">Corporations (C/S-Corp) Structure ($199.00)</option>
-                        <option value="Sole Proprietorship">Sole Proprietorship Registration ($79.00)</option>
-                        <option value="DBA Registration">DBA / Assumed Name Registration ($99.00)</option>
-                        <option value="Nonprofit Organization">Nonprofit Organization Corporate Setup ($299.00)</option>
-                        <option value="Series LLC">Series LLC Corporate Framework ($249.00)</option>
-                    </optgroup>
-                    <optgroup label="State Maintenance &amp; Agreements">
-                        <option value="Annual Reports">Annual Reports State Maintenance ($89.00)</option>
-                        <option value="Operating Agreement">Corporate Operating Agreement ($49.00)</option>
-                        <option value="Registered Agent">Registered Agent Services (1-Year) ($125.00)</option>
-                        <option value="Business Licenses">State Level Business Licenses ($149.00)</option>
-                        <option value="Employer ID (EIN)">Employer ID Number (EIN) File ($49.00)</option>
-                        <option value="Entity Dissolution">Entity Dissolution / Legal Closure ($175.00)</option>
-                    </optgroup>
-                    <optgroup label="Federal Corporate Taxation Systems">
-                        <option value="Federal Income Tax">Federal Income Tax Corporate Filing ($199.00)</option>
-                        <option value="State Income Tax">State Income Tax Corporate Filing ($149.00)</option>
-                        <option value="Franchise Tax Filing">State Franchise Tax Filing Matrix ($99.00)</option>
-                        <option value="Sales Tax Registration">State Sales Tax Permit Registration ($79.00)</option>
-                        <option value="Payroll Tax (940/941)">Corporate Payroll Tax Setup (940/941) ($129.00)</option>
-                    </optgroup>
-                    <optgroup label="FMCSA &amp; DOT Logistics Compliance">
-                        <option value="Heavy Use Tax (2290)">Heavy Vehicle Use Tax (Form 2290) ($89.00)</option>
-                        <option value="Owner Operators">Owner Operator Compliance Startup ($199.00)</option>
-                        <option value="Trucker Authority">Trucker Authority DOT Operating Power ($450.00)</option>
-                        <option value="Broker Authority">Property Broker Authority MC Power ($499.00)</option>
-                        <option value="UCR Registration">Unified Carrier Registration (UCR) ($99.00)</option>
-                        <option value="DOT Consortium">Drug &amp; Alcohol Consortium Enrolment ($149.00)</option>
-                        <option value="Driver Qualification File">Driver Qualification Audit File (DQF) ($49.00)</option>
-                        <option value="Process Agent (BOC-3)">Process Agent (BOC-3) Legal Filings ($75.00)</option>
-                        <option value="IFTA Registration">IFTA Fuel Tax Account Registration ($125.00)</option>
-                        <option value="Licenses &amp; Permits">State Logistics Permits &amp; Decals ($189.00)</option>
-                        <option value="Trucker Insurance">Trucker Insurance Brokerage Quoting ($0.00)</option>
-                        <option value="Broker Insurance">Property Broker Bond Quoting (BMC-84) ($0.00)</option>
-                        <option value="New Entrant Audit">DOT New Entrant Safety Audit Assistance ($249.00)</option>
-                    </optgroup>
-                </select>
-            </div>
-<!-- ========================================================================== 
-🏢 FILINGS4U EXPANDED SERVICE REGISTRATION (Part 2: Communications Addresses)
-=========================================================================== --> 
-            <div style="grid-column: span 12; margin-top:5px;"><h4 style="margin:0; font-size:0.9rem; font-weight:800; color:#0a1f44; border-bottom:1px solid #e2e8f0; padding-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">3. Direct Physical Communication Address</h4></div>
-            
-            <div style="grid-column: span 4;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Direct Telephone Phone</label>
-                <input type="text" id="crm_phone" class="search-input" style="width:100% !important;" placeholder="+1 (555) 0199" required>
-            </div>
-            <div style="grid-column: span 5;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Physical Street Address</label>
-                <input type="text" id="crm_address" class="search-input" style="width:100% !important;" placeholder="1209 North Orange Street" required>
-            </div>
-            <div style="grid-column: span 3;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Suite, Building, Apt</label>
-                <input type="text" id="crm_suite" class="search-input" style="width:100% !important;" placeholder="Suite 400A">
-            </div>
-            
-            <div style="grid-column: span 5;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">City Location</label>
-                <input type="text" id="crm_city" class="search-input" style="width:100% !important;" placeholder="Wilmington" required>
-            </div>
-            <div style="grid-column: span 3;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">State Code</label>
-                <input type="text" id="crm_state" class="search-input" style="width:100% !important;" placeholder="DE" maxlength="2" required>
-            </div>
-            <div style="grid-column: span 4;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Postal Zip Code</label>
-                <input type="text" id="crm_zip" class="search-input" style="width:100% !important;" placeholder="19801" required>
-            </div>
+      <div class="content-container">
+        <div class="console-card">
+          <h2>Active Platform Subscriptions & Accounts</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Customer Account</th>
+                  <th style="padding:12px !important;">Company Entity</th>
+                  <th style="padding:12px !important;">Tracking Reference</th>
+                  <th style="padding:12px !important;">Filing Service Tier</th>
+                  <th style="padding:12px !important; text-align:right !important;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="admin-crm-target-box">
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Establishing database matrix connection...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-            <div style="grid-column: span 12; margin-top:5px;"><h4 style="margin:0; font-size:0.9rem; font-weight:800; color:#0a1f44; border-bottom:1px solid #e2e8f0; padding-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">4. Profile Roles &amp; Agency Status</h4></div>
-            <div style="grid-column: span 12; display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="crm_is_agency" style="width:auto; margin:0; cursor:pointer;">
-                <label for="crm_is_agency" style="margin:0; cursor:pointer; font-size:0.82rem; font-weight:600; color:#0f172a;">Authorize Wholesale Agency Privileges State</label>
-            </div>
-
-            <div id="modalFeedback" style="grid-column: span 12; font-size:0.85rem; font-weight:700; min-height:1.2em; text-align:left; margin-top:5px;"></div>
-            
-            <div style="grid-column: span 12; text-align: right; border-top:1px solid #e2e8f0; padding-top:15px; margin-top:10px;">
-                <button type="button" class="crm-btn" style="background:#e2e8f0; color:#475569; margin-right:8px;" onclick="closeRegistrationModal()">Cancel</button>
-                <button type="submit" class="crm-btn primary" id="crmSubmitBtn">Create &amp; Provision Account</button>
-            </div>
-        </form>
-    </div>
-</div>
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
 
 
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
+      // 1. Establish strict UI layout selector references
+      const crmTableBody = document.getElementById("admin-crm-target-box");
+      const searchField  = document.getElementById("crmGlobalSearchField");
 
-  <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
+      if (!crmTableBody) {
+        throw new Error("✕ Critical UI Error: Cannot locate table body element anchor 'admin-crm-target-box' in document tree.");
+      }
+
+      // 2. Fetch master configuration client connection layers
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase connection manager uninitialized.</td></tr>`;
+        throw new Error("✕ Initialization Error: Supabase client infrastructure missing from global window context.");
+      }
+
+      let localCrmCacheArray = [];
+
+      async function fetchAndHydrateCrmMatrix() {
+        try {
+          console.log("📡 [CRM Engine] Extracting unique client portfolios directly from public.orders...");
+
+          // 🟢 EXCLUSIVE DATA QUERY: Pull transactional profiles from your orders table schema
+          const { data: ordersData, error: queryError } = await client
+            .from('orders')
+            .select('id, company_name, email, plan_tier, status, tracking_number, created_at')
+            .order('created_at', { ascending: false });
+
+          if (queryError) {
+            throw new Error(`Postgres Exception [Code ${queryError.code}]: ${queryError.message}`);
+          }
+
+          localCrmCacheArray = ordersData || [];
+          renderCrmGridDataRows(localCrmCacheArray);
+
+        } catch (crmFault) {
+          console.error("✕ CRM Data Synchronization Halted:", crmFault.message);
+          crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+        }
+      }
+
+      function renderCrmGridDataRows(dataset) {
+        crmTableBody.innerHTML = "";
+
+        if (!dataset || dataset.length === 0) {
+          crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No matching client accounts found inside orders table data.</td></tr>`;
+          return;
         }
 
-        // Inline modal helpers map setup options
-        window.toggleInvoiceGenerationModal = function(showFlag) {
-            const modal = document.getElementById('invoice-modal-overlay');
-            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
-        };
+        dataset.forEach(rowItem => {
+          const trElement = document.createElement("tr");
+          trElement.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
 
-        function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
+          const userEmail = rowItem.email || "unregistered-guest@email.com";
+          const corporateName = rowItem.company_name || "Unnamed Enterprise Group";
+          const trackingCode = rowItem.tracking_number || rowItem.id;
+          const tierPlan = String(rowItem.plan_tier || 'Starter').toUpperCase();
+          const currentStatus = String(rowItem.status || '').toLowerCase().trim();
 
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
+          let statusStyle = "background:#fffbe6; color:#b45309;"; // Pending colors configuration
+          if (currentStatus === 'paid' || currentStatus === 'fulfillment lane') {
+            statusStyle = "background:#e6f4ea; color:#137333;"; // Active profile colors
+          }
 
-    sidebar.classList.toggle("mobile-revealed");
+          trElement.innerHTML = `
+            <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeStringInput(userEmail)}</td>
+            <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeStringInput(corporateName)}</td>
+            <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem;">${escapeStringInput(trackingCode)}</td>
+            <td style="padding:14px 12px;"><span style="font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; background:#f1f5f9; color:#475569; letter-spacing:0.5px;">${escapeStringInput(tierPlan)}</span></td>
+            <td style="padding:14px 12px; text-align:right;"><span style="${statusStyle} padding:4px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${escapeStringInput(rowItem.status)}</span></td>
+          `;
 
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
+          crmTableBody.appendChild(trElement);
         });
+      }
+
+      // 🔍 3. INSTANT CLIENT-SIDE PROPERTY SEARCH FILTERING
+      if (searchField) {
+        searchField.addEventListener("input", (event) => {
+          const matchQuery = event.target.value.toLowerCase().trim();
+          
+          const filteredResults = localCrmCacheArray.filter(item => {
+            return (
+              String(item.email || '').toLowerCase().includes(matchQuery) ||
+              String(item.company_name || '').toLowerCase().includes(matchQuery) ||
+              String(item.tracking_number || '').toLowerCase().includes(matchQuery) ||
+              String(item.plan_tier || '').toLowerCase().includes(matchQuery)
+            );
+          });
+          
+          renderCrmGridDataRows(filteredResults);
+        });
+      }
+
+      function escapeStringInput(text) {
+        if (!text) return "";
+        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      // Fire main execution loop on window setup frame
+      await fetchAndHydrateCrmMatrix();
     });
-});
-    </script>
-
-<!-- ========================================================================== 
-🏢 FILINGS4U ACCOUNT CRM MASTER PANEL - PART 1-A: SAFE LIFECYCLE INITIALIZER
-=========================================================================== --> 
-<script>
-  // --- MODULE 1: GLOBAL PLATFORM STATE REGISTER CACHES ---
-  const crmClientMasterGate = window.supabaseClient || window.supabase;
-  let cachedCrmRecordsArray = [];
-  let currentTargetSelectedClientId = null; 
-
-  window.streamLiveOperationalLedgers = window.streamLiveOperationalLedgers || function() { return; };
-  window.hydrateAdminDashboardMetrics = window.hydrateAdminDashboardMetrics || function() { return; };
-
-  // --- MODULE 2: INITIALIZATION LIFECYCLE ENGINE ---
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || crmClientMasterGate;
-          if (!client) return;
-
-          try {
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
-
-              await synchronizeMasterCrmLedger(client);
-              setupCrmRosterLiveFilters();
-
-          } catch (err) {
-              console.error("CRM boot loader fault intercepted:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- MODULE 3: STATE-AWARE DISPLAY OPEN CONTROLLERS ---
-  // Action A: Fires an absolute data-wipe to open a completely clean registration canvas
-  function openCleanRegistrationModal() {
-      const modalElement = document.getElementById("registrationModal");
-      const entryForm = document.getElementById("crmRegistrationForm");
-      
-      if (modalElement && entryForm) {
-          currentTargetSelectedClientId = null; // Wipe active row locks
-          entryForm.reset();
-          
-          if (document.getElementById("crm_service_allocation")) document.getElementById("crm_service_allocation").value = "LLC Formation";
-          if (document.getElementById("crm_state")) document.getElementById("crm_state").value = "DE";
-          if (document.getElementById("crmSubmitBtn")) document.getElementById("crmSubmitBtn").textContent = "Create & Provision Account";
-          
-          const feedback = document.getElementById("modalFeedback");
-          if (feedback) feedback.textContent = "";
-
-          modalElement.style.display = "flex";
-      }
-  }
-
-  // Backup wrapper to guarantee seamless backward compatibility triggers mappings
-  function openRegistrationModal() {
-      const modalElement = document.getElementById("registrationModal");
-      if (modalElement) {
-          modalElement.style.display = "flex";
-          const feedback = document.getElementById("modalFeedback");
-          if (feedback) feedback.textContent = "";
-      }
-  }
-</script>
-
-
-<!-- ========================================================================== 
-🏢 FILINGS4U ACCOUNT CRM MASTER PANEL - PART 1-B: FORM CLOSING & VALUE HYDRATIONS
-=========================================================================== --> 
-<script>
-  // Action B: Handles modal dismissal and clears form pointers cleanly
-  function closeRegistrationModal() {
-      const modalElement = document.getElementById("registrationModal");
-      if (modalElement) {
-          modalElement.style.display = "none";
-          document.getElementById("crmRegistrationForm").reset();
-          currentTargetSelectedClientId = null; 
-          if (document.getElementById("crmSubmitBtn")) document.getElementById("crmSubmitBtn").textContent = "Create & Provision Account";
-      }
-  }
-
-  function toggleProfileModal(shouldOpenBoolean) {
-      if (shouldOpenBoolean) { openCleanRegistrationModal(); } else { closeRegistrationModal(); }
-  }
-
-  // --- MODULE 4: DYNAMIC INLINE EDIT VALUE PRE-FILL DISPATCHER ---
-  function enableCrmAccountInlineEditForm(clientId) {
-      const match = cachedCrmRecordsArray.find(r => parseInt(r.user_id) === parseInt(clientId));
-      if (!match) return;
-
-      currentTargetSelectedClientId = clientId; 
-      openRegistrationModal(); // Opens the generic display shell safely
-
-      // Repaint UI text nodes configuration values dynamically
-      if (document.getElementById("crmSubmitBtn")) document.getElementById("crmSubmitBtn").textContent = "Save Over-The-Air Variations 💾";
-      if (document.getElementById("crm_company_name")) document.getElementById("crm_company_name").value = match.company_name || "";
-      if (document.getElementById("crm_service_allocation")) document.getElementById("crm_service_allocation").value = match.service || "LLC Formation";
-      if (document.getElementById("crm_state")) document.getElementById("crm_state").value = match.state || "DE";
-
-      // Populate default data parameters into verification input blocks
-      if (document.getElementById("crm_full_name")) document.getElementById("crm_full_name").value = "Active Client Profile Holder";
-      if (document.getElementById("crm_email")) document.getElementById("crm_email").value = "customer-identity@filings4u.com";
-      if (document.getElementById("crm_password")) document.getElementById("crm_password").value = "PROTECTED_NODE";
-      if (document.getElementById("crm_phone")) document.getElementById("crm_phone").value = "1-800-555-0199";
-      if (document.getElementById("crm_address")) document.getElementById("crm_address").value = "1209 North Orange Street";
-      if (document.getElementById("crm_city")) document.getElementById("crm_city").value = "Wilmington";
-      if (document.getElementById("crm_zip")) document.getElementById("crm_zip").value = "19801";
-  }
-
-  // --- MODULE 5: RECOVER COMPREHENSIVE RECORDS INVENTORY FROM CLOUD ---
-  async function synchronizeMasterCrmLedger(client) {
-      const tbody = document.getElementById("crmTableBody");
-      if (!tbody) return;
-
-      try {
-          const { data: records, error } = await client.from('orders').select('*');
-          if (error) throw error;
-
-          cachedCrmRecordsArray = records || [];
-
-          if (cachedCrmRecordsArray.length === 0) {
-              cachedCrmRecordsArray = [
-                  { user_id: 1001, reference_id: 'CRM-1001', company_name: 'Roseland Logistics LLC', service: 'LLC Formation', status: 'Fulfillment Lane', created_at: new Date().toISOString() },
-                  { user_id: 1002, reference_id: 'CRM-1002', company_name: 'Swift Hauling Inc', service: 'Process Agent (BOC-3)', status: 'Review State', created_at: new Date().toISOString() },
-                  { user_id: 1003, reference_id: 'CRM-1003', company_name: 'Titan Fleet Systems', service: 'Trucker Authority', status: 'Lead Entry', created_at: new Date().toISOString() }
-              ];
-          }
-
-          cachedCrmRecordsArray.sort((a, b) => {
-              const dateA = new Date(a.created_at || a.inserted_at || 0);
-              const dateB = new Date(b.created_at || b.inserted_at || 0);
-              return dateB - dateA;
-          });
-
-          renderCrmRosterDataGrid(cachedCrmRecordsArray);
-
-      } catch (err) {
-          console.error("CRM log extraction crash:", err.message);
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); font-weight:700; padding:20px;">⚠️ CRM Ledger Sync Offline.</td></tr>`;
-      }
-  }
-</script>
-
-
-
-<!-- ========================================================================== 
-🏢 FILINGS4U ACCOUNT CRM PLATFORM - PART 2: RENDER MATRIX & RECORD MUTATORS
-=========================================================================== --> 
-<script>
-  // --- MODULE 1: DYNAMIC LIGHT DATA GRID RENDER MATRIX ---
-  function renderCrmRosterDataGrid(datasetArray) {
-      const tbody = document.getElementById("crmTableBody");
-      if (!tbody) return;
-
-      tbody.innerHTML = datasetArray.map(row => {
-          const numericDisplayId = row.user_id || 1001;
-          const trackingUniqueKey = row.id || numericDisplayId;
-          const pipelineState = row.status || row.tax_id_status || 'Lead Entry';
-          const computedProductTitle = row.service || row.service_title || row.requirement_name || 'Manual Profile Entry';
-          
-          let stateBadgeStyleColor = '#475569';
-          if (String(pipelineState).toUpperCase() === 'COMPLETED') stateBadgeStyleColor = '#10b981';
-          if (String(pipelineState).toUpperCase() === 'FULFILLMENT LANE' || String(pipelineState).toUpperCase() === 'PENDING' || String(pipelineState).toUpperCase() === 'REVIEW STATE') stateBadgeStyleColor = '#f59e0b';
-
-          return `
-              <tr style="border-bottom:1px solid var(--border-color, #e2e8f0); font-size:0.88rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-                  <td style="padding:14px 16px; font-family:monospace; font-weight:700; color:#1e40af;">CLIENT ID: #${numericDisplayId}</td>
-                  <td style="padding:14px 16px; font-weight:600; color:#475569;">${row.reference_id || 'CRM-' + numericDisplayId}</td>
-                  <td style="padding:14px 16px; vertical-align:middle;">
-                      <strong style="color:var(--text-dark, #0f172a); display:block; font-size:0.92rem;">🏢 ${row.company_name}</strong>
-                      <span style="color:#64748b; font-size:0.75rem; font-weight:500;">Procured Action: ${computedProductTitle}</span>
-                  </td>
-                  <td style="padding:14px 16px; vertical-align:middle;">
-                      <span style="background:${stateBadgeStyleColor}0d; color:${stateBadgeStyleColor}; border:1px solid ${stateBadgeStyleColor}20; font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:12px; display:inline-block;">
-                          ${pipelineState}
-                      </span>
-                  </td>
-                  <!-- 🎯 ACTION AREA UPGRADED: Embedded high-utility 'Inspect & Edit' trigger interface -->
-                  <td style="padding:14px 16px; white-space:nowrap; vertical-align:middle; text-align:right;">
-                      <button class="crm-btn" style="background:var(--text-dark, #0f172a); padding:6px 14px; font-size:0.75rem; font-weight:700; color:#fff !important; border:0; border-radius:4px; cursor:pointer; display:inline-block; margin-right:5px;" onclick="enableCrmAccountInlineEditForm('${numericDisplayId}')">Inspect &amp; Edit ⚙️</button>
-                      <button class="crm-btn" style="background:var(--staff-red, #c15254); padding:6px 14px; font-size:0.75rem; font-weight:700; color:#fff !important; border:0; border-radius:4px; cursor:pointer; display:inline-block;" onclick="executeCrmPurgeMutation('${trackingUniqueKey}')">Void</button>
-                  </td>
-              </tr>`;
-      }).join('');
-  }
-
-  // --- MODULE 2: OVER-THE-AIR ACCOUNT CREATION & INTEGRATED SAVE MODIFICATIONS ---
-  async function executeAdminCustomerProvisioning(event) {
-      event.preventDefault();
-      const client = window.supabaseClient || window.supabase || crmClientMasterGate;
-      const submitBtn = document.getElementById("crmSubmitBtn");
-      const feedback = document.getElementById("modalFeedback");
-
-      if (!client || !submitBtn || !feedback) return;
-
-      submitBtn.disabled = true;
-      feedback.style.color = "#475569";
-      feedback.textContent = "Writing system directory envelopes parameters...";
-
-      try {
-          const compName = document.getElementById("crm_company_name").value.trim();
-          const selectedService = document.getElementById("crm_service_allocation").value;
-          const stateInput = document.getElementById("crm_state").value.trim().toUpperCase();
-
-          // Calculate pricing thresholds variables metrics
-          let evaluatedPriceValue = 149.00;
-          if (selectedService.includes('Authority') || selectedService.includes('MC Power')) evaluatedPriceValue = 450.00;
-          if (selectedService.includes('BOC-3') || selectedService.includes('Sales')) evaluatedPriceValue = 75.00;
-
-          // 🧠 SELF-HEALING ACTION BRANCH: Route updates dynamically based on active row targeting triggers
-          if (currentTargetSelectedClientId) {
-              // WORKFLOW A: EXECUTE DYNAMIC UPDATE STATEMENT OVER THE AIR
-              const { error: updateError } = await client
-                  .from('orders')
-                  .update({
-                      company_name: compName,
-                      service: selectedService,
-                      service_title: selectedService,
-                      requirement_name: selectedService,
-                      state: stateInput,
-                      total_fee: evaluatedPriceValue
-                  })
-                  .eq('user_id', parseInt(currentTargetSelectedClientId));
-
-              if (updateError) throw updateError;
-              feedback.style.color = "#10b981";
-              feedback.textContent = "🎉 Success! Customer modifications saved and mirrored instantly.";
-
-          } else {
-              // WORKFLOW B: EXECUTE RECORD GENERATION WITH AUTH EXCEPTION INSULATORS
-              const clientEmail = document.getElementById("crm_email").value.trim().toLowerCase();
-              const passInput = document.getElementById("crm_password").value;
-
-              // Safe failover handler lets database provisioning persist even if SMTP loops are throttled
-              let generatedUserUuid = '00000000-0000-0000-0000-000000000000';
-              try {
-                  const { data: authData } = await client.auth.signUp({ email: clientEmail, password: passInput });
-                  if (authData && authData.user) generatedUserUuid = authData.user.id;
-              } catch (authErr) { console.warn("Authentication invitation deferred to local failover channels."); }
-
-              const currentIds = cachedCrmRecordsArray.map(o => parseInt(o.user_id || 1000));
-              const nextIdGuess = currentIds.length > 0 ? (Math.max(...currentIds) + 1) : 1001;
-
-              const { error: dbError } = await client.from('orders').insert({
-                  user_id: generatedUserUuid,
-                  company_name: compName,
-                  service: selectedService,
-                  service_title: selectedService,
-                  requirement_name: selectedService,
-                  tax_id_status: 'Lead Entry',
-                  status: 'Lead Entry',
-                  state: stateInput,
-                  total_fee: evaluatedPriceValue,
-                  reference_id: "CRM-" + nextIdGuess
-              });
-              if (dbError) throw dbError;
-
-              feedback.style.color = "#10b981";
-              feedback.textContent = "🎉 Success! Short numerical Client ID #" + nextIdGuess + " provisioned.";
-          }
-
-          setTimeout(async () => { closeRegistrationModal(); await synchronizeMasterCrmLedger(client); }, 1200);
-
-      } catch (err) {
-          feedback.style.color = "#c15254";
-          feedback.textContent = "Operation Intercept Error: " + err.message;
-      } finally {
-          submitBtn.disabled = false;
-      }
-  }
-
-  // --- MODULE 3: SEARCH BAR REGEX FILTER INPUT UTILITIES ---
-  function setupCrmRosterLiveFilters() {
-      const fieldInput = document.getElementById("adminGlobalSearchField") || document.querySelector(".search-input");
-      if (!fieldInput) return;
-
-      fieldInput.addEventListener("input", (e) => {
-          const parsingToken = e.target.value.toLowerCase().trim();
-          const filtered = cachedCrmRecordsArray.filter(row => {
-              const serviceValue = row.service || row.service_title || '';
-              return String(row.company_name || '').toLowerCase().includes(parsingToken) ||
-                     String(serviceValue).toLowerCase().includes(parsingToken) ||
-                     String(row.user_id || '').includes(parsingToken);
-          });
-          renderCrmRosterDataGrid(filtered);
-      });
-  }
-
-  // --- MODULE 4: PURGE CUSTOMER DATA LEDGER LINES ---
-  async function executeCrmPurgeMutation(recordId) {
-      const client = window.supabaseClient || window.supabase || crmClientMasterGate;
-      if (!client || !confirm("⚠️ Void this customer record permanently?")) return;
-      try {
-          const columnSelector = String(recordId).includes('-') ? 'id' : 'user_id';
-          await client.from('orders').delete().eq(columnSelector, String(recordId).includes('-') ? recordId : parseInt(recordId));
-          await synchronizeMasterCrmLedger(client); 
-      } catch (err) {
-          cachedCrmRecordsArray = cachedCrmRecordsArray.filter(r => String(r.id || r.user_id) !== String(recordId));
-          renderCrmRosterDataGrid(cachedCrmRecordsArray);
-      }
-  }
-</script>
-
-
-
+  </script>
 </body>
 </html>

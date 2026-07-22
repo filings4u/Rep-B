@@ -1,702 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Service Manager | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
-
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
-
-    <style>
-        /* ==========================================================================
-           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger:hover, .accordion-trigger.active {
-            background: #edf2f7 !important;
-            color: var(--text-dark) !important;
-        }
-
-        .accordion-trigger .chevron {
-            font-size: 0.6rem !important;
-            transition: transform 0.2s !important;
-        }
-
-        .accordion-trigger.active .chevron {
-            transform: rotate(180deg) !important;
-        }
-
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            transition: max-height 0.25s ease-out !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ PRIMARY SCROLLABLE MAIN VIEWPORTS */
-        .portal-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 24px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .search-input {
-            padding: 10px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 10px !important;
-            font-size: 0.82rem;
-            width: 220px;
-            outline: none;
-            background: #f8fafc;
-            box-sizing: border-box;
-            height: 40px;
-            color: var(--text-dark);
-        }
-
-        .search-input:focus {
-            background: var(--white);
-            border-color: var(--emerald);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
-        }
-
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        /* Ticket Pipeline Layout Components */
-        .ticket-list {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 16px !important;
-            width: 100% !important;
-        }
-
-        .ticket-row {
-            background: var(--white) !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 10px !important;
-            padding: 24px !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            box-sizing: border-box !important;
-        }
-
-        .ticket-row h3 {
-            margin: 0 0 6px 0 !important;
-            font-size: 1.1rem !important;
-            font-weight: 800 !important;
-            color: var(--text-dark) !important;
-            text-align: left !important;
-        }
-
-        .badge-pending {
-            background: rgba(245, 158, 11, 0.1) !important;
-            color: #d97706 !important;
-            padding: 6px 12px !important;
-            border-radius: 20px !important;
-            font-size: 0.75rem !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: inline-block !important;
-        }
-
-        @media (max-width: 991px) {
-    body, html { overflow-y: auto !important; }
-    .dashboard-wrapper { flex-direction: column !important; }
-    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
-    .portal-main { margin-left: 0 !important; width: 100% !important; }
-    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
-    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
-    .search-input { width: 100% !important; }
-    .content-container { padding: 20px !important; }
-    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-}
-
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Service Fulfillment Deck | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR MATRIX STYLE */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    
+    /* WORKSPACE CONTENT AREA */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+    
+    /* STATUS INTERACTION CONTROLS */
+    .status-select-action { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: #f8fafc; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); cursor: pointer; outline: none; }
+    .status-select-action:focus { border-color: var(--staff-red); }
+  </style>
 </head>
 <body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span></button>
+        <div class="accordion-panel">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+        </div>
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 600px;">
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-service-manager.html" class="nav-item active"><span>⚙️</span> Service Fulfillment</a>
+          <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+          <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
 
-        <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-                <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Service Fulfillment Operations Deck</h1>
+          <p>Live tracking control center for state incorporation data processing queues</p>
+        </div>
+      </header>
 
-            </nav>
-           <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
+      <div class="content-container">
+        <div class="console-card">
+          <h2>Fulfillment Queue & Lifecycle Management</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Company Entity</th>
+                  <th style="padding:12px !important;">Filing Service Title</th>
+                  <th style="padding:12px !important;">Tracking Code</th>
+                  <th style="padding:12px !important;">Total Paid</th>
+                  <th style="padding:12px !important; text-align:right !important;">Lifecycle Status Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-fulfillment-target-box">
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Establishing database queue connection...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
 
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+      const queueTableBody = document.getElementById("admin-fulfillment-target-box");
 
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
+      if (!queueTableBody) {
+        throw new Error("✕ Critical UI Error: Cannot locate queue table attachment point 'admin-fulfillment-target-box' inside document.");
+      }
 
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        queueTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure unavailable.</td></tr>`;
+        throw new Error("✕ Initialization Error: Database driver missing from global context.");
+      }
 
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
+      async function streamFulfillmentQueues() {
+        try {
+          console.log("📡 [Fulfillment Deck] Fetching current operational queues...");
+
+          // 🟢 DIRECT DB FETCH: Extract queue tracking rows purely from your single orders data-grid
+          const { data: queueRecords, error: fetchError } = await client
+            .from('orders')
+            .select('id, company_name, service_title, tracking_number, total_fee, status')
+            .order('created_at', { ascending: false });
+
+          if (fetchError) throw fetchError;
+
+          if (!queueRecords || queueRecords.length === 0) {
+            queueTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">Operational queues are currently empty.</td></tr>`;
+            return;
+          }
+
+          queueTableBody.innerHTML = "";
+
+          queueRecords.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const companyLabel = row.company_name || "Unnamed Corporation";
+            const serviceLabel = row.service_title || "State Filing Registry Item";
+            const trackingCode = row.tracking_number || row.id;
+            const absoluteCost = parseFloat(row.total_fee || 0).toFixed(2);
+            const currentStatus = String(row.status || '').toLowerCase().trim();
+
+            tr.innerHTML = `
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeOutput(companyLabel)}</td>
+              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeOutput(serviceLabel)}</td>
+              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem;">${escapeOutput(trackingCode)}</td>
+              <td style="padding:14px 12px; font-weight:800; color:#0f172a;">$${absoluteCost}</td>
+              <td style="padding:14px 12px; text-align:right;">
+                <select class="status-select-action" data-id="${row.id}">
+                  <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                  <option value="paid" ${currentStatus === 'paid' ? 'selected' : ''}>Paid</option>
+                  <option value="fulfillment lane" ${currentStatus === 'fulfillment lane' ? 'selected' : ''}>Fulfillment Lane</option>
+                  <option value="audit required" ${currentStatus === 'audit required' ? 'selected' : ''}>Audit Required</option>
+                  <option value="completed" ${currentStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                </select>
+              </td>
+            `;
+
+            // Bind in-line change listeners to the drop-down element
+            const selectMenu = tr.querySelector(".status-select-action");
+            selectMenu.addEventListener("change", async function() {
+              const targetOrderId = this.getAttribute("data-id");
+              const updatedStatusValue = this.value;
+
+              this.disabled = true;
+              console.log(`📡 [Fulfillment Deck] Committing status update to server for row ID: ${targetOrderId}`);
+
+              try {
+                const { error: patchError } = await client
+                  .from('orders')
+                  .update({ status: updatedStatusValue })
+                  .eq('id', targetOrderId);
+
+                if (patchError) throw patchError;
+                console.log(`✓ [Fulfillment Deck] Row status successfully updated to [${updatedStatusValue}]`);
+              } catch (updateFault) {
+                console.error("✕ Database status write rejected:", updateFault.message);
+                alert(`✕ Mutation Interrupted: ${updateFault.message}`);
+                // Revert to historical dataset state to keep UI clean
+                await streamFulfillmentQueues();
+              } finally {
+                this.disabled = false;
               }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
+            });
 
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
-</script>
-
-        </aside>
-
-        <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div>
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Service Execution Pipeline</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Process pending service tickets, manage assignments, and fulfill client corporate compliance packs.</p>
-                </div>
-                
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">05/19/2026 | 10:17:15</span>
-                    </div>
-                    <div>
-                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search execution tickets...">
-                    </div>
-                </div>
-            </header>
-
-            <div class="content-container">
-                <div class="ticket-list">
-                    
-                    <!-- Execution Pipeline Tracking Row Card -->
-                    <div class="ticket-row">
-                        <div style="text-align: left;">
-                            <h3>Delaware Registered Agent Assignment</h3>
-                            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Client Profile ID: <strong>Alpha Corp</strong> | Date Transmitted: Today</span>
-                        </div>
-                        <div>
-                            <span class="badge-pending" onclick="alert('Initializing background automated registration script routine maps...')">Processing</span>
-                        </div>
-                    </div>
-                    
-                </div>
-            </div>
-        </main>
-    </div>
-
-
-<script>
-  // --- 1. ACCESS COMPATIBLE SINGLE CORE CLIENT CONTEXT AREA ---
-  const masterAdminGatewayClient = window.supabaseClient || window.supabase;
-  function toggleSidebarAccordion(buttonElement) {
-      buttonElement.classList.toggle('active');
-      const panel = buttonElement.nextElementSibling;
-      if (panel && panel.style) {
-          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-              panel.style.maxHeight = "0px";
-          } else {
-              panel.style.maxHeight = panel.scrollHeight + "px";
-          }
-      }
-  }
-
-  /**
-   * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
-   */
-  function toggleMobileSidebarMenuOverlay() {
-      if (window.innerWidth > 992) return;
-      const sidebar = document.querySelector(".portal-sidebar");
-      const icon = document.getElementById("mobileNavTriggerIcon");
-      if (!sidebar) return;
-      sidebar.classList.toggle("mobile-revealed");
-      if (sidebar.classList.contains("mobile-revealed")) {
-          if (icon) icon.textContent = "✕";
-      } else {
-          if (icon) icon.textContent = "☰";
-      }
-  }
-
-  // --- 2. UNIFIED LIFECYCLE CONTROLLER ENGINE ---
-  document.addEventListener("DOMContentLoaded", () => {
-      // 50ms defensive delay check ensures central script completes bootstrapping
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || masterAdminGatewayClient;
-          if (!client) {
-              console.error("Critical Failure: Administrative database bridge is offline.");
-              return;
-          }
-
-          // Hydrate metrics, dropdown lists, and real-time transaction logs
-          populateAdminClientDropdown(client);
-          streamLiveOperationalLedgers(client);
-
-      }, 50);
-
-      // Attach responsive closing triggers to mobile navigation links
-      document.querySelectorAll(".nav-item").forEach(link => {
-          link.addEventListener("click", () => {
-              const sidebar = document.querySelector(".portal-sidebar");
-              if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                  toggleMobileSidebarMenuOverlay();
-              }
-          });
-      });
-  });
-
-  // --- 3. DYNAMIC SELECTION LOADER: POPULATE REGISTERED PROFILES ---
-  async function populateAdminClientDropdown(client) {
-      const dropdown = document.getElementById("adminClientDropdown");
-      if (!dropdown) return;
-
-      try {
-          // Extracts active corporate users directly from your client registry table
-          const { data: profiles, error } = await client
-              .from('orders')
-              .select('user_id, company_name')
-              .order('company_name', { ascending: true });
-
-          if (error) throw error;
-
-          if (!profiles || profiles.length === 0) {
-              dropdown.innerHTML = `<option value="">No active client accounts found on server</option>`;
-              return;
-          }
-
-          // Filter out duplicate user rows to keep options neat
-          const unifiedMap = new Map();
-          profiles.forEach(p => { if(p.user_id) unifiedMap.set(p.user_id, p.company_name || 'Unnamed Corporate Entity'); });
-
-          let dropdownOptionsMarkup = '<option value="">-- Choose Target Customer Account --</option>';
-          unifiedMap.forEach((companyName, userId) => {
-              dropdownOptionsMarkup += `<option value="${userId}">${companyName} [ID: ${userId.slice(0,6).toUpperCase()}]</option>`;
+            queueTableBody.appendChild(tr);
           });
 
-          dropdown.innerHTML = dropdownOptionsMarkup;
-
-      } catch (err) {
-          console.warn("Dropdown profiles extraction failure:", err.message);
-          dropdown.innerHTML = `<option value="">Error pulling system accounts</option>`;
-      }
-  }
-</script>
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U WORKFLOW OPERATIONS (Part 1: Aligned Multi-Card Initializer)
-========================================================================== --> 
-<script>
-  // --- 1. GLOBAL REAL-TIME REPOSITORY STATES ---
-  const servicesAdminCoreClient = window.supabaseClient || window.supabase;
-  let masterExecutionPipelineCache = [];
-
-  // Ghost firewall placeholders neutralize loose external home page function calls safely
-  window.streamLiveOperationalLedgers = window.streamLiveOperationalLedgers || function() { return; };
-  window.hydrateAdminDashboardMetrics = window.hydrateAdminDashboardMetrics || function() { return; };
-
-  // --- 2. ENGINE TIMING LIFE-CYCLE CONTROLLER INTIALIZER ---
-  document.addEventListener('DOMContentLoaded', () => {
-      // 50ms defensive delay check ensures central config completes bootstrapping
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || servicesAdminCoreClient;
-          if (!client) return;
-
-          try {
-              // Session Perimeter Gate Guard Verification Check
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
-
-              // Hot-reload system order rows explicitly
-              await synchronizeServiceExecutionPipeline(client);
-              setupPipelineSearchFilter();
-
-          } catch (err) {
-              console.error("Fulfillment engine bootstrap failure caught:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- 3. HARVEST COMPREHENSIVE SERVICE FILINGS JOBS ---
-  async function synchronizeServiceExecutionPipeline(client) {
-      const container = document.querySelector(".ticket-list");
-      if (!container) return;
-
-      try {
-          const { data: orders, error } = await client.from('orders').select('*');
-          if (error) throw error;
-
-          masterExecutionPipelineCache = orders || [];
-          renderServiceExecutionPipelineCards(masterExecutionPipelineCache);
-
-      } catch (err) {
-          console.error("Execution pipeline extraction crash:", err.message);
-          container.innerHTML = `<div style="text-align:center; color:var(--staff-red); padding:30px; font-weight:700;">⚠️ Fulfillment Stream Alignment Sync Error.</div>`;
-      }
-  }
-</script>
-
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U WORKFLOW OPERATIONS (Part 2: Isolated Card Elements Renderer)
-========================================================================== --> 
-<script>
-  // --- 1. RENDER ROW ELEMENT CARDS NATIVELY WITHOUT CLOSURE OVERLAPS ---
-  function renderServiceExecutionPipelineCards(datasetArray) {
-      const container = document.querySelector(".ticket-list");
-      if (!container) return;
-
-      if (datasetArray.length === 0) {
-          container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">No active fulfillment orders match the filter constraints parameters.</div>`;
-          return;
+        } catch (queueErr) {
+          console.error("✕ Queue Synchronization Error:", queueErr.message);
+          queueTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Pipeline Error: Failed to pull queue listings.</td></tr>`;
+        }
       }
 
-      container.innerHTML = datasetArray.map(job => {
-          const formattedDate = new Date(job.created_at || job.inserted_at || Date.now()).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'});
-          const currentStatus = job.status || job.tax_id_status || 'Lead Entry';
-          
-          const stateCodeValue = String(job.state || job.jurisdiction_state || 'US').toUpperCase();
-          const productPackageName = job.service || job.service_title || 'Fulfillment Item';
-
-          return `
-              <div class="ticket-row" style="background:#ffffff; border:1px solid var(--border-color, #e2e8f0); border-radius:8px; padding:20px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
-                  <div style="text-align: left;">
-                      <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:6px;">
-                          ${stateCodeValue} JURISDICTION
-                      </span>
-                      <h3 style="margin:0 0 4px 0; font-size:1.1rem; font-weight:800; color:var(--text-dark, #0f172a);">${productPackageName}</h3>
-                      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
-                          Client Target: <strong>${job.company_name}</strong> | Logged: ${formattedDate}
-                      </span>
-                      <br>
-                      <small style="font-family:monospace; color:#94a3b8; font-weight:600; font-size:0.72rem;">Tracking Reference ID: ${job.reference_id || 'N/A'}</small>
-                  </div>
-                  
-                  <!-- 🎯 FIX ENFORCED: Explicitly isolating event handlers passing row token unique values -->
-                  <div>
-                      <select class="search-input" style="height:36px; padding:0 10px !important; width:170px; background:#fff; font-size:0.8rem; font-weight:700; cursor:pointer;"
-                          onchange="executeAdministrativeStatusMutation('${job.id}', this.value)">
-                          <option value="Lead Entry" ${currentStatus === 'Lead Entry' ? 'selected' : ''}>Lead Entry</option>
-                          <option value="Fulfillment Lane" ${currentStatus === 'Fulfillment Lane' ? 'selected' : ''}>Fulfillment Lane</option>
-                          <option value="Review State" ${currentStatus === 'Review State' ? 'selected' : ''}>Review State</option>
-                          <option value="COMPLETED" ${currentStatus === 'COMPLETED' ? 'selected' : ''}>COMPLETED ✓</option>
-                      </select>
-                  </div>
-              </div>`;
-      }).join('');
-  }
-
-  // --- 2. LIVE FIELDLOOKUP TEXT INPUT FILTER ENGINE ---
-  function setupPipelineSearchFilter() {
-      const fieldInput = document.getElementById("adminGlobalSearchField");
-      if (!fieldInput) return;
-
-      fieldInput.addEventListener("input", (e) => {
-          const parsingToken = e.target.value.toLowerCase().trim();
-          
-          const filteredResults = masterExecutionPipelineCache.filter(job => {
-              const packageDescText = String(job.service || job.service_title || '').toLowerCase();
-              return String(job.company_name).toLowerCase().includes(parsingToken) || packageDescText.includes(parsingToken);
-          });
-          
-          renderServiceExecutionPipelineCards(filteredResults);
-      });
-  }
-
-  // --- 3. MUTATE SELECTION STATUS CODE VALUES OVER-THE-AIR ---
-  async function executeAdministrativeStatusMutation(recordId, selectedStatusString) {
-      const client = window.supabaseClient || window.supabase || servicesAdminCoreClient;
-      if (!client) return;
-
-      try {
-          // 🚀 DATA LOCK: Updates both alternative status fields simultaneously to satisfy cross-dashboard parameters
-          const { error } = await client
-              .from('orders')
-              .update({ 
-                  status: selectedStatusString,
-                  tax_id_status: selectedStatusString 
-              })
-              .eq('id', recordId);
-
-          if (error) throw error;
-          
-          console.log("Fulfill status row successfully changed onto: " + selectedStatusString);
-          await synchronizeServiceExecutionPipeline(client); // Hot-reload active workspace panels elements
-
-      } catch (err) {
-          alert("Pipeline mutation aborted: " + err.message);
+      function escapeOutput(text) {
+        if (!text) return "";
+        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
       }
-  }
-</script>
 
-
-
+      await streamFulfillmentQueues();
+    });
+  </script>
 </body>
 </html>

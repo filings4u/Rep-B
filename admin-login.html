@@ -1,529 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#c15254">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="msapplication-navbutton-color" content="#c15254">
-    <title>Directorate Control Panel | filings4u Staff Terminal</title>
-    
-    <!-- 🎯 GLOBAL FAVICON BRAND MATRIX ANCHOR -->
-    <link rel="icon" type="image/png" href="images/fav.png">
-    
-    <!-- PRODUCTION CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    
-    <!-- 🔒 HARDENED SEQUENTIAL AUTH ENFORCEMENT ENGINE -->
-    <script>
-        // Use a unified loading sequence to prevent asynchronous race condition script crashes
-        document.addEventListener("DOMContentLoaded", async () => {
-            // 1. Initialize your custom global configuration script parameters safely first
-            if (typeof initializeGlobalSupabase === "function") {
-                await initializeGlobalSupabase();
-            }
-            
-            // 2. Safely activate your core application logic scripts now that elements exist
-            if (typeof startAdminLoginEngine === "function") {
-                startAdminLoginEngine();
-            }
-        });
-    </script>
-    <script src="assets/js/supabase-config.js"></script>
-    
-    <!-- 🖥️ EXTRACTED CENTRAL PORTAL ASSET FILES LINKED -->
-    <link rel="stylesheet" href="assets/css/admin-core.css">
-    <link rel="stylesheet" href="assets/css/portal-global.css">
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
-    <script src="assets/js/wizard-sync.js"></script>
-
-    <style>
-        :root {
-            --primary-blue: #0a1f44;
-            --white: #ffffff;
-            --bg-light: #f8fafc;
-            --border-color: #e2e8f0;
-            --text-gray: #44526c;
-            --staff-red: #c15254;
-        }
-
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            background-color: var(--bg-light);
-        }
-
-        .split-container {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        /* 🎯 RESTORED BACKING CANVAS IMAGE WITH PROTECTED ATTRIBUTION STRINGS */
-        .image-side {
-            flex: 1;
-            background: linear-gradient(rgba(10, 31, 68, 0.85), rgba(193, 82, 84, 0.85)), url('images/login-hero.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            padding: 60px;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .image-content h1 {
-            font-size: 3rem;
-            line-height: 1.2;
-            margin-bottom: 20px;
-            font-weight: 800;
-        }
-
-        .image-content p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            max-width: 500px;
-            line-height: 1.5;
-        }
-
-        .form-side {
-            flex: 1;
-            background-color: var(--bg-light);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 15px;
-            box-sizing: border-box;
-            position: relative;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 380px;
-            background: var(--white);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 40px rgba(10,31,68,0.06);
-            text-align: center;
-            z-index: 10;
-            box-sizing: border-box;
-        }
-
-        .logo-container {
-            margin-bottom: 15px;
-        }
-
-        .logo-container img {
-            height: 38px;
-        }
-
-        .admin-badge {
-            display: inline-block;
-            background: rgba(193, 82, 84, 0.1);
-            color: var(--staff-red);
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(193, 82, 84, 0.2);
-        }
-
-        .login-card h2 {
-            color: var(--primary-blue);
-            font-size: 1.4rem;
-            margin: 0 0 6px 0;
-            font-weight: 800;
-        }
-
-        .login-card p.panel-subtitle {
-            color: var(--text-gray);
-            margin-bottom: 25px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-            margin-top: 0;
-        }
-
-        .form-group {
-            text-align: left;
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--primary-blue);
-            margin-bottom: 6px;
-            letter-spacing: 0.05em;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.9rem;
-            box-sizing: border-box;
-            outline: none;
-            transition: all 0.25s;
-            color: var(--primary-blue);
-        }
-
-        .form-group input:focus {
-            border-color: var(--staff-red);
-            box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.08);
-        }
-
-        .form-group input.field-error {
-            border-color: #e53e3e !important;
-            box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.15) !important;
-            animation: formFieldShake 0.4s ease-in-out;
-        }
-
-        @keyframes formFieldShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
-
-        .btn-login {
-            width: 100%;
-            background-color: var(--primary-blue) !important;
-            color: var(--white) !important;
-            border: none;
-            padding: 14px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-            margin-top: 5px;
-            display: block;
-        }
-
-        .btn-login:hover {
-            background-color: #122d5a !important;
-        }
-
-        .btn-login:active {
-            transform: scale(0.99);
-        }
-
-        .error-msg {
-            color: var(--staff-red);
-            font-size: 0.78rem;
-            margin-top: 8px;
-            font-weight: 600;
-            text-align: left;
-            min-height: 1.2em;
-            line-height: 1.3;
-        }
-
-        /* ==========================================================================
-           🛠️ MOBILE FLUID GRID COMPRESSION MEDIA QUERIES
-           ========================================================================== */
-        @media (max-width: 991px) {
-            html, body {
-                overflow: auto !important;
-                height: auto !important;
-                min-height: 100vh !important;
-            }
-
-            .split-container {
-                flex-direction: column !important;
-                height: auto !important;
-                min-height: 100vh !important;
-                overflow: visible !important;
-            }
-
-             @media (max-width: 991px) {
-        .image-side { display: none !important; } /* Removes the stretched mobile banner completely */
-        .form-side { width: 100% !important; min-height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; background: #f8fafc !important; }
-        .login-card { max-width: 380px !important; width: 100% !important; padding: 30px 20px !important; margin: 0 auto !important; box-shadow: 0 4px 12px rgba(0,0,0,0.02) !important; }
-    }
-
-            .form-side {
-                width: 100% !important;
-                height: auto !important;
-                padding: 30px 15px 50px 15px !important;
-                display: flex !important;
-                align-items: flex-start !important;
-                justify-content: center !important;
-                background-color: #f8fafc !important;
-                overflow: visible !important;
-            }
-
-            .login-card {
-                width: 100% !important;
-                max-width: 380px !important;
-                padding: 25px 20px !important;
-                box-shadow: 0 10px 25px rgba(10, 31, 68, 0.04) !important;
-                border-radius: 12px !important;
-                margin: 0 auto !important;
-            }
-        }
-
-        @media (max-width: 991px) {
-    body, html { overflow-y: auto !important; }
-    .dashboard-wrapper { flex-direction: column !important; }
-    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
-    .portal-main { margin-left: 0 !important; width: 100% !important; }
-    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
-    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
-    .search-input { width: 100% !important; }
-    .content-container { padding: 20px !important; }
-    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-}
-
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Staff Gateway | filings4u Administrative Suite</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f8fafc; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --staff-red: #c15254; --emerald: #10b981; }
+    body, html { margin: 0; padding: 0; min-height: 100vh; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; align-items: center; justify-content: center; }
+    .login-container { width: 100%; max-width: 420px; padding: 20px; box-sizing: border-box; }
+    .gateway-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 12px; padding: 40px 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); text-align: center; box-sizing: border-box; }
+    .logo-block img { height: 38px; width: auto; margin-bottom: 8px; }
+    .badge { display: inline-block; background: rgba(193, 82, 84, 0.08); color: var(--staff-red); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 4px 12px; border-radius: 9999px; margin-bottom: 24px; border: 1px solid rgba(193, 82, 84, 0.15); }
+    h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 8px 0; color: var(--text-dark); letter-spacing: -0.5px; }
+    p { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 32px 0; line-height: 1.4; }
+    .form-group { text-align: left; margin-bottom: 20px; position: relative; }
+    label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; transition: all 0.2s ease; }
+    input:focus { background: var(--white); border-color: var(--staff-red); box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.08); }
+    .submit-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.2s ease; margin-top: 12px; box-sizing: border-box; }
+    .submit-btn:hover { background: #1e293b; }
+    #status-msg { display: none; font-size: 0.82rem; font-weight: 600; text-align: left; margin-top: 16px; padding: 12px; border-radius: 6px; line-height: 1.4; }
+  </style>
 </head>
 <body>
-
-    <div class="split-container">
-        <!-- LEFT SIDE VIEWPORT BANNER CONSOLE -->
-        <section class="image-side">
-            <div style="position: absolute; top: 60px; left: 60px; text-align: left;">
-                <div class="image-content">
-                    <h1>Internal Staff<br>Terminal.</h1>
-                    <p>Authorized access point for corporate compliance infrastructure, active ledger audits, and platform sync utilities.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- RIGHT SIDE: ADMINISTRATIVE SECURITY VERIFICATION FORM -->
-        <section class="form-side">
-            <div class="login-card">
-                <div class="logo-container">
-                    <img src="images/logo.png" alt="filings4u logo">
-                </div>
-                <div class="admin-badge">Directorate System Security</div>
-                <h2>Staff Session Portal</h2>
-                <p class="panel-subtitle">Verify administrative token parameters to launch the performance dashboard.</p>
-                
-                <!-- 🎯 REQUIRED BINDING HOOK: id="adminLoginForm" -->
-                <form id="adminLoginForm" novalidate>
-                    <div class="form-group">
-                        <label for="email">Staff Email Address</label>
-                        <input type="email" id="email" required autocomplete="email" placeholder="username@filings4u.com">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password">Security Password</label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••" style="padding-right: 45px;">
-                            <!-- 👁️ INTERACTIVE VISIBILITY TOGGLE BUTTON -->
-                            <button type="button" id="passwordToggleBtn" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; user-select: none;">
-                                👁️
-                            </button>
-                        </div>
-                        <div id="password-error" class="error-msg"></div>
-                    </div>
-                    
-                    <button type="submit" class="btn-login" id="loginBtn">Verify Terminal Session →</button>
-                </form>
-                <div style="margin-top: 20px; font-size: 0.78rem; font-weight: 600; color: #475569; display: flex; align-items: center; justify-content: center; gap: 8px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #e2e8f0;">
-    <span>🔒</span> 256-Bit SSL Production Encryption Active
-</div>
-            </div>
-        </section>
+  <div class="login-container">
+    <div class="gateway-card">
+      <div class="logo-block"><img src="images/logo.png" alt="filings4u Logo"></div>
+      <div><span class="badge">Internal Staff Slat</span></div>
+      <h1>Directorate Security Login</h1>
+      <p>Authorized access terminal for corporate compliance managers and operational staff parameters.</p>
+      
+      <form id="adminLoginForm" novalidate>
+        <div class="form-group">
+          <label>Operator Email Address</label>
+          <input type="email" id="operatorEmail" required placeholder="name@filings4u.com">
+        </div>
+        <div class="form-group">
+          <label>Security Key Access Password</label>
+          <input type="password" id="operatorPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="submit-btn" id="loginBtn">Authenticate Session ➔</button>
+      </form>
+      <div id="status-msg"></div>
     </div>
+  </div>
 
-<!-- UI PASSWORD EYE TOGGLE INTERACTION BINDINGS -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    "use strict";
-    const passwordInput = document.getElementById('password');
-    const passwordToggleBtn = document.getElementById('passwordToggleBtn');
-    if (passwordToggleBtn && passwordInput) {
-        passwordToggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                passwordToggleBtn.innerText = '🙈';
-            } else {
-                passwordInput.type = 'password';
-                passwordToggleBtn.innerText = '👁️';
-            }
-        });
-    }
-});
-</script>
-
-<!-- ========================================================================== 
-     🏛️ FILINGS4U STAFF LOGIN PERIMETER - INTEGRATED INITIALIZATION ENGINE
-     ========================================================================== -->
-<script>
-(function() {
-    "use strict";
-
-    // --- 1. DYNAMIC CORE CLIENT FACTORY ---
-     // --- 1. DYNAMIC CORE CLIENT FACTORY ---
-    function resolveAdminClientInstance() {
-        let client = window.supabaseInstance || window.supabaseClient;
-
-        // Force a perfectly isolated, un-truncated connection matrix
-        if (!client || typeof client.from !== 'function') {
-            const explicitUrl = "https://lrbimrlbskjweynxlgas.supabase.co";
-            const explicitKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-
-            const factoryLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-
-            if (factoryLibrary && typeof factoryLibrary.createClient === 'function') {
-                console.log("📡 [Admin Login Perimeter] Initializing isolated database connection channel...");
-                
-                client = factoryLibrary.createClient(explicitUrl, explicitKey, {
-                    auth: { 
-                        persistSession: true, 
-                        autoRefreshToken: true, 
-                        detectSessionInUrl: true, 
-                        storageKey: "filings4u_admin_session_token" 
-                    }
-                });
-
-                window.supabaseInstance = client;
-                window.supabaseClient = client;
-            }
-        }
-        return client;
-    }
-
-
-    // --- 2. ENGINE ENTRY POINT BOOTSTRAPPER ---
-    function startAdminLoginEngine() {
-        const adminLoginForm = document.getElementById('adminLoginForm');
-        if (!adminLoginForm) return;
-
-        adminLoginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const client = resolveAdminClientInstance();
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const submitBtn = document.getElementById('loginBtn');
-            const errorMsgBox = document.getElementById('password-error');
-
-            if (!client || !emailInput || !passwordInput || !submitBtn || !errorMsgBox) return;
-
-            // Flush previous error states
-            emailInput.classList.remove('field-error');
-            passwordInput.classList.remove('field-error');
-            errorMsgBox.innerText = "";
-
-            const emailValue = emailInput.value.trim().toLowerCase();
-            const passwordValue = passwordInput.value;
-            let hasValidationErrors = false;
-
-            if (!emailValue) {
-                emailInput.classList.add('field-error');
-                hasValidationErrors = true;
-            }
-            if (!passwordValue) {
-                passwordInput.classList.add('field-error');
-                hasValidationErrors = true;
-            }
-            if (hasValidationErrors) return;
-
-            // Lock submission mechanism
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Verifying Terminal Session...";
-
-            try {
-                // Attempt fresh authentication session match against the target project URL
-                const { data, error: authError } = await client.auth.signInWithPassword({ 
-                    email: emailValue, 
-                    password: passwordValue 
-                });
-
-                if (authError) throw authError;
-                if (!data || !data.user || !data.user.email) {
-                    throw new Error("Authentication payload structure missing from system responses.");
-                }
-
-                const verifiedEmail = data.user.email.toLowerCase().trim();
-
-                // Perimeter Enforcement: Intercept standard customer accounts
-                const isCorporateStaff = verifiedEmail.endsWith('@filings4u.com') || verifiedEmail === 'test-admin@filings4u.com';
-                
-                if (!isCorporateStaff) {
-                    // Log unauthorized infiltration attempt into database security telemetry logs
-                    await logUnauthorizedPenetrationAlert(client, verifiedEmail);
-                    // Instantly destroy the illegal cookie token session parameter trace footprint
-                    await client.auth.signOut();
-                    throw new Error("Access Denied: Customer accounts are rejected from this terminal panel landscape.");
-                }
-
-                console.log("🚀 Administrative perimeter passed. Routing to home console frame...");
-                window.location.assign('admin-dashboard.html');
-
-            } catch (err) {
-                console.warn("Security exception caught:", err.message);
-                emailInput.classList.add('field-error');
-                passwordInput.classList.add('field-error');
-                errorMsgBox.innerText = err.message || "Invalid terminal session variables provided.";
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Verify Terminal Session →";
-            }
-        });
-    }
-
-    // --- 3. LOG UNAUTHORIZED PENETRATION ATTEMPTS ---
-    async function logUnauthorizedPenetrationAlert(client, rogueEmailStr) {
-        try {
-            await client.from('platform_security_telemetry_logs').insert({
-                action_type: 'BREACH_ATTEMPT',
-                actor_email: rogueEmailStr,
-                account_role: 'CLIENT_PROHIBITED',
-                message_details: `Standard client attempted penetration into internal staff terminal context landscape.`
-            });
-        } catch (telemetryError) {
-            console.warn("Security tracking loop dropped record write:", telemetryError.message);
-        }
-    }
-
-    // --- 4. PROFILE SESSION TRACKING WATCHER ---
+  <!-- INJECT SHARED CLIENT SETUP CONFIG -->
+  <script src="assets/js/supabase-config.js"></script>
+  <script>
     document.addEventListener("DOMContentLoaded", () => {
-        startAdminLoginEngine();
+      "use strict";
 
-        // Poller loop ensures global client registry handles active session auto-routing
-        const autoRedirectWatcher = setInterval(async () => {
-            const client = resolveAdminClientInstance();
-            if (client && client.auth) {
-                clearInterval(autoRedirectWatcher);
-                try {
-                    const { data: { session } } = await client.auth.getSession();
-                    if (session && session.user && session.user.email) {
-                        const emailCheck = session.user.email.toLowerCase().trim();
-                        const isStaffActive = emailCheck.endsWith('@filings4u.com') || emailCheck === 'test-admin@filings4u.com';
-                        
-                        // Auto-redirect if a valid staff profile session already exists on the browser context
-                        if (isStaffActive) {
-                            window.location.assign('admin-dashboard.html');
-                        }
-                    }
-                } catch (sessionCheckError) {
-                    console.log("Stale login profile cleared safely.");
-                }
-            }
-        }, 100);
+      const form = document.getElementById("adminLoginForm");
+      const emailInput = document.getElementById("operatorEmail");
+      const passwordInput = document.getElementById("operatorPassword");
+      const submitBtn = document.getElementById("loginBtn");
+      const statusMsg = document.getElementById("status-msg");
+
+      if (!form || !emailInput || !passwordInput || !submitBtn || !statusMsg) {
+        console.error("✕ Critical UI Error: Missing core administrative authorization elements.");
+        return;
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        // 1. Reset state messages and apply active loading parameter strings
+        statusMsg.style.display = "none";
+        statusMsg.style.background = "transparent";
+        statusMsg.style.color = "inherit";
+        statusMsg.textContent = "";
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+          statusMsg.style.display = "block";
+          statusMsg.style.background = "#fef2f2";
+          statusMsg.style.color = "#991b1b";
+          statusMsg.textContent = "✕ Validation Error: Both credentials fields are required.";
+          return;
+        }
+
+        // 🛡️ SECURITY DOMAIN RESTRICTION CHECK: Block non-internal routing attempts early
+        if (!email.toLowerCase().endsWith("@filings4u.com") && !email.toLowerCase().endsWith("@roselandcompanies.com")) {
+          statusMsg.style.display = "block";
+          statusMsg.style.background = "#fef2f2";
+          statusMsg.style.color = "#991b1b";
+          statusMsg.textContent = "✕ Access Denied: Unrecognized clearance string. This portal is strictly limited to verified administrative operators.";
+          return;
+        }
+
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = "Verifying Handshake Clearance...";
+        submitBtn.disabled = true;
+
+        const client = window.supabaseInstance || window.supabaseClient;
+        if (!client || typeof client.auth?.signInWithPassword !== 'function') {
+          statusMsg.style.display = "block";
+          statusMsg.style.background = "#fef2f2";
+          statusMsg.style.color = "#991b1b";
+          statusMsg.textContent = "✕ System Error: Database authorization client uninitialized.";
+          submitBtn.textContent = originalBtnText;
+          submitBtn.disabled = false;
+          return;
+        }
+
+        try {
+          // 2. Transmit secure encrypted connection parameters over network gateway channels
+          const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+          if (error) throw error;
+
+          if (data?.session) {
+            statusMsg.style.display = "block";
+            statusMsg.style.background = "#ecfdf5";
+            statusMsg.style.color = "#047857";
+            statusMsg.textContent = "✓ Authentication approved! Synchronizing platform token profiles...";
+
+            // Redirect smoothly to your primary control desk performance matrix hub layout
+            setTimeout(() => {
+              window.location.href = "admin-dashboard.html";
+            }, 1000);
+          } else {
+            throw new Error("Handshake aborted: Core user authentication profile failed to stabilize.");
+          }
+
+        } catch (authException) {
+          console.error("✕ Authentication barrier gate crash:", authException.message || authException);
+          statusMsg.style.display = "block";
+          statusMsg.style.background = "#fef2f2";
+          statusMsg.style.color = "#991b1b";
+          statusMsg.textContent = `✕ Identity Verification Failed: ${authException.message || "Invalid credentials configuration parameters."}`;
+          
+          submitBtn.textContent = originalBtnText;
+          submitBtn.disabled = false;
+        }
+      });
     });
-})();
-
-</script>
-
+  </script>
 </body>
 </html>
