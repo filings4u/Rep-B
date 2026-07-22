@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Website Design Intake | filings4u Portal</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- CORE CDN INFRASTRUCTURE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f8fafc; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --staff-red: #c15254; --emerald: #10b981; }
+    body, html { margin: 0; padding: 0; min-height: 100vh; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; align-items: center; justify-content: center; }
+    .intake-container { width: 100%; max-width: 580px; padding: 40px 20px; box-sizing: border-box; }
+    .intake-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 12px; padding: 40px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); box-sizing: border-box; }
+    .brand-logo img { height: 35px; width: auto; margin-bottom: 16px; display: block; }
+    h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-dark); letter-spacing: -0.5px; text-align: left; }
+    p { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 32px 0; line-height: 1.5; text-align: left; }
+    .form-group { text-align: left; margin-bottom: 20px; }
+    label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    input, select, textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.88rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
+    textarea { height: 100px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { background: var(--white); border-color: var(--staff-red); box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.04); }
+    .submit-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.2s ease; margin-top: 10px; box-sizing: border-box; }
+    .submit-btn:hover { background: #1e293b; }
+    .status-msg { display: none; font-size: 0.85rem; font-weight: 600; text-align: left; margin-top: 20px; padding: 12px; border-radius: 6px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="intake-container">
+    <div class="intake-card">
+      <div class="brand-logo"><img src="images/logo.png" alt="filings4u Logo"></div>
+      <h1>Website Specification Intake</h1>
+      <p>Please supply your operational design criteria, color preferences, and functional needs below to initialize asset production.</p>
+      
+      <form id="webIntakeForm" novalidate>
+        <div class="form-group">
+          <label>Desired Domain Name / Brand Concept</label>
+          <input type="text" id="webDomain" required placeholder="e.g., ://myenterprise.com">
+        </div>
+        <div class="form-group">
+          <label>Primary Brand Colors & Aesthetic Tone</label>
+          <input type="text" id="webAesthetic" required placeholder="e.g., Corporate Dark Blue and White, Clean Minimalist">
+        </div>
+        <div class="form-group">
+          <label>Core Core Business Features Required</label>
+          <select id="webFeatures" required>
+            <option value="Lead Generation Portfolio">Lead Generation Portfolio</option>
+            <option value="E-Commerce Storefront">E-Commerce Storefront</option>
+            <option value="Appointment Booking Engine">Appointment Booking Scheduling Engine</option>
+            <option value="Custom Enterprise App Matrix">Custom Enterprise Application Slat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Detailed Architectural Notes & Copy Elements</label>
+          <textarea id="webNotes" required placeholder="Log specific requirements, sections, pages, or competitor samples here..."></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">Submit Web Specifications ➔</button>
+      </form>
+      <div id="status-msg" class="status-msg"></div>
+    </div>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      const intakeForm = document.getElementById("webIntakeForm");
+      const domainInput = document.getElementById("webDomain");
+      const aestheticInput = document.getElementById("webAesthetic");
+      const featuresSelect = document.getElementById("webFeatures");
+      const notesTextarea = document.getElementById("webNotes");
+      const submitBtn = document.getElementById("submitBtn");
+      const statusMsg = document.getElementById("status-msg");
+
+      if (!intakeForm || !statusMsg || !submitBtn) {
+        throw new Error("✕ Critical UI Error: Form wrapper tree elements are missing from the page canvas.");
+      }
+
+      // 1. Scan query parameters for tracking validation tokens
+      const urlParams = new URLSearchParams(window.location.search);
+      const trackingToken = urlParams.get("token") || localStorage.getItem("f4u_active_tracking_token") || "GUEST-INTAKE";
+
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        statusMsg.style.display = "block";
+        statusMsg.style.background = "#fef2f2";
+        statusMsg.style.color = "#991b1b";
+        statusMsg.textContent = "✕ System Error: Supabase client infrastructure missing.";
+        throw new Error("✕ Initialization Error: Database connection reference unassigned.");
+      }
+
+      intakeForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        statusMsg.style.display = "none";
+        statusMsg.textContent = "";
+
+        const domain = domainInput.value.trim();
+        const aesthetic = aestheticInput.value.trim();
+        const featureType = featuresSelect.value;
+        const notes = notesTextarea.value.trim();
+
+        // Strict empty field validations [0.1]
+        if (!domain || !aesthetic || !featureType || !notes) {
+          statusMsg.style.display = "block";
+          statusMsg.style.background = "#fef2f2";
+          statusMsg.style.color = "#991b1b";
+          statusMsg.textContent = "✕ Validation Error: All intake criteria form parameters are required.";
+          return;
+        }
+
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = "Processing Blueprint Records...";
+        submitBtn.disabled = true;
+
+        try {
+          console.log(`📡 [Web Intake Engine] Syncing layout parameters for tracking code: [${trackingToken}]`);
+
+          // 🟢 DIRECT DB INSERTION: Save entries straight to the public web_intakes data grid table
+          const { error: insertError } = await client
+            .from('web_intakes')
+            .insert([
+              {
+                tracking_number: trackingToken,
+                desired_domain: domain,
+                aesthetic_tone: aesthetic,
+                required_features: featureType,
+                architectural_notes: notes,
+                created_at: new Date().toISOString()
+              }
+            ]);
+
+          if (insertError) {
+            throw new Error(`Postgres Transaction Failure [Code ${insertError.code}]: ${insertError.message}`);
+          }
+
+          console.log("✅ [Web Intake Engine] Specifications successfully logged into table architecture.");
+          statusMsg.style.display = "block";
+          statusMsg.style.background = "#ecfdf5";
+          statusMsg.style.color = "#047857";
+          statusMsg.textContent = "✓ Specifications Submitted! Our engineering staff will review your metrics and begin build phases instantly.";
+          
+          intakeForm.reset();
+
+        } catch (postFault) {
+          console.error("✕ Web intake processing loop broke:", postFault.message);
+          statusMsg.style.display = "block";
+          statusMsg.style.background = "#fef2f2";
+          statusMsg.style.color = "#991b1b";
+          statusMsg.textContent = `✕ Submission Failed: ${postFault.message}`;
+        } finally {
+          submitBtn.textContent = originalBtnText;
+          submitBtn.disabled = false;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
