@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Design Operations Board | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE CONTAINER */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    
+    .text-truncate-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-design-hub.html" class="nav-item active"><span>🎨</span> Design Operations Board</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Design Operations Board</h1>
+          <p>Central engineering panel monitoring active client website frameworks and custom logo design specification intakes</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Section A: Web Intakes Registry -->
+        <div class="console-card">
+          <h2>Website Project Specification Intakes</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Tracking Code</th>
+                  <th style="padding:12px !important;">Target Domain</th>
+                  <th style="padding:12px !important;">Aesthetic Style Preference</th>
+                  <th style="padding:12px !important;">Required Features Matrix</th>
+                  <th style="padding:12px !important; text-align:right !important;">Architectural Blueprint Notes</th>
+                </tr>
+              </thead>
+              <tbody id="admin-web-intakes-target-box">
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing web layout data rows...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section B: Logo Intakes Registry -->
+        <div class="console-card">
+          <h2>Logo & Branding Concept Intakes</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Tracking Code</th>
+                  <th style="padding:12px !important;">Branding Text Display</th>
+                  <th style="padding:12px !important;">Tagline / Slogan</th>
+                  <th style="padding:12px !important;">Aesthetic Dimensions Preference</th>
+                  <th style="padding:12px !important; text-align:right !important;">Visual Icon Guidelines</th>
+                </tr>
+              </thead>
+              <tbody id="admin-logo-intakes-target-box">
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing branding concept data rows...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Document Spreadsheet Target Containers
+      const webTableBody = document.getElementById("admin-web-intakes-target-box");
+      const logoTableBody = document.getElementById("admin-logo-intakes-target-box");
+
+      if (!webTableBody || !logoTableBody) {
+        throw new Error("✕ Critical UI Error: Multi-intake dashboard target spreadsheet tables are absent from document layouts.");
+      }
+
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        webTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</td></tr>`;
+        logoTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
+      }
+
+      // --- STAGE 1: READ AND STREAM LIVE WEBSITE INTAKE PAYLOADS ---
+      async function populateWebIntakesTable() {
+        try {
+          console.log("📡 [Design Hub] Loading rows from public.web_intakes...");
+          const { data: webData, error: fetchError } = await client
+            .from('web_intakes')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (fetchError) throw fetchError;
+
+          if (!webData || webData.length === 0) {
+            webTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No customer website specification entries logged inside the ledger.</td></tr>`;
+            return;
+          }
+
+          webTableBody.innerHTML = "";
+
+          webData.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const trackingKey = row.tracking_number || "GUEST-REF";
+            const domain      = row.desired_domain || "N/A";
+            const tone        = row.aesthetic_tone || "Not Specified";
+            const features    = row.required_features || "Portfolio";
+            const notes       = row.architectural_notes || "No extra specs noted.";
+
+            tr.innerHTML = `
+              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:700;">${escapeDesignHub(trackingKey)}</td>
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeDesignHub(domain)}</td>
+              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeDesignHub(tone)}</td>
+              <td style="padding:14px 12px;"><span style="font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; background:#f1f5f9; color:#475569; letter-spacing:0.5px;">${escapeDesignHub(features)}</span></td>
+              <td style="padding:14px 12px; text-align:right; color:var(--text-muted);" class="text-truncate-cell" title="${escapeDesignHub(notes)}">${escapeDesignHub(notes)}</td>
+            `;
+            webTableBody.appendChild(tr);
+          });
+        } catch (err) {
+          console.error("✕ Web Intakes Hydration Exception:", err.message);
+          webTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+        }
+      }
+
+      // --- STAGE 2: READ AND STREAM LIVE LOGO INTAKE PAYLOADS ---
+      async function populateLogoIntakesTable() {
+        try {
+          console.log("📡 [Design Hub] Loading rows from public.logo_intakes...");
+          const { data: logoData, error: fetchError } = await client
+            .from('logo_intakes')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (fetchError) throw fetchError;
+
+          if (!logoData || logoData.length === 0) {
+            logoTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No customer branding specification entries logged inside the ledger.</td></tr>`;
+            return;
+          }
+
+          logoTableBody.innerHTML = "";
+
+          logoData.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const trackingKey = row.tracking_number || "GUEST-REF";
+            const textDisplay = row.logo_text || "N/A";
+            const tagline     = row.tagline || "N/A";
+            const preference  = row.style_preference || "Minimalist";
+            const guidelines  = row.concept_description || "No concept notes provided.";
+
+            tr.innerHTML = `
+              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:700;">${escapeDesignHub(trackingKey)}</td>
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeDesignHub(textDisplay)}</td>
+              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600; font-style:italic;">"${escapeDesignHub(tagline)}"</td>
+              <td style="padding:14px 12px;"><span style="font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; background:#f1f5f9; color:#334155; letter-spacing:0.5px;">${escapeDesignHub(preference)}</span></td>
+              <td style="padding:14px 12px; text-align:right; color:var(--text-muted);" class="text-truncate-cell" title="${escapeDesignHub(guidelines)}">${escapeDesignHub(guidelines)}</td>
+            `;
+            logoTableBody.appendChild(tr);
+          });
+        } catch (err) {
+          console.error("✕ Logo Intakes Hydration Exception:", err.message);
+          logoTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Alignment Interrupted: Failed to extract branding parameters.</td></tr>`;
+        }
+      }
+
+      function escapeDesignHub(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      // Execute both monitoring data pipelines concurrently across thread pools
+      await Promise.all([
+        populateWebIntakesTable(),
+        populateLogoIntakesTable()
+      ]);
+    });
+  </script>
+</body>
+</html>

@@ -1,1125 +1,448 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Platform Chat Console | filings4u Staff</title>
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Platform Chat Console | filings4u Staff</title>
+  <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow: hidden !important; }
+    .dashboard-wrapper { display: flex !important; height: 100vh !important; width: 100% !important; position: relative !important; }
     
-    <!-- Scoped embedding your exact layout style criteria rules matrix -->
-    <style>
-        /* ==========================================================================
-           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow: hidden !important;
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-            transition: max-height 0.25s ease-out !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH */
-        .portal-main {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            margin-left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width)) !important;
-            height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 15px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-            height: 75px !important;
-        }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .search-input {
-            padding: 10px 14px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 8px !important;
-            font-size: 0.85rem !important;
-            outline: none !important;
-            box-sizing: border-box !important;
-            width: 200px !important;
-        }
-
-        /* 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION */
-        .chat-layout-container {
-            display: flex !important;
-            flex: 1 !important;
-            width: 100% !important;
-            height: calc(100vh - 75px) !important;
-            background: var(--white) !important;
-            box-sizing: border-box !important;
-        }
-
-        .chat-users-panel {
-            width: 300px !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            background: #f8fafc !important;
-            height: 100% !important;
-            box-sizing: border-box !important;
-        }
-
-        .search-users-box {
-            padding: 15px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            box-sizing: border-box !important;
-        }
-
-        .user-search-input {
-            width: 100% !important;
-            padding: 10px 14px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 8px !important;
-            background: var(--white) !important;
-            font-size: 0.85rem !important;
-            outline: none !important;
-            box-sizing: border-box !important;
-        }
-
-        .users-scrollable-feed {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            box-sizing: border-box !important;
-        }
-
-        .user-channel-row {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-            padding: 14px 18px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            cursor: pointer !important;
-            transition: background 0.15s !important;
-            text-align: left !important;
-            box-sizing: border-box !important;
-        }
-
-        .user-channel-row:hover {
-            background: #edf2f7 !important;
-        }
-
-        .user-channel-row.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            border-left: 4px solid var(--emerald) !important;
-        }
-
-        .avatar-circle {
-            width: 38px !important;
-            height: 38px !important;
-            background: var(--text-dark) !important;
-            color: #fff !important;
-            border-radius: 50% !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-weight: 700 !important;
-            font-size: 0.85rem !important;
-            flex-shrink: 0 !important;
-        }
-
-        .user-meta-block {
-            overflow: hidden !important;
-            white-space: nowrap !important;
-            text-overflow: ellipsis !important;
-        }
-
-        .chat-thread-panel {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100% !important;
-            overflow: hidden !important;
-            background: var(--white) !important;
-            box-sizing: border-box !important;
-        }
-
-        .messages-timeline-scroll {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 30px !important;
-            background: #fdfdfd !important;
-            box-sizing: border-box !important;
-        }
-
-        .msg-row {
-            display: flex !important;
-            margin-bottom: 20px !important;
-            width: 100% !important;
-        }
-
-        .msg-row.staff-sent {
-            justify-content: flex-end !important;
-        }
-
-        .msg-row.client-sent {
-            justify-content: flex-start !important;
-        }
-
-        .msg-bubble {
-            max-width: 65% !important;
-            padding: 12px 18px !important;
-            border-radius: 12px !important;
-            font-size: 0.9rem !important;
-            line-height: 1.45 !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
-            box-sizing: border-box !important;
-            text-align: left !important;
-        }
-
-        .msg-row.staff-sent .msg-bubble {
-            background: var(--text-dark) !important;
-            color: #ffffff !important;
-            border-bottom-right-radius: 2px !important;
-        }
-
-        .msg-row.client-sent .msg-bubble {
-            background: #f1f5f9 !important;
-            color: var(--text-dark) !important;
-            border-bottom-left-radius: 2px !important;
-            border: 1px solid var(--border-color) !important;
-        }
-
-        .msg-timestamp {
-            font-size: 0.68rem !important;
-            opacity: 0.6;
-            display: block !important;
-            margin-top: 4px !important;
-            text-align: right !important;
-        }
-
-        .chat-input-footer-tray {
-            padding: 20px 30px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: var(--white) !important;
-            box-sizing: border-box !important;
-        }
-
-        .tray-form-grid {
-            display: flex !important;
-            gap: 12px !important;
-            width: 100% !important;
-        }
-
-        .tray-textarea-input {
-            flex: 1 !important;
-            padding: 12px 16px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 8px !important;
-            font-size: 0.92rem !important;
-            outline: none !important;
-            resize: none !important;
-            font-family: inherit !important;
-            height: 44px !important;
-            box-sizing: border-box !important;
-            color: var(--text-dark) !important;
-            background: #f8fafc !important;
-        }
-
-        .tray-textarea-input:focus {
-            background: #fff !important;
-            border-color: var(--emerald) !important;
-        }
-
-        .btn-send {
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 0 24px !important;
-            border-radius: 8px !important;
-            font-weight: 700 !important;
-            font-size: 0.88rem !important;
-            cursor: pointer !important;
-            height: 44px !important;
-            box-sizing: border-box !important;
-        }
-
-        @media (max-width: 991px) {
-            .portal-sidebar { display: none !important; }
-            .portal-main { margin-left: 0 !important; width: 100% !important; }
-            .portal-header { flex-direction: column !important; padding: 15px !important; height: auto !important; }
-            .chat-layout-container { height: calc(100vh - 140px) !important; }
-            .chat-users-panel { width: 80px !important; }
-            .search-users-box, .user-meta-block { display: none !important; }
-        }
-
-        /* ✨ SMOOTH SLIDE-IN POP-UP CHAT BUBBLE ANIMATION */
-@keyframes bubbleSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.chat-bubble, .admin-chat-row-bubble {
-  animation: bubbleSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-  transform-origin: bottom right;
-}
-
-.chat-bubble.inbound {
-  transform-origin: bottom left !important;
-}
-
-/* 🌀 SPINNER BUTTON ANIMATION CORE */
-@keyframes buttonSpinnerRotate {
-  to { transform: rotate(360deg); }
-}
-
-.f4u-btn-spinner {
-  width: 16px !important;
-  height: 16px !important;
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
-  border-radius: 50% !important;
-  border-top-color: #ffffff !important;
-  animation: buttonSpinnerRotate 0.6s linear infinite !important;
-  display: inline-block !important;
-}
-
-/* 🖼️ CLICKABLE INLINE PREVIEW THUMBNAILS */
-.chat-inline-thumbnail-preview {
-  display: block !important;
-  max-width: 240px !important;
-  max-height: 180px !important;
-  border-radius: 6px !important;
-  margin-top: 6px !important;
-  cursor: pointer !important;
-  transition: opacity 0.15s ease !important;
-  border: 1px solid rgba(0,0,0,0.05) !important;
-}
-.chat-inline-thumbnail-preview:hover {
-  opacity: 0.9 !important;
-}
-
-    </style>
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 15px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; box-sizing: border-box !important; width: 100% !important; height: 75px !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 12px !important; }
+    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
+    
+    /* 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION */
+    .chat-layout-container { display: flex !important; flex: 1 !important; width: 100% !important; height: calc(100vh - 75px) !important; background: var(--white) !important; box-sizing: border-box !important; }
+    .chat-users-panel { width: 300px !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; background: #f8fafc !important; height: 100% !important; box-sizing: border-box !important; }
+    .search-users-box { padding: 15px !important; border-bottom: 1px solid var(--border-color) !important; box-sizing: border-box !important; }
+    .user-search-input { width: 100% !important; padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; background: var(--white) !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; }
+    .users-scrollable-feed { flex: 1 !important; overflow-y: auto !important; box-sizing: border-box !important; }
+    
+    .chat-thread-panel { flex: 1 !important; display: flex !important; flex-direction: column !important; height: 100% !important; overflow: hidden !important; background: var(--white) !important; box-sizing: border-box !important; }
+    .messages-timeline-scroll { flex: 1 !important; overflow-y: auto !important; padding: 30px !important; background: #fdfdfd !important; box-sizing: border-box !important; }
+    
+    .msg-row { display: flex !important; margin-bottom: 20px !important; width: 100% !important; }
+    .msg-row.staff-sent { justify-content: flex-end !important; }
+    .msg-row.client-sent { justify-content: flex-start !important; }
+    .msg-bubble { max-width: 65% !important; padding: 12px 18px !important; border-radius: 12px !important; font-size: 0.9rem !important; line-height: 1.45 !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; text-align: left; word-break: break-word; }
+    .msg-row.staff-sent .msg-bubble { background: var(--text-dark) !important; color: #ffffff !important; border-bottom-right-radius: 2px !important; }
+    .msg-row.client-sent .msg-bubble { background: #f1f5f9 !important; color: var(--text-dark) !important; border-bottom-left-radius: 2px !important; border: 1px solid var(--border-color) !important; }
+    .msg-timestamp { font-size: 0.68rem !important; opacity: 0.6; display: block !important; margin-top: 4px !important; text-align: right !important; }
+    
+    .chat-input-footer-tray { padding: 20px 30px !important; border-top: 1px solid var(--border-color) !important; background: var(--white) !important; box-sizing: border-box !important; }
+    .tray-form-grid { display: flex !important; gap: 12px !important; width: 100% !important; }
+    .tray-textarea-input { flex: 1 !important; padding: 12px 16px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.92rem !important; outline: none !important; resize: none !important; font-family: inherit !important; height: 44px !important; box-sizing: border-box !important; color: var(--text-dark) !important; background: #f8fafc !important; }
+    .tray-textarea-input:focus { background: #fff !important; border-color: var(--emerald) !important; }
+    .btn-send { background: var(--text-dark) !important; color: white !important; border: none !important; padding: 0 24px !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 0.88rem !important; cursor: pointer !important; height: 44px !important; box-sizing: border-box !important; }
+    
+    @media (max-width: 991px) {
+      .portal-sidebar { display: none !important; }
+      .portal-main { margin-left: 0 !important; width: 100% !important; }
+      .portal-header { flex-direction: column !important; padding: 15px !important; height: auto !important; }
+      .chat-layout-container { height: calc(100vh - 140px) !important; }
+      .chat-users-panel { width: 80px !important; }
+      .search-users-box { display: none !important; }
+    }
+  </style>
 </head>
+
 <body>
+  <div class="dashboard-wrapper">
+    <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <!-- ACCORDION 1 -->
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
+        <div class="accordion-panel">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+          <a href="admin-faq-analytics.html" class="nav-item"><span>📈</span> FAQ Performance Insights</a>
+        </div>
+        <!-- ACCORDION 2 -->
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
+        <div class="accordion-panel" style="max-height: 600px;">
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+          <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+          <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+        </div>
+        <!-- ACCORDION 3 -->
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
+        <div class="accordion-panel">
+          <a href="admin-revenue-reconciliation.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+          <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+          <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
+        </div>
+        <!-- ACCORDION 4 -->
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▲</span> </button>
+        <div class="accordion-panel" style="max-height: 600px;">
+          <a href="admin-chat.html" class="nav-item active"><span>💬</span> Client Chat</a>
+          <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
+          <a href="orders.html" class="nav-item"><span>📞</span> Phone Orders</a>
+          <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar Task Board</a>
+          <a href="invoice.html" class="nav-item"><span>🧾</span> Invoices Hub</a>
+          <a href="admin-staff-roster.html" class="nav-item"><span>👥</span> Staff Roster</a>
+          <a href="admin-global-settings.html" class="nav-item"><span>⚙️</span> System Settings</a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
+        <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
+          <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
+          <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
+        </div>
+        <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
+      </div>
+    </aside>
 
-    <div class="dashboard-wrapper">
-        <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-     <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
+    <!-- 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div style="text-align: left;">
+          <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Customer Communication Desk</h1>
+        </div>
+        <div class="header-actions-wrapper">
+          <div class="header-clock-pill">
+            <span>⏱️</span>
+            <span id="portal-clock">00/00/0000 | 00:00:00</span>
+          </div>
+        </div>
+      </header>
 
-            </nav>
-
-
-<!-- ========================================================================== 
-     🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework) 
-     =========================================================================== --> 
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;"> 
-  <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container --> 
-  <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;"> 
-    <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div> 
-    <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span> 
-  </div> 
-  <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button> 
-</div> 
-
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR --> 
-<script> 
-(function injectIsolatedTerminatorPipeline() { 
-  "use strict"; 
-  const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn"); 
-  if (!triggerBtn) return; 
-
-  triggerBtn.addEventListener("click", async (e) => { 
-    e.preventDefault(); 
-    e.stopPropagation(); 
-    triggerBtn.disabled = true; 
-    triggerBtn.textContent = "Wiping Security Cache..."; 
-
-    // FIXED: Multi-Instance Polyfill lookup array safeguards against backend session signout failures
-    const coreClient = window.supabaseClient || 
-                       window.supabase || 
-                       window.chatAdminCoreClient || 
-                       window.f4uWizardSupabaseInstance; 
-
-    console.log("Terminal logout initialized via self-contained trigger..."); 
-    
-    try { 
-      if (coreClient && coreClient.auth && typeof coreClient.auth.signOut === "function") { 
-        // Attempt over-the-air backend session tear-down 
-        await coreClient.auth.signOut(); 
-      } 
-    } catch (authErr) { 
-      console.warn("Server session clear deferred. Proceeding with hard client wipe.", authErr.message); 
-    } finally { 
-      // 1. HARD WIPE BROWSER CACHE REGISTRIES 
-      if (typeof window.localStorage !== 'undefined') { 
-        window.localStorage.clear(); 
-      } 
-      if (typeof window.sessionStorage !== 'undefined') { 
-        window.sessionStorage.clear(); 
-      } 
-
-      // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS 
-      document.cookie.split(";").forEach(cookieItem => { 
-        const eqPos = cookieItem.indexOf("="); 
-        const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim(); 
-        document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; 
-        document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";"; 
-      }); 
-
-      // 3. IMMEDIATE RE-ROUTING GATE 
-      console.log("Purge complete. Transferring terminal to login gateway."); 
-      window.location.replace('admin-login.html'); 
-    } 
-  }); 
-})(); 
-</script>
+      <!-- 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION -->
+      <div class="chat-layout-container">
+        <!-- LEFT USERS COLUMN FEED -->
+        <aside class="chat-users-panel">
+          <div class="search-users-box">
+            <input type="text" id="userFeedFilterField" class="user-search-input" placeholder="Search clients..." onkeyup="if(typeof window.filterUsersFeed === 'function') { window.filterUsersFeed(); }">
+          </div>
+          <div class="users-scrollable-feed" id="adminUsersFeedContainer">
+            <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">Loading live accounts feed...</div>
+          </div>
         </aside>
 
-<!-- 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH --> 
-<main class="portal-main"> 
-  <header class="portal-header"> 
-    <div style="text-align: left;"> 
-      <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Customer Communication Desk</h1> 
-    </div> 
-    <div class="header-actions-wrapper"> 
-      <div class="header-clock-pill"> 
-        <!-- FIXED: Decoded raw visual string token symbols directly -->
-        <span>⏱️</span> 
-        <span id="portal-clock">00/00/0000 | 00:00:00</span> 
-      </div> 
-    </div> 
-  </header> 
-
-  <!-- 💬 SPLIT SCREEN OPERATIONAL LAYOUT COMPRESSION --> 
-  <div class="chat-layout-container"> 
-    
-    <!-- LEFT USERS COLUMN FEED --> 
-    <aside class="chat-users-panel"> 
-      <div class="search-users-box"> 
-        <!-- FIXED: Safe query check inline pattern ensures typing never throws reference exceptions -->
-        <input type="text" id="userFeedFilterField" class="user-search-input" placeholder="Search clients..." onkeyup="if(typeof window.filterUsersFeed === 'function') { window.filterUsersFeed(); }"> 
-      </div> 
-      <div class="users-scrollable-feed" id="adminUsersFeedContainer"> 
-        <!-- Dynamic list of accounts loaded here --> 
-        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">Loading live accounts feed...</div> 
-      </div> 
-    </aside> 
-
-    <!-- RIGHT MAIN MESSAGE THREAD --> 
-    <section class="chat-thread-panel"> 
-      <div class="messages-timeline-scroll" id="adminChatMessagesLog"> 
-        <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;"> 
-          Select a client row on the left panel to connect streaming text thread nodes. 
-        </div> 
-      </div> 
-      <div class="chat-input-footer-tray"> 
-        <div class="tray-form-grid"> 
-          <!-- Keydown handler handles your text box keyboard loops cleanly -->
-          <textarea id="adminChatMessageInputField" class="tray-textarea-input" placeholder="Type your secure response message payload here... (Press Enter to Send)" onkeydown="if(typeof window.handleAdminChatKeyOptions === 'function') { window.handleAdminChatKeyOptions(event); }" disabled></textarea> 
-          <button id="adminChatSendButton" class="btn-send" onclick="if(typeof window.dispatchAdminResponseChatMessage === 'function') { window.dispatchAdminResponseChatMessage(); }" disabled>Send</button> 
-        </div> 
-      </div> 
-    </section> 
-
-  </div> 
-</main>
-
-<!-- ========================================================================== 
-     🏢 FILINGS4U ADMINISTRATIVE LIVE DESK CORE - PART 1: FULL-PAGE CHAT SYSTEM 
-     ========================================================================== --> 
-
-<script>
-// --- 1. GLOBAL WORKSPACE STORAGE CHANNELS ---
-let activeSelectedClientId = null;
-let realtimeChatSubscriptionChannel = null;
-const chatAdminCoreClient = window.supabaseClient || window.supabase || window.f4uWizardSupabaseInstance;
-
-// --- 2. RUNTIME ENGINE LIFE-CYCLE INITIALIZER ---
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(async () => {
-    // Standard polyfill lookup array maps across all active scripts safely
-    const client = window.supabaseClient || window.supabase || chatAdminCoreClient || window.f4uWizardSupabaseInstance;
-    const rosterContainer = document.getElementById("adminUsersFeedContainer");
-
-    if (!client) {
-      if (rosterContainer) rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Database Link Offline</div>`;
-      return;
-    }
-
-    try {
-      // Perimeter Authentication Access Guard Check
-      const { data: { session }, error: authErr } = await client.auth.getSession();
-      if (authErr || !session) {
-        window.location.href = 'admin-login.html';
-        return;
-      }
-
-      const staffEmail = String(session.user.email || '').toLowerCase().trim();
-      const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-      if (!isVerifiedStaff) {
-        window.location.href = 'portal-login.html';
-        return;
-      }
-
-      // Action A: Initialize the live unread list feed roster from the custom database View
-      await window.synchronizeChatThreadsRoster();
-
-      // Action B: Bind Live Global Real-time Notification Channels 
-      console.log("[Admin Desk] Activating global postgres_changes message interception network..."); 
-      
-      client.channel('global_admin_roster_watcher') 
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'chat_messages' 
-        }, (payload) => { 
-          
-          if (String(payload.new.sender_type).toLowerCase() === 'client') { 
-            // FIXED URL: Wrapped a reliable, fully qualified alert chime audio file target path string
-            try { 
-              new Audio("https://cdn.jsdelivr.net/jpm/simple-notification-sounds@1.0.0/dist/audio/alert.mp3").play().catch(() => {}); 
-            } catch(e) {} 
-            
-            // 🚨 TRIGGER TAB FLASHING ALERT INTERCEPTOR: Blinks browser title bar instantly! 
-            if (typeof window.triggerActiveBrowserTabFlashAlert === "function") { 
-              window.triggerActiveBrowserTabFlashAlert(payload.new.client_id); 
-            } 
-          } 
-
-          if (activeSelectedClientId === payload.new.client_id) { 
-            window.loadActiveThreadViewportPanel(activeSelectedClientId); 
-          } else { 
-            window.synchronizeChatThreadsRoster(); 
-          } 
-        })
-        .subscribe(); 
-
-    } catch (err) { 
-      console.error("Administrative chat runtime boot crash:", err.message); 
-    } 
-  }, 50); 
-
-  // Synchronize System Header Pill Clock 
-  function initializeHeaderClockTick() { 
-    const clock = document.getElementById("portal-clock"); 
-    if (!clock) return; 
-    const now = new Date(); 
-    clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString(); 
-  } 
-  setInterval(initializeHeaderClockTick, 1000); 
-  initializeHeaderClockTick(); 
-});
-
-// --- 3. SYNCHRONIZE LEFT CONTACT THREADS NATIVELY ---
-window.synchronizeChatThreadsRoster = async function() {
-  const rosterContainer = document.getElementById("adminUsersFeedContainer");
-  const client = window.supabaseClient || window.supabase || chatAdminCoreClient || window.f4uWizardSupabaseInstance;
-  
-  if (!rosterContainer || !client) return;
-
-  try {
-    // FIXED: Reads data directly from your SQL view layout mapping to account for real string UUIDs and unread counts
-    const { data: threads, error } = await client
-      .from('admin_chat_threads_view')
-      .select('*')
-      .order('last_message_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Cache thread data globally on the window context loop to facilitate search query parsing
-    window.masterCrmThreadsCache = threads || [];
-
-    if (window.masterCrmThreadsCache.length === 0) {
-      rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
-      return;
-    }
-
-    window.renderChatSidebarList(window.masterCrmThreadsCache);
-
-  } catch (err) {
-    console.error("Roster synchronization failure:", err.message);
-    rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
-  }
-};
-
-// --- 4. PRINT ACTIVE THREAD CARDS TO SIDEBAR DIRECTORIES ---
-window.renderChatSidebarList = function(datasetArray) {
-  const rosterContainer = document.getElementById("adminUsersFeedContainer");
-  if (!rosterContainer) return;
-
-  rosterContainer.innerHTML = datasetArray.map(row => {
-    const isSelected = activeSelectedClientId === row.client_id;
-    const shortUuid = String(row.client_id || '').substring(0, 8).toUpperCase();
-    
-    // Check if the record holds an embedded metadata string payload block text context to display a clean preview
-    let msgPreview = row.last_message_content || 'No text content.';
-    if (msgPreview.includes("Name:")) {
-      msgPreview = "📋 [New Room Handshake Onboarding Metadata]";
-    } else if (msgPreview.length > 38) {
-      msgPreview = msgPreview.substring(0, 35) + "...";
-    }
-
-    // Build the visual badge indicator layout block if unread logs exist
-    const unreadCountBadge = row.unread_count > 0 
-      ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` 
-      : '';
-
-    const backgroundStyles = isSelected 
-      ? "background: rgba(16, 185, 129, 0.08) !important; border-left: 4px solid #ef4444 !important;" 
-      : "background: none;";
-
-    return `
-      <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.client_id}')" onmouseover="if('${isSelected}' === 'false') this.style.background='#f1f5f9'" onmouseout="if('${isSelected}' === 'false') this.style.background='none'">
-        <div style="display:flex; justify-content:between; width:100%; align-items:center; box-sizing:border-box;">
-          <strong style="color:#0a1f44; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">👤 Session Profile: ${shortUuid}</strong>
-          ${unreadCountBadge}
-        </div>
-        <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${msgPreview}</small>
+        <!-- RIGHT MAIN MESSAGE THREAD -->
+        <section class="chat-thread-panel">
+          <div class="messages-timeline-scroll" id="adminChatMessagesLog">
+            <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">
+              Select a client row on the left panel to connect streaming text thread nodes.
+            </div>
+          </div>
+          <div class="chat-input-footer-tray">
+            <div class="tray-form-grid">
+              <textarea id="adminChatMessageInputField" class="tray-textarea-input" placeholder="Type your response here... (Press Enter to Send)" onkeydown="if(typeof window.handleAdminChatKeyOptions === 'function') { window.handleAdminChatKeyOptions(event); }" disabled></textarea>
+              <button id="adminChatSendButton" class="btn-send" onclick="if(typeof window.dispatchAdminResponseChatMessage === 'function') { window.dispatchAdminResponseChatMessage(); }" disabled>Send</button>
+            </div>
+          </div>
+        </section>
       </div>
-    `;
-  }).join('');
-};
+    </main>
+  </div>
 
-// --- 5. SEARCH ENGINE FILTER INTERCEPTOR ---
-window.filterUsersFeed = function() {
-  const searchBox = document.getElementById("userFeedFilterField");
-  if (!searchBox || !window.masterCrmThreadsCache) return;
+  <!-- ========================================================================== 🏢 ADMINISTRATIVE REAL-TIME LOGIC ENGINE CONTROLLERS ========================================================================== -->
+  <script>
+    "use strict";
 
-  const parsingToken = searchBox.value.toLowerCase().trim();
-  
-  const filtered = window.masterCrmThreadsCache.filter(row => 
-    String(row.client_id).toLowerCase().includes(parsingToken) || 
-    String(row.last_message_content).toLowerCase().includes(parsingToken)
-  );
+    let activeSelectedClientId = null;
+    let realtimeChatSubscriptionChannel = null;
+    const chatAdminCoreClient = window.supabaseInstance || window.supabaseClient || window.supabase || window.f4uWizardSupabaseInstance;
 
-  window.renderChatSidebarList(filtered);
-};
-</script>
-
-<!-- ========================================================================== 
-     🏢 FILINGS4U ADMINISTRATIVE LIVE DESK CORE - UNIFIED CHANNELS ENGINE (PART 1)
-     ========================================================================== --> 
-<script>
-// --- GLOBAL WORKSPACE MEMORY CHANNELS ---
-window.activeSelectedClientId = null;
-window.f4uTabNotificationIntervalInstance = null;
-window.originalBrowserTabTitleString = document.title;
-
-// =========================================================================
-// 🚀 MODULE 1: COMPREHENSIVE VIEWPORT TIMELINE RETRIEVAL ENGINE
-// =========================================================================
-window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
-  const client = window.supabaseClient || window.supabase || window.chatAdminCoreClient || window.f4uWizardSupabaseInstance;
-  const textarea = document.getElementById("adminChatMessageInputField");
-  const sendButton = document.getElementById("adminChatSendButton");
-  const msgLogBox = document.getElementById("adminChatMessagesLog");
-  
-  if (!client || !textarea || !sendButton || !msgLogBox) return;
-
-  // FIXED: Explicitly preserve the raw, clean 36-character string UUID tracking token
-  window.activeSelectedClientId = String(stringClientUuid).trim();
-  
-  // Unlock typing input interface states instantly on screen layout elements
-  textarea.disabled = false; 
-  sendButton.disabled = false;
-  textarea.placeholder = `Type response to Client: ${window.activeSelectedClientId.substring(0,8).toUpperCase()}...`;
-  textarea.focus();
-
-  try {
-    // ATOMIC SECURITY UPDATE: Reset unread count records on backend for this specific client channel loop
-    await client
-      .from('chat_messages')
-      .update({ is_read_by_admin: true })
-      .eq('client_id', window.activeSelectedClientId);
-
-    // Refresh roster counters dynamically to wipe away red unread numbers layout badges
-    if (typeof window.synchronizeChatThreadsRoster === "function") {
-      window.synchronizeChatThreadsRoster();
-    }
-
-    console.log(`[Admin Timeline] Querying chat logs history for user: ${window.activeSelectedClientId}`);
-    
-    // Fetch historical data matrix lines ordered chronologically from database disk
-    const { data: messages, error } = await client
-      .from('chat_messages')
-      .select('*')
-      .eq('client_id', window.activeSelectedClientId)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-
-    // Reset timeline scroll canvas view cleanly before printing elements
-    msgLogBox.innerHTML = "";
-
-    if (messages && messages.length > 0) {
-      messages.forEach(msg => {
-        // FIXED UNIFICATION: Hand records directly to the constructor layout nodes
-        window.appendSingleChatMessageBubbleToUI(msg);
-      });
-    } else {
-      msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
-    }
-    
-    window.scrollTerminalTimelineToAbsoluteBottom();
-
-  } catch (err) {
-    console.error("[Admin Timeline Exception] Storage retrieval failed:", err.message);
-    msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
-  }
-};
-
-// =========================================================================
-// 🪟 MODULE 2: GRAPHIC CHAT BUBBLE MARKUP CONSTRUCTOR & TAB FLASHING
-// =========================================================================
-
-// --- AUTOMATED BROWSER TAB FLASH ALERTS TRACKER ENGINE ---
-window.triggerActiveBrowserTabFlashAlert = function(clientLabel) {
-  if (window.f4uTabNotificationIntervalInstance) return; // Prevent alert spamming loops
-  
-  let toggleAlertFlag = true;
-  const shortIdLabel = String(clientLabel || '').substring(0, 8).toUpperCase();
-  
-  window.f4uTabNotificationIntervalInstance = setInterval(() => {
-    document.title = toggleAlertFlag 
-      ? `🚨 NEW CHAT (#${shortIdLabel})` 
-      : `💬 ${window.originalBrowserTabTitleString}`;
-    toggleAlertFlag = !toggleAlertFlag;
-  }, 1000);
-};
-
-// Clear the flashing tab notice automatically once an admin user clicks into the text entry area box
-document.addEventListener("click", () => {
-  const inputEl = document.getElementById("adminChatMessageInputField");
-  if (document.activeElement === inputEl && window.f4uTabNotificationIntervalInstance) {
-    clearInterval(window.f4uTabNotificationIntervalInstance);
-    window.f4uTabNotificationIntervalInstance = null;
-    document.title = window.originalBrowserTabTitleString;
-    console.log("[Tab Alert Sync] Focus state activated. Flashing title alert cleared.");
-  }
-});
-
-// --- MAIN GRAPHIC CHAT BUBBLE TEMPLATE GENERATOR ---
-window.buildMessageBubbleMarkup = function(msgRow) {
-  const currentSender = String(msgRow.sender_type || '').toLowerCase();
-  const isAdminResponse = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'broker' || currentSender === 'staff';
-  
-  const alignSide = isAdminResponse 
-    ? 'margin-left: auto; background: #0a1f44; color: #ffffff;' 
-    : 'margin-right: auto; background: #f1f5f9; color: #0f172a;';
-
-  const wrapperStyle = `max-width: 75%; padding: 12px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; display: block; clear: both; box-shadow: 0 1px 2px rgba(0,0,0,0.01); word-break: break-word; ${alignSide}`;
-  const metaStyle = `font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 4px; text-align: ${isAdminResponse ? 'right' : 'left'}; font-weight: 600;`;
-  const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  let bodyMarkup = msgRow.message_content;
-
-  // 📋 FEATURE 1: EXPAND INTAKE FORM INTO AN INTEGRATED HIGH-DENSITY PROFILE CARD
-  if (bodyMarkup.includes("System Notice:") || bodyMarkup.includes("Name:") || bodyMarkup.includes("Email:") || bodyMarkup.includes("Phone:")) {
-    return `
-      <div style="margin-right: auto !important; width: 100% !important; max-width: 440px !important; background: #edf2f7 !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 16px !important; box-sizing: border-box !important; clear: both !important; margin-bottom: 12px !important; text-align: left !important;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #cbd5e1; box-sizing: border-box;">
-          <span style="font-size:1.15rem;">📋</span>
-          <strong style="color:#0a1f44; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px; font-weight: 800;">Customer Lead Contact Intake Profile</strong>
-        </div>
-        <pre style="margin: 0; font-family: monospace; font-size: 0.825rem; line-height: 1.5; color: #334155; white-space: pre-wrap; font-weight: 700; text-align: left;">${bodyMarkup}</pre>
-        <span style="font-size:0.65rem; color:#94a3b8; display:block; margin-top:8px; font-weight:600;">Handshake Verified &bull; filings4u Backend Core &bull; ${readableTime}</span>
-      </div>
-    `;
-  }
-
-  // 🖼️ FEATURE 2: CLICKABLE IMAGE ATTACHMENT EXPANSIONS PASSTHROUGH
-  const imageRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
-  const match = bodyMarkup.match(imageRegex);
-  if (match) {
-    const imageUrl = match;
-    const plainText = bodyMarkup.replace(imageUrl, '').trim();
-    const textHtml = plainText ? `<div style="margin-bottom:6px; text-align: left;">${plainText}</div>` : '';
-    bodyMarkup = `${textHtml}<img src="${imageUrl}" class="chat-inline-thumbnail-preview" onclick="window.open('${imageUrl}', '_blank')">`;
-  }
-
-  return `<div style="${wrapperStyle}" class="admin-chat-row-bubble">${bodyMarkup}<span style="${metaStyle}">${isAdminResponse ? 'Fulfillment Staff' : 'Client Customer'} • ${readableTime}</span></div>`;
-};
-
-// =========================================================================
-// 🧱 MODULE 3: DIRECT DOM INJECTION & TIMELINE FRAME SHIFTERS
-// =========================================================================
-window.appendSingleChatMessageBubbleToUI = function(newMsgObj) {
-  const logBox = document.getElementById("adminChatMessagesLog");
-  if (!logBox) return;
-  
-  if (logBox.innerHTML.includes("exchanged with this user") || logBox.innerHTML.includes("Select a client row") || logBox.innerHTML.includes("Extracting secure")) {
-    logBox.innerHTML = "";
-  }
-  
-  const temporaryBubbleDiv = document.createElement("div");
-  temporaryBubbleDiv.innerHTML = window.buildMessageBubbleMarkup(newMsgObj);
-  logBox.appendChild(temporaryBubbleDiv.firstElementChild);
-  
-  window.scrollTerminalTimelineToAbsoluteBottom();
-};
-
-// =========================================================================
-// 🚀 MODULE 4: DISPATCH AGENT BROKER RESPONSE PAYLOAD
-// =========================================================================
-window.dispatchAdminResponseChatMessage = async function() {
-  const textarea = document.getElementById("adminChatMessageInputField");
-  const client = window.supabaseClient || window.supabase || window.chatAdminCoreClient || window.f4uWizardSupabaseInstance;
-  const currentTargetUuid = window.activeSelectedClientId;
-
-  if (!textarea || !currentTargetUuid || !client) return;
-  const contentRaw = textarea.value.trim();
-  if (!contentRaw) return;
-
-  textarea.value = "";
-
-  window.appendSingleChatMessageBubbleToUI({
-    sender_type: 'admin',
-    message_content: contentRaw,
-    created_at: new Date().toISOString()
-  });
-
-  try {
-    console.log(`[Admin Send] Committing response line to Client UUID: ${currentTargetUuid}`);
-    
-    const { error } = await client
-      .from('chat_messages')
-      .insert({
-        client_id: currentTargetUuid,
-        sender_type: 'admin',
-        message_content: contentRaw,
-        is_read_by_admin: true
-      });
-
-    if (error) throw error;
-    
-    if (typeof window.synchronizeChatThreadsRoster === "function") {
-      window.synchronizeChatThreadsRoster();
-    }
-
-  } catch (err) {
-    console.error("[Admin Send Fault] Message delivery rejected by Postgres cluster:", err.message);
-    alert("Response dropped. Check infrastructure network status.");
-  }
-};
-
-// =========================================================================
-// ⚙️ MODULE 5: UTILITY SCROLL TERMINAL & REAL-TIME SOUND ALERTS
-// =========================================================================
-window.scrollTerminalTimelineToAbsoluteBottom = function() {
-  const logBox = document.getElementById("adminChatMessagesLog");
-  if (logBox) logBox.scrollTop = logBox.scrollHeight;
-};
-
-window.handleAdminChatKeyOptions = function(event) {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault();
-    window.dispatchAdminResponseChatMessage();
-  }
-};
-
-// --- INITIALIZE REAL-TIME AUDIO HOOKS (CLEAN UNBROKEN VARIABLE RESOLUTION) ---
-// Note: Browsers block autoplay audio until a user first interacts with the page layout canvas.
-// This block ensures everything prepares cleanly behind the scenes.
-window.playIncomingSupportAlertChime = function() {
-  try {
-    // FIXED: Formatted into a single continuous URL string with zero character spacing breaks
-    const audioAssetUrl = "https://jsdelivr.net";
-    const soundNotificationWorker = new Audio(audioAssetUrl);
-    soundNotificationWorker.volume = 0.85;
-    soundNotificationWorker.play().catch((e) => {
-      console.log("[Audio Engine] Autoplay audio playback deferred until initial page click gesture.");
-    });
-  } catch (err) {
-    console.error("[Audio Engine Fault]", err.message);
-  }
-};
-</script>
-
-
-
-
-
-
-<!-- ========================================================================== 
-     🏢 FILINGS4U ADMINDESK INTERFACE SYSTEM UTILITIES (Hardened Layout Locks)
-     =========================================================================== --> 
-<script>
-// --- MODULE 1: RESPONSIVE SIDEBAR ACCORDION HANDLERS ---
-function toggleSidebarAccordion(buttonElement) {
-  if (!buttonElement) return;
-  buttonElement.classList.toggle('active');
-  const panel = buttonElement.nextElementSibling;
-  
-  if (panel) {
-    if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-      panel.style.maxHeight = "0px";
-    } else {
-      panel.style.maxHeight = panel.scrollHeight + "px";
-    }
-  }
-}
-
-// --- MODULE 2: INLINE ACCOUNT MODAL VIEW CONTROLLERS ---
-window.toggleInvoiceGenerationModal = function(showFlag) {
-  const modal = document.getElementById('invoice-modal-overlay');
-  if (modal) {
-    modal.style.display = showFlag ? 'flex' : 'none';
-  }
-};
-
-// --- MODULE 3: MOBILE LAYOUT DRAWER REVEAL WRAPPERS ---
-function toggleMobileSidebarMenuOverlay() {
-  // Only execute toggle shifts if the layout viewport matches mobile boundaries
-  if (window.innerWidth > 992) return;
-  
-  const sidebar = document.querySelector(".portal-sidebar");
-  const icon = document.getElementById("mobileNavTriggerIcon");
-  
-  if (!sidebar || !icon) return;
-  
-  sidebar.classList.toggle("mobile-revealed");
-  
-  // FIXED: Standard crisp decoded button values to stop rendering layout crashes
-  if (sidebar.classList.contains("mobile-revealed")) {
-    icon.textContent = "✕";
-  } else {
-    icon.textContent = "☰";
-  }
-}
-
-// --- MODULE 4: ISOLATED USER CLICK INTERCEPTORS ---
-document.addEventListener("DOMContentLoaded", () => {
-  // FIXED: Explicitly narrow the click listeners down to true navigation links (.portal-nav-link)
-  // to prevent chat thread card clicks (.chat-user-thread-card) from crashing the mobile view!
-  const navLinks = document.querySelectorAll(".portal-sidebar .nav-item, .portal-sidebar a");
-  
-  navLinks.forEach(link => {
-    link.addEventListener("click", (event) => {
-      const sidebar = document.querySelector(".portal-sidebar");
-      
-      // Auto collapse the mobile menu overlay tray ONLY if navigating away on small viewports
-      if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-        // Enforce a brief layout boundary timeout to ensure data routes clear before slide animation begins
-        setTimeout(() => {
-          if (sidebar.classList.contains("mobile-revealed")) {
-            toggleMobileSidebarMenuOverlay();
+    // --- LIFE-CYCLE BOOT INITIALIZER ---
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+        const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+        const rosterContainer = document.getElementById("adminUsersFeedContainer");
+        if (!client) {
+          if (rosterContainer) rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Database Link Offline</div>`;
+          return;
+        }
+        try {
+          // Perimeter Authentication Staff Access Guard Check [0.1]
+          const { data: { session }, error: authErr } = await client.auth.getSession();
+          if (authErr || !session) {
+            window.location.href = 'admin-login.html';
+            return;
           }
-        }, 150);
+          const staffEmail = String(session.user.email || '').toLowerCase().trim();
+          const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
+          if (!isVerifiedStaff) {
+            window.location.href = 'portal-login.html';
+            return;
+          }
+
+          await window.synchronizeChatThreadsRoster();
+
+          // Real-time notification channel listener [0.1]
+          client.channel('global_admin_roster_watcher')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
+              if (String(payload.new.sender_type).toLowerCase() === 'client') {
+                try {
+                  new Audio("https://jsdelivr.net").play().catch(() => {});
+                } catch(e) {}
+                if (typeof window.triggerActiveBrowserTabFlashAlert === "function") {
+                  window.triggerActiveBrowserTabFlashAlert(payload.new.client_id);
+                }
+              }
+              if (activeSelectedClientId === payload.new.client_id) {
+                window.loadActiveThreadViewportPanel(activeSelectedClientId);
+              } else {
+                window.synchronizeChatThreadsRoster();
+              }
+            })
+            .subscribe();
+        } catch (err) {
+          console.error("Administrative chat boot crash: ", err.message);
+        }
+      }, 50);
+
+      function initializeHeaderClockTick() {
+        const clock = document.getElementById("portal-clock");
+        if (!clock) return;
+        const now = new Date();
+        clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString();
+      }
+      setInterval(initializeHeaderClockTick, 1000);
+      initializeHeaderClockTick();
+    });
+
+        // --- DIRECTORY ROSTER RETRIEVAL MATRIX ---
+    window.synchronizeChatThreadsRoster = async function() {
+      const rosterContainer = document.getElementById("adminUsersFeedContainer");
+      const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+      if (!rosterContainer || !client) return;
+      try {
+        const { data: threads, error } = await client
+          .from('admin_chat_threads_view')
+          .select('*')
+          .order('last_message_at', { ascending: false });
+        if (error) throw error;
+
+        window.masterCrmThreadsCache = threads || [];
+        if (window.masterCrmThreadsCache.length === 0) {
+          rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
+          return;
+        }
+        window.renderChatSidebarList(window.masterCrmThreadsCache);
+      } catch (err) {
+        console.error("Roster synchronization failure:", err.message);
+        rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
+      }
+    };
+
+    window.renderChatSidebarList = function(datasetArray) {
+      const rosterContainer = document.getElementById("adminUsersFeedContainer");
+      if (!rosterContainer) return;
+      rosterContainer.innerHTML = datasetArray.map(row => {
+        const isSelected = activeSelectedClientId === row.client_id;
+        const shortUuid = String(row.client_id || '').substring(0, 8).toUpperCase();
+        let msgPreview = row.last_message_content || 'No text content.';
+        if (msgPreview.includes("Name:")) {
+          msgPreview = "📋 [New Room Handshake Onboarding Metadata]";
+        } else if (msgPreview.length > 38) {
+          msgPreview = msgPreview.substring(0, 35) + "...";
+        }
+        const unreadCountBadge = row.unread_count > 0 ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` : '';
+        const backgroundStyles = isSelected ? "background: rgba(16, 185, 129, 0.08) !important; border-left: 4px solid #ef4444 !important;" : "background: none;";
+        
+        return `
+          <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.client_id}')">
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center; box-sizing:border-box;">
+              <strong style="color:#0a1f44; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">👤 Session Profile: ${shortUuid}</strong>
+              ${unreadCountBadge}
+            </div>
+            <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${window.escapeChatTextMarkup(msgPreview)}</small>
+          </div>
+        `;
+      }).join('');
+    };
+
+    window.filterUsersFeed = function() {
+      const searchBox = document.getElementById("userFeedFilterField");
+      if (!searchBox || !window.masterCrmThreadsCache) return;
+      const parsingToken = searchBox.value.toLowerCase().trim();
+      const filtered = window.masterCrmThreadsCache.filter(row => 
+        String(row.client_id).toLowerCase().includes(parsingToken) || 
+        String(row.last_message_content).toLowerCase().includes(parsingToken)
+      );
+      window.renderChatSidebarList(filtered);
+    };
+
+    window.f4uTabNotificationIntervalInstance = null;
+    window.originalBrowserTabTitleString = document.title;
+
+    window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
+      const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+      const textarea = document.getElementById("adminChatMessageInputField");
+      const sendButton = document.getElementById("adminChatSendButton");
+      const msgLogBox = document.getElementById("adminChatMessagesLog");
+      if (!client || !textarea || !sendButton || !msgLogBox) return;
+
+      activeSelectedClientId = String(stringClientUuid).trim();
+      textarea.disabled = false;
+      sendButton.disabled = false;
+      textarea.placeholder = `Type response to Client: ${activeSelectedClientId.substring(0,8).toUpperCase()}...`;
+      textarea.focus();
+
+      try {
+        await client.from('chat_messages').update({ is_read_by_admin: true }).eq('client_id', activeSelectedClientId);
+        if (typeof window.synchronizeChatThreadsRoster === "function") {
+          window.synchronizeChatThreadsRoster();
+        }
+
+        const { data: messages, error } = await client
+          .from('chat_messages')
+          .select('*')
+          .eq('client_id', activeSelectedClientId)
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+
+        msgLogBox.innerHTML = "";
+        if (messages && messages.length > 0) {
+          messages.forEach(msg => {
+            window.appendSingleChatMessageBubbleToUI(msg);
+          });
+        } else {
+          msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
+        }
+        window.scrollTerminalTimelineToAbsoluteBottom();
+      } catch (err) {
+        console.error("Timeline retrieval failed:", err.message);
+        msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
+      }
+    };
+    window.triggerActiveBrowserTabFlashAlert = function(clientLabel) {
+      if (window.f4uTabNotificationIntervalInstance) return;
+      let toggleAlertFlag = true;
+      const shortIdLabel = String(clientLabel || '').substring(0, 8).toUpperCase();
+      window.f4uTabNotificationIntervalInstance = setInterval(() => {
+        document.title = toggleAlertFlag ? `🚨 NEW CHAT (#${shortIdLabel})` : `💬 ${window.originalBrowserTabTitleString}`;
+        toggleAlertFlag = !toggleAlertFlag;
+      }, 1000);
+    };
+
+    document.addEventListener("click", () => {
+      const inputEl = document.getElementById("adminChatMessageInputField");
+      if (document.activeElement === inputEl && window.f4uTabNotificationIntervalInstance) {
+        clearInterval(window.f4uTabNotificationIntervalInstance);
+        window.f4uTabNotificationIntervalInstance = null;
+        document.title = window.originalBrowserTabTitleString;
       }
     });
-  });
-});
-</script>
+
+    window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+      const msgLogBox = document.getElementById("adminChatMessagesLog");
+      if (!msgLogBox) return;
+      const currentSender = String(msgRow.sender_type || '').toLowerCase();
+      const isAdminResponse = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'broker' || currentSender === 'staff';
+      
+      const rowWrapper = document.createElement("div");
+      rowWrapper.className = isAdminResponse ? "msg-row staff-sent" : "msg-row client-sent";
+
+      const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const secureCleanText = window.escapeChatTextMarkup(msgRow.message_content || "");
+
+      rowWrapper.innerHTML = `
+        <div class="msg-bubble">
+          <div>${secureCleanText}</div>
+          <span class="msg-timestamp">${readableTime}</span>
+        </div>
+      `;
+      msgLogBox.appendChild(rowWrapper);
+      window.scrollTerminalTimelineToAbsoluteBottom();
+    };
+
+    window.dispatchAdminResponseChatMessage = async function() {
+      const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+      const textarea = document.getElementById("adminChatMessageInputField");
+      if (!client || !textarea || !activeSelectedClientId) return;
+
+      const rawText = textarea.value.trim();
+      if (!rawText) return;
+
+      textarea.disabled = true;
+      try {
+        const { error } = await client
+          .from('chat_messages')
+          .insert([{
+            client_id: activeSelectedClientId,
+            message_content: rawText,
+            sender_type: 'admin',
+            is_read_by_admin: true,
+            is_read_by_client: false,
+            created_at: new Date().toISOString()
+          }]);
+        if (error) throw error;
+        textarea.value = "";
+        await window.loadActiveThreadViewportPanel(activeSelectedClientId);
+      } catch (err) {
+        alert(`✕ Message Transmission Failed: ${err.message}`);
+      } finally {
+        textarea.disabled = false;
+        textarea.focus();
+      }
+    };
+
+    window.handleAdminChatKeyOptions = function(event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        window.dispatchAdminResponseChatMessage();
+      }
+    };
+
+    window.scrollTerminalTimelineToAbsoluteBottom = function() {
+      const msgLogBox = document.getElementById("adminChatMessagesLog");
+      if (msgLogBox) msgLogBox.scrollTop = msgLogBox.scrollHeight;
+    };
+
+    window.escapeChatTextMarkup = function(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    };
+
+    function toggleSidebarAccordion(buttonElement) {
+      if (!buttonElement) return;
+      buttonElement.classList.toggle('active');
+      const panel = buttonElement.nextElementSibling;
+      if (panel) {
+        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+          panel.style.maxHeight = "0px";
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+      }
+    }
+
+    document.getElementById("sidebarFallbackLogoutBtn")?.addEventListener("click", () => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+      window.location.replace("admin-login.html");
+    });
+  </script>
 </body>
 </html>

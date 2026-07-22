@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Invoice & Quote Hub | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE CONTAINER */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    
+    @media (min-width: 1200px) {
+      .content-container { grid-template-columns: 460px 1fr; }
+    }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    
+    /* FORM SCHEMAS MATRIX STYLE */
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: var(--white); border-color: var(--staff-red); }
+    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
+    .action-btn:hover { background: #1e293b; }
+    
+    /* RECORD METRICS BUTTONS BUTTON MATRIX */
+    .billing-action-link { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; margin-right: 4px; }
+    .billing-action-link.delete-trigger { background: #fef2f2; color: var(--staff-red); border-color: rgba(193,82,84,0.15); }
+    .billing-action-link:hover { background: var(--text-dark); color: var(--white); }
+    .billing-action-link.delete-trigger:hover { background: var(--staff-red); color: var(--white); }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="invoice.html" class="nav-item active"><span>🧾</span> Invoices & Quotes Hub</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Invoice & Quote Generation Hub</h1>
+          <p>Assemble custom billing sheets, generate public payment checkouts, and issue bulk enterprise quotes</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Billing Intake Creation Card Form -->
+        <div class="console-card">
+          <h2>Generate Financial Document</h2>
+          <form id="billingDocumentIntakeForm">
+            <div class="form-group">
+              <label>Document Classification Mode</label>
+              <select id="billDocType" required>
+                <option value="invoice">Official Active Invoice</option>
+                <option value="quote">Bulk Enterprise Quote</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Client Account Email</label>
+              <input type="email" id="billClientEmail" required placeholder="client@company.com">
+            </div>
+            <div class="form-group">
+              <label>Line Item Description Label</label>
+              <input type="text" id="billItemName" required placeholder="e.g., Enterprise Bundle: 5 State LLC Formations">
+            </div>
+            <div class="form-group">
+              <label>Absolute Statement Amount ($)</label>
+              <input type="number" step="0.01" id="billAmount" required placeholder="499.00">
+            </div>
+            <div class="form-group">
+              <label>Maturity Due / Expiration Date</label>
+              <input type="date" id="billDueDate" required>
+            </div>
+            <div id="billing-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px;"></div>
+            <button type="submit" class="action-btn" id="billSubmitBtn">Compile Financial Record ➔</button>
+          </form>
+        </div>
+
+        <!-- Billing Registry Explorer Sheet -->
+        <div class="console-card">
+          <h2>Dispatched Accounts Statement Ledger</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Classification</th>
+                  <th style="padding:12px !important;">Account Owner</th>
+                  <th style="padding:12px !important;">Description Label</th>
+                  <th style="padding:12px !important;">Statement Cost</th>
+                  <th style="padding:12px !important; text-align:right !important;">Billing Operations</th>
+                </tr>
+              </thead>
+              <tbody id="admin-billing-statements-target-box">
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing database financial registries...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Document Element Target Selectors
+      const billingForm  = document.getElementById("billingDocumentIntakeForm");
+      const docTypeSelect = document.getElementById("billDocType");
+      const emailInput    = document.getElementById("billClientEmail");
+      const itemInput     = document.getElementById("billItemName");
+      const amountInput   = document.getElementById("billAmount");
+      const dateInput     = document.getElementById("billDueDate");
+      const formStatusDiv = document.getElementById("billing-form-status");
+      const submitButton  = document.getElementById("billSubmitBtn");
+      const ledgerTableBody = document.getElementById("admin-billing-statements-target-box");
+
+      if (!billingForm || !ledgerTableBody || !formStatusDiv || !submitButton) {
+        throw new Error("✕ Critical UI Error: Core billing intake forms or ledger targets are missing from the layout tree.");
+      }
+
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Database configuration reference unassigned on window namespaces.");
+      }
+
+      // --- STAGE 1: READ AND FETCH ALL ACTIVE BILLING RECORDS ---
+      async function streamActiveStatementsLedger() {
+        try {
+          console.log("📡 [Billing Hub] Querying active statements rows out of public.invoices...");
+          
+          const { data: statements, error: fetchError } = await client
+            .from('invoices')
+            .select('id, document_type, client_email, line_item_description, total_amount, due_date, token_hash')
+            .order('created_at', { ascending: false });
+
+          if (fetchError) {
+            throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
+          }
+
+          if (!statements || statements.length === 0) {
+            ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No invoices or quotes recorded inside the active ledger files.</td></tr>`;
+            return;
+          }
+
+          ledgerTableBody.innerHTML = "";
+          statements.forEach(statementRow => {
+            const trNode = document.createElement("tr");
+            trNode.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const classification = String(statementRow.document_type || 'invoice').toUpperCase();
+            const clientEmail    = statementRow.client_email || "guest-billing@email.com";
+            const description    = statementRow.line_item_description || "Custom Compliance Bundle";
+            const absoluteCost   = parseFloat(statementRow.total_amount || 0).toFixed(2);
+            const publicToken    = statementRow.token_hash || statementRow.id;
+
+            let typeBadgeStyle = "background:#f1f5f9; color:#475569;";
+            if (classification === 'QUOTE') typeBadgeStyle = "background:rgba(193, 82, 84, 0.08); color:var(--staff-red);";
+            if (classification === 'INVOICE') typeBadgeStyle = "background:rgba(16, 185, 129, 0.08); color:var(--emerald);";
+
+            trNode.innerHTML = `
+              <td style="padding:14px 12px;"><span style="${typeBadgeStyle} font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; letter-spacing:0.5px;">${escapeBillHtml(classification)}</span></td>
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeBillHtml(clientEmail)}</td>
+              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeBillHtml(description)}</td>
+              <td style="padding:14px 12px; font-weight:800; color:#0f172a;">$${absoluteCost}</td>
+              <td style="padding:14px 12px; text-align:right; white-space:nowrap;">
+                <button class="billing-action-link link-trigger" data-token="${publicToken}">Copy Link</button>
+                <button class="billing-action-link delete-trigger purge-trigger" data-id="${statementRow.id}">Delete</button>
+              </td>
+            `;
+
+            // Copy Link Action: Compiles checkout path variables and copies them to the clipboard
+            trNode.querySelector(".link-trigger").addEventListener("click", function() {
+              const token = this.getAttribute("data-token");
+              const builtCheckoutUrl = `${window.location.origin}/pay-invoice.html?token=${token}`;
+              
+              navigator.clipboard.writeText(builtCheckoutUrl).then(() => {
+                const originalLabel = this.textContent;
+                this.textContent = "Copied! ✓";
+                setTimeout(() => { this.textContent = originalLabel; }, 1200);
+              }).catch(() => {
+                alert(`Checkout URL link generated: ${builtCheckoutUrl}`);
+              });
+            });
+
+            // Purge Trigger: Removes the record line cell from database tables immediately
+            trNode.querySelector(".purge-trigger").addEventListener("click", async function() {
+              if (!confirm("Are you sure you want to permanently delete this billing record?")) return;
+              
+              const recordId = this.getAttribute("data-id");
+              this.disabled = true;
+              this.textContent = "Clearing...";
+
+              try {
+                console.log(`📡 [Billing Hub] Purging statement cell row matching ID: [${recordId}]`);
+                const { error: deleteError } = await client.from('invoices').delete().eq('id', recordId);
+                if (deleteError) throw deleteError;
+
+                console.log("✓ [Billing Hub] Statement row purged from server context records.");
+                await streamActiveStatementsLedger();
+              } catch (delFault) {
+                console.error("✕ Database deletion request refused:", delFault.message);
+                alert(`✕ Deletion Interrupted: ${delFault.message}`);
+                this.disabled = false;
+                this.textContent = "Delete";
+              }
+            });
+
+            ledgerTableBody.appendChild(trNode);
+          });
+
+        } catch (queryFault) {
+          console.error("✕ Billing Records Synchronization Aborted:", queryFault.message);
+          ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+        }
+      }
+
+      // --- STAGE 2: HANDLE NEW BILLING RECORD FORM SUBMISSIONS ---
+      billingForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        formStatusDiv.style.display = "none";
+        formStatusDiv.textContent = "";
+
+        const docType     = docTypeSelect.value;
+        const targetEmail = emailInput.value.trim();
+        const itemDesc    = itemInput.value.trim();
+        const totalCost   = parseFloat(amountInput.value);
+        const dateLimit   = dateInput.value;
+
+        if (!docType || !targetEmail || !itemDesc || isNaN(totalCost) || !dateLimit) {
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = "✕ Validation Error: All financial statement configuration fields are required.";
+          return;
+        }
+
+        const originalBtnLabel = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = "Compiling Record Matrix...";
+
+        // Compute a unique secure link hash tracking parameter string block
+        const structuralTokenHash = 'bill_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+        try {
+          console.log(`📡 [Billing Hub] Injecting ledger row fields for: [${targetEmail}]`);
+          
+          const { error: insertError } = await client
+            .from('invoices')
+            .insert([
+              {
+                document_type: docType,
+                client_email: targetEmail,
+                line_item_description: itemDesc,
+                total_amount: parseFloat(totalCost.toFixed(2)),
+                due_date: dateLimit,
+                token_hash: structuralTokenHash,
+                created_at: new Date().toISOString()
+              }
+            ]);
+
+          if (insertError) {
+            throw new Error(`Postgres Transaction Failure [Code ${insertError.code}]: ${insertError.message}`);
+          }
+
+          console.log("✅ [Billing Hub] Document recompiled and appended cleanly to database grids.");
+          formStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          formStatusDiv.textContent = `✓ Financial ${docType} generated successfully! Copy link from logs below to distribute.`;
+          
+          billingForm.reset();
+          await streamActiveStatementsLedger();
+
+        } catch (postFault) {
+          console.error("✕ Billing compilation pipeline broken:", postFault.message);
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = `✕ Compilation Aborted: ${postFault.message}`;
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = originalBtnLabel;
+        }
+      });
+
+      function escapeBillHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      await streamActiveStatementsLedger();
+    });
+  </script>
+</body>
+</html>

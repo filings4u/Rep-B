@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Customer Profile Dossier | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE GEOMETRY */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    
+    @media (min-width: 1200px) {
+      .content-container { grid-template-columns: 340px 1fr; }
+    }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    
+    /* 360-DEGREE SECTION DATA GRIDS */
+    .profile-summary-box { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .profile-avatar-large { width: 72px; height: 72px; background: var(--text-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 800; }
+    .action-chat-routing-btn { width: 100%; background: var(--emerald); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: block; box-sizing: border-box; margin-top: 10px; }
+    .action-chat-routing-btn:hover { background: #0d9488; }
+    
+    .dossier-grid-stack { display: flex; flex-direction: column; gap: 24px; }
+    .dossier-sub-table-wrapper { border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #f8fafc; }
+    .dossier-sub-table-title { padding: 12px 16px; background: #f1f5f9; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-dark); letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-customer-profile.html" class="nav-item active"><span>👤</span> User Dossier 360</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Customer Profile Dossier 360</h1>
+          <p>Cross-referenced interaction timeline, asset vaults, and core database cell registries</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Column Left: Profile Summary -->
+        <div class="console-card">
+          <div class="profile-summary-box">
+            <div class="profile-avatar-large" id="dossier-avatar-label">?</div>
+            <h3 id="dossier-email-title" style="margin:4px 0 0 0; font-size:1.05rem; font-weight:800; word-break:break-all;">Loading Email...</h3>
+            <a href="admin-chat.html" class="action-chat-routing-btn">➔ Launch Live Chat Workspace</a>
+          </div>
+        </div>
+
+        <!-- Column Right: Relational Data Stack -->
+        <div class="dossier-grid-stack">
+          <!-- Item 1: Active Orders -->
+          <div class="dossier-sub-table-wrapper">
+            <div class="dossier-sub-table-title">Fulfillment Order Records</div>
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
+              <tbody id="dossier-orders-target-box">
+                <tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">Querying registration cells...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Item 2: Secure Vault Documents -->
+          <div class="dossier-sub-table-wrapper">
+            <div class="dossier-sub-table-title">Uploaded Storage Asset Vault</div>
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
+              <tbody id="dossier-docs-target-box">
+                <tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">Querying storage paths...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Item 3: Scheduled Consultations -->
+          <div class="dossier-sub-table-wrapper">
+            <div class="dossier-sub-table-title">Reserved Consultation Appointments</div>
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
+              <tbody id="dossier-appts-target-box">
+                <tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">Querying calendar timestamps...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Item 4: Helpdesk Tickets -->
+          <div class="dossier-sub-table-wrapper">
+            <div class="dossier-sub-table-title">Helpdesk Support Tickets Lifecycle</div>
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.8rem;">
+              <tbody id="dossier-tickets-target-box">
+                <tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">Querying ticketing streams...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Strict DOM Target Selectors
+      const avatarLabel  = document.getElementById("dossier-avatar-label");
+      const emailTitle   = document.getElementById("dossier-email-title");
+      const chatRouteBtn = document.querySelector(".action-chat-routing-btn");
+      
+      const ordersTarget  = document.getElementById("dossier-orders-target-box");
+      const docsTarget    = document.getElementById("dossier-docs-target-box");
+      const apptsTarget   = document.getElementById("dossier-appts-target-box");
+      const ticketsTarget = document.getElementById("dossier-tickets-target-box");
+
+      if (!ordersTarget || !docsTarget || !apptsTarget || !ticketsTarget || !emailTitle || !avatarLabel) {
+        throw new Error("✕ Critical UI Error: Core dossier summary nodes or sub-table targets are missing.");
+      }
+
+      // 2. Parse Parameter Arguments out of URL String Lookups
+      const urlQueryScanner = new URLSearchParams(window.location.search);
+      const targetUserEmail  = urlQueryScanner.get("email") ? urlQueryScanner.get("email").trim() : "";
+
+      if (!targetUserEmail) {
+        emailTitle.style.color = "var(--staff-red)";
+        emailTitle.textContent = "✕ Parameter Error: No target email supplied.";
+        ordersTarget.innerHTML = `<tr><td style="padding:16px; color:var(--staff-red);">Provide a clean account reference parameter (e.g., ?email=customer@email.com).</td></tr>`;
+        return;
+      }
+
+      // Hydrate Static Shell Layout Meta Fields Cleanly
+      emailTitle.textContent = targetUserEmail;
+      avatarLabel.textContent = targetUserEmail.charAt(0).toUpperCase();
+      if (chatRouteBtn) {
+        chatRouteBtn.href = `admin-chat.html?client_id=${encodeURIComponent(targetUserEmail)}`;
+      }
+
+      // 3. Verify Database Engine Client Connection Layer
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        ordersTarget.innerHTML = `<tr><td style="padding:16px; color:var(--staff-red);">✕ Supabase client configuration unassigned.</td></tr>`;
+        throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
+      }
+
+      async function compileCustomer360Dossier() {
+        try {
+          console.log(`📡 [Dossier Engine] Resolving cross-table relational datasets for: [${targetUserEmail}]`);
+
+          // 🟢 PARALLEL CORRELATION PIPELINE: Scan multi-service tables concurrently using native Promise architecture
+          const [ordersRes, docsRes, apptsRes, ticketsRes] = await Promise.all([
+            client.from('orders').select('tracking_number, company_name, service_title, status').eq('email', targetUserEmail),
+            client.from('order_documents').select('document_name, storage_file_path, created_at').eq('user_email', targetUserEmail),
+            client.from('appointments').select('title, appointment_date, priority_level').eq('user_email', targetUserEmail),
+            client.from('support_tickets').select('subject, priority, status, created_at').eq('email', targetUserEmail)
+          ]);
+
+          // --- STEP 1: HYDRATE COMPLETED ORDERS SUB-TABLE ROWS ---
+          if (ordersRes.error) throw ordersRes.error;
+          if (!ordersRes.data || ordersRes.data.length === 0) {
+            ordersTarget.innerHTML = `<tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">No corporate processing orders found for this profile email.</td></tr>`;
+          } else {
+            ordersTarget.innerHTML = ordersRes.data.map(order => `
+              <tr style="border-bottom:1px solid var(--border-color); background:#ffffff;">
+                <td style="padding:12px; font-weight:700; color:var(--text-dark); font-family:monospace;">${escapeDossierHtml(order.tracking_number)}</td>
+                <td style="padding:12px; font-weight:600; color:var(--text-dark);">${escapeDossierHtml(order.company_name)}</td>
+                <td style="padding:12px; color:var(--text-muted);">${escapeDossierHtml(order.service_title)}</td>
+                <td style="padding:12px; text-align:right;"><span style="font-size:10px; font-weight:800; text-transform:uppercase; background:#e6f4ea; color:#137333; padding:3px 6px; border-radius:4px;">${escapeDossierHtml(order.status)}</span></td>
+              </tr>
+            `).join('');
+          }
+
+          // --- STEP 2: HYDRATE BINARY DOCUMENTS STORAGE PATH OVERLAYS ---
+          if (docsRes.error) throw docsRes.error;
+          if (!docsRes.data || docsRes.data.length === 0) {
+            docsTarget.innerHTML = `<tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">No files uploaded inside secure bucket folders.</td></tr>`;
+          } else {
+            docsTarget.innerHTML = docsRes.data.map(doc => `
+              <tr style="border-bottom:1px solid var(--border-color); background:#ffffff;">
+                <td style="padding:12px; font-weight:700; color:var(--text-dark);">${escapeDossierHtml(doc.document_name)}</td>
+                <td style="padding:12px; color:var(--text-muted); font-family:monospace; font-size:0.75rem;">${escapeDossierHtml(doc.storage_file_path)}</td>
+                <td style="padding:12px; text-align:right; color:var(--text-muted); font-size:0.75rem;">${new Date(doc.created_at).toLocaleDateString()}</td>
+              </tr>
+            `).join('');
+          }
+
+          // --- STEP 3: HYDRATE CONSULTATION CALENDAR TIMESTAMPS ---
+          if (apptsRes.error) throw apptsRes.error;
+          if (!apptsRes.data || apptsRes.data.length === 0) {
+            apptsTarget.innerHTML = `<tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">No consultation slots registered inside the active schedule.</td></tr>`;
+          } else {
+            apptsTarget.innerHTML = apptsRes.data.map(appt => `
+              <tr style="border-bottom:1px solid var(--border-color); background:#ffffff;">
+                <td style="padding:12px; font-weight:700; color:var(--text-dark);">${escapeDossierHtml(appt.title)}</td>
+                <td style="padding:12px; color:var(--text-muted); font-weight:600; font-family:monospace;">${new Date(appt.appointment_date).toLocaleString()}</td>
+                <td style="padding:12px; text-align:right;"><span style="font-size:10px; font-weight:700; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeDossierHtml(appt.priority_level).toUpperCase()}</span></td>
+              </tr>
+            `).join('');
+          }
+
+          // --- STEP 4: HYDRATE HELPDESK TICKETS OPERATION DATA LINES ---
+          if (ticketsRes.error) throw ticketsRes.error;
+          if (!ticketsRes.data || ticketsRes.data.length === 0) {
+            ticketsTarget.innerHTML = `<tr><td style="padding:16px; color:var(--text-muted); font-style:italic;">The support ticket history context is clear for this client.</td></tr>`;
+          } else {
+            ticketsTarget.innerHTML = ticketsRes.data.map(ticket => `
+              <tr style="border-bottom:1px solid var(--border-color); background:#ffffff;">
+                <td style="padding:12px; font-weight:700; color:var(--text-dark);">${escapeDossierHtml(ticket.subject)}</td>
+                <td style="padding:12px; color:var(--text-muted);"><span style="font-size:10px; font-weight:700; background:#fffbe6; color:#b45309; padding:2px 6px; border-radius:4px;">${escapeDossierHtml(ticket.priority).toUpperCase()}</span></td>
+                <td style="padding:12px; text-align:right; font-weight:600; color:var(--text-muted); font-size:0.8rem;">${escapeDossierHtml(ticket.status)}</td>
+              </tr>
+            `).join('');
+          }
+
+        } catch (dossierException) {
+          console.error("✕ Dossier 360 Aggregation Chain Aborted:", dossierException.message);
+          ordersTarget.innerHTML = `<tr><td style="padding:16px; color:var(--staff-red); font-weight:700;">✕ Critical Sync Failure: See browser developer log files.</td></tr>`;
+        }
+      }
+
+      function escapeDossierHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      function toggleSidebarAccordion(buttonElement) {
+        if (!buttonElement) return;
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel) {
+          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        }
+      }
+      window.toggleSidebarAccordion = toggleSidebarAccordion;
+
+      await compileCustomer360Dossier();
+    });
+  </script>
+</body>
+</html>

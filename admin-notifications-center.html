@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>System Notifications Center | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE GEOMETRY */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    
+    /* INTERACTIVE NOTIFICATION ITEMS STYLES */
+    .notification-stream-list { display: flex; flex-direction: column; gap: 12px; }
+    .notification-item-card { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.15s ease; gap: 16px; }
+    .notification-item-card:hover { background: var(--white); border-color: var(--text-dark); transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); }
+    
+    .notification-meta-left { display: flex; align-items: center; gap: 14px; text-align: left; }
+    .event-type-badge { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px; white-space: nowrap; }
+    .badge-order { background: rgba(16, 185, 129, 0.08); color: var(--emerald); }
+    .badge-chat { background: rgba(193, 82, 84, 0.08); color: var(--staff-red); }
+    .badge-doc { background: #f1f5f9; color: #475569; }
+    .badge-form { background: rgba(59, 130, 246, 0.08); color: #3b82f6; }
+    
+    .event-context-text h4 { margin: 0 0 4px 0; font-size: 0.92rem; font-weight: 700; color: var(--text-dark); }
+    .event-context-text p { margin: 0; font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; }
+    .notification-meta-right { font-size: 0.75rem; color: #94a3b8; font-weight: 600; white-space: nowrap; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-notifications-center.html" class="nav-item active"><span>🔔</span> Activity Notification Center</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>System Activity & Notifications Center</h1>
+          <p>Real-time consolidated tracking log across multi-service database event lanes</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <div class="console-card">
+          <h2>Unified Operations Audit Stream</h2>
+          <div id="global-notifications-stream" class="notification-stream-list">
+            <div style="padding:40px; text-align:center; color:var(--text-muted); font-weight:600;">Connecting to system messaging pipelines...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Document Activity Stream Selector
+      const streamContainer = document.getElementById("global-notifications-stream");
+
+      if (!streamContainer) {
+        throw new Error("✕ Critical UI Error: Activity timeline target container 'global-notifications-stream' is missing.");
+      }
+
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        streamContainer.innerHTML = `<div style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</div>`;
+        throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
+      }
+
+      async function compileUnifiedOperationsStream() {
+        try {
+          console.log("📡 [Activity Center] Querying multi-service telemetry logs simultaneously...");
+
+          // 🟢 PARALLEL DATA PIPELINE EXECUTION: Query matching table logs concurrently via Promise pools
+          const [ordersRes, chatRes, docsRes, webFormRes, logoRes] = await Promise.all([
+            client.from('orders').select('company_name, service_title, created_at').order('created_at', { ascending: false }).limit(8),
+            client.from('chat_messages').select('client_id, message_content, created_at').eq('sender_type', 'client').order('created_at', { ascending: false }).limit(8),
+            client.from('order_documents').select('user_email, document_name, created_at').order('created_at', { ascending: false }).limit(8),
+            client.from('web_intakes').select('tracking_number, desired_domain, created_at').order('created_at', { ascending: false }).limit(8),
+            client.from('logo_intakes').select('tracking_number, logo_text, created_at').order('created_at', { ascending: false }).limit(8)
+          ]);
+
+          let aggregatedEventsTimeline = [];
+
+          // Map Inbound Order Events
+          if (ordersRes.data) {
+            ordersRes.data.forEach(item => {
+              aggregatedEventsTimeline.push({
+                type: 'ORDER',
+                badgeClass: 'badge-order',
+                title: 'New Conversion Order Placed',
+                message: `Company: ${item.company_name} • Service: ${item.service_title}`,
+                timestamp: new Date(item.created_at),
+                routeUrl: 'admin-dashboard.html'
+              });
+            });
+          }
+
+          // Map Inbound Client Chat Communications
+          if (chatRes.data) {
+            chatRes.data.forEach(item => {
+              aggregatedEventsTimeline.push({
+                type: 'CHAT',
+                badgeClass: 'badge-chat',
+                title: 'New Client Message Inbound',
+                message: `Client ${item.client_id.substring(0,8).toUpperCase()}: "${item.message_content}"`,
+                timestamp: new Date(item.created_at),
+                routeUrl: `admin-chat.html?client_id=${item.client_id}`
+              });
+            });
+          }
+
+          // Map Storage Asset Document Uploads
+          if (docsRes.data) {
+            docsRes.data.forEach(item => {
+              aggregatedEventsTimeline.push({
+                type: 'DOCUMENT',
+                badgeClass: 'badge-doc',
+                title: 'New Document Asset Uploaded',
+                message: `Owner: ${item.user_email} • File: ${item.document_name}`,
+                timestamp: new Date(item.created_at),
+                routeUrl: 'admin-documents.html'
+              });
+            });
+          }
+
+          // Map Public Website Form Intake Submissions
+          if (webFormRes.data) {
+            webFormRes.data.forEach(item => {
+              aggregatedEventsTimeline.push({
+                type: 'WEB FORM',
+                badgeClass: 'badge-form',
+                title: 'Website Intake Specification Submitted',
+                message: `Ref: ${item.tracking_number} • Target Domain: ${item.desired_domain}`,
+                timestamp: new Date(item.created_at),
+                routeUrl: 'admin-design-hub.html'
+              });
+            });
+          }
+
+          // Map Public Logo Branding Intake Submissions
+          if (logoRes.data) {
+            logoRes.data.forEach(item => {
+              aggregatedEventsTimeline.push({
+                type: 'LOGO FORM',
+                badgeClass: 'badge-form',
+                title: 'Branding Concept Specification Submitted',
+                message: `Ref: ${item.tracking_number} • Visual Text: ${item.logo_text}`,
+                timestamp: new Date(item.created_at),
+                routeUrl: 'admin-design-hub.html'
+              });
+            });
+          }
+
+          // Chronologically sort compiled rows from newest to oldest
+          aggregatedEventsTimeline.sort((alpha, beta) => beta.timestamp - alpha.timestamp);
+
+          if (aggregatedEventsTimeline.length === 0) {
+            streamContainer.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No system logs or multi-service activity records found.</div>`;
+            return;
+          }
+
+          streamContainer.innerHTML = "";
+
+          aggregatedEventsTimeline.forEach(eventItem => {
+            const cardNode = document.createElement("div");
+            cardNode.className = "notification-item-card";
+
+            cardNode.innerHTML = `
+              <div class="notification-meta-left">
+                <span class="event-type-badge ${eventItem.badgeClass}">${escapeStreamHtml(eventItem.type)}</span>
+                <div class="event-context-text">
+                  <h4>${escapeStreamHtml(eventItem.title)}</h4>
+                  <p>${escapeStreamHtml(eventItem.message)}</p>
+                </div>
+              </div>
+              <div class="notification-meta-right">${calculateTimeElapsedString(eventItem.timestamp)}</div>
+            `;
+
+            // Smart Navigation Trigger Event
+            cardNode.addEventListener("click", () => {
+              window.location.href = eventItem.routeUrl;
+            });
+
+            streamContainer.appendChild(cardNode);
+          });
+
+        } catch (streamException) {
+          console.error("✕ Unified Operations Stream Compilation Interrupted:", streamException.message);
+          streamContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</div>`;
+        }
+      }
+
+      function calculateTimeElapsedString(dateObject) {
+        const secondsDifference = Math.floor((new Date() - dateObject) / 1000);
+        if (secondsDifference < 60) return "Just Now";
+        const minutesDifference = Math.floor(secondsDifference / 60);
+        if (minutesDifference < 60) return `${minutesDifference}m ago`;
+        const hoursDifference = Math.floor(minutesDifference / 60);
+        if (hoursDifference < 24) return `${hoursDifference}h ago`;
+        return dateObject.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+      }
+
+      function escapeStreamHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      await compileUnifiedOperationsStream();
+    });
+  </script>
+</body>
+</html>

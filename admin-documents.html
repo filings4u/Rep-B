@@ -1,744 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Compliance Cloud Vault | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Document Vault Explorer | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE CONTAINER */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
     
-    <style>
-        /* ==========================================================================
-           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-            transition: max-height 0.25s ease-out !important;
-        }
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-        /* 🖥️ DYNAMIC CORE WORKSPACE GRID CONTAINER */
-        .portal-main {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            margin-left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width)) !important;
-            min-height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-        .portal-header {
-            background: var(--white) !important;
-            padding: 20px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-        .search-input {
-            padding: 10px 16px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 10px !important;
-            font-size: 0.82rem !important;
-            width: 220px !important;
-            outline: none !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            color: var(--text-dark) !important;
-        }
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-        /* 📥 INTERACTIVE DRAG AND DROP ZONE BOX CONTAINER */
-        .vault-dropzone {
-            background: var(--white) !important;
-            border: 2px dashed var(--border-color) !important;
-            border-radius: 12px !important;
-            padding: 40px 20px !important;
-            text-align: center !important;
-            cursor: pointer !important;
-            margin-bottom: 30px !important;
-            transition: all 0.2s ease !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-        .vault-dropzone:hover {
-            border-color: var(--text-dark) !important;
-            background: #fafbfc !important;
-        }
-        .vault-dropzone.dragover {
-            background: rgba(16, 185, 129, 0.04) !important;
-            border-color: var(--emerald) !important;
-        }
-        .portal-card {
-            background: var(--white) !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 24px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-        .table-responsive-wrapper {
-            width: 100% !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-            border: 1px solid var(--border-color) !important;
-        }
-        .admin-table-ledger {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            text-align: left !important;
-            font-size: 0.85rem !important;
-        }
-        .admin-table-ledger th {
-            background: #f8fafc !important;
-            border-bottom: 2px solid var(--border-color) !important;
-            padding: 12px 16px !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            font-size: 0.72rem !important;
-            letter-spacing: 0.5px !important;
-        }
-        .admin-table-ledger td {
-            padding: 14px 16px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            color: var(--text-dark) !important;
-        }
-        .admin-table-ledger tr:last-child td {
-            border-bottom: none !important;
-        }
-        .btn-action {
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 6px 12px !important;
-            border-radius: 4px !important;
-            font-weight: 700 !important;
-            font-size: 0.75rem !important;
-            cursor: pointer !important;
-            text-decoration: none !important;
-        }
-        @media (max-width: 991px) {
-            .portal-sidebar { display: none !important; }
-            .portal-main { margin-left: 0 !important; width: 100% !important; }
-            .portal-header { flex-direction: column !important; gap: 15px !important; padding: 15px !important; }
-        }
-    </style>
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    @media (min-width: 1200px) { .content-container { grid-template-columns: 420px 1fr; } }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+    
+    /* UPLOAD COMPONENT FORM STYLES */
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; }
+    .form-group input[type="file"] { padding: 8px 12px; background: #ffffff; cursor: pointer; }
+    .form-group input:focus, .form-group select:focus { background: var(--white); border-color: var(--staff-red); }
+    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+    
+    /* FILE LIST ACTIONS BUTTONS */
+    .document-action-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; margin-right: 4px; text-decoration: none; display: inline-block; }
+    .document-action-btn.delete-type { background: #fef2f2; color: var(--staff-red); border-color: rgba(193,82,84,0.15); }
+    .document-action-btn:hover { background: var(--text-dark); color: var(--white); }
+    .document-action-btn.delete-type:hover { background: var(--staff-red); color: var(--white); }
+  </style>
 </head>
 <body>
-       <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-documents.html" class="nav-item active"><span>📂</span> Document Storage Vault</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Document Vault & Storage Ledger</h1>
+          <p>Audit user asset uploads, delete dead files, and transmit finalized incorporation certificates securely</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Document Dispatch Form -->
+        <div class="console-card">
+          <h2>Transmit Document to Client</h2>
+          <form id="vaultTransmissionForm">
+            <div class="form-group">
+              <label>Target Account Email Recipient</label>
+              <select id="transmitRecipientEmail" required>
+                <option value="">-- Synchronizing Customer Profiles... --</option>
+              </select>
             </div>
-                <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
+            <div class="form-group">
+              <label>Document Classification Label</label>
+              <input type="text" id="transmitDocLabel" required placeholder="e.g., Official Approved LLC Articles">
+            </div>
+            <div class="form-group">
+              <label>Select Local File Asset</label>
+              <input type="file" id="transmitFileField" required>
+            </div>
+            <div id="vault-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px;"></div>
+            <button type="submit" class="action-btn" id="vaultSubmitBtn">Upload & Transmit Asset ➔</button>
+          </form>
+        </div>
 
-            </nav>
-           <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
+        <!-- Master Document Inventory Explorer -->
+        <div class="console-card">
+          <h2>Global Upload Storage Index Matrix</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Account Owner</th>
+                  <th style="padding:12px !important;">Document Description Label</th>
+                  <th style="padding:12px !important;">Storage Path Target</th>
+                  <th style="padding:12px !important; text-align:right !important;">Vault Operations Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-vault-explorer-target-box">
+                <tr><td colspan="4" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Compiling master storage nodes index...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
 
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+      // 1. Resolve Document Explorer Selectors
+      const transmissionForm = document.getElementById("vaultTransmissionForm");
+      const recipientSelect  = document.getElementById("transmitRecipientEmail");
+      const docLabelInput    = document.getElementById("transmitDocLabel");
+      const fileFieldInput   = document.getElementById("transmitFileField");
+      const statusDiv        = document.getElementById("vault-form-status");
+      const submitBtn        = document.getElementById("vaultSubmitBtn");
+      const explorerTableBody = document.getElementById("admin-vault-explorer-target-box");
 
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
+      if (!transmissionForm || !recipientSelect || !explorerTableBody || !statusDiv || !submitBtn) {
+        throw new Error("✕ Critical UI Error: Form controls or explorer data list tables are absent.");
+      }
 
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        explorerTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Database driver references evaluate to unassigned.");
+      }
 
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
+      // --- STAGE 1: DYNAMICALLY EXTRACT LIVE CUSTOMER LIST FROM ORDERS TABLE ---
+      async function synchronizeRecipientMenu() {
+        try {
+          console.log("📡 [Vault Engine] Mapping distinct emails out of public.orders...");
+          const { data: records, error: syncError } = await client.from('orders').select('email').not('email', 'is', null);
+          if (syncError) throw syncError;
 
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
+          const distinctEmails = [...new Set(records.map(row => row.email).filter(Boolean))];
+          recipientSelect.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+          
+          if (distinctEmails.length === 0) {
+            recipientSelect.innerHTML = `<option value="">-- No Active Profiles Located --</option>`;
+            return;
           }
-      });
-  })();
-</script>
 
-        </aside>
+          distinctEmails.forEach(email => {
+            const opt = document.createElement("option");
+            opt.value = email.trim();
+            opt.textContent = email.trim();
+            recipientSelect.appendChild(opt);
+          });
+        } catch (fault) {
+          console.error("✕ Menu Sync Halted:", fault.message);
+          recipientSelect.innerHTML = `<option value="">✕ Failed to sync profile logs</option>`;
+        }
+      }
 
-             <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div>
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Compliance Cloud Vault</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Review corporate uploads, execute background file downloads, and archive customer attachments.</p>
-                </div>
-                
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">05/19/2026 | 10:17:15</span>
-                    </div>
-                    <div>
-                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search execution tickets...">
-                    </div>
-                </div>
-            </header>
+      // --- STAGE 2: READ AND STREAM MASTER DOCUMENTS INDEX ---
+      async function streamGlobalDocumentStorageIndex() {
+        try {
+          console.log("📡 [Vault Explorer] Fetching records out of public.order_documents...");
+          const { data: documents, error: fetchError } = await client
+            .from('order_documents')
+            .select('id, user_email, document_name, storage_file_path')
+            .order('created_at', { ascending: false });
 
+          if (fetchError) throw fetchError;
 
-            <div class="content-container">
+          if (!documents || documents.length === 0) {
+            explorerTableBody.innerHTML = `<tr><td colspan="4" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No corporate assets or files discoverable inside storage registries.</td></tr>`;
+            return;
+          }
 
-                            <!-- 🎯 DYNAMIC CRM CUSTOMER DISPATCH SELECTION BLOCK -->
-<div class="portal-card" style="background:#ffffff; padding:20px; border:1px solid var(--border-color); border-radius:8px; margin-bottom:20px; text-align:left;">
-    <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; letter-spacing:0.5px;">Target Client Allocation Destination</label>
-    <select id="vaultAdminClientDropdown" style="width:100%; padding:12px; border:1px solid var(--border-color); border-radius:6px; background:#fff; font-size:0.88rem; font-weight:600; color:var(--text-dark); cursor:pointer;">
-        <option value="">-- Loading Registered Customer Profiles --</option>
-    </select>
-</div>
-                <!-- DYNAMIC DRAG AND DROP ZONE INTERFACE -->
-                <div class="vault-dropzone" id="adminDropzone">
-                    <span style="font-size: 2rem; display: block; margin-bottom: 10px;">📤</span>
-                    <strong style="font-size: 0.95rem; color: var(--text-dark); display: block; margin-bottom: 4px;">Drag & Drop Secure Compliance Files Here</strong>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">or click to browse your file system directories (.PDF, .PNG, .JPG up to 50MB)</span>
-                    <input type="file" id="manualFileInput" style="display: none;" multiple>
-                </div>
+          explorerTableBody.innerHTML = "";
 
-                <!-- LIVE FILE STORAGE HISTORY MATRIX CARD -->
-                <div class="portal-card">
-                    <div style="overflow-x: auto; width: 100%;">
-                        <div class="table-responsive-wrapper">
-                            <table class="admin-table-ledger">
-                                <thead>
-                                    <tr>
-                                        <th>Document Object Handle</th>
-                                        <th>Folder Context Path</th>
-                                        <th>Asset Type</th>
-                                        <th>Archived Timestamp</th>
-                                        <th>Filing Controls</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="documentsTableBody">
-                                    <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">Querying global cloud bucket index...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
+          documents.forEach(docRow => {
+            const tr = document.createElement("tr");
+            tr.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
 
-    <!-- PRODUCTION LOGIC BINDINGS ENGINE -->
-    
-   <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
+            const ownerEmail = docRow.user_email || "unregistered-guest@email.com";
+            const fileLabel  = docRow.document_name || "Incorporation File Block";
+            const bucketPath = docRow.storage_file_path || "";
+
+            tr.innerHTML = `
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeVaultHtml(ownerEmail)}</td>
+              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeVaultHtml(fileLabel)}</td>
+              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeVaultHtml(bucketPath)}">${escapeVaultHtml(bucketPath)}</td>
+              <td style="padding:14px 12px; text-align:right;">
+                <button class="document-action-btn download-trigger" data-path="${bucketPath}">Download</button>
+                <button class="document-action-btn delete-type purge-trigger" data-id="${docRow.id}" data-path="${bucketPath}">Delete</button>
+              </td>
+            `;
+
+            // Download Trigger: Request cryptographic signature public URLs from Supabase Storage [0.1]
+            tr.querySelector(".download-trigger").addEventListener("click", async function() {
+              const filePathKey = this.getAttribute("data-path");
+              try {
+                console.log(`📡 [Vault Explorer] Resolving temporary read signature URL for: [${filePathKey}]`);
+                const { data: urlData, error: urlError } = await client.storage.from('llc-vault').createSignedUrl(filePathKey, 60);
+                if (urlError) throw urlError;
+                window.open(urlData.signedUrl, '_blank');
+              } catch (err) {
+                alert(`✕ Read Request Refused: ${err.message}`);
+              }
+            });
+            // Purge Trigger: Structural file drops from both bucket volumes and tracking layers [0.1]
+            tr.querySelector(".purge-trigger").addEventListener("click", async function() {
+              if (!confirm("Are you sure you want to permanently delete this document from the server vault?")) return;
+              
+              const rowId = this.getAttribute("data-id");
+              const filePathKey = this.getAttribute("data-path");
+              this.disabled = true;
+              this.textContent = "Purging...";
+
+              try {
+                console.log(`📡 [Vault Explorer] Dropping file out of bucket: [${filePathKey}]`);
+                const { error: storageError } = await client.storage.from('llc-vault').remove([filePathKey]);
+                if (storageError) throw storageError;
+
+                console.log(`📡 [Vault Explorer] Clearing row entry ID: [${rowId}]`);
+                const { error: dbError } = await client.from('order_documents').delete().eq('id', rowId);
+                if (dbError) throw dbError;
+
+                console.log("✓ [Vault Explorer] Asset file purge successfully completed.");
+                await streamGlobalDocumentStorageIndex();
+              } catch (err) {
+                console.error("✕ Purge Routine Aborted:", err.message);
+                alert(`✕ Purge Interrupted: ${err.message}`);
+                await streamGlobalDocumentStorageIndex();
+              }
+            });
+
+            explorerTableBody.appendChild(tr);
+          });
+        } catch (err) {
+          console.error("✕ Vault Synchronization Exception Blocked:", err.message);
+          explorerTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+        }
+      }
+
+      // --- STAGE 3: UPLOAD ASSET FILES & LOG TRACKING METRICS ROWS ---
+      transmissionForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        statusDiv.style.display = "none";
+        statusDiv.textContent = "";
+
+        const recipientEmail = recipientSelect.value;
+        const documentLabel  = docLabelInput.value.trim();
+        const targetedFile   = fileFieldInput.files[0];
+
+        if (!recipientEmail || !documentLabel || !targetedFile) {
+          statusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          statusDiv.textContent = "✕ Validation Error: All transmission fields and file streams are required.";
+          return;
         }
 
-        // Inline modal helpers map setup options
-        window.toggleInvoiceGenerationModal = function(showFlag) {
-            const modal = document.getElementById('invoice-modal-overlay');
-            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
-        };
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Streaming Payload to Storage Bucket...";
 
-        function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
+        try {
+          // Construct an isolated file destination string block
+          const fileSanitizedName = `${Date.now()}_${targetedFile.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+          const destinationStoragePath = `${recipientEmail}/${fileSanitizedName}`;
 
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-    </script>
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE VAULT (Part 1: Self-Healing Dropdown Initializer)
-========================================================================= --> 
-<script>
-  // --- MODULE 1: GLOBAL WORKSPACE MEMORY CACHES ---
-  const vaultAdminCoreClient = window.supabaseClient || window.supabase;
-  let masterVaultFilesCache = [];
-
-  // --- MODULE 2: RUNTIME ENGINE LIFE-CYCLE STACK INITIALIZER ---
-  document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || vaultAdminCoreClient;
-          if (!client) return;
-
-          try {
-              // Strict Security Validation Gate Check: Confirm profile belongs to internal staff
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
-
-              // Fire unified data sheet synchronizations
-              await populateVaultClientDropdown(client);
-              await synchronizeCloudVaultInventory(client);
-              initializeDropzoneInteractions(client);
-
-          } catch (err) {
-              console.error("Vault initialization failure:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- MODULE 3: THE INDESTRUCTIBLE DROPDOWN MATRIX COMPILER ---
-  async function populateVaultClientDropdown(client) {
-      const dropdown = document.getElementById("vaultAdminClientDropdown");
-      if (!dropdown) return;
-
-      try {
-          // Fetch raw entries directly from your master orders log
-          const { data: profiles, error } = await client.from('orders').select('*');
-          if (error) throw error;
-
-          let optionsMarkup = '<option value="">-- Select Target Account (Upload Destination) --</option>';
-          const unifiedMap = new Map();
-
-          // Action A: If rows exist, map them tightly around short user_id numbers
-          if (profiles && profiles.length > 0) {
-              profiles.forEach(p => {
-                  const idKey = p.user_id || p.id;
-                  if (idKey) {
-                      unifiedMap.set(String(idKey), p.company_name || 'Active Customer Account');
-                  }
-              });
-          }
-
-          // 🧠 FALLBACK GATE OVERRIDE: If the public table is wiped or returns zero accounts,
-          // force-inject three high-utility Light testing profiles inside browser cache memory
-          if (unifiedMap.size === 0) {
-              console.warn("Vault Scanner Warning: Table empty. Activating automatic local cache injections.");
-              unifiedMap.set("1001", "Roseland Logistics LLC");
-              unifiedMap.set("1002", "Swift Hauling Inc");
-              unifiedMap.set("1003", "Titan Fleet Systems");
-          }
-
-          // Build option nodes strings cleanly
-          unifiedMap.forEach((companyName, clientId) => {
-              const cleanIdText = clientId.includes('-') ? clientId.slice(0,6).toUpperCase() : clientId;
-              optionsMarkup += `<option value="${clientId}">${companyName} [CLIENT ID: #${cleanIdText}]</option>`;
+          console.log(`📡 [Vault Upload] Initializing storage chunk transmission to: [llc-vault/${destinationStoragePath}]`);
+          const { error: storageUploadError } = await client.storage.from('llc-vault').upload(destinationStoragePath, targetedFile, {
+            cacheControl: '3600',
+            upsert: false
           });
 
-          dropdown.innerHTML = optionsMarkup;
+          if (storageUploadError) throw storageUploadError;
 
-      } catch (err) {
-          console.error("Profiles fallback dropdown compile error:", err.message);
-          dropdown.innerHTML = `<option value="1001">Roseland Logistics LLC [CLIENT ID: #1001]</option>
-                                <option value="1002">Swift Hauling Inc [CLIENT ID: #1002]</option>
-                                <option value="1003">Titan Fleet Systems [CLIENT ID: #1003]</option>`;
-      }
-  }
-</script>
+          console.log("📡 [Vault Upload] File successfully accepted by storage block. Creating trace row inside order_documents...");
+          const { error: dbRowLogValuesError } = await client
+            .from('order_documents')
+            .insert([
+              {
+                user_email: recipientEmail,
+                document_name: documentLabel,
+                storage_file_path: destinationStoragePath,
+                created_at: new Date().toISOString()
+              }
+            ]);
 
+          if (dbRowLogValuesError) throw dbRowLogValuesError;
 
-
-
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE VAULT (Part 2: Dropzone Handlers & Cloud Management)
-========================================================================= --> 
-<script>
-  // --- MODULE 1: BIND DRAG-AND-DROP FILE MAPPING OVERLAYS ---
-  function initializeDropzoneInteractions(client) {
-      const zone = document.getElementById("adminDropzone");
-      const fileInput = document.getElementById("manualFileInput");
-
-      if (!zone || !fileInput) return;
-
-      zone.addEventListener("click", () => fileInput.click());
-      fileInput.addEventListener("change", async (e) => {
-          if (e.target.files.length > 0) { await processBinaryStorageUploads(client, e.target.files); }
-      });
-
-      ['dragenter', 'dragover'].forEach(name => {
-          zone.addEventListener(name, (e) => {
-              e.preventDefault(); zone.style.border = "2px dashed #10b981"; zone.style.background = "#f0fdf4";
-          }, false);
-      });
-
-      ['dragleave', 'drop'].forEach(name => {
-          zone.addEventListener(name, (e) => {
-              e.preventDefault(); zone.style.border = ""; zone.style.background = "";
-          }, false);
-      });
-
-      zone.addEventListener('drop', async (e) => {
-          const droppedFiles = e.dataTransfer.files;
-          if (droppedFiles.length > 0) { await processBinaryStorageUploads(client, droppedFiles); }
-      });
-  }
-
-  // --- MODULE 2: RECOVER COMPREHENSIVE VAULT RECORDS ---
-  async function synchronizeCloudVaultInventory(client) {
-      const tableBody = document.getElementById("documentsTableBody");
-      if (!tableBody) return;
-
-      try {
-          const { data: vaultIndex, error } = await client.from('client_documents_vault').select('*');
-          if (error) throw error;
-
-          masterVaultFilesCache = vaultIndex || [];
-          renderCloudVaultMatrixTable(masterVaultFilesCache);
-
-      } catch (err) {
-          console.error("Vault records inventory fetch failure:", err.message);
-          tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b; font-style:italic;">No certificates or corporate formations uploaded to system bucket repositories.</td></tr>`;
-      }
-  }
-
-  // --- MODULE 3: OUTPUT CLOUD STORAGE MATRIX NATIVELY ON VIEWPORTS ---
-  function renderCloudVaultMatrixTable(datasetArray) {
-      const tableBody = document.getElementById("documentsTableBody");
-      if (!tableBody) return;
-
-      if (datasetArray.length === 0) {
-          tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:35px; color:var(--text-muted); font-style:italic;">No certificates or corporate formations uploaded to system bucket repositories.</td></tr>`;
-          return;
-      }
-
-      tableBody.innerHTML = datasetArray.map(doc => {
-          const fileSizeKb = (parseInt(doc.file_size_bytes || 0) / 1024).toFixed(1);
-          const archivedDate = new Date(doc.created_at).toLocaleDateString([], {month:'2-digit', day:'2-digit', year:'numeric'});
-          const cleanClientDisplayId = String(doc.user_id).includes('-') ? String(doc.user_id).slice(0,6).toUpperCase() : doc.user_id;
+          console.log("✅ [Vault Upload] Asset deployment sequence executed smoothly.");
+          statusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          statusDiv.textContent = "✓ Success! Asset file transmitted to storage buckets and mapped completely onto customer lists.";
           
-          return `
-              <tr style="border-bottom:1px solid #e2e8f0; font-size:0.85rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-                  <td style="padding:14px 12px;"><strong style="color:#0f172a; display:block;">📄 ${doc.document_display_name}</strong></td>
-                  <td style="padding:14px 12px; font-family:monospace; color:#1e40af; font-weight:700;">CLIENT ID: #${cleanClientDisplayId}</td>
-                  <td style="padding:14px 12px;"><span style="background:#f1f5f9; padding:3px 6px; border-radius:4px; font-size:0.75rem; font-weight:600; color:#475569;">${fileSizeKb} KB</span></td>
-                  <td style="padding:14px 12px; color:#64748b;">${archivedDate}</td>
-                  <td style="padding:14px 12px; white-space:nowrap; text-align:right;">
-                      <button class="btn-sm" style="background:#0f172a; color:#fff; border:0; padding:5px 10px; border-radius:4px; font-weight:700; cursor:pointer;" onclick="executeSecureCloudAssetDownload('${doc.storage_path}')">Download</button>
-                      <button class="btn-sm" style="background:#c15254; color:#fff; border:0; padding:5px 10px; border-radius:4px; font-weight:700; cursor:pointer;" onclick="executeCloudAssetDeletion('${doc.id}', '${doc.storage_path}')">Delete</button>
-                  </td>
-              </tr>`;
-      }).join('');
-  }
+          transmissionForm.reset();
+          await streamGlobalDocumentStorageIndex();
+        } catch (fault) {
+          console.error("✕ Document transmission stream failed:", fault.message);
+          statusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          statusDiv.textContent = `✕ Upload Aborted: ${fault.message}`;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText;
+        }
+      });
 
-  // --- MODULE 4: STREAM DATA OBJECTS DIRECTLY TO SUPABASE STORAGE ---
-  async function processBinaryStorageUploads(client, filesList) {
-      const selectedClientId = document.getElementById("vaultAdminClientDropdown").value;
-      if (!selectedClientId) {
-          alert("Filing Blocked: You must choose a target client profile from the selection dropdown box menu BEFORE dropping or uploading file objects.");
-          return;
+      function escapeVaultHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
       }
 
-      for (let i = 0; i < filesList.length; i++) {
-          const file = filesList[i];
-          const structuralStoragePath = "client_vault_" + selectedClientId + "/" + Date.now() + "_" + file.name.replace(/\s+/g, '_');
-
-          try {
-              const { error: uploadError } = await client.storage
-                  .from('secure-vault')
-                  .upload(structuralStoragePath, file, { cacheControl: '3600', upsert: true });
-
-              if (uploadError) throw uploadError;
-
-              // Insert tracking parameter metadata token cleanly back to log history charts
-              const isUuid = selectedClientId.includes('-');
-              const { error: dbError } = await client
-                  .from('client_documents_vault')
-                  .insert({
-                      user_id: isUuid ? 1001 : parseInt(selectedClientId),
-                      document_display_name: file.name,
-                      storage_path: structuralStoragePath,
-                      file_size_bytes: file.size,
-                      mime_type: file.type || 'application/pdf'
-                  });
-
-              if (dbError) throw dbError;
-              alert("Successfully uploaded \"" + file.name + "\" to client directory asset vault.");
-
-          } catch (err) {
-              console.warn("Silent storage tracking pass handled.");
-              alert("Document processed successfully and linked to dashboard vaults!");
-          }
-      }
-      await synchronizeCloudVaultInventory(client);
-  }
-
-  async function executeSecureCloudAssetDownload(storagePath) {
-      const client = window.supabaseClient || window.supabase || vaultAdminCoreClient;
-      try {
-          const { data, error } = await client.storage.from('secure-vault').createSignedUrl(storagePath, 60);
-          if (error) throw error; window.open(data.signedUrl, '_blank');
-      } catch (err) { alert("Download link generation error: " + err.message); }
-  }
-
-  async function executeCloudAssetDeletion(recordId, storagePath) {
-      const client = window.supabaseClient || window.supabase || vaultAdminCoreClient;
-      if (!client || !confirm("⚠️ Delete this certificate permanently from cloud storage?")) return;
-      try {
-          await client.storage.from('secure-vault').remove([storagePath]);
-          await client.from('client_documents_vault').delete().eq('id', recordId);
-          await synchronizeCloudVaultInventory(client);
-      } catch (err) { alert("Purge aborted: " + err.message); }
-  }
-</script>
-
-
-
-
-
+      await synchronizeRecipientMenu();
+      await streamGlobalDocumentStorageIndex();
+    });
+  </script>
 </body>
 </html>

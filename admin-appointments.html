@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Manage Consultations | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE GEOMETRY */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    @media (min-width: 1200px) { .content-container { grid-template-columns: 420px 1fr; } }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+    
+    /* SCHEDULER FORM FIELD COMPONENT STYLES */
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus { background: var(--white); border-color: var(--staff-red); }
+    
+    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
+    .action-btn:hover { background: #1e293b; }
+    
+    /* MANAGEMENT INTERACTION CONTROLS */
+    .booking-action-btn { background: #fef2f2; color: var(--staff-red); border: 1px solid rgba(193,82,84,0.15); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .booking-action-btn:hover { background: var(--staff-red); color: var(--white); }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="appointments.html" class="nav-item active"><span>📆</span> Consultation Booking</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Consultation Booking Center</h1>
+          <p>Schedule client calendar slots, log manual telephone requests, and purge obsolete appointments</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Phone Booking Intake Form Card -->
+        <div class="console-card">
+          <h2>Log Phone Consultation</h2>
+          <form id="phoneBookingIntakeForm">
+            <div class="form-group">
+              <label>Select Customer Profile</label>
+              <select id="bookingRecipientEmail" required>
+                <option value="">-- Synchronizing Customer List... --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Consultation Agenda / Topic</label>
+              <input type="text" id="bookingTitle" required placeholder="e.g., Corporate Compliance Strategy Review">
+            </div>
+            <div class="form-group">
+              <label>Target Date & Time</label>
+              <input type="datetime-local" id="bookingTimestamp" required>
+            </div>
+            <div class="form-group">
+              <label>Priority Tier Classification</label>
+              <select id="bookingPriority" required>
+                <option value="standard" selected>Standard</option>
+                <option value="high">High Priority</option>
+              </select>
+            </div>
+            <div id="booking-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px;"></div>
+            <button type="submit" class="action-btn" id="bookingSubmitBtn">Reserve Calendar Slot ➔</button>
+          </form>
+        </div>
+
+        <!-- Appointment Master Table Grid Card -->
+        <div class="console-card">
+          <h2>Active Consultation Schedule Ledger</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Account Owner</th>
+                  <th style="padding:12px !important;">Agenda Topic</th>
+                  <th style="padding:12px !important;">Allocated Date & Time</th>
+                  <th style="padding:12px !important;">Priority</th>
+                  <th style="padding:12px !important; text-align:right !important;">Operations</th>
+                </tr>
+              </thead>
+              <tbody id="admin-appointments-ledger-target-box">
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Synchronizing consultation metrics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Strict DOM Target Selectors
+      const bookingForm       = document.getElementById("phoneBookingIntakeForm");
+      const recipientSelect   = document.getElementById("bookingRecipientEmail");
+      const bookingTitleIn    = document.getElementById("bookingTitle");
+      const bookingTimestampIn = document.getElementById("bookingTimestamp");
+      const bookingPrioritySel = document.getElementById("bookingPriority");
+      const formStatusDiv     = document.getElementById("booking-form-status");
+      const submitButton      = document.getElementById("bookingSubmitBtn");
+      const ledgerTableBody   = document.getElementById("admin-appointments-ledger-target-box");
+
+      if (!bookingForm || !recipientSelect || !ledgerTableBody || !formStatusDiv || !submitButton) {
+        throw new Error("✕ Critical UI Error: Missing core layout template appointment forms or ledger targets.");
+      }
+
+      // 2. Fetch Master Client Initialization Instances Cleanly
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
+      }
+
+      // --- STAGE 1: DYNAMICALLY EXTRACT LIVE CUSTOMER LIST FROM ORDERS TABLE ---
+      async function synchronizeCustomerDropdown() {
+        try {
+          console.log("📡 [Appointments Engine] Syncing target emails from public.orders...");
+          const { data: records, error: syncError } = await client.from('orders').select('email').not('email', 'is', null);
+          if (syncError) throw syncError;
+
+          const distinctEmails = [...new Set(records.map(row => row.email).filter(Boolean))];
+          recipientSelect.innerHTML = `<option value="">-- Choose Customer Profile --</option>`;
+          
+          if (distinctEmails.length === 0) {
+            recipientSelect.innerHTML = `<option value="">-- No Active Profiles Located --</option>`;
+            return;
+          }
+
+          distinctEmails.forEach(email => {
+            const opt = document.createElement("option");
+            opt.value = email.trim();
+            opt.textContent = email.trim();
+            recipientSelect.appendChild(opt);
+          });
+        } catch (fault) {
+          console.error("✕ Customer Menu Sync Halted:", fault.message);
+          recipientSelect.innerHTML = `<option value="">✕ Failed to sync profile logs</option>`;
+        }
+      }
+
+      // --- STAGE 2: FETCH AND STREAM ACTIVE APPOINTMENTS ---
+      async function streamConsultationScheduleLedger() {
+        try {
+          console.log("📡 [Appointments Engine] Querying live entries from public.appointments...");
+          const { data: appts, error: fetchError } = await client
+            .from('appointments')
+            .select('id, user_email, title, appointment_date, priority_level')
+            .order('appointment_date', { ascending: true });
+
+          if (fetchError) {
+            throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
+          }
+
+          if (!appts || appts.length === 0) {
+            ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No consultation appointments found inside the active schedule.</td></tr>`;
+            return;
+          }
+
+          ledgerTableBody.innerHTML = "";
+          appts.forEach(apptItem => {
+            const trNode = document.createElement("tr");
+            trNode.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const userEmail = apptItem.user_email || "manual-entry@email.com";
+            const agendaTopic = apptItem.title || "Strategy Review Session";
+            const urgencyRank = String(apptItem.priority_level || 'standard').toUpperCase();
+
+            const formattedDateTime = new Date(apptItem.appointment_date).toLocaleString('en-US', {
+              month: 'short', day: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit', hour12: true
+            });
+
+            let priorityBadgeColor = "background:#f1f5f9; color:#475569;";
+            if (urgencyRank === 'HIGH') priorityBadgeColor = "background:#fffbe6; color:#b45309;";
+
+            trNode.innerHTML = `
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeApptHtml(userEmail)}</td>
+              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeApptHtml(agendaTopic)}</td>
+              <td style="padding:14px 12px; font-family:monospace; color:var(--text-dark); font-weight:600;">${formattedDateTime}</td>
+              <td style="padding:14px 12px;"><span style="${priorityBadgeColor} font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; letter-spacing:0.5px;">${escapeApptHtml(urgencyRank)}</span></td>
+              <td style="padding:14px 12px; text-align:right;">
+                <button class="booking-action-btn delete-trigger" data-id="${apptItem.id}">Cancel Slot</button>
+              </td>
+            `;
+
+            // Bind click listener to individual deletion action trigger
+            trNode.querySelector(".delete-trigger").addEventListener("click", async function() {
+              if (!confirm("Are you sure you want to cancel and delete this reserved consultation slot?")) return;
+              
+              const targetApptId = this.getAttribute("data-id");
+              this.disabled = true;
+              this.textContent = "Canceling...";
+              console.log(`📡 [Appointments Engine] Purging appointment row ID: [${targetApptId}]`);
+
+              try {
+                const { error: deleteError } = await client
+                  .from('appointments')
+                  .delete()
+                  .eq('id', targetApptId);
+
+                if (deleteError) throw deleteError;
+                console.log("✓ [Appointments Engine] Appointment slot cancellation verified by server.");
+                await streamConsultationScheduleLedger(); // Re-fetch logs instantly
+
+              } catch (delFault) {
+                console.error("✕ Database row deletion request refused:", delFault.message);
+                alert(`✕ Cancellation Interrupted: ${delFault.message}`);
+                this.disabled = false;
+                this.textContent = "Cancel Slot";
+              }
+            });
+
+            ledgerTableBody.appendChild(trNode);
+          });
+
+        } catch (queryFault) {
+          console.error("✕ Appointments Ledger Synchronization Aborted:", queryFault.message);
+          ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check system console logs.</td></tr>`;
+        }
+      }
+
+      // --- STAGE 3: HANDLE NEW APPOINTMENT FORM RESERVATION SUBMISSIONS ---
+      bookingForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        formStatusDiv.style.display = "none";
+        formStatusDiv.textContent = "";
+
+        const customerEmail = recipientSelect.value;
+        const title         = bookingTitleIn.value.trim();
+        const dateTimestamp = bookingTimestampIn.value;
+        const priorityLevel = bookingPrioritySel.value;
+
+        if (!customerEmail || !title || !dateTimestamp || !priorityLevel) {
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = "✕ Validation Error: All reservation form fields are required.";
+          return;
+        }
+
+        const originalBtnLabel = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = "Reserving Calendar Space...";
+
+        try {
+          console.log(`📡 [Appointments Engine] Pushing appointment payload row into public.appointments...`);
+          
+          const { error: insertError } = await client
+            .from('appointments')
+            .insert([
+              {
+                user_email: customerEmail,
+                title: title,
+                appointment_date: new Date(dateTimestamp).toISOString(),
+                priority_level: priorityLevel,
+                created_at: new Date().toISOString()
+              }
+            ]);
+
+          if (insertError) {
+            throw new Error(`Postgres Transaction Failure [Code ${insertError.code}]: ${insertError.message}`);
+          }
+
+          console.log("✅ [Appointments Engine] Consultation slot successfully added to database table.");
+          formStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          formStatusDiv.textContent = "✓ Consultation slot successfully reserved and logged completely!";
+          
+          bookingForm.reset();
+          await streamConsultationScheduleLedger(); // Refresh table loop cells instantly
+
+        } catch (postFault) {
+          console.error("✕ Appointment reservation loop disrupted:", postFault.message);
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = `✕ Reservation Aborted: ${postFault.message}`;
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = originalBtnLabel;
+        }
+      });
+
+      function escapeApptHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      // Initialize all operational pipeline stages inside the initial thread frame loop
+      await synchronizeCustomerDropdown();
+      await streamConsultationScheduleLedger();
+    });
+  </script>
+</body>
+</html>
