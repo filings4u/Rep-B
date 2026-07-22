@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Global System Settings | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-shadow: none !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE CONTAINER */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    
+    @media (min-width: 1200px) {
+      .content-container { grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); }
+    }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    
+    /* SETTINGS FIELD INPUT STYLES */
+    .form-group { text-align: left; margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus { background: var(--white); border-color: var(--staff-red); }
+    
+    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
+    .action-btn:hover { background: #1e293b; }
+    .status-alert-box { display: none; font-size: 0.8rem; font-weight: 700; margin-bottom: 15px; padding: 10px; border-radius: 6px; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-global-settings.html" class="nav-item active"><span>⚙️</span> Global System Settings</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Global Environment Configuration</h1>
+          <p>Modify production parameters, update base fee pricing matrix, and toggle application maintenance locks</p>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- Environment Variables Form Panel -->
+        <div class="console-card">
+          <h2>Platform Gateways & Webhooks</h2>
+          <form id="globalEnvironmentSettingsForm">
+            <div class="form-group">
+              <label>Production Maintenance Interlock Mode</label>
+              <select id="settingMaintenanceMode" required>
+                <option value="false">Disabled (Application Operational)</option>
+                <option value="true">Enabled (Portal Lock Enforced)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Outgoing Stripe Webhook Verification URL</label>
+              <input type="url" id="settingStripeWebhookUrl" required placeholder="https://filings4u.com">
+            </div>
+            <div class="form-group">
+              <label>Transactional Mail Endpoint Gateway</label>
+              <input type="url" id="settingMailGatewayUrl" required placeholder="https://resend.com">
+            </div>
+            <div id="env-settings-status" class="status-alert-box"></div>
+            <button type="submit" class="action-btn" id="envSubmitBtn">Save Gateway Parameters ➔</button>
+          </form>
+        </div>
+
+        <!-- Pricing Variables Form Panel -->
+        <div class="console-card">
+          <h2>Filing Package Matrix Fee Control</h2>
+          <form id="globalPricingSettingsForm">
+            <div class="form-group">
+              <label>Starter Base Processing Fee ($)</label>
+              <input type="number" step="0.01" id="feeStarterPlan" required placeholder="99.00">
+            </div>
+            <div class="form-group">
+              <label>Premium Suite Processing Fee ($)</label>
+              <input type="number" step="0.01" id="feePremiumPlan" required placeholder="299.00">
+            </div>
+            <div class="form-group">
+              <label>State Disbursement Baseline Contingency ($)</label>
+              <input type="number" step="0.01" id="feeDisbursementBaseline" required placeholder="50.00">
+            </div>
+            <div id="price-settings-status" class="status-alert-box"></div>
+            <button type="submit" class="action-btn" id="priceSubmitBtn">Update Package Price Matrix ➔</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Strict DOM Form and Input Element Targets
+      const envForm       = document.getElementById("globalEnvironmentSettingsForm");
+      const maintenanceIn = document.getElementById("settingMaintenanceMode");
+      const stripeUrlIn   = document.getElementById("settingStripeWebhookUrl");
+      const mailUrlIn     = document.getElementById("settingMailGatewayUrl");
+      const envStatusDiv  = document.getElementById("env-settings-status");
+      const envSubmitBtn  = document.getElementById("envSubmitBtn");
+
+      const priceForm     = document.getElementById("globalPricingSettingsForm");
+      const feeStarterIn  = document.getElementById("feeStarterPlan");
+      const feePremiumIn  = document.getElementById("feePremiumPlan");
+      const feeDisburseIn = document.getElementById("feeDisbursementBaseline");
+      const priceStatusDiv = document.getElementById("price-settings-status");
+      const priceSubmitBtn = document.getElementById("priceSubmitBtn");
+
+      if (!envForm || !priceForm || !envStatusDiv || !priceStatusDiv || !envSubmitBtn || !priceSubmitBtn) {
+        throw new Error("✕ Critical UI Error: Form controls or operational status blocks are missing from document layout.");
+      }
+
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        throw new Error("✕ Initialization Error: Supabase client infrastructure missing from global window context.");
+      }
+
+      // --- STAGE 1: HYDRATE INITIAL ENVIRONMENT FIELDS FROM THE SETTINGS MATRIX ---
+      async function populatePlatformConfigurations() {
+        try {
+          console.log("📡 [Settings Engine] Syncing existing configuration row keys from server tables...");
+          
+          // 🟢 DIRECT DB FETCH: Extract system configurations from a single configuration record cell
+          const { data: settingsArray, error: fetchError } = await client
+            .from('global_platform_settings')
+            .select('*')
+            .limit(1);
+
+          if (fetchError) throw fetchError;
+
+          if (settingsArray && settingsArray.length > 0) {
+            const config = settingsArray[0];
+            
+            // Populating environment configuration elements cleanly
+            maintenanceIn.value = String(config.maintenance_mode_interlock_active || 'false');
+            stripeUrlIn.value   = config.stripe_webhook_receiver_url || "";
+            mailUrlIn.value     = config.transactional_email_endpoint_url || "";
+            
+            // Populating price field index parameters safely
+            feeStarterIn.value  = parseFloat(config.starter_base_processing_fee || 99.00).toFixed(2);
+            feePremiumIn.value  = parseFloat(config.premium_suite_processing_fee || 299.00).toFixed(2);
+            feeDisburseIn.value = parseFloat(config.state_disbursement_baseline_fee || 50.00).toFixed(2);
+            
+            console.log("✓ [Settings Engine] Environment row properties mapped completely onto UI.");
+          }
+        } catch (syncFault) {
+          console.warn("⚠ [Settings Engine] Initial configuration blank or unassigned: ", syncFault.message);
+        }
+      }
+
+      // --- STAGE 2: PROCESS ENVIRONMENT VARIABLES FORM SAVES ---
+      envForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        envStatusDiv.style.display = "none";
+
+        const maintenanceMode = maintenanceIn.value === "true";
+        const stripeWebhookUrl = stripeUrlIn.value.trim();
+        const emailGatewayUrl = mailUrlIn.value.trim();
+
+        if (!stripeWebhookUrl || !emailGatewayUrl) {
+          envStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          envStatusDiv.textContent = "✕ Validation Error: Environment gateway target inputs cannot evaluate to empty.";
+          return;
+        }
+
+        envSubmitBtn.disabled = true;
+        
+        try {
+          console.log("📡 [Settings Engine] Registering updated environment flags to server...");
+          const { error: upsertError } = await client
+            .from('global_platform_settings')
+            .upsert({
+              id: 1, // Enforces single target configuration cell row locking overrides
+              maintenance_mode_interlock_active: maintenanceMode,
+              stripe_webhook_receiver_url: stripeWebhookUrl,
+              transactional_email_endpoint_url: emailGatewayUrl,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+
+          if (upsertError) throw upsertError;
+
+          envStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          envStatusDiv.textContent = "✓ Environment variable parameters successfully locked into global configuration grids.";
+        } catch (fault) {
+          console.error("✕ Environment patch transaction declined: ", fault.message);
+          envStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          envStatusDiv.textContent = `✕ Server Transaction Error: ${fault.message}`;
+        } finally {
+          envSubmitBtn.disabled = false;
+        }
+      });
+
+      // --- STAGE 3: PROCESS PRICING COEFFICIENTS MATRIX UPDATES ---
+      priceForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        priceStatusDiv.style.display = "none";
+
+        const starterFee = parseFloat(feeStarterIn.value);
+        const premiumFee = parseFloat(feePremiumIn.value);
+        const disburseFee = parseFloat(feeDisburseIn.value);
+
+        if (isNaN(starterFee) || isNaN(premiumFee) || isNaN(disburseFee)) {
+          priceStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          priceStatusDiv.textContent = "✕ Validation Error: Pricing coefficients must be valid numeric constraints.";
+          return;
+        }
+
+        priceSubmitBtn.disabled = true;
+
+        try {
+          console.log("📡 [Settings Engine] Deploying updated pricing matrix matrices to server tables...");
+          const { error: upsertError } = await client
+            .from('global_platform_settings')
+            .upsert({
+              id: 1,
+              starter_base_processing_fee: starterFee,
+              premium_suite_processing_fee: premiumFee,
+              state_disbursement_baseline_fee: disburseFee,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+
+          if (upsertError) throw upsertError;
+
+          priceStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          priceStatusDiv.textContent = "✓ Success! Package processing matrix variables recompiled and pushed live.";
+        } catch (fault) {
+          console.error("✕ Pricing matrix save request refused: ", fault.message);
+          priceStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          priceStatusDiv.textContent = `✕ Server Transaction Error: ${fault.message}`;
+        } finally {
+          priceSubmitBtn.disabled = false;
+        }
+      });
+
+      // Execute configuration data check cycles immediately on loading context threads
+      await populatePlatformConfigurations();
+    });
+  </script>
+</body>
+</html>

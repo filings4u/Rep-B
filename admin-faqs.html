@@ -4,953 +4,285 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>FAQ Management Matrix | filings4u Staff</title>
+  <title>Manage FAQs Matrix | filings4u Staff</title>
   <meta name="theme-color" content="#c15254">
-  
-  <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
-    
-  
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <style>
-    :root {
-      --bg-light: #f4f6f9;
-      --white: #ffffff;
-      --border-color: #e2e8f0;
-      --text-dark: #0f172a;
-      --text-muted: #475569;
-      --emerald: #10b981;
-      --staff-red: #c15254;
-      --sidebar-width: 260px;
-    }
-    body, html {
-      margin: 0 !important; padding: 0 !important;
-      min-height: 100vh !important;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-      background-color: var(--bg-light) !important;
-      color: var(--text-dark) !important;
-      overflow-x: hidden !important; overflow-y: auto !important;
-    }
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
     .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
-    /* 📁 STATIONARY SIDEBAR PANEL */
-    .portal-sidebar {
-      width: var(--sidebar-width) !important; background: var(--white) !important;
-      border-right: 1px solid var(--border-color) !important; display: flex !important;
-      flex-direction: column !important; position: fixed !important;
-      top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important;
-    }
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
     .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
-    .admin-badge {
-      display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important;
-      font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important;
-      letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important;
-    }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
     .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
-    .nav-item {
-      display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important;
-      color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important;
-      font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; transition: all 0.15s !important;
-    }
-    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
     .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
-
-    /* 🖥️ MAIN WORKSPACE CONTENT CONTAINER */
-    .workspace-main {
-      margin-left: var(--sidebar-width) !important; flex: 1 !important; padding: 40px !important; box-sizing: border-box !important; min-width: 0 !important;
-    }
-    .workspace-header { margin-bottom: 30px !important; }
-    .workspace-title { font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; margin: 0 0 6px 0 !important; }
-    .workspace-desc { font-size: 0.85rem !important; color: var(--text-muted) !important; margin: 0 !important; }
-
-    /* 🧱 AD-HOC MATRIX COMPONENT LAYOUT CORES */
-    .matrix-grid { display: grid !important; grid-template-columns: 1fr 2fr !important; gap: 30px !important; align-items: start !important; }
-    .matrix-card { background: var(--white) !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; padding: 24px !important; box-sizing: border-box !important; }
-    .card-title { font-size: 1rem !important; font-weight: 700 !important; color: var(--text-dark) !important; margin: 0 0 20px 0 !important; border-bottom: 1px solid var(--border-color) !important; padding-bottom: 10px !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
     
-    /* 📋 UTILITY WORKFLOW FORMS */
-    .form-group { margin-bottom: 16px !important; }
-    .form-label { display: block !important; font-size: 0.75rem !important; font-weight: 700 !important; color: var(--text-dark) !important; text-transform: uppercase !important; margin-bottom: 6px !important; }
-    .form-control {
-      width: 100% !important; padding: 10px 12px !important; font-size: 0.85rem !important; border: 1px solid var(--border-color) !important;
-      border-radius: 6px !important; background: #fafafa !important; box-sizing: border-box !important; color: var(--text-dark) !important;
-    }
-    .form-control:focus { outline: none !important; border-color: var(--emerald) !important; background: var(--white) !important; }
-    .btn-submit {
-      width: 100% !important; background: var(--staff-red) !important; color: var(--white) !important; border: none !important;
-      padding: 12px !important; font-weight: 700 !important; font-size: 0.85rem !important; border-radius: 6px !important; cursor: pointer !important; transition: background 0.2s !important;
-    }
-    .btn-submit:hover { background: #ab4446 !important; }
-
-    /* 📊 APPLIED DATA INTERFACES */
-    .data-table-frame { width: 100% !important; border-collapse: collapse !important; text-align: left !important; font-size: 0.85rem !important; }
-    .data-table-frame th { background: #f8fafc !important; padding: 12px !important; font-weight: 700 !important; border-bottom: 2px solid var(--border-color) !important; color: var(--text-muted) !important; }
-    .data-table-frame td { padding: 12px !important; border-bottom: 1px solid var(--border-color) !important; vertical-align: top !important; }
-    .badge-slug { background: #edf2f7 !important; color: var(--text-dark) !important; padding: 2px 6px !important; border-radius: 4px !important; font-family: monospace !important; font-size: 0.75rem !important; }
-    .btn-delete { background: none !important; border: none !important; color: #ef4444 !important; font-weight: 600 !important; font-size: 0.75rem !important; cursor: pointer !important; padding: 0 !important; }
-    .btn-delete:hover { text-decoration: underline !important; }
+    /* MAIN PLATFORM WORKSPACE CONTAINER */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
     
-    .status-toast { padding: 12px !important; border-radius: 6px !important; margin-bottom: 15px !important; font-size: 0.8rem !important; display: none; }
-    .status-success { background: rgba(16, 185, 129, 0.1) !important; color: var(--emerald) !important; border: 1px solid rgba(16, 185, 129, 0.2) !important; }
-    .status-error { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; border: 1px solid rgba(239, 68, 68, 0.2) !important; }
-  
-        /* ==========================================================================
-           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important; /* Forces normal native scrolling rules */
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger:hover, .accordion-trigger.active {
-            background: #edf2f7 !important;
-            color: var(--text-dark) !important;
-        }
-
-        .accordion-trigger .chevron {
-            font-size: 0.6rem !important;
-            transition: transform 0.2s !important;
-        }
-
-        .accordion-trigger.active .chevron {
-            transform: rotate(180deg) !important;
-        }
-
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            transition: max-height 0.25s ease-out !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
-        .portal-main {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            
-            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
-            margin-left: var(--sidebar-width) !important; 
-            width: calc(100% - var(--sidebar-width)) !important;
-            min-height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 20px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
-        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        /* ⏱️ Input-styled unified date/time pill element */
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .search-input {
-            padding: 10px 16px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 10px !important;
-            font-size: 0.82rem !important;
-            width: 220px !important;
-            outline: none !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            color: var(--text-dark) !important;
-        }
-
-        .search-input:focus {
-            background: var(--white) !important;
-            border-color: var(--emerald) !important;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
-        }
-
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        /* CARD CAROUSELS SYSTEM CORES */
-        .stats-row {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-            gap: 20px !important;
-            margin-bottom: 30px !important;
-            width: 100% !important;
-        }
-
-        .stat-card {
-            background: var(--white) !important;
-            padding: 20px !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            box-sizing: border-box !important;
-        }
-
-        .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
-        .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
-
-        .dashboard-grid-layout {
-            display: grid !important;
-            grid-template-columns: 2fr 1fr !important;
-            gap: 24px !important;
-            align-items: start !important;
-            width: 100% !important;
-        }
-
-        @media (max-width: 1100px) {
-            .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-        }
-
-        .console-card {
-            background: var(--white) !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 24px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            margin-bottom: 24px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
-   
-   @media (max-width: 991px) {
-    body, html { overflow-y: auto !important; }
-    .dashboard-wrapper { flex-direction: column !important; }
-    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
-    .portal-main { margin-left: 0 !important; width: 100% !important; }
-    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
-    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
-    .search-input { width: 100% !important; }
-    .content-container { padding: 20px !important; }
-    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-}
-
-  
-  
+    @media (min-width: 1200px) {
+      .content-container { grid-template-columns: 420px 1fr; }
+    }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+    
+    /* FORM INPUT COMPONENT VARIABLE BOUNDS */
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
+    .form-group textarea { height: 120px; resize: vertical; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: var(--white); border-color: var(--staff-red); }
+    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+    .action-btn:hover { background: #1e293b; }
+    
+    /* FAQ LAYOUT LISTINGS ROW */
+    .faq-item-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 12px; border-bottom: 1px solid var(--border-color); gap: 16px; }
+    .faq-item-row:last-child { border-bottom: none; }
+    .faq-info-meta { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+    .faq-info-meta h4 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-dark); }
+    .faq-info-meta p { margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+    .faq-info-meta .category-tag { font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; width: max-content; margin-top: 4px; }
+    .delete-row-btn { background: #fef2f2; color: var(--staff-red); border: 1px solid rgba(193,82,84,0.15); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .delete-row-btn:hover { background: var(--staff-red); color: var(--white); }
   </style>
 </head>
 
 <body>
-       <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-                <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
-
-            </nav>
-          <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
-
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
-      "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
-
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
-
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
-
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
-
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
-</script>
-
-        </aside>
-
-    <!-- 🖥️ MAIN WORKSPACE CONTENT CONTAINER -->
-    <main class="workspace-main">
-      <header class="workspace-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; flex-wrap: wrap !important; gap: 15px !important;">
-        <div class="welcome-text">
-          <h1 class="workspace-title">Dynamic FAQ Matrix Panel</h1>
-          <p class="workspace-desc">Inject, edit, or eliminate targeted question-answer rows served directly by the Supabase operational tier.</p>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item active"><span>🚀</span> Manage FAQs Matrix</a>
         </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
 
-        <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX (Aligns Bell, Clock, and Search side-by-side) -->
-        <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 12px !important;">
-          <!-- 🧱 STRUCTURAL NAVIGATION BELL CONTAINER -->
-          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; box-sizing: border-box !important;">
-            <!-- DYNAMIC NAVIGATION BELL BADGE EMBED -->
-            <a href="notifications.html" class="nav-bell-wrapper" aria-label="View Central Notifications Channel" style="text-decoration: none !important; position: relative !important;">
-              <span class="nav-bell-icon" style="font-size: 1.3rem !important;">🔔</span>
-              <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -5px !important; right: -5px !important; background: var(--staff-red) !important; color: white !important; font-size: 0.65rem !important; padding: 2px 6px !important; border-radius: 10px !important; font-weight: bold !important;">0</div>
-            </a>
-          </div>
-
-          <!-- LIVE SYSTEM CLOCK COMPONENT PILL -->
-          <div class="header-clock-pill" style="background: var(--white) !important; border: 1px solid var(--border-color) !important; padding: 8px 12px !important; border-radius: 6px !important; font-size: 0.8rem !important; font-weight: 600 !important; display: flex !important; align-items: center !important; gap: 6px !important;">
-            <span>⏱️</span>
-            <span id="portal-clock">00/00/0000 | 00:00:00</span>
-          </div>
-
-          <!-- DYNAMIC GLOBAL SEARCH FIELD -->
-          <div>
-            <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices..." style="padding: 9px 12px !important; font-size: 0.85rem !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; width: 220px !important; box-sizing: border-box !important; background: var(--white) !important; color: var(--text-dark) !important;" oninput="executeLiveMatrixSearchFilter(this.value)">
-          </div>
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Knowledge Base FAQs Manager</h1>
+          <p>Compose customer-facing support documentation block matrices and synchronize platform categories</p>
         </div>
       </header>
 
-      <!-- Feedback Banner Area -->
-      <div id="status-notification-toast" class="status-toast"></div>
-
-      <div class="matrix-grid">
-        
-            <!-- 🧱 INPUT LOADER COMPONENT CARD -->
-        <section class="matrix-card">
-          <h2 class="card-title">Append Record Row</h2>
-          <form id="faq-injection-form" onsubmit="handleFormSubmission(event)">
+      <div class="content-container">
+        <!-- Composition Form Panel -->
+        <div class="console-card">
+          <h2>Compose Knowledge Base Entry</h2>
+          <form id="faqEntryForm">
             <div class="form-group">
-              <label class="form-label" for="faq-question">Target Question</label>
-              <!-- 🚀 UI UPGRADE: Max length cap constraint logic added with live input tracking listener -->
-              <input type="text" id="faq-question" class="form-control" placeholder="e.g., What is your turnaround execution window?" maxlength="120" required oninput="evaluateQuestionCharacterThreshold(this)" />
-              
-              <!-- ⚠️ Dynamic Character Counter Warning Pill Placement Zone -->
-              <div id="faq-character-warn-pill" style="font-size: 0.72rem !important; font-weight: 700 !important; margin-top: 5px !important; color: #64748b !important; text-align: right !important; display: block !important;">
-                <span id="faq-current-count">0</span> / 120 characters max
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="faq-answer">Target Answer Narrative</label>
-              <textarea id="faq-answer" class="form-control" rows="4" placeholder="Enter explicit compliance answer details here..." required></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="faq-slug">Service Route Target Slug</label>
-              <select id="faq-slug" class="form-control" required style="background-color: #fafafa; cursor: pointer;">
-                <!-- Global Category -->
-                <option value="global" selected>🌍 Global (Show on all pages)</option>
-                
-                <!-- Business Structure Formations -->
-                <optgroup label="💼 Business Formation Services">
-                  <option value="llc-formation">LLC Formation</option>
-                  <option value="corporations">Corporations (C/S-Corp)</option>
-                  <option value="sole-proprietorship">Sole Proprietorship</option>
-                  <option value="dba-registration">DBA Registration</option>
-                  <option value="nonprofit-organization">Nonprofit Organization</option>
-                  <option value="series-llc">Series LLC</option>
-                </optgroup>
-
-                <!-- Corporate Compliance & Essentials -->
-                <optgroup label="📋 Corporate Compliance">
-                  <option value="annual-reports">Annual Reports</option>
-                  <option value="operating-agreement">Operating Agreement</option>
-                  <option value="registered-agent">Registered Agent</option>
-                  <option value="business-licenses">Business Licenses</option>
-                  <option value="employer-id">Employer ID (EIN)</option>
-                  <!-- 🧠 FIXED: Corrected option value structural wrapper tags cleanly -->
-                  Entity Dissolution</option>
-                </optgroup>
-
-                <!-- Tax Registrations & Filings -->
-                <optgroup label="🏦 Tax Filings & Registrations">
-                  <option value="federal-income-tax">Federal Income Tax</option>
-                  <option value="state-income-tax">State Income Tax</option>
-                  <option value="franchise-tax-filing">Franchise Tax Filing</option>
-                  <option value="sales-tax-registration">Sales Tax Registration</option>
-                  <option value="payroll-tax">Payroll Tax (940/941)</option>
-                  <option value="heavy-use-tax">Heavy Use Tax (2290)</option>
-                </optgroup>
-
-                <!-- Logistics, Trucking & Authority -->
-                <optgroup label="🚛 Trucking & Logistics Authority">
-                  <option value="owner-operators">Owner Operators</option>
-                  <option value="trucker-authority">Trucker Authority</option>
-                  <option value="broker-authority">Broker Authority</option>
-                  <option value="ucr-registration">UCR Registration</option>
-                  <option value="dot-consortium">DOT Consortium</option>
-                  <option value="driver-qualification-file">Driver Qualification File</option>
-                  <option value="process-agent">Process Agent (BOC-3)</option>
-                  <option value="ifta-registration">IFTA Registration</option>
-                  <option value="new-entrant-audit">New Entrant Audit</option>
-                </optgroup>
-
-                <!-- Freight Insurance & Risk Management -->
-                <optgroup label="🛡️ Insurance & Risk Management">
-                  <option value="insurance-risk">Insurance & Risk (General)</option>
-                  <option value="trucker-insurance">Trucker Insurance</option>
-                  <option value="broker-insurance">Broker Insurance</option>
-                </optgroup>
+              <label>FAQ Category Classification</label>
+              <select id="faqCategory" required>
+                <option value="General Information">General Information</option>
+                <option value="Pricing & Billing">Pricing & Billing</option>
+                <option value="Compliance & POA">Compliance & POA</option>
+                <option value="Fulfillment Processing">Fulfillment Processing</option>
               </select>
             </div>
-
             <div class="form-group">
-              <label class="form-label" for="faq-order">Display Sequence Order</label>
-              <input type="number" id="faq-order" class="form-control" value="1" min="1" required />
+              <label>Question Header Text</label>
+              <input type="text" id="faqQuestion" required placeholder="e.g., What is an EIN number?">
             </div>
-
-            <button type="submit" class="btn-submit">Push Record Entry</button>
+            <div class="form-group">
+              <label>Answer Explanation Context</label>
+              <textarea id="faqAnswer" required placeholder="Type the detailed customer knowledge base clarification text here..."></textarea>
+            </div>
+            <div id="faq-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px;"></div>
+            <button type="submit" class="action-btn" id="faqSubmitBtn">Publish Live FAQ Entry ➔</button>
           </form>
-        </section>
+        </div>
 
-        <!-- 📊 ACTIVE ROW INVENTORY MONITOR -->
-        <section class="matrix-card">
-          <h2 class="card-title">Live Row Database Mirror</h2>
-          <div style="overflow-x: auto;">
-            <table class="data-table-frame">
-              <thead>
-                <tr>
-                  <th style="width: 80px;">Seq Ord</th>
-                  <th style="width: 120px;">Scope Slug</th>
-                  <th>Record Entry Matrix Block</th>
-                  <th style="width: 110px; text-align: center;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="live-faq-rows-target">
-                <tr>
-                  <td colspan="4" style="text-align: center; color: var(--text-muted);">Syncing live cloud row pipelines...</td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Inventory List Panel -->
+        <div class="console-card">
+          <h2>Active Platform Knowledge Base Archive</h2>
+          <div id="admin-faq-target-box">
+            <div style="padding:40px; text-align:center; color:var(--text-muted); font-weight:600;">Connecting to the knowledge base storage channels...</div>
           </div>
-        </section>
+        </div>
       </div>
     </main>
-
   </div>
 
-  <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Strict DOM Target Selectors
+      const faqForm        = document.getElementById("faqEntryForm");
+      const faqCategorySel = document.getElementById("faqCategory");
+      const faqQuestionIn  = document.getElementById("faqQuestion");
+      const faqAnswerIn    = document.getElementById("faqAnswer");
+      const formStatusDiv  = document.getElementById("faq-form-status");
+      const submitButton   = document.getElementById("faqSubmitBtn");
+      const faqTargetBox   = document.getElementById("admin-faq-target-box");
+
+      if (!faqForm || !faqTargetBox || !formStatusDiv || !submitButton) {
+        throw new Error("✕ Critical UI Error: Missing core layout template faq forms or status nodes.");
+      }
+
+      // 2. Fetch Master Client Initialization Instances
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        faqTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</div>`;
+        throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
+      }
+
+      // --- STAGE 1: READ AND FETCH ALL ACTIVE PUBLIC FAQS ---
+      async function streamActiveFaqs() {
+        try {
+          console.log("📡 [FAQs Engine] Querying live entries from public.faqs...");
+          
+          const { data: faqs, error: fetchError } = await client
+            .from('faqs')
+            .select('id, category, question, answer, created_at')
+            .order('created_at', { ascending: false });
+
+          if (fetchError) {
+            throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
+          }
+
+          if (!faqs || faqs.length === 0) {
+            faqTargetBox.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No active knowledge base rows discovered inside database archives.</div>`;
+            return;
+          }
+
+          faqTargetBox.innerHTML = "";
+
+          faqs.forEach(faqItem => {
+            const rowWrapper = document.createElement("div");
+            rowWrapper.className = "faq-item-row";
+
+            rowWrapper.innerHTML = `
+              <div class="faq-info-meta">
+                <h4>${escapeFaqHtml(faqItem.question)}</h4>
+                <p>${escapeFaqHtml(faqItem.answer)}</p>
+                <span class="category-tag">${escapeFaqHtml(faqItem.category)}</span>
+              </div>
+              <button class="delete-row-btn" data-id="${faqItem.id}">Delete Entry</button>
+            `;
+
+            // Bind individual click listeners to the specific item delete button
+            const deleteBtn = rowWrapper.querySelector(".delete-row-btn");
+            deleteBtn.addEventListener("click", async function() {
+              const targetFaqId = this.getAttribute("data-id");
+              this.disabled = true;
+              this.textContent = "Removing...";
+              console.log(`📡 [FAQs Engine] Deleting entry row matching ID: [${targetFaqId}]`);
+
+              try {
+                const { error: deleteError } = await client
+                  .from('faqs')
+                  .delete()
+                  .eq('id', targetFaqId);
+
+                if (deleteError) throw deleteError;
+                console.log("✓ [FAQs Engine] FAQ deletion verified by backend database server.");
+                await streamActiveFaqs(); // Re-fetch rows instantly
+
+              } catch (delFault) {
+                console.error("✕ Database row deletion request refused:", delFault.message);
+                alert(`✕ Deletion Refused: ${delFault.message}`);
+                this.disabled = false;
+                this.textContent = "Delete Entry";
+              }
+            });
+
+            faqTargetBox.appendChild(rowWrapper);
+          });
+
+        } catch (queryFault) {
+          console.error("✕ FAQs Inventory Synchronization Aborted:", queryFault.message);
+          faqTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</div>`;
+        }
+      }
+
+      // --- STAGE 2: HANDLE NEW FAQ ENTRY FORM COMPOSITION SUBMISSIONS ---
+      faqForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        formStatusDiv.style.display = "none";
+        formStatusDiv.textContent = "";
+
+        const category = faqCategorySel.value;
+        const question = faqQuestionIn.value.trim();
+        const answer   = faqAnswerIn.value.trim();
+
+        if (!category || !question || !answer) {
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = "✕ Validation Error: All form fields are required.";
+          return;
         }
 
-        // Inline modal helpers map setup options
-        window.toggleInvoiceGenerationModal = function(showFlag) {
-            const modal = document.getElementById('invoice-modal-overlay');
-            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
-        };
+        const originalBtnLabel = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = "Broadcasting to Table Context...";
 
-        function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
-
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-    </script>
-
-    <!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE FAQS MATRIX (Part 1: Initializer & Sync Engines)
-========================================================================== --> 
-<script>
-  // --- 1. GLOBAL TERMINAL MEMORY MATRIX REGISTRIES ---
-  const faqAdminCoreClient = window.supabaseClient || window.supabase;
-  let masterFaqsCacheArray = [];
-  let currentlyEditingFaqUuid = null;
-
-  // --- 2. ENGINE TIMING LIFE-CYCLE INITIALIZER ---
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || faqAdminCoreClient;
-          if (!client) return;
-
-          try {
-              // Perimeter Validation Gate Check: Ensure profile belongs to internal staff
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
-
-              // Hot-reload active FAQ database records inventory
-              await synchronizeFaqsLedgerInventory(client);
-              checkForIncomingAnalyticsAuditTriggers();
-
-          } catch (err) {
-              console.error("FAQ master stack bootstrapping failure:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- 3. CHARACTER COUNT THRESHOLD LOGIC INDICATOR ---
-  function evaluateQuestionCharacterThreshold(inputDomNode) {
-      const currentCounterNode = document.getElementById("faq-current-count");
-      if (currentCounterNode) {
-          currentCounterNode.textContent = inputDomNode.value.length;
-      }
-  }
-
-  // --- 4. SYNCHRONIZE ROW INVENTORY DIRECTLY FROM SYSTEM CLOUDS ---
-  async function synchronizeFaqsLedgerInventory(client) {
-      const targetTbody = document.getElementById("live-faq-rows-target");
-      if (!targetTbody) return;
-
-      try {
-          const { data: faqs, error } = await client
-              .from('faqs')
-              .select('*')
-              .order('display_order', { ascending: true });
-
-          if (error) throw error;
-
-          masterFaqsCacheArray = faqs || [];
-          renderFaqsLedgerMatrixTable(masterFaqsCacheArray);
-
-      } catch (err) {
-          console.error("Database roster retrieval crash:", err.message);
-          targetTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Row pipeline synchronization offline.</td></tr>`;
-      }
-  }
-</script>
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE FAQS MATRIX (Part 2: UI Renderers & Filters)
-========================================================================== --> 
-<script>
-  // --- 1. OUTPUT MASTER DEADLOCK ROW DIRECTORIES NATIVELY ---
-  function renderFaqsLedgerMatrixTable(datasetArray) {
-      const targetTbody = document.getElementById("live-faq-rows-target");
-      if (!targetTbody) return;
-
-      if (datasetArray.length === 0) {
-          targetTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted); font-style:italic;">No custom regulatory rows compiled inside this database scope view.</td></tr>`;
-          return;
-      }
-
-      targetTbody.innerHTML = datasetArray.map(row => `
-          <tr style="border-bottom:1px solid var(--border-color); font-size:0.85rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-              <td style="padding:12px; text-align:center; font-weight:700; color:var(--text-muted);">${row.display_order}</td>
-              <td style="padding:12px; font-family:monospace; font-weight:700; color:var(--text-muted);">/${row.slug_scope}</td>
-              <td style="padding:12px; max-width:420px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                  <strong style="color:var(--text-dark); display:block; margin-bottom:2px;">${row.question}</strong>
-                  <span style="color:var(--text-muted); font-size:0.78rem;">${row.answer}</span>
-              </td>
-              <td style="padding:12px; text-align:center; white-space:nowrap;">
-                  <button type="button" class="btn-sm" style="background:var(--text-dark); padding:4px 10px; margin-right:4px; cursor:pointer;" onclick="enableFaqRecordRowEditForm('${row.id}')">Edit</button>
-                  <button type="button" class="btn-sm" style="background:var(--staff-red); padding:4px 10px; cursor:pointer;" onclick="executeFaqRecordDeletionMutation('${row.id}')">Void</button>
-              </td>
-          </tr>
-      `).join('');
-  }
-
-  // --- 2. LIVE SELECTION GRID SEARCH FILTER ---
-  function executeLiveMatrixSearchFilter(queryTokenValue) {
-      const searchTokenParsed = queryTokenValue.toLowerCase().trim();
-      const filteredResults = masterFaqsCacheArray.filter(faq => 
-          faq.question.toLowerCase().includes(searchTokenParsed) ||
-          faq.answer.toLowerCase().includes(searchTokenParsed) ||
-          faq.slug_scope.toLowerCase().includes(searchTokenParsed)
-      );
-      renderFaqsLedgerMatrixTable(filteredResults);
-  }
-
-  // --- 3. 🎯 LINKED WITH ANALYTICS DESK: INTERCEPT INCOMING ROUTING TRIGGERS ---
-  function checkForIncomingAnalyticsAuditTriggers() {
-      const urlParameters = new URLSearchParams(window.location.search);
-      const incomingTargetFaqId = urlParameters.get("edit_target_id");
-      
-      if (incomingTargetFaqId) {
-          // Fire hot-reload field focus modifier parameters
-          enableFaqRecordRowEditForm(incomingTargetFaqId);
-          displayOperationalStatusToast("🎯 Poor performing FAQ node locked. Ready for immediate text adjustment.");
-      }
-  }
-</script>
-
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE FAQS MATRIX (Part 3: Form Processing & DB Mutators)
-========================================================================== --> 
-<script>
-  // --- 1. LOAD VALUE SELECTION PARAMETERS INTO FORM INPUTS FOR UPDATES ---
-  function enableFaqRecordRowEditForm(recordUuid) {
-      const matchedFaq = masterFaqsCacheArray.find(f => f.id === recordUuid);
-      if (!matchedFaq) return;
-
-      currentlyEditingFaqUuid = recordUuid;
-
-      // Swap Form Header Titles parameters
-      const formCardTitleNode = document.querySelector(".matrix-card .card-title");
-      const submitBtnNode = document.querySelector("#faq-injection-form .btn-submit");
-      
-      if (formCardTitleNode) formCardTitleNode.textContent = `Modify Record Row [ID: ${recordUuid.slice(0,6).toUpperCase()}]`;
-      if (submitBtnNode) {
-          submitBtnNode.textContent = "Save Over-The-Air Modifications 💾";
-          submitBtnNode.style.background = "#10b981";
-      }
-
-      // Populate input data fields natively
-      document.getElementById("faq-question").value = matchedFaq.question;
-      document.getElementById("faq-answer").value = matchedFaq.answer;
-      document.getElementById("faq-slug").value = matchedFaq.slug_scope;
-      document.getElementById("faq-order").value = matchedFaq.display_order;
-
-      // Reset character length warning metrics indicator
-      document.getElementById("faq-current-count").textContent = matchedFaq.question.length;
-      if (formCardTitleNode) formCardTitleNode.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // --- 2. GLOBAL FORM TRANSACTION OVERSIGHT SUBMISSION HANDLER ---
-  async function handleFormSubmission(event) {
-      event.preventDefault();
-      const client = window.supabaseClient || window.supabase || faqAdminCoreClient;
-      const submitBtn = document.querySelector("#faq-injection-form .btn-submit");
-
-      if (!client || !submitBtn) return;
-      submitBtn.disabled = true;
-
-      try {
-          const question = document.getElementById("faq-question").value.trim();
-          const answer = document.getElementById("faq-answer").value.trim();
-          const slug_scope = document.getElementById("faq-slug").value;
-          const display_order = parseInt(document.getElementById("faq-order").value) || 1;
-
-          const submissionPayloadDataBundle = { question, answer, slug_scope, display_order };
-
-          if (currentlyEditingFaqUuid) {
-              // Trigger row UPDATE transaction
-              const { error } = await client
-                  .from('faqs')
-                  .update(submissionPayloadDataBundle)
-                  .eq('id', currentlyEditingFaqUuid);
-
-              if (error) throw error;
-              displayOperationalStatusToast("🎉 Success! FAQ record parameters adjusted and synchronized globally.");
-          } else {
-              // Trigger row INSERT transaction
-              const { error } = await client
-                  .from('faqs')
-                  .insert([submissionPayloadDataBundle]);
-
-              if (error) throw error;
-              displayOperationalStatusToast("🚀 Success! New answer node appended live to database registries.");
-          }
-
-          // Reset complete layout form views context
-          currentlyEditingFaqUuid = null;
-          document.getElementById("faq-injection-form").reset();
+        try {
+          console.log("📡 [FAQs Engine] Pushing new entry payload row to public.faqs...");
           
-          const defaultCardTitle = document.querySelector(".matrix-card .card-title");
-          if (defaultCardTitle) defaultCardTitle.textContent = "Append Record Row";
-          if (submitBtn) {
-              submitBtn.textContent = "Push Record Entry";
-              submitBtn.style.background = "";
+          const { error: insertError } = await client
+            .from('faqs')
+            .insert([
+              { category, question, answer, created_at: new Date().toISOString() }
+            ]);
+
+          if (insertError) {
+            throw new Error(`Postgres Insertion Failure [Code ${insertError.code}]: ${insertError.message}`);
           }
-          document.getElementById("faq-current-count").textContent = "0";
 
-          await synchronizeFaqsLedgerInventory(client); // Hot-reload table listings
+          console.log("✅ [FAQs Engine] Content successfully added to table layers.");
+          formStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          formStatusDiv.textContent = "✓ FAQ entry successfully published live to production distribution pipelines!";
+          
+          faqForm.reset();
+          await streamActiveFaqs(); // Hydrate inventory instantly
 
-      } catch (err) {
-          console.error("FAQ structural write error:", err.message);
-          alert(`Filing Aborted: ${err.message}`);
-      } finally {
-          submitBtn.disabled = false;
+        } catch (postFault) {
+          console.error("✕ FAQ entry publication chain broke:", postFault.message);
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = `✕ Publishing Aborted: ${postFault.message}`;
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = originalBtnLabel;
+        }
+      });
+
+      function escapeFaqHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
       }
-  }
 
-  // --- 3. PURGE ROW DATA VECTOR FROM STORAGE LEDGER ---
-  async function executeFaqRecordDeletionMutation(recordUuid) {
-      const client = window.supabaseClient || window.supabase || faqAdminCoreClient;
-      if (!client) return;
-
-      const deleteConfirmationCheck = confirm("⚠️ Regulatory System Check: Are you absolutely certain you want to void and delete this FAQ row permanently from public view matrices?");
-      if (!deleteConfirmationCheck) return;
-
-      try {
-          const { error } = await client
-              .from('faqs')
-              .delete()
-              .eq('id', recordUuid);
-
-          if (error) throw error;
-
-          displayOperationalStatusToast("Item removed. Re-indexing data arrays...");
-          await synchronizeFaqsLedgerInventory(client);
-
-      } catch (err) {
-          alert(`Deletion intercept failure: ${err.message}`);
-      }
-  }
-
-  // --- 4. VISUAL NOTIFICATION FEEDBACK TOAST ---
-  function displayOperationalStatusToast(messageStr) {
-      const toastNode = document.getElementById("status-notification-toast");
-      if (toastNode) {
-          toastNode.textContent = messageStr;
-          toastNode.style.display = "block";
-          setTimeout(() => { toastNode.style.display = "none"; }, 4000);
-      }
-  }
-</script>
+      // Trigger structural execution cycle immediately on initial thread frame
+      await streamActiveFaqs();
+    });
+  </script>
 </body>
 </html>

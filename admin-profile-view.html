@@ -2,122 +2,235 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Profile Dossier Audit | Admin Desk</title>
-  <link rel="stylesheet" href="assets/css/mobile-responsive.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Client Profile Dossier | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <style>
-    :root { 
-      --bg-light: #f4f6f9; 
-      --white: #ffffff; 
-      --border-color: #e2e8f0; 
-      --text-dark: #0f172a; 
-      --text-muted: #475569; 
-      --emerald: #10b981; 
-      --staff-red: #c15254; 
-    }
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      background: var(--bg-light); 
-      margin: 0; 
-      padding: 20px; /* 🟢 Reduced padding for a tighter fit */
-      color: var(--text-dark); 
-    }
-    .profile-view-card { 
-      background: var(--white); 
-      border: 1px solid var(--border-color); 
-      border-radius: 8px; 
-      padding: 24px; /* 🟢 Balanced padding margins */
-      max-width: 850px; 
-      margin: 0 auto; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02); 
-    }
-    .grid-2 { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 16px; /* 🟢 Tightened layout gap spacing */
-      margin-top: 14px; 
-    }
-    .meta-box { 
-      background: #f8fafc; 
-      border: 1px solid var(--border-color); 
-      border-radius: 6px; 
-      padding: 12px 14px; 
-    }
-    .meta-box span { 
-      display: block; 
-      font-size: 0.68rem; /* 🟢 Scaled typography down */
-      font-weight: 800; 
-      text-transform: uppercase; 
-      color: var(--text-muted); 
-      margin-bottom: 2px; 
-      letter-spacing: 0.5px;
-    }
-    .meta-box strong { 
-      font-size: 0.88rem; /* 🟢 Balanced data view sizes */
-      color: var(--text-dark); 
-      word-break: break-all; 
-    }
-    .back-btn { 
-      background: var(--text-dark); 
-      color: #fff; 
-      text-decoration: none; 
-      padding: 8px 14px; 
-      border-radius: 6px; 
-      font-weight: 700; 
-      font-size: 0.78rem; 
-      display: inline-flex; 
-      align-items: center; 
-      gap: 6px; 
-      margin-bottom: 16px; 
-    }
-    h2 {
-      font-size: 0.9rem !important; /* 🟢 Subtitles shrunk for data density */
-      font-weight: 800 !important; 
-      margin: 24px 0 0 0 !important; 
-      text-transform: uppercase !important; 
-      letter-spacing: 0.5px !important; 
-      color: var(--staff-red) !important;
-    }
-    h2:first-of-type {
-      margin-top: 0 !important;
-    }
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    
+    /* WORKSPACE FRAME */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; margin-bottom: 24px !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+    
+    /* DETAILED PROFILE GRID PARAMETERS */
+    .profile-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; text-align: left; }
+    .meta-field-cell { display: flex; flex-direction: column; gap: 4px; }
+    .meta-field-cell label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+    .meta-field-cell span { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+    .status-dropdown-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 700; width: 100%; outline: none; background: #f8fafc; cursor: pointer; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-config.js"></script>
 </head>
 <body>
-
-  <div style="max-width: 850px; margin: 0 auto;">
-    <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard Hub</a>
-    
-    <main class="profile-view-card">
-      <div style="border-bottom: 2px solid var(--bg-light); padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-        <div>
-          <h1 id="view-company-header" style="margin: 0; font-size: 1.4rem; font-weight: 900; letter-spacing: -0.3px;">Synchronizing Profile...</h1>
-          <p style="margin: 2px 0 0 0; color: var(--text-muted); font-size: 0.8rem;">Live corporate registration details synced directly from central databanks.</p>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
         </div>
-        <span id="view-status-pill" style="background: #e2e8f0; color: var(--text-dark); font-weight: 800; font-size: 0.65rem; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;">SCANNING</span>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
       </div>
+    </aside>
 
-      <h2>1. Company Identity Parameters</h2>
-      <div class="grid-2">
-        <div class="meta-box"><span>Legal Enterprise Name</span><strong id="view-company-name">---</strong></div>
-        <div class="meta-box"><span>F4U Secure Account Number</span><strong id="view-account-number">---</strong></div>
-        <div class="meta-box"><span>Federal Taxpayer ID / EIN</span><strong id="view-ein">---</strong></div>
-        <div class="meta-box"><span>Registered Customer Email</span><strong id="view-email">---</strong></div>
-      </div>
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Client Corporate Profile Dossier</h1>
+          <p id="dossier-subtitle">Parsing operational tracking matrix parameters...</p>
+        </div>
+      </header>
 
-      <h2>2. Compliance & Location Logistics</h2>
-      <div class="grid-2">
-        <div class="meta-box" style="grid-column: span 2;"><span>Principal Office Address</span><strong id="view-address">---</strong></div>
-        <div class="meta-box"><span>State of Formation</span><strong id="view-state">---</strong></div>
-        <div class="meta-box"><span>Purchased Fulfillment Service Plan</span><strong id="view-service">---</strong></div>
+      <div class="content-container">
+        <div class="console-card">
+          <h2>Filing Registration Parameters Overview</h2>
+          <div id="dossier-loading-box" style="padding: 40px; text-align: center; color: var(--text-muted); font-weight: 600;">
+            Extracting profile row structures out of secure database spaces...
+          </div>
+          
+          <div id="dossier-main-layout" style="display: none;" class="profile-meta-grid">
+            <div class="meta-field-cell"><label>Target Corporate Entity</label><span id="view-company-name"></span></div>
+            <div class="meta-field-cell"><label>Account Email Holder</label><span id="view-email"></span></div>
+            <div class="meta-field-cell"><label>Filing Service Title</label><span id="view-service-title"></span></div>
+            <div class="meta-field-cell"><label>Filing Service Tier</label><span id="view-plan-tier"></span></div>
+            <div class="meta-field-cell"><label>Total Service Fee Paid</label><span id="view-total-fee" style="color:var(--text-dark); font-weight:800;"></span></div>
+            <div class="meta-field-cell"><label>Tracking Session Reference</label><span id="view-tracking-number" style="font-family: monospace;"></span></div>
+            <div class="meta-field-cell"><label>POA Signature Verification String</label><span id="view-poa-sig" style="font-family: monospace; font-size: 0.8rem; color:var(--text-muted);"></span></div>
+            
+            <div class="meta-field-cell">
+              <label>Modify Operational Status Matrix</label>
+              <select id="view-status-selector" class="status-dropdown-control">
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="fulfillment lane">Fulfillment Lane</option>
+                <option value="audit required">Audit Required</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <!-- 🧼 DEVELOPER JSONB DUMP CONTAINER COMPLETELY PURGED -->
     </main>
   </div>
 
-  <script src="assets/js/admin-profile-view.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      // 1. Resolve Document Interface Mount Elements
+      const loadingBox      = document.getElementById("dossier-loading-box");
+      const mainLayout      = document.getElementById("dossier-main-layout");
+      const dossierSubtitle = document.getElementById("dossier-subtitle");
+      
+      const compNameEl     = document.getElementById("view-company-name");
+      const emailEl        = document.getElementById("view-email");
+      const titleEl        = document.getElementById("view-service-title");
+      const tierEl         = document.getElementById("view-plan-tier");
+      const feeEl          = document.getElementById("view-total-fee");
+      const trackingEl     = document.getElementById("view-tracking-number");
+      const poaSigEl       = document.getElementById("view-poa-sig");
+      const statusSelector = document.getElementById("view-status-selector");
+
+      if (!loadingBox || !mainLayout || !statusSelector) {
+        throw new Error("✕ Critical UI Error: Core dossier text display nodes or selectors are missing from the HTML tree.");
+      }
+
+      // 2. Scan URL Context for Strict Token and Email Routing Parameters
+      const urlQueryScanner = new URLSearchParams(window.location.search);
+      const targetToken      = urlQueryScanner.get("token");
+      const targetEmail      = urlQueryScanner.get("email");
+
+      if (!targetToken) {
+        loadingBox.style.color = "var(--staff-red)";
+        loadingBox.textContent = "✕ Navigation Exception: Required tracking token search argument is missing from query string.";
+        throw new Error("✕ Parameter Verification Failed: Direct navigation blocked without an absolute token reference key.");
+      }
+
+      // 3. Verify Database Engine Client Connection Layer
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        loadingBox.style.color = "var(--staff-red)";
+        loadingBox.textContent = "✕ System Error: Supabase client connection missing.";
+        throw new Error("✕ Initialization Error: Supabase database interface layer is unassigned on global namespaces.");
+      }
+
+      let activeRecordInternalId = null;
+
+      async function fetchProfileDossierRow() {
+        try {
+          console.log(`📡 [Dossier Engine] Initiating target lookup query for token match: [${targetToken}]`);
+          
+          // 🟢 EXCLUSIVE DATA QUERY: Pull single record details using exact tracking or id parameters
+          let query = client.from('orders').select('*');
+          
+          if (targetToken.includes('-') && targetToken.length === 36) {
+            query = query.eq('id', targetToken);
+          } else {
+            query = query.eq('tracking_number', decodeURIComponent(targetToken));
+          }
+
+          const { data: recordPayload, error: queryError } = await query;
+
+          if (queryError) {
+            throw new Error(`Postgres Transaction Exception [Code ${queryError.code}]: ${queryError.message}`);
+          }
+
+          if (!recordPayload || recordPayload.length === 0) {
+            loadingBox.style.color = "var(--staff-red)";
+            loadingBox.textContent = "✕ Record Not Found: The tracking parameter does not point to an active record cell.";
+            return;
+          }
+
+          const targetRow = recordPayload[0];
+          activeRecordInternalId = targetRow.id;
+
+          // Hydrate the dossier display text metrics elements cleanly
+          if (dossierSubtitle) dossierSubtitle.textContent = `Displaying parameters profile dossier map for Record ID: ${targetRow.id}`;
+          if (compNameEl)  compNameEl.textContent  = targetRow.company_name || "Unnamed Enterprise";
+          if (emailEl)     emailEl.textContent     = targetRow.email || "unregistered-guest@email.com";
+          if (titleEl)     titleEl.textContent     = targetRow.service_title || "State Filing Integration Module";
+          if (tierEl)      tierEl.textContent      = String(targetRow.plan_tier || 'Starter').toUpperCase();
+          if (feeEl)       feeEl.textContent       = `$${parseFloat(targetRow.total_fee || 0).toFixed(2)}`;
+          if (trackingEl)  trackingEl.textContent  = targetRow.tracking_number || targetRow.id;
+          if (poaSigEl)    poaSigEl.textContent    = targetRow.poa_signature_verification_string || "No digital execution logged";
+          
+          // Set selection state option matching database properties cleanly
+          statusSelector.value = String(targetRow.status || 'pending').toLowerCase().trim();
+
+          // Reveal data views layout grid and clear loader
+          loadingBox.style.display = "none";
+          mainLayout.style.display = "grid";
+
+        } catch (extractionFault) {
+          console.error("✕ Dossier Extraction Halted:", extractionFault.message);
+          loadingBox.style.color = "var(--staff-red)";
+          loadingBox.textContent = `✕ Connection Aborted: ${extractionFault.message}`;
+        }
+      }
+
+      // 4. BIND EVENT LISTENERS TO PUSH LIVE PIPELINE MUTATIONS ON DROP-DOWN CHANGES
+      statusSelector.addEventListener("change", async function() {
+        if (!activeRecordInternalId) {
+          alert("✕ Mutation Blocked: Target database record index has not been successfully resolved.");
+          return;
+        }
+
+        const selectedStatusValue = this.value;
+        this.disabled = true;
+        console.log(`📡 [Dossier Engine] Sending row mutation payload to server. Target ID: [${activeRecordInternalId}] ➔ Status: [${selectedStatusValue}]`);
+
+        try {
+          const { error: updateError } = await client
+            .from('orders')
+            .update({ status: selectedStatusValue })
+            .eq('id', activeRecordInternalId);
+
+          if (updateError) throw updateError;
+          console.log(`✓ [Dossier Engine] Mutation approved by database server. Status locked: [${selectedStatusValue}]`);
+
+        } catch (mutationFault) {
+          console.error("✕ Database status update rejected:", mutationFault.message);
+          alert(`✕ Server Refused Mutation: ${mutationFault.message}`);
+          await fetchProfileDossierRow(); // Rollback and sync UI state to database properties
+        } finally {
+          this.disabled = false;
+        }
+      });
+
+      // Execute data fetching pipeline cycle immediately on initial load sequence
+      await fetchProfileDossierRow();
+    });
+  </script>
 </body>
 </html>

@@ -3,435 +3,225 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>FAQ Analytics Desk | filings4u Staff</title>
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>FAQs Analytics Matrix | filings4u Staff</title>
   <meta name="theme-color" content="#c15254">
-  
-  <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-  <script src="assets/js/supabase-config.js"></script>
-  <link rel="stylesheet" href="assets/css/mobile-responsive.css">
-
- <style>
-  :root {
-    --bg-light: #f4f6f9;
-    --white: #ffffff;
-    --border-color: #e2e8f0;
-    --text-dark: #0f172a;
-    --text-muted: #475569;
-    --emerald: #10b981;
-    --staff-red: #c15254;
-    --sidebar-width: 260px;
-  }
-  body, html {
-    margin: 0 !important; padding: 0 !important;
-    min-height: 100vh !important;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    background-color: var(--bg-light) !important;
-    color: var(--text-dark) !important;
-  }
-  .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
-  
-  /* 📁 ACCORDION SIDEBAR PANEL STYLING */
-  .portal-sidebar {
-    width: var(--sidebar-width) !important; background: var(--white) !important;
-    border-right: 1px solid var(--border-color) !important; display: flex !important;
-    flex-direction: column !important; position: fixed !important;
-    top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important;
-  }
-  .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; }
-  .admin-badge {
-    display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important;
-    font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important;
-    letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important;
-  }
-  .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
-  
-  .accordion-trigger {
-    width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; 
-    font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; 
-    letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; 
-    cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important;
-  }
-  .accordion-trigger:hover, .accordion-trigger.active { background: #edf2f7 !important; color: var(--text-dark) !important; }
-  .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
-  
-  .nav-item {
-    display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important;
-    color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important;
-    font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; transition: all 0.15s !important;
-  }
-  .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
-  .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
-
-  .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
-  .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
-
-  /* 🖥️ 🏁 FIXED: ALIGNED PORTAL MAIN AREA AND CARD CONTAINER STYLES */
-  .portal-main { 
-    margin-left: var(--sidebar-width) !important; 
-    flex: 1 !important; 
-    padding: 40px !important; 
-    box-sizing: border-box !important; 
-    min-width: 0 !important; 
-    display: block !important;
-  }
-  .portal-header { 
-    display: flex !important; 
-    justify-content: space-between !important; 
-    align-items: center !important; 
-    width: 100% !important; 
-    margin-bottom: 30px !important; 
-    flex-wrap: wrap !important; 
-    gap: 15px !important; 
-    box-sizing: border-box !important;
-  }
-  .portal-header h1 { font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; margin: 0 0 6px 0 !important; }
-  .portal-header p { font-size: 0.85rem !important; color: var(--text-muted) !important; margin: 0 !important; }
-  
-  /* TOOL WRAPPERS & BADGES */
-  .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 12px !important; flex-wrap: nowrap !important; }
-  .header-clock-pill { background: var(--white) !important; border: 1px solid var(--border-color) !important; padding: 8px 12px !important; border-radius: 6px !important; font-size: 0.8rem !important; font-weight: 600 !important; display: flex !important; align-items: center !important; gap: 6px !important; box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; white-space: nowrap !important; color: var(--text-dark) !important; }
-  
-  .matrix-card { background: var(--white) !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; padding: 24px !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-  .data-table-frame { width: 100% !important; border-collapse: collapse !important; text-align: left !important; font-size: 0.85rem !important; }
-  .data-table-frame th { background: #f8fafc !important; padding: 12px !important; font-weight: 700; border-bottom: 2px solid var(--border-color) !important; color: var(--text-muted) !important; }
-  .data-table-frame td { padding: 12px !important; border-bottom: 1px solid var(--border-color) !important; vertical-align: middle !important; }
-  .badge-slug { background: #edf2f7 !important; color: var(--text-dark) !important; padding: 2px 6px !important; border-radius: 4px !important; font-family: monospace !important; font-size: 0.75rem !important; }
-  
-  .btn-optimize { background: var(--staff-red) !important; color: white !important; border: none !important; padding: 6px 12px !important; border-radius: 4px !important; font-size: 0.75rem !important; font-weight: 700 !important; cursor: pointer !important; text-decoration: none !important; display: inline-block !important; }
-  .btn-optimize:hover { background: #ab4446 !important; }
-</style>
-
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    
+    /* WORKSPACE DISTRIBUTION MATRIX */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    
+    /* ANALYTICS CARD GRID GRIDS */
+    .stats-row { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important; gap: 20px !important; margin-bottom: 30px !important; width: 100% !important; }
+    .stat-card { background: var(--white) !important; padding: 20px !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; }
+    .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
+    .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+    
+    /* DISTRIBUTION ROWS PROGRESS GRAPH METRICS */
+    .metric-progress-wrapper { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+    .progress-bar-container { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+    .progress-bar-labels { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-dark); }
+    .progress-bar-track { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; position: relative; }
+    .progress-bar-fill { height: 100%; background: var(--staff-red); border-radius: 4px; width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  </style>
 </head>
 <body>
-        <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-                <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+          <a href="admin-faq-analytics.html" class="nav-item active"><span>📊</span> FAQs Category Volume</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
 
-            </nav>
-         <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
-
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
-      "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
-
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
-
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
-
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
-
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
-</script>
-
-        </aside>
-
-     <!-- 🧱 FIXED WORKSPACE CONTAINER -->
     <main class="portal-main">
       <header class="portal-header">
         <div class="welcome-text">
-          <h1>FAQ Helpfulness Analytics Desk</h1>
-          <p>Identifies poorly performing answers based on real-time public user submissions.</p>
-        </div>
-
-        <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX (Aligns Bell, Clock, and Search side-by-side) -->
-        <div class="header-actions-wrapper">
-          <!-- 🧱 STRUCTURAL NAVIGATION BELL CONTAINER -->
-          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
-            <a href="notifications.html" class="nav-bell-wrapper" aria-label="View Central Notifications Channel" style="text-decoration: none !important; position: relative !important; display: block !important;">
-              <span class="nav-bell-icon" style="font-size: 1.3rem !important;">🔔</span>
-              <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -5px !important; right: -5px !important; background: var(--staff-red) !important; color: white !important; font-size: 0.65rem !important; padding: 2px 6px !important; border-radius: 10px !important; font-weight: bold !important; line-height: 1 !important;">0</div>
-            </a>
-          </div>
-
-          <!-- LIVE SYSTEM CLOCK COMPONENT PILL -->
-          <div class="header-clock-pill">
-            <span>⏱️</span>
-            <span id="portal-clock">00/00/0000 | 00:00:00</span>
-          </div>
-
-          <!-- REFRESH ACTIONS INTERFACE BUTTON -->
-          <div>
-            <button onclick="calculateFaqHelpfulnessMetrics()" style="background: #ffffff !important; border: 1px solid var(--border-color) !important; color: var(--text-dark) !important; padding: 8px 16px !important; font-size: 0.8rem !important; font-weight: 700 !important; border-radius: 6px !important; cursor: pointer !important; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space: nowrap !important; transition: all 0.15s !important;">🔄 Refresh Stats</button>
-          </div>
+          <h1>FAQs Knowledge Base Category Volume</h1>
+          <p>Strict performance analysis of published consumer documentation volumes segmented by department</p>
         </div>
       </header>
 
-      <!-- WHITE CONTENT DISPLAY GRID MATRICES -->
-      <section class="matrix-card">
-        <div style="overflow-x: auto;">
-          <table class="data-table-frame">
-            <thead>
-              <tr>
-                <th style="width: 100px; text-align: center;">Rating</th>
-                <th style="width: 140px;">Scope Slug</th>
-                <th>Question Narrative Matrix</th>
-                <th style="width: 130px; text-align: center;">Total Votes</th>
-                <th style="width: 110px; text-align: center;">Action</th>
-              </tr>
-            </thead>
-            <tbody id="admin-faq-analytics-rows-target">
-              <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Aggregating cloud feedback streams...</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="content-container">
+        <!-- Live Audit Summary Cards -->
+        <div class="stats-row">
+          <div class="stat-card"><small>Published FAQ Blocks</small><h2 id="faq-total-count">0</h2></div>
+          <div class="stat-card"><small>Primary Category Core</small><h2 id="faq-top-category" style="color: var(--emerald);">N/A</h2></div>
+          <div class="stat-card"><small>Fulfillment Documentation Ratio</small><h2 id="faq-fulfillment-pct">0%</h2></div>
         </div>
-      </section>
-    </main>
 
+        <div class="console-card">
+          <h2>Departmental Classification Density Metrics</h2>
+          <div id="faq-analytics-loading-box" style="padding:40px; text-align:center; color:var(--text-muted); font-weight:600;">
+            Tabulating category volumes directly out of secure databases...
+          </div>
+          <div id="faq-progress-bars-target" class="metric-progress-wrapper" style="display:none;">
+            <!-- Render bars script dynamically inside here -->
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
 
-  <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
-        // Inline modal helpers map setup options
-        window.toggleInvoiceGenerationModal = function(showFlag) {
-            const modal = document.getElementById('invoice-modal-overlay');
-            if (modal) modal.style.display = showFlag ? 'flex' : 'none';
-        };
+      // 1. Resolve Document View Port Targets
+      const loadingLabel     = document.getElementById("faq-analytics-loading-box");
+      const progressWrapper  = document.getElementById("faq-progress-bars-target");
+      const totalCountEl     = document.getElementById("faq-total-count");
+      const topCategoryEl    = document.getElementById("faq-top-category");
+      const fulfillmentPctEl = document.getElementById("faq-fulfillment-pct");
 
-        function toggleMobileSidebarMenuOverlay() {
-    // Only run toggle menu slide overrides if the viewport matches mobile parameters
-    if (window.innerWidth > 992) return;
+      if (!loadingLabel || !progressWrapper || !totalCountEl || !topCategoryEl || !fulfillmentPctEl) {
+        throw new Error("✕ Critical UI Error: Analytics metric cards or layout containers are absent from document tree.");
+      }
 
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
+      // 2. Establish Secure Database Connection Interface
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        loadingLabel.style.color = "var(--staff-red)";
+        loadingLabel.textContent = "✕ System Error: Supabase client infrastructure missing.";
+        throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
+      }
 
-    sidebar.classList.toggle("mobile-revealed");
+      async function executeKnowledgeBaseAnalysis() {
+        try {
+          console.log("📡 [Analytics Engine] Auditing documentation density records within public.faqs...");
 
-    if (sidebar.classList.contains("mobile-revealed")) {
-        icon.textContent = "✕";
-    } else {
-        icon.textContent = "☰";
-    }
-}
+          // 🟢 PURE DB DATA STREAM: Pull category classification metrics from your faqs table space
+          const { data: faqRecords, error: fetchError } = await client
+            .from('faqs')
+            .select('category');
 
-document.addEventListener("DOMContentLoaded", () => {
-    const navLinks = document.querySelectorAll(".nav-item");
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            const sidebar = document.querySelector(".portal-sidebar");
-            // Auto close mobile drawer layout menu only if view is running in mobile mode
-            if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                toggleMobileSidebarMenuOverlay();
-            }
-        });
-    });
-});
-    </script>
-
-    <!-- ========================================================================== 
-🏛️ FILINGS4U FAQ ANALYTICS CENTER - PART 1: METRICS PROCESSING LIFECYCLE
-========================================================================= --> 
-<script>
-  // --- 1. ACCESS SHARED CENTRAL CONNECTIONS INFRASTRUCTURE ---
-  const faqAnalyticsCoreClient = window.supabaseClient || window.supabase;
-  let masterFaqAnalyticsCache = [];
-
-  // --- 2. ENGINE TIMING LIFE-CYCLE CORE INITIALIZER ---
-  document.addEventListener('DOMContentLoaded', () => {
-      // 50ms defensive delay check ensures central infrastructure completes bootstrapping
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || faqAnalyticsCoreClient;
-          if (!client) return;
-
-          try {
-              // Perimeter Validation Gate Check: Ensure profile belongs to internal staff
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
-
-              // Hot-reload dynamic calculation matrices rosters
-              await calculateFaqHelpfulnessMetrics();
-
-          } catch (err) {
-              console.error("FAQ analytics hub terminal bootstrap failure:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- 3. RECOVER FEEDBACK STREAMS AND AGGREGATE STATS ---
-  async function calculateFaqHelpfulnessMetrics() {
-      const client = window.supabaseClient || window.supabase || faqAnalyticsCoreClient;
-      const targetTbody = document.getElementById("admin-faq-analytics-rows-target");
-      
-      if (!targetTbody || !client) return;
-      targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Recalculating algorithmic score vectors...</td></tr>`;
-
-      try {
-          // Fetch raw user upvote and downvote actions from the cloud
-          const { data: votes, error } = await client
-              .from('faq_submissions')
-              .select('faq_id, slug_scope, question_text, is_helpful');
-
-          if (error) throw error;
-
-          if (!votes || votes.length === 0) {
-              targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:35px; color:var(--text-muted); font-style:italic;">No user feedback votes registered inside this analytical tracking sequence yet.</td></tr>`;
-              return;
+          if (fetchError) {
+            throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
           }
 
-          // Group and reduce arrays to parse individual metric stats
-          const aggregatedFaqMap = new Map();
-          votes.forEach(v => {
-              if (!aggregatedFaqMap.has(v.faq_id)) {
-                  aggregatedFaqMap.set(v.faq_id, { faq_id: v.faq_id, slug: v.slug_scope, text: v.question_text, upvotes: 0, downvotes: 0 });
-              }
-              const currentObj = aggregatedFaqMap.get(v.faq_id);
-              if (v.is_helpful) currentObj.upvotes++;
-              else currentObj.downvotes++;
+          const absoluteTotalBlocks = faqRecords ? faqRecords.length : 0;
+          if (absoluteTotalBlocks === 0) {
+            loadingLabel.textContent = "ℹ️ Knowledge Base Empty: Zero classification rows located.";
+            if (totalCountEl) totalCountEl.textContent = "0";
+            if (topCategoryEl) topCategoryEl.textContent = "None";
+            if (fulfillmentPctEl) fulfillmentPctEl.textContent = "0%";
+            return;
+          }
+
+          // 3. Initialize Algorithmic Category Accumulators
+          const classificationMaps = {};
+          
+          faqRecords.forEach(row => {
+            const rawCategoryLabel = row.category || "General Information";
+            classificationMaps[rawCategoryLabel] = (classificationMaps[rawCategoryLabel] || 0) + 1;
           });
 
-          masterFaqAnalyticsCache = Array.from(aggregatedFaqMap.values());
-          renderFaqAnalyticsTableRows(masterFaqAnalyticsCache);
+          // Identify top primary category core bounds
+          let highestVolumeTitle = "N/A";
+          let highestVolumeCount = 0;
+          
+          Object.keys(classificationMaps).forEach(key => {
+            if (classificationMaps[key] > highestVolumeCount) {
+              highestVolumeCount = classificationMaps[key];
+              highestVolumeTitle = key;
+            }
+          });
 
-      } catch (err) {
-          console.error("Analytical calculation failure caught:", err.message);
-          targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Analytics Sync Failure.</td></tr>`;
+          // Isolate specialized fulfillment metric splits
+          const fulfillmentVolumeCount = classificationMaps["Fulfillment Processing"] || 0;
+          const computedFulfillmentRatio = Math.round((fulfillmentVolumeCount / absoluteTotalBlocks) * 100);
+
+          // Hydrate Score Summary Text Blocks
+          if (totalCountEl)     totalCountEl.textContent     = absoluteTotalBlocks.toString();
+          if (topCategoryEl)    topCategoryEl.textContent    = highestVolumeTitle;
+          if (fulfillmentPctEl) fulfillmentPctEl.textContent = `${computedFulfillmentRatio}%`;
+
+          // 4. Generate Interactive Horizontal Progress Metric Bars
+          progressWrapper.innerHTML = "";
+          
+          Object.keys(classificationMaps).forEach(categoryKey => {
+            const currentItemCount = classificationMaps[categoryKey];
+            const currentWidthPercentage = Math.round((currentItemCount / absoluteTotalBlocks) * 100);
+
+            const progressBarNode = document.createElement("div");
+            progressBarNode.className = "progress-bar-container";
+            
+            progressBarNode.innerHTML = `
+              <div class="progress-bar-labels">
+                <span>${escapeAnalyticsHtml(categoryKey)}</span>
+                <span>${currentItemCount} Blocks (${currentWidthPercentage}%)</span>
+              </div>
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill" style="width: 0%;"></div>
+              </div>
+            `;
+
+            progressWrapper.appendChild(progressBarNode);
+
+            // Refensively apply smooth micro-repaint widths rendering loops
+            setTimeout(() => {
+              const fillElement = progressBarNode.querySelector(".progress-bar-fill");
+              if (fillElement) fillElement.style.width = `${currentWidthPercentage}%`;
+            }, 60);
+          });
+
+          // Core container displays swap flips
+          loadingLabel.style.display = "none";
+          progressWrapper.style.display = "flex";
+
+        } catch (analyticsException) {
+          console.error("✕ Knowledge Base Analytics Processing Exception:", analyticsException.message);
+          loadingLabel.style.color = "var(--staff-red)";
+          loadingLabel.textContent = `✕ Execution Halted: ${analyticsException.message}`;
+        }
       }
-  }
-</script>
 
+      function escapeAnalyticsHtml(textStr) {
+        if (!textStr) return "";
+        return String(textStr).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
 
-<!-- ========================================================================== 
-🏛️ FILINGS4U FAQ ANALYTICS CENTER - PART 2: UI GENERATOR & ROUTER BINDINGS
-========================================================================= --> 
-<script>
-  // --- 1. OUTPUT ANALYTICAL ROWS NATIVELY ON PANEL LAYOUTS ---
-  function renderFaqAnalyticsTableRows(datasetArray) {
-      const targetTbody = document.getElementById("admin-faq-analytics-rows-target");
-      if (!targetTbody) return;
-
-      targetTbody.innerHTML = datasetArray.map(row => {
-          const totalVotes = row.upvotes + row.downvotes;
-          
-          // Compute the helpfulness ratio as a percentage math indicator
-          const helpfulnessRatingPercentage = totalVotes > 0 ? Math.round((row.upvotes / totalVotes) * 100) : 100;
-          
-          let criticalStatusBadgeStyle = 'color:#10b981; font-weight:700;'; // Healthy emerald
-          if (helpfulnessRatingPercentage < 75) criticalStatusBadgeStyle = 'color:#f59e0b; font-weight:700;'; // Warning amber
-          if (helpfulnessRatingPercentage < 50) criticalStatusBadgeStyle = 'color:#ef4444; font-weight:800;'; // Critical red
-
-          return `
-              <tr style="border-bottom:1px solid var(--border-color, #e2e8f0); font-size:0.88rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-                  <td style="padding:14px 12px; text-align:center; ${criticalStatusBadgeStyle}">${helpfulnessRatingPercentage}%</td>
-                  <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${row.slug}</td>
-                  <td style="padding:14px 12px;"><strong style="color:var(--text-dark); display:block; font-size:0.92rem;">${row.text}</strong></td>
-                  <td style="padding:14px 12px; text-align:center; font-weight:600; color:#475569;">${totalVotes} (${row.downvotes} 👎)</td>
-                  <td style="padding:14px 12px; text-align:center;">
-                      <button class="btn-sm" style="background:var(--text-dark, #0f172a); color:#fff; border:0; padding:6px 12px; border-radius:4px; font-weight:700; font-size:0.75rem; cursor:pointer;" 
-                          onclick="transitFaqToModificationDashboard('${row.faq_id}', '${row.slug}')">
-                          Fix Code →
-                      </button>
-                  </td>
-              </tr>
-          `;
-      }).join('');
-  }
-
-  // --- 2. EXECUTABLE TRANSIT PIPELINE TO FAQS MANAGER DASHBOARD ---
-  function transitFaqToModificationDashboard(faqIdUuid, routeSlugString) {
-      // Passes parameters directly into the next file in your alphabetical sequence to isolate editing fields
-      window.location.href = `admin-faqs.html?edit_target_id=${faqIdUuid}&scope=${routeSlugString}`;
-  }
-</script>
+      await executeKnowledgeBaseAnalysis();
+    });
+  </script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#c15254">
   <link rel="icon" type="image/png" href="images/fav.png">
   <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
-  <script src="https://jsdelivr.net" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <style>
     :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
     body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
@@ -98,3 +98,89 @@
 
   <script src="assets/js/supabase-config.js"></script>
   <script src="assets/js/admin-navigation.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      const auditTableBody = document.getElementById("admin-compliance-target-box");
+
+      if (!auditTableBody) {
+        throw new Error("✕ Critical UI Error: Cannot locate table alignment body element 'admin-compliance-target-box' inside current document.");
+      }
+
+      // Resolve authenticated database drivers from shared client configurations
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
+      }
+
+      async function executeComplianceAuditStream() {
+        try {
+          console.log("🛡️ [Compliance Engine] Querying signature parameters from public.orders...");
+
+          // 🟢 PURE DB DATA STREAM: Map records strictly from your single orders data-grid
+          const { data: auditRecords, error: fetchError } = await client
+            .from('orders')
+            .select('id, company_name, email, tracking_number, poa_signed_state, poa_signature_verification_string')
+            .order('created_at', { ascending: false });
+
+          if (fetchError) {
+            throw new Error(`Postgres Transaction Exception [Code ${fetchError.code}]: ${fetchError.message}`);
+          }
+
+          if (!auditRecords || auditRecords.length === 0) {
+            auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No corporate rows recorded for compliance auditing.</td></tr>`;
+            return;
+          }
+
+          auditTableBody.innerHTML = "";
+
+          auditRecords.forEach(row => {
+            const trElement = document.createElement("tr");
+            trElement.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const companyLabel = row.company_name || "Unnamed Corporation";
+            const accountEmail = row.email || "no-email-logged@email.com";
+            const trackingCode = row.tracking_number || row.id;
+            
+            // Check Boolean state parameters for legal signature status indicators
+            const isPoaExecuted = row.poa_signed_state === true;
+            const signatureHashTrace = row.poa_signature_verification_string || "No digital signature recorded";
+
+            let executionBadgeStyle = "background:#fef2f2; color:#991b1b;"; // Fault un-signed state colors
+            let executionBadgeLabel = "Not Executed";
+
+            if (isPoaExecuted) {
+              executionBadgeStyle = "background:#e6f4ea; color:#137333;"; // Valid authorization colors
+              executionBadgeLabel = "Authorized & Valid";
+            }
+
+            trElement.innerHTML = `
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${sanitizeStringData(companyLabel)}</td>
+              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${sanitizeStringData(accountEmail)}</td>
+              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem;">${sanitizeStringData(trackingCode)}</td>
+              <td style="padding:14px 12px;"><span style="${executionBadgeStyle} padding:4px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${executionBadgeLabel}</span></td>
+              <td style="padding:14px 12px; text-align:right; font-family:monospace; color:#475569; font-weight:700; font-size:0.8rem; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sanitizeStringData(signatureHashTrace)}">${sanitizeStringData(signatureHashTrace)}</td>
+            `;
+
+            auditTableBody.appendChild(trElement);
+          });
+
+        } catch (auditException) {
+          console.error("✕ Compliance Audit Stream Aborted:", auditException.message);
+          auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Audit Halted: Failed to parse signature parameters.</td></tr>`;
+        }
+      }
+
+      function sanitizeStringData(textString) {
+        if (!textString) return "";
+        return String(textString).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      await executeComplianceAuditStream();
+    });
+  </script>
+</body>
+</html>

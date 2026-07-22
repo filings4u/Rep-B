@@ -1,692 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Entity Master Directory | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Entity Master Ledger | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
-    <style>
-        /* ==========================================================================
-           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-            background-color: var(--white) !important;
-        }
-
-        /* 🎯 FIXED: Changed background-color to white to remove the gray tint */
-        .accordion-trigger {
-            width: 100% !important;
-            background: var(--white) !important; 
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger:hover, .accordion-trigger.active {
-            background: #edf2f7 !important; /* Premium light-blue focus state */
-            color: var(--text-dark) !important;
-        }
-
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            transition: max-height 0.25s ease-out !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-            background-color: var(--white) !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: var(--white) !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ PRIMARY SCROLLABLE MAIN CONTENT REGION */
-        .portal-main {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            margin-left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width)) !important;
-            height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 20px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .search-input {
-            padding: 10px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 10px !important;
-            font-size: 0.82rem;
-            width: 220px;
-            outline: none;
-            background: #f8fafc;
-            box-sizing: border-box;
-            height: 40px;
-            color: var(--text-dark);
-        }
-
-        .search-input:focus {
-            background: var(--white);
-            border-color: var(--emerald);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
-        }
-
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-            overflow-y: auto !important;
-            height: calc(100vh - 75px) !important;
-        }
-
-        .portal-card {
-            background: var(--white) !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 24px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            margin-bottom: 30px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .admin-table-ledger {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            text-align: left !important;
-            font-size: 0.85rem !important;
-        }
-
-        .admin-table-ledger th {
-            background: #f8fafc !important;
-            border-bottom: 2px solid var(--border-color) !important;
-            padding: 12px 16px !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            font-size: 0.72rem !important;
-            letter-spacing: 0.5px !important;
-        }
-
-        .admin-table-ledger td {
-            padding: 14px 16px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            color: var(--text-dark) !important;
-        }
-
-        .badge-active {
-            background: rgba(16, 185, 129, 0.1) !important;
-            color: var(--emerald) !important;
-            padding: 4px 8px !important;
-            border-radius: 12px !important;
-            font-size: 0.75rem !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            display: inline-block !important;
-        }
-
-        @media (max-width: 991px) {
-            body, html { overflow-y: auto !important; }
-            .dashboard-wrapper { flex-direction: column !important; height: auto !important; }
-            .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
-            .portal-main { margin-left: 0 !important; width: 100% !important; height: auto !important; }
-            .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; height: auto !important; }
-            .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
-            .search-input { width: 100% !important; }
-            .content-container { padding: 20px !important; height: auto !important; }
-        }
-    </style>
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    
+    /* MAIN PLATFORM WORKSPACE CONTAINER */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+  </style>
 </head>
 <body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span></button>
+        <div class="accordion-panel">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+        </div>
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 600px;">
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
+          <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
+          <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
 
-        <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-                <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Corporate Entity Master Ledger</h1>
+          <p>Central record authority tracking all formed and active corporate structural rows</p>
+        </div>
+      </header>
 
-            </nav>
-           <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
+      <div class="content-container">
+        <div class="console-card">
+          <h2>Master System Records Inventory</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Entity Name</th>
+                  <th style="padding:12px !important;">Associated Account</th>
+                  <th style="padding:12px !important;">Structure Tier</th>
+                  <th style="padding:12px !important;">Registration Date</th>
+                  <th style="padding:12px !important; text-align:right !important;">Operational Status</th>
+                </tr>
+              </thead>
+              
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing corporate ledger matrix...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
 
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+      const ledgerTableBody = document.getElementById("admin-entity-master-target-box");
 
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
+      if (!ledgerTableBody) {
+        throw new Error("✕ Critical UI Error: Cannot locate table body element anchor 'admin-entity-master-target-box' in document tree.");
+      }
 
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
+      // Fetch master client initialization instances cleanly
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
+        throw new Error("✕ Critical System Error: The global Supabase client connection has not been initialized on the window scope namespace.");
+      }
 
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
+      async function streamCorporateMasterLedger() {
+        try {
+          console.log("📡 [Entity Master Engine] Fetching complete legal filing records from public.orders...");
 
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
+          // 🟢 PURE DB DATA STREAM: Pull columns exclusively from your single orders database table
+          const { data: records, error: queryError } = await client
+            .from('orders')
+            .select('id, company_name, email, plan_tier, status, created_at')
+            .order('created_at', { ascending: false });
 
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
+          if (queryError) {
+            throw new Error(`Postgres Database Operational Exception [Code ${queryError.code}]: ${queryError.message}`);
           }
-      });
-  })();
-</script>
 
-        </aside>
+          if (!records || records.length === 0) {
+            ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No corporate entity master records found inside database layers.</td></tr>`;
+            return;
+          }
 
-        <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div>
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Entity Master Directory</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">Manage global corporate formations and active jurisdictional legal states.</p>
-                </div>
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">00/00/0000 | 00:00:00</span>
-                    </div>
-                    <div>
-                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search corporate ledger...">
-                    </div>
-                </div>
-            </header>
+          ledgerTableBody.innerHTML = "";
 
-            <div class="content-container">
-                <div class="portal-card" style="overflow-x: auto;">
-                    <table class="admin-table-ledger">
-                        <thead>
-                            <tr>
-                                <th>Entity Name / Corporate Title</th>
-                                <th>Client UUID Owner ID</th>
-                                <th>Jurisdiction State</th>
-                                <th>Classification Type</th>
-                                <th>Filing Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminEntityMasterTableBody">
-                    
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
+          records.forEach((rowItem) => {
+            const tr = document.createElement("tr");
+            tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;";
 
-    
-    <script>
-        // 📁 ACCORDION NAVIGATION FIXED CONTROLLER
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            const chevronSymbol = buttonElement.querySelector('.chevron');
-            
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-                if (chevronSymbol) chevronSymbol.textContent = '▼';
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-                if (chevronSymbol) chevronSymbol.textContent = '▲';
-            }
-        }
+            const entityName = rowItem.company_name || "Unnamed Corporate Entity";
+            const accountEmail = rowItem.email || "no-contact@email.com";
+            const planTier = String(rowItem.plan_tier || 'Starter').toUpperCase();
+            const currentStandingStatus = String(rowItem.status || '').toLowerCase().trim();
 
-        function toggleMobileSidebarMenuOverlay() {
-            if (window.innerWidth > 992) return;
-            const sidebar = document.querySelector(".portal-sidebar");
-            if (!sidebar) return;
-            sidebar.classList.toggle("mobile-revealed");
-        }
-
-        // 🏢 Dynamic Database Integration Hydrator
-        async function loadLiveMasterEntityLedger() {
-            const client = window.supabaseClient;
-            const tbody = document.getElementById("adminEntityMasterTableBody");
-            if (!client || !tbody) return;
-
-            try {
-                const { data: entities, error } = await client
-                    .from('entities')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                if (!entities || entities.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">No active entities registered inside system records.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = entities.map(row => `
-                    <tr class="crm-data-row">
-                        <td><strong style="font-size:0.9rem; color:var(--text-dark);">${row.entity_name}</strong></td>
-                        <td><code style="font-family:monospace; background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${row.owner_id}</code></td>
-                        <td style="font-weight:700; text-transform:uppercase;">${row.state_jurisdiction || 'DE'}</td>
-                        <td style="color:var(--text-muted); font-weight:600;">${row.structure_type || 'LLC'}</td>
-                        <td><span class="badge-active" style="background:${row.status === 'Active' ? 'rgba(16,185,129,0.1)' : 'rgba(243,156,18,0.1)'}; color:${row.status === 'Active' ? 'var(--emerald)' : '#d97706'};">${row.status || 'Active'}</span></td>
-                    </tr>
-                `).join('');
-
-            } catch (err) {
-                console.error("Entity directory query stalled:", err.message);
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--staff-red);">Failed to query corporate databases.</td></tr>`;
-            }
-        }
-
-        // Live Fuzzy Search Input Binding Logic Hook
-        document.getElementById('adminGlobalSearchField')?.addEventListener('input', function(e) {
-            const query = e.target.value.toLowerCase().trim();
-            document.querySelectorAll('.crm-data-row').forEach(row => {
-                const textContext = row.textContent.toLowerCase();
-                row.style.setProperty('display', textContext.includes(query) ? 'table-row' : 'none', 'important');
+            // Enforce clean USA standardized calendar date formatting
+            const registrationDate = new Date(rowItem.created_at).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: '2-digit'
             });
-        });
 
-        // Bootstrap initialization polling checker layer
-        const initChecker = setInterval(() => {
-            if (window.supabaseClient) {
-                clearInterval(initChecker);
-                loadLiveMasterEntityLedger();
+            let pillBackground = '#e2e8f0';
+            let pillTextStyleColor = '#475569';
+            if (currentStandingStatus === 'paid' || currentStandingStatus === 'fulfillment lane' || currentStandingStatus === 'completed') {
+              pillBackground = '#e6f4ea';
+              pillTextStyleColor = '#137333';
+            } else if (currentStandingStatus === 'pending') {
+              pillBackground = '#fffbe6';
+              pillTextStyleColor = '#b45309';
+            } else if (currentStandingStatus === 'audit required') {
+              pillBackground = '#fef2f2';
+              pillTextStyleColor = '#991b1b';
             }
-        }, 150);
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const navLinks = document.querySelectorAll(".nav-item");
-            navLinks.forEach(link => {
-                link.addEventListener("click", () => {
-                    const sidebar = document.querySelector(".portal-sidebar");
-                    if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                        toggleMobileSidebarMenuOverlay();
-                    }
-                });
-            });
-        });
-    </script>
+            tr.innerHTML = `
+              <td style="padding: 14px 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${escapeCharacterMarkup(entityName)}</td>
+              <td style="padding: 14px 12px; color: var(--text-muted); text-align: left;">${escapeCharacterMarkup(accountEmail)}</td>
+              <td style="padding: 14px 12px; text-align: left;"><span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">${escapeCharacterMarkup(planTier)}</span></td>
+              <td style="padding: 14px 12px; color: var(--text-muted); text-align: left; font-family: monospace;">${registrationDate}</td>
+              <td style="padding: 14px 12px; text-align: right;"><span style="background:${pillBackground}; color:${pillTextStyleColor}; padding:4px 12px; border-radius:4px; font-size:0.75rem; font-weight:700; text-transform:uppercase; display:inline-block;">${escapeCharacterMarkup(rowItem.status)}</span></td>
+            `;
 
-<!-- ========================================================================== 
-🏛️ FILINGS4U ENTITY MASTER REPOSITORY (Part 1: Persistent Synchronization)
-========================================================================== --> 
-<script>
-  // --- MODULE 1: GLOBAL PLATFORM MEMORY MATRIX REGISTRIES ---
-  const entityAdminMasterClient = window.supabaseClient || window.supabase;
-  let masterEntitiesRosterCache = [];
-  let persistentRenderIntervalLoop = null;
-
-  // --- MODULE 2: REVENUE LIFE-CYCLE INITIALIZATION ENGINE ---
-  document.addEventListener('DOMContentLoaded', () => {
-      // 50ms protective window ensures central setup completely boots first
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || entityAdminMasterClient;
-          if (!client) return;
-
-          try {
-              // Perimeter Access Control Validation Gate Check
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
-
-              // Hot-reload global business formations directory lines
-              await synchronizeGlobalEntitiesLedger(client);
-              setupEntityMasterLiveFilters();
-
-          } catch (err) {
-              console.error("Entity master system boot failure:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- MODULE 3: RECOVER COMPREHENSIVE REVENUE HISTORY LOGS ---
-  async function synchronizeGlobalEntitiesLedger(client) {
-      try {
-          const { data: globalEntities, error } = await client
-              .from('orders')
-              .select('*');
-
-          if (error) throw error;
-
-          masterEntitiesRosterCache = globalEntities || [];
-          
-          // Clear any conflicting render intervals before establishing a fresh tracking loop
-          if (persistentRenderIntervalLoop) clearInterval(persistentRenderIntervalLoop);
-          
-          // 🚀 PERSISTENT PERSISTENCE WRAPPER: Enforces data grid visibility every 300 milliseconds 
-          // to instantly neutralize background script rewrites
-          persistentRenderIntervalLoop = setInterval(() => {
-              renderEntityMasterDirectoryRows(masterEntitiesRosterCache);
-          }, 300);
-
-      } catch (err) {
-          console.error("Global entities matrix extraction crash:", err.message);
-          const targetTbody = document.getElementById("adminEntityMasterTableBody");
-          if (targetTbody) {
-              targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--staff-red); font-weight:600; padding:20px;">⚠️ Entity Master Directory Alignment Sync Error.</td></tr>`;
-          }
-      }
-  }
-</script>
-
-
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ENTITY MASTER REPOSITORY (Part 2: Persistent Row Generation & Filters)
-========================================================================== --> 
-<script>
-  // --- MODULE 1: FORCE-INJECT REGISTERED ENTITY DATAS NATIVELY ---
-  function renderEntityMasterDirectoryRows(datasetArray) {
-      const targetTbody = document.getElementById("adminEntityMasterTableBody");
-      if (!targetTbody) return;
-
-      if (datasetArray.length === 0) {
-          // Verify to make sure we don't spam empty placeholders repeatedly
-          if (!targetTbody.innerHTML.includes("No corporate entity formations")) {
-              targetTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:35px; color:var(--text-muted); font-style:italic;">No corporate entity formations found matching current ledger filter scopes.</td></tr>`;
-          }
-          return;
-      }
-
-      // Compile design data nodes markup mapping standard parameter fallbacks
-      const generatedRowsHtmlMarkup = datasetArray.map(row => {
-          const currentStatusClean = (row.status || row.tax_id_status || 'Active').trim();
-          const badgeStyleClassModifier = currentStatusClean.toLowerCase().replace(/\s+/g, '-');
-          
-          const rawUserIdString = String(row.user_id || 'SYSTEM_SHELL');
-          const truncatedKeyText = rawUserIdString.length > 8 ? rawUserIdString.slice(0,8).toUpperCase() : rawUserIdString.toUpperCase();
-          
-          const formedStateCode = String(row.state || row.jurisdiction_state || row.state_code || 'DE').toUpperCase();
-          const productDescription = row.service || row.service_title || 'LLC Formation';
-          const businessStructureType = productDescription.toUpperCase().includes('CORP') ? 'C-CORP' : 'LLC';
-
-          return `
-              
-                  <td style="padding:14px 16px;"><strong style="color:var(--text-dark, #0f172a); font-size:0.95rem; display:block;">🏢 ${row.company_name || 'Inbound Corporate Lead'}</strong></td>
-                  <td style="padding:14px 16px; font-family:monospace; color:var(--text-muted); font-weight:600;"><span title="${rawUserIdString}">${truncatedKeyText}...</span></td>
-                  <td style="padding:14px 16px;"><span style="font-weight:700; text-transform:uppercase; color:#475569;">${formedStateCode}</span></td>
-                  <td style="padding:14px 16px;"><span style="font-size:0.8rem; background:#f1f5f9; padding:3px 8px; border-radius:4px; font-weight:600; color:#334155;">${businessStructureType}</span></td>
-                  <td style="padding:14px 16px; vertical-align:middle;">
-                      <span class="status-pill status-${badgeStyleClassModifier}" style="font-weight:700; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.3px;">
-                          ${currentStatusClean}
-                      </span>
-                  </td>
-              </tr>`;
-      }).join('');
-
-      // 🧠 DIRECT PROTECTION FORCE OVERRIDE: 
-      // If a background script has wiped the table inner HTML, override it and force re-inject instantly
-      if (targetTbody.innerHTML !== generatedRowsHtmlMarkup) {
-          targetTbody.innerHTML = generatedRowsHtmlMarkup;
-      }
-  }
-
-  // --- MODULE 2: LIVE SEARCH CONSOLE REGEX UTILITIES ---
-  function setupEntityMasterLiveFilters() {
-      const searchInputField = document.getElementById("adminGlobalSearchField");
-      if (!searchInputField) return;
-
-      searchInputField.addEventListener("input", (e) => {
-          const parsingSearchToken = e.target.value.toLowerCase().trim();
-          
-          const filteredResults = masterEntitiesRosterCache.filter(entity => {
-              const entityName = String(entity.company_name || '').toLowerCase();
-              const ownerId = String(entity.user_id || '').toLowerCase();
-              const state = String(entity.state || entity.jurisdiction_state || '').toLowerCase();
-              
-              return entityName.includes(parsingSearchToken) ||
-                     ownerId.includes(parsingSearchToken) ||
-                     state.includes(parsingSearchToken);
+            ledgerTableBody.appendChild(tr);
           });
-          
-          // Clear active browser loop to let search filter input updates paint natively on views
-          if (persistentRenderIntervalLoop) clearInterval(persistentRenderIntervalLoop);
-          renderEntityMasterDirectoryRows(filteredResults);
-          
-          // Fall back to continuous loop if input field values are empty
-          if (!parsingSearchToken) {
-              persistentRenderIntervalLoop = setInterval(() => {
-                  renderEntityMasterDirectoryRows(masterEntitiesRosterCache);
-              }, 300);
-          }
-      });
-  }
-</script>
 
+        } catch (ledgerFault) {
+          console.error("✕ Entity Master Ledger Streaming Exception:", ledgerFault);
+          ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--staff-red); font-weight: 600; font-size:0.85rem;">✕ Failed to sync entity master records ledger.</td></tr>`;
+        }
+      }
+
+      function escapeCharacterMarkup(text) {
+        if (!text) return "";
+        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+
+      await streamCorporateMasterLedger();
+    });
+  </script>
 </body>
 </html>

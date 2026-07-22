@@ -1,848 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Admin Terminal Dashboard | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
-
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Support Tickets | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
-
-    <style>
-        /* ==========================================================================
-           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important; /* Forces normal native scrolling rules */
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger:hover, .accordion-trigger.active {
-            background: #edf2f7 !important;
-            color: var(--text-dark) !important;
-        }
-
-        .accordion-trigger .chevron {
-            font-size: 0.6rem !important;
-            transition: transform 0.2s !important;
-        }
-
-        .accordion-trigger.active .chevron {
-            transform: rotate(180deg) !important;
-        }
-
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            transition: max-height 0.25s ease-out !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
-        .portal-main {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            
-            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
-            margin-left: var(--sidebar-width) !important; 
-            width: calc(100% - var(--sidebar-width)) !important;
-            min-height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 20px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
-        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        /* ⏱️ Input-styled unified date/time pill element */
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .search-input {
-            padding: 10px 16px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 10px !important;
-            font-size: 0.82rem !important;
-            width: 220px !important;
-            outline: none !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            color: var(--text-dark) !important;
-        }
-
-        .search-input:focus {
-            background: var(--white) !important;
-            border-color: var(--emerald) !important;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
-        }
-
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        /* CARD CAROUSELS SYSTEM CORES */
-        .stats-row {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-            gap: 20px !important;
-            margin-bottom: 30px !important;
-            width: 100% !important;
-        }
-
-        .stat-card {
-            background: var(--white) !important;
-            padding: 20px !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            box-sizing: border-box !important;
-        }
-
-        .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
-        .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
-
-        .dashboard-grid-layout {
-            display: grid !important;
-            grid-template-columns: 2fr 1fr !important;
-            gap: 24px !important;
-            align-items: start !important;
-            width: 100% !important;
-        }
-
-        @media (max-width: 1100px) {
-            .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-        }
-
-        .console-card {
-            background: var(--white) !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 24px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            margin-bottom: 24px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
-   
-   @media (max-width: 991px) {
-    body, html { overflow-y: auto !important; }
-    .dashboard-wrapper { flex-direction: column !important; }
-    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
-    .portal-main { margin-left: 0 !important; width: 100% !important; }
-    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
-    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
-    .search-input { width: 100% !important; }
-    .content-container { padding: 20px !important; }
-    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-}
-
-   
-   </style>
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE CONTAINER */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
+    
+    @media (min-width: 1200px) {
+      .content-container { grid-template-columns: 420px 1fr; }
+    }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+    
+    /* INTAKE FORM COMPONENT STYLES */
+    .form-group { text-align: left; margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
+    .form-group textarea { height: 100px; resize: vertical; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: var(--white); border-color: var(--staff-red); }
+    
+    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
+    .action-btn:hover { background: #1e293b; }
+    
+    /* STATUS CONTROLS */
+    .ticket-select-action { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: #f8fafc; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); cursor: pointer; outline: none; }
+  </style>
 </head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+        </div>
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
+          <a href="admin-tickets.html" class="nav-item active"><span>🎫</span> Helpdesk Tickets</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
 
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Helpdesk Ticketing Control Tower</h1>
+          <p>Real-time client support queues, issue lifecycle tracking, and phone call request logging</p>
+        </div>
+      </header>
 
-<body style="background:#f8fafc; margin:0; font-family:sans-serif;">
-
-       <div class="dashboard-wrapper">
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
+      <div class="content-container">
+        <!-- Ticket Phone Intake Form Card -->
+        <div class="console-card">
+          <h2>Log Phone Call / Manual Ticket</h2>
+          <form id="adminTicketIntakeForm">
+            <div class="form-group">
+              <label>Client Account Email</label>
+              <input type="email" id="intakeEmail" required placeholder="customer@email.com">
             </div>
-           <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
-
-            </nav>
-          <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
-
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
-      "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
-
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
-
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
-
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
-
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
-</script>
-        </aside>
-
-<main class="portal-main" style="width:100% !important; padding:30px 20px !important; box-sizing:border-box !important;">
-    
-    <!-- ENTERPRISE OPERATIONS HEADER OVERVIEW -->
-    <header class="portal-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:30px;">
-        <div style="text-align:left;">
-            <h1 style="margin:0; font-size:1.6rem; font-weight:800; color:#0f172a;">ITSM Incident Management Desk</h1>
-            <p style="margin:4px 0 0 0; font-size:0.9rem; color:#64748b;">Review customer system reports, delegate technical support tiers, and track resolution lifecycles.</p>
-        </div>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <input type="text" id="itsmSearchBox" class="search-input" placeholder="Filter incidents by keyword or Client ID..." style="width:280px; height:40px; padding:0 12px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem;">
-            <button class="crm-btn primary" onclick="openNewTicketCreationModal()" style="height:40px; font-weight:700; cursor:pointer; padding:0 16px;">+ Log Support Case</button>
-        </div>
-    </header>
-
-    <!-- ANALYTICS COUNTER CARD TILES ROW BANNER -->
-    <div class="summary-cards-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; margin-bottom:25px; box-sizing:border-box; width:100%;">
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px; text-align:left;">
-            <span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700; letter-spacing:0.3px;">Critical/Unresolved</span>
-            <h2 id="itsmCountCritical" style="margin:5px 0 0 0; font-size:1.8rem; font-weight:800; color:#ef4444;">0</h2>
-        </div>
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px; text-align:left;">
-            <span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700; letter-spacing:0.3px;">Active Processing Tiers</span>
-            <h2 id="itsmCountActive" style="margin:5px 0 0 0; font-size:1.8rem; font-weight:800; color:#f59e0b;">0</h2>
-        </div>
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px; text-align:left;">
-            <span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700; letter-spacing:0.3px;">Closed Support Cases</span>
-            <h2 id="itsmCountTotal" style="margin:5px 0 0 0; font-size:1.8rem; font-weight:800; color:#10b981;">0</h2>
-        </div>
-    </div>
-
-    <!-- MAIN TIMELINE HOLDER CANVAS -->
-    <div id="itsmTicketsTimelineContainer" style="display:flex; flex-direction:column; gap:15px; width:100%; box-sizing:border-box;">
-        <div style="text-align:center; padding:40px; color:#64748b; font-style:italic;">Querying real-time help desk indices...</div>
-    </div>
-</main>
-
-
-<!-- ========================================================================== 
-🏢 FILINGS4U ITSM SUPPORT CENTER (Part 2: Incident Form Dialog Modal Panel)
-=========================================================================== --> 
-<div id="newTicketModal" class="crm-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:99999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
-    <div style="background:#ffffff; width:100%; max-width:650px; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); overflow:hidden; display:flex; flex-direction:column; margin:0 auto;">
-        
-        <div style="background:#0f172a; color:#fff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#fff;">Log New Technical Support Incident</h3>
-            <button onclick="closeNewTicketCreationModal()" style="background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer; line-height:1;">✕</button>
+            <div class="form-group">
+              <label>Issue Subject / Topic</label>
+              <input type="text" id="intakeSubject" required placeholder="e.g., Timing Delay on State Charter Approval">
+            </div>
+            <div class="form-group">
+              <label>Urgency Priority Classification</label>
+              <select id="intakePriority" required>
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Conversation Notes / Message Context</label>
+              <textarea id="intakeMessage" required placeholder="Log detailed processing context notes discussed over the call line..."></textarea>
+            </div>
+            <div id="intake-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px;"></div>
+            <button type="submit" class="action-btn" id="intakeSubmitBtn">Commit Call Ticket ➔</button>
+          </form>
         </div>
 
-        <form id="newTicketForm" onsubmit="executeAdministrativeSupportTicketCreation(event)" style="padding:25px; display:flex; flex-direction:column; gap:14px; margin:0; box-sizing:border-box; width:100%;">
-            <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; text-align:left;">
-                <div>
-                    <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Short Client ID</label>
-                    <input type="number" id="formClientId" class="search-input" style="width:100% !important;" placeholder="e.g. 1001" required>
-                </div>
-                <div>
-                    <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Company Legal Title</label>
-                    <input type="text" id="formCompanyName" class="search-input" style="width:100% !important;" placeholder="Paramount Transport LLC" required>
-                </div>
-            </div>
-            <div style="text-align:left;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Case Issue Subject</label>
-                <input type="text" id="formSubject" class="search-input" style="width:100% !important;" placeholder="Short tracking error title description" required>
-            </div>
-            <div style="text-align:left;">
-                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Troubleshooting Problem Description</label>
-                <textarea id="formDescription" class="search-input" style="width:100% !important; height:90px; padding:10px; font-family:sans-serif; box-sizing:border-box;" placeholder="Provide errors codes or phone intake messages..." required></textarea>
-            </div>
-            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; text-align:left;">
-                <div>
-                    <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Incident Priority Severity</label>
-                    <select id="formPriority" class="search-input" style="width:100% !important; background:#fff; height:40px; cursor:pointer;">
-                        <option value="Critical">🔴 Critical Tier Breach</option>
-                        <option value="High">🟠 High Priority Error</option>
-                        <option value="Medium" selected>🟡 Medium Incident Case</option>
-                        <option value="Low">🟢 Low General Inquiry</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:5px;">Assign To Agent</label>
-                    <select id="formAgent" class="search-input" style="width:100% !important; background:#fff; height:40px; cursor:pointer;">
-                        <option value="Unassigned" selected>Leave Unassigned 👥</option>
-                        <option value="Alex M. (Engineering)">Alex M. (Engineering)</option>
-                        <option value="Sarah T. (Operations)">Sarah T. (Operations)</option>
-                        <option value="Marcus K. (Compliance)">Marcus K. (Compliance)</option>
-                    </select>
-                </div>
-            </div>
-            <div id="modalFeedbackBox" style="font-size:0.85rem; font-weight:700; min-height:1.2em; text-align:left;"></div>
-            <div style="text-align:right; border-top:1px solid #e2e8f0; padding-top:15px; margin-top:5px;">
-                <button type="button" class="crm-btn" style="background:#e2e8f0; color:#475569; margin-right:8px; padding:8px 14px; border:0; border-radius:4px; cursor:pointer;" onclick="closeNewTicketCreationModal()">Cancel</button>
-                <button type="submit" class="crm-btn primary" id="formSubmitBtn" style="padding:8px 16px; border:0; border-radius:4px; font-weight:700; cursor:pointer;">Deploy Support Ticket ➔</button>
-            </div>
-        </form>
-    </div>
-</div>
+        <!-- Ticket Active Queue Card -->
+        <div class="console-card">
+          <h2>Active Helpdesk Operations Queue</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Client Account</th>
+                  <th style="padding:12px !important;">Subject & Context</th>
+                  <th style="padding:12px !important;">Priority</th>
+                  <th style="padding:12px !important; text-align:right !important;">Lifecycle Resolution Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-tickets-queue-target-box">
+                <tr><td colspan="4" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Establishing helpdesk session connection...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-<!-- ========================================================================== 
-🏢 FILINGS4U ITSM SUPPORT CENTER (Part 1: Case-Insensitive Synchronization Core)
-=========================================================================== --> 
-<script>
-  // --- MODULE 1: GLOBAL CONTROL REGISTER MANAGERS ---
-  const itsmAdminCoreClient = window.supabaseClient || window.supabase;
-  let masterItsmTicketsArray = [];
-  let availableSystemAgentsList = []; 
-  let realtimeSupportStreamChannel = null;
-
-  window.streamLiveOperationalLedgers = window.streamLiveOperationalLedgers || function() { return; };
-  window.hydrateAdminDashboardMetrics = window.hydrateAdminDashboardMetrics || function() { return; };
-
-  // --- MODULE 2: INITIALIZATION LIFECYCLE CONTROLLER ENGINE ---
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || itsmAdminCoreClient;
-          if (!client) return;
-
-          try {
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-
-              // Hydrate both database tables concurrently on boot
-              await fetchLiveAdministrativeAgents(client);
-              await synchronizeItsmTicketsPipeline(client);
-              setupItsmGlobalFiltersField();
-
-              // Realtime WebSocket poller captures client form submissions instantly
-              realtimeSupportStreamChannel = client
-                  .channel('live_production_itsm_stream')
-                  .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' }, () => {
-                      synchronizeItsmTicketsPipeline(client);
-                  })
-                  .subscribe();
-
-          } catch (err) {
-              console.error("ITSM production bridge failure caught:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- MODULE 3: EXTRACT REGISTRIES AND LOGS OVER THE AIR ---
-  async function fetchLiveAdministrativeAgents(client) {
-      try {
-          const { data: agents, error } = await client.from('admin_profiles').select('*').order('full_name', { ascending: true });
-          if (error) throw error;
-          
-          availableSystemAgentsList = agents || [];
-
-          const modalSelect = document.getElementById("formAgent");
-          if (modalSelect) {
-              let dropdownOptions = '<option value="Unassigned" selected>Leave Unassigned 👥</option>';
-              availableSystemAgentsList.forEach(agent => {
-                  dropdownOptions += `<option value="${agent.full_name}">${agent.full_name}</option>`;
-              });
-              modalSelect.innerHTML = dropdownOptions;
-          }
-      } catch (err) {
-          console.warn("Agents extraction fallback handled:", err.message);
-      }
-  }
-
-  async function synchronizeItsmTicketsPipeline(client) {
-      const timeline = document.getElementById("itsmTicketsTimelineContainer");
-      if (!timeline) return;
-
-      try {
-          const { data: tickets, error } = await client.from('support_tickets').select('*');
-          if (error) throw error;
-
-          masterItsmTicketsArray = tickets || [];
-          masterItsmTicketsArray.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-
-          renderItsmIncidentsTimelineGrid(masterItsmTicketsArray);
-
-      } catch (err) {
-          timeline.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444; font-weight:700;">⚠️ Production Help Desk Sync Offline.</div>`;
-      }
-  }
-</script>
-
-
-
-
-
-<!-- ========================================================================== 
-🏢 FILINGS4U ITSM SUPPORT CENTER (Part 2: Case-Insensitive Card Matrix Renderer)
-=========================================================================== --> 
-<script>
-  // --- MODULE 1: OUTPUT ACTIONABLE TICKETS CHRONOLOGICALLY ---
-  function renderItsmIncidentsTimelineGrid(datasetArray) {
-      const timeline = document.getElementById("itsmTicketsTimelineContainer");
-      if (!timeline) return;
-
-      // 🧠 SELF-HEALING COUNTERS: Defensively evaluate status case strings to pass all sweeps cleanly
-      const criticalCount = datasetArray.filter(t => String(t.priority).toUpperCase().trim() === 'CRITICAL' && String(t.status).toUpperCase().trim() !== 'CLOSED').length;
-      const activeCount = datasetArray.filter(t => String(t.status).toUpperCase().trim() === 'IN PROGRESS' || String(t.status).toUpperCase().trim() === 'NEW').length;
-      
-      if (document.getElementById("itsmCountCritical")) document.getElementById("itsmCountCritical").textContent = criticalCount;
-      if (document.getElementById("itsmCountActive")) document.getElementById("itsmCountActive").textContent = activeCount;
-      if (document.getElementById("itsmCountTotal")) document.getElementById("itsmCountTotal").textContent = datasetArray.filter(t => String(t.status).toUpperCase().trim() === 'CLOSED' || String(t.status).toUpperCase().trim() === 'RESOLVED').length;
-
-      if (datasetArray.length === 0) {
-          timeline.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b; font-style:italic;">No active technical incidents logged in support queue.</div>`;
-          return;
-      }
-
-      timeline.innerHTML = datasetArray.map(ticket => {
-          const dateStr = new Date(ticket.created_at).toLocaleDateString([], {month:'short', day:'2-digit', year:'numeric'}) + ' ' + new Date(ticket.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-          const pClass = String(ticket.priority).toLowerCase().trim();
-          
-          // Clean up status text checks defensively
-          const cleanStatusText = String(ticket.status || 'New').toUpperCase().trim();
-
-          let agentOptionsMarkup = `<option value="Unassigned" ${ticket.assigned_agent === 'Unassigned' ? 'selected' : ''}>Unassigned 👥</option>`;
-          availableSystemAgentsList.forEach(agent => {
-              agentOptionsMarkup += `<option value="${agent.full_name}" ${ticket.assigned_agent === agent.full_name ? 'selected' : ''}>${agent.full_name}</option>`;
-          });
-
-          return `
-              <div class="ticket-card-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:22px; display:flex; flex-direction:column; gap:12px; text-align:left; box-shadow:0 1px 3px rgba(0,0,0,0.02); margin-bottom:12px;">
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                      <div>
-                          <span style="font-family:monospace; font-size:0.8rem; font-weight:800; color:#1e40af; background:#dbeafe; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:6px;">${ticket.ticket_id}</span>
-                          <span class="badge prio-${pClass}" style="margin-left:5px; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">${ticket.priority} Severity</span>
-                          <h3 style="margin:4px 0; font-size:1.2rem; font-weight:800; color:#0f172a;">${ticket.subject}</h3>
-                          <p style="margin:2px 0 8px 0; font-size:0.9rem; color:#334155; word-break:break-word;">${ticket.description}</p>
-                          <small style="color:#64748b; font-weight:600; font-size:0.78rem;">🏢 Account: <b>${ticket.company_name}</b> | Client ID: <b>#${ticket.user_id}</b> | Logged: ${dateStr}</small>
-                      </div>
-
-                      <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-                          <select class="search-input" onchange="executeItsmPropertyStateChangeMutation('${ticket.id}', 'status', this.value)" style="height:34px; font-weight:700; cursor:pointer; width:180px;">
-                              <option value="New" ${cleanStatusText === 'NEW' ? 'selected' : ''}>New 🆕</option>
-                              <option value="In Progress" ${cleanStatusText === 'IN PROGRESS' ? 'selected' : ''}>In Progress ⚙️</option>
-                              <option value="Resolved" ${cleanStatusText === 'RESOLVED' ? 'selected' : ''}>Resolved ✓</option>
-                              <option value="Closed" ${cleanStatusText === 'CLOSED' ? 'selected' : ''}>Closed 🔒</option>
-                          </select>
-                          
-                          <select class="search-input" onchange="executeItsmPropertyStateChangeMutation('${ticket.id}', 'assigned_agent', this.value)" style="height:34px; font-size:0.75rem; cursor:pointer; width:180px; font-weight:600;">
-                              ${agentOptionsMarkup}
-                          </select>
-                      </div>
-                  </div>
-              </div>`;
-      }).join('');
-  }
-
-  async function executeAdministrativeSupportTicketCreation(event) {
-      event.preventDefault();
-      const client = window.supabaseClient || window.supabase || itsmAdminCoreClient;
-      const btn = document.getElementById("formSubmitBtn");
-      const fb = document.getElementById("modalFeedbackBox");
-
-      if (!client || !btn || !fb) return;
-
-      btn.disabled = true;
-      btn.textContent = "Deploying Incident...";
-
-      try {
-          const cId = document.getElementById("formClientId").value.trim();
-          const cName = document.getElementById("formCompanyName").value.trim();
-          const sub = document.getElementById("formSubject").value.trim();
-          const desc = document.getElementById("formDescription").value.trim();
-          const prio = document.getElementById("formPriority").value;
-          const agnt = document.getElementById("formAgent").value;
-
-          const { error } = await client.from('support_tickets').insert({
-              user_id: cId, company_name: cName, subject: sub, description: desc, priority: prio, assigned_agent: agnt
-          });
-          if (error) throw error;
-
-          fb.style.color = "#10b981";
-          fb.textContent = "🎉 Success! Ticket launched into live pipeline.";
-          setTimeout(() => { closeNewTicketCreationModal(); }, 1200);
-
-      } catch (err) {
-          fb.style.color = "#c15254";
-          fb.textContent = "Deployment Error: " + err.message;
-      } finally {
-          btn.disabled = false;
-          btn.textContent = "Deploy Support Ticket ➔";
-      }
-  }
-
-  async function executeItsmPropertyStateChangeMutation(idUuid, fieldKey, targetStringValue) {
-      const client = window.supabaseClient || window.supabase || itsmAdminCoreClient;
-      if (!client) return;
-
-      try {
-          const payloadUpdateObj = {};
-          payloadUpdateObj[fieldKey] = targetStringValue;
-          payloadUpdateObj['updated_at'] = new Date().toISOString();
-
-          const { error } = await client.from('support_tickets').update(payloadUpdateObj).eq('id', idUuid);
-          if (error) throw error;
-
-      } catch (err) {
-          alert("ITSM Modification Blocked: " + err.message);
-      }
-  }
-
-  function setupItsmGlobalFiltersField() {
-      const input = document.getElementById("itsmSearchBox");
-      if (!input) return;
-
-      input.addEventListener("input", (e) => {
-          const parsingToken = e.target.value.toLowerCase().trim();
-          const filtered = masterItsmTicketsArray.filter(t => {
-              return String(t.subject || '').toLowerCase().includes(parsingToken) || 
-                     String(t.description || '').toLowerCase().includes(parsingToken) || 
-                     String(t.user_id || '').includes(parsingToken);
-          });
-          renderItsmIncidentsTimelineGrid(filtered);
-      });
-  }
-</script>
-
-
-
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
 
     <script>
-  // --- 1. ACCESS COMPATIBLE SINGLE CORE CLIENT CONTEXT AREA ---
-  const masterAdminGatewayClient = window.supabaseClient || window.supabase;
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
-  /**
-   * 📁 SIDEBAR ACCORDION COLLAPSIBLE NAVIGATION HANDLERS
-   */
-  function toggleSidebarAccordion(buttonElement) {
-      buttonElement.classList.toggle('active');
-      const panel = buttonElement.nextElementSibling;
-      if (panel && panel.style) {
-          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-              panel.style.maxHeight = "0px";
-          } else {
-              panel.style.maxHeight = panel.scrollHeight + "px";
-          }
+      // 1. Gather Form Inputs & Structural Table Hooks
+      const ticketForm       = document.getElementById("adminTicketIntakeForm");
+      const intakeEmailInput = document.getElementById("intakeEmail");
+      const intakeSubjectIn  = document.getElementById("intakeSubject");
+      const intakePriorityIn = document.getElementById("intakePriority");
+      const intakeMessageIn  = document.getElementById("intakeMessage");
+      const formStatusDiv    = document.getElementById("intake-form-status");
+      const submitButton     = document.getElementById("intakeSubmitBtn");
+      const queueTableBody   = document.getElementById("admin-tickets-queue-target-box");
+
+      if (!ticketForm || !queueTableBody || !formStatusDiv || !submitButton) {
+        throw new Error("✕ Critical UI Error: Form inputs or ticket list target boxes are missing from document layout.");
       }
-  }
 
-  /**
-   * 📱 PORTAL MOBILE SIDEBAR LAYOUT OVERLAY INTERACTORS
-   */
-  function toggleMobileSidebarMenuOverlay() {
-      if (window.innerWidth > 992) return;
-      const sidebar = document.querySelector(".portal-sidebar");
-      const icon = document.getElementById("mobileNavTriggerIcon");
-      if (!sidebar) return;
-      sidebar.classList.toggle("mobile-revealed");
-      if (sidebar.classList.contains("mobile-revealed")) {
-          if (icon) icon.textContent = "✕";
-      } else {
-          if (icon) icon.textContent = "☰";
+      // 2. Fetch Global Database Instance Connections
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        queueTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</td></tr>`;
+        throw new Error("✕ Initialization Error: Database connection reference unassigned.");
       }
-  }
 
-  // --- 2. UNIFIED LIFECYCLE CONTROLLER ENGINE ---
-  document.addEventListener("DOMContentLoaded", () => {
-      // 50ms defensive delay check ensures central script completes bootstrapping
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || masterAdminGatewayClient;
-          if (!client) {
-              console.error("Critical Failure: Administrative database bridge is offline.");
-              return;
+      // --- STAGE 1: READ AND FETCH ALL ACTIVE DISPATCHED TICKETS ---
+      async function streamActiveHelpdeskQueues() {
+        try {
+          console.log("📡 [Helpdesk Engine] Extracting current tickets from public.support_tickets...");
+          
+          const { data: tickets, error: fetchError } = await client
+            .from('support_tickets')
+            .select('id, email, subject, message, priority, status, created_at')
+            .order('created_at', { ascending: false });
+
+          if (fetchError) {
+            throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
           }
 
-          // Hydrate metrics, dropdown lists, and real-time transaction logs
-          populateAdminClientDropdown(client);
-          hydrateAdminDashboardMetrics(client);
-          streamLiveOperationalLedgers(client);
+          if (!tickets || tickets.length === 0) {
+            queueTableBody.innerHTML = `<tr><td colspan="4" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">The administrative support queue is currently clear.</td></tr>`;
+            return;
+          }
 
-      }, 50);
+          queueTableBody.innerHTML = "";
 
-      // Attach responsive closing triggers to mobile navigation links
-      document.querySelectorAll(".nav-item").forEach(link => {
-          link.addEventListener("click", () => {
-              const sidebar = document.querySelector(".portal-sidebar");
-              if (window.innerWidth <= 992 && sidebar && sidebar.classList.contains("mobile-revealed")) {
-                  toggleMobileSidebarMenuOverlay();
+          tickets.forEach(ticketRow => {
+            const trNode = document.createElement("tr");
+            trNode.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+
+            const clientEmail = ticketRow.email || "guest-call@email.com";
+            const topicTitle  = ticketRow.subject || "Manual Inquiry Note";
+            const bodyContext = ticketRow.message || "No contextual parameters saved.";
+            const urgencyRank = String(ticketRow.priority || 'medium').toUpperCase();
+            const currentStatus = String(ticketRow.status || 'open').toLowerCase().trim();
+
+            let priorityBadgeColor = "background:#f1f5f9; color:#475569;";
+            if (urgencyRank === 'HIGH') priorityBadgeColor = "background:#fffbe6; color:#b45309;";
+            if (urgencyRank === 'CRITICAL') priorityBadgeColor = "background:#fef2f2; color:#991b1b; font-weight:800;";
+
+            trNode.innerHTML = `
+              <td style="padding:14px 12px; font-weight:700; color:#0f172a; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeTicketHtml(clientEmail)}">${escapeTicketHtml(clientEmail)}</td>
+              <td style="padding:14px 12px; text-align:left; max-width:240px;">
+                <div style="font-weight:700; color:#1e293b; margin-bottom:2px;">${escapeTicketHtml(topicTitle)}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;" title="${escapeTicketHtml(bodyContext)}">${escapeTicketHtml(bodyContext)}</div>
+              </td>
+              <td style="padding:14px 12px;"><span style="${priorityBadgeColor} font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; letter-spacing:0.5px;">${escapeTicketHtml(urgencyRank)}</span></td>
+              <td style="padding:14px 12px; text-align:right;">
+                <select class="ticket-select-action" data-id="${ticketRow.id}">
+                  <option value="open" ${currentStatus === 'open' ? 'selected' : ''}>Open</option>
+                  <option value="in progress" ${currentStatus === 'in progress' ? 'selected' : ''}>In Progress</option>
+                  <option value="resolved" ${currentStatus === 'resolved' ? 'selected' : ''}>Resolved</option>
+                  <option value="closed" ${currentStatus === 'closed' ? 'selected' : ''}>Closed</option>
+                </select>
+              </td>
+            `;
+
+            // Bind real-time change mutations directly to the dropdown element cell
+            const selectDropdown = trNode.querySelector(".ticket-select-action");
+            selectDropdown.addEventListener("change", async function() {
+              const targetTicketId = this.getAttribute("data-id");
+              const updatedStatusValue = this.value;
+
+              this.disabled = true;
+              console.log(`📡 [Helpdesk Engine] Dispatching status patch payload. Ticket: [${targetTicketId}] ➔ [${updatedStatusValue}]`);
+
+              try {
+                const { error: updateError } = await client
+                  .from('support_tickets')
+                  .update({ status: updatedStatusValue })
+                  .eq('id', targetTicketId);
+
+                if (updateError) throw updateError;
+                console.log(`✓ [Helpdesk Engine] Status successfully updated to [${updatedStatusValue}]`);
+              } catch (updateFault) {
+                console.error("✕ Database status modification write rejected:", updateFault.message);
+                alert(`✕ Mutation Interrupted: ${updateFault.message}`);
+                await streamActiveHelpdeskQueues(); // Revert to balanced historical table cells
+              } finally {
+                this.disabled = false;
               }
+            });
+
+            queueTableBody.appendChild(trNode);
           });
-      });
-  });
 
-  // --- 3. DYNAMIC SELECTION LOADER: POPULATE REGISTERED PROFILES ---
-  async function populateAdminClientDropdown(client) {
-      const dropdown = document.getElementById("adminClientDropdown");
-      if (!dropdown) return;
+        } catch (queryFault) {
+          console.error("✕ Support Tickets Queue Synchronization Aborted:", queryFault.message);
+          queueTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+        }
+      }
 
-      try {
-          // Extracts active corporate users directly from your client registry table
-          const { data: profiles, error } = await client
-              .from('orders')
-              .select('user_id, company_name')
-              .order('company_name', { ascending: true });
+      // --- STAGE 2: HANDLE PHONE INTAKE FORM SUBMISSION LOGGING ---
+      ticketForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-          if (error) throw error;
+        formStatusDiv.style.display = "none";
+        formStatusDiv.textContent = "";
 
-          if (!profiles || profiles.length === 0) {
-              dropdown.innerHTML = `<option value="">No active client accounts found on server</option>`;
-              return;
+        const email    = intakeEmailInput.value.trim();
+        const subject  = intakeSubjectIn.value.trim();
+        const priority = intakePriorityIn.value;
+        const message  = intakeMessageIn.value.trim();
+
+        if (!email || !subject || !priority || !message) {
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = "✕ Validation Error: All form intake fields are required.";
+          return;
+        }
+
+        const originalBtnLabel = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = "Committing Call Record...";
+
+        try {
+          console.log(`📡 [Helpdesk Engine] Transmitting phone call ticket entry for email: [${email}]`);
+          
+          const { error: insertError } = await client
+            .from('support_tickets')
+            .insert([
+              {
+                email: email,
+                subject: subject,
+                priority: priority,
+                message: message,
+                status: 'open',
+                created_at: new Date().toISOString()
+              }
+            ]);
+
+          if (insertError) {
+            throw new Error(`Postgres Insertion Failure [Code ${insertError.code}]: ${insertError.message}`);
           }
 
-          // Filter out duplicate user rows to keep options neat
-          const unifiedMap = new Map();
-          profiles.forEach(p => { if(p.user_id) unifiedMap.set(p.user_id, p.company_name || 'Unnamed Corporate Entity'); });
+          console.log("✅ [Helpdesk Engine] Phone intake ticket successfully written to table archives.");
+          formStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
+          formStatusDiv.textContent = "✓ Phone support ticket logged and committed to active queues successfully!";
+          
+          ticketForm.reset();
+          await streamActiveHelpdeskQueues(); // Hydrate queue grid spreadsheet cells instantly
 
-          let dropdownOptionsMarkup = '<option value="">-- Choose Target Customer Account --</option>';
-          unifiedMap.forEach((companyName, userId) => {
-              dropdownOptionsMarkup += `<option value="${userId}">${companyName} [ID: ${userId.slice(0,6).toUpperCase()}]</option>`;
-          });
+        } catch (postFault) {
+          console.error("✕ Helpdesk ticket manual insertion chain broke:", postFault.message);
+          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
+          formStatusDiv.textContent = `✕ Insertion Aborted: ${postFault.message}`;
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = originalBtnLabel;
+        }
+      });
 
-          dropdown.innerHTML = dropdownOptionsMarkup;
-
-      } catch (err) {
-          console.warn("Dropdown profiles extraction failure:", err.message);
-          dropdown.innerHTML = `<option value="">Error pulling system accounts</option>`;
+      function escapeTicketHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
       }
-  }
-</script>
 
-
+      // Initialize all operational pipeline stages inside the initial thread frame loop
+      await streamActiveHelpdeskQueues();
+    });
+  </script>
 </body>
 </html>

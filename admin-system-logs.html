@@ -1,707 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>System Logs | filings4u Staff</title>
-    <meta name="theme-color" content="#c15254">
-
-    <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <script src="assets/js/supabase-config.js"></script>
-    <link rel="stylesheet" href="assets/css/mobile-responsive.css">
-
-    <style>
-        /* ==========================================================================
-           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger:hover, .accordion-trigger.active {
-            background: #edf2f7 !important;
-            color: var(--text-dark) !important;
-        }
-
-        .accordion-trigger .chevron {
-            font-size: 0.6rem !important;
-            transition: transform 0.2s !important;
-        }
-
-        .accordion-trigger.active .chevron {
-            transform: rotate(180deg) !important;
-        }
-
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            transition: max-height 0.25s ease-out !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ PRIMARY SCROLLABLE MAIN VIEWPORTS */
-        .portal-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 24px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .search-input {
-            padding: 10px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 10px !important;
-            font-size: 0.82rem;
-            width: 220px;
-            outline: none;
-            background: #f8fafc;
-            box-sizing: border-box;
-            height: 40px;
-            color: var(--text-dark);
-        }
-
-        .search-input:focus {
-            background: var(--white);
-            border-color: var(--emerald);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
-        }
-
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .portal-card {
-            background: var(--white) !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 24px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            margin-bottom: 30px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        /* Console Terminal Spacing Styles */
-        .log-entry-row {
-            display: flex !important;
-            align-items: flex-start !important;
-            gap: 14px !important;
-            padding: 12px 16px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            font-family: monospace !important;
-            font-size: 0.85rem !important;
-            line-height: 1.5 !important;
-        }
-        .log-entry-row:last-child { border-bottom: none !important; }
-
-        .log-timestamp {
-            color: var(--text-muted) !important;
-            white-space: nowrap !important;
-            font-weight: 600 !important;
-        }
-
-        .log-tag {
-            padding: 2px 8px !important;
-            border-radius: 4px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            white-space: nowrap !important;
-            background: var(--bg-light) !important;
-            color: var(--text-muted) !important;
-        }
-        .log-tag.payment { background: rgba(16, 185, 129, 0.1) !important; color: var(--emerald) !important; }
-        .log-tag.error { background: rgba(193, 82, 84, 0.1) !important; color: var(--staff-red) !important; }
-        .log-tag.system { background: rgba(10, 31, 68, 0.08) !important; color: var(--text-dark) !important; }
-
-        .log-message {
-            color: var(--text-dark) !important;
-            text-align: left !important;
-        }
-
-        @media (max-width: 991px) {
-    body, html { overflow-y: auto !important; }
-    .dashboard-wrapper { flex-direction: column !important; }
-    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
-    .portal-main { margin-left: 0 !important; width: 100% !important; }
-    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
-    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
-    .search-input { width: 100% !important; }
-    .content-container { padding: 20px !important; }
-    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-}
-
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Global System Logs | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR SYSTEM MATRIX */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* MAIN PLATFORM WORKSPACE FRAME */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    
+    /* UNIFIED TELEMETRY COUNTER ROWS */
+    .stats-row { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important; gap: 20px !important; margin-bottom: 24px !important; width: 100% !important; }
+    .stat-card { background: var(--white) !important; padding: 20px !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; box-sizing: border-box !important; }
+    .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
+    .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
+    
+    .filter-tabs-row { display: flex !important; gap: 10px !important; margin-bottom: 20px !important; width: 100% !important; }
+    .tab-filter-btn { padding: 10px 20px !important; border-radius: 8px !important; border: 1px solid var(--border-color) !important; background: var(--white) !important; color: var(--text-muted) !important; font-size: 0.8rem !important; font-weight: 700 !important; cursor: pointer !important; outline: none !important; transition: all 0.2s ease !important; }
+    .tab-filter-btn:hover { background: #f8fafc !important; }
+    .tab-filter-btn.active { background: var(--text-dark) !important; color: var(--white) !important; border-color: var(--text-dark) !important; }
+    
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+  </style>
 </head>
 <body>
+  <div class="dashboard-wrapper">
+    <aside class="portal-sidebar">
+      <div class="sidebar-brand-block">
+        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+        <div><div class="admin-badge">Directorate Admin</div></div>
+      </div>
+      <nav class="sidebar-accordion-menu">
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
+          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
+          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
+          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
+        </div>
+        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▲</span></button>
+        <div class="accordion-panel" style="max-height: 400px;">
+          <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
+          <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
+          <a href="admin-system-logs.html" class="nav-item active"><span>📋</span> System Event Logs</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer-lock">
+        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
+      </div>
+    </aside>
 
-    <!-- ==========================================================================
-🏢 FILINGS4U ADMINISTRATIVE MULTI-PAGE TERMINAL - MOBILE DRAWER NAVIGATION
-========================================================================== -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Unified Security Event Logs</h1>
+          <p>Real-time cross-platform access monitoring tracking both administrative operators and guest client portals</p>
+        </div>
+      </header>
 
-<!-- A. FIXED LIGHT BAR STRIP NAVIGATION CONTROLLER -->
-<div class="mobile-top-navbar-strip">
-    <span class="mobile-brand-title">🏛️ Filings4U Admin</span>
-    <button class="mobile-nav-toggle-btn" onclick="executeMobileDrawerRevealToggle(true)" aria-label="Open Navigation Menu">☰</button>
-</div>
+      <div class="content-container">
+        <!-- Live Audit Counter Cards -->
+        <div class="stats-row">
+          <div class="stat-card"><small>Total Logged Events</small><h2 id="log-stat-total">0</h2></div>
+          <div class="stat-card"><small>Admin Operations</small><h2 id="log-stat-admins" style="color: var(--staff-red);">0</h2></div>
+          <div class="stat-card"><small>Client Portal Hits</small><h2 id="log-stat-clients" style="color: var(--emerald);">0</h2></div>
+        </div>
 
-<!-- B. BACKGROUND GLASS SHEET BLUR FILTER OVERLAY -->
-<div class="mobile-drawer-overlay" id="mobileNavOverlay" onclick="executeMobileDrawerRevealToggle(false)"></div>
+        <!-- Dynamic Filter Sorting Buttons -->
+        <div class="filter-tabs-row">
+          <button id="filter-btn-all" class="tab-filter-btn active">Show All Logs</button>
+          <button id="filter-btn-admin" class="tab-filter-btn">Admin Streams Only</button>
+          <button id="filter-btn-client" class="tab-filter-btn">Client Streams Only</button>
+        </div>
 
-<!-- C. SLIDING DIRECT NAVIGATION ACTION DROPDOWN MODULE -->
-<div class="mobile-nav-drawer" id="mobileNavDrawerContainer">
-    <div class="drawer-header">
-        <span style="color:#fff; font-weight:800; font-size:1rem;">Operations Core</span>
-        <button onclick="executeMobileDrawerRevealToggle(false)" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✕</button>
-    </div>
-    
-    <nav class="drawer-links-wrapper">
-        <a href="admin-dashboard.html" class="drawer-nav-item">📈 Performance Analytics</a>
-        <a href="admin-crm.html" class="drawer-nav-item">👥 Client Directory CRM</a>
-        <a href="admin-service-manager.html" class="drawer-nav-item">⚙️ Operations Pipeline</a>
-        <a href="admin-compliance-audit.html" class="drawer-nav-item">🛡️ Compliance Audits</a>
-        <a href="admin-billing.html" class="drawer-nav-item">💳 Revenue Ledgers</a>
-        <a href="admin-documents.html" class="drawer-nav-item">📥 Certificate Vaults</a>
-        <a href="admin-chat.html" class="drawer-nav-item">💬 Support Desk Chat</a>
-        <a href="admin-system-logs.html" class="drawer-nav-item">📋 Telemetry Audit Logs</a>
-    </nav>
-</div>
+        <div class="console-card">
+          <h2>Cross-Platform Security Audit Trail</h2>
+          <div style="overflow-x:auto !important;">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+              <thead>
+                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+                  <th style="padding:12px !important;">Timestamp Index</th>
+                  <th style="padding:12px !important;">Action Vector</th>
+                  <th style="padding:12px !important;">Operator / Client Email</th>
+                  <th style="padding:12px !important;">Account Role</th>
+                  <th style="padding:12px !important; text-align:right !important;">Operation Details Context</th>
+                </tr>
+              </thead>
+              <tbody id="admin-system-logs-target-box">
+                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Querying unified security streams...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-<!-- D. ZERO-DEPENDENCY DRAWER ANIMATOR SCRIPTS BLOCK -->
-<script>
-  function executeMobileDrawerRevealToggle(shouldRevealBoolean) {
-      const overlayElement = document.getElementById("mobileNavOverlay");
-      const drawerContainer = document.getElementById("mobileNavDrawerContainer");
-      
-      if (!overlayElement || !drawerContainer) return;
+  <script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/admin-navigation.js"></script>
 
-      if (shouldRevealBoolean) {
-          overlayElement.style.display = "block";
-          // Small 10ms delay ensures browser repaints display block before pushing translation matrices animations
-          setTimeout(() => {
-              drawerContainer.classList.add("drawer-active");
-          }, 10);
-      } else {
-          drawerContainer.classList.remove("drawer-active");
-          setTimeout(() => {
-              overlayElement.style.display = "none";
-          }, 300); // Links smoothly with the 0.3s CSS sliding speed curve
-      }
-  }
-
-  // Auto-highlight the current active page inside the mobile menu list links properties array
-  document.addEventListener("DOMContentLoaded", () => {
-      const currentFileName = window.location.pathname.split("/").pop();
-      document.querySelectorAll(".drawer-nav-item").forEach(linkItem => {
-          if (linkItem.getAttribute("href") === currentFileName) {
-              linkItem.classList.add("active");
-          }
-      });
-  });
-</script>
-
-
-       <div class="dashboard-wrapper">
-        
-      <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-        <aside class="portal-sidebar">
-            <div class="sidebar-brand-block">
-                <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-                <div><div class="admin-badge">Directorate Admin</div></div>
-            </div>
-                <nav class="sidebar-accordion-menu">
-                <!-- ACCORDION 1 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-                    <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-                    <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-                    <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-                    <a href="admin-faq-analytics.html" class="nav-item" id="nav-analytics-link"><span>👍</span>FAQ Performance Insights</a>
-                </div>
-                <!-- ACCORDION 2 -->
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 600px;">
-                    <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-                    <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-                    <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-                    <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-                    
-                </div>
-                <!-- ACCORDION 3 -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-billing.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-                    <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-                    <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-                </div>
-                <!-- ACCORDION 4 (NEW ADDITIONS) -->
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="admin-chat.html" class="nav-item"><span>💬</span> Client Chat</a>
-                    <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-                    <a href="admin-phone-intake.html" class="nav-item"><span>📞</span> Phone Orders</a>
-                    <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar</a>
-                </div>
-
-            </nav>
-           <!-- ==========================================================================
-🏢 FILINGS4U ADMINDESK FOOTER SECURED ANCHOR PANEL (Self-Healing Click Framework)
-=========================================================================== -->
-<div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-    
-    <!-- 🎯 VISUAL FIX: Centered Flex Alignment Container -->
-    <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-        <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-        <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-    </div>
-    
-    <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-</div>
-
-<!-- 🔒 SELF-CONTAINED LOCAL PURGE TERMINATOR BUTTON INTERCEPTOR -->
-<script>
-  (function injectIsolatedTerminatorPipeline() {
-      "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
-
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
-
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
-
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
-
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
-</script>
-
-        </aside>
-
-    <!-- 🧱 SCROLLABLE DASHBOARD WORKSPACE MAIN CONTAINER -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div>
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-dark);">Admin System Logs</h1>
-                    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">View logs about everyone who logged in or out.</p>
-                </div>
-                
-                <div class="header-actions-wrapper">
-                    <div class="header-clock-pill">
-                        <span>⏱️</span> <span id="portal-clock">05/19/2026 | 10:17:15</span>
-                    </div>
-                    <div>
-                        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search execution tickets...">
-                    </div>
-                </div>
-            </header>
-
-            <div class="content-container">
-                <div class="portal-card" id="adminSystemLogsTerminalWrapper" style="padding: 0 !important; overflow: hidden; background: transparent !important; backdrop-filter: blur(8px) !important; border: 1px solid #e2e8f0 !important; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); width: 100%;">
-                    
-                    <!-- Structured Unified Terminal Console Rows -->
-                    <div class="log-entry-row">
-                        <span class="log-timestamp">2026-05-09 22:15:04</span>
-                        <span class="log-tag payment">Payment</span>
-                        <span class="log-message">Transaction #TXN-9042 settled successfully for Roseland Logistics LLC.</span>
-                    </div>
-                    
-                    <div class="log-entry-row">
-                        <span class="log-timestamp">2026-05-09 22:12:30</span>
-                        <span class="log-tag">User</span>
-                        <span class="log-message">Address Guardrail check triggered for EIN ending in 1234.</span>
-                    </div>
-                    
-                    <div class="log-entry-row">
-                        <span class="log-timestamp">2026-05-09 22:01:15</span>
-                        <span class="log-tag error">Error</span>
-                        <span class="log-message">Failed API connection handshake with Delaware SOS portal service endpoint. Retrying in 30s.</span>
-                    </div>
-                    
-                    <div class="log-entry-row">
-                        <span class="log-timestamp">2026-05-09 21:55:12</span>
-                        <span class="log-tag system">System</span>
-                        <span class="log-message">Automated snapshot database table backup completed successfully across storage cluster cells.</span>
-                    </div>
-                    
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- CORE CONTROL PIPELINES SCRIPTS -->
     <script>
-        function toggleSidebarAccordion(buttonElement) {
-            buttonElement.classList.toggle('active');
-            const panel = buttonElement.nextElementSibling;
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
-    </script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE SECURITY TELEMETRY (Part 1: Initializer Sync Core)
-========================================================================== --> 
-<script>
-  // --- MODULE 1: GLOBAL CONNECTION STATE INFRASTRUCTURES ---
-  const logsAdminCoreClient = window.supabaseClient || window.supabase;
-  let masterSystemLogsCache = [];
-  let realtimeLogsSubscriptionChannel = null;
+      // 1. Resolve Document Interface Mount Elements
+      const logsTableBody = document.getElementById("admin-system-logs-target-box");
+      const statTotalEl   = document.getElementById("log-stat-total");
+      const statAdminsEl  = document.getElementById("log-stat-admins");
+      const statClientsEl = document.getElementById("log-stat-clients");
+      
+      const btnAll     = document.getElementById("filter-btn-all");
+      const btnAdmin   = document.getElementById("filter-btn-admin");
+      const btnClient  = document.getElementById("filter-btn-client");
 
-  // --- MODULE 2: ENGINE TIMING LIFE-CYCLE CONTROLLER INITIALIZER ---
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || logsAdminCoreClient;
-          if (!client) return;
+      if (!logsTableBody) {
+        throw new Error("✕ Critical UI Target Element Missing: 'admin-system-logs-target-box' tbody anchor is absent.");
+      }
 
-          try {
-              // Perimeter Validation Gate Check: Ensure profile belongs to internal staff
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
+      // 2. Fetch Master Client Initialization Instances Cleanly
+      const client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        logsTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
+        throw new Error("✕ Critical System Error: The global Supabase client connection is unassigned.");
+      }
 
-              // Hot-reload current database logging cache rows
-              await synchronizeTelemetrySystemLogs(client);
-              setupLogsGlobalSearchFilter();
+      let masterLogsCacheArray = [];
 
-              // Hook Realtime WebSocket channel to append new platform events instantly
-              realtimeLogsSubscriptionChannel = client
-                  .channel('live_telemetry_stream')
-                  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'platform_security_telemetry_logs' }, (payload) => {
-                      injectSingleTelemetryRowToUI(payload.new);
-                  })
-                  .subscribe();
+      async function streamUnifiedSecurityLogs() {
+        try {
+          console.log("📡 [Security Logs Core] Fetching dual-role security telemetry records...");
 
-          } catch (err) {
-              console.error("Telemetry module initialization failure:", err.message);
+          // 🟢 RAW DB SOURCE HANDSHAKE: Pull rows straight out of the security log table space
+          const { data: logsData, error: queryError } = await client
+            .from('platform_security_telemetry_logs')
+            .select('id, created_at, action_type, actor_email, account_role, message_details')
+            .order('created_at', { ascending: false });
+
+          if (queryError) {
+            throw new Error(`Postgres Log Query Failure [Code ${queryError.code}]: ${queryError.message}`);
           }
-      }, 50);
-  });
 
-  // --- MODULE 3: RECOVER COMPREHENSIVE VAULT RECORDS ---
-  async function synchronizeTelemetrySystemLogs(client) {
-      const container = document.querySelector(".portal-card");
-      if (!container) return;
+          masterLogsCacheArray = logsData || [];
+          
+          // Tabulate card counter balances
+          let totalCount  = masterLogsCacheArray.length;
+          let adminCount  = 0;
+          let clientCount = 0;
 
-      try {
-          const { data: logs, error } = await client
-              .from('platform_security_telemetry_logs')
-              .select('*');
-
-          if (error) throw error;
-
-          // Local Memory Sorting Array: Arranges logs chronologically in the client browser frame fallback
-          masterSystemLogsCache = logs || [];
-          masterSystemLogsCache.sort((a, b) => {
-              const dateA = new Date(a.inserted_at || a.created_at || 0);
-              const dateB = new Date(b.inserted_at || b.created_at || 0);
-              return dateB - dateA; 
+          masterLogsCacheArray.forEach(item => {
+            const role = String(item.account_role || '').toUpperCase().trim();
+            if (role === 'ADMIN STAFF') adminCount++;
+            if (role === 'PORTAL CLIENT') clientCount++;
           });
 
-          renderTelemetryLogsTerminalView(masterSystemLogsCache);
+          // Hydrate stat summary counters
+          if (statTotalEl)   statTotalEl.textContent   = totalCount.toString();
+          if (statAdminsEl)  statAdminsEl.textContent  = adminCount.toString();
+          if (statClientsEl) statClientsEl.textContent = clientCount.toString();
 
-      } catch (err) {
-          console.error("Logs database pipeline sync crash:", err.message);
-          container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--staff-red); font-weight:700;">⚠️ Telemetry index synchronization offline.</div>`;
-      }
-  }
-</script>
+          renderLogsDataGrid(masterLogsCacheArray);
 
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE SECURITY TELEMETRY (Part 2-A: Repaired Light Row Compiler)
-========================================================================== --> 
-<script>
-  function buildTelemetryRowMarkupString(log) {
-      const rawDateValue = log.inserted_at || log.created_at || new Date().toISOString();
-      const timestamp = new Date(rawDateValue).toISOString().replace('T', ' ').slice(0, 19);
-      
-      const actionType = String(log.action_type || 'EVENT').toUpperCase();
-      const roleText = String(log.account_role || log.role || 'USER').toUpperCase();
-      const emailText = log.actor_email || log.email || 'system-node';
-      const detailsText = log.message_details || log.details || 'Filing log context metadata tracking update executed.';
-      
-      // Vivid color palettes optimized for white frosted glass themes
-      let tagBgColor = '#e2e8f0';
-      let tagTextColor = '#334155';
-
-      if (actionType.includes('PAYMENT') || actionType.includes('ORDER')) {
-          tagBgColor = '#d1fae5'; 
-          tagTextColor = '#065f46'; 
-      } else if (actionType.includes('BREACH') || actionType.includes('ERROR') || actionType.includes('FAIL')) {
-          tagBgColor = '#fee2e2'; 
-          tagTextColor = '#991b1b'; 
-      } else if (actionType.includes('AUTH') || actionType.includes('LOGIN') || actionType.includes('PROVISION')) {
-          tagBgColor = '#dbeafe'; 
-          tagTextColor = '#1e40af'; 
-      } else if (actionType.includes('RESET') || actionType.includes('SYSTEM')) {
-          // 🎯 FIXED SYNTAX: Completely removed loose comment syntax tags strings
-          tagBgColor = '#f3e8ff'; 
-          tagTextColor = '#6b21a8'; 
+        } catch (logFault) {
+          console.error("✕ Security Logs Engine processing failure:", logFault.message);
+          logsTableBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--staff-red); font-weight: 600;">✕ Failed to sync cross-platform log streams.</td></tr>`;
+        }
       }
 
-      return `
-          <div class="log-entry-row" style="padding:12px 20px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:15px; font-family:monospace; font-size:0.88rem; background: transparent !important; color: #1e293b !important; width: 100%; box-sizing: border-box;">
-              <span class="log-timestamp" style="color:#64748b !important; white-space:nowrap; font-weight:600;">${timestamp}</span>
-              <span class="log-tag" style="padding:4px 10px; border-radius:4px; font-weight:800; font-size:0.72rem; text-transform:uppercase; background:${tagBgColor} !important; color:${tagTextColor} !important; border:1px solid rgba(0,0,0,0.03); white-space:nowrap;">
-                  ${roleText}: ${actionType}
-              </span>
-              <span class="log-message" style="color:#0f172a !important; text-align:left; word-break:break-word; flex:1; font-weight:500;">
-                  <strong style="color:#475569 !important;">[${emailText}]</strong> ${detailsText}
-              </span>
-          </div>`;
-  }
-</script>
+      function renderLogsDataGrid(dataset) {
+        logsTableBody.innerHTML = "";
 
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMINISTRATIVE SECURITY TELEMETRY (Part 2-B: Real-Time Injectors)
-========================================================================== --> 
-<script>
-  function renderTelemetryLogsTerminalView(datasetArray) {
-      const container = document.getElementById("adminSystemLogsTerminalWrapper");
-      if (!container) return;
-
-      if (datasetArray.length === 0) {
-          container.innerHTML = `<div style="text-align:center; padding:30px; color:#475569; font-style:italic; font-family:monospace;">No recorded operations logs or authentication traces logged to cloud schema.</div>`;
+        if (!dataset || dataset.length === 0) {
+          logsTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">No matching platform access records matching criteria selection.</td></tr>`;
           return;
+        }
+
+        dataset.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;";
+
+          const actionType  = row.action_type || "TELEMETRY";
+          const actorEmail  = row.actor_email || "system-node@filings4u.com";
+          const roleLabel   = row.account_role || "CLIENT GATEWAY";
+          const description = row.message_details || "Processed standard access criteria parameters.";
+          
+          const localizedTime = new Date(row.created_at).toLocaleString('en-US', {
+            year: 'numeric', month: 'short', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+          });
+
+          let actionBadgePillColor = "background: #f1f5f9; color: #475569;";
+          if (actionType === 'LOGIN')  actionBadgePillColor = "background: #e6f4ea; color: #137333; font-weight:700;";
+          if (actionType === 'LOGOUT') actionBadgePillColor = "background: #fffbe6; color: #b45309; font-weight:700;";
+
+          tr.innerHTML = `
+            <td style="padding: 14px 12px; font-family: monospace; color: var(--text-muted); font-size: 0.8rem; white-space: nowrap;">${localizedTime}</td>
+            <td style="padding: 14px 12px;"><span style="${actionBadgePillColor} font-size: 10px; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${escapeLogMarkup(actionType)}</span></td>
+            <td style="padding: 14px 12px; font-weight: 700; color: #0f172a;">${escapeLogMarkup(actorEmail)}</td>
+            <td style="padding: 14px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem;">${escapeLogMarkup(roleLabel)}</td>
+            <td style="padding: 14px 12px; text-align: right; color: var(--text-muted); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeLogMarkup(description)}">${escapeLogMarkup(description)}</td>
+          `;
+          logsTableBody.appendChild(tr);
+        });
       }
 
-      container.innerHTML = datasetArray.map(log => buildTelemetryRowMarkupString(log)).join('');
-  }
+      // 🔍 3. UNIFIED ACCESSIBLE ROUTING TABS FILTRATION CONTROLLERS
+      window.filterSystemLogGrid = function(roleCriteria, elementTrigger) {
+        // Reset interactive visual tabs classes uniformly
+        document.querySelectorAll(".tab-filter-btn").forEach(btn => btn.classList.remove("active"));
+        if (elementTrigger) elementTrigger.classList.add("active");
 
-  function injectSingleTelemetryRowToUI(newLogObj) {
-      const container = document.getElementById("adminSystemLogsTerminalWrapper");
-      if (!container) return;
-      
-      const emptyCheck = container.querySelector("div");
-      if (emptyCheck && emptyCheck.textContent.includes("No recorded operations")) { container.innerHTML = ""; }
+        if (roleCriteria === 'ALL') {
+          renderLogsDataGrid(masterLogsCacheArray);
+        } else {
+          const isolatedSubset = masterLogsCacheArray.filter(item => {
+            return String(item.account_role || '').toUpperCase().trim() === roleCriteria.toUpperCase().trim();
+          });
+          renderLogsDataGrid(isolatedSubset);
+        }
+      };
 
-      const temporaryWrapperDiv = document.createElement("div");
-      temporaryWrapperDiv.innerHTML = buildTelemetryRowMarkupString(newLogObj);
-      
-      container.insertBefore(temporaryWrapperDiv.firstChild, container.firstChild);
-  }
-</script>
+      // Wire onclick triggers safely to standard button layout layers
+      if (btnAll)    btnAll.addEventListener("click", function() { window.filterSystemLogGrid('ALL', this); });
+      if (btnAdmin)  btnAdmin.addEventListener("click", function() { window.filterSystemLogGrid('ADMIN STAFF', this); });
+      if (btnClient) btnClient.addEventListener("click", function() { window.filterSystemLogGrid('PORTAL CLIENT', this); });
 
+      function escapeLogMarkup(text) {
+        if (!text) return "";
+        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
 
-
-
-
+      await streamUnifiedSecurityLogs();
+    });
+  </script>
 </body>
 </html>
