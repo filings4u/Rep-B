@@ -1,59 +1,59 @@
 /**
  * 📁 FILE PATH: assets/js/admin-metrics-ledger.js
- * Responsibility: Query Central Master Schemas & Hydrate Top-Level Admin Statistics
+ * Responsibility: Mathematical tabulation of platform revenue metrics from database fields
  */
 (function() {
-    "use strict";
+  "use strict";
 
-    document.addEventListener("DOMContentLoaded", () => {
-        syncAdminGlobalMetrics();
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+    initializeMetricsHandshake();
+  });
 
-    async function syncAdminGlobalMetrics() {
-        // 🚀 Poll safely until your core backend driver is live
-        if (!window.supabaseInstance || typeof window.supabaseInstance.from !== 'function') {
-            setTimeout(syncAdminGlobalMetrics, 200);
-            return;
-        }
+  async function initializeMetricsHandshake() {
+    const revenueEl = document.getElementById("stat-total-revenue");
+    const activeEl  = document.getElementById("stat-active-users");
+    const pendingEl = document.getElementById("stat-pending-filings");
 
-        const client = window.supabaseInstance;
-
-        try {
-            // Fetch central billing metrics and total profile matrices concurrently
-            const [ordersResult, entitiesResult] = await Promise.all([
-                client.from('orders').select('total_fee, status'),
-                client.from('entities').select('id, status')
-            ]);
-
-            if (ordersResult.error) throw ordersResult.error;
-            if (entitiesResult.error) throw entitiesResult.error;
-
-            const orders = ordersResult.data || [];
-            const entities = entitiesResult.data || [];
-
-            // 1. Calculate Administrative Metrics Parameters
-            const totalRevenue = orders.reduce((acc, curr) => acc + (parseFloat(curr.total_fee) || 0), 0);
-            const activeCount = entities.filter(e => e.status === 'Active' || e.status === 'Completed').length;
-            const pendingAudits = orders.filter(o => o.status === 'Fulfillment Lane' || o.status === 'In Review').length;
-
-            // 2. Identify Layout Target UI Selectors (Targeting your exact metric pills)
-            const revenueDisplay = document.getElementById('statPlatformRevenue') || document.querySelector('.card:nth-of-type(1) div');
-            const entitiesDisplay = document.getElementById('statActiveEntitiesAdmin') || document.querySelector('.card:nth-of-type(2) div');
-            const auditsDisplay = document.getElementById('statPendingAudits') || document.querySelector('.card:nth-of-type(3) div');
-            const healthDisplay = document.getElementById('statSystemHealth') || document.querySelector('.card:nth-of-type(4) div');
-
-            // 3. Inject calculations, clearing out your placeholder ellipses
-            if (revenueDisplay) revenueDisplay.textContent = `$${totalRevenue.toFixed(2)}`;
-            if (entitiesDisplay) entitiesDisplay.textContent = entities.length; // Total dynamic workspace targets
-            if (auditsDisplay) auditsDisplay.textContent = pendingAudits;
-            if (healthDisplay) {
-                healthDisplay.textContent = "100%";
-                healthDisplay.style.color = "#137333";
-            }
-
-        } catch (err) {
-            console.error("[Fatal Infrastructure Metrics Handshake Fault]", err);
-        }
+    let client = window.supabaseInstance || window.supabaseClient;
+    if (!client || typeof client.from !== 'function') {
+      setTimeout(initializeMetricsHandshake, 200);
+      return;
     }
-})();
 
+    try {
+      // Query the specific table target columns cleanly
+      const { data: metricsGrid, error } = await client
+        .from('orders')
+        .select('total_fee, status');
+
+      if (error) throw error;
+
+      let runtimeRevenueSum = 0;
+      let activeEntitiesCount = 0;
+      let pendingAuditsCount  = 0;
+
+      if (metricsGrid && metricsGrid.length > 0) {
+        metricsGrid.forEach(orderRow => {
+          const rowFee = parseFloat(orderRow.total_fee || 0);
+          runtimeRevenueSum += rowFee;
+
+          const rawStatus = String(orderRow.status || '').toLowerCase().trim();
+          
+          if (rawStatus === 'paid' || rawStatus === 'fulfillment lane') {
+            activeEntitiesCount++;
+          } else if (rawStatus === 'pending' || rawStatus === 'audit required') {
+            pendingAuditsCount++;
+          }
+        });
+      }
+
+      // Bind calculations safely into the user interface text elements
+      if (revenueEl) revenueEl.textContent = `$${runtimeRevenueSum.toFixed(2)}`;
+      if (activeEl)  activeEl.textContent  = activeEntitiesCount.toString();
+      if (pendingEl) pendingEl.textContent = pendingAuditsCount.toString();
+
+    } catch (metricFault) {
+      console.error("✕ Platform Metrics Tabulation Fault Intercepted:", metricFault);
+    }
+  }
+})();

@@ -1,177 +1,216 @@
 /**
  * 📁 FILE PATH: assets/js/admin-master-ledger.js
- * Responsibility: Master Corporate Ledger Grid synchronization, Row rendering, and Layout Accordions
+ * Responsibility: Master Administrative Dashboard Synchronization Hub
+ * Data Target: public.orders (Single Table Source)
  */
 (function() {
-    "use strict";
+  "use strict";
 
-    // --- 1. GLOBAL WINDOW HOOK: EMPOWERS THE ACCORDION CLICKS ---
-    window.toggleSidebarAccordion = function(buttonElement) {
-        if (!buttonElement) return;
-        buttonElement.classList.toggle('active');
-        const panel = buttonElement.nextElementSibling;
-        const chevron = buttonElement.querySelector(".chevron") || buttonElement.querySelector("span:last-child");
-        
-        if (panel && panel.style) {
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px" && panel.style.maxHeight !== "") {
-                panel.style.maxHeight = "0px";
-                if (chevron) chevron.textContent = "▼";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-                if (chevron) chevron.textContent = "▲";
-            }
-        }
-    };
+  // --- 1. GLOBAL WINDOW HOOK: CONTROL SIDEBAR PANELS ACCORDIONS ---
+  window.toggleSidebarAccordion = function(buttonElement) {
+    if (!buttonElement) return;
+    buttonElement.classList.toggle('active');
+    const panel = buttonElement.nextElementSibling;
+    const chevron = buttonElement.querySelector(".chevron") || buttonElement.querySelector("span:last-child");
+    
+    if (panel && panel.style) {
+      if (panel.style.maxHeight && panel.style.maxHeight !== "0px" && panel.style.maxHeight !== "") {
+        panel.style.maxHeight = "0px";
+        if (chevron) chevron.textContent = "▼";
+      } else {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+        if (chevron) chevron.textContent = "▲";
+      }
+    }
+  };
 
-    // --- 2. UNIFIED SERVER SYNCHRONIZER ENGINE ---
-    document.addEventListener("DOMContentLoaded", () => {
-        streamLiveOperationalLedgers();
-        hydrateRecentActivityLogs();
-    });
+  // --- 2. STARTUP EXECUTION BLOCK LOOP ---
+  document.addEventListener("DOMContentLoaded", () => {
+    streamUnifiedAdministrativeDataGrid();
+  });
 
-    // --- 3. DYNAMIC LEDGER HYDRATION PIPELINE ---
-    async function streamLiveOperationalLedgers() {
-        const targetBox = document.getElementById("admin-global-sales-target-box") || document.getElementById("masterLedgerTargetBody");
-        if (!targetBox) return;
+  async function streamUnifiedAdministrativeDataGrid() {
+    const salesTableBody = document.getElementById("admin-global-sales-target-box");
+    const clientDropdown = document.getElementById("adminClientDropdown");
+    const commsStreamBox = document.getElementById("admin-inbox-live-stream-box");
+    
+    // Summary Card Target Elements
+    const revenueCard  = document.getElementById("stat-total-revenue");
+    const activeCard   = document.getElementById("stat-active-users");
+    const pendingCard  = document.getElementById("stat-pending-filings");
 
-        // 🚀 FAIL-SAFE INITIALIZATION BYPASS CHANNEL
-        let client = window.supabaseInstance || window.supabaseClient;
+    if (!salesTableBody) return;
 
-        if (!client || typeof client.from !== 'function') {
-            const currentLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-            
-            if (currentLibrary && typeof currentLibrary.createClient === 'function') {
-                console.log("🔧 [Admin Master Ledger] Building fresh database fail-safe connection inline...");
-                
-                const targetUrl = "https://lrbimrlbskjweynxlgas.supabase.co";
-                const targetKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-                
-                client = currentLibrary.createClient(targetUrl, targetKey, {
-                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: "filings4u_secure_session_token" }
-                });
+    // Gracefully check for your global database engine instance connection layout
+    let client = window.supabaseInstance || window.supabaseClient;
+    if (!client || typeof client.from !== 'function') {
+      setTimeout(streamUnifiedAdministrativeDataGrid, 200);
+      return;
+    }
 
-                window.supabaseInstance = client;
-                window.supabaseClient = client;
-            }
-        }
-
-        // Fall back to polling interval loop if the connection layer hasn't initialized yet
-        if (!client || typeof client.from !== 'function') {
-            console.warn("⚠️ Master Ledger: Target client initialization lagging. Polling system context...");
-            setTimeout(streamLiveOperationalLedgers, 150);
-            return;
-        }
-
-      // Inside streamLiveOperationalLedgers():
-try {
-    const { data: records, error } = await client
-        .from('entities')
-        .select('*')
+    try {
+      // 🟢 THE RESOLUTION PIPELINE: Fetch everything directly from public.orders
+      const { data: records, error } = await client
+        .from('orders')
+        .select('id, company_name, email, plan_tier, total_fee, status, tracking_number, created_at, service_title')
         .order('created_at', { ascending: false });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // ✅ If records is null, undefined, or empty, clear the loader and display an explicit note
-    if (!records || records.length === 0) {
-        targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 500;">No corporate entity master records found inside database layers.</td></tr>`;
+      if (!records || records.length === 0) {
+        salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 500;">No corporate transactional profiles found inside database layers.</td></tr>`;
+        if (revenueCard) revenueCard.textContent = "$0.00";
+        if (activeCard) activeCard.textContent = "0";
+        if (pendingCard) pendingCard.textContent = "0";
         return;
-    }
-    
-    targetBox.innerHTML = ""; // Clear loader and proceed to render loops
-    // ... rest of records.forEach loop logic
+      }
 
-            
-            records.forEach((rowItem) => {
-                const tr = document.createElement("tr");
-                tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark);";
+      // --- INITIALIZE REAL-TIME CALCULATORS ---
+      let cumulativeRevenueValue = 0;
+      let totalActiveEntitiesCount = 0;
+      let pendingAuditsCount       = 0;
+      let supportLogMarkups        = "";
 
-                const companyNameValue = rowItem.entity_name || "Unnamed Corporate Entity";
-                const jurisdictionValue = rowItem.state_jurisdiction || "DE";
-                const structureTypeValue = rowItem.structure_type || "LLC";
-                const currentStandingStatus = rowItem.status || "Active";
+      salesTableBody.innerHTML = "";
 
-                let pillBackground = '#e2e8f0';
-                let pillTextStyleColor = '#475569';
-                if (currentStandingStatus === 'Active' || currentStandingStatus === 'Good Standing') {
-                    pillBackground = '#e6f4ea';
-                    pillTextStyleColor = '#137333';
-                }
+      // Hydrate selection option values dynamically to filter messaging operations
+      if (dropdownSelectIsValid(clientDropdown)) {
+        clientDropdown.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+        const distinctAccountEmails = [...new Set(records.map(item => item.email).filter(Boolean))];
+        distinctAccountEmails.forEach(email => {
+          const opt = document.createElement("option");
+          opt.value = email;
+          opt.textContent = email;
+          clientDropdown.appendChild(opt);
+        });
+      }
 
-                // ✅ HTML REPAIRED: Restored missing opening button syntax tag properties cleanly
-                tr.innerHTML = `
-                    <td style="padding: 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${window.escapeTimelineHTML(companyNameValue)}</td>
-                    <td style="padding: 12px; color: var(--text-muted); font-family: monospace; text-align: left; text-transform: uppercase; font-weight: bold;">${window.escapeTimelineHTML(jurisdictionValue)}</td>
-                    <td style="padding: 12px; color: var(--text-muted); font-weight: 600; text-align: left;">
-                        ${window.escapeTimelineHTML(structureTypeValue)}
-                    </td>
-                    <td style="padding: 12px; text-align: left;"><span style="background:${pillBackground}; color:${pillTextStyleColor}; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">${window.escapeTimelineHTML(currentStandingStatus)}</span></td>
-                    <td style="padding: 12px; text-align: right;">
-                        
-                            View Row
-                        </button>
-                    </td>
-                `;
-                targetBox.appendChild(tr);
-            });
+      // --- PROCESS RECORD SET ROWS ---
+      records.forEach((rowItem) => {
+        // Tabulate cumulative financial sum totals
+        const rowFee = parseFloat(rowItem.total_fee || 0);
+        cumulativeRevenueValue += rowFee;
 
-        } catch (err) {
-            console.error("Sales ledger streaming error intercept:", err);
-            targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--staff-red); font-weight: 600;">✕ Failed to sync sales records.</td></tr>`;
-        }
-    }
-
-    // --- 4. STREAM ACTIVITY MESSAGE TRACKERS ---
-    async function hydrateRecentActivityLogs() {
-        const staffEmailLog = document.getElementById("liveStaffEmailDisplayLog");
-        const commsStreamBox = document.getElementById("admin-inbox-live-stream-box");
-
-        if (!window.supabaseInstance || typeof window.supabaseInstance.from !== 'function') {
-            setTimeout(hydrateRecentActivityLogs, 150);
-            return;
+        const currentStandingStatus = String(rowItem.status || '').toLowerCase().trim();
+        
+        // Define interface tracking count metrics categories
+        if (currentStandingStatus === 'paid' || currentStandingStatus === 'fulfillment lane') {
+          totalActiveEntitiesCount++;
+        } else if (currentStandingStatus === 'pending' || currentStandingStatus === 'audit required') {
+          pendingAuditsCount++;
         }
 
-        const client = window.supabaseInstance;
+        // Generate matching communication data log parameters
+        const logTime = new Date(rowItem.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        supportLogMarkups += `<p style="margin: 0 0 8px 0; line-height: 1.4; text-align: left; font-size: 0.82rem; color: #475569;">📦 <strong>[${logTime}] New Order:</strong> ${escapeCharacterMarkup(rowItem.company_name)} initialized ${rowItem.plan_tier}</p>`;
 
-        try {
-            const sessionCheck = await client.auth.getSession();
-            const staffEmail = sessionCheck.data?.session?.user?.email || "internal-operator@filings4u.com";
-            
-            if (staffEmailLog) {
-                staffEmailLog.innerHTML = `<i class="fa-solid fa-user-shield"></i> Operator Session: ${staffEmail}`;
-            }
+        // Render corporate ledger grid elements dynamically
+        const tr = document.createElement("tr");
+        tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;";
 
-            const { data: supportMessages, error: queryError } = await client
-                .from('support_tickets')
-                .select('subject, created_at')
-                .order('created_at', { ascending: false })
-                .limit(3);
-
-            if (queryError) throw queryError;
-
-            if (commsStreamBox) {
-                if (supportMessages && supportMessages.length > 0) {
-                    let streamMarkup = "";
-                    supportMessages.forEach(msg => {
-                        const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        streamMarkup += `<p style="margin: 0 0 8px 0; line-height: 1.4; text-align: left; font-size: 0.85rem; color: #475569;">📬 <strong>[${time}] Ticket:</strong> ${window.escapeTimelineHTML(msg.subject)}</p>`;
-                    });
-                    commsStreamBox.innerHTML = streamMarkup;
-                } else {
-                    commsStreamBox.innerHTML = `<p style="margin: 0; font-size: 0.85rem; color: #94a3b8; text-align: left;">No incoming support tickets pending assignment loops.</p>`;
-                }
-            }
-        } catch(e) {
-            console.warn("Log environment hydration fault caught:", e.message || e);
-            if (commsStreamBox) {
-                commsStreamBox.innerHTML = `<p style="margin: 0; font-size: 0.85rem; color: #ef4444; text-align: left;">✕ Communications tracking offline.</p>`;
-            }
+        let pillBackground = '#e2e8f0';
+        let pillTextStyleColor = '#475569';
+        if (currentStandingStatus === 'paid' || currentStandingStatus === 'fulfillment lane') {
+          pillBackground = '#e6f4ea';
+          pillTextStyleColor = '#137333';
+        } else if (currentStandingStatus === 'pending') {
+          pillBackground = '#fffbe6';
+          pillTextStyleColor = '#b45309';
         }
+
+        const uniqueTrackingToken = rowItem.tracking_number || rowItem.id;
+        const targetEmailString   = rowItem.email || "no-contact@email.com";
+
+        tr.innerHTML = `
+          <td style="padding: 14px 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${escapeCharacterMarkup(rowItem.company_name)}</td>
+          <td style="padding: 14px 12px; color: var(--text-muted); text-align: left;">${escapeCharacterMarkup(rowItem.email)}</td>
+          <td style="padding: 14px 12px; text-align: left;"><span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #334155; text-transform: uppercase;">${escapeCharacterMarkup(rowItem.plan_tier)}</span></td>
+          <td style="padding: 14px 12px; font-weight: 800; color: #0f172a; text-align: left;">$${rowFee.toFixed(2)}</td>
+          <td style="padding: 14px 12px; text-align: right;">
+            <button class="view-details-action" onclick="window.navigateToAdminProfileViewCard('${encodeURIComponent(uniqueTrackingToken)}', '${encodeURIComponent(targetEmailString)}')" style="padding: 6px 14px; font-size: 11px; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Manage</button>
+          </td>
+        `;
+        salesTableBody.appendChild(tr);
+      });
+
+      // --- HYDRATE METRICS DISPLAY INTERFACES ---
+      if (revenueCard) revenueCard.textContent = `$${cumulativeRevenueValue.toFixed(2)}`;
+      if (activeCard)  activeCard.textContent  = totalActiveEntitiesCount.toString();
+      if (pendingCard) pendingCard.textContent = pendingAuditsCount.toString();
+      if (commsStreamBox && supportLogMarkups !== "") commsStreamBox.innerHTML = supportLogMarkups;
+
+    } catch (err) {
+      console.error("✕ Master administrative layout streaming exception:", err);
+      salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--staff-red); font-weight: 600; font-size: 0.85rem;">✕ Failed to establish real-time dashboard data pipeline grid connection.</td></tr>`;
     }
+  }
 
-    // Global routing path redirection execution channel
-    window.navigateToAdminProfileViewCard = function(trackingToken, customerEmail) {
-        if (!trackingToken) return;
-        window.location.href = `admin-profile-view.html?token=${encodeURIComponent(trackingToken)}&email=${customerEmail}`;
-    };
+  // Navigation controller mapping functionality parameters
+  window.navigateToAdminProfileViewCard = function(token, email) {
+    if (!token) return;
+    window.location.href = `admin-profile-view.html?token=${token}&email=${email}`;
+  };
 
-})(); // ✅ CLOSES ROOT MODULE SCOPE CORRECTLY HERE
+  function dropdownSelectIsValid(element) {
+    return element !== null && element !== undefined;
+  }
+
+  function escapeCharacterMarkup(text) {
+    if (!text) return "";
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+    // ============================================================================ //
+  // 🚀 ATTACH ALERT SUBMISSION LISTENER DIRECTLY INTO MASTER PIPELINE            //
+  // ============================================================================ //
+  const alertForm = document.getElementById("adminAlertForm");
+  const alertStatusDiv = document.getElementById("alertStatus");
+
+  if (alertForm) {
+    alertForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!clientDropdown || !alertStatusDiv) return;
+
+      const targetAccountEmail = clientDropdown.value;
+      const notificationTitle  = document.getElementById("alertTitle")?.value || "";
+      const notificationBody   = document.getElementById("alertMessage")?.value || "";
+
+      if (!targetAccountEmail || !notificationTitle || !notificationBody) {
+        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+        alertStatusDiv.textContent = "✕ Validation Error: All fields are required.";
+        return;
+      }
+
+      alertStatusDiv.style.cssText = "color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+      alertStatusDiv.textContent = "Processing dispatch matrix hooks...";
+
+      try {
+        // Appends custom alerts into your notifications table
+        const { error: insertError } = await client
+          .from('notifications')
+          .insert([
+            {
+              recipient_email: targetAccountEmail,
+              title: notificationTitle,
+              message: notificationBody,
+              is_unread: true,
+              created_at: new Date().toISOString()
+            }
+          ]);
+
+        if (insertError) throw insertError;
+
+        alertStatusDiv.style.cssText = "color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700;";
+        alertStatusDiv.textContent = "✓ Real-Time Alert Pushed Successfully!";
+        alertForm.reset();
+
+      } catch (postFault) {
+        console.error("✕ Notification Dispatch Interruption:", postFault.message);
+        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+        alertStatusDiv.textContent = `✕ Dispatch Failed: ${postFault.message}`;
+      }
+    });
+  }
+
+  
+})();

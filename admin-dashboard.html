@@ -492,29 +492,30 @@
 </div>
 
 
-<!-- ✅ CORRECTED ADMIN INTEGRATION SEQUENCE ORDER (PLACE BEFORE THE CLOSING </body> TAG) -->
+  <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
+  <!-- 1. The Global Library Core MUST load absolute first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. The Configuration setup creates window.supabaseClient immediately -->
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-master-ledger.js"></script>
 
-<!-- 1. The Global Library Core MUST load absolute first -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- 2. The Configuration setup creates window.supabaseInstance immediately -->
-<script src="assets/js/supabase-config.js"></script>
-
-<!-- 3. All dashboard engine files and ledgers can now safely load sequentially -->
-<script src="assets/js/admin-master-ledger.js"></script> 
-<script src="assets/js/admin-sales-ledger.js"></script>
-<script src="assets/js/admin-push-alerts.js"></script>
-<script src="assets/js/admin-metrics-ledger.js"></script> 
-<script src="assets/js/portal-engine.js"></script> 
-
-<!-- 4. Non-critical layout peripherals load at the absolute bottom -->
-<script src="assets/js/admin-layout-sanitizer.js"></script>
-<script src="assets/js/admin-navigation-core.js"></script>
-<script src="assets/js/admin-sidebar-accordion.js"></script>
-<script src="assets/js/admin-session-terminator.js"></script>
-<script src="assets/js/admin-header-clock.js"></script>
-
-
+  <!-- 4. Simple Built-in Perimeter Layout Controllers -->
+  <script>
+    // System clock peripheral calculation function loop
+    document.addEventListener("DOMContentLoaded", () => {
+      const clockElement = document.getElementById("portal-clock");
+      if (clockElement) {
+        setInterval(() => {
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+          clockElement.textContent = `${dateStr} | ${timeStr}`;
+        }, 1000);
+      }
+    });
+  </script>
 </body>
-
 </html>

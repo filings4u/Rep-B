@@ -1,115 +1,78 @@
 /**
- * 📁 FILE PATH: admin-sales-ledger.js
- * Responsibility: Fetch Production Entity Records globally and control flyout detail modals
+ * 📁 FILE PATH: assets/js/admin-sales-ledger.js
+ * Responsibility: Dynamic orders processing, sorting data matrices, and cross-tab token layout routing
  */
 (function() {
-    "use strict";
+  "use strict";
 
-    document.addEventListener("DOMContentLoaded", () => {
-        syncGlobalSalesPricingLedger();
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+    streamDynamicSalesLedgerMatrix();
+  });
 
-    async function syncGlobalSalesPricingLedger() {
-        // 🚀 Poll live against the window namespace until your connection driver is active
-        if (!window.supabaseInstance || typeof window.supabaseInstance.from !== 'function') {
-            setTimeout(syncGlobalSalesPricingLedger, 150);
-            return;
-        }
+  async function streamDynamicSalesLedgerMatrix() {
+    const targetTableBox = document.getElementById("admin-global-sales-target-box");
+    if (!targetTableBox) return;
 
-        const targetBox = document.getElementById("admin-global-sales-target-box");
-        if (!targetBox) return;
-
-        const client = window.supabaseInstance;
-
-        try {
-            // Fetch every corporate entity row globally across the platform
-            const { data: entities, error } = await client
-                .from('entities')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            if (!entities || entities.length === 0) {
-                targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--text-muted);">No corporate entity master records found inside database layers.</td></tr>`;
-                return;
-            }
-
-            targetBox.innerHTML = ""; // Clear out stale interface elements securely
-            
-            entities.forEach(row => {
-                const tr = document.createElement("tr");
-                tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem;";
-                
-                // Set standing structural status badges matching your admin styling parameters
-                let badgeBg = '#e2e8f0';
-                let badgeColor = '#475569';
-                if (row.status === 'Active' || row.status === 'Good Standing') {
-                    badgeBg = '#e6f4ea';
-                    badgeColor = '#137333';
-                }
-
-                tr.innerHTML = `
-                    <td style="padding: 12px; font-weight: 700; color: var(--text-dark);">${window.escapeTimelineHTML(row.entity_name || 'Filing Target')}</td>
-                    <td style="padding: 12px; color: var(--text-muted); font-family: monospace; text-transform: uppercase; font-weight: bold;">
-                        ${window.escapeTimelineHTML(row.state_jurisdiction || 'DE')}
-                    </td>
-                    <td style="padding: 12px; font-weight: 600; color: var(--text-muted);">
-                        ${window.escapeTimelineHTML(row.structure_type || 'LLC')}
-                    </td>
-                    <td style="padding: 12px;"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">${window.escapeTimelineHTML(row.status || 'Active')}</span></td>
-                    <td style="padding: 12px; text-align: right;">
-                        
-                            <i class="fa-solid fa-folder-open"></i> View Row
-                        </button>
-                    </td>
-                `;
-                targetBox.appendChild(tr);
-            });
-
-        } catch (ledgerError) {
-            console.error("[Fatal Sales Ledger Execution Interception]", ledgerError);
-            targetBox.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: #ef4444; font-weight: 600;">✕ Data sync failed to hydrate rows.</td></tr>`;
-        }
+    // Await core initialization properties gracefully from the shared script pipeline wrapper
+    let clientInstance = window.supabaseInstance || window.supabaseClient;
+    
+    if (!clientInstance || typeof clientInstance.from !== 'function') {
+      setTimeout(streamDynamicSalesLedgerMatrix, 200);
+      return;
     }
 
-    // --- MODAL DISPLAY SYSTEM CONTROL LOGIC ---
-    window.executeAdminInspectorFlyoutRowLink = function(buttonNode) {
-        if (!buttonNode) return;
-        
-        const company = buttonNode.getAttribute("data-company");
-        const jurisdiction = buttonNode.getAttribute("data-jurisdiction");
-        const structure = buttonNode.getAttribute("data-structure");
-        const status = buttonNode.getAttribute("data-status");
-        const entityId = buttonNode.getAttribute("data-entity-id");
-        
-        window.revealFilingDetailModal(company, jurisdiction, structure, status, entityId);
-    };
+    try {
+      // Connect to your exact SQL table structure definition
+      const { data: salesRecords, error } = await clientInstance
+        .from('orders')
+        .select('id, company_name, email, plan_tier, total_fee, tracking_number')
+        .order('created_at', { ascending: false });
 
-    window.revealFilingDetailModal = function(company, jurisdiction, structure, status, entityId) {
-        const modal = document.getElementById("filingDetailModal");
-        const targetHeader = document.getElementById("modalHeaderFilingTitle");
-        const displayTarget = document.getElementById("modalMetadataDisplayTarget");
-        
-        if (!modal || !displayTarget) return;
-        if (targetHeader) targetHeader.textContent = company;
-        
-        displayTarget.innerHTML = `
-            <div style="line-height: 1.6; display: flex; flex-direction: column; gap: 10px; text-align: left; font-family: sans-serif;">
-                <div><strong>Target Corporate Client:</strong> <span style="font-weight: 600; color: var(--text-dark);">${window.escapeTimelineHTML(company)}</span></div>
-                <div><strong>State Jurisdiction Area:</strong> <span style="text-transform: uppercase; font-weight: 700;">${window.escapeTimelineHTML(jurisdiction)}</span></div>
-                <div><strong>Fulfillment Entity Structure:</strong> <span>${window.escapeTimelineHTML(structure)}</span></div>
-                <div><strong>Standing Profile Status:</strong> <span style="font-weight: 700; color: #10b981;">${window.escapeTimelineHTML(status)}</span></div>
-                <div><strong>Database Reference Token:</strong> <span style="font-family: monospace; font-size: 0.75rem; color: #64748b;">${entityId}</span></div>
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0;">
-                <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4;">This operational database object payload is compiled, synchronized, and mirrored live from your production public.entities schema architecture.</div>
-            </div>
+      if (error) throw error;
+
+      if (!salesRecords || salesRecords.length === 0) {
+        targetTableBox.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 500;">No transactional history matrices detected inside storage systems.</td></tr>`;
+        return;
+      }
+
+      targetTableBox.innerHTML = "";
+
+      salesRecords.forEach((orderRow) => {
+        const trElement = document.createElement("tr");
+        trElement.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;";
+
+        const companyName = orderRow.company_name || "Unnamed Corporate Entity";
+        const customerEmail = orderRow.email || "no-contact@email.com";
+        const activePlanTier = String(orderRow.plan_tier || 'Starter').toUpperCase();
+        const absoluteFeeValue = Number(orderRow.total_fee || 0).toFixed(2);
+        const uniqueTrackingToken = orderRow.tracking_number || orderRow.id;
+
+        // Render standard structured components matching your exact dashboard data cells
+        trElement.innerHTML = `
+          <td style="padding: 14px 12px; font-weight: 700; text-align: left; color: #0f172a;">${escapeInputStringCharacters(companyName)}</td>
+          <td style="padding: 14px 12px; color: var(--text-muted); text-align: left;">${escapeInputStringCharacters(customerEmail)}</td>
+          <td style="padding: 14px 12px; text-align: left;"><span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">${escapeInputStringCharacters(activePlanTier)}</span></td>
+          <td style="padding: 14px 12px; font-weight: 800; color: #0f172a; text-align: left;">$${absoluteFeeValue}</td>
+          <td style="padding: 14px 12px; text-align: right;">
+            <button class="view-details-action" onclick="window.navigateToAdminProfileViewCard('${encodeURIComponent(uniqueTrackingToken)}', '${encodeURIComponent(customerEmail)}')" style="padding: 6px 14px; font-size: 11px; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Manage Row</button>
+          </td>
         `;
-        modal.style.display = "flex";
-    };
+        targetTableBox.appendChild(trElement);
+      });
 
-    window.closeFilingDetailModal = function() {
-        const modal = document.getElementById("filingDetailModal");
-        if (modal) modal.style.display = "none";
-    };
+    } catch (queryFault) {
+      console.error("✕ Sales Ledger Extraction Exception:", queryFault);
+      targetTableBox.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--staff-red); font-weight: 600; font-size: 0.85rem;">✕ Failed to establish real-time connection to your transaction database records.</td></tr>`;
+    }
+  }
+
+  function escapeInputStringCharacters(rawTextString) {
+    if (!rawTextString) return "";
+    return String(rawTextString)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 })();

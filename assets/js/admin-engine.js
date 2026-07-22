@@ -48,7 +48,7 @@ function initAdminDashboardManager() {
 
         if (authError || !user || !isAdmin) {
           console.warn("🔐 Unauthorized administrative access intercepted. Evicting session.");
-          window.location.href = "index.html";
+          window.location.href = "https://filings4u.com/get-started.html";
           return;
         }
 

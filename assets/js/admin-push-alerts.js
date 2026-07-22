@@ -1,130 +1,101 @@
 /**
- * 📁 FILE PATH: admin-push-alerts.js
- * Responsibility: Dropdown Client Hydration and Customer Notification Dispatch Panel Matrix
+ * 📁 FILE PATH: assets/js/admin-push-alerts.js
+ * Responsibility: Account profile dropdown serialization and notification dispatch management
  */
 (function() {
-    "use strict";
+  "use strict";
 
-    document.addEventListener("DOMContentLoaded", () => {
-        initializeAdminNotificationSystem();
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+    initializeAlertSystemPipeline();
+  });
 
-    async function initializeAdminNotificationSystem() {
-        if (!window.supabaseInstance || typeof window.supabaseInstance.from !== 'function') {
-            setTimeout(initializeAdminNotificationSystem, 150);
-            return;
-        }
+  async function initializeAlertSystemPipeline() {
+    const dropdownSelect = document.getElementById("adminClientDropdown");
+    const alertForm      = document.getElementById("adminAlertForm");
+    const alertStatusDiv = document.getElementById("alertStatus");
 
-        const clientDropdown = document.getElementById("adminClientDropdown");
-        const alertForm = document.getElementById("adminAlertForm");
-        const feedbackStatus = document.getElementById("alertStatus");
-
-        if (!alertForm) return;
-        const client = window.supabaseInstance;
-
-        // 1. POPULATE DROPDOWN FIELD WITH AUTHENTIC USER IDs FROM THE ENTITIES SCHEMA
-        try {
-            const { data: records, error: fetchError } = await client
-                .from('entities')
-                .select('entity_name, owner_id')
-                .not('owner_id', 'is', null)
-                .order('entity_name', { ascending: true });
-
-            if (fetchError) throw fetchError;
-
-            if (clientDropdown) {
-                clientDropdown.innerHTML = '<option value="">-- Choose Target Customer Account --</option>';
-                const registeredTrackersMap = new Set();
-
-                if (records) {
-                    records.forEach(record => {
-                        const uid = record.owner_id;
-                        // Avoid duplicates if a single user identity owner manages multiple corporate entity entries
-                        if (uid && !registeredTrackersMap.has(uid)) {
-                            registeredTrackersMap.add(uid);
-                            const option = document.createElement("option");
-                            option.value = uid;
-                            option.textContent = `${record.entity_name || 'Filing Entity'} [${uid.substring(0, 6).toUpperCase()}]`;
-                            clientDropdown.appendChild(option);
-                        }
-                    });
-                }
-            }
-        } catch (dropdownErr) {
-            console.warn("Dropdown population pass failed:", dropdownErr);
-            if (clientDropdown) clientDropdown.innerHTML = '<option value="">✕ Failed to load system profiles.</option>';
-        }
-
-        // 2. DISPATCH LIVE MESSAGE PAYLOADS DOWNSTREAM INTO CUSTOMER DASHBOARDS
-        alertForm.onsubmit = async function(e) {
-            e.preventDefault();
-
-            const targetUserId = clientDropdown.value;
-            const titleField = document.getElementById("alertTitle") || alertForm.querySelector("input[type='text']");
-            const messageField = document.getElementById("alertMessage") || alertForm.querySelector("textarea");
-            const submitBtn = alertForm.querySelector("button[type='submit']");
-
-            const titleValue = titleField ? titleField.value.trim() : "";
-            const messageValue = messageField ? messageField.value.trim() : "";
-
-            if (!targetUserId || !titleValue || !messageValue) {
-                alert("Input Verification Error: Please select an active corporate user target account profile and provide message text.");
-                return;
-            }
-
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching Broadcast Payload...';
-            }
-
-            try {
-                // Exact alignment mapping matching your system public.portal_notifications schema properties
-                const notificationPayload = {
-                    user_id: targetUserId,
-                    title: titleValue,
-                    message: messageValue,
-                    is_read: false,
-                    is_archived: false,
-                    created_at: new Date().toISOString()
-                };
-
-                const { error: insertNotificationError } = await client
-                    .from('portal_notifications')
-                    .insert([notificationPayload]);
-
-                if (insertNotificationError) throw insertNotificationError;
-
-                // Fire a fast air-broadcast notification packet over WebSockets if active real-time channels are live
-                if (window.realtimeTelemetryChannel) {
-                    await window.realtimeTelemetryChannel.send({
-                        type: 'broadcast',
-                        event: 'pipeline_mutation',
-                        payload: { title: titleValue, message: messageValue, timestamp: new Date().toISOString() }
-                    });
-                }
-
-                if (feedbackStatus) {
-                    feedbackStatus.style.cssText = "color: #10b981; font-size: 0.85rem; font-weight: 700; margin-top: 12px; display: block; text-align: left;";
-                    feedbackStatus.innerHTML = "✓ Notification packet successfully broadcasted inside active client dashboard arrays.";
-                }
-
-                // Clean input fields safely
-                if (titleField) titleField.value = "";
-                if (messageField) messageField.value = "";
-                clientDropdown.value = "";
-
-            } catch (pushException) {
-                console.error("[Fatal Alert Gateway Exception Caught]", pushException);
-                if (feedbackStatus) {
-                    feedbackStatus.style.cssText = "color: #ef4444; font-size: 0.85rem; font-weight: 700; margin-top: 12px; display: block; text-align: left;";
-                    feedbackStatus.innerHTML = `✕ Transmission Failed: ${pushException.message || pushException}`;
-                }
-            } finally {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = "Push Real-Time Alert →";
-                }
-            }
-        };
+    let client = window.supabaseInstance || window.supabaseClient;
+    if (!client || typeof client.from !== 'function') {
+      setTimeout(initializeAlertSystemPipeline, 200);
+      return;
     }
+
+    // ============================================================================ //
+    // 👥 STAGE 1: READ ACTIVE EMAILS AND HYDRATE ACCOUNT SELECTION INPUTS          //
+    // ============================================================================ //
+    try {
+      const { data: profileMatrix, error: fetchError } = await client
+        .from('orders')
+        .select('email')
+        .order('email', { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      if (dropdownSelect && profileMatrix) {
+        dropdownSelect.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+        
+        // Extract distinct non-nullable user email arrays
+        const cleanDistinctEmails = [...new Set(profileMatrix.map(row => row.email).filter(Boolean))];
+        
+        cleanDistinctEmails.forEach(userEmailString => {
+          const optElement = document.createElement("option");
+          optElement.value = userEmailString;
+          optElement.textContent = userEmailString;
+          dropdownSelect.appendChild(optElement);
+        });
+      }
+    } catch (hydrateErr) {
+      console.error("✕ Dropdown Population Exception Intercepted:", hydrateErr.message);
+    }
+
+    // ============================================================================ //
+    // 🚀 STAGE 2: PROCESS FORM SUBMISSIONS & SAVE SYSTEM ALERT NOTICES             //
+    // ============================================================================ //
+    if (!alertForm) return;
+
+    alertForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!dropdownSelect || !alertStatusDiv) return;
+
+      const targetAccountEmail = dropdownSelect.value;
+      const notificationTitle  = document.getElementById("alertTitle")?.value || "";
+      const notificationBody   = document.getElementById("alertMessage")?.value || "";
+
+      // Basic input sanitation checks
+      if (!targetAccountEmail || !notificationTitle || !notificationBody) {
+        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+        alertStatusDiv.textContent = "✕ Validation Error: All fields are required.";
+        return;
+      }
+
+      alertStatusDiv.style.cssText = "color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+      alertStatusDiv.textContent = "Processing dispatch matrix hooks...";
+
+      try {
+        // Appends custom alerts into your notifications table
+        const { error: insertError } = await client
+          .from('notifications')
+          .insert([
+            {
+              recipient_email: targetAccountEmail,
+              title: notificationTitle,
+              message: notificationBody,
+              is_unread: true,
+              created_at: new Date().toISOString()
+            }
+          ]);
+
+        if (insertError) throw insertError;
+
+        alertStatusDiv.style.cssText = "color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700;";
+        alertStatusDiv.textContent = "✓ Real-Time Alert Pushed Successfully!";
+        alertForm.reset();
+
+      } catch (postFault) {
+        console.error("✕ Notification Dispatch Interruption:", postFault.message);
+        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+        alertStatusDiv.textContent = `✕ Dispatch Failed: ${postFault.message}`;
+      }
+    });
+  }
 })();
