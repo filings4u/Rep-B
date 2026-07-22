@@ -1,19 +1,27 @@
 /**
  * 📁 FILE PATH: assets/js/admin-master-ledger.js
- * Responsibility: Master Administrative Dashboard Synchronization Hub
- * Data Target: public.orders (Single Table Source)
+ * Responsibility: Strict Production Administrative Control Center
+ * Data Target: public.orders (Single Table Source Data-Grid)
  */
 (function() {
   "use strict";
 
-  // --- 1. GLOBAL WINDOW HOOK: CONTROL SIDEBAR PANELS ACCORDIONS ---
+  // --- 1. GLOBAL WINDOW ACCORDION LAYOUT FRAMEWORKS ---
   window.toggleSidebarAccordion = function(buttonElement) {
-    if (!buttonElement) return;
+    if (!buttonElement) {
+      console.error("✕ Accordion Error: Trigger button element is missing.");
+      return;
+    }
     buttonElement.classList.toggle('active');
     const panel = buttonElement.nextElementSibling;
     const chevron = buttonElement.querySelector(".chevron") || buttonElement.querySelector("span:last-child");
     
-    if (panel && panel.style) {
+    if (!panel) {
+      console.error("✕ Accordion Error: Matching layout sub-panel element not found.");
+      return;
+    }
+    
+    if (panel.style) {
       if (panel.style.maxHeight && panel.style.maxHeight !== "0px" && panel.style.maxHeight !== "") {
         panel.style.maxHeight = "0px";
         if (chevron) chevron.textContent = "▼";
@@ -24,193 +32,207 @@
     }
   };
 
-  // --- 2. STARTUP EXECUTION BLOCK LOOP ---
+  // --- 2. PIPELINE SYSTEM RUNTIME STARTER LOOP ---
   document.addEventListener("DOMContentLoaded", () => {
-    streamUnifiedAdministrativeDataGrid();
+    verifyAndStreamStrictAdminGrid();
   });
+  async function verifyAndStreamStrictAdminGrid() {
+    console.log("📊 [Strict Engine] Commencing structural interface element validations...");
 
-  async function streamUnifiedAdministrativeDataGrid() {
+    // Catch UI target anchors strictly
     const salesTableBody = document.getElementById("admin-global-sales-target-box");
     const clientDropdown = document.getElementById("adminClientDropdown");
     const commsStreamBox = document.getElementById("admin-inbox-live-stream-box");
+    const staffEmailLog  = document.getElementById("liveStaffEmailDisplayLog");
     
-    // Summary Card Target Elements
     const revenueCard  = document.getElementById("stat-total-revenue");
     const activeCard   = document.getElementById("stat-active-users");
     const pendingCard  = document.getElementById("stat-pending-filings");
 
-    if (!salesTableBody) return;
+    // Enforce element tracking validation checks
+    if (!salesTableBody) { throw new Error("✕ Critical UI Target Element Missing: 'admin-global-sales-target-box' tbody anchor is absent from the HTML layout."); }
+    if (!clientDropdown) { console.error("✕ UI Verification Alert: Dropdown target element ID 'adminClientDropdown' is missing."); }
+    if (!commsStreamBox) { console.error("✕ UI Verification Alert: Inbox logging element ID 'admin-inbox-live-stream-box' is missing."); }
+    if (!staffEmailLog)  { console.error("✕ UI Verification Alert: Staff tracking display label element ID 'liveStaffEmailDisplayLog' is missing."); }
+    if (!revenueCard || !activeCard || !pendingCard) { console.warn("⚠ UI Verification Alert: One or more score status cards element targets evaluate to absent."); }
 
-    // Gracefully check for your global database engine instance connection layout
-    let client = window.supabaseInstance || window.supabaseClient;
+    // Fetch master client initialization instances cleanly
+    const client = window.supabaseInstance || window.supabaseClient;
     if (!client || typeof client.from !== 'function') {
-      setTimeout(streamUnifiedAdministrativeDataGrid, 200);
-      return;
+      throw new Error("✕ Critical System Error: The global Supabase client connection has not been initialized on the window scope namespace layout.");
     }
 
+    // --- ENFORCE ABSOLUTE USER VALIDITY CONTROL CHANNELS ---
+    console.log("🔒 [Strict Engine] Running session authentication layer check...");
+    const { data: sessionData, error: authError } = await client.auth.getSession();
+    
+    if (authError) {
+      throw new Error(`✕ Cryptographic Session Authorization Rejected: ${authError.message}`);
+    }
+    
+    if (!sessionData || !sessionData.session || !sessionData.session.user) {
+      if (staffEmailLog) { staffEmailLog.innerHTML = `<span style="color:var(--staff-red); font-weight:700;">✕ Administrative Session Invalid</span>`; }
+      throw new Error("✕ Unauthenticated Command Error: No active administrative user session token detected. Access to database rows has been halted safely.");
+    }
+
+    const currentStaffEmail = sessionData.session.user.email;
+    if (staffEmailLog) {
+      staffEmailLog.innerHTML = `<span><i class="fa-solid fa-user-shield"></i> Operator Session: ${currentStaffEmail}</span>`;
+    }
+    // --- EXECUTE DIRECT PRODUCTION DATA QUERY MATRIX ---
     try {
-      // 🟢 THE RESOLUTION PIPELINE: Fetch everything directly from public.orders
-      const { data: records, error } = await client
+      console.log(`📡 [Strict Engine] Dispatching database request payload out to table space for user: [${currentStaffEmail}]`);
+
+      // 🟢 RAW DB SOURCE HANDSHAKE: Request data columns matching your explicit orders schema table parameters
+      const { data: records, error: queryError } = await client
         .from('orders')
         .select('id, company_name, email, plan_tier, total_fee, status, tracking_number, created_at, service_title')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (queryError) {
+        throw new Error(`Postgres Database Operational Exception [Code ${queryError.code || 'UNKNOWN'}]: ${queryError.message}`);
+      }
 
+      // Check for valid array configurations
       if (!records || records.length === 0) {
-        salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 500;">No corporate transactional profiles found inside database layers.</td></tr>`;
-        if (revenueCard) revenueCard.textContent = "$0.00";
-        if (activeCard) activeCard.textContent = "0";
-        if (pendingCard) pendingCard.textContent = "0";
+        console.warn("ℹ️ [Strict Engine] System connected successfully, but no rows match query properties inside table: [public.orders].");
+        salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">The platform database table is currently empty.</td></tr>`;
         return;
       }
 
-      // --- INITIALIZE REAL-TIME CALCULATORS ---
-      let cumulativeRevenueValue = 0;
-      let totalActiveEntitiesCount = 0;
-      let pendingAuditsCount       = 0;
-      let supportLogMarkups        = "";
+      // Initialize calculation registers
+      let totalRevenueCounter = 0;
+      let totalActiveCounter  = 0;
+      let pendingAuditsCounter = 0;
+      let logStreamMarkup     = "";
 
       salesTableBody.innerHTML = "";
 
-      // Hydrate selection option values dynamically to filter messaging operations
-      if (dropdownSelectIsValid(clientDropdown)) {
+      // Hydrate search target selectors dropdown options cleanly
+      if (clientDropdown) {
         clientDropdown.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
-        const distinctAccountEmails = [...new Set(records.map(item => item.email).filter(Boolean))];
-        distinctAccountEmails.forEach(email => {
+        const uniqueEmails = [...new Set(records.map(row => row.email).filter(Boolean))];
+        uniqueEmails.forEach(email => {
           const opt = document.createElement("option");
           opt.value = email;
           opt.textContent = email;
           clientDropdown.appendChild(opt);
         });
       }
-
-      // --- PROCESS RECORD SET ROWS ---
+      // Run record sets rendering loops
       records.forEach((rowItem) => {
-        // Tabulate cumulative financial sum totals
-        const rowFee = parseFloat(rowItem.total_fee || 0);
-        cumulativeRevenueValue += rowFee;
+        const feeValue = parseFloat(rowItem.total_fee || 0);
+        totalRevenueCounter += feeValue;
 
-        const currentStandingStatus = String(rowItem.status || '').toLowerCase().trim();
-        
-        // Define interface tracking count metrics categories
-        if (currentStandingStatus === 'paid' || currentStandingStatus === 'fulfillment lane') {
-          totalActiveEntitiesCount++;
-        } else if (currentStandingStatus === 'pending' || currentStandingStatus === 'audit required') {
-          pendingAuditsCount++;
+        const currentStatus = String(rowItem.status || '').toLowerCase().trim();
+        if (currentStatus === 'paid' || currentStatus === 'fulfillment lane') {
+          totalActiveCounter++;
+        } else if (currentStatus === 'pending' || currentStatus === 'audit required') {
+          pendingAuditsCounter++;
         }
 
-        // Generate matching communication data log parameters
         const logTime = new Date(rowItem.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        supportLogMarkups += `<p style="margin: 0 0 8px 0; line-height: 1.4; text-align: left; font-size: 0.82rem; color: #475569;">📦 <strong>[${logTime}] New Order:</strong> ${escapeCharacterMarkup(rowItem.company_name)} initialized ${rowItem.plan_tier}</p>`;
+        logStreamMarkup += `<p style="margin: 0 0 8px 0; line-height: 1.4; text-align: left; font-size: 0.82rem; color: #475569;">📬 <strong>[${logTime}] Order Sync:</strong> ${escapeHtml(rowItem.company_name)} placed ${rowItem.plan_tier}</p>`;
 
-        // Render corporate ledger grid elements dynamically
         const tr = document.createElement("tr");
         tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;";
 
-        let pillBackground = '#e2e8f0';
-        let pillTextStyleColor = '#475569';
-        if (currentStandingStatus === 'paid' || currentStandingStatus === 'fulfillment lane') {
-          pillBackground = '#e6f4ea';
-          pillTextStyleColor = '#137333';
-        } else if (currentStandingStatus === 'pending') {
-          pillBackground = '#fffbe6';
-          pillTextStyleColor = '#b45309';
+        let pillStyle = "background: #fffbe6; color: #b45309;"; 
+        if (currentStatus === 'paid' || currentStatus === 'fulfillment lane') {
+          pillStyle = "background: #e6f4ea; color: #137333;";
         }
 
-        const uniqueTrackingToken = rowItem.tracking_number || rowItem.id;
-        const targetEmailString   = rowItem.email || "no-contact@email.com";
+        const trackingToken = rowItem.tracking_number || rowItem.id;
+        const targetEmail   = rowItem.email || "";
 
         tr.innerHTML = `
-          <td style="padding: 14px 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${escapeCharacterMarkup(rowItem.company_name)}</td>
-          <td style="padding: 14px 12px; color: var(--text-muted); text-align: left;">${escapeCharacterMarkup(rowItem.email)}</td>
-          <td style="padding: 14px 12px; text-align: left;"><span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #334155; text-transform: uppercase;">${escapeCharacterMarkup(rowItem.plan_tier)}</span></td>
-          <td style="padding: 14px 12px; font-weight: 800; color: #0f172a; text-align: left;">$${rowFee.toFixed(2)}</td>
+          <td style="padding: 14px 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${escapeHtml(rowItem.company_name)}</td>
+          <td style="padding: 14px 12px; color: var(--text-muted); text-align: left;">${escapeHtml(rowItem.email)}</td>
+          <td style="padding: 14px 12px; text-align: left;"><span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #334155; text-transform: uppercase;">${escapeHtml(rowItem.plan_tier)}</span></td>
+          <td style="padding: 14px 12px; font-weight: 800; color: #0f172a; text-align: left;">$${feeValue.toFixed(2)}</td>
           <td style="padding: 14px 12px; text-align: right;">
-            <button class="view-details-action" onclick="window.navigateToAdminProfileViewCard('${encodeURIComponent(uniqueTrackingToken)}', '${encodeURIComponent(targetEmailString)}')" style="padding: 6px 14px; font-size: 11px; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Manage</button>
+            <button class="view-details-action" onclick="window.navigateToAdminProfileViewCard('${encodeURIComponent(trackingToken)}', '${encodeURIComponent(targetEmail)}')" style="padding: 6px 14px; font-size: 11px; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Manage</button>
           </td>
         `;
         salesTableBody.appendChild(tr);
       });
 
-      // --- HYDRATE METRICS DISPLAY INTERFACES ---
-      if (revenueCard) revenueCard.textContent = `$${cumulativeRevenueValue.toFixed(2)}`;
-      if (activeCard)  activeCard.textContent  = totalActiveEntitiesCount.toString();
-      if (pendingCard) pendingCard.textContent = pendingAuditsCount.toString();
-      if (commsStreamBox && supportLogMarkups !== "") commsStreamBox.innerHTML = supportLogMarkups;
+      // Commit metrics calculations up to display view elements
+      if (revenueCard) revenueCard.textContent = `$${totalRevenueCounter.toFixed(2)}`;
+      if (activeCard)  activeCard.textContent  = totalActiveCounter.toString();
+      if (pendingCard) pendingCard.textContent = pendingAuditsCounter.toString();
+      if (commsStreamBox && logStreamMarkup !== "") commsStreamBox.innerHTML = logStreamMarkup;
 
-    } catch (err) {
-      console.error("✕ Master administrative layout streaming exception:", err);
-      salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--staff-red); font-weight: 600; font-size: 0.85rem;">✕ Failed to establish real-time dashboard data pipeline grid connection.</td></tr>`;
+    } catch (queryFault) {
+      salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--staff-red); font-weight: 600; font-size: 0.85rem;">✕ Execution Halted: Check system console logs.</td></tr>`;
+      throw queryFault; // Throw up to window space un-bypassed
     }
   }
 
-  // Navigation controller mapping functionality parameters
   window.navigateToAdminProfileViewCard = function(token, email) {
     if (!token) return;
     window.location.href = `admin-profile-view.html?token=${token}&email=${email}`;
   };
 
-  function dropdownSelectIsValid(element) {
-    return element !== null && element !== undefined;
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
+  // --- 3. ATTACH NOTIFICATION PUSH LOGIC STRICTLY TO SUBMIT ACTIONS ---
+  document.addEventListener("DOMContentLoaded", () => {
+    const alertForm = document.getElementById("adminAlertForm");
+    const alertStatusDiv = document.getElementById("alertStatus");
+    const dropdownSelect = document.getElementById("adminClientDropdown");
 
-  function escapeCharacterMarkup(text) {
-    if (!text) return "";
-    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  }
+    if (alertForm) {
+      alertForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!dropdownSelect || !alertStatusDiv) return;
 
-    // ============================================================================ //
-  // 🚀 ATTACH ALERT SUBMISSION LISTENER DIRECTLY INTO MASTER PIPELINE            //
-  // ============================================================================ //
-  const alertForm = document.getElementById("adminAlertForm");
-  const alertStatusDiv = document.getElementById("alertStatus");
+        const targetAccountEmail = dropdownSelect.value;
+        const notificationTitle  = document.getElementById("alertTitle")?.value || "";
+        const notificationBody   = document.getElementById("alertMessage")?.value || "";
 
-  if (alertForm) {
-    alertForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (!clientDropdown || !alertStatusDiv) return;
+        let clientInstance = window.supabaseInstance || window.supabaseClient;
+        if (!clientInstance) { 
+          throw new Error("✕ Messaging Request Dropped: Active database connection reference unavailable."); 
+        }
 
-      const targetAccountEmail = clientDropdown.value;
-      const notificationTitle  = document.getElementById("alertTitle")?.value || "";
-      const notificationBody   = document.getElementById("alertMessage")?.value || "";
+        if (!targetAccountEmail || !notificationTitle || !notificationBody) {
+          alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+          alertStatusDiv.textContent = "✕ Validation Error: All form fields are required.";
+          return;
+        }
 
-      if (!targetAccountEmail || !notificationTitle || !notificationBody) {
-        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
-        alertStatusDiv.textContent = "✕ Validation Error: All fields are required.";
-        return;
-      }
+        alertStatusDiv.style.cssText = "color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+        alertStatusDiv.textContent = "Processing dispatch matrix hooks...";
 
-      alertStatusDiv.style.cssText = "color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
-      alertStatusDiv.textContent = "Processing dispatch matrix hooks...";
+        try {
+          const { error: insertError } = await clientInstance
+            .from('notifications')
+            .insert([
+              {
+                recipient_email: targetAccountEmail,
+                title: notificationTitle,
+                message: notificationBody,
+                is_unread: true,
+                created_at: new Date().toISOString()
+              }
+            ]);
 
-      try {
-        // Appends custom alerts into your notifications table
-        const { error: insertError } = await client
-          .from('notifications')
-          .insert([
-            {
-              recipient_email: targetAccountEmail,
-              title: notificationTitle,
-              message: notificationBody,
-              is_unread: true,
-              created_at: new Date().toISOString()
-            }
-          ]);
+          if (insertError) throw insertError;
 
-        if (insertError) throw insertError;
+          alertStatusDiv.style.cssText = "color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700;";
+          alertStatusDiv.textContent = "✓ Real-Time Alert Pushed Successfully!";
+          alertForm.reset();
 
-        alertStatusDiv.style.cssText = "color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700;";
-        alertStatusDiv.textContent = "✓ Real-Time Alert Pushed Successfully!";
-        alertForm.reset();
+        } catch (postFault) {
+          alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+          alertStatusDiv.textContent = `✕ Dispatch Failed: Check system console logs.`;
+          throw new Error(`✕ Notification Entry Injection Failure: ${postFault.message}`);
+        }
+      });
+    }
+  });
 
-      } catch (postFault) {
-        console.error("✕ Notification Dispatch Interruption:", postFault.message);
-        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
-        alertStatusDiv.textContent = `✕ Dispatch Failed: ${postFault.message}`;
-      }
-    });
-  }
-
-  
-})();
+})(); // ✅ CLOSES ROOT MODULE SCOPE CORRECTLY HERE
