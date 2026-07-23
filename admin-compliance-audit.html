@@ -10,7 +10,7 @@
   <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <style>
-    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
     body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
     .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
@@ -72,115 +72,338 @@
         </div>
       </header>
 
-      <div class="content-container">
-        <div class="console-card">
-          <h2>Legal Document Signatures Verification Ledger</h2>
-          <div style="overflow-x:auto !important;">
-            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-              <thead>
-                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
-                  <th style="padding:12px !important;">Filing Entity</th>
-                  <th style="padding:12px !important;">Account Holder</th>
-                  <th style="padding:12px !important;">Tracking Code</th>
-                  <th style="padding:12px !important;">POA Execution Status</th>
-                  <th style="padding:12px !important; text-align:right !important;">Digital Signature Trace</th>
-                </tr>
-              </thead>
-              <tbody id="admin-compliance-target-box">
-                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing legal authorization indices...</td></tr>
-              </tbody>
-            </table>
-          </div>
+ <div class="content-container" style="display: block; width: 100%;">
+    <!-- Panel Center: Comprehensive Compliance Management & Uploader Console -->
+    <div class="console-card" id="adminComplianceManagementView" style="width:100% !important; box-sizing: border-box;">
+        <div style="margin-bottom: 24px;">
+            <h2 style="margin:0;">Corporate Asset Vault & Compliance Operations</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.45; margin:4px 0 0 0; text-align:left;">
+                Upload official certified filing records, assign specific state validation expiration dates, and push real-time countdown tracking updates to your client profiles.
+            </p>
         </div>
-      </div>
+
+        <!-- Section A: Live Document Ingestion & Date Entry Panel Form -->
+        <div style="background:#f8fafc; border:1px solid var(--border-color, #e2e8f0); border-radius:8px; padding:20px; margin-bottom:24px; box-sizing:border-box;">
+            <h3 style="margin:0 0 16px 0; font-size:1.05rem; color:var(--text-dark, #0f172a); font-weight:800;">Upload New Compliance Asset</h3>
+            <div>
+                 <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:6px;">Target Client Account / Company</label>
+                 <select id="uploadTargetClientSelector" required style="width:100%; padding:9px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; box-sizing:border-box; background:#fff;">
+                  <option value="">-- Fetching active customer pipelines... --</option>
+                 </select>
+            </div>
+
+        </div>
+
+        <!-- Section B: Active Vault Logs and Extracted Monitoring Ledgers -->
+        <h3 style="margin:0 0 12px 0; font-size:1.05rem; color:var(--text-dark, #0f172a); font-weight:800;">Tracked Corporate Documents Ledger</h3>
+        <div style="overflow-x:auto !important; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0);">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+                <thead>
+                    <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important; font-weight:700;">
+                        <th style="padding:14px 12px !important;">User Target Core Context</th>
+                        <th style="padding:14px 12px !important;">Document Asset Title</th>
+                        <th style="padding:14px 12px !important;">Assigned Expiration Date</th>
+                        <th style="padding:14px 12px !important;">Storage File Path Reference</th>
+                        <th style="padding:14px 12px !important; text-align:right !important;">Operational Deletion</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-compliance-target-box">
+                    <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important; font-style:italic;">Parsing live document vault indices...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
     </main>
   </div>
 
   <script src="assets/js/supabase-config.js"></script>
   <script src="assets/js/admin-navigation.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
 
-      const auditTableBody = document.getElementById("admin-compliance-target-box");
+    const auditTableBody = document.getElementById("admin-compliance-target-box");
+    const ingestionForm = document.getElementById("adminComplianceIngestionForm");
 
-      if (!auditTableBody) {
-        throw new Error("✕ Critical UI Error: Cannot locate table alignment body element 'admin-compliance-target-box' inside current document.");
-      }
+    if (!auditTableBody || !ingestionForm) {
+        throw new Error("✕ Critical UI Error: Cannot locate table alignment body or ingestion forms.");
+    }
 
-      // Resolve authenticated database drivers from shared client configurations
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
+    // Resolve authenticated database drivers from shared client configurations
+    const client = window.supabaseInstance || window.supabaseClient;
+    if (!client || typeof client.from !== 'function') {
         auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
         throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
-      }
-
-      async function executeComplianceAuditStream() {
+    }
+    // --- STAGE 2: LIVE RETRIEVAL & RENDERING OF TRACKED VAULT ASSETS ---
+    async function executeComplianceAuditStream() {
         try {
-          console.log("🛡️ [Compliance Engine] Querying signature parameters from public.orders...");
-
-          // 🟢 PURE DB DATA STREAM: Map records strictly from your single orders data-grid
-          const { data: auditRecords, error: fetchError } = await client
-            .from('orders')
-            .select('id, company_name, email, tracking_number, poa_signed_state, poa_signature_verification_string')
-            .order('created_at', { ascending: false });
-
-          if (fetchError) {
-            throw new Error(`Postgres Transaction Exception [Code ${fetchError.code}]: ${fetchError.message}`);
-          }
-
-          if (!auditRecords || auditRecords.length === 0) {
-            auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No corporate rows recorded for compliance auditing.</td></tr>`;
-            return;
-          }
-
-          auditTableBody.innerHTML = "";
-
-          auditRecords.forEach(row => {
-            const trElement = document.createElement("tr");
-            trElement.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
-
-            const companyLabel = row.company_name || "Unnamed Corporation";
-            const accountEmail = row.email || "no-email-logged@email.com";
-            const trackingCode = row.tracking_number || row.id;
+            console.log("🛡️ [Compliance Admin] Querying documents from client_documents_vault...");
             
-            // Check Boolean state parameters for legal signature status indicators
-            const isPoaExecuted = row.poa_signed_state === true;
-            const signatureHashTrace = row.poa_signature_verification_string || "No digital signature recorded";
+            // 🟢 PURE DB DATA STREAM: Pull documents sorted by creation timeline parameters
+            const { data: documentRecords, error: fetchError } = await client
+                .from('client_documents_vault')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-            let executionBadgeStyle = "background:#fef2f2; color:#991b1b;"; // Fault un-signed state colors
-            let executionBadgeLabel = "Not Executed";
-
-            if (isPoaExecuted) {
-              executionBadgeStyle = "background:#e6f4ea; color:#137333;"; // Valid authorization colors
-              executionBadgeLabel = "Authorized & Valid";
+            if (fetchError) {
+                throw new Error(`Postgres Transaction Exception [Code ${fetchError.code}]: ${fetchError.message}`);
             }
 
-            trElement.innerHTML = `
-              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${sanitizeStringData(companyLabel)}</td>
-              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${sanitizeStringData(accountEmail)}</td>
-              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem;">${sanitizeStringData(trackingCode)}</td>
-              <td style="padding:14px 12px;"><span style="${executionBadgeStyle} padding:4px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${executionBadgeLabel}</span></td>
-              <td style="padding:14px 12px; text-align:right; font-family:monospace; color:#475569; font-weight:700; font-size:0.8rem; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sanitizeStringData(signatureHashTrace)}">${sanitizeStringData(signatureHashTrace)}</td>
-            `;
+            if (!documentRecords || documentRecords.length === 0) {
+                auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No corporate document rows recorded inside the admin tracking ledger.</td></tr>`;
+                return;
+            }
 
-            auditTableBody.appendChild(trElement);
-          });
+            auditTableBody.innerHTML = "";
+            
+            documentRecords.forEach(row => {
+                const trElement = document.createElement("tr");
+                trElement.style.cssText = "border-bottom:1px solid var(--border-color, #e2e8f0); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+                
+                const userTarget = row.user_id || row.email || "Unassigned Account";
+                const docName = row.document_name || "Untitled Asset Documentation";
+                const expDate = row.expiration_date ? new Date(row.expiration_date).toLocaleDateString() : "Permanent Asset";
+                const storagePath = row.storage_file_path || row.document_url || "No active path map entry";
+
+                trElement.innerHTML = `
+                    <td style="padding:14px 12px; font-weight:700; color:#0f172a; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sanitizeStringData(userTarget)}">${sanitizeStringData(userTarget)}</td>
+                    <td style="padding:14px 12px; color:var(--text-dark); font-weight:600;">${sanitizeStringData(docName)}</td>
+                    <td style="padding:14px 12px; font-family:monospace; color:#475569; font-weight:700;">${sanitizeStringData(expDate)}</td>
+                    <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sanitizeStringData(storagePath)}">${sanitizeStringData(storagePath)}</td>
+                    <td style="padding:14px 12px; text-align:right;">
+                        <button class="admin-purge-document-btn" data-id="${row.id}" data-path="${sanitizeStringData(storagePath)}" style="cursor:pointer; background:#fee2e2; color:#991b1b; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">Purge File</button>
+                    </td>
+                `;
+
+                auditTableBody.appendChild(trElement);
+            });
+
+            // Attach dynamic purge execution controls onto rows
+            attachPurgeOperationalEventTriggers();
 
         } catch (auditException) {
-          console.error("✕ Compliance Audit Stream Aborted:", auditException.message);
-          auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Audit Halted: Failed to parse signature parameters.</td></tr>`;
+            console.error("✕ Compliance Audit Stream Aborted:", auditException.message);
+            auditTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Audit Halted: Failed to parse storage parameters.</td></tr>`;
         }
-      }
+    }
+       // --- STAGE 3: POPULATE DYNAMIC CUSTOMER ACCESS DROPDOWNS ---
+    async function hydrateAdminCustomerSelectionDropdown() {
+        const clientDropdownSelector = document.getElementById("uploadTargetClientSelector");
+        if (!clientDropdownSelector) return;
 
-      function sanitizeStringData(textString) {
-        if (!textString) return "";
-        return String(textString).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-      }
+        try {
+            console.log("📡 [Dropdown Ingestion] Loading customer registers from public.orders...");
+            // Pull company information mapped directly to client profiles
+            const { data: ordersProfiles, error: dropdownErr } = await client
+                .from('orders')
+                .select('email, company_name, user_id');
 
-      await executeComplianceAuditStream();
+            if (dropdownErr) throw dropdownErr;
+
+            if (!ordersProfiles || ordersProfiles.length === 0) {
+                clientDropdownSelector.innerHTML = `<option value="">✕ No active profile entries detected</option>`;
+                return;
+            }
+
+            // Isolate unique profiles using emails to prevent duplicates
+            const isolatedEmailMap = new Map();
+            ordersProfiles.forEach(row => {
+                if (row.email) {
+                    isolatedEmailMap.set(row.email, {
+                        email: row.email,
+                        company: row.company_name || "Asset Lane Entity",
+                        uuid: row.user_id
+                    });
+                }
+            });
+
+            // Re-render select configurations
+            clientDropdownSelector.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+            isolatedEmailMap.forEach(customer => {
+                const labelTextString = `${customer.company} (${customer.email})`;
+                // Store serialized user metadata attributes cleanly as the select value option
+                const compositeStorageValue = JSON.stringify({ email: customer.email, uuid: customer.uuid });
+                
+                const formatOptionNode = document.createElement("option");
+                formatOptionNode.value = compositeStorageValue;
+                formatOptionNode.textContent = labelTextString;
+                clientDropdownSelector.appendChild(formatOptionNode);
+            });
+
+        } catch (dropdownQueryFault) {
+            console.error("✕ Dropdown Population Aborted: ", dropdownQueryFault.message);
+            clientDropdownSelector.innerHTML = `<option value="">✕ Failed to load user records</option>`;
+        }
+    }
+
+    // --- FORM SUBMISSION CAPTURES AND MULTI-TABLE RECORD PROCESSING ---
+    ingestionForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const serializedClientSelector = document.getElementById("uploadTargetClientSelector").value;
+        const documentNameVal = document.getElementById("uploadDocumentNameField").value.trim();
+        const expirationDateVal = document.getElementById("uploadExpirationDateField").value;
+        const fileSelector = document.getElementById("uploadBinaryFileSelector");
+        const submitButton = document.getElementById("adminUploadActionSubmitBtn");
+
+        if (!serializedClientSelector) {
+            alert("✕ Validation Error: Please select an active client from the dropdown list menu.");
+            return;
+        }
+        if (!fileSelector.files || fileSelector.files.length === 0) {
+            alert("✕ Validation Error: Please select a valid document file asset to continue.");
+            return;
+        }
+
+        const selectedTargetFile = fileSelector.files[0];
+        const clientMetadataObject = JSON.parse(serializedClientSelector);
+        
+        const originalBtnLabel = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = "Pushing Asset to Private Customer Vault...";
+
+        try {
+            // Uniquely package file paths inside your universal vault_documents private storage space
+            const fileExtension = selectedTargetFile.name.split('.').pop();
+            const uniqueFileLocationKey = `${clientMetadataObject.email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${fileExtension}`;
+
+            console.log(`📡 [Storage Upload] Pushing payload array to private vault_documents bucket: [${uniqueFileLocationKey}]`);
+            
+            // 1. PURE STORAGE ACTIONS: Stream file binary stream down to your private vault_documents bucket
+            const { data: storageUploadData, error: storageErr } = await client.storage
+                .from('vault_documents')
+                .upload(uniqueFileLocationKey, selectedTargetFile, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (storageErr) throw storageErr;
+            const finalRecordedFilePath = storageUploadData.path || uniqueFileLocationKey;
+
+            console.log("📡 [Metadata Insert] Writing file reference pointers to client_documents_vault...");
+            
+            // 2. METADATA PARSING: Bind database values into client_documents_vault table logs
+            const { error: databaseInsertError } = await client
+                .from('client_documents_vault')
+                .insert([{
+                    user_id: clientMetadataObject.uuid,
+                    email: clientMetadataObject.email,
+                    document_name: documentNameVal,
+                    expiration_date: expirationDateVal,
+                    storage_file_path: finalRecordedFilePath,
+                    document_url: finalRecordedFilePath
+                }]);
+
+            if (databaseInsertError) throw databaseInsertError;
+
+            console.log("📡 [Compliance Timeline Update] Syncing expiration targets inside compliance_deadlines...");
+            
+            // 3. COMPLIANCE ENGINE UPDATE: Insert timeline rows directly to populate client countdown indicators
+            const { error: deadlineSyncErr } = await client
+                .from('compliance_deadlines')
+                .insert([{
+                    user_id: clientMetadataObject.uuid,
+                    entity_name: documentNameVal,
+                    filing_type: documentNameVal.toLowerCase().includes('annual') ? 'Annual Compliance Filing' : 'State Standing Documentation',
+                    deadline_date: expirationDateVal,
+                    status: 'active'
+                }]);
+
+            if (deadlineSyncErr) console.warn("⚠️ Timeline Sync Alert (Non-blocking):", deadlineSyncErr.message);
+
+            alert("🎉 Asset Upload Complete!\n\nDocument metadata strings successfully linked to client dashboard timelines securely.");
+            ingestionForm.reset();
+            await executeComplianceAuditStream();
+
+        } catch (exceptionItem) {
+            console.error("✕ Upload Ingestion Pipeline Aborted: ", exceptionItem.message);
+            alert(`✕ Operational Failure: ${exceptionItem.message}`);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = originalBtnLabel;
+        }
     });
-  </script>
+    // --- STAGE 4: ATTACH COMPLIANCE DELETION/PURGE OPERATIONAL EVENT TRIGGERS ---
+    function attachPurgeOperationalEventTriggers() {
+        auditTableBody.querySelectorAll(".admin-purge-document-btn").forEach(btn => {
+            btn.addEventListener("click", async function() {
+                const targetRecordId = this.getAttribute("data-id");
+                const targetStoragePath = this.getAttribute("data-path");
+
+                const confirmPurgeCheck = confirm("🚨 Are you absolutely sure you want to purge this compliance asset?\n\nThis will permanently delete the binary file from your private storage bucket and remove the data row from all customer dashboard tables.");
+                if (!confirmPurgeCheck) return;
+
+                try {
+                    console.log(`📡 [Storage Delete] Purging object from vault_documents: [${targetStoragePath}]`);
+                    
+                    // 1. STORAGE PURGE: Wipe file asset out of your private storage bucket space
+                    if (targetStoragePath && targetStoragePath !== "No active path map entry") {
+                        const { error: storageDeleteErr } = await client.storage
+                            .from('vault_documents')
+                            .remove([targetStoragePath]);
+                        
+                        if (storageDeleteErr) {
+                            console.warn("⚠️ Storage Bucket Purge Warning (Continuing):", storageDeleteErr.message);
+                        }
+                    }
+
+                    console.log(`📡 [Metadata Delete] Purging index row: [${targetRecordId}]`);
+
+                    // 2. METADATA PURGE: Erase configuration tracking from client_documents_vault table
+                    const { error: dbDeleteErr } = await client
+                        .from('client_documents_vault')
+                        .delete()
+                        .eq('id', targetRecordId);
+
+                    if (dbDeleteErr) throw dbDeleteErr;
+
+                    alert("🗑️ Asset successfully purged from storage and database logs!");
+                    await executeComplianceAuditStream();
+
+                } catch (purgeFaultItem) {
+                    console.error("✕ Purge Execution Threw Exception: ", purgeFaultItem.message);
+                    alert(`✕ Purge Aborted: ${purgeFaultItem.message}`);
+                }
+            });
+        });
+    }
+
+    // --- HELPER STRING CONTEXT PREVENTATIVE ANTI-XSS REPLACEMENT ENGINES ---
+    function sanitizeStringData(textString) {
+        if (!textString) return "";
+        return String(textString)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    // --- INTERACTIVE SIDEBAR UI CONTROLS ---
+    function toggleSidebarAccordion(buttonElement) {
+        if (!buttonElement) return;
+        buttonElement.classList.toggle('active');
+        const panel = buttonElement.nextElementSibling;
+        if (panel) {
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        }
+    }
+    window.toggleSidebarAccordion = toggleSidebarAccordion;
+
+    // --- GLOBAL RUNTIME SCHEDULER MATRIX ---
+    await hydrateAdminCustomerSelectionDropdown();
+    await executeComplianceAuditStream();
+});
+</script>
+
+
 </body>
 </html>

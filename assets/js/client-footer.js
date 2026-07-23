@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     width: 100% !important;
     margin-top: auto !important;
     padding: 20px 40px !important;
-    background: #0f172a !important;
+    background: #0a1f44 !important;
     color: #94a3b8 !important;
     font-size: 0.8rem !important;
     border-top: 1px solid #1e293b !important;

@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <a href="client-knowledgebase.html" class="nav-item m-link" data-page="client-knowledgebase.html">📰 Help Resources</a>
           </div>
         </div>
-        <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#0f172a; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Log Out Session</button>
+        <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#0a1f44; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Log Out Session</button>
       </nav>
     `;
 
