@@ -76,135 +76,160 @@
         </div>
       </header>
 
-      <div class="content-container">
-        <div class="console-card">
-          <h2>Active Standing Business Entities Ledger</h2>
-          <div style="overflow-x:auto !important;">
-            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-              <thead>
-                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
-                  <th style="padding:12px !important;">Legal Entity Corporate Name</th>
-                  <th style="padding:12px !important;">Filing Service Tracking Reference</th>
-                  <th style="padding:12px !important;">Employer ID Number (EIN)</th>
-                  <th style="padding:12px !important; text-align:right !important;">Compliance Tracking Actions</th>
-                </tr>
-              </thead>
-              <tbody id="client-entities-target-box">
-                <tr><td colspan="4" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing corporate charter metrics...</td></tr>
-              </tbody>
-            </table>
-          </div>
+    <div class="content-container" style="display: block; width: 100%;">
+    <!-- Panel Center: Active Corporate Formations Ledger -->
+    <div class="console-card" id="clientEntitiesMainView" style="width:100% !important; box-sizing: border-box;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <h2 style="margin:0;">My Registered Entities Portfolio</h2>
+                <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.45; margin:4px 0 0 0; text-align:left;">
+                    Review legal corporate structures, formation filing package configurations, and active tracking assets locked onto your profile.
+                </p>
+            </div>
+            <a href="client-compliance.html" style="text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:10px 16px; border-radius:6px; font-size:0.8rem; display:inline-flex; align-items:center; gap:6px;">
+                🛡️ Open Compliance Tracker
+            </a>
         </div>
-      </div>
+
+        <div style="overflow-x:auto !important; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0);">
+            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+                <thead>
+                    <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important; font-weight:700;">
+                        <th style="padding:14px 12px !important;">Company Legal Name</th>
+                        <th style="padding:14px 12px !important;">Formation Structure Type</th>
+                        <th style="padding:14px 12px !important;">Filing Service Tier</th>
+                        <th style="padding:14px 12px !important;">State Tracking Code</th>
+                        <th style="padding:14px 12px !important; text-align:right !important;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="client-entities-feed-target-box">
+                    <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important; font-style:italic;">Compiling entity portfolio data tracks...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
     </main>
   </div>
 
   <script src="assets/js/supabase-config.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+ <script>
+document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
 
-      // 1. Resolve Document Table Target Node Hook
-      const entitiesTableBody = document.getElementById("client-entities-target-box");
+    // 1. Resolve Document Table Target Node Hook
+    const entitiesTableBody = document.getElementById("client-entities-feed-target-box") || document.getElementById("client-entities-target-box");
+    if (!entitiesTableBody) {
+        throw new Error("✕ Critical UI Error: Table alignment target container is missing from current document layout tree.");
+    }
 
-      if (!entitiesTableBody) {
-        throw new Error("✕ Critical UI Error: Table alignment target container 'client-entities-target-box' is missing from document tree.");
-      }
-
-      // 2. Fetch Global Database Instance Connections
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        entitiesTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
+    // 2. Fetch Global Database Instance Connections
+    const client = window.supabaseInstance || window.supabaseClient;
+    if (!client || typeof client.from !== 'function') {
+        entitiesTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
         throw new Error("✕ Initialization Error: Database driver references evaluate to unassigned.");
-      }
+    }
 
-      // 3. Authenticate Active User Portal Session Profile Layers [0.1]
-      const { data: { session }, error: sessionError } = await client.auth.getSession();
-      if (sessionError || !session) {
+    // 3. Authenticate Active User Portal Session Profile Layers [0.1]
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) {
         window.location.href = "portal-login.html";
         return;
-      }
+    }
 
-      const clientSessionEmail = session.user.email;
-
-      async function streamClientEntitiesLedgerPipeline() {
+    const clientSessionEmail = session.user.email;
+    // --- STAGE 2: PULL RECORDS AND FORMULATE PORTFOLIO STRUCUTRES ---
+    async function streamClientEntitiesLedgerPipeline() {
         try {
-          console.log(`📡 [Entities Ledger] Pulling business charters matching account email: [${clientSessionEmail}]`);
+            console.log(`📡 [Entities Ledger] Pulling business charters matching account email: [${clientSessionEmail}]`);
 
-          // 🟢 DIRECT CLIENT FETCH: Extract cleared records belonging exclusively to this account email context
-          const { data: orders, error: fetchError } = await client
-            .from('orders')
-            .select('company_name, tracking_number, tax_id_status, status')
-            .eq('email', clientSessionEmail);
+            // 🟢 DIRECT CLIENT FETCH: Extract portfolio details filtered by current account email credentials context
+            const { data: orders, error: fetchError } = await client
+                .from('orders')
+                .select('company_name, service_title, plan_tier, tracking_number, status')
+                .eq('email', clientSessionEmail);
 
-          if (fetchError) throw fetchError;
+            if (fetchError) throw fetchError;
 
-          if (!orders || orders.length === 0) {
-            entitiesTableBody.innerHTML = `<tr><td colspan="4" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No registered entities or business formations recorded under your account.</td></tr>`;
-            return;
-          }
+            // Filter for orders that represent active formations
+            const activeFormations = orders ? orders.filter(orderItem => {
+                const currentStatus = String(orderItem.status || '').toLowerCase();
+                return currentStatus === 'paid' || currentStatus === 'approved' || currentStatus === 'complete' || currentStatus === 'active';
+            }) : [];
 
-          entitiesTableBody.innerHTML = "";
-
-          orders.forEach(orderItem => {
-            const trNode = document.createElement("tr");
-            trNode.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
-
-            const companyName = orderItem.company_name || "Asset Formation Lane";
-            const trackingNum = orderItem.tracking_number || "F4U-REF-KEY";
-            
-            // Format EIN fields smoothly or fallback to a standard state placeholder string
-            let taxIdString = orderItem.tax_id_status || "Processing...";
-            if (taxIdString.toLowerCase() === 'fulfillment lane' || taxIdString.toLowerCase() === 'processing') {
-              taxIdString = "⚙️ In Fulfillment";
+            if (activeFormations.length === 0) {
+                entitiesTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-style:italic;">No finalized registered entities or active business structures recorded under your account.</td></tr>`;
+                return;
             }
 
-            trNode.innerHTML = `
-              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeEntitiesHtml(companyName)}</td>
-              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:600;">${escapeEntitiesHtml(trackingNum)}</td>
-              <td style="padding:14px 12px; font-family:monospace; font-weight:700; color:var(--text-dark);">${escapeEntitiesHtml(taxIdString)}</td>
-              <td style="padding:14px 12px; text-align:right;">
-                Trace Status</a>
-              </td>
-            `;
+            entitiesTableBody.innerHTML = "";
+            
+            activeFormations.forEach(orderItem => {
+                const trNode = document.createElement("tr");
+                trNode.style.cssText = "border-bottom:1px solid var(--border-color, #e2e8f0); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
 
-            entitiesTableBody.appendChild(trNode);
-          });
+                const companyName = orderItem.company_name || "Asset Formation Lane";
+                const structureType = orderItem.service_title || "LLC Registration Package";
+                const packageTier = String(orderItem.plan_tier || 'standard').toUpperCase();
+                const trackingNum = orderItem.tracking_number || "F4U-REF-KEY";
+
+                trNode.innerHTML = `
+                    <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeEntitiesHtml(companyName)}</td>
+                    <td style="padding:14px 12px; color:#475569; font-weight:600;">${escapeEntitiesHtml(structureType)}</td>
+                    <td style="padding:14px 12px; font-family:monospace; font-size:0.75rem;"><span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700; color:#475569;">${escapeEntitiesHtml(packageTier)}</span></td>
+                    <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:600;">${escapeEntitiesHtml(trackingNum)}</td>
+                    <td style="padding:14px 12px; text-align:right;">
+                        <a href="client-compliance.html" style="text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 12px; border-radius:4px; font-size:11px; display:inline-block; transition: background 0.2s;">View Compliance Tracker ➔</a>
+                    </td>
+                `;
+                
+                entitiesTableBody.appendChild(trNode);
+            });
 
         } catch (queryFault) {
-          console.error("✕ Entities ledger synchronization loop broke: ", queryFault.message);
-          entitiesTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check portal status logs.</td></tr>`;
+            console.error("✕ Entities ledger synchronization loop broke: ", queryFault.message);
+            entitiesTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check portal status logs.</td></tr>`;
         }
-      }
-
-      function escapeEntitiesHtml(str) {
+    }
+    // --- STAGE 3: HELPER STRINGS ANTI-XSS ESCAPE PARSER LAYER ---
+    function escapeEntitiesHtml(str) {
         if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-      }
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
 
-      function toggleSidebarAccordion(buttonElement) {
+    // --- INTERACTIVE SIDEBAR UI CONTROLS ---
+    function toggleSidebarAccordion(buttonElement) {
         if (!buttonElement) return;
         buttonElement.classList.toggle('active');
         const panel = buttonElement.nextElementSibling;
         if (panel) {
-          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-            panel.style.maxHeight = "0px";
-          } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-          }
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
         }
-      }
-      window.toggleSidebarAccordion = toggleSidebarAccordion;
+    }
+    window.toggleSidebarAccordion = toggleSidebarAccordion;
 
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+    // --- LOGOUT EVENT HANDLER ATTACHMENT ---
+    document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
         window.localStorage.clear();
         window.sessionStorage.clear();
         window.location.replace("portal-login.html");
-      });
-
-      await streamClientEntitiesLedgerPipeline();
     });
-  </script>
+
+    // Execute Global Sync Cycle Initialization
+    await streamClientEntitiesLedgerPipeline();
+});
+</script>
+
 </body>
 </html>
