@@ -166,8 +166,11 @@ window.renderChatSidebarList = function(datasetArray) {
     if (!rosterContainer) return;
 
     rosterContainer.innerHTML = datasetArray.map(row => {
-        // Read your exact schema properties
-        const isSelected = activeSelectedClientId === row.client_id;
+        // 🟢 FIXED: Added safe string lookup validation fallback to protect the variable loop logic
+        const currentActiveToken = window.activeSelectedClientId || null;
+        const isSelected = currentActiveToken === row.client_id;
+        
+        const shortUuid = String(row.client_id || '').substring(0, 8).toUpperCase();
         
         // 🟢 FIXED SIDEBAR NAMES: Display the real name from your view column, fallback to ID string if blank
         const cleanCustomerName = row.resolved_customer_name && row.resolved_customer_name.trim() !== ""
@@ -409,39 +412,40 @@ window.initializeAdminRealtimeMessagingPipeline = function() {
 
     console.log("📡 [Real-time Engine] Binding global workspace listener channel...");
 
-    // Remove any existing duplicate websocket tracks to avoid message double-printing
-    if (realtimeChatSubscriptionChannel) {
-        client.removeChannel(realtimeChatSubscriptionChannel);
+    // 🟢 FIXED: Use explicit window object scope referencing to eliminate undefined lookup crashes
+    if (window.realtimeChatSubscriptionChannel) {
+        client.removeChannel(window.realtimeChatSubscriptionChannel);
     }
 
     // Subscribe straight to raw chat mutations to bypass static view refresh lockouts
-    realtimeChatSubscriptionChannel = client.channel('admin_master_chat_stream')
+    window.realtimeChatSubscriptionChannel = client.channel('admin_master_chat_stream')
         .on('postgres_changes', { 
             event: 'INSERT', 
             schema: 'public', 
             table: 'chat_messages' 
         }, async (payload) => {
             console.log("📡 [Inbound Live Broadcast Caught]:", payload.new);
-            
             const incomingClientId = payload.new.client_id;
 
             // Trigger temporary audio alert indicators on customer messages
             if (String(payload.new.sender_type).toLowerCase() === 'client') {
-                try { new Audio("assets/sounds/notification.mp3").play().catch(() => {}); } catch(e) {}
+                try {
+                    new Audio("assets/sounds/notification.mp3").play().catch(() => {});
+                } catch(e) {}
                 if (typeof window.triggerActiveBrowserTabFlashAlert === "function") {
                     window.triggerActiveBrowserTabFlashAlert(incomingClientId);
                 }
             }
 
             // Case A: If the staff member is actively viewing this specific customer's room
-            if (activeSelectedClientId === incomingClientId) {
+            if ((window.activeSelectedClientId || null) === incomingClientId) {
                 // Instantly construct and append the text bubble row to the layout tree in real-time
                 window.appendSingleChatMessageBubbleToUI(payload.new);
-                
+
                 // Natively clear unread flags on the backend silently
                 await client.from('chat_messages')
                     .update({ is_read_by_admin: true })
-                    .eq('client_id', activeSelectedClientId);
+                    .eq('client_id', window.activeSelectedClientId);
             }
 
             // Case B: Always regenerate the left column roster list view parameters to shift active rows to the top
@@ -458,6 +462,10 @@ const clientInstanceHook = window.supabaseInstance || window.supabaseClient || c
 if (clientInstanceHook) {
     // Fire off immediate async layout state hydrations as soon as script block compiles
     (async () => {
+        // Initialize window globals safely before running loops
+        if (typeof window.activeSelectedClientId === "undefined") window.activeSelectedClientId = null;
+        if (typeof window.realtimeChatSubscriptionChannel === "undefined") window.realtimeChatSubscriptionChannel = null;
+
         await window.synchronizeChatThreadsRoster();
         window.initializeAdminRealtimeMessagingPipeline();
     })();
