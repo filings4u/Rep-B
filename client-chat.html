@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
     await resolveHumanReadableProfileIdentity();
-    // --- STAGE 1: DYNAMIC TIMELINE STREAM LOAD PROTOCOLS ---
+     // --- STAGE 1: DYNAMIC TIMELINE STREAM LOAD PROTOCOLS ---
     async function streamClientChatTimelineLogs() {
         try {
             console.log(`📡 [Chat Engine] Querying messaging logs matching thread path token: [${clientActiveUserId}]`);
@@ -536,7 +536,22 @@ document.addEventListener("DOMContentLoaded", async () => {
                     window.appendSingleChatMessageBubbleToUI(msgRow);
                 });
             } else {
-                msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">Welcome! Send your first secure support message query to initialize communications.</div>`;
+                // 🟢 ENTERPRISE AUTOMATION: Insert an initial automated room record to trigger the sidebar threads view row
+                console.log("📋 [Onboarding] Initializing new support room channel mapping entries...");
+                const { error: welcomeErr } = await client
+                    .from('chat_messages')
+                    .insert([{
+                        client_id: clientActiveUserId,
+                        message_content: "Welcome to filings4u Corporate Support Desk! An asset specialist has been assigned to your entity file. Please state your statutory query or detail your configuration update requirements below.",
+                        sender_type: 'admin',
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (!welcomeErr) {
+                    // Instantly reload to parse the freshly written welcome record row properties
+                    await streamClientChatTimelineLogs();
+                    return;
+                }
             }
             window.scrollChatTimelineToAbsoluteBottom();
         } catch (fault) {
@@ -544,6 +559,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--staff-red); font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Interrupted.</div>`;
         }
     }
+
 
     // --- STAGE 2: ATTACH LIVE REALTIME POSTGRES CHANGES BROADCASTS TRACKS ---
     console.log("[Chat Engine] Activating real-time row insertion monitoring listener...");
