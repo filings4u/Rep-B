@@ -138,9 +138,21 @@
 
   <script src="assets/js/client-footer.js"></script>
 
+
+
+
+
+
 <script>
 // CLIENT DASHBOARD PAGE SCRIPT
 document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize your client using your project keys
+  const SUPABASE_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
+  
+  // Ensure the variable name matches what your application functions expect below
+  window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
   await renderClientComplianceDashboard();
 });
 
@@ -157,18 +169,18 @@ async function renderClientComplianceDashboard() {
       return;
     }
 
-    // 2. Fetch tracking rows belonging strictly to this user's ID instance
-// Change the query inside your CLIENT page JavaScript to this:
-const { data: rows, error } = await client
-  .from('orders') // Calls your real orders table directly
-  .select('service_title, company_name, created_at, status')
-  .eq('user_id', user.id); // Isolates entries down to the active logged-in client
+    // 2. Fetch data from your unified compliance_deadlines view matching user_id
+    // Fixed: Changed 'client' to 'supabase' to prevent execution crashes
+    const { data: rows, error: dbError } = await supabase
+      .from('compliance_deadlines') 
+      .select('id, requirement_name, state_authority, due_date, status')
+      .eq('user_id', user.id); 
 
-
+    // Fixed: Correctly catches database errors matching the database response variable name
     if (dbError) throw dbError;
-    tableContainer.innerHTML = '';
+    tableContainer.innerHTML = ''; 
 
-    // 3. Render clean empty state if no compliance requirements apply yet
+    // 3. Render clean empty state if no rows populate
     if (!rows || rows.length === 0) {
       tableContainer.innerHTML = `
         <tr>
@@ -179,27 +191,26 @@ const { data: rows, error } = await client
       return;
     }
 
-    // 4. Mount entries dynamically into your client-compliance-feed-target-box console array
+    // 4. Mount entries dynamically into your table matrix
     rows.forEach(item => {
-      let statusStyle = 'background:#fef3c7; color:#92400e;'; // Default yellow PENDING tag
-      if (item.status === 'COMPLETED') {
-        statusStyle = 'background:#dcfce7; color:#166534;';
-      } else if (item.status === 'OVERDUE') {
-        statusStyle = 'background:#fee2e2; color:#991b1b;';
-      }
+      // Configures label styling checking for your exact database string options ('Paid', 'paid', 'payment_pending')
+      const isPaid = (item.status === 'Paid' || item.status === 'paid');
+      const statusStyle = isPaid ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;';
+      const displayLabel = item.status === 'payment_pending' ? 'Payment Pending' : item.status;
 
+      // Fixed: Mapped row strings to read view definitions: requirement_name, state_authority, and due_date
       const rowMarkup = `
         <tr style="border-bottom: 1px solid #e2e8f0;">
           <td style="padding:14px 12px; font-weight: 600; color: #1e293b;">${escapeClientHtml(item.requirement_name)}</td>
           <td style="padding:14px 12px; color: #475569;">${escapeClientHtml(item.state_authority)}</td>
-          <td style="padding:14px 12px; color: #475569;">${item.due_date}</td>
+          <td style="padding:14px 12px; color: #475569; font-family: monospace;">${item.due_date}</td>
           <td style="padding:14px 12px;">
             <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${statusStyle}">
-              ${escapeClientHtml(item.status)}
+              ${escapeClientHtml(displayLabel)}
             </span>
           </td>
           <td style="padding:14px 12px; text-align:right;">
-            <button onclick="viewClientAsset('${item.id}')" style="padding: 6px 12px; background: #ffffff; color: #2563eb; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+            <button onclick="viewClientAsset('${item.id}', '${escapeClientHtml(item.requirement_name)}')" style="padding: 6px 12px; background: #ffffff; color: #2563eb; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
               View Document
             </button>
           </td>
@@ -219,14 +230,7 @@ function escapeClientHtml(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-function viewClientAsset(id) {
-  alert(`Opening storage verification attachment for item index: ${id}`);
+function viewClientAsset(id, requirementName) {
+  alert(`Locating historical verification files for compliance item ID: ${id}`);
 }
-
 </script>
-</body>
-</html>
-
-
-</body>
-</html>
