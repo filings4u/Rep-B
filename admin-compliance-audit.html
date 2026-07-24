@@ -179,50 +179,51 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-  
 
 <script>
 // ADMIN DASHBOARD PAGE SCRIPT
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Populate admin dropdown using clean names from client_profiles table
+  // Initialize your admin client context safely
+  const SUPABASE_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'; // Admin requires service role key to pull all entries
+  
+  window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // 1. Populate admin form dropdown menu using clean rows from your client_profiles table
   await populateAdminDropdownFromProfiles();
   
-  // 2. Sync any new orders into compliance_deadlines
-  await syncOrdersToComplianceDeadlines();
-  
-  // 3. Render the admin ledger table rows
+  // 2. Render the admin tracking ledger rows directly from the compliance_deadlines database view
   await renderAdminLedgerTable();
 });
 
+/**
+ * 1. Populates the paperclip uploader form target selector using your actual client profiles
+ */
 async function populateAdminDropdownFromProfiles() {
   const dropdown = document.getElementById('uploadTargetClientSelector');
   if (!dropdown) return;
 
   try {
-    // Queries your actual client profiles directory mapping to auth.users records
-  // Change the query inside your ADMIN page JavaScript to this:
-const { data: rows, error } = await client
-  .from('orders') // Calls your real orders table directly
-  .select(`
-    service_title,
-    company_name,
-    created_at,
-    status,
-    client_profiles!inner ( email ) 
-  `); // !inner forces a join to display user target core context emails
-
+    // Queries your explicit client_profiles table records
+    // Fixed: Switched object reference from 'client' to your correct 'supabase' variable instance
+    const { data: profiles, error } = await supabase
+      .from('client_profiles') 
+      .select('id, email, first_name, last_name')
+      .order('email', { ascending: true });
 
     if (error) throw error;
 
+    // Fixed: Changed 'profiles' check variable initialization to match the returned rows structure
     if (profiles && profiles.length > 0) {
       dropdown.innerHTML = '<option value="">-- Choose a target entity profile --</option>';
+      
       profiles.forEach(client => {
         const option = document.createElement('option');
-        option.value = client.id;
+        option.value = client.id; // Sets value mapping to your client user_id
         
-        // Use full name if available, fallback cleanly to email if names are blank
+        // Use full name combinations if available, fallback cleanly to email address strings if blank
         const clientLabel = (client.first_name || client.last_name) 
-          ? `${client.first_name || ''} ${client.last_name || ''}`.trim()
+          ? `${client.first_name || ''} ${client.last_name || ''}`.trim() 
           : client.email;
 
         option.textContent = `${clientLabel} (${client.email})`;
@@ -237,77 +238,47 @@ const { data: rows, error } = await client
   }
 }
 
-async function syncOrdersToComplianceDeadlines() {
-  try {
-    const { data: activeOrders, error: orderErr } = await supabase
-      .from('orders')
-      .select('user_id, requirement_name, state_authority, fulfillment_due_date')
-      .eq('status', 'PAID'); 
-
-    if (orderErr) throw orderErr;
-    if (!activeOrders || activeOrders.length === 0) return;
-
-    const { data: currentDeadlines, error: deadlineErr } = await supabase
-      .from('compliance_deadlines')
-      .select('requirement_name, user_id');
-
-    if (deadlineErr) throw deadlineErr;
-
-    const baselineKeys = new Set(currentDeadlines.map(d => `${d.user_id}_${d.requirement_name.trim().toLowerCase()}`));
-
-    const ingestionPayloads = activeOrders
-      .filter(order => order.user_id && !baselineKeys.has(`${order.user_id}_${order.requirement_name.trim().toLowerCase()}`))
-      .map(order => ({
-        user_id: order.user_id,
-        requirement_name: order.requirement_name,
-        state_authority: order.state_authority || 'State Authority Pending',
-        due_date: order.fulfillment_due_date,
-        status: 'PENDING_ACTION'
-      }));
-
-    if (ingestionPayloads.length > 0) {
-      const { error: insertErr } = await supabase
-        .from('compliance_deadlines')
-        .insert(ingestionPayloads);
-      if (insertErr) throw insertErr;
-    }
-  } catch (err) {
-    console.warn('Orders sync skipped:', err.message);
-  }
-}
-
+/**
+ * 2. Renders records cleanly inside the administration tracker ledger table matrix
+ */
 async function renderAdminLedgerTable() {
   const adminContainer = document.getElementById('admin-compliance-target-box');
   if (!adminContainer) return;
 
   try {
-    // Join or pull compliance_deadlines
+    // Calling the exact fields available on your compliance_deadlines database view layer
     const { data: rows, error } = await supabase
       .from('compliance_deadlines')
-      .select('*')
+      .select('email, requirement_name, state_authority, due_date, status')
       .order('due_date', { ascending: true });
 
     if (error) throw error;
-    adminContainer.innerHTML = '';
+    adminContainer.innerHTML = ''; // Clear layout loader placeholders
 
     if (!rows || rows.length === 0) {
-      adminContainer.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No records found.</td></tr>`;
+      adminContainer.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No records found inside your tracking ledger.</td></tr>`;
       return;
     }
 
+    // Mount entries dynamically into your table matrix rows
     rows.forEach(item => {
-      const statusColor = item.status === 'COMPLETED' ? 'background:#dcfce7; color:#166534;' : 'background:#fef3c7; color:#92400e;';
+      // Color-coding layout configuration matching your actual database statuses ('Paid', 'paid', 'payment_pending')
+      const isPaid = (item.status === 'Paid' || item.status === 'paid');
+      const statusColor = isPaid ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;';
+      const displayStatus = item.status === 'payment_pending' ? 'Payment Pending' : item.status;
+
+      // Fixed: Mapped template identifiers to render target variables: email, requirement_name, state_authority, and due_date
       const tableHTML = `
         <tr style="border-bottom: 1px solid #e2e8f0;">
-          <td style="padding:14px 12px; font-weight: 500; color: #475569; font-size: 0.75rem; font-family: monospace;">
-            ${item.user_id ? item.user_id.substring(0,8) + '...' : 'N/A'}
+          <td style="padding:14px 12px; font-weight: 500; color: #475569;">
+            ${escapeAdminHtml(item.email || 'N/A')}
           </td>
           <td style="padding:14px 12px; font-weight: 600; color: #1e293b;">${escapeAdminHtml(item.requirement_name)}</td>
           <td style="padding:14px 12px; color: #475569;">${escapeAdminHtml(item.state_authority)}</td>
-          <td style="padding:14px 12px; color: #475569;">${item.due_date}</td>
+          <td style="padding:14px 12px; color: #475569; font-family: monospace;">${item.due_date}</td>
           <td style="padding:14px 12px; text-align:right;">
             <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${statusColor}">
-              ${escapeAdminHtml(item.status)}
+              ${escapeAdminHtml(displayStatus)}
             </span>
           </td>
         </tr>
@@ -324,9 +295,8 @@ function escapeAdminHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
-
-
 </script>
+
 
 
 </body>
