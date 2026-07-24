@@ -67,58 +67,7 @@
 
 <body>
   <div class="dashboard-wrapper">
-    <!-- 🌐 ACCORDION SIDEBAR CONSOLE FRAMEWORK -->
-    <aside class="portal-sidebar">
-      <div class="sidebar-brand-block">
-        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-        <div><div class="admin-badge">Directorate Admin</div></div>
-      </div>
-      <nav class="sidebar-accordion-menu">
-        <!-- ACCORDION 1 -->
-        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span> </button>
-        <div class="accordion-panel">
-          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-          <a href="admin-faq-analytics.html" class="nav-item"><span>📈</span> FAQ Performance Insights</a>
-        </div>
-        <!-- ACCORDION 2 -->
-        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span> </button>
-        <div class="accordion-panel" style="max-height: 600px;">
-          <a href="admin-crm.html" class="nav-item"><span>👥</span> Customer CRM</a>
-          <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-          <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-          <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-        </div>
-        <!-- ACCORDION 3 -->
-        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Financials & Health <span class="chevron">▼</span> </button>
-        <div class="accordion-panel">
-          <a href="admin-revenue-reconciliation.html" class="nav-item"><span>💸</span> Revenue Reconciliation</a>
-          <a href="admin-portfolio-spend.html" class="nav-item"><span>💳</span> Portfolio Spend</a>
-          <a href="admin-system-logs.html" class="nav-item"><span>📋</span> System Event Logs</a>
-        </div>
-        <!-- ACCORDION 4 -->
-        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Communication & Tools <span class="chevron">▲</span> </button>
-        <div class="accordion-panel" style="max-height: 600px;">
-          <a href="admin-chat.html" class="nav-item active"><span>💬</span> Client Chat</a>
-          <a href="admin-documents.html" class="nav-item"><span>📂</span> Document Vault</a>
-          <a href="orders.html" class="nav-item"><span>📞</span> Phone Orders</a>
-          <a href="admin-calendar.html" class="nav-item"><span>📅</span> Calendar Task Board</a>
-          <a href="invoice.html" class="nav-item"><span>🧾</span> Invoices Hub</a>
-          <a href="admin-staff-roster.html" class="nav-item"><span>👥</span> Staff Roster</a>
-          <a href="admin-global-settings.html" class="nav-item"><span>⚙️</span> System Settings</a>
-        </div>
-      </nav>
-      
-      <div class="sidebar-footer-lock" style="width: 100%; box-sizing: border-box; text-align: center; padding: 15px 10px;">
-        <div style="display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; margin-bottom: 12px !important; width: 100% !important;">
-          <div style="width: 6px !important; height: 6px !important; background: #10b981 !important; border-radius: 50% !important; box-shadow: 0 0 6px #10b981 !important;"></div>
-          <span style="font-size: 0.65rem !important; color: #10b981 !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;">Cloud Synced</span>
-        </div>
-        <button id="sidebarFallbackLogoutBtn" class="logout-btn" style="width: 100% !important; cursor: pointer !important; box-sizing: border-box !important;">Exit Admin Session</button>
-      </div>
-    </aside>
+  
 
     <!-- 🖥️ CHAT DASHBOARD REGION CANVAS STRETCH -->
     <main class="portal-main">
@@ -164,7 +113,7 @@
     </main>
   </div>
 
-    <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
+  
   <!-- 1. The Global Library Core MUST load absolute first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
@@ -178,283 +127,295 @@
   <script src="assets/js/admin-navigation.js"></script>
 
   <!-- ========================================================================== 🏢 ADMINISTRATIVE REAL-TIME LOGIC ENGINE CONTROLLERS ========================================================================== -->
-  <script>
-    "use strict";
+ <script>
 
-    let activeSelectedClientId = null;
-    let realtimeChatSubscriptionChannel = null;
-    const chatAdminCoreClient = window.supabaseInstance || window.supabaseClient || window.supabase || window.f4uWizardSupabaseInstance;
+// --- DIRECTORY ROSTER RETRIEVAL MATRIX --- 
+window.synchronizeChatThreadsRoster = async function() {
+    const rosterContainer = document.getElementById("adminUsersFeedContainer");
+    const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+    if (!rosterContainer || !client) return;
 
-    // --- LIFE-CYCLE BOOT INITIALIZER ---
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-        const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
-        const rosterContainer = document.getElementById("adminUsersFeedContainer");
-        if (!client) {
-          if (rosterContainer) rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Database Link Offline</div>`;
-          return;
-        }
-        try {
-          // Perimeter Authentication Staff Access Guard Check [0.1]
-          const { data: { session }, error: authErr } = await client.auth.getSession();
-          if (authErr || !session) {
-            window.location.href = 'admin-login.html';
-            return;
-          }
-          const staffEmail = String(session.user.email || '').toLowerCase().trim();
-          const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-          if (!isVerifiedStaff) {
-            window.location.href = 'portal-login.html';
-            return;
-          }
-
-          await window.synchronizeChatThreadsRoster();
-
-          // Real-time notification channel listener [0.1]
-          client.channel('global_admin_roster_watcher')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
-              if (String(payload.new.sender_type).toLowerCase() === 'client') {
-                try {
-                  new Audio("https://jsdelivr.net").play().catch(() => {});
-                } catch(e) {}
-                if (typeof window.triggerActiveBrowserTabFlashAlert === "function") {
-                  window.triggerActiveBrowserTabFlashAlert(payload.new.client_id);
-                }
-              }
-              if (activeSelectedClientId === payload.new.client_id) {
-                window.loadActiveThreadViewportPanel(activeSelectedClientId);
-              } else {
-                window.synchronizeChatThreadsRoster();
-              }
-            })
-            .subscribe();
-        } catch (err) {
-          console.error("Administrative chat boot crash: ", err.message);
-        }
-      }, 50);
-
-      function initializeHeaderClockTick() {
-        const clock = document.getElementById("portal-clock");
-        if (!clock) return;
-        const now = new Date();
-        clock.innerText = now.toLocaleDateString() + " | " + now.toLocaleTimeString();
-      }
-      setInterval(initializeHeaderClockTick, 1000);
-      initializeHeaderClockTick();
-    });
-
-        // --- DIRECTORY ROSTER RETRIEVAL MATRIX ---
-    window.synchronizeChatThreadsRoster = async function() {
-      const rosterContainer = document.getElementById("adminUsersFeedContainer");
-      const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
-      if (!rosterContainer || !client) return;
-      try {
+    try {
+        // 1. Fetch raw conversational view threads data
         const { data: threads, error } = await client
-          .from('admin_chat_threads_view')
-          .select('*')
-          .order('last_message_at', { ascending: false });
+            .from('admin_chat_threads_view')
+            .select('*')
+            .order('last_message_at', { ascending: false });
+
         if (error) throw error;
+        const rawThreadsArray = threads || [];
 
-        window.masterCrmThreadsCache = threads || [];
-        if (window.masterCrmThreadsCache.length === 0) {
-          rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
-          return;
+        if (rawThreadsArray.length === 0) {
+            rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
+            return;
         }
-        window.renderChatSidebarList(window.masterCrmThreadsCache);
-      } catch (err) {
-        console.error("Roster synchronization failure:", err.message);
-        rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
-      }
-    };
 
-    window.renderChatSidebarList = function(datasetArray) {
-      const rosterContainer = document.getElementById("adminUsersFeedContainer");
-      if (!rosterContainer) return;
-      rosterContainer.innerHTML = datasetArray.map(row => {
+        // 2. 🟢 RELATIONAL PROFILE JOIN: Pull matching customer names to replace fallback ID strings
+        const uniqueClientIds = [...new Set(rawThreadsArray.map(t => t.client_id))];
+        const { data: profiles, error: profileErr } = await client
+            .from('client_profiles')
+            .select('id, first_name, last_name')
+            .in('id', uniqueClientIds);
+
+        // Map human profiles to our memory thread object rows
+        const profileMap = {};
+        if (!profileErr && profiles) {
+            profiles.forEach(p => {
+                profileMap[p.id] = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+            });
+        }
+
+        window.masterCrmThreadsCache = rawThreadsArray.map(thread => ({
+            ...thread,
+            resolved_customer_name: profileMap[thread.client_id] || null
+        }));
+
+        window.renderChatSidebarList(window.masterCrmThreadsCache);
+
+    } catch (err) {
+        console.error("Roster synchronization failure:", err.message);
+        // Inline UI error display replaces old 1980 style popups
+        rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:var(--staff-red); font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
+    }
+};
+window.renderChatSidebarList = function(datasetArray) {
+    const rosterContainer = document.getElementById("adminUsersFeedContainer");
+    if (!rosterContainer) return;
+
+    rosterContainer.innerHTML = datasetArray.map(row => {
         const isSelected = activeSelectedClientId === row.client_id;
         const shortUuid = String(row.client_id || '').substring(0, 8).toUpperCase();
+        
+        // 🟢 FIXED: Prioritize human readable name context over raw UUID strings
+        const displayNameString = row.resolved_customer_name 
+            ? `👤 ${row.resolved_customer_name}` 
+            : `🆔 Thread Ref: ${shortUuid}`;
+
         let msgPreview = row.last_message_content || 'No text content.';
         if (msgPreview.includes("Name:")) {
-          msgPreview = "📋 [New Room Handshake Onboarding Metadata]";
+            msgPreview = "📋 [New Room Handshake Onboarding Metadata]";
         } else if (msgPreview.length > 38) {
-          msgPreview = msgPreview.substring(0, 35) + "...";
+            msgPreview = msgPreview.substring(0, 35) + "...";
         }
-        const unreadCountBadge = row.unread_count > 0 ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` : '';
-        const backgroundStyles = isSelected ? "background: rgba(16, 185, 129, 0.08) !important; border-left: 4px solid #ef4444 !important;" : "background: none;";
-        
+
+        const unreadCountBadge = row.unread_count > 0 
+            ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` 
+            : '';
+
+        const backgroundStyles = isSelected 
+            ? "background: rgba(16, 185, 129, 0.08) !important; border-left: 4px solid #c15254 !important;" 
+            : "background: none;";
+
         return `
-          <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.client_id}')">
-            <div style="display:flex; justify-content:space-between; width:100%; align-items:center; box-sizing:border-box;">
-              <strong style="color:#0a1f44; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">👤 Session Profile: ${shortUuid}</strong>
-              ${unreadCountBadge}
+            <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.client_id}')">
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center; box-sizing:border-box;">
+                    <strong style="color:#0a1f44; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">${window.escapeChatTextMarkup(displayNameString)}</strong>
+                    ${unreadCountBadge}
+                </div>
+                <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${window.escapeChatTextMarkup(msgPreview)}</small>
             </div>
-            <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${window.escapeChatTextMarkup(msgPreview)}</small>
-          </div>
         `;
-      }).join('');
-    };
+    }).join('');
+};
 
-    window.filterUsersFeed = function() {
-      const searchBox = document.getElementById("userFeedFilterField");
-      if (!searchBox || !window.masterCrmThreadsCache) return;
-      const parsingToken = searchBox.value.toLowerCase().trim();
-      const filtered = window.masterCrmThreadsCache.filter(row => 
+window.filterUsersFeed = function() {
+    const searchBox = document.getElementById("userFeedFilterField");
+    if (!searchBox || !window.masterCrmThreadsCache) return;
+    
+    const parsingToken = searchBox.value.toLowerCase().trim();
+    const filtered = window.masterCrmThreadsCache.filter(row => 
         String(row.client_id).toLowerCase().includes(parsingToken) || 
+        String(row.resolved_customer_name || '').toLowerCase().includes(parsingToken) ||
         String(row.last_message_content).toLowerCase().includes(parsingToken)
-      );
-      window.renderChatSidebarList(filtered);
-    };
+    );
+    window.renderChatSidebarList(filtered);
+};
 
-    window.f4uTabNotificationIntervalInstance = null;
-    window.originalBrowserTabTitleString = document.title;
+window.f4uTabNotificationIntervalInstance = null;
+window.originalBrowserTabTitleString = document.title;
+window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
+    const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+    const textarea = document.getElementById("adminChatMessageInputField");
+    const sendButton = document.getElementById("adminChatSendButton");
+    const msgLogBox = document.getElementById("adminChatMessagesLog");
+    if (!client || !textarea || !sendButton || !msgLogBox) return;
 
-    window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
-      const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
-      const textarea = document.getElementById("adminChatMessageInputField");
-      const sendButton = document.getElementById("adminChatSendButton");
-      const msgLogBox = document.getElementById("adminChatMessagesLog");
-      if (!client || !textarea || !sendButton || !msgLogBox) return;
+    activeSelectedClientId = String(stringClientUuid).trim();
+    textarea.disabled = false;
+    sendButton.disabled = false;
+    textarea.placeholder = `Type response to Client...`;
+    textarea.focus();
 
-      activeSelectedClientId = String(stringClientUuid).trim();
-      textarea.disabled = false;
-      sendButton.disabled = false;
-      textarea.placeholder = `Type response to Client: ${activeSelectedClientId.substring(0,8).toUpperCase()}...`;
-      textarea.focus();
-
-      try {
+    try {
         await client.from('chat_messages').update({ is_read_by_admin: true }).eq('client_id', activeSelectedClientId);
         if (typeof window.synchronizeChatThreadsRoster === "function") {
-          window.synchronizeChatThreadsRoster();
+            window.synchronizeChatThreadsRoster();
         }
-
         const { data: messages, error } = await client
-          .from('chat_messages')
-          .select('*')
-          .eq('client_id', activeSelectedClientId)
-          .order('created_at', { ascending: true });
-        if (error) throw error;
+            .from('chat_messages')
+            .select('*')
+            .eq('client_id', activeSelectedClientId)
+            .order('created_at', { ascending: true });
 
+        if (error) throw error;
         msgLogBox.innerHTML = "";
+
         if (messages && messages.length > 0) {
-          messages.forEach(msg => {
-            window.appendSingleChatMessageBubbleToUI(msg);
-          });
+            messages.forEach(msg => {
+                window.appendSingleChatMessageBubbleToUI(msg);
+            });
         } else {
-          msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
+            msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
         }
         window.scrollTerminalTimelineToAbsoluteBottom();
-      } catch (err) {
+    } catch (err) {
         console.error("Timeline retrieval failed:", err.message);
-        msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
-      }
-    };
-    window.triggerActiveBrowserTabFlashAlert = function(clientLabel) {
-      if (window.f4uTabNotificationIntervalInstance) return;
-      let toggleAlertFlag = true;
-      const shortIdLabel = String(clientLabel || '').substring(0, 8).toUpperCase();
-      window.f4uTabNotificationIntervalInstance = setInterval(() => {
+        msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--staff-red); font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
+    }
+};
+
+window.triggerActiveBrowserTabFlashAlert = function(clientLabel) {
+    if (window.f4uTabNotificationIntervalInstance) return;
+    let toggleAlertFlag = true;
+    const shortIdLabel = String(clientLabel || '').substring(0, 8).toUpperCase();
+    window.f4uTabNotificationIntervalInstance = setInterval(() => {
         document.title = toggleAlertFlag ? `🚨 NEW CHAT (#${shortIdLabel})` : `💬 ${window.originalBrowserTabTitleString}`;
         toggleAlertFlag = !toggleAlertFlag;
-      }, 1000);
-    };
+    }, 1000);
+};
 
-    document.addEventListener("click", () => {
-      const inputEl = document.getElementById("adminChatMessageInputField");
-      if (document.activeElement === inputEl && window.f4uTabNotificationIntervalInstance) {
+document.addEventListener("click", () => {
+    const inputEl = document.getElementById("adminChatMessageInputField");
+    if (document.activeElement === inputEl && window.f4uTabNotificationIntervalInstance) {
         clearInterval(window.f4uTabNotificationIntervalInstance);
         window.f4uTabNotificationIntervalInstance = null;
         document.title = window.originalBrowserTabTitleString;
-      }
+    }
+});
+
+window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+    const msgLogBox = document.getElementById("adminChatMessagesLog");
+    if (!msgLogBox) return;
+    const currentSender = String(msgRow.sender_type || '').toLowerCase();
+    const isAdminResponse = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'broker' || currentSender === 'staff';
+    const rowWrapper = document.createElement("div");
+    rowWrapper.className = isAdminResponse ? "msg-row staff-sent" : "msg-row client-sent";
+    const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    let secureCleanText = window.escapeChatTextMarkup(msgRow.message_content || "");
+    
+    // Inbound metadata storage payload unpacker to support user uploaded files cleanly
+    const meta = msgRow.payload_metadata || {};
+    if (meta.document_url) {
+        const bucketSource = meta.storage_file_path || "chat_documents";
+        const attachmentName = meta.file_name || "Download File Attachment";
+        secureCleanText += `
+            <a href="#" class="chat-file-embed-link admin-cloud-download" data-bucket="${bucketSource}" data-path="${meta.document_url}" style="display:flex; align-items:center; gap:6px; font-weight:700; color:inherit; margin-top:6px;">
+                📁 [Attached File]: ${window.escapeChatTextMarkup(attachmentName)} ➔
+            </a>
+        `;
+    }
+
+    rowWrapper.innerHTML = `
+        <div class="msg-bubble">
+            <div>${secureCleanText}</div>
+            <span class="msg-timestamp">${readableTime}</span>
+        </div>
+    `;
+
+    rowWrapper.querySelectorAll(".admin-cloud-download").forEach(link => {
+        link.addEventListener("click", async function(e) {
+            e.preventDefault();
+            const bucket = this.getAttribute("data-bucket");
+            const path = this.getAttribute("data-path");
+            try {
+                const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 90);
+                if (error) throw error;
+                window.open(data.signedUrl, '_blank');
+            } catch(err) {
+                console.error("Staff access to payload link rejected: ", err.message);
+            }
+        });
     });
 
-    window.appendSingleChatMessageBubbleToUI = function(msgRow) {
-      const msgLogBox = document.getElementById("adminChatMessagesLog");
-      if (!msgLogBox) return;
-      const currentSender = String(msgRow.sender_type || '').toLowerCase();
-      const isAdminResponse = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'broker' || currentSender === 'staff';
-      
-      const rowWrapper = document.createElement("div");
-      rowWrapper.className = isAdminResponse ? "msg-row staff-sent" : "msg-row client-sent";
+    msgLogBox.appendChild(rowWrapper);
+    window.scrollTerminalTimelineToAbsoluteBottom();
+};
 
-      const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const secureCleanText = window.escapeChatTextMarkup(msgRow.message_content || "");
+window.dispatchAdminResponseChatMessage = async function() {
+    const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+    const textarea = document.getElementById("adminChatMessageInputField");
+    if (!client || !textarea || !activeSelectedClientId) return;
+    const rawText = textarea.value.trim();
+    if (!rawText) return;
 
-      rowWrapper.innerHTML = `
-        <div class="msg-bubble">
-          <div>${secureCleanText}</div>
-          <span class="msg-timestamp">${readableTime}</span>
-        </div>
-      `;
-      msgLogBox.appendChild(rowWrapper);
-      window.scrollTerminalTimelineToAbsoluteBottom();
-    };
-
-    window.dispatchAdminResponseChatMessage = async function() {
-      const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
-      const textarea = document.getElementById("adminChatMessageInputField");
-      if (!client || !textarea || !activeSelectedClientId) return;
-
-      const rawText = textarea.value.trim();
-      if (!rawText) return;
-
-      textarea.disabled = true;
-      try {
-        const { error } = await client
-          .from('chat_messages')
-          .insert([{
-            client_id: activeSelectedClientId,
-            message_content: rawText,
-            sender_type: 'admin',
+    textarea.disabled = true;
+    try {
+  // Inside your admin-chat.html transmission block
+const { error } = await client
+    .from('chat_messages')
+    .insert([{
+        client_id: activeSelectedClientId,
+        message_content: rawText,
+        sender_type: 'admin',
+        created_at: new Date().toISOString(),
+        payload_metadata: {
             is_read_by_admin: true,
-            is_read_by_client: false,
-            created_at: new Date().toISOString()
-          }]);
+            is_read_by_client: false
+        }
+    }]);
+
+
         if (error) throw error;
         textarea.value = "";
         await window.loadActiveThreadViewportPanel(activeSelectedClientId);
-      } catch (err) {
-        alert(`✕ Message Transmission Failed: ${err.message}`);
-      } finally {
+    } catch (err) {
+        console.error("Message delivery transmission crash:", err.message);
+        // FIXED: Replaced browser native alerts with temporary input element error flash states
+        const savedPlaceholder = textarea.placeholder;
+        textarea.placeholder = `✕ Transmission Failed: ${err.message}`;
+        setTimeout(() => { textarea.placeholder = savedPlaceholder; }, 4000);
+    } finally {
         textarea.disabled = false;
         textarea.focus();
-      }
-    };
+    }
+};
 
-    window.handleAdminChatKeyOptions = function(event) {
-      if (event.key === "Enter" && !event.shiftKey) {
+window.handleAdminChatKeyOptions = function(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         window.dispatchAdminResponseChatMessage();
-      }
-    };
-
-    window.scrollTerminalTimelineToAbsoluteBottom = function() {
-      const msgLogBox = document.getElementById("adminChatMessagesLog");
-      if (msgLogBox) msgLogBox.scrollTop = msgLogBox.scrollHeight;
-    };
-
-    window.escapeChatTextMarkup = function(str) {
-      if (!str) return "";
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    };
-
-    function toggleSidebarAccordion(buttonElement) {
-      if (!buttonElement) return;
-      buttonElement.classList.toggle('active');
-      const panel = buttonElement.nextElementSibling;
-      if (panel) {
-        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-          panel.style.maxHeight = "0px";
-        } else {
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      }
     }
+};
 
-    document.getElementById("sidebarFallbackLogoutBtn")?.addEventListener("click", () => {
-      window.localStorage.clear();
-      window.sessionStorage.clear();
-      window.location.replace("admin-login.html");
-    });
-  </script>
+window.scrollTerminalTimelineToAbsoluteBottom = function() {
+    const msgLogBox = document.getElementById("adminChatMessagesLog");
+    if (msgLogBox) msgLogBox.scrollTop = msgLogBox.scrollHeight;
+};
+
+window.escapeChatTextMarkup = function(str) {
+    if (!str) return "";
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+};
+
+function toggleSidebarAccordion(buttonElement) {
+    if (!buttonElement) return;
+    buttonElement.classList.toggle('active');
+    const panel = buttonElement.nextElementSibling;
+    if (panel) {
+        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+            panel.style.maxHeight = "0px";
+        } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+    }
+}
+
+document.getElementById("sidebarFallbackLogoutBtn")?.addEventListener("click", () => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    window.location.replace("admin-login.html");
+});
+</script>
 </body>
 </html>

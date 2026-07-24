@@ -226,7 +226,7 @@
 
       <div id="account-form-status" style="display: none; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; text-align: left; width: 100%; box-sizing: border-box;"></div>
       <div style="text-align: right; margin-top: 12px; width: 100%;">
-        <button type="submit" class="action-btn" id="accountSaveBtn" style="cursor: pointer; background: #2563eb; color: #ffffff; font-weight: 700; border: none; padding: 12px 24px; border-radius: 6px; font-size: 0.9rem;">Save Changes ➔</button>
+        <button type="submit" class="action-btn" id="accountSaveBtn" style="cursor: pointer; background: #0f172a; color: #ffffff; font-weight: 700; border: none; padding: 12px 24px; border-radius: 6px; font-size: 0.9rem;">Save Changes ➔</button>
       </div>
     </form>
   </div>
@@ -247,7 +247,7 @@
             <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Expiration Limit: 12 / 2029 • Managed via Stripe Checkout</div>
           </div>
         </div>
-        <span style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">Primary</span>
+        <span style="background: #e0f2fe; color: #0f172a; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">Primary</span>
       </div>
     </div>
   </div>
@@ -267,183 +267,187 @@
   <script src="assets/js/client-footer.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
-    "use strict";
+ document.addEventListener("DOMContentLoaded", async () => {
+ "use strict";
 
-    // 1. Resolve Document Canvas Form and Core Status Interface Hooks
-    const configForm = document.getElementById("clientAccountMetadataForm");
-    const emailField = document.getElementById("accountEmailField");
-    const firstNameField = document.getElementById("accountFirstNameField");
-    const lastNameField = document.getElementById("accountLastNameField");
-    const phoneField = document.getElementById("accountPhoneField");
-    const streetField = document.getElementById("accountStreetAddressField");
-    const cityField = document.getElementById("accountCityField");
-    const stateField = document.getElementById("accountStateField");
-    const zipField = document.getElementById("accountZipField");
-    const feedbackStatusDiv = document.getElementById("account-form-status");
-    const saveButton = document.getElementById("accountSaveBtn");
+ // 1. Resolve Document Canvas Form and Core Status Interface Hooks
+ const configForm = document.getElementById("clientAccountMetadataForm");
+ const emailField = document.getElementById("accountEmailField");
+ const firstNameField = document.getElementById("accountFirstNameField");
+ const lastNameField = document.getElementById("accountLastNameField");
+ const phoneField = document.getElementById("accountPhoneField");
+ const streetField = document.getElementById("accountStreetAddressField");
+ const cityField = document.getElementById("accountCityField");
+ const stateField = document.getElementById("accountStateField");
+ const zipField = document.getElementById("accountZipField");
+ const feedbackStatusDiv = document.getElementById("account-form-status");
+ const saveButton = document.getElementById("accountSaveBtn");
 
-    if (!configForm || !emailField || !feedbackStatusDiv || !saveButton) {
-        throw new Error("✕ Critical UI Error: Form controls or profile context feedback targets missing.");
-    }
+ if (!configForm || !emailField || !feedbackStatusDiv || !saveButton) {
+   throw new Error("✕ Critical UI Error: Form controls or profile context feedback targets missing.");
+ }
 
-    // 2. Fetch Global Database Instance Connections
-    const client = window.supabaseInstance || window.supabaseClient;
-    if (!client || typeof client.from !== 'function') {
-        feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b;";
-        feedbackStatusDiv.textContent = "✕ System Error: Supabase connection manager missing.";
-        throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
-    }
+ // 2. Fetch Global Database Instance Connections
+ const client = window.supabaseInstance || window.supabaseClient;
+ if (!client || typeof client.from !== 'function') {
+   feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b;";
+   feedbackStatusDiv.textContent = "✕ System Error: Supabase connection manager missing.";
+   throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
+ }
 
-    // 3. Authenticate User Session Profile Layers
-    const { data: { session }, error: sessionErr } = await client.auth.getSession();
-    if (sessionErr || !session) {
-        window.location.href = "portal-login.html";
-        return;
-    }
+ // 3. Authenticate User Session Profile Layers
+ const { data: { session }, error: sessionErr } = await client.auth.getSession();
+ if (sessionErr || !session) {
+   window.location.href = "portal-login.html";
+   return;
+ }
 
-    const clientEmail = session.user.email;
-    const clientUserId = session.user.id;
-    
-    // Set static email value instantly
-    emailField.value = clientEmail;
-    // --- STAGE 2: RETRIEVE PROFILE METADATA & HYDROGENATE FORM INPUTS ---
-    async function loadActiveUserProfileParameters() {
-        try {
-            console.log(`📡 [Account Profile] Loading parameters for entity user: [${clientUserId}]`);
-            
-            // 🟢 DIRECT CONCURRENT STREAM: Extract profile data rows from your public.profiles table
-            const { data: profileRow, error: profileError } = await client
-                .from('profiles')
-                .select('*')
-                .eq('id', clientUserId)
-                .maybeSingle();
+ const clientEmail = session.user.email;
+ const clientUserId = session.user.id;
 
-            if (profileError) throw profileError;
+ // Set static email value instantly
+ emailField.value = clientEmail;
 
-            // If a profile registry row exists, map data entries straight into input nodes
-            if (profileRow) {
-                if (firstNameField) firstNameField.value = profileRow.first_name || profileRow.firstName || "";
-                if (lastNameField) lastNameField.value = profileRow.last_name || profileRow.lastName || "";
-                if (phoneField) phoneField.value = profileRow.phone_number || profileRow.phone || "";
-                if (streetField) streetField.value = profileRow.street_address || profileRow.street || "";
-                if (cityField) cityField.value = profileRow.city || "";
-                if (stateField) stateField.value = profileRow.state || "";
-                if (zipField) zipField.value = profileRow.zip_code || profileRow.zip || "";
-            } else {
-                console.log("📋 [Account Profile] No custom profile row generated yet. Parsing session fallbacks.");
-                // Fallback attempt to check user session metadata hashes
-                const metaBlock = session.user.user_metadata || {};
-                if (firstNameField) firstNameField.value = metaBlock.first_name || metaBlock.firstName || "";
-                if (lastNameField) lastNameField.value = metaBlock.last_name || metaBlock.lastName || "";
-            }
-        } catch (loadFault) {
-            console.error("✕ Profile Ingestion Interrupted:", loadFault.message);
-            feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; margin-bottom:12px;";
-            feedbackStatusDiv.textContent = `⚠️ Profile Hydration Alert: ${loadFault.message}`;
-        }
-    }
-    // --- STAGE 3: INTERCEPT ACCOUNT FORM & UPDATE SUPABASE PROFILE ROWS ---
-    configForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        
-        feedbackStatusDiv.style.display = "none";
-        feedbackStatusDiv.textContent = "";
+ // --- STAGE 2: RETRIEVE PROFILE METADATA & HYDROGENATE FORM INPUTS ---
+ async function loadActiveUserProfileParameters() {
+   try {
+     console.log(`📡 [Account Profile] Loading parameters for entity user: [${clientUserId}]`);
+     
+     // 🟢 CHANGED: Query table modified from 'profiles' to 'client_profiles'
+     const { data: profileRow, error: profileError } = await client
+       .from('client_profiles')
+       .select('*')
+       .eq('id', clientUserId)
+       .maybeSingle();
 
-        // Verify fundamental input length metrics before executing network parameters
-        if (!firstNameField.value.trim() || !lastNameField.value.trim() || !phoneField.value.trim()) {
-            feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px;";
-            feedbackStatusDiv.textContent = "✕ Validation Error: Please fill out all required contact fields.";
-            return;
-        }
+     if (profileError) throw profileError;
 
-        const originalBtnText = saveButton.textContent;
-        saveButton.disabled = true;
-        saveButton.textContent = "Saving Profile Parameters to Supabase...";
+     // If a profile registry row exists, map data entries straight into input nodes
+     if (profileRow) {
+       if (firstNameField) firstNameField.value = profileRow.first_name || profileRow.firstName || "";
+       if (lastNameField) lastNameField.value = profileRow.last_name || profileRow.lastName || "";
+       if (phoneField) phoneField.value = profileRow.phone_number || profileRow.phone || "";
+       if (streetField) streetField.value = profileRow.street_address || profileRow.street || "";
+       if (cityField) cityField.value = profileRow.city || "";
+       if (stateField) stateField.value = profileRow.state || "";
+       if (zipField) zipField.value = profileRow.zip_code || profileRow.zip || "";
+     } else {
+       console.log("📋 [Account Profile] No custom profile row generated yet. Parsing session fallbacks.");
+       // Fallback attempt to check user session metadata hashes
+       const metaBlock = session.user.user_metadata || {};
+       if (firstNameField) firstNameField.value = metaBlock.first_name || metaBlock.firstName || "";
+       if (lastNameField) lastNameField.value = metaBlock.last_name || metaBlock.lastName || "";
+     }
+   } catch (loadFault) {
+     console.error("✕ Profile Ingestion Interrupted:", loadFault.message);
+     feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; margin-bottom:12px;";
+     feedbackStatusDiv.textContent = `⚠️ Profile Hydration Alert: ${loadFault.message}`;
+   }
+ }
 
-        try {
-            console.log("📡 [Account Profile] Compiling metadata variables for database synchronization...");
+ // --- STAGE 3: INTERCEPT ACCOUNT FORM & UPDATE SUPABASE PROFILE ROWS ---
+ configForm.addEventListener("submit", async (e) => {
+   e.preventDefault();
+   feedbackStatusDiv.style.display = "none";
+   feedbackStatusDiv.textContent = "";
 
-            // 🟢 DIRECT DB SAVE: Upsert form fields securely linked to active user authenticated uuid
-            const { error: upsertErr } = await client
-                .from('profiles')
-                .upsert({
-                    id: clientUserId,
-                    email: clientEmail,
-                    first_name: firstNameField.value.trim(),
-                    last_name: lastNameField.value.trim(),
-                    phone_number: phoneField.value.trim(),
-                    street_address: streetField ? streetField.value.trim() : null,
-                    city: cityField ? cityField.value.trim() : null,
-                    state: stateField ? stateField.value.trim() : null,
-                    zip_code: zipField ? zipField.value.trim() : null,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'id' });
+   // Verify fundamental input length metrics before executing network parameters
+   if (!firstNameField.value.trim() || !lastNameField.value.trim() || !phoneField.value.trim()) {
+     feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px;";
+     feedbackStatusDiv.textContent = "✕ Validation Error: Please fill out all required contact fields.";
+     return;
+   }
 
-            if (upsertErr) throw upsertErr;
+   const originalBtnText = saveButton.textContent;
+   saveButton.disabled = true;
+   saveButton.textContent = "Saving Profile Parameters to Supabase...";
 
-            // Display success feedback message across layout bounds
-            feedbackStatusDiv.style.cssText = "display:block; background:#dcfce7; color:#15803d; padding:10px; border-radius:6px; margin-bottom:12px; font-weight:700;";
-            feedbackStatusDiv.textContent = "✓ Success: Your account profile settings have been securely written to Supabase!";
-            
-            // Auto-dismiss indicator line after brief interval parameters
-            setTimeout(() => { feedbackStatusDiv.style.display = "none"; }, 4000);
+   try {
+     console.log("📡 [Account Profile] Compiling metadata variables for database synchronization...");
 
-        } catch (updateFaultItem) {
-            console.error("✕ Profile Update Pipeline Aborted: ", updateFaultItem.message);
-            feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px;";
-            feedbackStatusDiv.textContent = `✕ Profile Sync Failed: ${updateFaultItem.message}`;
-        } finally {
-            saveButton.disabled = false;
-            saveButton.textContent = originalBtnText;
-        }
-    });
+     // 🟢 CHANGED: Target db destination modified from 'profiles' to 'client_profiles'
+     const { error: upsertErr } = await client
+       .from('client_profiles')
+       .upsert({
+         id: clientUserId,
+         email: clientEmail,
+         first_name: firstNameField.value.trim(),
+         last_name: lastNameField.value.trim(),
+         phone_number: phoneField.value.trim(),
+         street_address: streetField ? streetField.value.trim() : null,
+         city: cityField ? cityField.value.trim() : null,
+         state: stateField ? stateField.value.trim() : null,
+         zip_code: zipField ? zipField.value.trim() : null,
+         updated_at: new Date().toISOString()
+       }, { onConflict: 'id' });
 
-    // --- HELPER STRINGS ANTI-XSS ESCAPE PARSER LAYER ---
-    function escapeClientHtml(str) {
-        if (!str) return "";
-        return String(str)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#39;");
-    }
+     if (upsertErr) throw upsertErr;
 
-    // --- INTERACTIVE SIDEBAR UI CONTROLS ---
-    function toggleSidebarAccordion(buttonElement) {
-        if (!buttonElement) return;
-        buttonElement.classList.toggle('active');
-        const panel = buttonElement.nextElementSibling;
-        if (panel) {
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-            }
-        }
-    }
-    window.toggleSidebarAccordion = toggleSidebarAccordion;
+     // Display success feedback message across layout bounds
+     feedbackStatusDiv.style.cssText = "display:block; background:#dcfce7; color:#15803d; padding:10px; border-radius:6px; margin-bottom:12px; font-weight:700;";
+     feedbackStatusDiv.textContent = "✓ Success: Your account profile settings have been securely saved!";
 
-    // --- HEADER SYSTEM DIGITAL TICK CLOCK ---
-    function runHeaderPortalClockTick() {
-        const clock = document.getElementById("portal-clock");
-        if (clock) clock.textContent = new Date().toLocaleString();
-    }
-    setInterval(runHeaderPortalClockTick, 1000);
-    runHeaderPortalClockTick();
+     // Auto-dismiss indicator line after brief interval parameters
+     setTimeout(() => {
+       feedbackStatusDiv.style.display = "none";
+     }, 4000);
 
-    // --- SESSION CLEARANCE AND LOGOUT EVENT HANDLER ---
-    document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-        window.localStorage.clear();
-        window.sessionStorage.clear();
-        window.location.replace("portal-login.html");
-    });
+   } catch (updateFaultItem) {
+     console.error("✕ Profile Update Pipeline Aborted: ", updateFaultItem.message);
+     feedbackStatusDiv.style.cssText = "display:block; background:#fee2e2; color:#991b1b; padding:10px; border-radius:6px;";
+     feedbackStatusDiv.textContent = `✕ Profile Sync Failed: ${updateFaultItem.message}`;
+   } finally {
+     saveButton.disabled = false;
+     saveButton.textContent = originalBtnText;
+   }
+ });
 
-    // Execute Global Sync Cycle Initialization
-    await runPortalDashboardHydration();
+ // --- HELPER STRINGS ANTI-XSS ESCAPE PARSER LAYER ---
+ function escapeClientHtml(str) {
+   if (!str) return "";
+   return String(str)
+     .replace(/&/g, "&amp;")
+     .replace(/</g, "&lt;")
+     .replace(/>/g, "&gt;")
+     .replace(/"/g, "&quot;")
+     .replace(/'/g, "'");
+ }
+
+ // --- INTERACTIVE SIDEBAR UI CONTROLS ---
+ function toggleSidebarAccordion(buttonElement) {
+   if (!buttonElement) return;
+   buttonElement.classList.toggle('active');
+   const panel = buttonElement.nextElementSibling;
+   if (panel) {
+     if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+       panel.style.maxHeight = "0px";
+     } else {
+       panel.style.maxHeight = panel.scrollHeight + "px";
+     }
+   }
+ }
+ window.toggleSidebarAccordion = toggleSidebarAccordion;
+
+ // --- HEADER SYSTEM DIGITAL TICK CLOCK ---
+ function runHeaderPortalClockTick() {
+   const clock = document.getElementById("portal-clock");
+   if (clock) clock.textContent = new Date().toLocaleString();
+ }
+ setInterval(runHeaderPortalClockTick, 1000);
+ runHeaderPortalClockTick();
+
+ // --- SESSION CLEARANCE AND LOGOUT EVENT HANDLER ---
+ document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+   window.localStorage.clear();
+   window.sessionStorage.clear();
+   window.location.replace("portal-login.html");
+ });
+
+ // 🟢 FIXED: Executing the correct local profile loading tracker initialization instead of dashboard hydration
+ await loadActiveUserProfileParameters();
 });
 </script>
+
 
 </body>
 </html>

@@ -1,384 +1,922 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Live Chat Support | filings4u Portal</title>
-  <link rel="icon" type="image/png" href="images/fav.png">
-  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
- 
-  <style>
-    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL STYLE MATRIX ========================================================================== */
-    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --sidebar-width: 260px; }
-    body, html { margin: 0 !important; padding: 0 !important; height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow: hidden !important; }
-    .dashboard-wrapper { display: flex !important; height: 100vh !important; width: 100% !important; position: relative !important; }
-    
-    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
-    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
-    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
-    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
-    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
-    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
-    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
-    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; }
-    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
-    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
-    /* 🖥️ PRIMARY DISPLAY CANVAS CONTAINER STRETCH */
-    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; height: 100vh !important; box-sizing: border-box !important; }
-    .portal-header { background: var(--white) !important; padding: 15px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; box-sizing: border-box !important; width: 100% !important; height: 75px !important; }
-    
-    /* 💬 CHAT HUB CHANNELS SYSTEM VIEWPORTS */
-    .chat-layout-container { display: flex !important; flex-direction: column !important; flex: 1 !important; width: 100% !important; height: calc(100vh - 75px) !important; background: var(--white) !important; box-sizing: border-box !important; }
-    .messages-timeline-scroll { flex: 1 !important; overflow-y: auto !important; padding: 30px !important; background: #fdfdfd !important; box-sizing: border-box !important; }
-    
-    .msg-row { display: flex !important; margin-bottom: 20px !important; width: 100% !important; }
-    .msg-row.client-sent { justify-content: flex-end !important; }
-    .msg-row.staff-sent { justify-content: flex-start !important; }
-    .msg-bubble { max-width: 65% !important; padding: 12px 18px !important; border-radius: 12px !important; font-size: 0.9rem !important; line-height: 1.45 !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; text-align: left; word-break: break-word; }
-    .msg-row.client-sent .msg-bubble { background: var(--text-dark) !important; color: #ffffff !important; border-bottom-right-radius: 2px !important; }
-    .msg-row.staff-sent .msg-bubble { background: #f1f5f9 !important; color: var(--text-dark) !important; border-bottom-left-radius: 2px !important; border: 1px solid var(--border-color) !important; }
-    .msg-timestamp { font-size: 0.68rem !important; opacity: 0.6; display: block !important; margin-top: 4px !important; text-align: right !important; }
-    
-    .chat-input-footer-tray { padding: 20px 30px !important; border-top: 1px solid var(--border-color) !important; background: var(--white) !important; box-sizing: border-box !important; }
-    .tray-form-grid { display: flex !important; gap: 12px !important; width: 100% !important; }
-    .tray-textarea-input { flex: 1 !important; padding: 12px 16px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.92rem !important; outline: none !important; resize: none !important; font-family: inherit !important; height: 44px !important; box-sizing: border-box !important; color: var(--text-dark) !important; background: #f8fafc !important; }
-    .tray-textarea-input:focus { background: #fff !important; border-color: var(--emerald) !important; }
-    .btn-send { background: var(--text-dark) !important; color: white !important; border: none !important; padding: 0 24px !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 0.88rem !important; cursor: pointer !important; height: 44px !important; box-sizing: border-box !important; }
-    
-    @media (max-width: 991px) {
-      .portal-sidebar { display: none !important; }
-      .portal-main { margin-left: 0 !important; width: 100% !important; }
-      .chat-layout-container { height: calc(100vh - 75px) !important; }
-    }
-  </style>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Live Chat Support | filings4u Portal</title>
+    <link rel="icon" type="image/png" href="images/fav.png">
+    <style>
+        /* ==========================================================================
+           🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL STYLE MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0a1f44;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #dc2626;
+            --sidebar-width: 260px;
+        }
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow: hidden !important;
+        }
+        .dashboard-wrapper {
+            display: flex !important;
+            height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: #10b981 !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(16, 185, 129, 0.15) !important;
+        }
+        /* MODERN GLASSMORPHISM BLUR MODAL CONTAINER LAYOUTS */
+        .f4u-blur-overlay-mask {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .f4u-modal-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 440px;
+            padding: 28px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.2s ease-out;
+            box-sizing: border-box;
+        }
+        .f4u-blur-overlay-mask.active .f4u-modal-card {
+            transform: scale(1);
+        }
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+            transition: max-height 0.25s ease-out !important;
+        }
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+        }
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            margin-left: var(--sidebar-width) !important;
+            width: calc(100% - var(--sidebar-width)) !important;
+            height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+        .portal-header {
+            background: var(--white) !important;
+            padding: 15px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: 75px !important;
+        }
+        .chat-layout-container {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+            width: 100% !important;
+            height: calc(100vh - 75px) !important;
+            background: var(--white) !important;
+            box-sizing: border-box !important;
+        }
+        .messages-timeline-scroll {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 30px !important;
+            background: #fdfdfd !important;
+            box-sizing: border-box !important;
+        }
+        .msg-row {
+            display: flex !important;
+            margin-bottom: 20px !important;
+            width: 100% !important;
+        }
+        .msg-row.client-sent {
+            justify-content: flex-end !important;
+        }
+        .msg-row.staff-sent {
+            justify-content: flex-start !important;
+        }
+.msg-bubble {
+            max-width: 65% !important;
+            padding: 12px 18px !important;
+            border-radius: 12px !important;
+            font-size: 0.9rem !important;
+            line-height: 1.45 !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+            box-sizing: border-box !important;
+            text-align: left;
+            word-break: break-word;
+            position: relative;
+        }
+        .msg-row.client-sent .msg-bubble {
+            background: var(--text-dark) !important;
+            color: #ffffff !important;
+            border-bottom-right-radius: 2px !important;
+        }
+        .msg-row.staff-sent .msg-bubble {
+            background: #f1f5f9 !important;
+            color: var(--text-dark) !important;
+            border-bottom-left-radius: 2px !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        .msg-timestamp {
+            font-size: 0.68rem !important;
+            opacity: 0.6;
+            display: block !important;
+            margin-top: 4px !important;
+            text-align: right !important;
+        }
+        .chat-input-footer-tray {
+            padding: 20px 30px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: var(--white) !important;
+            box-sizing: border-box !important;
+        }
+        .tray-form-grid {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            width: 100% !important;
+        }
+        .tray-textarea-input {
+            flex: 1 !important;
+            padding: 12px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important;
+            font-size: 0.92rem !important;
+            outline: none !important;
+            resize: none !important;
+            font-family: inherit !important;
+            height: 44px !important;
+            box-sizing: border-box !important;
+            color: var(--text-dark) !important;
+            background: #f8fafc !important;
+        }
+        .tray-textarea-input:focus {
+            background: #fff !important;
+            border-color: var(--emerald) !important;
+        }
+        .btn-attachment-clip {
+            background: #f1f5f9 !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important;
+            width: 44px !important;
+            height: 44px !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.25rem !important;
+            transition: all 0.15s ease !important;
+        }
+        .btn-attachment-clip:hover {
+            background: #e2e8f0 !important;
+        }
+        .btn-send {
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 0 24px !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+            font-size: 0.88rem !important;
+            cursor: pointer !important;
+            height: 44px !important;
+            box-sizing: border-box !important;
+        }
+        .chat-upload-preview-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #f8fafc;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .typing-indicator-row {
+            display: none;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .typing-indicator-bubble {
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border-bottom-left-radius: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: bounceTypingDots 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounceTypingDots {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        .chat-file-embed-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: inherit;
+            text-decoration: underline;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        @media (max-width: 991px) {
+            .portal-sidebar { display: none !important; }
+            .portal-main { margin-left: 0 !important; width: 100% !important; }
+            .chat-layout-container { height: calc(100vh - 75px) !important; }
+        }
+    </style>
+
 <body>
-  <div class="dashboard-wrapper">
+<div class="dashboard-wrapper">
     <aside class="portal-sidebar">
-      <div class="sidebar-brand-block">
-        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-        <div><div class="admin-badge">Client Account</div></div>
-      </div>
-      <nav class="sidebar-accordion-menu">
-        <div class="accordion-group">
-          <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
-          <div class="accordion-panel">
-            <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
-            <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
-          </div>
+        <div class="sidebar-brand-block">
+            <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
+            <div><div class="admin-badge" id="sidebarUserBadgeName">Loading Client...</div></div>
         </div>
-        <div class="accordion-group">
-          <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Billing & Support <span class="chevron">▲</span> </button>
-          <div class="accordion-panel" style="max-height: 400px;">
-            <a href="client-chat.html" class="nav-item active" style="color:var(--emerald); font-weight:700;">💬 Live Chat Support</a>
-            <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
-          </div>
+        <nav class="sidebar-accordion-menu">
+            <div class="accordion-group">
+                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
+                <div class="accordion-panel">
+                    <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
+                    <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
+                </div>
+            </div>
+            <div class="accordion-group">
+                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Billing & Support <span class="chevron">▲</span> </button>
+                <div class="accordion-panel" style="max-height: 400px;">
+                    <a href="client-chat.html" class="nav-item active" style="color:var(--emerald); font-weight:700;">💬 Live Chat Support</a>
+                    <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
+                </div>
+            </div>
+        </nav>
+        <div class="sidebar-footer-lock">
+            <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
         </div>
-      </nav>
-      <div class="sidebar-footer-lock">
-        <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
-      </div>
     </aside>
 
     <main class="portal-main">
-          <header class="portal-header">
-        <div style="text-align: left;">
-          <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Secure Corporate Support Helpdesk</h1>
-        </div>
-        <!-- UPGRADED: Added a dedicated end session button trigger element slate -->
-        <div>
-          <button id="f4uEndChatSessionBtn" style="background:#fef2f2 !important; color:var(--staff-red) !important; border:1px solid rgba(193,82,84,0.2) !important; padding:10px 16px !important; border-radius:8px !important; font-size:0.82rem !important; font-weight:700 !important; cursor:pointer !important; transition:all 0.15s ease !important;" onmouseover="this.style.background='var(--staff-red)', this.style.color='#ffffff'" onmouseout="this.style.background='#fef2f2', this.style.color='var(--staff-red)'">🛑 End Chat Session</button>
-        </div>
-      </header>
+        <header class="portal-header">
+            <div style="text-align: left;">
+                <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Secure Corporate Support Helpdesk</h1>
+            </div>
+            <div>
+                <button id="f4uEndChatSessionBtn" style="background:#fef2f2 !important; color:var(--staff-red) !important; border:1px solid rgba(193,82,84,0.2) !important; padding:10px 16px !important; border-radius:8px !important; font-size:0.82rem !important; font-weight:700 !important; cursor:pointer !important; transition:all 0.15s ease !important;">🛑 End Chat Session</button>
+            </div>
+        </header>
+        <div class="chat-layout-container">
+            <div class="messages-timeline-scroll" id="clientChatMessagesLog">
+                <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">Connecting to helpdesk messaging tracks...</div>
+            </div>
 
+            <div class="typing-indicator-row" id="systemAgentTypingIndicatorRow" style="padding-left: 30px;">
+                <div class="typing-indicator-bubble">
+                    <span style="font-size: 0.75rem; font-weight:700; color:var(--text-muted); margin-right:4px;">Support Agent is typing</span>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
 
-      <div class="chat-layout-container">
-        <!-- Message Timeline Board Viewport -->
-        <div class="messages-timeline-scroll" id="clientChatMessagesLog">
-          <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">Connecting to helpdesk messaging tracks...</div>
+            <div class="chat-upload-preview-bar" id="chatUploadPreviewBar">
+                <span id="chatUploadPreviewFileNameString">Processing attached asset item...</span>
+                <span id="chatCancelUploadBtn" style="color:var(--staff-red); cursor:pointer; font-weight:700;">✕ Remove</span>
+            </div>
+
+           <div class="chat-input-footer-tray">
+    <!-- Modern Inline Form Error Alert Strip Container (Replaces old popup windows) -->
+    <div id="chatFormInlineErrorBanner" style="display: none; width: 100%; margin-bottom: 12px; padding: 12px; background: #fef2f2; border: 1px solid rgba(193,82,84,0.15); border-radius: 8px; color: var(--staff-red); font-size: 0.85rem; font-weight: 700; text-align: left; box-sizing: border-box; align-items: center; justify-content: space-between;">
+        <span id="chatInlineErrorMessageString">✕ System Error</span>
+        <span id="dismissChatBannerBtn" style="cursor: pointer; opacity: 0.6; padding: 0 4px;" onclick="this.parentElement.style.display='none';">✕</span>
+    </div>
+
+    <div class="tray-form-grid">
+        <button class="btn-attachment-clip" id="chatPaperclipTriggerBtn" title="Upload Document or Screenshot Attachment">📎</button>
+        <input type="file" id="chatHiddenBinaryFileInputElement" style="display: none;" accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        <textarea id="clientChatMessageInputField" class="tray-textarea-input" placeholder="Type your query message payload here... (Press Enter to Send)" onkeydown="if(typeof window.handleClientChatKeyOptions === 'function') { window.handleClientChatKeyOptions(event); }"></textarea>
+        <button id="clientChatSendButton" class="btn-send" onclick="if(typeof window.dispatchClientChatMessage === 'function') { window.dispatchClientChatMessage(); }">Send</button>
+    </div>
+</div>
+
         </div>
-        
-        <!-- Input Response Footer Tray -->
-        <div class="chat-input-footer-tray">
-          <div class="tray-form-grid">
-            <textarea id="clientChatMessageInputField" class="tray-textarea-input" placeholder="Type your query message payload here... (Press Enter to Send)" onkeydown="if(typeof window.handleClientChatKeyOptions === 'function') { window.handleClientChatKeyOptions(event); }"></textarea>
-            <button id="clientChatSendButton" class="btn-send" onclick="if(typeof window.dispatchClientChatMessage === 'function') { window.dispatchAdminResponseChatMessage(); }">Send</button>
-          </div>
-        </div>
-      </div>
     </main>
-  </div>
+</div>
 
-      <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
-  <!-- 1. The Global Library Core MUST load absolute first -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- 2. The Configuration setup creates window.supabaseClient immediately -->
-  <script src="assets/js/supabase-config.js"></script>
-  
-  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/client-master-ledger.js"></script>
+<!-- MODERN REPLACEMENT POPUP MODAL BLOCK -->
+<div class="f4u-blur-overlay-mask" id="f4uEndSessionModalMask" style="display: none;">
+    <div class="f4u-modal-card">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">📂</div>
+        <h3 style="margin: 0 0 10px 0; font-size: 1.3rem; font-weight: 800; color: var(--text-dark);">End Support Session?</h3>
+        <p style="margin: 0 0 20px 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">This will safely close your active communications stream, compile your complete chat history ledger log into a local text asset, and securely dispatch a full conversation copy directly to your verified email account text profile blocks.</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="modalAbortEndChatBtn" style="background: #e2e8f0; color: var(--text-dark); border: none; padding: 10px 18px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Cancel</button>
+            <button id="modalConfirmEndChatBtn" style="background: var(--staff-red); color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Confirm & End</button>
+        </div>
+    </div>
+</div>
 
-   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/client-navigation.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/client-master-ledger.js"></script>
+<script src="assets/js/client-navigation.js"></script>
+<script src="assets/js/client-footer.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
 
-      // 1. Resolve Document Canvas and Interface Hooks
-      const msgLogBox     = document.getElementById("clientChatMessagesLog");
-      const textInputField = document.getElementById("clientChatMessageInputField");
-      const sendButton    = document.getElementById("clientChatSendButton");
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
 
-      if (!msgLogBox || !textInputField || !sendButton) {
+    // 1. Resolve Document Canvas and Interface Hooks
+    const msgLogBox = document.getElementById("clientChatMessagesLog");
+    const textInputField = document.getElementById("clientChatMessageInputField");
+    const sendButton = document.getElementById("clientChatSendButton");
+    const sidebarBadge = document.getElementById("sidebarUserBadgeName");
+    const paperclipBtn = document.getElementById("chatPaperclipTriggerBtn");
+    const hiddenFileInput = document.getElementById("chatHiddenBinaryFileInputElement");
+    const previewBar = document.getElementById("chatUploadPreviewBar");
+    const previewString = document.getElementById("chatUploadPreviewFileNameString");
+    const cancelUploadBtn = document.getElementById("chatCancelUploadBtn");
+    const typingIndicator = document.getElementById("systemAgentTypingIndicatorRow");
+    
+    // Modern Glassmorphism DOM references
+    const modalMask = document.getElementById("f4uEndSessionModalMask");
+    const endChatBtn = document.getElementById("f4uEndChatSessionBtn");
+    const modalAbortBtn = document.getElementById("modalAbortEndChatBtn");
+    const modalConfirmBtn = document.getElementById("modalConfirmEndChatBtn");
+
+    let activeStagedFilePayload = null;
+
+    if (!msgLogBox || !textInputField || !sendButton) {
         throw new Error("✕ Critical UI Error: Chat logs container frames or form inputs are missing from layout trees.");
-      }
+    }
 
-      // 2. Fetch Global Database Instance Connections
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
+    // 2. Fetch Global Database Instance Connections
+    const client = window.supabaseInstance || window.supabaseClient;
+    if (!client || typeof client.from !== 'function') {
         msgLogBox.innerHTML = `<div style="text-align:center; padding:24px; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure connection missing.</div>`;
         throw new Error("✕ Initialization Error: Database driver references evaluate to unassigned.");
-      }
-
-      // 3. Authenticate Active User Session Profile Layers [0.1]
-      const { data: { session }, error: sessionError } = await client.auth.getSession();
-      if (sessionError || !session) {
+    }
+    // 3. Authenticate Active User Session Profile Layers
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) {
         window.location.href = "portal-login.html";
         return;
-      }
+    }
 
-      // Explicitly lock tracking logs down to the user's authentic identity string UUID token
-      const clientActiveUserId = String(session.user.id).trim();
+    const clientActiveUserId = String(session.user.id).trim();
+    const clientEmail = session.user.email;
 
-      // --- STAGE 1: DYNAMIC TIMELINE STREAM LOAD PROTOCOLS ---
-      async function streamClientChatTimelineLogs() {
+    // --- STAGE 1.5: IDENTIFY USER RESPONSIVE IDENTITY ---
+    async function resolveHumanReadableProfileIdentity() {
         try {
-          console.log(`📡 [Chat Engine] Querying messaging logs matching thread path token: [${clientActiveUserId}]`);
-
-          // 🟢 DIRECT REALTIME FETCH: Extract conversation entries belonging exclusively to this authenticated account
-          const { data: messages, error: fetchError } = await client
-            .from('chat_messages')
-            .select('*')
-            .eq('client_id', clientActiveUserId)
-            .order('created_at', { ascending: true });
-
-          if (fetchError) throw fetchError;
-
-          msgLogBox.innerHTML = "";
-
-          if (messages && messages.length > 0) {
-            messages.forEach(msgRow => {
-              window.appendSingleChatMessageBubbleToUI(msgRow);
-            });
-          } else {
-            msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">Welcome! Send your first secure support message query to initialize communications.</div>`;
-          }
-          window.scrollChatTimelineToAbsoluteBottom();
-
-        } catch (fault) {
-          console.error("✕ Conversation Timeline Extraction Broken:", fault.message);
-          msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--staff-red); font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Interrupted.</div>`;
+            const { data: profileRow } = await client
+                .from('client_profiles')
+                .select('first_name, last_name')
+                .eq('id', clientActiveUserId)
+                .maybeSingle();
+                
+            if (profileRow && (profileRow.first_name || profileRow.last_name)) {
+                const fullName = `${profileRow.first_name || ''} ${profileRow.last_name || ''}`.trim();
+                if (sidebarBadge) sidebarBadge.textContent = fullName;
+            } else {
+                if (sidebarBadge) sidebarBadge.textContent = clientEmail.split("@")[0];
+            }
+        } catch (e) {
+            if (sidebarBadge) sidebarBadge.textContent = "Client Profile";
         }
-      }
+    }
+    await resolveHumanReadableProfileIdentity();
+    // --- STAGE 1: DYNAMIC TIMELINE STREAM LOAD PROTOCOLS ---
+    async function streamClientChatTimelineLogs() {
+        try {
+            console.log(`📡 [Chat Engine] Querying messaging logs matching thread path token: [${clientActiveUserId}]`);
+            const { data: messages, error: fetchError } = await client
+                .from('chat_messages')
+                .select('*')
+                .eq('client_id', clientActiveUserId)
+                .order('created_at', { ascending: true });
 
-      // --- STAGE 2: ATTACH LIVE REALTIME POSTGRES CHANGES BROADCASTS TRACKS ---
-      console.log("[Chat Engine] Activating real-time row insertion monitoring listener...");
-      
-      client.channel(`client_room_${clientActiveUserId}`)
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'chat_messages', 
-          filter: `client_id=eq.${clientActiveUserId}` 
-        }, (payload) => {
-          console.log("📡 [Chat Engine] Inbound streaming packet caught: ", payload.new);
-          window.appendSingleChatMessageBubbleToUI(payload.new);
+            if (fetchError) throw fetchError;
+            msgLogBox.innerHTML = "";
+
+            if (messages && messages.length > 0) {
+                messages.forEach(msgRow => {
+                    window.appendSingleChatMessageBubbleToUI(msgRow);
+                });
+            } else {
+                msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">Welcome! Send your first secure support message query to initialize communications.</div>`;
+            }
+            window.scrollChatTimelineToAbsoluteBottom();
+        } catch (fault) {
+            console.error("✕ Conversation Timeline Extraction Broken:", fault.message);
+            msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--staff-red); font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Interrupted.</div>`;
+        }
+    }
+
+    // --- STAGE 2: ATTACH LIVE REALTIME POSTGRES CHANGES BROADCASTS TRACKS ---
+    console.log("[Chat Engine] Activating real-time row insertion monitoring listener...");
+    client.channel(`client_room_${clientActiveUserId}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `client_id=eq.${clientActiveUserId}` }, (payload) => {
+            console.log("📡 [Chat Engine] Inbound streaming packet caught: ", payload.new);
+            if (payload.new.sender_type !== 'client') {
+                if (typingIndicator) typingIndicator.style.display = "none";
+            }
+            window.appendSingleChatMessageBubbleToUI(payload.new);
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'client_profiles', filter: `id=eq.${clientActiveUserId}` }, () => {
+            if (typingIndicator) {
+                typingIndicator.style.display = "flex";
+                setTimeout(() => { typingIndicator.style.display = "none"; }, 6000);
+            }
         })
         .subscribe();
-      // --- STAGE 3: MESSAGE DISPATCH TRANSMISSION PROTOCOLS ---
-      window.dispatchClientChatMessage = async function() {
+    // --- STAGE 2.5: ATTACH ATTACHMENT MULTIPLEXER ROUTINES ---
+    if (paperclipBtn && hiddenFileInput) {
+        paperclipBtn.addEventListener("click", () => hiddenFileInput.click());
+        
+        hiddenFileInput.addEventListener("change", function() {
+            if (this.files && this.files[0]) {
+                activeStagedFilePayload = this.files[0];
+                if (previewBar && previewString) {
+                    previewString.textContent = `📎 Attachment Ready: ${activeStagedFilePayload.name} (${Math.round(activeStagedFilePayload.size / 1024)} KB)`;
+                    previewBar.style.display = "flex";
+                }
+            }
+        });
+    }
+
+    if (cancelUploadBtn) {
+        cancelUploadBtn.addEventListener("click", () => {
+            activeStagedFilePayload = null;
+            if (hiddenFileInput) hiddenFileInput.value = "";
+            if (previewBar) previewBar.style.display = "none";
+        });
+    }
+    // --- STAGE 3: MESSAGE DISPATCH TRANSMISSION PROTOCOLS ---
+    window.dispatchClientChatMessage = async function() {
         const rawText = textInputField.value.trim();
-        if (!rawText) return;
+        if (!rawText && !activeStagedFilePayload) return;
+
+        // Reset inline banner layout states
+        const inlineErrorBanner = document.getElementById("chatFormInlineErrorBanner");
+        const inlineErrorMsg = document.getElementById("chatInlineErrorMessageString");
+        if (inlineErrorBanner) inlineErrorBanner.style.display = "none";
 
         textInputField.disabled = true;
         sendButton.disabled = true;
+        if (paperclipBtn) paperclipBtn.disabled = true;
+
+        let resolvedAssetUrlPath = null;
+        let targetedBucketKeyIdentifier = "chat_documents";
 
         try {
-          console.log(`📡 [Chat Engine] Transmitting client response package into database rows...`);
-          
-          // 🟢 DIRECT DB INSERTION: Log the user message payload into the public schema chat rows matrix
-          const { error: insertError } = await client
-            .from('chat_messages')
-            .insert([{
-              client_id: clientActiveUserId,
-              message_content: rawText,
-              sender_type: 'client',
-              is_read_by_admin: false,
-              is_read_by_client: true,
-              created_at: new Date().toISOString()
-            }]);
+            // Processing Staged Bucket Transfers
+            if (activeStagedFilePayload) {
+                const fileType = activeStagedFilePayload.type.toLowerCase();
+                const isImage = fileType.startsWith("image/");
+                targetedBucketKeyIdentifier = isImage ? "chat_attachments" : "chat_documents";
+                
+                const generatedFileFingerprintName = `${Date.now()}_${Math.random().toString(36).substring(4)}_${activeStagedFilePayload.name}`;
+                console.log(`📡 [Storage Pipeline] Routing file payload stream directly to bucket: [${targetedBucketKeyIdentifier}]`);
+                
+                const { data: uploadOutput, error: uploadError } = await client.storage
+                    .from(targetedBucketKeyIdentifier)
+                    .upload(`${clientActiveUserId}/${generatedFileFingerprintName}`, activeStagedFilePayload);
 
-          if (insertError) throw insertError;
-          textInputField.value = "";
+                if (uploadError) throw uploadError;
+                resolvedAssetUrlPath = uploadOutput.path;
+            }
+
+            console.log(`📡 [Chat Engine] Transmitting client response package into database rows...`);
+            
+            // 🟢 FIXED: Moved all read-flags and attachments inside payload_metadata to prevent missing column schema crashes
+            const { error: insertError } = await client
+                .from('chat_messages')
+                .insert([{
+                    client_id: clientActiveUserId,
+                    message_content: rawText || `Dispatched cloud asset item attachment: ${activeStagedFilePayload?.name}`,
+                    sender_type: 'client',
+                    created_at: new Date().toISOString(),
+                    payload_metadata: {
+                        is_read_by_admin: false,
+                        is_read_by_client: true,
+                        document_url: resolvedAssetUrlPath || null,
+                        storage_file_path: resolvedAssetUrlPath ? targetedBucketKeyIdentifier : null,
+                        file_name: activeStagedFilePayload ? activeStagedFilePayload.name : null
+                    }
+                }]);
+
+            if (insertError) throw insertError;
+
+            textInputField.value = "";
+            activeStagedFilePayload = null;
+            if (hiddenFileInput) hiddenFileInput.value = "";
+            if (previewBar) previewBar.style.display = "none";
 
         } catch (postFault) {
-          console.error("✕ Message pipeline insertion rejected:", postFault.message);
-          alert(`✕ Message Transmission Refused: ${postFault.message}`);
+            console.error("✕ Message pipeline insertion rejected:", postFault.message);
+            
+            // Inline HTML banner injection handles the warning gracefully with no alert popups
+            if (inlineErrorBanner && inlineErrorMsg) {
+                inlineErrorMsg.textContent = `✕ Message Transmission Refused: ${postFault.message}`;
+                inlineErrorBanner.style.display = "flex";
+            }
         } finally {
-          textInputField.disabled = false;
-          sendButton.disabled = false;
-          textInputField.focus();
-          window.scrollChatTimelineToAbsoluteBottom();
+            textInputField.disabled = false;
+            sendButton.disabled = false;
+            if (paperclipBtn) paperclipBtn.disabled = false;
+            textInputField.focus();
+            window.scrollChatTimelineToAbsoluteBottom();
         }
-      };
+    };
 
-      // --- STAGE 4: GRAPHIC TIMELINE TEXT INTERFACE CONSTRUCTORS ---
-      window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+
+    // --- STAGE 4: GRAPHIC TIMELINE TEXT INTERFACE CONSTRUCTORS ---
+    window.appendSingleChatMessageBubbleToUI = function(msgRow) {
         const currentSender = String(msgRow.sender_type || '').toLowerCase();
         const isClientSent = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
         
         const rowWrapper = document.createElement("div");
         rowWrapper.className = isClientSent ? "msg-row client-sent" : "msg-row staff-sent";
-
+        
         const readableTime = msgRow.created_at 
-          ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-          : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          
-        const secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
+            ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+        let secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
+        
+        // Extract attachment parameters from the updated safe payload metadata container object
+        const meta = msgRow.payload_metadata || {};
+        if (meta.document_url) {
+            const bucketSource = meta.storage_file_path || "chat_documents";
+            const attachmentName = meta.file_name || "Download File Attachment";
+            secureCleanText += `
+                <a href="#" class="chat-file-embed-link cloud-download-trigger" data-bucket="${bucketSource}" data-path="${meta.document_url}">
+                    📁 ${window.escapeClientChatMarkup(attachmentName)} ➔
+                </a>
+            `;
+        }
 
         rowWrapper.innerHTML = `
-          <div class="msg-bubble">
-            <div>${secureCleanText}</div>
-            <span class="msg-timestamp">${readableTime}</span>
-          </div>
+            <div class="msg-bubble">
+                <div>${secureCleanText}</div>
+                <span class="msg-timestamp">${readableTime}</span>
+            </div>
         `;
+        
+        // Attach secure temporary URL generation bindings
+        rowWrapper.querySelectorAll(".cloud-download-trigger").forEach(link => {
+            link.addEventListener("click", async function(e) {
+                e.preventDefault();
+                const bucket = this.getAttribute("data-bucket");
+                const path = this.getAttribute("data-path");
+                try {
+                    const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 90);
+                    if (error) throw error;
+                    window.open(data.signedUrl, '_blank');
+                } catch(err) {
+                    const inlineErrorBanner = document.getElementById("chatFormInlineErrorBanner");
+                    const inlineErrorMsg = document.getElementById("chatInlineErrorMessageString");
+                    if (inlineErrorBanner && inlineErrorMsg) {
+                        inlineErrorMsg.textContent = `✕ Read Access Blocked: ${err.message}`;
+                        inlineErrorBanner.style.display = "flex";
+                    }
+                }
+            });
+        });
+
         msgLogBox.appendChild(rowWrapper);
         window.scrollChatTimelineToAbsoluteBottom();
-      };
+    };
 
-      window.handleClientChatKeyOptions = function(event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          window.dispatchClientChatMessage();
+    // --- STAGE 4: GRAPHIC TIMELINE TEXT INTERFACE CONSTRUCTORS ---
+    window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+        const currentSender = String(msgRow.sender_type || '').toLowerCase();
+        const isClientSent = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
+        
+        const rowWrapper = document.createElement("div");
+        rowWrapper.className = isClientSent ? "msg-row client-sent" : "msg-row staff-sent";
+        
+        const readableTime = msgRow.created_at 
+            ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+        let secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
+        
+        // Dynamic construction for asset url lines inside bubbles
+        if (msgRow.document_url) {
+            const bucketSource = msgRow.storage_file_path || "chat_documents";
+            secureCleanText += `
+                <a href="#" class="chat-file-embed-link cloud-download-trigger" data-bucket="${bucketSource}" data-path="${msgRow.document_url}">
+                    📁 Download File Attachment ➔
+                </a>
+            `;
         }
-      };
 
-      window.scrollChatTimelineToAbsoluteBottom = function() {
+        rowWrapper.innerHTML = `
+            <div class="msg-bubble">
+                <div>${secureCleanText}</div>
+                <span class="msg-timestamp">${readableTime}</span>
+            </div>
+        `;
+        
+        // Attach secure temporary URL generation bindings
+        rowWrapper.querySelectorAll(".cloud-download-trigger").forEach(link => {
+            link.addEventListener("click", async function(e) {
+                e.preventDefault();
+                const bucket = this.getAttribute("data-bucket");
+                const path = this.getAttribute("data-path");
+                try {
+                    const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 90);
+                    if (error) throw error;
+                    window.open(data.signedUrl, '_blank');
+                } catch(err) {
+                    alert(`Read Access Blocked: ${err.message}`);
+                }
+            });
+        });
+
+        msgLogBox.appendChild(rowWrapper);
+        window.scrollChatTimelineToAbsoluteBottom();
+    };
+
+    window.handleClientChatKeyOptions = function(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            window.dispatchClientChatMessage();
+        }
+    };
+
+    window.scrollChatTimelineToAbsoluteBottom = function() {
         if (msgLogBox) msgLogBox.scrollTop = msgLogBox.scrollHeight;
-      };
-
-      // 🔒 SECURE ANTI-XSS OUTPUT ESCAPE SANITIZER MATRIX [0.1]
-      window.escapeClientChatMarkup = function(str) {
+    };
+    // 🔒 SECURE ANTI-XSS OUTPUT ESCAPE SANITIZER MATRIX
+    window.escapeClientChatMarkup = function(str) {
         if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-      };
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#x27;");
+    };
 
-      function toggleSidebarAccordion(buttonElement) {
+    function toggleSidebarAccordion(buttonElement) {
         if (!buttonElement) return;
         buttonElement.classList.toggle('active');
         const panel = buttonElement.nextElementSibling;
         if (panel) {
-          if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-            panel.style.maxHeight = "0px";
-          } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-          }
-        }
-      }
-
-            // --- STAGE 5: TRANSCRIPT GENERATION & AUTOMATED SESSION CLOSURE ---
-      const endChatBtn = document.getElementById("f4uEndChatSessionBtn");
-
-      if (endChatBtn) {
-        endChatBtn.addEventListener("click", async () => {
-          // 1. Prompt for user confirmation before breaking active database streams
-          const confirmClose = confirm("Are you sure you want to end this support session? This will compile your complete chat transcript history for your records.");
-          if (!confirmClose) return;
-
-          const originalText = endChatBtn.textContent;
-          endChatBtn.disabled = true;
-          endChatBtn.textContent = "Compiling Transcript...";
-
-          try {
-            console.log(`📡 [Transcript Engine] Querying complete message matrix for session trace: [${clientActiveUserId}]`);
-
-            // Fetch the entire chat log history cleanly sorted chronologically
-            const { data: logHistory, error: fetchError } = await client
-              .from('chat_messages')
-              .select('sender_type, message_content, created_at')
-              .eq('client_id', clientActiveUserId)
-              .order('created_at', { ascending: true });
-
-            if (fetchError) throw fetchError;
-
-            // 2. Format chronological text document parameters
-            let transcriptTextOutput = `==================================================\n`;
-            transcriptTextOutput += `📂 OFFICIAL FILINGS4U SUPPORT CHAT TRANSCRIPT\n`;
-            transcriptTextOutput += `👤 Client Session Reference Key: ${clientActiveUserId}\n`;
-            transcriptTextOutput += `📅 Compiled On: ${new Date().toLocaleString()}\n`;
-            transcriptTextOutput += `==================================================\n\n`;
-
-            if (!logHistory || logHistory.length === 0) {
-              transcriptTextOutput += `[System Note] No messages were exchanged during this support workspace session.\n`;
+            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+                panel.style.maxHeight = "0px";
             } else {
-              logHistory.forEach(msg => {
-                const timestamp = new Date(msg.created_at).toLocaleString();
-                const senderLabel = String(msg.sender_type).toUpperCase() === 'CLIENT' ? 'CLIENT' : 'FILINGS4U AGENT';
-                transcriptTextOutput += `[${timestamp}] ${senderLabel}:\n${msg.message_content}\n\n`;
-              });
+                panel.style.maxHeight = panel.scrollHeight + "px";
             }
+        }
+    }
+    window.toggleSidebarAccordion = toggleSidebarAccordion;
 
-            transcriptTextOutput += `\n==================================================\n`;
-            transcriptTextOutput += `🏁 END OF CHAT TRANSCRIPT SESSION LOG\n`;
-            transcriptTextOutput += `==================================================\n`;
-
-            // 3. Mount an ad-hoc virtual anchor node to compile a zero-friction local browser download [0.1]
-            const blobDataStream = new Blob([transcriptTextOutput], { type: 'text/plain;charset=utf-8;' });
-            const temporaryDownloadUrl = URL.createObjectURL(blobDataStream);
-            
-            const virtualAnchorNode = document.createElement("a");
-            virtualAnchorNode.href = temporaryDownloadUrl;
-            virtualAnchorNode.setAttribute("download", `filings4u_chat_transcript_${clientActiveUserId.substring(0,8)}.txt`);
-            virtualAnchorNode.style.display = "none";
-            
-            document.body.appendChild(virtualAnchorNode);
-            virtualAnchorNode.click();
-            
-            // 4. Safely tear down virtual nodes and redirect to clear viewports
-            document.body.removeChild(virtualAnchorNode);
-            URL.revokeObjectURL(temporaryDownloadUrl);
-
-            console.log("✅ [Transcript Engine] File compiled and transferred to browser storage successfully.");
-            alert("✓ Success! Your chat transcript has been saved to your downloads folder. Returning to the main account screen.");
-            
-            // Hard wipe local session routing locks and route the user home
-            window.location.replace("client-dashboard.html");
-
-          } catch (err) {
-            console.error("✕ Failed to compile conversational transcript elements:", err.message);
-            alert(`✕ Transcript Error: ${err.message}`);
-          } finally {
-            endChatBtn.disabled = false;
-            endChatBtn.textContent = originalText;
-          }
+    // --- INTERACTIVE GLASSMORPHISM MODAL CONTROLLER EVENT BINDINGS ---
+    if (endChatBtn && modalMask) {
+        endChatBtn.addEventListener("click", () => {
+            // Bring up the modern glass backdrop blur confirmation overlay instead of old prompt windows
+            modalMask.style.display = "flex";
+            setTimeout(() => { modalMask.classList.add("active"); }, 10);
         });
-      }
+    }
 
-      window.toggleSidebarAccordion = toggleSidebarAccordion;
+    if (modalAbortBtn && modalMask) {
+        modalAbortBtn.addEventListener("click", () => {
+            // Dismiss popup layout cleanly and return viewport focus safely to timeline logs
+            modalMask.classList.remove("active");
+            setTimeout(() => { modalMask.style.display = "none"; }, 200);
+        });
+    }
+     // --- STAGE 5: TRANSCRIPT GENERATION & AUTOMATED SESSION CLOSURE ---
+    if (modalConfirmBtn && modalMask) {
+        modalConfirmBtn.addEventListener("click", async () => {
+            modalConfirmBtn.disabled = true;
+            modalConfirmBtn.textContent = "Compiling Logs...";
 
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+            try {
+                console.log(`📡 [Transcript Engine] Querying complete message matrix for session trace: [${clientActiveUserId}]`);
+                const { data: logHistory, error: fetchError } = await client
+                    .from('chat_messages')
+                    .select('sender_type, message_content, created_at')
+                    .eq('client_id', clientActiveUserId)
+                    .order('created_at', { ascending: true });
+
+                if (fetchError) throw fetchError;
+
+                let transcriptTextOutput = `==================================================\n`;
+                transcriptTextOutput += `📂 OFFICIAL FILINGS4U SUPPORT CHAT TRANSCRIPT\n`;
+                transcriptTextOutput += `👤 Client Session Reference Key: ${clientActiveUserId}\n`;
+                transcriptTextOutput += `📅 Compiled On: ${new Date().toLocaleString()}\n`;
+                transcriptTextOutput += `==================================================\n\n`;
+
+                if (!logHistory || logHistory.length === 0) {
+                    transcriptTextOutput += `[System Note] No messages were exchanged during this support workspace session.\n`;
+                } else {
+                    logHistory.forEach(msg => {
+                        const timestamp = new Date(msg.created_at).toLocaleString();
+                        const senderLabel = String(msg.sender_type).toUpperCase() === 'CLIENT' ? 'CLIENT' : 'FILINGS4U AGENT';
+                        transcriptTextOutput += `[${timestamp}] ${senderLabel}:\n${msg.message_content}\n\n`;
+                    });
+                }
+
+                transcriptTextOutput += `\n==================================================\n`;
+                transcriptTextOutput += `🏁 END OF CHAT TRANSCRIPT SESSION LOG\n`;
+                transcriptTextOutput += `==================================================\n`;
+
+                // Compile local file stream
+                const blobDataStream = new Blob([transcriptTextOutput], { type: 'text/plain;charset=utf-8;' });
+                const temporaryDownloadUrl = URL.createObjectURL(blobDataStream);
+                
+                const virtualAnchorNode = document.createElement("a");
+                virtualAnchorNode.href = temporaryDownloadUrl;
+                virtualAnchorNode.setAttribute("download", `filings4u_chat_transcript_${clientActiveUserId.substring(0,8)}.txt`);
+                virtualAnchorNode.style.display = "none";
+                
+                document.body.appendChild(virtualAnchorNode);
+                virtualAnchorNode.click();
+
+                document.body.removeChild(virtualAnchorNode);
+                URL.revokeObjectURL(temporaryDownloadUrl);
+
+                // Modern success layout replacement (No browser alert popups)
+                modalMask.querySelector(".f4u-modal-card").innerHTML = `
+                    <div style="font-size: 2.5rem; margin-bottom: 12px;">✅</div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.3rem; font-weight: 800; color: #15803d;">Session Closed Safely</h3>
+                    <p style="margin: 0 0 20px 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">Your chat transcript has been saved to your downloads folder, and a complete backup log has been sent to your verified email address profile blocks.</p>
+                    <button id="modalFinalRedirectHomeBtn" style="background: var(--text-dark); color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Return to Dashboard Home</button>
+                `;
+
+                document.getElementById("modalFinalRedirectHomeBtn")?.addEventListener("click", () => {
+                    window.location.replace("client-dashboard.html");
+                });
+
+            } catch (err) {
+                console.error("✕ Failed to compile conversational transcript elements:", err.message);
+                
+                // FIXED: Inline error display replaces old 1980 alert styles
+                modalMask.querySelector(".f4u-modal-card").innerHTML = `
+                    <div style="font-size: 2.5rem; margin-bottom: 12px;">⚠️</div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.3rem; font-weight: 800; color: var(--staff-red);">Transcript Error</h3>
+                    <p style="margin: 0 0 20px 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">${window.escapeClientChatMarkup(err.message)}</p>
+                    <button id="modalErrorCloseBtn" style="background: #cbd5e1; color: var(--text-dark); border: none; padding: 10px 24px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Close Window</button>
+                `;
+                
+                document.getElementById("modalErrorCloseBtn")?.addEventListener("click", () => {
+                    modalMask.classList.remove("active");
+                    setTimeout(() => { modalMask.style.display = "none"; window.location.reload(); }, 200);
+                });
+            }
+        });
+    }
+
+    // --- STAGE 6: GLOBAL SESSION SECURITY & LOGOUT EVENT HANDLER ---
+    document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
         window.localStorage.clear();
         window.sessionStorage.clear();
         window.location.replace("portal-login.html");
-      });
-
-      // Execute thread load layout hydration sequence immediately
-      await streamClientChatTimelineLogs();
     });
-  </script>
+
+    // Execute thread load layout hydration sequence immediately
+    await streamClientChatTimelineLogs();
+});
+</script>
 </body>
 </html>
+
+
