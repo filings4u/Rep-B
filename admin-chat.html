@@ -136,48 +136,70 @@ window.synchronizeChatThreadsRoster = async function() {
     if (!rosterContainer || !client) return;
 
     try {
-        // 1. Fetch raw conversational view threads data
-        const { data: threads, error } = await client
-            .from('admin_chat_threads_view')
-            .select('*')
-            .order('last_message_at', { ascending: false });
+        console.log("📡 [Roster Sync] Fetching direct chat tracks from ledger rows...");
+        
+        // 1. Fetch raw messages directly sorted chronologically to build threads array
+        const { data: rawMessages, error: msgError } = await client
+            .from('chat_messages')
+            .select('client_id, message_content, created_at, sender_type')
+            .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        const rawThreadsArray = threads || [];
+        if (msgError) throw msgError;
+        const messagesArray = rawMessages || [];
 
-        if (rawThreadsArray.length === 0) {
-            rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
+        if (messagesArray.length === 0) {
+            rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active support threads logged.</div>`;
             return;
         }
 
-        // 2. 🟢 RELATIONAL PROFILE JOIN: Pull matching customer names to replace fallback ID strings
-        const uniqueClientIds = [...new Set(rawThreadsArray.map(t => t.client_id))];
-        const { data: profiles, error: profileErr } = await client
+        // 2. Reduce incoming raw rows on the client-side to find the unique active rooms
+        const threadTrackingMap = {};
+        messagesArray.forEach(msg => {
+            if (!threadTrackingMap[msg.client_id]) {
+                threadTrackingMap[msg.client_id] = {
+                    client_id: msg.client_id,
+                    last_message_content: msg.message_content,
+                    last_message_at: msg.created_at,
+                    sender_type: msg.sender_type,
+                    unread_count: 0
+                };
+            }
+            // Increment unread counters natively for client sent entries
+            if (msg.sender_type === 'client') {
+                threadTrackingMap[msg.client_id].unread_count += 0; // Toggle counting metrics when status indicators are built
+            }
+        });
+
+        const activeThreadsList = Object.values(threadTrackingMap);
+
+        // 3. Match user rows natively using cached identities array
+        const uniqueClientIds = activeThreadsList.map(t => t.client_id);
+        const { data: profiles } = await client
             .from('client_profiles')
             .select('id, first_name, last_name')
             .in('id', uniqueClientIds);
 
-        // Map human profiles to our memory thread object rows
         const profileMap = {};
-        if (!profileErr && profiles) {
+        if (profiles) {
             profiles.forEach(p => {
                 profileMap[p.id] = `${p.first_name || ''} ${p.last_name || ''}`.trim();
             });
         }
 
-        window.masterCrmThreadsCache = rawThreadsArray.map(thread => ({
+        window.masterCrmThreadsCache = activeThreadsList.map(thread => ({
             ...thread,
-            resolved_customer_name: profileMap[thread.client_id] || null
+            resolved_customer_name: profileMap[thread.client_id] || `Client Space (${thread.client_id.substring(0,8).toUpperCase()})`
         }));
 
         window.renderChatSidebarList(window.masterCrmThreadsCache);
 
     } catch (err) {
         console.error("Roster synchronization failure:", err.message);
-        // Inline UI error display replaces old 1980 style popups
         rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:var(--staff-red); font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
     }
 };
+
+
 window.renderChatSidebarList = function(datasetArray) {
     const rosterContainer = document.getElementById("adminUsersFeedContainer");
     if (!rosterContainer) return;

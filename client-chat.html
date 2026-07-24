@@ -679,9 +679,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
 
-    // --- STAGE 4: GRAPHIC TIMELINE TEXT INTERFACE CONSTRUCTORS ---
+   // --- STAGE 4: GRAPHIC TIMELINE TEXT INTERFACE CONSTRUCTORS ---
     window.appendSingleChatMessageBubbleToUI = function(msgRow) {
         const currentSender = String(msgRow.sender_type || '').toLowerCase();
+        
+        // FIXED ALIGNMENT logic: Client's own messages align right, admin aligns left
         const isClientSent = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
         
         const rowWrapper = document.createElement("div");
@@ -693,7 +695,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             
         let secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
         
-        // Extract attachment parameters from the updated safe payload metadata container object
+        // Extract attachment parameters from payload metadata container object safely
         const meta = msgRow.payload_metadata || {};
         if (meta.document_url) {
             const bucketSource = meta.storage_file_path || "chat_documents";
