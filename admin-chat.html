@@ -136,82 +136,43 @@ window.synchronizeChatThreadsRoster = async function() {
     if (!rosterContainer || !client) return;
 
     try {
-        console.log("📡 [Roster Sync] Fetching direct chat tracks from ledger rows...");
+        console.log("📡 [Roster Engine] Syncing threads matrix using explicit format parameters...");
         
-        // 1. Fetch raw messages directly sorted chronologically to build threads array
-        const { data: rawMessages, error: msgError } = await client
-            .from('chat_messages')
-            .select('client_id, message_content, created_at, sender_type')
-            .order('created_at', { ascending: false });
+        // 🟢 DIRECT VIEW FETCH: Pulling your exact column names directly from your table view definition
+        const { data: threads, error } = await client
+            .from('admin_chat_threads_view')
+            .select('client_id, last_message_content, last_message_at, sender_type, resolved_customer_name, unread_count')
+            .order('last_message_at', { ascending: false });
 
-        if (msgError) throw msgError;
-        const messagesArray = rawMessages || [];
+        if (error) throw error;
+        window.masterCrmThreadsCache = threads || [];
 
-        if (messagesArray.length === 0) {
-            rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active support threads logged.</div>`;
+        if (window.masterCrmThreadsCache.length === 0) {
+            rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
             return;
         }
-
-        // 2. Reduce incoming raw rows on the client-side to find the unique active rooms
-        const threadTrackingMap = {};
-        messagesArray.forEach(msg => {
-            if (!threadTrackingMap[msg.client_id]) {
-                threadTrackingMap[msg.client_id] = {
-                    client_id: msg.client_id,
-                    last_message_content: msg.message_content,
-                    last_message_at: msg.created_at,
-                    sender_type: msg.sender_type,
-                    unread_count: 0
-                };
-            }
-            // Increment unread counters natively for client sent entries
-            if (msg.sender_type === 'client') {
-                threadTrackingMap[msg.client_id].unread_count += 0; // Toggle counting metrics when status indicators are built
-            }
-        });
-
-        const activeThreadsList = Object.values(threadTrackingMap);
-
-        // 3. Match user rows natively using cached identities array
-        const uniqueClientIds = activeThreadsList.map(t => t.client_id);
-        const { data: profiles } = await client
-            .from('client_profiles')
-            .select('id, first_name, last_name')
-            .in('id', uniqueClientIds);
-
-        const profileMap = {};
-        if (profiles) {
-            profiles.forEach(p => {
-                profileMap[p.id] = `${p.first_name || ''} ${p.last_name || ''}`.trim();
-            });
-        }
-
-        window.masterCrmThreadsCache = activeThreadsList.map(thread => ({
-            ...thread,
-            resolved_customer_name: profileMap[thread.client_id] || `Client Space (${thread.client_id.substring(0,8).toUpperCase()})`
-        }));
 
         window.renderChatSidebarList(window.masterCrmThreadsCache);
 
     } catch (err) {
         console.error("Roster synchronization failure:", err.message);
+        // Clean inline warning block replaces old native alert popups
         rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:var(--staff-red); font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
     }
 };
-
 
 window.renderChatSidebarList = function(datasetArray) {
     const rosterContainer = document.getElementById("adminUsersFeedContainer");
     if (!rosterContainer) return;
 
     rosterContainer.innerHTML = datasetArray.map(row => {
+        // Read your exact schema properties
         const isSelected = activeSelectedClientId === row.client_id;
-        const shortUuid = String(row.client_id || '').substring(0, 8).toUpperCase();
         
-        // 🟢 FIXED: Prioritize human readable name context over raw UUID strings
-        const displayNameString = row.resolved_customer_name 
-            ? `👤 ${row.resolved_customer_name}` 
-            : `🆔 Thread Ref: ${shortUuid}`;
+        // 🟢 FIXED SIDEBAR NAMES: Display the real name from your view column, fallback to ID string if blank
+        const cleanCustomerName = row.resolved_customer_name && row.resolved_customer_name.trim() !== ""
+            ? row.resolved_customer_name
+            : `Client Ref: ${String(row.client_id).substring(0, 8).toUpperCase()}`;
 
         let msgPreview = row.last_message_content || 'No text content.';
         if (msgPreview.includes("Name:")) {
@@ -220,7 +181,8 @@ window.renderChatSidebarList = function(datasetArray) {
             msgPreview = msgPreview.substring(0, 35) + "...";
         }
 
-        const unreadCountBadge = row.unread_count > 0 
+        // 🟢 FIXED UNREAD BADGE: Read your exact integer unread_count column type definition
+        const unreadCountBadge = row.unread_count && parseInt(row.unread_count) > 0 
             ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` 
             : '';
 
@@ -231,7 +193,7 @@ window.renderChatSidebarList = function(datasetArray) {
         return `
             <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.client_id}')">
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center; box-sizing:border-box;">
-                    <strong style="color:#0a1f44; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">${window.escapeChatTextMarkup(displayNameString)}</strong>
+                    <strong style="color:#0a1f44; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">👤 ${window.escapeChatTextMarkup(cleanCustomerName)}</strong>
                     ${unreadCountBadge}
                 </div>
                 <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${window.escapeChatTextMarkup(msgPreview)}</small>
@@ -239,6 +201,7 @@ window.renderChatSidebarList = function(datasetArray) {
         `;
     }).join('');
 };
+
 
 window.filterUsersFeed = function() {
     const searchBox = document.getElementById("userFeedFilterField");
@@ -438,6 +401,67 @@ document.getElementById("sidebarFallbackLogoutBtn")?.addEventListener("click", (
     window.sessionStorage.clear();
     window.location.replace("admin-login.html");
 });
+
+// --- STAGE 2: REAL-TIME CLIENT SYNC CHANNEL DISPATCHERS ---
+window.initializeAdminRealtimeMessagingPipeline = function() {
+    const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+    if (!client) return;
+
+    console.log("📡 [Real-time Engine] Binding global workspace listener channel...");
+
+    // Remove any existing duplicate websocket tracks to avoid message double-printing
+    if (realtimeChatSubscriptionChannel) {
+        client.removeChannel(realtimeChatSubscriptionChannel);
+    }
+
+    // Subscribe straight to raw chat mutations to bypass static view refresh lockouts
+    realtimeChatSubscriptionChannel = client.channel('admin_master_chat_stream')
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'chat_messages' 
+        }, async (payload) => {
+            console.log("📡 [Inbound Live Broadcast Caught]:", payload.new);
+            
+            const incomingClientId = payload.new.client_id;
+
+            // Trigger temporary audio alert indicators on customer messages
+            if (String(payload.new.sender_type).toLowerCase() === 'client') {
+                try { new Audio("assets/sounds/notification.mp3").play().catch(() => {}); } catch(e) {}
+                if (typeof window.triggerActiveBrowserTabFlashAlert === "function") {
+                    window.triggerActiveBrowserTabFlashAlert(incomingClientId);
+                }
+            }
+
+            // Case A: If the staff member is actively viewing this specific customer's room
+            if (activeSelectedClientId === incomingClientId) {
+                // Instantly construct and append the text bubble row to the layout tree in real-time
+                window.appendSingleChatMessageBubbleToUI(payload.new);
+                
+                // Natively clear unread flags on the backend silently
+                await client.from('chat_messages')
+                    .update({ is_read_by_admin: true })
+                    .eq('client_id', activeSelectedClientId);
+            }
+
+            // Case B: Always regenerate the left column roster list view parameters to shift active rows to the top
+            await window.synchronizeChatThreadsRoster();
+        })
+        .subscribe((status) => {
+            console.log(`🔌 [Real-time Pipeline Status Switch]: ${status}`);
+        });
+};
+
+// --- INITIALIZER RUN EXECUTIONS ---
+// Replace the top-level boot initializer listener block in your <script> setup with these direct triggers:
+const clientInstanceHook = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
+if (clientInstanceHook) {
+    // Fire off immediate async layout state hydrations as soon as script block compiles
+    (async () => {
+        await window.synchronizeChatThreadsRoster();
+        window.initializeAdminRealtimeMessagingPipeline();
+    })();
+}
 </script>
 </body>
 </html>
