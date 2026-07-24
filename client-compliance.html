@@ -140,97 +140,115 @@
 
 
 
+  <script>
 
+// 1. Initialize your specific project client instance
+const supabaseUrl = 'https://your-project-id.supabase.co'; // Update with your actual project URL
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'; // Update with your actual Anon Key
 
+// This creates the dedicated instance containing database pipeline functions
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-<script>
-// CLIENT DASHBOARD PAGE SCRIPT
-document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize your client using your project keys
-  const SUPABASE_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
-  
-  // Ensure the variable name matches what your application functions expect below
-  window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+async function renderComplianceDashboard() {
+  const container = document.getElementById('client-compliance-feed-target-box');
+  const fallbackRow = document.getElementById('tableFallbackState');
 
-  await renderClientComplianceDashboard();
-});
+  // 2. Activate dashboard loader state
+  if (fallbackRow) fallbackRow.style.display = 'table-row';
 
-async function renderClientComplianceDashboard() {
-  const tableContainer = document.getElementById('client-compliance-feed-target-box');
-  if (!tableContainer) return;
+  // Clear pre-existing static mockup data rows
+  const existingRows = container.querySelectorAll('tr:not(#tableFallbackState)');
+  existingRows.forEach(row => row.remove());
 
   try {
-    // 1. Get the currently logged-in client session context safely
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      tableContainer.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:#ef4444; font-style:italic;">Please sign in to view your compliance records.</td></tr>`;
+    // 3. Fetch data using your updated 'supabaseClient' instance
+    const { data: deadlines, error } = await supabaseClient
+      .from('compliance_deadlines')
+      .select('requirement_name, state_authority, due_date, status, document_url')
+      .order('due_date', { ascending: true });
+
+    if (error) throw error;
+
+    // 4. Handle an empty table state gracefully
+    if (!deadlines || deadlines.length === 0) {
+      if (fallbackRow) {
+        fallbackRow.querySelector('td').textContent = 'No compliance requirements found.';
+        fallbackRow.style.display = 'table-row';
+      }
       return;
     }
 
-    // 2. Fetch data from your unified compliance_deadlines view matching user_id
-    // Fixed: Changed 'client' to 'supabase' to prevent execution crashes
-    const { data: rows, error: dbError } = await supabase
-      .from('compliance_deadlines') 
-      .select('id, requirement_name, state_authority, due_date, status')
-      .eq('user_id', user.id); 
+    // Hide the loader before drawing new elements
+    if (fallbackRow) fallbackRow.style.display = 'none';
 
-    // Fixed: Correctly catches database errors matching the database response variable name
-    if (dbError) throw dbError;
-    tableContainer.innerHTML = ''; 
+    // 5. Generate and append valid interface table rows
+    deadlines.forEach(item => {
+      const row = document.createElement('tr');
+      row.style.borderBottom = '1px solid #e2e8f0';
 
-    // 3. Render clean empty state if no rows populate
-    if (!rows || rows.length === 0) {
-      tableContainer.innerHTML = `
-        <tr>
-          <td colspan="5" style="padding:40px; text-align:center; color:#64748b; font-style:italic;">
-            No compliance requirements mapped to your profile.
-          </td>
-        </tr>`;
-      return;
-    }
+      const statusConfig = getStatusBadgeStyles(item.status);
 
-    // 4. Mount entries dynamically into your table matrix
-    rows.forEach(item => {
-      // Configures label styling checking for your exact database string options ('Paid', 'paid', 'payment_pending')
-      const isPaid = (item.status === 'Paid' || item.status === 'paid');
-      const statusStyle = isPaid ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;';
-      const displayLabel = item.status === 'payment_pending' ? 'Payment Pending' : item.status;
-
-      // Fixed: Mapped row strings to read view definitions: requirement_name, state_authority, and due_date
-      const rowMarkup = `
-        <tr style="border-bottom: 1px solid #e2e8f0;">
-          <td style="padding:14px 12px; font-weight: 600; color: #1e293b;">${escapeClientHtml(item.requirement_name)}</td>
-          <td style="padding:14px 12px; color: #475569;">${escapeClientHtml(item.state_authority)}</td>
-          <td style="padding:14px 12px; color: #475569; font-family: monospace;">${item.due_date}</td>
-          <td style="padding:14px 12px;">
-            <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${statusStyle}">
-              ${escapeClientHtml(displayLabel)}
-            </span>
-          </td>
-          <td style="padding:14px 12px; text-align:right;">
-            <button onclick="viewClientAsset('${item.id}', '${escapeClientHtml(item.requirement_name)}')" style="padding: 6px 12px; background: #ffffff; color: #2563eb; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
-              View Document
-            </button>
-          </td>
-        </tr>
+      row.innerHTML = `
+        <td style="padding:14px 12px; font-weight: 600; color: #1e293b;">${escapeHtml(item.requirement_name || 'N/A')}</td>
+        <td style="padding:14px 12px; color: #475569;">${escapeHtml(item.state_authority || 'N/A')}</td>
+        <td style="padding:14px 12px; color: #475569;">${escapeHtml(item.due_date || 'N/A')}</td>
+        <td style="padding:14px 12px;">
+          <span style="padding:4px 8px; background: ${statusConfig.bg}; color: ${statusConfig.text}; border-radius: 4px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">
+            ${escapeHtml(item.status || 'UNKNOWN')}
+          </span>
+        </td>
+        <td style="padding:14px 12px; text-align:right;">
+          <button 
+            onclick="${item.document_url ? `window.open('${escapeHtml(item.document_url)}', '_blank')` : "alert('No document attached to this requirement.')"}"
+            style="padding: 6px 12px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+            onmouseover="this.style.background='#e2e8f0'"
+            onmouseout="this.style.background='#f1f5f9'"
+          >
+            View Document
+          </button>
+        </td>
       `;
-      tableContainer.insertAdjacentHTML('beforeend', rowMarkup);
+      container.appendChild(row);
     });
 
   } catch (err) {
-    console.error('Client sync exception:', err.message);
-    tableContainer.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:#ef4444;">Unable to sync dashboard indicators: ${err.message}</td></tr>`;
+    console.error('Error loading compliance dashboard:', err);
+    if (fallbackRow) {
+      fallbackRow.querySelector('td').textContent = 'Failed to load pipeline requirements. Please retry.';
+      fallbackRow.querySelector('td').style.color = '#dc2626';
+      fallbackRow.style.display = 'table-row';
+    }
   }
 }
 
-function escapeClientHtml(text) {
-  if (!text) return '';
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+// Helper: Contextual color mapping logic for table badges
+function getStatusBadgeStyles(status) {
+  const normStatus = String(status).toUpperCase();
+  switch (normStatus) {
+    case 'COMPLETED':
+    case 'VERIFIED':
+      return { bg: '#dcfce7', text: '#15803d' };
+    case 'PENDING_ACTION':
+    case 'IN_PROGRESS':
+      return { bg: '#fef3c7', text: '#92400e' };
+    case 'OVERDUE':
+    case 'CRITICAL':
+      return { bg: '#fee2e2', text: '#b91c1c' };
+    default:
+      return { bg: '#f1f5f9', text: '#475569' };
+  }
 }
 
-function viewClientAsset(id, requirementName) {
-  alert(`Locating historical verification files for compliance item ID: ${id}`);
+// Helper: Secure script sanitizer to clear target text values
+function escapeHtml(str) {
+  return str.replace(/[&<>'"]/g, 
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
 }
+
+// Run the dashboard component script when structural elements load
+document.addEventListener('DOMContentLoaded', renderComplianceDashboard);
 </script>
+
+</body>
+</html>
