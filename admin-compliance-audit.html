@@ -109,7 +109,6 @@
 <script>
 (function() {
   // 1. Core Connection Initialization
-  // Put your real project credentials inside these string placeholders
   const DB_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
   const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'; 
 
@@ -118,49 +117,53 @@
   async function initAdminConsole() {
     const tableElement = document.getElementById('admin-compliance-target-box');
     const clientMenu = document.getElementById('uploadTargetClientSelector');
+    const uploadForm = document.getElementById('complianceUploadForm');
 
     try {
       if (typeof supabase === 'undefined') {
         throw new Error("Supabase storage script driver failed to load via CDN.");
       }
 
-      // Initialize isolated instance connection variable
+      // Initialize global instance connection variable safely inside this block scope
       dbClient = supabase.createClient(DB_URL, DB_KEY);
 
-      // A. Populate Customer Menu Options from public.client_profiles table rows
+      // A. Pull data once out of compliance_deadlines to populate BOTH table and dropdown menu
+      const { data: recordRows, error: recordErr } = await dbClient
+        .from('compliance_deadlines')
+        .select('id, user_id, email, requirement_name, state_authority, due_date, status')
+        .order('due_date', { ascending: true });
+
+      if (recordErr) throw recordErr;
+
+      // B. Populate Customer Dropdown Options directly from the unique emails in your active rows
       if (clientMenu) {
-        const { data: clientRows, error: clientErr } = await dbClient
-          .from('client_profiles')
-          .select('id, email, first_name, last_name')
-          .order('email', { ascending: true });
+        const uniqueClientsMap = new Map();
+        
+        if (recordRows && recordRows.length > 0) {
+          recordRows.forEach(row => {
+            // Skips null or dummy guest user_ids to guarantee valid paths
+            if (row.user_id && row.user_id !== '00000000-0000-0000-0000-000000000000' && !uniqueClientsMap.has(row.user_id)) {
+              uniqueClientsMap.set(row.user_id, row.email);
+            }
+          });
+        }
 
-        if (clientErr) throw clientErr;
-
-        if (clientRows && clientRows.length > 0) {
-          clientMenu.innerHTML = '<option value="">-- Choose a target entity profile --</option>';
-          clientRows.forEach(client => {
+        if (uniqueClientsMap.size > 0) {
+          clientMenu.innerHTML = '<option value="">-- Choose a target client profile --</option>';
+          uniqueClientsMap.forEach((email, userId) => {
             const rowOption = document.createElement('option');
-            rowOption.value = client.id;
-            const cleanLabel = (client.first_name || client.last_name)
-              ? `${client.first_name || ''} ${client.last_name || ''}`.trim()
-              : client.email;
-            rowOption.textContent = `${cleanLabel} (${client.email})`;
+            rowOption.value = userId; // Sets option mapping payload value to user_id
+            rowOption.textContent = email; // Displays their verified client account email text
             clientMenu.appendChild(rowOption);
           });
         } else {
-          clientMenu.innerHTML = '<option value="">No client profiles registered.</option>';
+          clientMenu.innerHTML = '<option value="">No client profiles found matching records.</option>';
         }
       }
 
-      // B. Render the Management Table Ledger rows directly from compliance_deadlines view
+      // C. Render the Management Table Ledger rows directly onto the screen
       if (tableElement) {
-        const { data: recordRows, error: recordErr } = await dbClient
-          .from('compliance_deadlines')
-          .select('email, requirement_name, state_authority, due_date, status')
-          .order('due_date', { ascending: true });
-
-        if (recordErr) throw recordErr;
-        tableElement.innerHTML = ''; // Safely clears out the "Parsing live indices..." text
+        tableElement.innerHTML = ''; // Clears out "Parsing live document indices..." placeholder row
 
         if (!recordRows || recordRows.length === 0) {
           tableElement.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No records found inside your orders tracking metrics.</td></tr>`;
@@ -189,6 +192,52 @@
         });
       }
 
+      // D. Connect the Paperclip Attachment submission logic straight to client_documents_vault
+      if (uploadForm) {
+        // Remove duplicate event listener attachments safely prior to binding a new track thread
+        uploadForm.removeAttribute('data-has-listener');
+        
+        uploadForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const targetUserId = document.getElementById('uploadTargetClientSelector').value;
+          const fileInput = document.getElementById('uploadFileReference');
+
+          if (!targetUserId) {
+            alert("Please choose a target client profile out of the account dropdown list.");
+            return;
+          }
+
+          if (!fileInput.files || fileInput.files.length === 0) {
+            alert("Please choose a file attachment reference first using the upload input bar.");
+            return;
+          }
+
+          const targetFile = fileInput.files[0];
+          // Generates a path mapping configuration inside the secure vault container: user_id/timestamp_filename.ext
+          const secureStoragePath = `${targetUserId}/${Date.now()}_${targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
+
+          try {
+            // Submits payload raw files natively straight into the designated storage bucket
+            const { data: uploadData, error: uploadError } = await dbClient
+              .storage
+              .from('client_documents_vault')
+              .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
+
+            if (uploadError) throw uploadError;
+
+            alert(`Verification asset successfully uploaded to the client_documents_vault for client ID reference: ${targetUserId}`);
+            uploadForm.reset();
+            
+          } catch (uploadFail) {
+            console.error('File binary streaming interrupted:', uploadFail.message);
+            alert(`Asset submission interrupted: ${uploadFail.message}`);
+          }
+        });
+        
+        uploadForm.setAttribute('data-has-listener', 'true');
+      }
+
     } catch (crashEvent) {
       console.error('System execution error caught:', crashEvent.message);
       if (tableElement) {
@@ -202,7 +251,7 @@
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
-  // Safe listener fallback invocation
+  // Safe listener fallback lifecycle invocation execution tree
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAdminConsole);
   } else {
@@ -210,7 +259,6 @@
   }
 })();
 </script>
-
 
 
 </body>
