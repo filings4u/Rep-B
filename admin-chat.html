@@ -37,9 +37,30 @@
     .user-search-input { width: 100% !important; padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; background: var(--white) !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; }
     .users-scrollable-feed { flex: 1 !important; overflow-y: auto !important; box-sizing: border-box !important; }
     
-    .chat-thread-panel { flex: 1 !important; display: flex !important; flex-direction: column !important; height: 100% !important; overflow: hidden !important; background: var(--white) !important; box-sizing: border-box !important; }
-    .messages-timeline-scroll { flex: 1 !important; overflow-y: auto !important; padding: 30px !important; background: #fdfdfd !important; box-sizing: border-box !important; }
-    
+         .chat-thread-panel {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            background: var(--white) !important;
+            box-sizing: border-box !important;
+        }
+        .messages-timeline-scroll {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 30px !important;
+            background: #fdfdfd !important;
+            box-sizing: border-box !important;
+        }
+         .chat-input-footer-tray {
+            padding: 20px 30px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: var(--white) !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            margin-top: auto !important;
+        }
     .msg-row { display: flex !important; margin-bottom: 20px !important; width: 100% !important; }
     .msg-row.staff-sent { justify-content: flex-end !important; }
     .msg-row.client-sent { justify-content: flex-start !important; }
@@ -219,8 +240,6 @@ window.filterUsersFeed = function() {
     window.renderChatSidebarList(filtered);
 };
 
-window.f4uTabNotificationIntervalInstance = null;
-window.originalBrowserTabTitleString = document.title;
 window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
     const client = window.supabaseInstance || window.supabaseClient || chatAdminCoreClient;
     const textarea = document.getElementById("adminChatMessageInputField");
@@ -234,11 +253,21 @@ window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
     textarea.placeholder = `Type response to Client...`;
     textarea.focus();
 
+    // 1. 🟢 FIXED: Disconnect any active channel to clear out duplicate text-bubble loops
+    if (window.realtimeChatSubscriptionChannel) {
+        console.log("🔌 [Real-time Engine] Clearing duplicate thread listener streams...");
+        await client.removeChannel(window.realtimeChatSubscriptionChannel);
+        window.realtimeChatSubscriptionChannel = null;
+    }
+
     try {
+        // Mark messages as read on the backend silently
         await client.from('chat_messages').update({ is_read_by_admin: true }).eq('client_id', activeSelectedClientId);
         if (typeof window.synchronizeChatThreadsRoster === "function") {
             window.synchronizeChatThreadsRoster();
         }
+
+        // Fetch historical log rows chronologically
         const { data: messages, error } = await client
             .from('chat_messages')
             .select('*')
@@ -256,6 +285,11 @@ window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
             msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--text-muted); font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
         }
         window.scrollTerminalTimelineToAbsoluteBottom();
+        // 2. 🟢 FIXED: Fire a fresh, clean real-time listener session for the selected customer
+        if (typeof window.initializeAdminRealtimeMessagingPipeline === "function") {
+            window.initializeAdminRealtimeMessagingPipeline();
+        }
+
     } catch (err) {
         console.error("Timeline retrieval failed:", err.message);
         msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:var(--staff-red); font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
@@ -285,47 +319,21 @@ window.appendSingleChatMessageBubbleToUI = function(msgRow) {
     const msgLogBox = document.getElementById("adminChatMessagesLog");
     if (!msgLogBox) return;
     const currentSender = String(msgRow.sender_type || '').toLowerCase();
-    const isAdminResponse = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'broker' || currentSender === 'staff';
-    const rowWrapper = document.createElement("div");
-    rowWrapper.className = isAdminResponse ? "msg-row staff-sent" : "msg-row client-sent";
-    const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
+    // ADMIN VIEW: My own messages go right, client messages go left
+    const isMyOwnMessage = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'staff';
+    const rowWrapper = document.createElement("div");
+    rowWrapper.className = isMyOwnMessage ? "msg-row staff-sent" : "msg-row client-sent";
+    
+    const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     let secureCleanText = window.escapeChatTextMarkup(msgRow.message_content || "");
     
-    // Inbound metadata storage payload unpacker to support user uploaded files cleanly
-    const meta = msgRow.payload_metadata || {};
-    if (meta.document_url) {
-        const bucketSource = meta.storage_file_path || "chat_documents";
-        const attachmentName = meta.file_name || "Download File Attachment";
-        secureCleanText += `
-            <a href="#" class="chat-file-embed-link admin-cloud-download" data-bucket="${bucketSource}" data-path="${meta.document_url}" style="display:flex; align-items:center; gap:6px; font-weight:700; color:inherit; margin-top:6px;">
-                📁 [Attached File]: ${window.escapeChatTextMarkup(attachmentName)} ➔
-            </a>
-        `;
-    }
-
     rowWrapper.innerHTML = `
         <div class="msg-bubble">
             <div>${secureCleanText}</div>
             <span class="msg-timestamp">${readableTime}</span>
         </div>
     `;
-
-    rowWrapper.querySelectorAll(".admin-cloud-download").forEach(link => {
-        link.addEventListener("click", async function(e) {
-            e.preventDefault();
-            const bucket = this.getAttribute("data-bucket");
-            const path = this.getAttribute("data-path");
-            try {
-                const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 90);
-                if (error) throw error;
-                window.open(data.signedUrl, '_blank');
-            } catch(err) {
-                console.error("Staff access to payload link rejected: ", err.message);
-            }
-        });
-    });
-
     msgLogBox.appendChild(rowWrapper);
     window.scrollTerminalTimelineToAbsoluteBottom();
 };

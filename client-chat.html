@@ -205,6 +205,14 @@
             background: #fdfdfd !important;
             box-sizing: border-box !important;
         }
+             .chat-input-footer-tray {
+            padding: 20px 30px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: var(--white) !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            margin-top: auto !important; /* Pushes the tray firmly down to base limits */
+        }
         .msg-row {
             display: flex !important;
             margin-bottom: 20px !important;
@@ -561,45 +569,81 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
 
-    // --- STAGE 2: ATTACH LIVE REALTIME POSTGRES CHANGES BROADCASTS TRACKS ---
-    console.log("[Chat Engine] Activating real-time row insertion monitoring listener...");
-    client.channel(`client_room_${clientActiveUserId}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `client_id=eq.${clientActiveUserId}` }, (payload) => {
-            console.log("📡 [Chat Engine] Inbound streaming packet caught: ", payload.new);
-            if (payload.new.sender_type !== 'client') {
-                if (typingIndicator) typingIndicator.style.display = "none";
-            }
-            window.appendSingleChatMessageBubbleToUI(payload.new);
-        })
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'client_profiles', filter: `id=eq.${clientActiveUserId}` }, () => {
-            if (typingIndicator) {
-                typingIndicator.style.display = "flex";
-                setTimeout(() => { typingIndicator.style.display = "none"; }, 6000);
-            }
-        })
-        .subscribe();
-    // --- STAGE 2.5: ATTACH ATTACHMENT MULTIPLEXER ROUTINES ---
-    if (paperclipBtn && hiddenFileInput) {
-        paperclipBtn.addEventListener("click", () => hiddenFileInput.click());
-        
-        hiddenFileInput.addEventListener("change", function() {
-            if (this.files && this.files[0]) {
-                activeStagedFilePayload = this.files[0];
-                if (previewBar && previewString) {
-                    previewString.textContent = `📎 Attachment Ready: ${activeStagedFilePayload.name} (${Math.round(activeStagedFilePayload.size / 1024)} KB)`;
-                    previewBar.style.display = "flex";
-                }
-            }
-        });
-    }
+// --- STAGE 2: ATTACH LIVE REALTIME POSTGRES CHANGES BROADCASTS TRACKS ---
+console.log("[Chat Engine] Activating direct real-time table insertion listener...");
 
-    if (cancelUploadBtn) {
-        cancelUploadBtn.addEventListener("click", () => {
-            activeStagedFilePayload = null;
-            if (hiddenFileInput) hiddenFileInput.value = "";
-            if (previewBar) previewBar.style.display = "none";
-        });
-    }
+client.channel(`client_broadcast_stream_${clientActiveUserId}`)
+    .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'chat_messages', 
+        filter: `client_id=eq.${clientActiveUserId}` 
+    }, (payload) => {
+        console.log("📡 [Client Chat Engine] Live packet intercepted: ", payload.new);
+        
+        // 1. Instantly append the inbound message bubble to the layout tree in real-time
+        window.appendSingleChatMessageBubbleToUI(payload.new);
+        
+        // 2. Clear typing indicators when a live message lands
+        if (payload.new.sender_type !== 'client' && typingIndicator) {
+            typingIndicator.style.display = "none";
+        }
+
+        // 3. 🟢 FIXED: Fire the browser tab notification instantly when an agent responds
+        if (payload.new.sender_type !== 'client') {
+            window.triggerClientTabFlashAlert();
+        }
+    })
+    .subscribe();
+
+// --- STAGE 2.5: ATTACH ATTACHMENT MULTIPLEXER ROUTINES ---
+if (paperclipBtn && hiddenFileInput) {
+    paperclipBtn.addEventListener("click", () => hiddenFileInput.click());
+    
+    hiddenFileInput.addEventListener("change", function() {
+        if (this.files && this.files[0]) {
+            activeStagedFilePayload = this.files[0];
+            if (previewBar && previewString) {
+                previewString.textContent = `📎 Attachment Ready: ${activeStagedFilePayload.name} (${Math.round(activeStagedFilePayload.size / 1024)} KB)`;
+                previewBar.style.display = "flex";
+            }
+        }
+    });
+}
+
+if (cancelUploadBtn) {
+    cancelUploadBtn.addEventListener("click", () => {
+        activeStagedFilePayload = null;
+        if (hiddenFileInput) hiddenFileInput.value = "";
+        if (previewBar) previewBar.style.display = "none";
+    });
+}
+
+// --- TAB ALERT INFRASTRUCTURE METRICS MANAGEMENT ---
+window.clientTabAlertIntervalInstance = null;
+window.clientOriginalTabTitle = document.title;
+
+window.triggerClientTabFlashAlert = function() {
+    if (window.clientTabAlertIntervalInstance) return;
+    let alertStateFlag = true;
+    window.clientTabAlertIntervalInstance = setInterval(() => {
+        document.title = alertStateFlag ? "🚨 NEW RESPONSE FROM AGENT!" : window.clientOriginalTabTitle;
+        alertStateFlag = !alertStateFlag;
+    }, 1000);
+};
+
+// Automatically stop tab flashing when the user clicks back inside their text input box
+if (textInputField) {
+    textInputField.addEventListener("focus", () => {
+        if (window.clientTabAlertIntervalInstance) {
+            clearInterval(window.clientTabAlertIntervalInstance);
+            window.clientTabAlertIntervalInstance = null;
+            document.title = window.clientOriginalTabTitle;
+        }
+    });
+}
+
+
     // --- STAGE 3: MESSAGE DISPATCH TRANSMISSION PROTOCOLS ---
     window.dispatchClientChatMessage = async function() {
         const rawText = textInputField.value.trim();
@@ -739,56 +783,27 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.scrollChatTimelineToAbsoluteBottom();
     };
 
-    // --- STAGE 4: GRAPHIC TIMELINE TEXT INTERFACE CONSTRUCTORS ---
-    window.appendSingleChatMessageBubbleToUI = function(msgRow) {
-        const currentSender = String(msgRow.sender_type || '').toLowerCase();
-        const isClientSent = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
-        
-        const rowWrapper = document.createElement("div");
-        rowWrapper.className = isClientSent ? "msg-row client-sent" : "msg-row staff-sent";
-        
-        const readableTime = msgRow.created_at 
-            ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-        let secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
-        
-        // Dynamic construction for asset url lines inside bubbles
-        if (msgRow.document_url) {
-            const bucketSource = msgRow.storage_file_path || "chat_documents";
-            secureCleanText += `
-                <a href="#" class="chat-file-embed-link cloud-download-trigger" data-bucket="${bucketSource}" data-path="${msgRow.document_url}">
-                    📁 Download File Attachment ➔
-                </a>
-            `;
-        }
-
-        rowWrapper.innerHTML = `
-            <div class="msg-bubble">
-                <div>${secureCleanText}</div>
-                <span class="msg-timestamp">${readableTime}</span>
-            </div>
-        `;
-        
-        // Attach secure temporary URL generation bindings
-        rowWrapper.querySelectorAll(".cloud-download-trigger").forEach(link => {
-            link.addEventListener("click", async function(e) {
-                e.preventDefault();
-                const bucket = this.getAttribute("data-bucket");
-                const path = this.getAttribute("data-path");
-                try {
-                    const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 90);
-                    if (error) throw error;
-                    window.open(data.signedUrl, '_blank');
-                } catch(err) {
-                    alert(`Read Access Blocked: ${err.message}`);
-                }
-            });
-        });
-
-        msgLogBox.appendChild(rowWrapper);
-        window.scrollChatTimelineToAbsoluteBottom();
-    };
+window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+    const currentSender = String(msgRow.sender_type || '').toLowerCase();
+    
+    // CLIENT VIEW: My own messages go right, admin messages go left
+    const isMyOwnMessage = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
+    
+    const rowWrapper = document.createElement("div");
+    rowWrapper.className = isMyOwnMessage ? "msg-row client-sent" : "msg-row staff-sent";
+    
+    const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    let secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
+    
+    rowWrapper.innerHTML = `
+        <div class="msg-bubble">
+            <div>${secureCleanText}</div>
+            <span class="msg-timestamp">${readableTime}</span>
+        </div>
+    `;
+    msgLogBox.appendChild(rowWrapper);
+    window.scrollChatTimelineToAbsoluteBottom();
+};
 
     window.handleClientChatKeyOptions = function(event) {
         if (event.key === "Enter" && !event.shiftKey) {
