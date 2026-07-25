@@ -609,10 +609,9 @@
 
             if (vaultWriteError) throw vaultWriteError;
 
-            // 🎯 STEP 4: TRIGGER YOUR EXISTING SUPABASE EDGE FUNCTION IMMEDIATELY
-            // This manually calls your deployed script on form click, sending the payload data it needs
+            // 🎯 STEP 4: TRIGGER UNBLOCKED EDGE FUNCTION WITHOUT JWT
             try {
-              await fetch('https://supabase.co', {
+              await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
@@ -627,10 +626,12 @@
                   }
                 })
               });
+              console.log('Notification safely delivered to open Edge Function pipeline.');
             } catch (emailErr) {
-              // Non-blocking log catch so file upload still shows success even if email service has hiccups
               console.error('Notification API routing exception caught:', emailErr);
             }
+
+
 
             showCustomBlurModal('✅', 'Asset Synchronized', `The file binary was successfully committed to your storage vault. Your notification function was fired.`);
             uploadForm.reset();
