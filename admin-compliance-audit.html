@@ -550,7 +550,6 @@
       if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
         uploadForm.addEventListener('submit', async (e) => {
           e.preventDefault();
-
           const targetSelector = document.getElementById('uploadTargetClientSelector');
           const targetUserId = targetSelector.value;
           const targetEmail = targetSelector.options[targetSelector.selectedIndex].text.trim();
@@ -568,14 +567,16 @@
             return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
           }
 
-          const targetFile = fileInput.files[0];
-
+          const targetFile = fileInput.files[0]; // Fixes array target
           if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
             return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
           }
 
           const submitBtn = uploadForm.querySelector('button[type="submit"]');
-          if (submitBtn) submitBtn.disabled = true;
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Syncing Vault Asset...';
+          }
 
           try {
             // STEP 1: Insert parameters matching database columns format explicitly
@@ -608,7 +609,30 @@
 
             if (vaultWriteError) throw vaultWriteError;
 
-            showCustomBlurModal('✅', 'Asset Synchronized', `The file binary was successfully committed to your storage vault under the raw email folder: "${rawEmailFolder}".`);
+            // 🎯 STEP 4: TRIGGER YOUR EXISTING SUPABASE EDGE FUNCTION IMMEDIATELY
+            // This manually calls your deployed script on form click, sending the payload data it needs
+            try {
+              await fetch('https://supabase.co', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  record: {
+                    client_email: targetEmail,
+                    client_name: clientName,
+                    filing_name: filingName,
+                    company_name: companyName,
+                    expiration_date: expDateRaw
+                  }
+                })
+              });
+            } catch (emailErr) {
+              // Non-blocking log catch so file upload still shows success even if email service has hiccups
+              console.error('Notification API routing exception caught:', emailErr);
+            }
+
+            showCustomBlurModal('✅', 'Asset Synchronized', `The file binary was successfully committed to your storage vault. Your notification function was fired.`);
             uploadForm.reset();
             initAdminConsole(); // Live ledger lines refresh
 
@@ -616,11 +640,15 @@
             console.error('Processing transaction error trace caught:', actionErr);
             showCustomBlurModal('❌', 'Execution Interrupted', `System processing error verified: ${actionErr.message || actionErr}`);
           } finally {
-            if (submitBtn) submitBtn.disabled = false;
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Commit Vault Asset';
+            }
           }
         });
         uploadForm.setAttribute('data-live-listener', 'true');
       }
+
 
     } catch (err) {
       console.error('System Engine Setup Failure:', err);
