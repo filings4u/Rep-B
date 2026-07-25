@@ -114,10 +114,9 @@
   <script src="assets/js/client-footer.js"></script>
 
 
-
 <script>
 (function() {
-  const DB_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
+  const DB_URL = 'https://supabase.co';
   const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
   let dbClient = null;
 
@@ -128,7 +127,7 @@
     if (fallbackRow) fallbackRow.style.display = 'table-row';
 
     try {
-      if (typeof supabase === 'undefined') throw new Error("Supabase script driver missing from layout template headers.");
+      if (typeof supabase === 'undefined') throw new Error("Supabase script framework missing from layout template headers.");
       dbClient = supabase.createClient(DB_URL, DB_KEY);
 
       const { data: recordRows, error: recordErr } = await dbClient
@@ -210,8 +209,12 @@
 
                 if (listError) throw listError;
 
-                // 🎯 THE FIX: Force case-insensitive validation lookup to match lowercase/uppercase IDs safely
-                const matchFile = storageList ? storageList.find(f => f.name.toLowerCase().includes(recordId.toLowerCase())) : null;
+                // 🎯 THE CORE LOOKUP FIX: Changes absolute string validation to wildcard verification (.includes())
+                const matchFile = storageList ? storageList.find(f => {
+                  const targetFileName = String(f.name).toLowerCase();
+                  const targetMatchToken = String(recordId).toLowerCase();
+                  return targetFileName.includes(targetMatchToken);
+                }) : null;
 
                 if (!matchFile) {
                   throw new Error("The verification asset document could not be found under your raw email folder track directory.");
@@ -243,6 +246,7 @@
     }
   }
 
+  // GLOBAL BLURRY ACCESSIBLE CONTEXT OVERLAY MODAL DISPLAY HANDLER FUNCTIONS
   window.showCustomBlurModal = function(icon, title, message) {
     const overlay = document.getElementById('complianceCustomModalOverlay');
     if (overlay) {
@@ -270,7 +274,6 @@
   }
 })();
 </script>
-
 
 </body>
 </html>
