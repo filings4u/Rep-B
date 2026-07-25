@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Website Design Intake | filings4u Portal</title>
     <link rel="icon" type="image/png" href="images/fav.png">
+    <meta name="theme-color" content="#10b981">
   <style>
 :root {
   --bg-light: #f8fafc;
@@ -228,6 +229,29 @@ input:focus, select:focus, textarea:focus {
 }
 </style>
 
+<style>
+/* 🧠 SMOOTH HARMONIC POSITION SHAKING KEYFRAMES */
+@keyframes structuralFieldShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* 🎯 UTILITY TARGET CLASS APPLIED DYNAMICALLY BY SCRIPT ENGINE */
+.invalid-shake-trigger {
+  animation: structuralFieldShake 0.4s ease-in-out !important;
+  border-color: var(--staff-red) !important;
+}
+
+/* Ensure focus overrides during validation faults */
+.invalid-shake-trigger input, 
+.invalid-shake-trigger select, 
+.invalid-shake-trigger textarea {
+  border-color: var(--staff-red) !important;
+  box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.15) !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -238,7 +262,7 @@ input:focus, select:focus, textarea:focus {
   <div class="master-portal-wrapper"> 
     <div class="intake-card"> 
       <div class="brand-logo"> 
-        <img src="https://supabase.co" alt="filings4u Logo"> 
+        <img src="images/logo.png" alt="filings4u Logo"> 
       </div> 
       <h1>Website Specification Design Intake</h1> 
       <p class="subtitle-p">Please supply your localized corporate business models, aesthetic preferences, functional workflows, and delivery scopes below to initialize immediate development queues.</p> 
@@ -415,6 +439,7 @@ input:focus, select:focus, textarea:focus {
 
 
     
+
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
@@ -478,19 +503,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       const otherCheckbox = Array.from(document.querySelectorAll('input[name="webFeatures"]'))
         .find(cb => cb.value === "Other");
       const isOtherChecked = otherCheckbox ? otherCheckbox.checked : false;
-      toggleConditionalField("group-webFeaturesOther", "webFeaturesOther", isOtherChecked);
+      toggleConditionalField("group-webFeaturesOther", "group-webFeaturesOther", isOtherChecked);
     }
-  });
-  // Extract configuration tokens
+  });  // Extract configuration parameters
   const urlParams = new URLSearchParams(window.location.search);
   const trackingToken = urlParams.get("token") || localStorage.getItem("f4u_active_tracking_token") || "GUEST-INTAKE";
 
-  const client = window.supabaseInstance || window.supabaseClient;
+  let client = window.supabaseInstance || window.supabaseClient;
+
+  if (!client && typeof window.supabase !== 'undefined') {
+    const SUPABASE_URL = 'https://lrbimrlbskjweynxlgas.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
+    
+    if (SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+      client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  }
+
   if (!client || typeof client.from !== 'function') {
-    statusMsg.style.display = "block";
-    statusMsg.style.background = "#fef2f2";
-    statusMsg.style.color = "#991b1b";
-    statusMsg.textContent = "✕ System Error: Supabase client infrastructure missing.";
     throw new Error("✕ Initialization Error: Database connection reference unassigned.");
   }
 
@@ -500,13 +530,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusMsg.style.display = "none";
     statusMsg.textContent = "";
 
-    // 1. Enforce validation boundaries on all visible inputs
-    if (!intakeForm.checkValidity()) {
-      statusMsg.style.display = "block";
-      statusMsg.style.background = "#fef2f2";
-      statusMsg.style.color = "#991b1b";
-      statusMsg.textContent = "✕ Validation Error: All visible required fields must be properly completed.";
-      intakeForm.reportValidity();
+    // 1. Isolate and validate visible inputs, excluding exceptions
+    let isFormValid = true;
+    const inputsToValidate = intakeForm.querySelectorAll("input[required], select[required], textarea[required]");
+
+    inputsToValidate.forEach((input) => {
+      // 🎯 THE DIRECT FIX: Identify parents and strip any leftover shake indicators
+      const groupContainer = input.closest(".form-group");
+      if (groupContainer) {
+        groupContainer.classList.remove("invalid-shake-trigger");
+      }
+
+      // Bypass checks if the field is hidden or belongs to our explicitly whitelisted elements
+      if (input.id === "webNotes" || input.id === "webInspirationUrls") {
+        return; 
+      }
+
+      const isElementVisible = input.offsetWidth > 0 || input.offsetHeight > 0;
+      if (isElementVisible && !input.value.trim()) {
+        isFormValid = false;
+        
+        if (groupContainer) {
+          // Re-trigger hardware accelerated element shaking
+          void groupContainer.offsetWidth; 
+          groupContainer.classList.add("invalid-shake-trigger");
+        }
+      }
+    });
+
+    // Terminate pipeline gracefully if visible metrics are missing without throwing message banners
+    if (!isFormValid) {
       return;
     }
 
@@ -544,7 +597,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const logoUrl = document.getElementById("webLogoUrl")?.value.trim() || "";
     const notes = document.getElementById("webNotes").value.trim();
 
-    // 3. Flatten layout choices out to match table column constraints
+    // 3. Format choices into unified string values
     const optimizedWebsiteType = siteType === "Other" && siteTypeOther ? `Other: ${siteTypeOther}` : siteType;
     const optimizedStylePreference = styleDirection === "Other" && styleDirectionOther ? `Other: ${styleDirectionOther}` : styleDirection;
     
@@ -561,7 +614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       console.log(`📡 [Web Intake Engine] Syncing layout parameters for tracking code: [${trackingToken}]`);
 
-      // 4. Run explicit insert using correct database keys
+      // 4. Send operational variables straight to Supabase
       const { error: insertError } = await client
         .from('web_intakes')
         .insert([
@@ -602,7 +655,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       intakeForm.reset();
       
-      // Close visibility wrapper groups on successful execution reset
+      // Force collapse all conditional groups on form reset
       const conditionals = ["group-webSiteTypeOther", "group-webBrandAssets", "group-webStyleDirectionOther", "group-webFeaturesOther", "group-webLogoUrl"];
       conditionals.forEach(id => {
         const el = document.getElementById(id);
@@ -622,6 +675,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 </script>
+
+
 
 
 </body>
