@@ -516,6 +516,7 @@
           }
         }
       }
+
       // C. Print database entries into workspace data table rows
       if (tableElement) {
         tableElement.innerHTML = '';
@@ -526,7 +527,6 @@
             const isPaid = (item.status === 'Paid');
             const badgeStyle = isPaid ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;';
             const displayDate = item.expiration_date ? item.expiration_date : 'No Expiration Date';
-
             const rowMarkup = `
               <tr style="border-bottom: 1px solid #e2e8f0;">
                 <td style="padding:14px 12px; color: #475569;">${escapeDataString(item.client_email)}</td>
@@ -546,83 +546,82 @@
         }
       }
 
-// D. Multi-Write Form Submission Controller Pipeline Tracker Block
-if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
-  uploadForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+      // D. Multi-Write Form Submission Controller Pipeline Tracker Block
+      if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
+        uploadForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
 
-    const targetSelector = document.getElementById('uploadTargetClientSelector');
-    const targetUserId = targetSelector.value;
-    const targetEmail = targetSelector.options[targetSelector.selectedIndex].text.trim();
-    const clientName = document.getElementById('formClientName').value;
-    const filingName = document.getElementById('formFilingName').value;
-    const companyName = document.getElementById('formCompanyName').value;
-    const expDateRaw = document.getElementById('formExpirationDate').value;
-    const statusVal = document.getElementById('formStatusSelector').value;
-    const fileInput = document.getElementById('uploadFileReference');
+          const targetSelector = document.getElementById('uploadTargetClientSelector');
+          const targetUserId = targetSelector.value;
+          const targetEmail = targetSelector.options[targetSelector.selectedIndex].text.trim();
+          const clientName = document.getElementById('formClientName').value;
+          const filingName = document.getElementById('formFilingName').value;
+          const companyName = document.getElementById('formCompanyName').value;
+          const expDateRaw = document.getElementById('formExpirationDate').value;
+          const statusVal = document.getElementById('formStatusSelector').value;
+          const fileInput = document.getElementById('uploadFileReference');
 
-    if (!targetUserId || targetUserId === '') {
-      return showCustomBlurModal('⚠️', 'Input Required', 'Please select a valid target client profile email from the option dropdown menu.');
-    }
-    if (!fileInput.files || fileInput.files.length === 0) {
-      return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
-    }
+          if (!targetUserId || targetUserId === '') {
+            return showCustomBlurModal('⚠️', 'Input Required', 'Please select a valid target client profile email from the option dropdown menu.');
+          }
+          if (!fileInput.files || fileInput.files.length === 0) {
+            return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
+          }
 
-    // 🎯 THE CRITICAL EXTRACTION FIX: Select the exact first file binary element out of the input node array list
-    const targetFile = fileInput.files[0];
-    
-    // Front-end security check: enforce PDF selection explicitly
-    if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
-      return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
-    }
+          const targetFile = fileInput.files[0];
 
-    const submitBtn = uploadForm.querySelector('button[type="submit"]');
-    if (submitBtn) submitBtn.disabled = true;
+          if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
+            return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
+          }
 
-    try {
-      // STEP 1: Insert parameters matching database columns format explicitly
-      const { data: newRow, error: dbError } = await dbClient
-        .from('compliance_deadlines')
-        .insert([{ 
-          user_id: targetUserId, 
-          client_email: targetEmail, 
-          client_name: clientName, 
-          filing_name: filingName, 
-          company_name: companyName, 
-          expiration_date: expDateRaw || null, 
-          status: statusVal 
-        }])
-        .select()
-        .single();
+          const submitBtn = uploadForm.querySelector('button[type="submit"]');
+          if (submitBtn) submitBtn.disabled = true;
 
-      if (dbError) throw dbError;
+          try {
+            // STEP 1: Insert parameters matching database columns format explicitly
+            const { data: newRow, error: dbError } = await dbClient
+              .from('compliance_deadlines')
+              .insert([{
+                user_id: targetUserId,
+                client_email: targetEmail,
+                client_name: clientName,
+                filing_name: filingName,
+                company_name: companyName,
+                expiration_date: expDateRaw || null,
+                status: statusVal
+              }])
+              .select()
+              .single();
 
-      // STEP 2: Use the raw lower-case email directly as the folder name.
-      const rawEmailFolder = targetEmail.toLowerCase().trim();
-      const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-      const secureStoragePath = `${rawEmailFolder}/${newRow.id}_${fileCleanName}`;
+            if (dbError) throw dbError;
 
-      // STEP 3: Stream physical binary payload straight to storage container vault bucket
-      const { data: storageResult, error: vaultWriteError } = await dbClient
-        .storage
-        .from('client_documents_vault')
-        .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
+            // STEP 2: Use the raw lower-case email directly as the folder name.
+            const rawEmailFolder = targetEmail.toLowerCase().trim();
+            const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+            const secureStoragePath = `${rawEmailFolder}/${newRow.id}_${fileCleanName}`;
 
-      if (vaultWriteError) throw vaultWriteError;
+            // STEP 3: Stream physical binary payload straight to storage container vault bucket
+            const { data: storageResult, error: vaultWriteError } = await dbClient
+              .storage
+              .from('client_documents_vault')
+              .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
 
-      showCustomBlurModal('✅', 'Asset Synchronized', `The file binary was successfully committed to your storage vault under the raw email folder: "${rawEmailFolder}".`);
-      uploadForm.reset();
-      initAdminConsole(); // Live ledger lines refresh
+            if (vaultWriteError) throw vaultWriteError;
 
-    } catch (actionErr) {
-      console.error('Processing transaction error trace caught:', actionErr);
-      showCustomBlurModal('❌', 'Execution Interrupted', `System processing error verified: ${actionErr.message || actionErr}`);
-    } finally {
-      if (submitBtn) submitBtn.disabled = false;
-    }
-  });
-  uploadForm.setAttribute('data-live-listener', 'true');
-}
+            showCustomBlurModal('✅', 'Asset Synchronized', `The file binary was successfully committed to your storage vault under the raw email folder: "${rawEmailFolder}".`);
+            uploadForm.reset();
+            initAdminConsole(); // Live ledger lines refresh
+
+          } catch (actionErr) {
+            console.error('Processing transaction error trace caught:', actionErr);
+            showCustomBlurModal('❌', 'Execution Interrupted', `System processing error verified: ${actionErr.message || actionErr}`);
+          } finally {
+            if (submitBtn) submitBtn.disabled = false;
+          }
+        });
+        uploadForm.setAttribute('data-live-listener', 'true');
+      }
+
     } catch (err) {
       console.error('System Engine Setup Failure:', err);
     }
@@ -662,6 +661,7 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
   }
 })();
 </script>
+
 
 
 
