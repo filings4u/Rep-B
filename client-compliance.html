@@ -131,7 +131,6 @@
       if (typeof supabase === 'undefined') throw new Error("Supabase script driver missing from layout template headers.");
       dbClient = supabase.createClient(DB_URL, DB_KEY);
 
-      // Fetch requirements data rows matching active structural metrics
       const { data: recordRows, error: recordErr } = await dbClient
         .from('compliance_deadlines')
         .select('id, user_id, client_email, client_name, filing_name, company_name, expiration_date, status')
@@ -185,6 +184,7 @@
           `;
           tableElement.insertAdjacentHTML('beforeend', rowMarkup);
         });
+
         // Direct Raw Storage Bucket Retrieval Loop
         if (!tableElement.hasAttribute('data-has-click-hook')) {
           tableElement.addEventListener('click', async function(e) {
@@ -201,7 +201,6 @@
                 e.target.innerText = 'Locating file...';
                 e.target.disabled = true;
 
-                // Target the exact lowercase user email folder inside your bucket tree
                 const rawEmailFolder = clientEmail.toLowerCase().trim();
 
                 // 1. Scan storage container folder track directly using raw email format
@@ -211,7 +210,7 @@
 
                 if (listError) throw listError;
 
-                // 🎯 WILDCARD LOOKUP FIX: Searches case-insensitively for the record ID anywhere inside the filename
+                // 🎯 THE FIX: Force case-insensitive validation lookup to match lowercase/uppercase IDs safely
                 const matchFile = storageList ? storageList.find(f => f.name.toLowerCase().includes(recordId.toLowerCase())) : null;
 
                 if (!matchFile) {
@@ -244,7 +243,6 @@
     }
   }
 
-  // GLOBAL BLURRY ACCESSIBLE CONTEXT OVERLAY MODAL DISPLAY HANDLER FUNCTIONS
   window.showCustomBlurModal = function(icon, title, message) {
     const overlay = document.getElementById('complianceCustomModalOverlay');
     if (overlay) {
@@ -272,7 +270,6 @@
   }
 })();
 </script>
-
 
 
 </body>
