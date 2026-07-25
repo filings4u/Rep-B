@@ -226,6 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a href="client-chat.html" class="nav-item m-link" data-page="client-chat.html">💬 Live Chat Support</a>
                     <a href="client-ticket.html" class="nav-item m-link" data-page="client-ticket.html">🎫 Support Tickets</a>
                     <a href="client-knowledgebase.html" class="nav-item m-link" data-page="client-knowledgebase.html">📰 Help Resources</a>
+                    <a href="client-status.html" class="nav-item m-link" data-page="client-status.html">✅ Check Order Status</a>
                 </div>
             </div>
             <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#0a1f44; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Log Out Session</button>
