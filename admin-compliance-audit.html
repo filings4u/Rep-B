@@ -568,6 +568,7 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
       return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
     }
 
+    // 🎯 THE CRITICAL EXTRACTION FIX: Select the exact first file binary element out of the input node array list
     const targetFile = fileInput.files[0];
     
     // Front-end security check: enforce PDF selection explicitly
@@ -596,8 +597,8 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
 
       if (dbError) throw dbError;
 
-      // STEP 2: Uses the raw lower-case email directly as the folder name.
-      const rawEmailFolder = targetEmail.toLowerCase();
+      // STEP 2: Use the raw lower-case email directly as the folder name.
+      const rawEmailFolder = targetEmail.toLowerCase().trim();
       const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
       const secureStoragePath = `${rawEmailFolder}/${newRow.id}_${fileCleanName}`;
 
@@ -661,7 +662,6 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
   }
 })();
 </script>
-
 
 
 
