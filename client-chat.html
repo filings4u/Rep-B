@@ -372,78 +372,211 @@
         }
     </style>
 
+    <!-- 🎨 FLOATING STRUCTURAL ARCHITECTURE STYLE ENGINE -->
+<!-- 🎨 CENTERING & VIEWPORT CONSTRAINTS ENGINE -->
+<style>
+  /* 🎯 MAIN CENTRAL CONTAINER WRAPPER */
+  .central-chat-viewport-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    /* Calculates optimal desktop spacing to ensure the chat window doesn't bleed off screen panels */
+    min-height: calc(100vh - 160px);
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+/* 📐 UPDATED CHAT LAYOUT TARGET FOR FULL WIDTH EXTENSION */
+.chat-layout-container {
+  display: flex;
+  flex-direction: column;
+  
+  /* 🎯 THE STRETCH FIX: Use 100% width instead of a restricted pixel count */
+  width: 100%; 
+  max-width: 100%; /* Removes the previous 850px limit */
+  
+  /* Retains your optimal vertical boundaries and responsiveness */
+  height: 65vh; 
+  max-height: 600px;
+  min-height: 420px;
+  
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+
+  /* TIMELINE SCROLL ZONE */
+  .messages-timeline-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f8fafc;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+  }
+
+  .typing-indicator-row {
+    flex: 0 0 auto;
+    background: #f8fafc;
+    padding-bottom: 8px;
+    box-sizing: border-box;
+  }
+
+  .chat-upload-preview-bar {
+    flex: 0 0 auto;
+    background: #f1f5f9;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  /* LOWER RIGID TRAYS MATRIX */
+  .chat-input-footer-tray {
+    flex: 0 0 auto;
+    background: #ffffff;
+    padding: 16px;
+    border-top: 1px solid #e2e8f0;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .tray-form-grid {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* INLINE INTERNAL TEXTAREA CONFIGURATION */
+  .tray-textarea-input {
+    flex: 1 1 auto;
+    height: 44px;
+    max-height: 120px;
+    min-height: 44px;
+    padding: 11px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #0f172a;
+    outline: none;
+    resize: none;
+    overflow-y: auto;
+    box-sizing: border-box;
+    line-height: 1.4;
+    transition: border-color 0.15s ease;
+  }
+
+  .tray-textarea-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  }
+
+  .btn-attachment-clip, .btn-send {
+    flex: 0 0 auto;
+    height: 44px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+</style>
+
 <body>
 <div class="dashboard-wrapper">
-    <aside class="portal-sidebar">
-        <div class="sidebar-brand-block">
-            <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-            <div><div class="admin-badge" id="sidebarUserBadgeName">Loading Client...</div></div>
-        </div>
-        <nav class="sidebar-accordion-menu">
-            <div class="accordion-group">
-                <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> My Account <span class="chevron">▼</span> </button>
-                <div class="accordion-panel">
-                    <a href="client-dashboard.html" class="nav-item">📊 Dashboard Home</a>
-                    <a href="client-entities.html" class="nav-item">🏢 My Registered Entities</a>
-                </div>
-            </div>
-            <div class="accordion-group">
-                <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Billing & Support <span class="chevron">▲</span> </button>
-                <div class="accordion-panel" style="max-height: 400px;">
-                    <a href="client-chat.html" class="nav-item active" style="color:var(--emerald); font-weight:700;">💬 Live Chat Support</a>
-                    <a href="client-knowledgebase.html" class="nav-item">📰 Help Resources</a>
-                </div>
-            </div>
-        </nav>
-        <div class="sidebar-footer-lock">
-            <button id="portalLogoutBtn" class="logout-btn">Log Out</button>
-        </div>
-    </aside>
+
 
     <main class="portal-main">
         <header class="portal-header">
             <div style="text-align: left;">
                 <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Secure Corporate Support Helpdesk</h1>
             </div>
-            <div>
+
+             <div>
                 <button id="f4uEndChatSessionBtn" style="background:#fef2f2 !important; color:var(--staff-red) !important; border:1px solid rgba(193,82,84,0.2) !important; padding:10px 16px !important; border-radius:8px !important; font-size:0.82rem !important; font-weight:700 !important; cursor:pointer !important; transition:all 0.15s ease !important;">🛑 End Chat Session</button>
             </div>
-        </header>
-        <div class="chat-layout-container">
-            <div class="messages-timeline-scroll" id="clientChatMessagesLog">
-                <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;">Connecting to helpdesk messaging tracks...</div>
-            </div>
-
-            <div class="typing-indicator-row" id="systemAgentTypingIndicatorRow" style="padding-left: 30px;">
-                <div class="typing-indicator-bubble">
-                    <span style="font-size: 0.75rem; font-weight:700; color:var(--text-muted); margin-right:4px;">Support Agent is typing</span>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-            </div>
-
-            <div class="chat-upload-preview-bar" id="chatUploadPreviewBar">
-                <span id="chatUploadPreviewFileNameString">Processing attached asset item...</span>
-                <span id="chatCancelUploadBtn" style="color:var(--staff-red); cursor:pointer; font-weight:700;">✕ Remove</span>
-            </div>
-
-           <div class="chat-input-footer-tray">
-    <!-- Modern Inline Form Error Alert Strip Container (Replaces old popup windows) -->
-    <div id="chatFormInlineErrorBanner" style="display: none; width: 100%; margin-bottom: 12px; padding: 12px; background: #fef2f2; border: 1px solid rgba(193,82,84,0.15); border-radius: 8px; color: var(--staff-red); font-size: 0.85rem; font-weight: 700; text-align: left; box-sizing: border-box; align-items: center; justify-content: space-between;">
-        <span id="chatInlineErrorMessageString">✕ System Error</span>
-        <span id="dismissChatBannerBtn" style="cursor: pointer; opacity: 0.6; padding: 0 4px;" onclick="this.parentElement.style.display='none';">✕</span>
-    </div>
-
-    <div class="tray-form-grid">
-        <button class="btn-attachment-clip" id="chatPaperclipTriggerBtn" title="Upload Document or Screenshot Attachment">📎</button>
-        <input type="file" id="chatHiddenBinaryFileInputElement" style="display: none;" accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-        <textarea id="clientChatMessageInputField" class="tray-textarea-input" placeholder="Type your query message payload here... (Press Enter to Send)" onkeydown="if(typeof window.handleClientChatKeyOptions === 'function') { window.handleClientChatKeyOptions(event); }"></textarea>
-        <button id="clientChatSendButton" class="btn-send" onclick="if(typeof window.dispatchClientChatMessage === 'function') { window.dispatchClientChatMessage(); }">Send</button>
-    </div>
-</div>
-
+    
+                <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 16px !important;">
+          <!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
+          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
+            <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
+              <span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
+              <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
+            </a>
+          </div>
+          
+          <!-- PORTAL CLOCK SYSTEM CONTAINER -->
+          <div class="header-clock-pill" style="background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 6px 12px !important; border-radius: 6px !important; font-family: monospace !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; height: 32px !important; white-space: nowrap !important;">
+            <span>⏱️</span>
+            <span id="portal-clock">Syncing...</span>
+          </div>
+          
+          <div>
+            <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 6px 12px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; font-size: 0.8rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; height: 32px !important;">
+          </div>
         </div>
+      </header>
+
+<!-- 🎯 NEW CENTRALIZING VIEWPORT OVERLAY CONTAINER -->
+<div class="central-chat-viewport-wrapper">
+
+  <!-- CORE CHAT LAYOUT CARD CONTAINER -->
+  <div class="chat-layout-container"> 
+    
+    <!-- INTERNALLY ISOLATED TIMELINE TRACK --> 
+    <div class="messages-timeline-scroll" id="clientChatMessagesLog"> 
+      <div style="text-align:center; padding-top:20%; color:var(--text-muted); font-size:0.85rem; font-style:italic;"> 
+        Connecting to helpdesk messaging tracks... 
+      </div> 
+    </div> 
+
+    <!-- ASYNCHRONOUS AGENT INDICATOR BAR --> 
+    <div class="typing-indicator-row" id="systemAgentTypingIndicatorRow" style="padding-left: 30px; display: none;"> 
+      <div class="typing-indicator-bubble"> 
+        <span style="font-size: 0.75rem; font-weight:700; color:var(--text-muted); margin-right:4px;">Support Agent is typing</span> 
+        <div class="typing-dot"></div> 
+        <div class="typing-dot"></div> 
+        <div class="typing-dot"></div> 
+      </div> 
+    </div> 
+
+    <!-- ASSET TRANSFER UPLOAD STATUS BAR --> 
+    <div class="chat-upload-preview-bar" id="chatUploadPreviewBar" style="display: none;"> 
+      <span id="chatUploadPreviewFileNameString">Processing attached asset item...</span> 
+      <span id="chatCancelUploadBtn" style="color:var(--staff-red); cursor:pointer; font-weight:700;">✕ Remove</span> 
+    </div> 
+
+    <!-- PRE-ALIGNED RIGID INPUT CONTROL PANEL TRAY --> 
+    <div class="chat-input-footer-tray"> 
+      <!-- Inline Error Alert Strip Container --> 
+      <div id="chatFormInlineErrorBanner" style="display: none; width: 100%; margin-bottom: 12px; padding: 12px; background: #fef2f2; border: 1px solid rgba(193,82,84,0.15); border-radius: 8px; color: var(--staff-red); font-size: 0.85rem; font-weight: 700; text-align: left; box-sizing: border-box; align-items: center; justify-content: space-between;"> 
+        <span id="chatInlineErrorMessageString">✕ System Error</span> 
+        <span id="dismissChatBannerBtn" style="cursor: pointer; opacity: 0.6; padding: 0 4px;" onclick="this.parentElement.style.display='none';">✕</span> 
+      </div> 
+
+      <div class="tray-form-grid"> 
+        <button class="btn-attachment-clip" id="chatPaperclipTriggerBtn" title="Upload Document or Screenshot Attachment" style="padding: 0 12px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1.1rem;">📎</button> 
+        <input type="file" id="chatHiddenBinaryFileInputElement" style="display: none;" accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"> 
+        
+        <!-- 🎯 INLINE TEXTAREA SCROLL ENGINE --> 
+        <textarea id="clientChatMessageInputField" class="tray-textarea-input" placeholder="Type your query message payload here... (Press Enter to Send)" onkeydown="if(typeof window.handleClientChatKeyOptions === 'function') { window.handleClientChatKeyOptions(event); }"></textarea> 
+        
+        <button id="clientChatSendButton" class="btn-send" onclick="if(typeof window.dispatchClientChatMessage === 'function') { window.dispatchClientChatMessage(); }" style="padding: 0 16px; background: #2563eb; color: #ffffff; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; transition: background 0.15s ease;">Send</button> 
+      </div> 
+    </div> 
+
+  </div>
+</div>
     </main>
 </div>
 
@@ -952,6 +1085,66 @@ window.appendSingleChatMessageBubbleToUI = function(msgRow) {
 
     // Execute thread load layout hydration sequence immediately
     await streamClientChatTimelineLogs();
+
+     // --- HEADER SYSTEM DIGITAL TICK CLOCK ---
+ function runHeaderPortalClockTick() {
+   const clock = document.getElementById("portal-clock");
+   if (clock) clock.textContent = new Date().toLocaleString();
+ }
+ setInterval(runHeaderPortalClockTick, 1000);
+ runHeaderPortalClockTick();
+
+const textInputNode = document.getElementById('clientChatMessageInputField');
+
+if (textInputNode) {
+  textInputNode.addEventListener('input', function() {
+    // Reset initial input calculation metrics
+    this.style.height = '44px';
+    // Dynamically track scroll heights adjustments
+    this.style.height = (this.scrollHeight) + 'px';
+  });
+}
+
+// 🎯 UPDATE INSIDE YOUR CHAT RENDERING ENGINE:
+function initializeChatInterfaceView(dbHistoryRows) {
+  const chatLogContainer = document.getElementById('clientChatMessagesLog');
+  if (!chatLogContainer) return;
+
+  // Clear original static loading placeholder text fields
+  chatLogContainer.innerHTML = '';
+
+  // 1. Generate the Branded Corporate Static Welcome Card Markup
+  const welcomeMessageCardMarkup = `
+    <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: flex-start; width: 100%; box-sizing: border-box;">
+      <!-- System Support Circular Avatar Icon Pill -->
+      <div style="width: 32px; height: 32px; background: #0a1f44; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <span style="font-size: 0.8rem; color: #10b981; font-weight: 800;">F4U</span>
+      </div>
+      <!-- Welcome Message Content Bubble Block -->
+      <div style="max-width: 75%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px; border-top-left-radius: 0; padding: 12px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); box-sizing: border-box;">
+        <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Central Corporate Support</span>
+        <p style="margin: 0; font-size: 0.88rem; color: #334155; line-height: 1.5;">
+          Welcome to your secure **filings4u** Helpdesk channel. An enterprise support agent has been allocated to your session tracker tracking lane. 
+          <br><br>
+          Please submit any statutory documentation inquiries, operational certificates processing queries, or validation requests right here.
+        </p>
+        <span style="display: block; font-size: 0.65rem; color: #94a3b8; text-align: right; margin-top: 6px; font-family: monospace;">SYSTEM CONSOLE AUTOMATION</span>
+      </div>
+    </div>
+  `;
+
+  // 2. Inject the welcome message card at the absolute top of the container
+  chatLogContainer.insertAdjacentHTML('beforeend', welcomeMessageCardMarkup);
+
+  // 3. Follow up with your standard database history loops below this line
+  if (dbHistoryRows && dbHistoryRows.length > 0) {
+    dbHistoryRows.forEach(messageItem => {
+       // Your existing code block logic that prints historical client/agent message bubbles...
+    });
+  }
+}
+
+
 });
 </script>
 </body>
