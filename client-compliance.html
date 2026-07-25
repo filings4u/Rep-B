@@ -114,166 +114,175 @@
   <script src="assets/js/client-footer.js"></script>
 
 
-<script>
-(function() {
-  const DB_URL = 'https://supabase.co';
-  const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
-  let dbClient = null;
+ <script>
+(function() { 
+  const DB_URL = 'https://lrbimrlbskjweynxlgas.supabase.co'; 
+  const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'; 
+  let dbClient = null; 
 
-  async function initClientDashboard() {
-    const tableElement = document.getElementById('client-compliance-feed-target-box');
-    const fallbackRow = document.getElementById('tableFallbackState');
+  async function initClientDashboard() { 
+    const tableElement = document.getElementById('client-compliance-feed-target-box'); 
+    const fallbackRow = document.getElementById('tableFallbackState'); 
+    if (fallbackRow) fallbackRow.style.display = 'table-row'; 
+    
+    try { 
+      if (typeof supabase === 'undefined') throw new Error("Supabase script framework missing from layout template headers."); 
+      dbClient = supabase.createClient(DB_URL, DB_KEY); 
 
-    if (fallbackRow) fallbackRow.style.display = 'table-row';
+      // 1. Fetching rows safely from table 
+      const { data: recordRows, error: recordErr } = await dbClient 
+        .from('compliance_deadlines') 
+        .select('id, user_id, client_email, client_name, filing_name, company_name, expiration_date, status') 
+        .order('expiration_date', { ascending: true, nullsFirst: false }); 
 
-    try {
-      if (typeof supabase === 'undefined') throw new Error("Supabase script framework missing from layout template headers.");
-      dbClient = supabase.createClient(DB_URL, DB_KEY);
+      if (recordErr) throw recordErr; 
 
-      const { data: recordRows, error: recordErr } = await dbClient
-        .from('compliance_deadlines')
-        .select('id, user_id, client_email, client_name, filing_name, company_name, expiration_date, status')
-        .order('expiration_date', { ascending: true, nullsFirst: false });
+      if (tableElement) { 
+        const existingDataRows = tableElement.querySelectorAll('tr:not(#tableFallbackState)'); 
+        existingDataRows.forEach(el => el.remove()); 
 
-      if (recordErr) throw recordErr;
+        if (!recordRows || recordRows.length === 0) { 
+          if (fallbackRow) { 
+            fallbackRow.querySelector('td').textContent = 'No corporate asset documents tracked.'; 
+            fallbackRow.style.display = 'table-row'; 
+          } 
+          return; 
+        } 
 
-      if (tableElement) {
-        const existingDataRows = tableElement.querySelectorAll('tr:not(#tableFallbackState)');
-        existingDataRows.forEach(el => el.remove());
+        if (fallbackRow) fallbackRow.style.display = 'none'; 
 
-        if (!recordRows || recordRows.length === 0) {
-          if (fallbackRow) {
-            fallbackRow.querySelector('td').textContent = 'No corporate asset documents tracked.';
-            fallbackRow.style.display = 'table-row';
-          }
-          return;
-        }
+        recordRows.forEach(item => { 
+          const isPaid = (item.status === 'Paid'); 
+          const badgeStyle = isPaid ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;'; 
+          const displayDate = item.expiration_date ? item.expiration_date : 'No Expiration Date'; 
+          const rowEmail = item.client_email || item.clientEmail || ''; 
+          
+          // Capturing User UUID parameter cleanly
+          const clientUuid = item.user_id || '';
 
-        if (fallbackRow) fallbackRow.style.display = 'none';
-
-        recordRows.forEach(item => {
-          const isPaid = (item.status === 'Paid');
-          const badgeStyle = isPaid ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;';
-          const displayDate = item.expiration_date ? item.expiration_date : 'No Expiration Date';
-
-          const rowMarkup = `
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-              <td style="padding:14px 12px; color: #475569; font-weight: 500;">${escapeDataString(item.client_name)}</td>
-              <td style="padding:14px 12px; font-weight: 600; color: #1e293b;">${escapeDataString(item.filing_name)}</td>
-              <td style="padding:14px 12px; color: #475569;">${escapeDataString(item.company_name)}</td>
-              <td style="padding:14px 12px; color: #475569; font-family: monospace;">${displayDate}</td>
-              <td style="padding:14px 12px;">
-                <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; ${badgeStyle}">
-                  ${escapeDataString(item.status)}
-                </span>
-              </td>
-              <td style="padding:14px 12px; text-align:right;">
-                <button 
-                  class="action-download-vault-doc" 
-                  data-email="${item.client_email || ''}" 
-                  data-id="${item.id || ''}" 
-                  style="padding: 6px 12px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
-                  onmouseover="this.style.background='#e2e8f0'" 
-                  onmouseout="this.style.background='#f1f5f9'"
-                >
-                  Download Document
-                </button>
-              </td>
-            </tr>
-          `;
-          tableElement.insertAdjacentHTML('beforeend', rowMarkup);
+          // ADDED data-uuid TO THE GENERATED ACTION BUTTON
+          const rowMarkup = ` 
+            <tr style="border-bottom: 1px solid #e2e8f0;"> 
+              <td style="padding:14px 12px; color: #475569; font-weight: 500;">${escapeDataString(item.client_name)}</td> 
+              <td style="padding:14px 12px; font-weight: 600; color: #1e293b;">${escapeDataString(item.filing_name)}</td> 
+              <td style="padding:14px 12px; color: #475569;">${escapeDataString(item.company_name)}</td> 
+              <td style="padding:14px 12px; color: #475569; font-family: monospace;">${displayDate}</td> 
+              <td style="padding:14px 12px;"> 
+                <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; ${badgeStyle}"> 
+                  ${escapeDataString(item.status)} 
+                </span> 
+              </td> 
+              <td style="padding:14px 12px; text-align:right;"> 
+                <button class="action-download-vault-doc" data-email="${rowEmail}" data-id="${item.id || ''}" data-uuid="${clientUuid}" data-filing="${item.filing_name || ''}" style="padding: 6px 12px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'"> 
+                  Download Document 
+                </button> 
+              </td> 
+            </tr> 
+          `; 
+          tableElement.insertAdjacentHTML('beforeend', rowMarkup); 
         });
+        // 2. Direct Raw Storage Bucket Retrieval Loop 
+        if (!tableElement.hasAttribute('data-has-click-hook')) { 
+          tableElement.addEventListener('click', async function(e) { 
+            if (e.target && e.target.classList.contains('action-download-vault-doc')) { 
+              const recordId = e.target.getAttribute('data-id'); 
+              const clientEmail = e.target.getAttribute('data-email'); 
+              const clientUuid = e.target.getAttribute('data-uuid'); 
+              const filingName = e.target.getAttribute('data-filing'); 
 
-        // Direct Raw Storage Bucket Retrieval Loop
-        if (!tableElement.hasAttribute('data-has-click-hook')) {
-          tableElement.addEventListener('click', async function(e) {
-            if (e.target && e.target.classList.contains('action-download-vault-doc')) {
-              const recordId = e.target.getAttribute('data-id');
-              const clientEmail = e.target.getAttribute('data-email');
+              if (!recordId || !clientEmail) { 
+                return showCustomBlurModal('⚠️', 'Routing Error', 'Missing required routing metadata fields.'); 
+              } 
 
-              if (!recordId || !clientEmail) {
-                return showCustomBlurModal('⚠️', 'Routing Error', 'Missing routing metadata fields.');
-              }
+              const initialText = e.target.innerText; 
+              try { 
+                e.target.innerText = 'Locating file...'; 
+                e.target.disabled = true; 
 
-              const initialText = e.target.innerText;
-              try {
-                e.target.innerText = 'Locating file...';
-                e.target.disabled = true;
+                const rawEmailFolder = clientEmail.toLowerCase().trim(); 
 
-                const rawEmailFolder = clientEmail.toLowerCase().trim();
+                // Scan storage folder track directly 
+                const { data: storageList, error: listError } = await dbClient.storage 
+                  .from('client_documents_vault') 
+                  .list(rawEmailFolder, { limit: 50 }); 
 
-                // 1. Scan storage container folder track directly using raw email format
-                const { data: storageList, error: listError } = await dbClient.storage
-                  .from('client_documents_vault')
-                  .list(rawEmailFolder, { limit: 50 });
+                if (listError) throw listError; 
 
-                if (listError) throw listError;
+                // MATCH MATRIX: Matches the User UUID token or fallback filing title phrases
+                const matchFile = storageList ? storageList.find(f => { 
+                  const targetFileName = String(f.name).toLowerCase(); 
+                  const uuidToken = String(clientUuid).toLowerCase().trim(); 
+                  const recordRowToken = String(recordId).toLowerCase(); 
+                  
+                  const fallbackToken = String(filingName).toLowerCase().replace(/[^a-z0-9]/gi, '_'); 
+                  const fallbackRawToken = String(filingName).toLowerCase(); 
+                  
+                  // Evaluates if the filename starts with or includes the target client UUID matching configuration
+                  return (uuidToken && targetFileName.includes(uuidToken)) || 
+                         targetFileName.includes(recordRowToken) || 
+                         targetFileName.includes(fallbackToken) || 
+                         targetFileName.includes(fallbackRawToken); 
+                }) : null; 
 
-                // 🎯 THE CORE LOOKUP FIX: Changes absolute string validation to wildcard verification (.includes())
-                const matchFile = storageList ? storageList.find(f => {
-                  const targetFileName = String(f.name).toLowerCase();
-                  const targetMatchToken = String(recordId).toLowerCase();
-                  return targetFileName.includes(targetMatchToken);
-                }) : null;
+                if (!matchFile) { 
+                  throw new Error("The verification asset document could not be found under your folder path directory. Ensure the file name matches your filing title or contains the unique record reference token."); 
+                } 
 
-                if (!matchFile) {
-                  throw new Error("The verification asset document could not be found under your raw email folder track directory.");
-                }
+                // Generate secure tokenized ephemeral signed URL string 
+                const { data: authUrl, error: tokenErr } = await dbClient.storage 
+                  .from('client_documents_vault') 
+                  .createSignedUrl(`${rawEmailFolder}/${matchFile.name}`, 60); 
 
-                // 2. Generate secure tokenized ephemeral signed URL string
-                const { data: authUrl, error: tokenErr } = await dbClient.storage
-                  .from('client_documents_vault')
-                  .createSignedUrl(`${rawEmailFolder}/${matchFile.name}`, 60);
+                if (tokenErr) throw tokenErr; 
+                
+                window.open(authUrl.signedUrl, '_blank'); 
 
-                if (tokenErr) throw tokenErr;
-                window.open(authUrl.signedUrl, '_blank');
+              } catch (fail) { 
+                console.error('File collection failure:', fail); 
+                showCustomBlurModal('❌', 'Download Interrupted', fail.message || fail); 
+              } finally { 
+                e.target.innerText = initialText; 
+                e.target.disabled = false; 
+              } 
+            } 
+          }); 
+          tableElement.setAttribute('data-has-click-hook', 'true'); 
+        } 
+      } 
+    } catch (crash) { 
+      console.error('Client UI Engine Initialization Crash:', crash); 
+    } 
+  } 
 
-              } catch (fail) {
-                console.error('File collection failure:', fail);
-                showCustomBlurModal('❌', 'Download Interrupted', fail.message || fail);
-              } finally {
-                e.target.innerText = initialText;
-                e.target.disabled = false;
-              }
-            }
-          });
-          tableElement.setAttribute('data-has-click-hook', 'true');
-        }
-      }
+  // GLOBAL MODAL DISPLAY HANDLERS 
+  window.showCustomBlurModal = function(icon, title, message) { 
+    const overlay = document.getElementById('complianceCustomModalOverlay'); 
+    if (overlay) { 
+      document.getElementById('modalIconBox').textContent = icon; 
+      document.getElementById('modalHeaderTitle').textContent = title; 
+      document.getElementById('modalMessageContent').textContent = message; 
+      overlay.style.display = 'flex'; 
+    } 
+  }; 
 
-    } catch (crash) {
-      console.error('Client UI Engine Initialization Crash:', crash);
-    }
-  }
+  window.closeComplianceModal = function() { 
+    const overlay = document.getElementById('complianceCustomModalOverlay'); 
+    if (overlay) overlay.style.display = 'none'; 
+  }; 
 
-  // GLOBAL BLURRY ACCESSIBLE CONTEXT OVERLAY MODAL DISPLAY HANDLER FUNCTIONS
-  window.showCustomBlurModal = function(icon, title, message) {
-    const overlay = document.getElementById('complianceCustomModalOverlay');
-    if (overlay) {
-      document.getElementById('modalIconBox').textContent = icon;
-      document.getElementById('modalHeaderTitle').textContent = title;
-      document.getElementById('modalMessageContent').textContent = message;
-      overlay.style.display = 'flex';
-    }
-  };
+  function escapeDataString(text) { 
+    if (!text) return ''; 
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); 
+  } 
 
-  window.closeComplianceModal = function() {
-    const overlay = document.getElementById('complianceCustomModalOverlay');
-    if (overlay) overlay.style.display = 'none';
-  };
-
-  function escapeDataString(text) {
-    if (!text) return '';
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'");
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initClientDashboard);
-  } else {
-    initClientDashboard();
-  }
+  if (document.readyState === 'loading') { 
+    document.addEventListener('DOMContentLoaded', initClientDashboard); 
+  } else { 
+    initClientDashboard(); 
+  } 
 })();
-</script>
+
+ </script>
 
 </body>
 </html>
