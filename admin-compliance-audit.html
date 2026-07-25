@@ -569,6 +569,12 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
     }
 
     const targetFile = fileInput.files[0];
+    
+    // Front-end security check: enforce PDF selection explicitly
+    if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
+      return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
+    }
+
     const submitBtn = uploadForm.querySelector('button[type="submit"]');
     if (submitBtn) submitBtn.disabled = true;
 
@@ -590,7 +596,7 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
 
       if (dbError) throw dbError;
 
-      // STEP 2: FIX - Removed underscore replacements. Uses the raw lower-case email directly as the folder name.
+      // STEP 2: Uses the raw lower-case email directly as the folder name.
       const rawEmailFolder = targetEmail.toLowerCase();
       const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
       const secureStoragePath = `${rawEmailFolder}/${newRow.id}_${fileCleanName}`;
@@ -604,7 +610,6 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
       if (vaultWriteError) throw vaultWriteError;
 
       showCustomBlurModal('✅', 'Asset Synchronized', `The file binary was successfully committed to your storage vault under the raw email folder: "${rawEmailFolder}".`);
-      
       uploadForm.reset();
       initAdminConsole(); // Live ledger lines refresh
 
@@ -617,8 +622,6 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
   });
   uploadForm.setAttribute('data-live-listener', 'true');
 }
-
-
     } catch (err) {
       console.error('System Engine Setup Failure:', err);
     }
@@ -658,6 +661,7 @@ if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
   }
 })();
 </script>
+
 
 
 

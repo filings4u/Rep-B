@@ -131,6 +131,7 @@
       if (typeof supabase === 'undefined') throw new Error("Supabase script driver missing from layout template headers.");
       dbClient = supabase.createClient(DB_URL, DB_KEY);
 
+      // Fetch requirements data rows matching active structural metrics
       const { data: recordRows, error: recordErr } = await dbClient
         .from('compliance_deadlines')
         .select('id, user_id, client_email, client_name, filing_name, company_name, expiration_date, status')
@@ -170,11 +171,11 @@
               </td>
               <td style="padding:14px 12px; text-align:right;">
                 <button 
-                  class="action-download-vault-doc"
-                  data-email="${item.client_email || ''}"
-                  data-id="${item.id || ''}"
+                  class="action-download-vault-doc" 
+                  data-email="${item.client_email || ''}" 
+                  data-id="${item.id || ''}" 
                   style="padding: 6px 12px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
-                  onmouseover="this.style.background='#e2e8f0'"
+                  onmouseover="this.style.background='#e2e8f0'" 
                   onmouseout="this.style.background='#f1f5f9'"
                 >
                   Download Document
@@ -191,33 +192,34 @@
               const recordId = e.target.getAttribute('data-id');
               const clientEmail = e.target.getAttribute('data-email');
 
-              if (!recordId || !clientEmail) return showCustomBlurModal('⚠️', 'Routing Error', 'Missing routing metadata fields.');
+              if (!recordId || !clientEmail) {
+                return showCustomBlurModal('⚠️', 'Routing Error', 'Missing routing metadata fields.');
+              }
 
               const initialText = e.target.innerText;
               try {
                 e.target.innerText = 'Locating file...';
                 e.target.disabled = true;
 
-                // FIX - Removed the string sanitization. Uses the raw lower-case email directly to hit your bucket location
+                // Target the exact lowercase user email folder inside your bucket tree
                 const rawEmailFolder = clientEmail.toLowerCase().trim();
 
-                // 🎯 SCAN BUCKET DIRECTLY: List files inside the raw customer email folder track
+                // 1. Scan storage container folder track directly using raw email format
                 const { data: storageList, error: listError } = await dbClient.storage
                   .from('client_documents_vault')
                   .list(rawEmailFolder, { limit: 50 });
-                  
+
                 if (listError) throw listError;
-                
-                // Find the unique document prefixed with the compliance row's ID
-                const matchFile = storageList ? storageList.find(f => f.name.startsWith(recordId + '_')) : null;
-                
+
+                // 🎯 WILDCARD LOOKUP FIX: Searches case-insensitively for the record ID anywhere inside the filename
+                const matchFile = storageList ? storageList.find(f => f.name.toLowerCase().includes(recordId.toLowerCase())) : null;
+
                 if (!matchFile) {
                   throw new Error("The verification asset document could not be found under your raw email folder track directory.");
                 }
 
-                // File discovered natively inside the bucket folder! Generate the secure short-lived temporary access token
-                const { data: authUrl, error: tokenErr } = await dbClient
-                  .storage
+                // 2. Generate secure tokenized ephemeral signed URL string
+                const { data: authUrl, error: tokenErr } = await dbClient.storage
                   .from('client_documents_vault')
                   .createSignedUrl(`${rawEmailFolder}/${matchFile.name}`, 60);
 
@@ -270,6 +272,7 @@
   }
 })();
 </script>
+
 
 
 </body>
