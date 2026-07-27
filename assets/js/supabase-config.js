@@ -1,52 +1,59 @@
-  // ============================================================================
-  // FRONTEND ROUTE PERIMETER GUARD ENGINE (FIXED LOGIN EXCLUSION)
-  // ============================================================================
-  window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
-    const currentPath = window.location.pathname.toLowerCase();
-    const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
-    const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
-    const isUpdatePasswordPage = currentPath.includes('update-password');
-    
-    // 🎯 THE DIRECT LOGIN FIX: If they are on a login screen, exit immediately and let them type!
-    if (currentPath.includes('login') || currentPath.includes('signin')) return;
+// ============================================================================ 
+// FRONTEND ROUTE PERIMETER GUARD ENGINE (FIXED ABSOLUTE LOGIN ESCAPE) 
+// ============================================================================ 
+window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
+  const currentPath = window.location.pathname.toLowerCase();
 
-    // Skip verification routines entirely if the visitor is browsing standard public landing layouts
-    if (!isAdminPage && !isClientPage && !isUpdatePasswordPage) return;
+  // 🎯 THE DIRECT FIX: This check must stay at the absolute top of the function.
+  // If the path contains 'login' or 'signin', skip all guard sweeps instantly.
+  if (currentPath.includes('login') || currentPath.includes('signin')) {
+    console.log("🔓 [Route Perimeter Guard] Login view context detected. Perimeter checks disabled.");
+    return;
+  }
 
-    // Wipes broken placeholder tokens out of memory to fix database crashes
-    const activeStoredToken = localStorage.getItem("f4u_active_tracking_token");
-    if (activeStoredToken === "F4U-UNKNOWN" || activeStoredToken === "UNKNOWN") {
-      localStorage.removeItem("f4u_active_tracking_token");
-    }
+  const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
+  const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
+  const isUpdatePasswordPage = currentPath.includes('update-password');
 
-    console.log("🛡️ [Route Perimeter Guard] Assessing session token authenticity...");
-    const { data: { session } } = await clientInstance.auth.getSession();
-    const activeUser = session?.user;
+  // Skip verification routines entirely if the visitor is browsing standard public landing layouts
+  if (!isAdminPage && !isClientPage && !isUpdatePasswordPage) return;
 
-    // SCENARIO 1: Visitor attempts accessing internal assets without an active account session
-    if (!activeUser) {
+  // Wipes broken placeholder tokens out of memory to fix database crashes
+  const activeStoredToken = localStorage.getItem("f4u_active_tracking_token");
+  if (activeStoredToken === "F4U-UNKNOWN" || activeStoredToken === "UNKNOWN") {
+    localStorage.removeItem("f4u_active_tracking_token");
+  }
+
+  console.log("🛡️ [Route Perimeter Guard] Assessing session token authenticity...");
+  const { data: { session } } = await clientInstance.auth.getSession();
+  const activeUser = session?.user;
+
+  // SCENARIO 1: Visitor attempts accessing internal assets without an active account session
+  if (!activeUser) {
+    window.injectSecureBlurInterceptionOverlay();
+    setTimeout(() => {
+      window.location.replace("https://filings4u.com/get-started.html");
+    }, 1500);
+    return;
+  }
+
+  // SCENARIO 2: Valid profile asset updates their security password access key
+  if (isUpdatePasswordPage) return;
+
+  // SCENARIO 3: Access Validation check monitoring administrative group scopes
+  if (isAdminPage) {
+    const emailString = (activeUser.email || "").toLowerCase();
+    if (!emailString.endsWith('@filings4u.com')) {
+      console.warn("🔒 Security Alert: Non-admin profile detected on admin route. Ejecting...");
       window.injectSecureBlurInterceptionOverlay();
+      await clientInstance.auth.signOut();
       setTimeout(() => {
         window.location.replace("https://filings4u.com/get-started.html");
       }, 1500);
-      return;
     }
+  }
+};
 
-    // SCENARIO 2: Valid profile asset updates their security password access key
-    if (isUpdatePasswordPage) return;
-
-    // SCENARIO 3: Access Validation check monitoring administrative group scopes
-    if (isAdminPage) {
-      const emailString = (activeUser.email || "").toLowerCase();
-      if (!emailString.endsWith('@filings4u.com')) {
-        window.injectSecureBlurInterceptionOverlay();
-        await clientInstance.auth.signOut();
-        setTimeout(() => {
-          window.location.replace("https://filings4u.com/get-started.html");
-        }, 1500);
-      }
-    }
-  };
 
 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
