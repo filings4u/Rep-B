@@ -1,6 +1,6 @@
 /**
  * 📁 FILE PATH: assets/js/supabase-config.js (infrastructure-part-a)
- * Responsibility: Secure Core Database Bootstrapper & Direct Route Perimeter Guard
+ * Responsibility: Secure Core Database Bootstrapper, Visual Shield Generator, & Route Gate
  */
 (function() {
   "use strict";
@@ -15,8 +15,59 @@
       .replace(/'/g, '&#39;');
   };
 
+  // 🎯 VISUAL SECURITY SHIELD INTERFACE LOGIC
+  window.injectSecureBlurInterceptionOverlay = function() {
+    if (document.getElementById("f4u-perimeter-blur-shield")) return;
+
+    // Create a container layout that masks the entire browser screen window space
+    const overlayNode = document.createElement("div");
+    overlayNode.id = "f4u-perimeter-blur-shield";
+    
+    // Inject custom inline CSS properties to fully block the view frame background cleanly
+    Object.assign(overlayNode.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(10, 31, 68, 0.4)",
+      backdropFilter: "blur(16px)",
+      webkitBackdropFilter: "blur(16px)",
+      zIndex: "9999999",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    });
+
+    // Create the modal banner interface text module panel block
+    const cardNode = document.createElement("div");
+    Object.assign(cardNode.style, {
+      background: "#ffffff",
+      padding: "32px 48px",
+      borderRadius: "16px",
+      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+      textAlign: "center",
+      border: "1px solid #e2e8f0"
+    });
+
+    cardNode.innerHTML = `
+      <div style="font-size: 24px; font-weight: 800; color: #0a1f44; margin-bottom: 8px;">Redirecting filings4u.com</div>
+      <div style="font-size: 14px; color: #64748b; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <span style="width: 16px; height: 16px; border: 2px solid #10b981; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: f4u-spin 0.8s linear infinite;"></span>
+        Securing connection parameters...
+      </div>
+      <style>
+        @keyframes f4u-spin { to { transform: rotate(360deg); } }
+        body { overflow: hidden !important; } /* Prevent layout scrolling while active */
+      </style>
+    `;
+
+    overlayNode.appendChild(cardNode);
+    document.documentElement.appendChild(overlayNode);
+  };
+
   window.executePerimeterSecurityGate = function(clientInstance) {
-    console.log("🚀 System patch: executePerimeterSecurityGate mapped and stabilized.");
     if (clientInstance && clientInstance.from) {
       const originalFromMethod = clientInstance.from;
       clientInstance.from = function(tableName) {
@@ -28,11 +79,7 @@
             const isAdminRoute = currentPath.includes('admin-') || currentPath.includes('/admin');
             
             if (columnName === 'user_id') {
-              if (isAdminRoute) {
-                console.log(`📡 [Security Gate] Admin path detected. Allowing global matrix bypass on table: [${tableName}]`);
-                return queryBuilder;
-              }
-              console.log(`🔧 [Security Gate] Query Interceptor: Enforcing strict user_id mapping validation layout on table: [${tableName}]`);
+              if (isAdminRoute) return queryBuilder;
               return originalEqMethod.call(this, 'user_id', criteriaValue);
             }
             return originalEqMethod.apply(this, arguments);
@@ -42,47 +89,60 @@
       };
     }
   };
-
-  // 🎯 THE DIRECT FRONTEND PERIMETER GUARD HIGHWAY
+  // ============================================================================
+  // FRONTEND ROUTE PERIMETER GUARD ENGINE WITH INTEGRATED BLUR SECURITY INTERCEPT
+  // ============================================================================
   window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
     const currentPath = window.location.pathname.toLowerCase();
     const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
     const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
     const isUpdatePasswordPage = currentPath.includes('update-password');
 
-    // Skip verification routines entirely if the visitor is browsing public-facing landing layouts
+    // Bypass route perimeter checks entirely for non-restricted public landing grids
     if (!isAdminPage && !isClientPage && !isUpdatePasswordPage) return;
 
-    console.log("🛡️ [Route Perimeter Guard] Verifying access token credentials state...");
-    
-    // Retrieve the active session payload context directly from memory
-    const { data: { session }, error } = await clientInstance.auth.getSession();
+    // 🛡️ RE-GEN SAFEGUARD: Wipes broken placeholder tokens out of context to fix database crashes
+    const activeStoredToken = localStorage.getItem("f4u_active_tracking_token");
+    if (activeStoredToken === "F4U-UNKNOWN" || activeStoredToken === "UNKNOWN") {
+      localStorage.removeItem("f4u_active_tracking_token");
+      console.log("🔧 [Token Healer] Successfully cleared illegal F4U-UNKNOWN value from application memory.");
+    }
+
+    console.log("🛡️ [Route Perimeter Guard] Assessing session token authenticity parameter maps...");
+    const { data: { session } } = await clientInstance.auth.getSession();
     const activeUser = session?.user;
 
-    // SCENARIO 1: Unauthenticated user tries accessing restricted portal spaces
+    // SCENARIO 1: Visitor attempts accessing internal assets without an active account session
     if (!activeUser) {
-      console.warn("🔒 Access Denied: Session token context missing. Routing to entry login gates.");
-      if (isAdminPage) {
-        window.location.replace(`${window.location.origin}/admin-login.html`);
-      } else {
-        window.location.replace(`${window.location.origin}/portal-login.html`);
-      }
+      console.warn("🔒 Access Denied: Unauthenticated network request. Deploying perimeter blur shield...");
+      
+      // 🎯 Injects the visual blur overlay block instantly to screen out unauthorized views
+      window.injectSecureBlurInterceptionOverlay();
+      
+      setTimeout(() => {
+        window.location.replace("https://filings4u.com/get-started.html");
+      }, 1500); // 1.5 seconds delay allows the redirect modal to render gracefully
       return;
     }
 
-    // SCENARIO 2: Authenticated user hits the password revision view frame
+    // SCENARIO 2: Valid profile asset updates their security password access key
     if (isUpdatePasswordPage) {
-      console.log("🎯 Access Validated: Secure password modernization terminal initialized.");
+      console.log("🎯 Access Validated: Secure password update panel initialized.");
       return;
     }
 
-    // SCENARIO 3: Access Validation check verifying administrative group scopes
+    // SCENARIO 3: Access Validation check monitoring structural administrative domain targets
     if (isAdminPage) {
       const emailString = (activeUser.email || "").toLowerCase();
       if (!emailString.endsWith('@filings4u.com')) {
-        console.error("🔒 Security Escalation: Client profile rejected from admin territory.");
+        console.error("🔒 Security Escalation: Client profile rejected from admin territory. Engaging shield...");
+        
+        window.injectSecureBlurInterceptionOverlay();
         await clientInstance.auth.signOut();
-        window.location.replace(`${window.location.origin}/admin-login.html`);
+        
+        setTimeout(() => {
+          window.location.replace("https://filings4u.com/get-started.html");
+        }, 1500);
       }
     }
   };
@@ -91,9 +151,7 @@
     const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
 
-    if (window.supabaseClient || window.supabaseInstance) {
-      return;
-    }
+    if (window.supabaseClient || window.supabaseInstance) return;
 
     const cdnLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
     if (cdnLibrary && typeof cdnLibrary.createClient === 'function') {
@@ -114,7 +172,7 @@
         window.executePerimeterSecurityGate(initializedInstance);
       }
 
-      // 🎯 Run the structural verification engine right at script execution checkpoint
+      // 🎯 Engage the route guard check during the asset bootstrapping phase
       window.enforceSynchronousRoutePerimeterGuard(initializedInstance);
     }
   }
