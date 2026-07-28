@@ -1,11 +1,72 @@
-// ============================================================================ 
-// FRONTEND ROUTE PERIMETER GUARD ENGINE (FIXED ABSOLUTE LOGIN ESCAPE) 
-// ============================================================================ 
+// ============================================================================
+// ⏱️ 5-MINUTE TAB INACTIVITY AUTO-LOGOUT CONTROLLER (PART 1 OF 2)
+// ============================================================================
+(function() {
+  "use strict";
+
+  let backgroundTimerReference = null;
+  const INACTIVITY_LIMIT_MS = 5 * 60 * 1000; // Exact 5-minute timeout conversion check bounds
+
+  window.initializeTabInactivityMonitorEngine = function(clientInstance) {
+    const currentPath = window.location.pathname.toLowerCase();
+    
+    // Safety check: Do not execute background timeouts on the public login layout nodes
+    if (currentPath.includes('login') || currentPath.includes('signin')) return;
+
+    const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
+    const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
+    
+    // Limit execution contexts strictly to operational portal modules
+    if (!isAdminPage && !isClientPage) return;
+
+    console.log("⏱️ [Inactivity Engine] Monitoring active workspace tab presence matrices...");
+
+    document.addEventListener("visibilitychange", async () => {
+      if (document.hidden) {
+        console.log("⚠️ [Inactivity Engine] Tab hidden. Initiating 5-minute logout countdown context...");
+        
+        // Spawn an absolute background execution block tracking inactivity spans
+        backgroundTimerReference = setTimeout(async () => {
+          console.warn("🚨 [Inactivity Engine] 5 minutes exceeded in background state. Purging credentials...");
+          
+          if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
+            window.injectSecureBlurInterceptionOverlay();
+          }
+
+          try {
+            await clientInstance.auth.signOut();
+          } catch (logoutFault) {
+            console.error("[Inactivity Engine Error] Clean signout blocked:", logoutFault);
+          }
+
+          // Clear local browser storage maps completely to eliminate trace state properties
+          localStorage.removeItem("f4u_stripe_client_secret");
+          localStorage.removeItem("f4u_portal_login_strikes");
+          
+          // Eject the unauthenticated browser session immediately to the main sales landing page
+          window.location.replace("https://filings4u.com/get-started.html");
+        }, INACTIVITY_LIMIT_MS);
+
+      } else {
+        // If the user re-focuses the page before 5 minutes pass, clear the pending clock loop safely
+        if (backgroundTimerReference) {
+          console.log("✅ [Inactivity Engine] Tab focused. Resetting background timer triggers.");
+          clearTimeout(backgroundTimerReference);
+          backgroundTimerReference = null;
+        }
+      }
+    });
+  };
+})();
+
+
+// ============================================================================
+// FRONTEND ROUTE PERIMETER GUARD ENGINE (PART 2 OF 2 - INTEGRATED INITIALIZATION)
+// ============================================================================
 window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
   const currentPath = window.location.pathname.toLowerCase();
 
   // 🎯 THE DIRECT FIX: This check must stay at the absolute top of the function.
-  // If the path contains 'login' or 'signin', skip all guard sweeps instantly.
   if (currentPath.includes('login') || currentPath.includes('signin')) {
     console.log("🔓 [Route Perimeter Guard] Login view context detected. Perimeter checks disabled.");
     return;
@@ -17,6 +78,11 @@ window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
 
   // Skip verification routines entirely if the visitor is browsing standard public landing layouts
   if (!isAdminPage && !isClientPage && !isUpdatePasswordPage) return;
+
+  // 🎯 RUN INACTIVITY ENGINE HOOK ON SECURE PATH PASSES
+  if (typeof window.initializeTabInactivityMonitorEngine === "function") {
+    window.initializeTabInactivityMonitorEngine(clientInstance);
+  }
 
   // Wipes broken placeholder tokens out of memory to fix database crashes
   const activeStoredToken = localStorage.getItem("f4u_active_tracking_token");
@@ -30,7 +96,9 @@ window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
 
   // SCENARIO 1: Visitor attempts accessing internal assets without an active account session
   if (!activeUser) {
-    window.injectSecureBlurInterceptionOverlay();
+    if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
+      window.injectSecureBlurInterceptionOverlay();
+    }
     setTimeout(() => {
       window.location.replace("https://filings4u.com/get-started.html");
     }, 1500);
@@ -45,7 +113,9 @@ window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
     const emailString = (activeUser.email || "").toLowerCase();
     if (!emailString.endsWith('@filings4u.com')) {
       console.warn("🔒 Security Alert: Non-admin profile detected on admin route. Ejecting...");
-      window.injectSecureBlurInterceptionOverlay();
+      if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
+        window.injectSecureBlurInterceptionOverlay();
+      }
       await clientInstance.auth.signOut();
       setTimeout(() => {
         window.location.replace("https://filings4u.com/get-started.html");
@@ -53,6 +123,7 @@ window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
     }
   }
 };
+
 
 
 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
