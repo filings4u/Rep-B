@@ -401,6 +401,7 @@
 
 <!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE - CLIENT PORTAL SPECIFIC -->
 <script>
+// BLOCK 1: Repaired Lifecycle Entrance & Security Pre-Checks
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
@@ -414,9 +415,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // 🚀 CRITICAL FIX: Block page refreshes immediately on line 1 to stop the blinking
         e.preventDefault();
 
-        // 🎯 FIX: Dynamically read our explicit, synchronized runtime instance pointer 
+        // Dynamically read our explicit, synchronized runtime instance pointer
         let client = window.supabaseInstance || window.supabaseClient || window.supabase;
-        
         const emailInputNode = document.getElementById('email');
         const pwdInputNode = document.getElementById('password');
         const authSubmitButton = document.getElementById('loginBtn');
@@ -426,13 +426,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if ((!client || typeof client.from !== 'function') && typeof supabase !== 'undefined') {
             const URL = "https://lrbimrlbskjweynxlgas.supabase.co";
             const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-            
             client = supabase.createClient(URL, KEY, {
-                auth: { 
-                    persistSession: true, 
-                    autoRefreshToken: true, 
-                    detectSessionInUrl: true, 
-                    storageKey: "filings4u_client_session_token" // 🔒 ISOLATED PORTAL COOKIE KEY
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    storageKey: "filings4u_client_session_token"
                 }
             });
             window.supabaseInstance = client;
@@ -462,7 +461,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (pwdInputNode) pwdInputNode.classList.add('field-error');
             hasFormValidationErrors = true;
         }
-
         if (hasFormValidationErrors) {
             if (emailInputNode && !emailInputNode.value.trim()) emailInputNode.focus();
             else if (pwdInputNode) pwdInputNode.focus();
@@ -474,7 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
             authSubmitButton.textContent = 'Verifying Security Parameters...';
         }
 
-        // 🛡️ SECURITY SHIELD LAYER: Falls back gracefully if Turnstile blocks execution
+        // 🛡️ SECURITY SHIELD LAYER: Turnstile verification parameters checks
         let verifiedSecurityToken = null;
         try {
             if (typeof turnstile !== 'undefined' && typeof turnstile.getResponse === 'function') {
@@ -489,40 +487,57 @@ document.addEventListener("DOMContentLoaded", () => {
                 authSubmitButton.disabled = false;
                 authSubmitButton.textContent = 'Enter Secure Portal →';
             }
-            return; 
+            return;
         }
-
         // Call our database validation handler safely passing runtime nodes
-        executeSupabaseAuthenticationHandshake(emailInputNode.value.trim(), pwdInputNode.value, authSubmitButton, systemFeedbackBox, client);
+        executeSupabaseAuthenticationHandshake(
+            emailInputNode.value.trim(), 
+            pwdInputNode.value, 
+            authSubmitButton, 
+            systemFeedbackBox, 
+            client
+        );
     });
 });
 
 /**
  * 📡 SECURE SUPABASE ACCESS DISPATCH ENGINE
- * Handles user database validation and forces cross-assignment workspace keys
+ * Handles user database validation and triggers your 2-Strike lock rules
  */
 async function executeSupabaseAuthenticationHandshake(emailValue, passwordValue, submitBtn, feedbackBox, activeClient) {
     "use strict";
-
     try {
-        console.log(`🔐 Initiating isolated client handshake transmission to: lrbimrlbskjweynxlgas.supabase.co...`);
-
+        console.log(`🔒 Initiating isolated client handshake transmission to: lrbimrlbskjweynxlgas.supabase.co...`);
+        
         // Force form verification parameters to query against client storage layers
-        const { data, error } = await activeClient.auth.signInWithPassword({
-            email: emailValue,
-            password: passwordValue
+        const { data, error } = await activeClient.auth.signInWithPassword({ 
+            email: emailValue, 
+            password: passwordValue 
         });
 
-        if (error) throw error;
+        if (error) {
+            // Check message or status to see if it is explicitly an invalid credential strike
+            if (error.message.toLowerCase().includes("invalid login credentials") || error.status === 400) {
+                if (typeof window.handleFailedLoginAttemptTracking === "function") {
+                    window.handleFailedLoginAttemptTracking();
+                }
+            }
+            throw error;
+        }
 
         console.log("🚀 Auth connection verified. Synchronizing window namespace matrices...");
         
+        // Clear out any old remaining security tracking strikes on structural success passes
+        if (typeof window.clearLoginStrikesOnSuccess === "function") {
+            window.clearLoginStrikesOnSuccess();
+        }
+
         // Expose state tokens globally so page scripts trigger on arrival pass
         window.activeClientSessionUser = data.user;
         window.supabaseInstance = activeClient;
         window.supabaseClient = activeClient;
 
-        // Strict customer domain re-route logic 
+        // Strict administrative operator context vs client route sorting
         if (emailValue.toLowerCase().endsWith('@filings4u.com')) {
             if (feedbackBox) feedbackBox.textContent = "Redirecting administrative operator context profile...";
             window.location.replace("admin-dashboard.html");
@@ -533,6 +548,7 @@ async function executeSupabaseAuthenticationHandshake(emailValue, passwordValue,
 
     } catch (handshakeException) {
         console.error("Authorization access fault caught:", handshakeException.message || handshakeException);
+        
         if (feedbackBox) {
             feedbackBox.textContent = handshakeException.message || "Invalid account credentials provided.";
         }
@@ -543,6 +559,5 @@ async function executeSupabaseAuthenticationHandshake(emailValue, passwordValue,
     }
 }
 </script>
-
 </body>
 </html>
