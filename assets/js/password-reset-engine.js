@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Reset application states cleanly on success checkpoint
       formSubmissionAttemptsCounter = 0;
 
-      // 2. ROLE INTERCEPTOR: Inspect user app_metadata or user_metadata fields for administrative clearance roles
+      // 2. ROLE INTERCEPTOR: Inspect user metadata fields for administrative clearance roles
       const user = updateData?.user;
       const userRole = user?.app_metadata?.role || user?.user_metadata?.role || "client";
       
@@ -303,13 +303,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("[Role Gateway] Standard client clearance detected.");
       }
 
-      // 3. Clear the active session and process the specific dashboard redirect sequence
-      await client.auth.signOut();
+      // 3. ✅ FIXED REDIRECTION CHAIN: 
+      // We set the location window redirect FIRST, then clear the session.
+      // This prevents the JavaScript thread from crashing mid-signout.
+      const baseRoot = window.productionRootUrl || window.location.origin;
+      const finalDestinationUrl = `${baseRoot}/${targetDashboard}?login_hint=${encodeURIComponent(trackingToken)}&status=activated`;
 
-      setTimeout(() => {
-        const baseRoot = window.productionRootUrl || window.location.origin;
-        window.location.href = `${baseRoot}/${targetDashboard}?login_hint=${encodeURIComponent(trackingToken)}&status=activated`;
-      }, 1500);
+      console.log("[Redirect Engine] Handshaking destination: " + finalDestinationUrl);
+      
+      // Execute a quick signout and immediately push the browser to the dashboard
+      client.auth.signOut().then(() => {
+        window.location.replace(finalDestinationUrl);
+      }).catch(() => {
+        // Fallback: If signout promise hangs, forcefully push the page anyway
+        window.location.href = finalDestinationUrl;
+      });
 
     } catch (err) {
       console.error("[Finalization Intercept Fault]", err);
@@ -320,5 +328,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       submitBtn.textContent = originalBtnText;
       submitBtn.disabled = false;
     }
+
   });
 });
