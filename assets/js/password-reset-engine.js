@@ -58,12 +58,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // --- PASSWORD STRENGTH ENGINE (MOVED FROM HTML) ---
-  if (passField && bar1 && bar2 && bar3) {
+  // --- PASSWORD STRENGTH ENGINE (DYNAMIC SELECTOR PATCH) ---
+  if (passField) {
     passField.addEventListener("input", () => {
       const val = passField.value;
+      
+      // Look up bars dynamically inside the DOM context on input events
+      const b1 = document.getElementById("strength-1");
+      const b2 = document.getElementById("strength-2");
+      const b3 = document.getElementById("strength-3");
+
+      // Guard check: Stop execution if elements are not painted in view yet
+      if (!b1 || !b2 || !b3) return;
+
+      // Wipe out styles instantly if input is empty
       if (val.length === 0) {
-        bar1.style.background = bar2.style.background = bar3.style.background = '';
+        b1.style.background = b2.style.background = b3.style.background = '';
         return;
       }
       
@@ -72,17 +82,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
       if (/[^A-Za-z0-9]/.test(val)) score++;
 
+      // Apply dynamic colors to your visual status bars
       if (score === 1) {
-        bar1.style.background = '#ef4444'; // Error Red
-        bar2.style.background = bar3.style.background = '';
+        b1.style.background = '#ef4444'; // Error Red
+        b2.style.background = b3.style.background = '';
       } else if (score === 2) {
-        bar1.style.background = bar2.style.background = '#f59e0b'; // Warning Amber
-        bar3.style.background = '';
+        b1.style.background = b2.style.background = '#f59e0b'; // Warning Amber
+        b3.style.background = '';
       } else if (score === 3) {
-        bar1.style.background = bar2.style.background = bar3.style.background = '#10b981'; // Success Green
+        b1.style.background = b2.style.background = b3.style.background = '#10b981'; // Success Green
       }
     });
   }
+
 
   // --- TOKEN EXTRACTOR & SANITIZER ---
   const urlParams = new URLSearchParams(window.location.search);
