@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
 
-  // Ensure client connects securely to global window mappings
   if (!window.supabase || typeof window.supabase.from !== "function") {
     if (typeof createClient === "function") {
       window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -116,7 +115,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("[Auth Engine] Active session mapped securely for: ", session.user.email);
         if (viewTitle) viewTitle.textContent = "Complete Password Setup";
         if (viewDesc) viewDesc.textContent = "Establish high-entropy alphanumeric credentials to unlock your compliance dashboard safely.";
-        if (submitBtn) submitBtn.textContent = "Authorize & Build Account";
+        
+        // 🔥 FIXED REMOVED THE GRAY LOCK: Keeps button clickable upon confirmation handshake completion
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.background = "var(--primary)";
+          submitBtn.style.cursor = "pointer";
+          submitBtn.textContent = "Authorize & Build Account";
+        }
       } else {
         showInterlockError();
       }
@@ -242,7 +248,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     submitBtn.disabled = true;
 
     try {
-      // 1. Fire the user password modification parameter update payload to Supabase Auth
       const { data: updateData, error: updateError } = await client.auth.updateUser({ 
         password: passField.value 
       });
@@ -254,7 +259,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       formSubmissionAttemptsCounter = 0;
 
-      // 2. ROLE INTERCEPTOR ROUTER: Inspect the payload metadata arrays for clear admin variables
       const user = updateData?.user;
       const userRole = user?.app_metadata?.role || user?.user_metadata?.role || "client";
       
@@ -266,7 +270,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       const baseRoot = window.productionRootUrl || window.location.origin;
       const finalDestinationUrl = `${baseRoot}/${targetDashboard}?login_hint=${encodeURIComponent(trackingToken)}&status=activated`;
 
-      // 3. Destruct the token session state tracking securely and fire execution links
       client.auth.signOut().then(() => {
         window.location.replace(finalDestinationUrl);
       }).catch(() => {
