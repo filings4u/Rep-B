@@ -1,28 +1,30 @@
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
+  // ============================================================================
+  // ⚙️ INITIALIZATION CONFIGURATION (EMBEDDED PROJECT PARAMS)
+  // ============================================================================
+  const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+
+  // Ensure client connects securely to global window mappings
+  if (!window.supabase || typeof window.supabase.from !== "function") {
+    if (typeof createClient === "function") {
+      window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else if (window.supabase && typeof window.supabase.createClient === "function") {
+      window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  }
+
+  const client = window.supabaseClient || window.supabase;
+  if (!client) {
+    console.error("[Critical Error] Supabase SDK client failed instantiation pass.");
+    return;
+  }
+
   // --- INTERNAL RATE LIMITING STATE REGISTER ---
   let formSubmissionAttemptsCounter = 0;
   let formExecutionLockoutTimestamp = 0;
-
-  // 1. TIMING PROTECTION: Wait until global Supabase client initializes
-  const waitForClient = () => new Promise(res => {
-    // Checks both standard naming and custom initialization bindings
-    if (window.supabaseClient) return res(window.supabaseClient);
-    if (window.supabase && typeof window.supabase.from === "function") return res(window.supabase);
-    
-    const idx = setInterval(() => {
-      if (window.supabaseClient) {
-        clearInterval(idx);
-        res(window.supabaseClient);
-      } else if (window.supabase && typeof window.supabase.from === "function") {
-        clearInterval(idx);
-        res(window.supabase);
-      }
-    }, 30);
-  });
-
-  const client = await waitForClient();
 
   // --- DOM ELEMENT MAPS ---
   const form = document.getElementById('passwordResetCommitForm');
@@ -34,13 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const viewDesc = document.getElementById('portal-view-desc');
   const timeoutBox = document.getElementById('timeout-warning-box');
   const reverifyBtn = document.getElementById('triggerReverifyBtn');
-
-  // --- INTERACTIVE STRENGTH BARS (MOVED FROM HTML) ---
-  const bar1 = document.getElementById("strength-1");
-  const bar2 = document.getElementById("strength-2");
-  const bar3 = document.getElementById("strength-3");
-
-  // --- EYE ICON VISIBILITY ENGINE (MOVED FROM HTML) ---
+  // --- EYE ICON VISIBILITY ENGINE ---
   const eyeIcons = document.querySelectorAll(".toggle-password-eye");
   eyeIcons.forEach(icon => {
     icon.addEventListener("click", function () {
@@ -58,20 +54,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // --- PASSWORD STRENGTH ENGINE (DYNAMIC SELECTOR PATCH) ---
+  // --- PASSWORD STRENGTH WATCHER ---
   if (passField) {
     passField.addEventListener("input", () => {
       const val = passField.value;
-      
-      // Look up bars dynamically inside the DOM context on input events
       const b1 = document.getElementById("strength-1");
       const b2 = document.getElementById("strength-2");
       const b3 = document.getElementById("strength-3");
 
-      // Guard check: Stop execution if elements are not painted in view yet
       if (!b1 || !b2 || !b3) return;
 
-      // Wipe out styles instantly if input is empty
       if (val.length === 0) {
         b1.style.background = b2.style.background = b3.style.background = '';
         return;
@@ -82,27 +74,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
       if (/[^A-Za-z0-9]/.test(val)) score++;
 
-      // Apply dynamic colors to your visual status bars
       if (score === 1) {
-        b1.style.background = '#ef4444'; // Error Red
+        b1.style.background = '#ef4444'; 
         b2.style.background = b3.style.background = '';
       } else if (score === 2) {
-        b1.style.background = b2.style.background = '#f59e0b'; // Warning Amber
+        b1.style.background = b2.style.background = '#f59e0b'; 
         b3.style.background = '';
       } else if (score === 3) {
-        b1.style.background = b2.style.background = b3.style.background = '#10b981'; // Success Green
+        b1.style.background = b2.style.background = b3.style.background = '#10b981'; 
       }
     });
   }
 
-
-  // --- TOKEN EXTRACTOR & SANITIZER ---
+  // --- PARSE REGISTRATION URL PARAMETERS ---
   const urlParams = new URLSearchParams(window.location.search);
   const rawTrackingToken = urlParams.get('token') || ""; 
   const trackingToken = /^[a-zA-Z0-9_\-]+$/.test(rawTrackingToken) ? rawTrackingToken : "";
-
   // ============================================================================
-  // 🔑 STEP 1 & 2: EXTRACT LINK TOKEN & RE-ESTABLISH SECURED AUTHENTICATED SESSION
+  // 🔑 AUTH EXCHANGE HANDSHAKE 
   // ============================================================================
   const exchangeSecureEmailToken = async () => {
     try {
@@ -112,32 +101,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       const refreshToken = hashParams.get("refresh_token");
 
       if (accessToken) {
-        console.log("[Auth Engine] Direct inbound verification hash detected. Initializing handshake...");
-        
-        // Explicitly inject the tokens directly to lock the active session context down
+        console.log("[Auth Engine] Inbound hash detected. Committing credentials loop...");
         const { error: tokenError } = await client.auth.setSession({ 
           access_token: accessToken, 
           refresh_token: refreshToken || "" 
         });
-        
         if (tokenError) throw tokenError;
       }
 
-      // Fetch unified session status to guarantee verification passed
       const { data: { session }, error: sessionError } = await client.auth.getSession();
       if (sessionError) throw sessionError;
 
       if (session?.user) {
-        console.log("[Auth Engine] Session verified for: ", session.user.email);
+        console.log("[Auth Engine] Active session mapped securely for: ", session.user.email);
         if (viewTitle) viewTitle.textContent = "Complete Password Setup";
         if (viewDesc) viewDesc.textContent = "Establish high-entropy alphanumeric credentials to unlock your compliance dashboard safely.";
         if (submitBtn) submitBtn.textContent = "Authorize & Build Account";
       } else {
-        console.warn("[Auth Engine] Critical Failure: No active authenticated user session context found.");
         showInterlockError();
       }
-    } catch (tokenExchangeErr) {
-      console.error("[Token Handshake Crash]", tokenExchangeErr);
+    } catch (err) {
+      console.error("[Token Handshake Crash]", err);
       showInterlockError();
     }
   };
@@ -145,88 +129,68 @@ document.addEventListener("DOMContentLoaded", async () => {
   const showInterlockError = () => {
     if (statusMsg) {
       statusMsg.style.color = "var(--error)";
-      statusMsg.style.backgroundColor = "var(--error-bg)";
-      statusMsg.style.padding = "10px 12px";
-      statusMsg.style.borderRadius = "6px";
-      statusMsg.style.border = "1px solid #fca5a5";
       statusMsg.textContent = "Security Interlock Failure: Your verification link is invalid, expired, or has already been consumed.";
       statusMsg.style.display = 'block';
     }
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.style.background = "#cbd5e1";
-      submitBtn.style.boxShadow = "none";
       submitBtn.style.cursor = "not-allowed";
     }
   };
 
-  // Execute verification immediately on layout entry frame
   await exchangeSecureEmailToken();
 
   // ============================================================================
-  // ⏱️ STEP 4: 10-MINUTE SECURITY TIMEOUT WATCHDOG
+  // ⏱️ SECURITY WATCHDOGS & REVERIFICATION LINK DISPATCHERS
   // ============================================================================
   setTimeout(() => {
-    console.warn("[Security Watchdog] 10-minute activation window elapsed. Locking canvas forms.");
+    console.warn("[Watchdog] Session lifetime limit matched.");
     if (passField) passField.disabled = true;
     if (confirmField) confirmField.disabled = true;
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.style.background = "#cbd5e1";
-      submitBtn.style.boxShadow = "none";
-      submitBtn.style.cursor = "not-allowed";
       submitBtn.textContent = "Session Timed Out";
     }
     if (timeoutBox) timeoutBox.style.display = "block";
   }, 10 * 60 * 1000);
 
-  // ============================================================================
-  // 🔄 STEP 5: TIMEOUT RE-VERIFICATION HANDSHAKE LOOP
-  // ============================================================================
   if (reverifyBtn) {
     reverifyBtn.addEventListener('click', async () => {
       reverifyBtn.disabled = true;
       reverifyBtn.textContent = 'Checking Database Ledger...';
-      
       try {
-        if (!trackingToken) {
-          throw new Error("Tracking parameters are absent or invalid inside the current web view context.");
-        }
+        if (!trackingToken) throw new Error("Tracking parameters are absent or invalid inside view context.");
 
-        // Connect back to Supabase to extract customer routing metrics matching token
         const { data: matchedOrder, error: orderErr } = await client
           .from('orders')
-          .select('email_address') // ✅ FIXED: Changed '--' syntax to standard JavaScript comment syntax 
+          .select('email_address')
           .eq('tracking_number', trackingToken)
           .maybeSingle();
 
         if (orderErr) throw orderErr;
         const recEmail = matchedOrder?.email_address;
 
-        if (!recEmail) {
-          throw new Error("Dossier Mismatch: No registered transaction profiles match this tracking code.");
-        }
+        if (!recEmail) throw new Error("Dossier Mismatch: No tracking signatures match this parameter token.");
 
-        // Fire fresh routing request right back into your custom verified route
         const redirectUrl = `${window.location.origin}/forgot-password.html?token=${encodeURIComponent(trackingToken)}`;
         const { error: resetError } = await client.auth.resetPasswordForEmail(recEmail, { redirectTo: redirectUrl });
         if (resetError) throw resetError;
 
         reverifyBtn.style.background = "var(--accent)";
         reverifyBtn.textContent = 'Dispatched! Check Inbox.';
-        alert(`✓ A fresh security link has been successfully issued to ${recEmail}. Please inspect your primary inbox or spam filters and close this tab.`);
+        alert(`✓ A fresh recovery connection has been delivered to ${recEmail}. Please view your main tab files.`);
       } catch (e) {
-        console.error("[Reverification Pipeline Failure]", e);
-        alert(`Verification Loop Interrupted: ${e.message || e}`);
+        console.error(e);
+        alert(`Verification Loop Interrupted: ${e.message}`);
         reverifyBtn.disabled = false;
         reverifyBtn.textContent = 'Request New Verification Email';
       }
     });
   }
-
-
-   // ============================================================================
-  // 🔐 STEP 6: COMPLEXITY MATRIX SUBMIT CHANNELS & DASHBOARD ROUTING
+  // ============================================================================
+  // 🚀 SUBMIT CHANNELS & ROLE-BASED REDIRECT ROUTING
   // ============================================================================
   if (!form) return;
 
@@ -238,17 +202,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     confirmField.classList.remove('field-error');
     statusMsg.style.display = 'none';
 
-    // SECURE CHECK: Rate Limit Bot Prevention Gate
     const currentTimestampUnix = Date.now();
     if (currentTimestampUnix < formExecutionLockoutTimestamp) {
       const remainingSeconds = Math.ceil((formExecutionLockoutTimestamp - currentTimestampUnix) / 1000);
       statusMsg.style.color = "var(--error)";
-      statusMsg.textContent = `Brute-Force Intercept: Too many attempts. Please pause for ${remainingSeconds} seconds before retry.`;
+      statusMsg.textContent = `Brute-Force Intercept: Too many attempts. Pause for ${remainingSeconds} seconds.`;
       statusMsg.style.display = 'block';
       return;
     }
 
-    // High Entropy Verification regular expressions matrix
     const passValueString = passField.value;
     const hasUppercaseLetter = /[A-Z]/.test(passValueString);
     const hasLowercaseLetter = /[a-z]/.test(passValueString);
@@ -258,7 +220,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (passValueString.length < 10 || !hasUppercaseLetter || !hasLowercaseLetter || !hasNumericalDigit || !hasSpecialSymbol) {
       formSubmissionAttemptsCounter++;
       if (formSubmissionAttemptsCounter >= 3) {
-        // Enforce a strict 30-second penalty delay on consecutive complexity errors
         formExecutionLockoutTimestamp = Date.now() + (30 * 1000);
       }
       passField.classList.add('field-error');
@@ -268,16 +229,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // CONSTANT TIME ITERATION MATCHING: Thwarts side-channel microsecond tracing strategies
-    let alignmentMismatchCounter = 0;
-    const maxStringLength = Math.max(passField.value.length, confirmField.value.length);
-    for (let i = 0; i < maxStringLength; i++) {
-      if (passField.value[i] !== confirmField.value[i]) {
-        alignmentMismatchCounter++;
-      }
-    }
-
-    if (alignmentMismatchCounter !== 0) {
+    if (passField.value !== confirmField.value) {
       confirmField.classList.add('field-error');
       statusMsg.style.color = "var(--error)";
       statusMsg.textContent = "Verification Failure: Password field confirmations do not match.";
@@ -290,7 +242,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     submitBtn.disabled = true;
 
     try {
-      // 1. Commit the password update payload configuration parameters to the database
+      // 1. Fire the user password modification parameter update payload to Supabase Auth
       const { data: updateData, error: updateError } = await client.auth.updateUser({ 
         password: passField.value 
       });
@@ -300,39 +252,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       statusMsg.textContent = "✓ Security credentials established! Verifying role privileges...";
       statusMsg.style.display = 'block';
 
-      // Reset application states cleanly on success checkpoint
       formSubmissionAttemptsCounter = 0;
 
-      // 2. ROLE INTERCEPTOR: Inspect user metadata fields for administrative clearance roles
+      // 2. ROLE INTERCEPTOR ROUTER: Inspect the payload metadata arrays for clear admin variables
       const user = updateData?.user;
       const userRole = user?.app_metadata?.role || user?.user_metadata?.role || "client";
       
       let targetDashboard = "client-dashboard.html";
       if (userRole.toLowerCase() === "admin" || userRole.toLowerCase() === "administrator") {
         targetDashboard = "admin-dashboard.html";
-        console.log("[Role Gateway] Administrative privileges verified.");
-      } else {
-        console.log("[Role Gateway] Standard client clearance detected.");
       }
 
-      // 3. ✅ FIXED REDIRECTION CHAIN: 
-      // We set the location window redirect FIRST, then clear the session.
-      // This prevents the JavaScript thread from crashing mid-signout.
       const baseRoot = window.productionRootUrl || window.location.origin;
       const finalDestinationUrl = `${baseRoot}/${targetDashboard}?login_hint=${encodeURIComponent(trackingToken)}&status=activated`;
 
-      console.log("[Redirect Engine] Handshaking destination: " + finalDestinationUrl);
-      
-      // Execute a quick signout and immediately push the browser to the dashboard
+      // 3. Destruct the token session state tracking securely and fire execution links
       client.auth.signOut().then(() => {
         window.location.replace(finalDestinationUrl);
       }).catch(() => {
-        // Fallback: If signout promise hangs, forcefully push the page anyway
-        window.location.href = finalDestinationUrl;
+        window.location.replace(finalDestinationUrl);
       });
 
     } catch (err) {
-      console.error("[Finalization Intercept Fault]", err);
+      console.error(err);
       passField.classList.add('field-error');
       statusMsg.style.color = "var(--error)";
       statusMsg.textContent = `Update Halted: ${err.message || err}`;
@@ -340,6 +282,5 @@ document.addEventListener("DOMContentLoaded", async () => {
       submitBtn.textContent = originalBtnText;
       submitBtn.disabled = false;
     }
-
   });
 });
