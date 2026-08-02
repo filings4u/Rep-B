@@ -1,535 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#10b981">
-  <!-- Chrome, Firefox, & Opera Mobile -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981"> 
-  <!-- Safari iOS Wrapper Engine Tracking -->
-  <meta name="msapplication-navbutton-color" content="#10b981"> 
-  <!-- Windows Phone Interface Target -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
+  <meta name="msapplication-navbutton-color" content="#10b981">
   <title>Customer Portal | filings4u</title>
+  
   <link rel="icon" type="image/png" href="images/fav.png">
-
-  <!-- 🚀 PLATFORM CDN INFRASTRUCTURE -->
-  <!-- FIXED: Embedded explicit async/defer loading properties to prevent CORS preflight blocking -->
+  
+  <!-- Inter Font Family Matrix Integration -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Integration Route -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Platform Scripts -->
   <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <script src="assets/js/supabase-config.js"></script>
-  
   <link rel="stylesheet" href="assets/css/client-custom.css">
-</head>
+
+  <style>
+    :root {
+      --primary: #0a1f44;
+      --primary-hover: #112d5d;
+      --accent: #10b981;
+      --accent-bg: rgba(16, 185, 129, 0.06);
+      --error: #ef4444;
+      --error-bg: #fef2f2;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --border-color: #e2e8f0;
+      --bg-page: #f8fafc;
+    }
+
+    body, html {
+      margin: 0;
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    .split-container {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+    }
+    .image-side {
+      flex: 12;
+      background: linear-gradient(rgba(10, 31, 68, 0.82), rgba(16, 185, 129, 0.78)), url('images/login-hero.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      padding: 60px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .image-content h1 {
+      color: #ffffff;
+      font-size: 3.2rem;
+      line-height: 1.15;
+      margin-bottom: 24px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .image-content p {
+      color: #ffffff;
+      font-size: 1.15rem;
+      opacity: 0.95;
+      max-width: 520px;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .form-side {
+      flex: 11;
+      background-color: var(--bg-page);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+      position: relative;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.06);
+      text-align: center;
+      z-index: 10;
+      box-sizing: border-box;
+    }
+
+    .logo-container {
+      margin-bottom: 24px;
+    }
+
+    .logo-container img {
+      height: 40px;
+      width: auto;
+    }
+
+    .login-card h2 {
+      color: var(--primary);
+      font-size: 1.6rem;
+      margin: 0 0 8px 0;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .login-card p.card-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 8px;
+      letter-spacing: 0.06em;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      outline: none;
+      color: var(--text-main);
+      background-color: #ffffff;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 4px var(--accent-bg) !important;
+    }
+
+    .form-group input.field-error {
+      border-color: var(--error) !important;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12) !important;
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    .btn-login {
+      width: 100%;
+      background-color: var(--primary) !important;
+      color: #ffffff !important;
+      border: none;
+      padding: 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 12px;
+      display: block;
+      box-shadow: 0 4px 12px rgba(10, 31, 68, 0.1);
+    }
+
+    .btn-login:hover {
+      background-color: var(--primary-hover) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(10, 31, 68, 0.15);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .error-msg {
+      color: var(--error);
+      background-color: var(--error-bg);
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+      font-weight: 500;
+      text-align: left;
+      border-radius: 6px;
+      line-height: 1.4;
+      display: none;
+    }
     
-    <style>
-        :root {
-            --primary-blue: #0a1f44;
-            --white: #ffffff;
-            --bg-light: #f8fafc;
-            --border-color: #e2e8f0;
-            --text-gray: #44526c;
-            --emerald: #10b981;
-        }
+    .error-msg:not(:empty) {
+      display: block;
+      padding: 10px 12px;
+      border: 1px solid #fca5a5;
+    }
 
-        body, html {
-            margin: 0;
-            height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-        }
+    /* CENTERED ACCESS MODAL OVERLAY */
+    .access-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(10, 31, 68, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
 
-        .split-container {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-            overflow: hidden;
-        }
+    .access-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
-        .image-side {
-            flex: 1;
-            background: linear-gradient(rgba(10, 31, 68, 0.8), rgba(16, 185, 129, 0.8)), url('images/login-hero.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            padding: 60px;
-            box-sizing: border-box;
-            position: relative;
-        }
+    .access-modal-box {
+      background: #ffffff;
+      padding: 36px;
+      border-radius: 16px;
+      box-shadow: 0 24px 48px rgba(10, 31, 68, 0.18);
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-        .image-content h1 {
-            color: #ffffff;
-            font-size: 3rem;
-            line-height: 1.2;
-            margin-bottom: 20px;
-            font-weight: 800;
-        }
+    .access-modal-overlay.active .access-modal-box {
+      transform: scale(1);
+    }
 
-        .image-content p {
-            color: #ffffff;
-            font-size: 1.1rem;
-            opacity: 0.9;
-            max-width: 500px;
-            line-height: 1.5;
-        }
+    .access-modal-box h3 {
+      margin: 0 0 12px 0;
+      color: var(--error);
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
 
-        .form-side {
-            flex: 1;
-            background-color: var(--bg-light);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 15px;
-            box-sizing: border-box;
-            position: relative;
-            height: 100vh;
-            overflow: hidden;
-        }
+    .access-modal-box p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0 0 24px 0;
+    }
 
-        .login-card {
-            width: 100%;
-            max-width: 380px;
-            background: var(--white);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 40px rgba(10,31,68,0.06);
-            text-align: center;
-            z-index: 10;
-            box-sizing: border-box;
-        }
+    .access-modal-btn {
+      background-color: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    
+    .access-modal-btn:hover {
+      background-color: var(--primary-hover);
+    }
 
-        .logo-container {
-            margin-bottom: 15px;
-        }
+    /* VIEWPORT RESPONSIVE MOBILE OVERRIDES */
+    @media (max-width: 991px) {
+      html, body {
+        overflow: auto !important;
+        height: auto !important;
+        min-height: 100vh !important;
+      }
+      .split-container {
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+      }
+      .image-side {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 180px !important;
+        min-height: 180px !important;
+        padding: 24px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+      }
+      .image-content h1 {
+        font-size: 1.8rem !important;
+        margin-bottom: 0px !important;
+        text-align: center !important;
+        line-height: 1.2 !important;
+        letter-spacing: -0.02em;
+      }
+      .image-content p {
+        display: none !important;
+      }
+      .form-side {
+        width: 100% !important;
+        height: auto !important;
+        padding: 32px 16px 64px 16px !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        overflow: visible !important;
+      }
+      .login-card {
+        width: 100% !important;
+        max-width: 400px !important;
+        padding: 32px 24px !important;
+        box-shadow: 0 10px 25px rgba(10, 31, 68, 0.02) !important;
+        border-radius: 14px !important;
+        margin: 0 auto !important;
+      }
+      .form-group input {
+        font-size: 16px !important; /* Disables standard device auto-zoom paths */
+      }
+    }
 
-        .logo-container img {
-            height: 38px;
-        }
-
-        .login-card h2 {
-            color: var(--primary-blue);
-            font-size: 1.4rem;
-            margin: 0 0 6px 0;
-            font-weight: 800;
-        }
-
-        .login-card p.card-subtitle {
-            color: var(--text-gray);
-            margin-bottom: 25px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-        }
-
-        .form-group {
-            text-align: left;
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--primary-blue);
-            margin-bottom: 6px;
-            letter-spacing: 0.05em;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.9rem;
-            box-sizing: border-box;
-            outline: none;
-            transition: all 0.25s;
-            color: var(--primary-blue);
-        }
-
-        .form-group input:focus {
-            border-color: var(--emerald);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
-        }
-
-        .form-group input.field-error {
-            border-color: #e53e3e !important;
-            box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.15) !important;
-            animation: shake 0.4s ease-in-out;
-        }
-
-        @keyframes shake { 
-            0%, 100% { transform: translateX(0); } 
-            25% { transform: translateX(-4px); } 
-            75% { transform: translateX(4px); } 
-        }
-
-        .btn-login { 
-            width: 100%; 
-            background-color: var(--primary-blue) !important; 
-            color: var(--white) !important; 
-            border: none; 
-            padding: 14px; 
-            border-radius: 6px; 
-            font-weight: 700; 
-            font-size: 0.9rem; 
-            cursor: pointer; 
-            transition: background-color 0.2s, transform 0.1s; 
-            margin-top: 5px; 
-            display: block; 
-        }
-
-        .btn-login:hover { 
-            background-color: #122d5a !important; 
-        }
-
-        .btn-login:active { 
-            transform: scale(0.99); 
-        }
-
-        .error-msg { 
-            color: #c15254; 
-            font-size: 0.78rem; 
-            margin-top: 8px; 
-            font-weight: 600; 
-            text-align: left; 
-            min-height: 1.2em; 
-            line-height: 1.3; 
-        }
-
-        /* CENTERED ACCESS MODAL OVERLAY */
-        .access-modal-overlay { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh; 
-            background: rgba(10, 31, 68, 0.4); 
-            backdrop-filter: blur(8px); 
-            -webkit-backdrop-filter: blur(8px); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            z-index: 99999; 
-            opacity: 0; 
-            pointer-events: none; 
-            transition: opacity 0.3s ease; 
-        }
-
-        .access-modal-overlay.active { 
-            opacity: 1; 
-            pointer-events: auto; 
-        }
-
-        .access-modal-box { 
-            background: #ffffff; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 24px 48px rgba(10, 31, 68, 0.18); 
-            width: 90%; 
-            max-width: 400px; 
-            text-align: center; 
-            border: 1px solid #e2e8f0; 
-            transform: scale(0.9); 
-            transition: transform 0.3s ease; 
-        }
-
-        .access-modal-overlay.active .access-modal-box { 
-            transform: scale(1); 
-        }
-
-        .access-modal-box h3 { 
-            margin: 0 0 10px 0; 
-            color: #c15254; 
-            font-size: 1.3rem; 
-            font-weight: 800; 
-        }
-
-        .access-modal-box p { 
-            color: #44526c; 
-            font-size: 0.9rem; 
-            line-height: 1.5; 
-            margin: 0 0 20px 0; 
-        }
-
-        .access-modal-btn { 
-            background-color: #0a1f44; 
-            color: #ffffff; 
-            border: none; 
-            padding: 12px 24px; 
-            border-radius: 6px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            width: 100%; 
-        }
-
-        /* VIEWPORT RESPONSIVE MOBILE OVERRIDES */
-        @media (max-width: 991px) {
-            html, body { 
-                overflow: auto !important; 
-                height: auto !important; 
-                min-height: 100vh !important; 
-            }
-            .split-container { 
-                flex-direction: column !important; 
-                height: auto !important; 
-                min-height: 100vh !important; 
-                overflow: visible !important; 
-            }
-            .image-side { 
-                width: 100% !important; 
-                max-width: 100% !important; 
-                height: 160px !important; 
-                min-height: 160px !important; 
-                padding: 20px !important; 
-                display: flex !important; 
-                align-items: center !important; 
-                justify-content: center !important; 
-                box-sizing: border-box !important; 
-            }
-            .image-side .text-wrapper {
-                position: static !important; 
-                text-align: center !important; 
-            }
-            .image-content h1 { 
-                font-size: 1.6rem !important; 
-                margin-bottom: 0px !important; 
-                text-align: center !important; 
-                line-height: 1.2 !important;
-            }
-            .image-content p { 
-                display: none !important; 
-            }
-            .form-side { 
-                width: 100% !important; 
-                height: auto !important; 
-                padding: 25px 15px 50px 15px !important; 
-                display: flex !important; 
-                align-items: flex-start !important; 
-                justify-content: center !important; 
-                background-color: #f8fafc !important; 
-                overflow: visible !important; 
-            }
-            .login-card { 
-                width: 100% !important; 
-                max-width: 380px !important; 
-                padding: 25px 20px !important; 
-                box-shadow: 0 10px 25px rgba(10, 31, 68, 0.04) !important; 
-                border-radius: 12px !important; 
-                margin: 0 auto !important; 
-            }
-        }
-    </style>
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+      40%, 60% { transform: translate3d(3px, 0, 0); }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="split-container">
-        <!-- LEFT SIDE VIEWPORT BANNER CONTAINER -->
-        <section class="image-side">
-            <div class="text-wrapper">
-                <div class="image-content">
-                    <h1>Built for Compliance.</h1>
-                    <p>The comprehensive hub for managing all your filings, registrations, and agent services throughout your corporate journey.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- RIGHT SIDE: INTERFACE FORM -->
-        <section class="form-side">
-            <div class="login-card">
-                <div class="logo-container">
-                    <img src="images/logo.png" alt="filings4u logo">
-                </div>
-                <h2>Portal Login</h2>
-                <p class="card-subtitle">Please enter your credentials to access your secure dashboard.</p>
-
-                <!-- Corporate Registration Link Widget -->
-                <div style="margin-top: 15px; margin-bottom: 25px; text-align: center;">
-                    <p style="color: #64748b; font-size: 0.85rem; margin: 0 0 8px 0;">New to the corporate infrastructure portal?</p>
-                    <a href="https://filings4u.com/get-started.html" class="crm-btn secondary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; padding: 10px 16px; font-size: 0.8rem; border: 1px solid #e2e8f0; background: #ffffff; color: #0a1f44; border-radius: 6px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s;">
-                        ✨ Establish a Corporate Profile →
-                    </a>
-                </div>
-
-                <!-- Form Target Bind Identifier -->
-                <form id="loginForm" novalidate>
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" required autocomplete="email" placeholder="name@domain.com">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="password" id="password" required autocomplete="current-password" style="padding-right: 45px;" placeholder="••••••••">
-                            <!-- INTERACTIVE VISIBILITY TOGGLE BUTTON -->
-                            <button type="button" id="passwordToggleBtn" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; user-select: none;">
-                                👁️
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="errorMessage" class="error-msg"></div>
-                    
-                    <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button>
-                    
-                    <div style="margin-top:16px; font-size:0.78rem; color:#64748b; padding:10px; border:1px dashed #e2e8f0; border-radius:6px; text-align:center; background: #f8fafc;">
-                        🛡️ Security Handshake Active
-                    </div>
-                </form>
-
-                <div style="margin-top: 20px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
-                    <a href="forgot-password.html" style="color: #0a1f44; text-decoration: none; font-weight: 600;">Forgot Password?</a>
-                    <span style="color: #44526c; font-weight: 500;">Account Gate</span>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- DYNAMIC ACCESS DENIED MODAL POPUP CONTAINER -->
-    <div class="access-modal-overlay" id="accessDeniedModal">
-        <div class="access-modal-box">
-            <h3>⚠️ Access Clearance Denied</h3>
-            <p>Your profile token parameters do not hold the required clearance level to access this administrative workspace directory.</p>
-            <button class="access-modal-btn" id="closeAccessModalBtn" onclick="document.getElementById('accessDeniedModal').classList.remove('active')">Return to Authentication Terminal</button>
+      <div class="split-container">
+    
+    <!-- LEFT SIDE VIEWPORT BANNER CONTAINER -->
+    <section class="image-side">
+      <div class="text-wrapper">
+        <div class="image-content">
+          <h1>Built for Compliance.</h1>
+          <p>The comprehensive hub for managing all your filings, registrations, and agent services throughout your corporate journey.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- RIGHT SIDE: INTERFACE FORM -->
+    <section class="form-side">
+      <div class="login-card">
+        <div class="logo-container">
+          <img src="images/logo.png" alt="filings4u logo">
+        </div>
+        <h2>Portal Login</h2>
+        <p class="card-subtitle">Please enter your credentials to access your secure dashboard.</p>
+
+        <!-- Corporate Registration Link Widget -->
+        <div style="margin-top: 12px; margin-bottom: 28px; text-align: center;">
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 10px 0;">New to the corporate infrastructure portal?</p>
+          <a href="https://filings4u.com/get-started.html" class="crm-btn secondary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; padding: 12px 18px; font-size: 0.8rem; border: 1px solid var(--border-color); background: #ffffff; color: var(--primary); border-radius: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s;">
+            ✨ Establish a Corporate Profile →
+          </a>
+        </div>
+
+        <!-- Form Target Bind Identifier -->
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" required autocomplete="email" placeholder="name@domain.com">
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="password" id="password" required autocomplete="current-password" style="padding-right: 48px;" placeholder="••••••••">
+              <!-- INTERACTIVE VISIBILITY TOGGLE BUTTON -->
+              <button type="button" id="passwordToggleBtn" style="position: absolute; right: 14px; background: none; border: none; cursor: pointer; font-size: 1rem; padding: 4px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); user-select: none;">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="errorMessage" class="error-msg"></div>
+
+          <button type="submit" class="btn-login" id="loginBtn">Enter Secure Portal →</button>
+
+          <div style="margin-top:18px; font-size:0.78rem; color:var(--text-muted); padding:12px; border:1px dashed var(--border-color); border-radius:8px; text-align:center; background: var(--bg-page); display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-lock" style="color: var(--accent);"></i> Security Handshake Active
+          </div>
+        </form>
+
+        <div style="margin-top: 24px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
+          <a href="update-password.html" style="color: var(--primary); text-decoration: none; font-weight: 600; transition: color 0.2s;">Forgot Password?</a>
+          <span style="color: var(--text-muted); font-weight: 500;">Account Gate</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- DYNAMIC ACCESS DENIED MODAL POPUP CONTAINER -->
+  <div class="access-modal-overlay" id="accessDeniedModal">
+    <div class="access-modal-box">
+      <div style="margin-bottom: 16px;"><i class="fa-solid fa-circle-exclamation" style="font-size: 2.5rem; color: var(--error);"></i></div>
+      <h3>Access Clearance Denied</h3>
+      <p>Your profile token parameters do not hold the required clearance level to access this administrative workspace directory.</p>
+      <button class="access-modal-btn" id="closeAccessModalBtn" onclick="document.getElementById('accessDeniedModal').classList.remove('active')">Return to Authentication Terminal</button>
     </div>
+  </div>
+  <!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      "use strict";
 
-<!-- SYSTEM CONTROL CONTROLLERS - REPAIRED SUBMISSION CORE - CLIENT PORTAL SPECIFIC -->
-<script>
-// BLOCK 1: Repaired Lifecycle Entrance & Security Pre-Checks
-document.addEventListener("DOMContentLoaded", () => {
-    "use strict";
+      // --- 1. PASSWORD EYE FIELD VISIBILITY TOGGLE TOGGLE ---
+      const toggleBtn = document.getElementById("passwordToggleBtn");
+      const passwordInput = document.getElementById("password");
+      if (toggleBtn && passwordInput) {
+        toggleBtn.addEventListener("click", () => {
+          const icon = toggleBtn.querySelector("i");
+          if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            if (icon) icon.classList.replace("fa-eye", "fa-eye-slash");
+          } else {
+            passwordInput.type = "password";
+            if (icon) icon.classList.replace("fa-eye-slash", "fa-eye");
+          }
+        });
+      }
 
-    const loginFormNode = document.getElementById('loginForm');
-    if (!loginFormNode) {
-        console.warn("⚠️ Layout Intercept: #loginForm element missing from active viewport wrapper layout.");
+      // --- 2. FORM SUBMISSION WORKFLOW ---
+      const loginFormNode = document.getElementById('loginForm');
+      if (!loginFormNode) {
+        console.warn("⚠ Layout Intercept: #loginForm element missing from active layout.");
         return;
-    }
+      }
 
-    loginFormNode.addEventListener('submit', async (e) => {
-        // 🚀 CRITICAL FIX: Block page refreshes immediately on line 1 to stop the blinking
-        e.preventDefault();
+      loginFormNode.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Stop instant window flashing behaviors instantly
 
-        // Dynamically read our explicit, synchronized runtime instance pointer
         let client = window.supabaseInstance || window.supabaseClient || window.supabase;
         const emailInputNode = document.getElementById('email');
         const pwdInputNode = document.getElementById('password');
         const authSubmitButton = document.getElementById('loginBtn');
         const systemFeedbackBox = document.getElementById('errorMessage');
 
-        // Fallback Initialization: Instantly build client context if configuration layer is lagging
+        if (systemFeedbackBox) {
+          systemFeedbackBox.textContent = "";
+          systemFeedbackBox.style.display = "none";
+        }
+
+        // Fallback Initialization: Instantly build client context if connection is lagging
         if ((!client || typeof client.from !== 'function') && typeof supabase !== 'undefined') {
-            const URL = "https://lrbimrlbskjweynxlgas.supabase.co";
-            const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-            client = supabase.createClient(URL, KEY, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: true,
-                    storageKey: "filings4u_client_session_token"
-                }
-            });
-            window.supabaseInstance = client;
-            window.supabaseClient = client;
+          const URL = "https://lrbimrlbskjweynxlgas.supabase.co";
+          const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+          client = supabase.createClient(URL, KEY, {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true,
+              storageKey: "filings4u_client_session_token"
+            }
+          });
+          window.supabaseInstance = client;
+          window.supabaseClient = client;
         }
 
         if (!client || !client.auth) {
-            console.error("Gateway Offline: window.supabaseInstance is not ready yet.");
-            if (systemFeedbackBox) {
-                systemFeedbackBox.textContent = "Authentication Gateway Engine initializing. Please wait 1 second and retry.";
-            }
-            return;
+          console.error("Gateway Offline: window.supabaseInstance is not ready yet.");
+          if (systemFeedbackBox) {
+            systemFeedbackBox.textContent = "Authentication Gateway Engine initializing. Please wait 1 second and retry.";
+            systemFeedbackBox.style.display = "block";
+          }
+          return;
         }
 
-        // Flush any leftover layout error decorations
-        if (typeof flushInterfaceFieldErrorStates === 'function') {
-            flushInterfaceFieldErrorStates();
-        }
+        // Flush decoration layouts
+        if (emailInputNode) emailInputNode.classList.remove('field-error');
+        if (pwdInputNode) pwdInputNode.classList.remove('field-error');
 
-        // Input verification fallback boundaries
+        // Validation Boundaries Checks
         let hasFormValidationErrors = false;
         if (!emailInputNode || !emailInputNode.value.trim()) {
-            if (emailInputNode) emailInputNode.classList.add('field-error');
-            hasFormValidationErrors = true;
+          if (emailInputNode) emailInputNode.classList.add('field-error');
+          hasFormValidationErrors = true;
         }
         if (!pwdInputNode || !pwdInputNode.value) {
-            if (pwdInputNode) pwdInputNode.classList.add('field-error');
-            hasFormValidationErrors = true;
+          if (pwdInputNode) pwdInputNode.classList.add('field-error');
+          hasFormValidationErrors = true;
         }
+
         if (hasFormValidationErrors) {
-            if (emailInputNode && !emailInputNode.value.trim()) emailInputNode.focus();
-            else if (pwdInputNode) pwdInputNode.focus();
-            return;
+          if (emailInputNode && !emailInputNode.value.trim()) emailInputNode.focus();
+          else if (pwdInputNode) pwdInputNode.focus();
+          return;
         }
 
         if (authSubmitButton) {
-            authSubmitButton.disabled = true;
-            authSubmitButton.textContent = 'Verifying Security Parameters...';
+          authSubmitButton.disabled = true;
+          authSubmitButton.textContent = 'Verifying Security Parameters...';
         }
 
         // 🛡️ SECURITY SHIELD LAYER: Turnstile verification parameters checks
         let verifiedSecurityToken = null;
         try {
-            if (typeof turnstile !== 'undefined' && typeof turnstile.getResponse === 'function') {
-                verifiedSecurityToken = turnstile.getResponse();
-                if (!verifiedSecurityToken) {
-                    throw new Error("Security verification incomplete. Please interact with the security checkbox.");
-                }
+          if (typeof turnstile !== 'undefined' && typeof turnstile.getResponse === 'function') {
+            verifiedSecurityToken = turnstile.getResponse();
+            if (!verifiedSecurityToken) {
+              throw new Error("Security verification incomplete. Please interact with the security checkbox.");
             }
+          }
         } catch (securityValidationError) {
-            if (systemFeedbackBox) systemFeedbackBox.textContent = securityValidationError.message;
-            if (authSubmitButton) {
-                authSubmitButton.disabled = false;
-                authSubmitButton.textContent = 'Enter Secure Portal →';
-            }
-            return;
+          if (systemFeedbackBox) {
+            systemFeedbackBox.textContent = securityValidationError.message;
+            systemFeedbackBox.style.display = "block";
+          }
+          if (authSubmitButton) {
+            authSubmitButton.disabled = false;
+            authSubmitButton.textContent = 'Enter Secure Portal →';
+          }
+          return;
         }
+
         // Call our database validation handler safely passing runtime nodes
         executeSupabaseAuthenticationHandshake(
-            emailInputNode.value.trim(), 
-            pwdInputNode.value, 
-            authSubmitButton, 
-            systemFeedbackBox, 
-            client
+          emailInputNode.value.trim(),
+          pwdInputNode.value,
+          authSubmitButton,
+          systemFeedbackBox,
+          client
         );
+      });
     });
-});
+    /**
+     * 📡 SECURE SUPABASE ACCESS DISPATCH ENGINE
+     * Handles user database validation and triggers your 2-Strike lock rules
+     */
+    async function executeSupabaseAuthenticationHandshake(emailValue, passwordValue, submitBtn, feedbackBox, activeClient) {
+      "use strict";
+      try {
+        console.log(`🔐 Initiating isolated client handshake transmission to: lrbimrlbskjweynxlgas.supabase.co...`);
 
-/**
- * 📡 SECURE SUPABASE ACCESS DISPATCH ENGINE
- * Handles user database validation and triggers your 2-Strike lock rules
- */
-async function executeSupabaseAuthenticationHandshake(emailValue, passwordValue, submitBtn, feedbackBox, activeClient) {
-    "use strict";
-    try {
-        console.log(`🔒 Initiating isolated client handshake transmission to: lrbimrlbskjweynxlgas.supabase.co...`);
-        
         // Force form verification parameters to query against client storage layers
-        const { data, error } = await activeClient.auth.signInWithPassword({ 
-            email: emailValue, 
-            password: passwordValue 
+        const { data, error } = await activeClient.auth.signInWithPassword({
+          email: emailValue,
+          password: passwordValue
         });
 
         if (error) {
-            // Check message or status to see if it is explicitly an invalid credential strike
-            if (error.message.toLowerCase().includes("invalid login credentials") || error.status === 400) {
-                if (typeof window.handleFailedLoginAttemptTracking === "function") {
-                    window.handleFailedLoginAttemptTracking();
-                }
+          // Check message or status to see if it is explicitly an invalid credential strike
+          if (error.message.toLowerCase().includes("invalid login credentials") || error.status === 400) {
+            if (typeof window.handleFailedLoginAttemptTracking === "function") {
+              window.handleFailedLoginAttemptTracking();
             }
-            throw error;
+          }
+          throw error;
         }
 
         console.log("🚀 Auth connection verified. Synchronizing window namespace matrices...");
-        
+
         // Clear out any old remaining security tracking strikes on structural success passes
         if (typeof window.clearLoginStrikesOnSuccess === "function") {
-            window.clearLoginStrikesOnSuccess();
+          window.clearLoginStrikesOnSuccess();
         }
 
         // Expose state tokens globally so page scripts trigger on arrival pass
@@ -539,25 +595,46 @@ async function executeSupabaseAuthenticationHandshake(emailValue, passwordValue,
 
         // Strict administrative operator context vs client route sorting
         if (emailValue.toLowerCase().endsWith('@filings4u.com')) {
-            if (feedbackBox) feedbackBox.textContent = "Redirecting administrative operator context profile...";
+          if (feedbackBox) {
+            feedbackBox.style.color = "var(--accent)";
+            feedbackBox.style.backgroundColor = "var(--accent-bg)";
+            feedbackBox.style.border = "1px solid #a7f3d0";
+            feedbackBox.textContent = "Redirecting administrative operator context profile...";
+            feedbackBox.style.display = "block";
+          }
+          setTimeout(() => {
             window.location.replace("admin-dashboard.html");
+          }, 800);
         } else {
-            if (feedbackBox) feedbackBox.textContent = "Secure connection verified. Loading your corporate profiles...";
+          if (feedbackBox) {
+            feedbackBox.style.color = "var(--accent)";
+            feedbackBox.style.backgroundColor = "var(--accent-bg)";
+            feedbackBox.style.border = "1px solid #a7f3d0";
+            feedbackBox.textContent = "Secure connection verified. Loading your corporate profiles...";
+            feedbackBox.style.display = "block";
+          }
+          setTimeout(() => {
             window.location.replace("client-dashboard.html");
+          }, 800);
         }
 
-    } catch (handshakeException) {
+      } catch (handshakeException) {
         console.error("Authorization access fault caught:", handshakeException.message || handshakeException);
         
         if (feedbackBox) {
-            feedbackBox.textContent = handshakeException.message || "Invalid account credentials provided.";
+          feedbackBox.style.color = "var(--error)";
+          feedbackBox.style.backgroundColor = "var(--error-bg)";
+          feedbackBox.style.border = "1px solid #fca5a5";
+          feedbackBox.textContent = handshakeException.message || "Invalid account credentials provided.";
+          feedbackBox.style.display = "block";
         }
+        
         if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Enter Secure Portal →';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Enter Secure Portal →';
         }
+      }
     }
-}
-</script>
+  </script>
 </body>
 </html>
