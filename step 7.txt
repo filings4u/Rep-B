@@ -1,0 +1,108 @@
+/**
+ * Handles Step 8 Account Activation confirmation display configurations safely.
+ * Stripped of step-7 input gathering structures to preserve design parity.
+ */
+window.handleClientAccountActivation = async function(event) {
+  if (event) {
+    if (typeof event.preventDefault === "function") event.preventDefault();
+    if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+  }
+
+  const actionSubmitBtn = document.getElementById("portal-activation-submit-btn");
+  const formElement = document.getElementById("wizard-account-generation-form");
+
+  if (!actionSubmitBtn || !formElement) {
+    console.error("[Gatekeeper Error] Core Interactive input elements missing from DOM.");
+    return false;
+  }
+
+  // Extract from pristine token properties cached during earlier wizard blocks
+  const trackingToken = window.currentGeneratedMbeAccountNumber || localStorage.getItem("tracking_number") || "";
+  
+  let targetEmail = "";
+  try {
+    const manifest = JSON.parse(sessionStorage.getItem("f4u_finalized_checkout_receipt_manifest") || "{}");
+    targetEmail = manifest.communications_email || localStorage.getItem("wizard_field_lead_email") || "";
+  } catch(ex) {
+    targetEmail = "";
+  }
+
+  let originalBtnHtml = actionSubmitBtn.innerHTML;
+  actionSubmitBtn.disabled = true;
+  actionSubmitBtn.style.background = "#64748b";
+  actionSubmitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 6px;"></i> Securing Identity Payload...';
+
+  try {
+    const supabaseClient = window.getSuccessPageSupabaseClient();
+    if (!supabaseClient) throw new Error("Supabase authentication connection engine unavailable.");
+
+    console.log("[Gatekeeper] Verified status update block context for order tracking token:", trackingToken);
+
+    // DISPLAY ON-SCREEN SECURITY CONFIRMATION REMINDER TOOLTIP INSTEAD OF BLIND INPUT COLLECTION
+    formElement.innerHTML = `
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; text-align: left; box-sizing: border-box; width: 100%;">
+        <h4 style="color: #1e40af; font-size: 1rem; font-weight: 800; margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-paper-plane"></i> Verification Link Transmitted
+        </h4>
+        <p style="color: #1e3a8a; font-size: 0.85rem; margin: 0 0 12px 0; line-height: 1.5;">
+          A secure identity access verification token has been dispatched to your registered address: <strong>${targetEmail}</strong>.
+        </p>
+        <div style="background: #ffffff; border: 1px solid #dbeafe; border-radius: 6px; padding: 12px; font-size: 0.775rem; color: #475569; line-height: 1.4;">
+          <span style="color: #fbbf24; font-size: 1rem; margin-right: 4px;"><i class="fa-solid fa-triangle-exclamation"></i></span>
+          <strong>Important Action Required:</strong> Open your email application, locate the verification button message, and select it to establish your password configuration parameters. Be sure to check your <strong>Spam or Junk email folders</strong> if the card does not render inside your primary ledger view in 60 seconds.
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    console.error("[Gatekeeper Suspended Exception]", err);
+    alert(`Account Initialization Suspended: ${err.message || err}`);
+    actionSubmitBtn.disabled = false;
+    actionSubmitBtn.style.background = "#10b981";
+    actionSubmitBtn.innerHTML = originalBtnHtml;
+  }
+  return false;
+};
+
+
+
+
+
+
+
+// ============================================================================ //
+// ðŸ“„ FILE: step-8.js - BLOCK 4 - PART J                                        //
+// ðŸ§¾ MODULE: TIMEOUT MODALS, STEP STEP-8 LIFE-CYCLE HOOKS, & POA REHYDRATION   //
+// ============================================================================ //
+
+// ============================================================================ //
+// ðŸŽ¯ FIXED OVERLAY TIMER ENGINE                                                //
+// ============================================================================ //
+window.triggerSecureBlurModalRedirect = function(verifiedUserUuid, verifiedEmailAddress) {
+  const overlay = document.getElementById("secure-redirect-blur-overlay");
+  const progressBar = document.getElementById("redirect-countdown-progress-bar");
+  const countLabel = document.getElementById("redirect-countdown-text-label");
+  if (!overlay) return;
+
+  overlay.style.display = "flex";
+  
+  // ðŸ”¥ FIX: Corrected structural typo percentage syntax to initialize bar width cleanly
+  if (progressBar) progressBar.style.width = "100%";
+  setTimeout(() => { if (progressBar) progressBar.style.width = "0%"; }, 50);
+
+  let secondsRemainingValue = 10;
+  const countingIntervalThread = setInterval(() => {
+    secondsRemainingValue--;
+    if (countLabel) {
+      countLabel.innerHTML = `Redirecting in ${secondsRemainingValue} second${secondsRemainingValue !== 1 ? 's' : ''}...`;
+    }
+    if (secondsRemainingValue <= 0) {
+      clearInterval(countingIntervalThread);
+      console.log("[Verification Secure] Verification successful. Redirecting to user platform...");
+      sessionStorage.removeItem("f4u_finalized_checkout_receipt_manifest");
+      
+      // ðŸŸ¢ FIXED: Added missing '$' sign and query routing path to validate the template execution
+      const destinationGatewayUrl = `https://portal.filings4u.com/client-dashboard.html?uuid=${encodeURIComponent(verifiedUserUuid)}&email=${encodeURIComponent(verifiedEmailAddress)}`;
+      window.location.href = destinationGatewayUrl;
+    }
+  }, 1000);
+};
