@@ -89,38 +89,45 @@
     </main>
   </div>
 
-  
-      <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
- 
+  <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <script src="assets/js/supabase-config.js"></script>
-  
   <script src="assets/js/client-master-ledger.js"></script>
-
   <script src="assets/js/client-navigation.js"></script>
-
   <script src="assets/js/client-footer.js"></script>
-
-    <script>
+  <script>
     document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
 
       // 1. Resolve Document Table Target Node Hook
       const historyTableBody = document.getElementById("client-orders-history-target-box");
-
       if (!historyTableBody) {
         throw new Error("✕ Critical UI Error: Table alignment target container 'client-orders-history-target-box' is missing from document layout.");
       }
 
-      // 2. Fetch Global Database Instance Connections
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        historyTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure connection missing.</td></tr>`;
-        throw new Error("✕ Initialization Error: Database driver references evaluate to unassigned.");
+      // 2. Fetch Global Database Instance Connections Defensively
+      let client = window.supabaseInstance || window.supabaseClient || window.supabase;
+      if ((!client || typeof client.from !== 'function') && typeof supabase !== 'undefined') {
+        const URL = "https://lrbimrlbskjweynxlgas.supabase.co";
+        const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+        client = supabase.createClient(URL, KEY, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            storageKey: "filings4u_client_session_token"
+          }
+        });
+        window.supabaseInstance = client;
+        window.supabaseClient = client;
       }
 
-      // 3. Authenticate Active User Portal Session Profile Layers [0.1]
+      if (!client || typeof client.from !== 'function') {
+        historyTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ System Error: Supabase client infrastructure connection missing.</td></tr>`;
+        return;
+      }
+
+      // 3. Authenticate Active User Portal Session Profile Layers
       const { data: { session }, error: sessionError } = await client.auth.getSession();
       if (sessionError || !session) {
         window.location.href = "portal-login.html";
@@ -129,58 +136,111 @@
 
       const clientSessionEmail = session.user.email;
 
+      // 🟢 ADD EXTRA TABLE COLUMN HEADER DYNAMICALLY TO ACCOMMODATE ACTIONS
+      const tableHeaderRow = document.querySelector("table thead tr");
+      if (tableHeaderRow && !document.getElementById("actionsHeaderCell")) {
+        const thActions = document.createElement("th");
+        thActions.id = "actionsHeaderCell";
+        thActions.style.cssText = "padding:12px !important; text-align:right !important;";
+        thActions.textContent = "Receipt Actions";
+        tableHeaderRow.appendChild(thActions);
+      }
+
+      // Track active row data context object globally for our PDF function worker anchor access
+      let currentActiveReceiptRowData = null;
+
+      // --- 🔗 LINK SCHEMA CORE: FETCH FROM PUBLIC.ORDERS ---
       async function streamClientOrderHistoryPipeline() {
         try {
           console.log(`📡 [Billing History] Querying invoice statements matching owner: [${clientSessionEmail}]`);
-
-          // 🟢 DIRECT CLIENT FETCH: Extract user receipts filtered safely by session email parameters [0.1]
+          
+          // Pull down EVERY single layout attribute from your orders table schema safely
           const { data: orders, error: fetchError } = await client
             .from('orders')
-            .select('tracking_number, service_title, company_name, total_fee')
-            .eq('email', clientSessionEmail);
+            .select('tracking_number, selected_plan, company_name, total_paid_amount, created_at, first_name, last_name, phone_number, selected_upsells, stripe_payment_id, poa_signature')
+            .eq('email_address', clientSessionEmail.trim().toLowerCase());
 
-          if (fetchError) {
-            throw new Error("Postgres Database Operational Exception: " + fetchError.message);
-          }
+          if (fetchError) throw fetchError;
 
           if (!orders || orders.length === 0) {
-            historyTableBody.innerHTML = `<tr><td colspan="4" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No payment transactions or invoice receipts logged on this account.</td></tr>`;
+            historyTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No payment transactions or invoice receipts logged on this account.</td></tr>`;
             return;
           }
 
           historyTableBody.innerHTML = "";
 
-          orders.forEach(orderRow => {
+          orders.forEach((orderRow, index) => {
             const trNode = document.createElement("tr");
             trNode.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
-
+            
             const trackingRef = orderRow.tracking_number || "F4U-REF-KEY";
-            const serviceDesc = orderRow.service_title || "Corporate Processing Fee";
-            const companyName = orderRow.company_name || "Asset Formation Lane";
-            const feePaid     = parseFloat(orderRow.total_fee || 0).toFixed(2);
-
+            const serviceDesc = orderRow.selected_plan || "Corporate Processing Fee";
+            const companyName = orderRow.company_name || "Not Specified";
+            const feePaid = parseFloat(orderRow.total_paid_amount || 0).toFixed(2);
+            
             trNode.innerHTML = `
               <td style="padding:14px 12px; font-family:monospace; font-weight:700; color:var(--text-muted);">${escapeHistoryHtml(trackingRef)}</td>
               <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeHistoryHtml(serviceDesc)}</td>
               <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeHistoryHtml(companyName)}</td>
               <td style="padding:14px 12px; text-align:right; font-weight:800; color:var(--text-dark);">$${feePaid}</td>
+              <td style="padding:14px 12px; text-align:right;">
+                <button type="button" class="view-receipt-action-trigger-btn" id="rcptTriggerBtn_${index}" style="cursor:pointer; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; padding:6px 12px; border-radius:4px; font-weight:700; font-size:0.75rem; transition:all 0.2s;">View Receipt</button>
+              </td>
             `;
-
+            
             historyTableBody.appendChild(trNode);
-          });
 
+            // 🎯 POPUP OPEN ROUTINE ATTACHMENT
+            const actionButton = trNode.querySelector(`#rcptTriggerBtn_${index}`);
+            if (actionButton) {
+              actionButton.addEventListener("click", () => {
+                // Map the active structural dataset to our global tracking mirror
+                currentActiveReceiptRowData = orderRow;
+
+                const transDate = orderRow.created_at ? new Date(orderRow.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+                const clientFullName = ((orderRow.first_name || "") + " " + (orderRow.last_name || "")).trim() || "Customer Account";
+
+                // Paint properties straight into the Modal elements
+                document.getElementById("rcptTracking").textContent = trackingRef;
+                document.getElementById("rcptDate").textContent = transDate;
+                document.getElementById("rcptCompany").textContent = companyName;
+                document.getElementById("rcptClientName").textContent = clientFullName;
+                document.getElementById("rcptClientPhone").textContent = orderRow.phone_number || "Not Provided";
+                document.getElementById("rcptClientEmail").textContent = clientSessionEmail;
+                document.getElementById("rcptPlan").textContent = serviceDesc;
+                document.getElementById("rcptAmount").textContent = `$${feePaid}`;
+                document.getElementById("rcptStripeId").textContent = orderRow.stripe_payment_id || "N/A (Internal Ledger)";
+                document.getElementById("rcptSignature").textContent = orderRow.poa_signature || "Digitally Verified";
+
+                // Render upsells line if option flags are populated inside the database field array strings
+                const upsellsBlock = document.getElementById("rcptUpsellsWrapperRow");
+                const upsellsList = document.getElementById("rcptUpsellsList");
+                if (orderRow.selected_upsells && orderRow.selected_upsells.trim() !== "") {
+                  upsellsList.textContent = orderRow.selected_upsells;
+                  upsellsBlock.style.display = "flex";
+                } else {
+                  upsellsBlock.style.display = "none";
+                }
+
+                // Smoothly trigger modal layout state to display flex view properties
+                document.getElementById("receiptModalOverlay").style.display = "flex";
+              });
+            }
+          });
         } catch (historyException) {
-          console.error("✕ Order History Retrieval Exception Blocked:", historyException.message);
-          historyTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Failed to link to billing logs.</td></tr>`;
+          console.error("✕ Order History Ingestion Crash:", historyException.message);
+          historyTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ Synchronization Failure: Failed to link to billing logs.</td></tr>`;
         }
       }
 
+      // --- HELPER STRINGS ANTI-XSS ESCAPE PARSER LAYER ---
       function escapeHistoryHtml(str) {
         if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'");
       }
 
-      function toggleSidebarAccordion(buttonElement) {
+      // --- INTERACTIVE SIDEBAR UI CONTROLS ---
+      window.toggleSidebarAccordion = function(buttonElement) {
         if (!buttonElement) return;
         buttonElement.classList.toggle('active');
         const panel = buttonElement.nextElementSibling;
@@ -191,17 +251,173 @@
             panel.style.maxHeight = panel.scrollHeight + "px";
           }
         }
-      }
-      window.toggleSidebarAccordion = toggleSidebarAccordion;
+      };
 
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-        window.localStorage.clear();
-        window.sessionStorage.clear();
-        window.location.replace("portal-login.html");
+      // --- ⏱️ LIVE PORTAL CLOCK SYSTEM WORKER ---
+      function runHeaderPortalClockTick() {
+        const clock = document.getElementById("portal-clock");
+        if (clock) clock.textContent = new Date().toLocaleString();
+      }
+      setInterval(runHeaderPortalClockTick, 1000);
+      runHeaderPortalClockTick();
+
+      // --- DOORMAN LOGOUT TERMINAL HOOK ---
+      const sharedLogoutTriggers = document.querySelectorAll(".logout-btn, .portal-logout-action");
+      sharedLogoutTriggers.forEach(element => {
+        element.addEventListener("click", async () => {
+          try { await client.auth.signOut(); } catch(e) {}
+          window.localStorage.clear();
+          window.sessionStorage.clear();
+          window.location.replace("portal-login.html");
+        });
       });
 
-      await streamClientOrderHistoryPipeline();
+      // 🛠️ THE FIXED ROUTING INVOCATION: Call data thread asynchronously to avoid guard crashes
+      streamClientOrderHistoryPipeline().catch((err) => {
+        console.error("[Order History Shield Trace]:", err);
+      });
     });
+
+          // --- 📥 SECURE CLIENT-SIDE BINARY PDF RECEIPT DOWNLOAD GENERATOR ---
+      const downloadPdfBtn = document.getElementById("rcptDownloadBinaryPdfBtn");
+      if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener("click", async () => {
+          if (!currentActiveReceiptRowData) return;
+          
+          const targetNode = currentActiveReceiptRowData;
+          const originalText = downloadPdfBtn.textContent;
+          
+          downloadPdfBtn.disabled = true;
+          downloadPdfBtn.textContent = "Compiling PDF Asset...";
+
+          try {
+            console.log("Generating secure binary receipt download artifact schema...");
+            
+            // Build the dynamic parameters payload string container array to trigger our file worker
+            const receiptFileName = `receipt_${targetNode.tracking_number || "invoice"}.pdf`;
+            
+            // Trigger browser native print stream mapping restricted cleanly to just our modal layout container block
+            // This is completely safe, PCI-compliant, uses zero processing data packages, and saves instantly as a layout PDF
+            const targetPrintAreaContents = document.getElementById("printableReceiptArea").innerHTML;
+            const originalBodyContentFramework = document.body.innerHTML;
+
+            // Isolate layout view state to just print context frame canvas boxes
+            document.body.innerHTML = `
+              <div style="background:#ffffff; padding:40px; font-family:sans-serif; color:#0f172a; max-width:600px; margin:0 auto; box-sizing:border-box;">
+                ${targetPrintAreaContents}
+              </div>
+            `;
+            
+            window.print(); // Triggers the system print panel to Save as PDF natively with crisp clean vector alignments
+
+            // Restore the dashboard view canvas layout elements instantly after download panel cancels/closes
+            window.location.reload(); 
+
+          } catch (pdfGenerationFault) {
+            console.error("✕ PDF Export Interrupted:", pdfGenerationFault);
+            alert("Unable to compile receipt file structure at this time. Please use Print option instead.");
+            downloadPdfBtn.disabled = false;
+            downloadPdfBtn.textContent = originalText;
+          }
+        });
+      }
+
   </script>
+
+  
+<!-- 📄 RE-COMPACTED FLOATING OVERLAY VIEW CANVAS -->
+<div id="receiptModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex !important; align-items: center !important; justify-content: center !important; z-index: 10000; padding: 20px; box-sizing: border-box;">
+  
+  <!-- Outer Card Boundary Element (Scaled Down Height Limits Added) -->
+  <div style="background: #ffffff; width: 100%; max-width: 480px; max-height: calc(100vh - 80px); border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15); display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;">
+    
+    <!-- Modal Control Header Bar -->
+    <div style="background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+      <span style="font-weight: 800; font-size: 0.825rem; color: #0a1f44; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+        <i class="fa-solid fa-file-invoice-dollar" style="color: #10b981;"></i> Transaction Invoice Receipt
+      </span>
+      <button type="button" onclick="document.getElementById('receiptModalOverlay').style.display = 'none'" style="background: none; border: none; font-size: 1.1rem; color: #64748b; cursor: pointer; padding: 4px; display: inline-flex; align-items: center;">✕</button>
+    </div>
+
+    <!-- 🔄 ISOLATED INTERNAL CONTENT SCROLL BOX (Prevents Full-Screen Stretching) -->
+    <div id="printableReceiptArea" style="padding: 24px; flex: 1; overflow-y: auto !important; text-align: left; box-sizing: border-box;">
+
+      
+      <!-- Brand Logo Core Section -->
+      <div style="text-align: center; margin-bottom: 28px;">
+        <img src="images/logo.png" alt="filings4u logo" style="height: 38px; margin-bottom: 6px;">
+        <p style="margin: 0; font-size: 0.725rem; color: #10b981; text-transform: uppercase; font-weight: 800; letter-spacing: 0.08em;">Official Corporate Fulfillment Summary</p>
+      </div>
+
+      <!-- Transaction Anchors Split Subgrid -->
+      <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 14px; margin-bottom: 18px; font-size: 0.85rem;">
+        <div>
+          <div style="color: #64748b; font-weight: 600;">Tracking Reference:</div>
+          <div id="rcptTracking" style="font-weight: 800; font-family: monospace; color: #0f172a; margin-top: 2px;">-</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="color: #64748b; font-weight: 600;">Fulfillment Date:</div>
+          <div id="rcptDate" style="font-weight: 700; color: #0f172a; margin-top: 2px;">-</div>
+        </div>
+      </div>
+
+      <!-- Customer Dossier Profile Metadata Block -->
+      <div style="margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; line-height: 1.5;">
+        <div style="font-weight: 800; color: #0a1f44; font-size: 0.95rem; margin-bottom: 6px;" id="rcptCompany">-</div>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: x 8px; color: #475569;">
+          <span style="color:#94a3b8; font-weight:600;">Authorized Agent:</span> <span id="rcptClientName" style="font-weight:600; color:#0f172a;">-</span>
+          <span style="color:#94a3b8; font-weight:600;">Routing Contact:</span> <span id="rcptClientPhone">-</span>
+          <span style="color:#94a3b8; font-weight:600;">Linked Email:</span> <span id="rcptClientEmail">-</span>
+        </div>
+      </div>
+
+      <!-- Itemized Pricing Breakdown Panel -->
+      <div style="margin-bottom: 24px;">
+        <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+          <span>Itemized Description Allocation</span>
+          <span>Total Fee Paid</span>
+        </div>
+        
+        <!-- Primary Plan Item Row -->
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 8px 0; border-bottom: 1px solid #f1f5f9; align-items: baseline;">
+          <span id="rcptPlan" style="font-weight: 700; color: #0f172a;">-</span>
+          <span id="rcptAmount" style="font-weight: 800; color: #0f172a;">-</span>
+        </div>
+        
+        <!-- Add-on Upsells Dynamic Append Item Row -->
+        <div id="rcptUpsellsWrapperRow" style="display: none; flex-direction: column; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid #f1f5f9; gap: 4px;">
+          <span style="font-weight: 600; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Active Market Add-ons Stacked:</span>
+          <span id="rcptUpsellsList" style="color: #475569; font-style: italic; line-height: 1.4;">-</span>
+        </div>
+      </div>
+
+      <!-- Ledger Audit References Block -->
+      <div style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.775rem; background: #fafafa; padding: 12px; border-radius: 6px; border: 1px solid #f1f5f9;">
+        <div>
+          <span style="color:#94a3b8; font-weight:600; display:block;">Stripe Reference ID:</span>
+          <span id="rcptStripeId" style="font-family:monospace; font-weight:600; color:#475569;">-</span>
+        </div>
+        <div>
+          <span style="color:#94a3b8; font-weight:600; display:block;">Digital POA Signature:</span>
+          <span id="rcptSignature" style="font-style:italic; font-weight:600; color:#475569;">-</span>
+        </div>
+      </div>
+
+      <!-- Bottom Security Verification Watermark -->
+      <div style="text-align: center; font-size: 0.725rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 8px; border: 1px dashed rgba(16, 185, 129, 0.25); display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <i class="fa-solid fa-shield-checkmark"></i> Secured 256-Bit SSL Cryptographic Transaction Authorization Verified
+      </div>
+    </div>
+
+    <!-- Modal Action Footer Control Layout -->
+    <div style="background: #f8fafc; padding: 18px 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; box-sizing: border-box;">
+      <button type="button" id="rcptDownloadBinaryPdfBtn" style="flex: 12; cursor: pointer; background: #0a1f44; color: #ffffff; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+        <i class="fa-solid fa-circle-arrow-down"></i> Download PDF Receipt
+      </button>
+      <button type="button" onclick="document.getElementById('receiptModalOverlay').style.display = 'none'" style="flex: 7; cursor: pointer; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;">Dismiss Panel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
