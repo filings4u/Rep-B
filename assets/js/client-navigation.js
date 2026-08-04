@@ -143,34 +143,45 @@ document.addEventListener("DOMContentLoaded", () => {
         <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
         <div><div class="admin-badge">Client Account</div></div>
     </div>
-    <nav class="sidebar-accordion-menu">
-        <div class="accordion-group">
-            <button class="accordion-trigger d-trigger" data-group="account"> My Account <span class="chevron">▼</span> </button>
-            <div class="accordion-panel d-panel" data-group="account">
-                <a href="client-dashboard.html" class="nav-item d-link" data-page="client-dashboard.html">📊 Dashboard Home</a>
-                <a href="client-entities.html" class="nav-item d-link" data-page="client-entities.html">🏢 My Registered Entities</a>
-                <a href="client-services.html" class="nav-item d-link" data-page="client-services.html">🛠️ Order New Services</a>
-            </div>
-        </div>
-        <div class="accordion-group">
-            <button class="accordion-trigger d-trigger" data-group="compliance"> Filings & Compliance <span class="chevron">▼</span> </button>
-            <div class="accordion-panel d-panel" data-group="compliance">
-                <a href="client-filings.html" class="nav-item d-link" data-page="client-filings.html">⚙️ Active Orders</a>
-                <a href="client-compliance.html" class="nav-item d-link" data-page="client-compliance.html">🛡️ Compliance Tracker</a>
-                <a href="client-vault.html" class="nav-item d-link" data-page="client-vault.html">📂 Document Vault</a>
-            </div>
-        </div>
-        <div class="accordion-group">
-            <button class="accordion-trigger d-trigger" data-group="support"> Billing & Support <span class="chevron">▼</span> </button>
-            <div class="accordion-panel d-panel" data-group="support">
-                <a href="client-account.html" class="nav-item d-link" data-page="client-account.html">💰 My Account</a>
-                <a href="client-order-history.html" class="nav-item d-link" data-page="client-order-history.html">💸 Order History</a>
-                <a href="client-chat.html" class="nav-item d-link" data-page="client-chat.html">💬 Live Chat Support</a>
-                <a href="client-ticket.html" class="nav-item d-link" data-page="client-ticket.html">🎫 Support Tickets</a>
-                <a href="client-knowledgebase.html" class="nav-item d-link" data-page="client-knowledgebase.html">📰 Help Resources</a>
-            </div>
-        </div>
-    </nav>
+<nav class="sidebar-accordion-menu" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"> 
+  
+  <!-- 👤 ACCOUNT ENGINE ACCORDION -->
+  <div class="accordion-group"> 
+    <button class="accordion-trigger d-trigger" data-group="account"> My Account <span class="chevron">▼</span> </button> 
+    <div class="accordion-panel d-panel" data-group="account"> 
+      <a href="client-dashboard.html" class="nav-item d-link" data-page="client-dashboard.html">📊 Dashboard Home</a> 
+      <a href="client-entities.html" class="nav-item d-link" data-page="client-entities.html">🏢 Registered Entities</a> 
+      <a href="client-team.html" class="nav-item d-link" data-page="client-team.html">🔐 Team & Access Control</a>
+      <a href="client-services.html" class="nav-item d-link" data-page="client-services.html">🛒 Order New Services</a> 
+    </div> 
+  </div> 
+
+  <!-- ⚖️ STATUTORY FILINGS & COMPLIANCE ACCORDION -->
+  <div class="accordion-group"> 
+    <button class="accordion-trigger d-trigger" data-group="compliance"> Filings & Compliance <span class="chevron">▼</span> </button> 
+    <div class="accordion-panel d-panel" data-group="compliance"> 
+      <a href="client-filings.html" class="nav-item d-link" data-page="client-filings.html">⚙️ Active Orders Queue</a> 
+      <a href="client-status.html" class="nav-item d-link" data-page="client-status.html">📡 Track Live Progress</a> 
+      <a href="client-registered-agent.html" class="nav-item d-link" data-page="client-registered-agent.html">🛡️ Registered Agent Desk</a>
+      <a href="client-mailroom.html" class="nav-item d-link" data-page="client-mailroom.html">📬 Mailroom & State Notices</a>
+      <a href="client-compliance.html" class="nav-item d-link" data-page="client-compliance.html">🔄 Annual Compliance Monitor</a> 
+      <a href="client-vault.html" class="nav-item d-link" data-page="client-vault.html">📂 Secure Corporate Vault</a> 
+    </div> 
+  </div> 
+
+  <!-- 💳 FINANCES & TECHNICAL HELP ACCORDION -->
+  <div class="accordion-group"> 
+    <button class="accordion-trigger d-trigger" data-group="support"> Billing & Support <span class="chevron">▼</span> </button> 
+    <div class="accordion-panel d-panel" data-group="support"> 
+      <a href="client-account.html" class="nav-item d-link" data-page="client-account.html">💳 Payment Methods & Plans</a> 
+      <a href="client-order-history.html" class="nav-item d-link" data-page="client-order-history.html">🧾 Invoices & Statements</a> 
+      <a href="client-support-center.html" class="nav-item d-link" data-page="client-support-center.html">💬 Support & Live Help Desk</a> 
+      <a href="client-knowledgebase.html" class="nav-item d-link" data-page="client-knowledgebase.html">📰 Corporate Knowledgebase</a> 
+    </div> 
+  </div> 
+</nav>
+
+
     <div class="sidebar-footer-lock" style="padding-top:10px !important;">
         <button id="f4uSidebarCollapseToggleHandle" title="Hide Navigation Sidebar Workspace Layout Bounds">◀ Hide Sidebar Menu</button>
         <button id="desktopPortalLogoutBtn" class="logout-btn">Log Out</button>
