@@ -11,21 +11,29 @@
   });
 
   async function initializeRealtimeBroadcastNetwork() {
-    // 🚀 THE BREAKOUT FIX: Evaluate the shared database property dynamically to stop loop freezes
+    // Evaluate the shared database property dynamically to stop loop freezes
     let activeClient = window.supabaseInstance || window.supabaseClient;
 
     if (!activeClient || typeof activeClient.channel !== 'function') {
       const currentLibrary = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+      
       if (currentLibrary && typeof currentLibrary.createClient === 'function') {
         console.log("🔧 [Portal Engine] Building fresh database fail-safe connection channel inline...");
         const targetUrl = "https://lrbimrlbskjweynxlgas.supabase.co";
         const targetKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
         
+        // 🟢 FIX 1: Removed restrictive storageKey so password resets can share the default localStorage token space
         activeClient = currentLibrary.createClient(targetUrl, targetKey, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: "filings4u_secure_session_token" }
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
         });
+        
         window.supabaseInstance = activeClient;
         window.supabaseClient = activeClient;
+        window.supabase = activeClient; // Synchronize global window space
       }
     }
 
@@ -43,8 +51,16 @@
       return;
     }
 
+    // 🟢 FIX 2: If we are on the update-password page, DO NOT loop-freeze if the user is unauthenticated.
+    // They are arriving via an email link; their session is a recovery-state hash token, not a full login yet.
+    if (currentPath.includes('update-password.html')) {
+      console.log("🔑 [Realtime Engine] Update-password view detected. Bypassing global telemetry handshake locks.");
+      return;
+    }
+
     try {
       let userInstance = window.activeClientSessionUser;
+      
       if (!userInstance && activeClient.auth && typeof activeClient.auth.getUser === 'function') {
         const { data: { user }, error } = await activeClient.auth.getUser();
         if (!error && user) {
@@ -61,17 +77,21 @@
 
       // Open user specific telemetry socket desk channel room
       window.realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${userInstance.id}`);
-
+      
       window.realtimeTelemetryChannel
         .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
           console.log('⚡ Realtime state sync received:', payload);
-          handleIncomingStateSync(payload);
+          if (typeof handleIncomingStateSync === 'function') {
+            handleIncomingStateSync(payload);
+          }
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.log('📡 Synchronized cleanly to Supabase Realtime Broadcast Network');
             // Safely chain down to load database data parameters
-            syncAccountTelemetryGrid(activeClient, userInstance);
+            if (typeof syncAccountTelemetryGrid === 'function') {
+              syncAccountTelemetryGrid(activeClient, userInstance);
+            }
           }
         });
 
