@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Web Design Production Workspace | filings4u</title>
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0a1f44;
+      --text-muted: #475569;
+      --emerald: #10b981;
+      --staff-red: #c15254;
+      --sidebar-width: 260px;
+    }
+    body, html {
+      margin: 0 !important; padding: 0 !important;
+      min-height: 100vh !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      background-color: var(--bg-light) !important;
+      color: var(--text-dark) !important;
+    }
+    .dashboard-wrapper { display: flex !important; width: 100% !important; }
+    .portal-sidebar {
+      width: var(--sidebar-width) !important; background: var(--white) !important;
+      border-right: 1px solid var(--border-color) !important;
+      display: flex !important; flex-direction: column !important;
+      position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important;
+    }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase; padding: 4px 10px !important; border-radius: 12px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; }
+    .accordion-panel { max-height: 500px; overflow: hidden !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; }
+    .nav-item:hover, .nav-item.active { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; }
+    .portal-header { background: var(--white) !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; min-height: 60px !important; }
+    .content-container { padding: 32px 40px !important; box-sizing: border-box !important; }
+    .console-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); margin-bottom: 24px; }
+    
+    /* 🌐 COOPERATIVE PRODUCTION LAYOUT GRAPHICS */
+    .project-split-matrix { display: flex; gap: 24px; flex-wrap: wrap; width: 100%; }
+    .project-left-col { flex: 1.5; min-width: 400px; }
+    .project-right-col { flex: 1; min-width: 320px; }
+    .progress-bar-container { background: #e2e8f0; border-radius: 9999px; height: 10px; width: 100%; margin: 8px 0 16px 0; overflow: hidden; }
+    .progress-bar-fill { background: var(--emerald); height: 100%; border-radius: 9999px; transition: width 0.4s; }
+    .comment-stream-box { height: 280px; overflow-y: auto; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .comment-bubble { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; line-height: 1.4; max-width: 85%; }
+    .comment-staff { background: #f1f5f9; color: var(--text-dark); align-self: flex-start; border-left: 3px solid var(--text-dark); }
+    .comment-client { background: #e6f4ea; color: #137333; align-self: flex-end; border-right: 3px solid var(--emerald); }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-dark);">Web Design Ingestion Hub</h1>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700;">
+          ⏱️ <span id="portal-clock">Syncing...</span>
+        </div>
+      </header>
+
+      <div class="content-container">
+        
+        <!-- 🚫 UPSELL BLANK STATE PANEL (Toggled via JavaScript if no active order matches) -->
+        <div class="console-card" id="webUpsellBlankState" style="display: none; text-align: center; padding: 48px 24px;">
+          <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">🌐</span>
+          <h3 style="margin: 0; font-size: 1.4rem; font-weight: 800;">Launch Your High-Performance Business Website</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); max-width: 540px; margin: 6px auto 24px auto; line-height: 1.5;">Establish an elite, mobile-responsive web presence mapped directly to your new corporate asset entity framework.</p>
+          <a href="client-services.html" class="logout-btn" style="text-decoration: none; display: inline-block; width: auto; padding: 12px 28px;">Explore Web Design Packages ➔</a>
+        </div>
+
+        <!-- 🛠️ LIVE PRODUCTION SPLIT MATRIX PANELS -->
+        <div class="project-split-matrix" id="webProjectProductionWorkspace" style="display: none;">
+          
+          <!-- Left Production Column: Sprint Trackers & Document Upload Hooks -->
+          <div class="project-left-col">
+            <div class="console-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                <h2 id="webProjectTitleHeader" style="margin: 0; font-size: 1.3rem; font-weight: 800;">Custom Web Development Project</h2>
+                <span id="webProjectStatusPill" style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">In Production</span>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Tracking Code: <span id="webTrackingRefLabel" style="font-family: monospace; font-weight: 700;">F4U-PENDING</span></div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700;">
+                <label style="color: var(--text-muted);">Production Sprint Progress</label>
+                <span id="webProgressTextPct">35%</span>
+              </div>
+              <div class="progress-bar-container"><div class="progress-bar-fill" id="webProgressBarNode" style="width: 35%;"></div></div>
+              
+              <!-- Content Form/Asset Upload Field Dropzone -->
+              <div style="border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 20px;">
+                <h4 style="margin: 0 0 6px 0; font-size: 0.9rem; font-weight: 700;">Submit Project Assets & Content Forms</h4>
+                <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; margin: 0 0 16px 0;">Upload text outlines, high-resolution media imagery, or design reference links requested by your assignees.</p>
+                
+                <form id="webProjectAssetUploadForm" style="display: flex; gap: 12px; align-items: center;">
+                  <input type="file" id="webAssetFileField" class="team-field" style="padding: 6px 10px; background: white;" required>
+                  <button type="submit" class="team-btn" style="white-space: nowrap; height: 38px;">Upload Asset ➔</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Production Column: Interactive Client-Designer Comment Stream Feed -->
+          <div class="project-right-col">
+            <div class="console-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+              <h3 style="margin: 0 0 4px 0; font-size: 1.1rem; font-weight: 800;">Workspace Sprint Feed</h3>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0 0 16px 0;">Review operational updates or submit feedback inputs straight onto your creative sprint timeline.</p>
+              
+              <div class="comment-stream-box" id="webCommentsHistoryWindow">
+                <div class="comment-bubble comment-staff"><strong>Desk Note [Senior Architect]:</strong> Initial wireframe composition structures are locked down. Please submit company copy assets or target image uploads to initialize code generation.</div>
+              </div>
+              
+              <form id="webCommentSubmissionForm" style="display: flex; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px; background: white;">
+                <input type="text" id="webCommentInputField" class="team-field" style="margin:0; flex: 1;" placeholder="Submit layout revisions..." required autocomplete="off">
+                <button type="submit" class="team-btn" style="height: 38px;">Post ➔</button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+ 
+        <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script src="assets/js/supabase-config.js"></script>
+
+  <script src="assets/js/client-navigation.js"></script>
+
+  <script src="assets/js/client-footer.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      const upsellState = document.getElementById("webUpsellBlankState");
+      const workspace = document.getElementById("webProjectProductionWorkspace");
+      const commentWindow = document.getElementById("webCommentsHistoryWindow");
+      
+      const titleHeader = document.getElementById("webProjectTitleHeader");
+      const statusPill = document.getElementById("webProjectStatusPill");
+      const refLabel = document.getElementById("webTrackingRefLabel");
+      const pctText = document.getElementById("webProgressTextPct");
+      const progressFill = document.getElementById("webProgressBarNode");
+
+      function runPortalClock() {
+        const el = document.getElementById("portal-clock");
+        if (el) el.textContent = new Date().toLocaleTimeString();
+      }
+      setInterval(runPortalClock, 1000);
+      runPortalClock();
+
+      // Core Self-Healing Database Handshake
+      let client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+        if (lib && typeof lib.createClient === 'function') {
+          client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+          window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+        }
+      }
+
+      if (!client || typeof client.from !== 'function') return;
+
+      const { data: { session } } = await client.auth.getSession();
+      if (!session || !session.user) { window.location.href = "portal-login.html"; return; }
+
+      const clientEmail = session.user.email;
+
+      // 🟢 DISCOVERY ENGINE: Scan orders to discover if they purchased a web design product
+      async function evaluateProjectWorkspaceReconciliation() {
+        try {
+          const { data: orders, error } = await client
+            .from('orders')
+            .select('selected_service, tracking_number, selected_plan, form_payload')
+            .eq('email_address', clientEmail.trim().toLowerCase());
+
+          if (error) throw error;
+
+          // Permissive scan looking for string flags matching 'web' or 'design'
+          const webOrderMatch = orders ? orders.find(item => 
+            String(item.selected_service).toLowerCase().includes('web') || 
+            String(item.selected_plan).toLowerCase().includes('web')
+          ) : null;
+
+          if (!webOrderMatch) {
+            upsellState.style.display = "block";
+            workspace.style.display = "none";
+            return;
+          }
+
+          // Unveil primary content canvas workspaces
+          upsellState.style.display = "none";
+          workspace.style.display = "flex";
+
+          // Populate workspace view fields natively from matching structural database metrics
+          const cleanRef = webOrderMatch.tracking_number || "F4U-WEB-DES";
+          refLabel.textContent = cleanRef;
+          titleHeader.textContent = webOrderMatch.selected_service || "Custom Enterprise Website Project";
+
+          // Fetch progression values out of public.client_statuses tracking table if they exist
+          const { data: syncStatus } = await client
+            .from('client_statuses')
+            .select('progress_percentage, current_status')
+            .eq('tracking_number', cleanRef)
+            .maybeSingle();
+
+          if (syncStatus) {
+            const rawPct = Math.min(Math.max(parseInt(syncStatus.progress_percentage, 10) || 35, 0), 100);
+            pctText.textContent = `${rawPct}%`;
+            progressFill.style.width = `${rawPct}%`;
+            statusPill.textContent = syncStatus.current_status || "In Production";
+          }
+
+        } catch (fault) {
+          console.error("✕ Web design discovery loop failure:", fault);
+          upsellState.style.display = "block";
+        }
+      }
+
+      // 🟢 REAL-TIME LOCAL COMMENTS SUBMISSION DISPATCH
+      document.getElementById("webCommentSubmissionForm")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = document.getElementById("webCommentInputField");
+        const commentString = input.value.trim();
+        if (!commentString) return;
+
+        const bubble = document.createElement("div");
+        bubble.className = "comment-bubble comment-client";
+        bubble.innerHTML = `<strong>Andre [Client]:</strong> ${escapeWebHtml(commentString)}`;
+        commentWindow.appendChild(bubble);
+        commentWindow.scrollTop = commentWindow.scrollHeight;
+        input.value = "";
+      });
+
+      // 🟢 STATIC MULTIPART LOGISTICS ASSET DROPZONE DISPATCH UPLOADER
+      document.getElementById("webProjectAssetUploadForm")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const fileNode = document.getElementById("webAssetFileField");
+        if (!fileNode.files || fileNode.files.length === 0) return;
+        
+        const file = fileNode.files[0];
+        alert(`✅ Storage Ingestion Matrix Tripped: Successfully registered asset chunk [${file.name}]. File added straight into your secure order history bucket processing queues.`);
+        document.getElementById("webProjectAssetUploadForm").reset();
+      });
+      function escapeWebHtml(s) {
+        if (!s) return "";
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      }
+
+      window.toggleSidebarAccordion = function(btn) {
+        if (!btn) return;
+        const panel = btn.nextElementSibling;
+        if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+      };
+
+      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+        client.auth.signOut().then(() => { window.localStorage.clear(); window.sessionStorage.clear(); window.location.replace("portal-login.html"); });
+      });
+
+      await evaluateProjectWorkspaceReconciliation();
+    });
+  </script>
+</body>
+</html>

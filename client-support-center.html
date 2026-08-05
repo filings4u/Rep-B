@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Support & Live Help Desk | filings4u</title>
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0a1f44;
+      --text-muted: #475569;
+      --emerald: #10b981;
+      --staff-red: #c15254;
+      --sidebar-width: 260px;
+    }
+    body, html {
+      margin: 0 !important; padding: 0 !important;
+      min-height: 100vh !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      background-color: var(--bg-light) !important;
+      color: var(--text-dark) !important;
+    }
+    .dashboard-wrapper { display: flex !important; width: 100% !important; }
+    .portal-sidebar {
+      width: var(--sidebar-width) !important; background: var(--white) !important;
+      border-right: 1px solid var(--border-color) !important;
+      display: flex !important; flex-direction: column !important;
+      position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important;
+    }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase; padding: 4px 10px !important; border-radius: 12px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; }
+    .accordion-panel { max-height: 500px; overflow: hidden !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; }
+    .nav-item:hover, .nav-item.active { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; }
+    .portal-header { background: var(--white) !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; min-height: 60px !important; }
+    .content-container { padding: 32px 40px !important; box-sizing: border-box !important; }
+    .console-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); }
+    
+    /* 💬 CHAT & TICKET WORKSPACE FRAMEWORKS */
+    .support-split-layout { display: flex; gap: 28px; flex-wrap: wrap; width: 100%; }
+    .support-chat-pane { flex: 2; min-width: 400px; height: 500px; display: flex; flex-direction: column; background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+    .chat-history-container { flex: 1; overflow-y: auto; padding: 20px; background: #f8fafc; display: flex; flex-direction: column; gap: 12px; }
+    .chat-bubble-client { align-self: flex-end; background: var(--text-dark); color: white; padding: 10px 14px; border-radius: 12px 12px 0 12px; font-size: 0.85rem; max-width: 70%; line-height: 1.4; }
+    .chat-bubble-agent { align-self: flex-start; background: #e2e8f0; color: var(--text-dark); padding: 10px 14px; border-radius: 12px 12px 12px 0; font-size: 0.85rem; max-width: 70%; line-height: 1.4; }
+    .support-ticket-field { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; box-sizing: border-box; margin-bottom: 14px; }
+    .support-ticket-field:focus { border-color: var(--emerald); }
+  </style>
+
+  <style>
+.support-split-layout {
+  display: flex !important;
+  gap: 24px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  align-items: start !important;
+}
+
+@media (max-width: 900px) {
+  .support-split-layout { flex-direction: column !important; }
+}
+
+.support-chat-pane {
+  flex: 1.2 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.form-group-block {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.clean-field-label {
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  margin-bottom: 6px !important;
+}
+
+.clean-input-element, .clean-select-element {
+  width: 100% !important;
+  padding: 11px 14px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+}
+
+.clean-textarea-element {
+  width: 100% !important;
+  height: 120px !important;
+  padding: 12px 14px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  color: #0f172a !important;
+  resize: none !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+}
+
+.clean-input-element:focus, .clean-select-element:focus, .clean-textarea-element:focus {
+  outline: none !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+}
+
+.status-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulseAnimationTransform 1.8s infinite ease-in-out;
+}
+
+@keyframes pulseAnimationTransform {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+</style>
+
+</head>
+<body>
+  <div class="dashboard-wrapper">
+  
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-dark);">Support Help Center</h1>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700;">
+          ⏱️ <span id="portal-clock">Syncing...</span>
+        </div>
+      </header>
+
+<div class="content-container"> 
+  <!-- Live Operating Status Strip Container --> 
+  <div id="supportDeskStatusStrip" style="padding: 14px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);"> 
+    <span class="status-pulse-dot"></span> 
+    <span id="status-strip-text-target">Calculating operational office hour timeline metrics...</span> 
+  </div> 
+
+  <div class="support-split-layout"> 
+    <!-- INTERFACE CONTAINER A: DYNAMIC MESSAGING CONSOLE (Business Hours Core) --> 
+    <div class="support-chat-pane" id="liveChatInterfaceWrapper" style="display: none;"> 
+      <div style="padding: 16px 20px; background: #0f172a; color: white; font-weight: 700; font-size: 0.9rem; display: flex; justify-content: space-between; border-radius: 12px 12px 0 0;"> 
+        <span>💬 Live Chat Assistance</span> 
+        <span style="color: #10b981; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight:800;">● Staff Online</span> 
+      </div> 
+      <div class="chat-history-container" id="chatStreamingTargetWindow" style="background: #f8fafc; padding: 20px; min-height: 350px; max-height: 450px; overflow-y: auto; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;"> 
+        <div class="chat-bubble-agent" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 0 12px 12px 12px; max-width: 80%; font-size: 0.85rem; color: #334155; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.02);"> 
+          Hello! Our formations and legal team members are active online. Drop a message to parse file statuses dynamically. 
+        </div> 
+      </div> 
+      <form id="chatMessageDispatchForm" style="display: flex; border: 1px solid #e2e8f0; border-top: none; padding: 14px; background: white; gap: 12px; border-radius: 0 0 12px 12px;"> 
+        <input type="text" id="chatMessageInput" style="margin: 0; flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" placeholder="Write message string..." required autocomplete="off"> 
+        <button type="submit" style="height: 42px; background: #0f172a; color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight:600; cursor:pointer;">Send ➔</button> 
+      </form> 
+    </div> 
+
+    <!-- INTERFACE CONTAINER B: COMPREHENSIVE TICKET SYSTEM (After Hours Fallback) --> 
+    <div class="console-card" id="supportTicketInterfaceWrapper" style="display: none; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); width: 100%; box-sizing: border-box;"> 
+      <h3 style="margin: 0 0 4px 0; font-size: 1.2rem; font-weight: 850; color: #0f172a;">Log Help Desk Ticket</h3> 
+      <p style="font-size: 0.82rem; color: #64748b; margin: 0 0 20px 0; line-height: 1.4;">Our direct support operators are currently offline. Request deep architectural analysis or escalate corporate documentation updates securely below.</p> 
+      
+      <div id="ticket-action-status" style="display: none; padding: 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 20px;"></div> 
+
+      <form id="createSupportTicketForm" style="display: flex; flex-direction: column; gap: 16px;"> 
+        
+        <!-- Row 1: Profile Identifiers (Locked & Grayed targets) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group-block"> 
+            <label class="clean-field-label">Your First Name</label> 
+            <input type="text" id="ticketFirstName" class="clean-input-element" placeholder="Syncing from profile...">
+          </div>
+          <div class="form-group-block"> 
+            <label class="clean-field-label">Your Last Name</label> 
+            <input type="text" id="ticketLastName" class="clean-input-element" placeholder="Syncing from profile...">
+          </div>
+        </div>
+
+        <!-- Row 2: Communications Matrix (Locked & Grayed targets) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group-block"> 
+            <label class="clean-field-label">Contact Email Address</label> 
+            <input type="email" id="ticketEmailAddress" class="clean-input-element" placeholder="Syncing from profile...">
+          </div>
+          <div class="form-group-block"> 
+            <label class="clean-field-label">Contact Telephone Number</label> 
+            <input type="tel" id="ticketPhoneNumber" class="clean-input-element" placeholder="Syncing from profile...">
+          </div>
+        </div>
+
+        <!-- Row 3: Tracking Specs (OPEN & EDITABLE) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;"> 
+          <div class="form-group-block"> 
+            <label class="clean-field-label">Ticket Priority Level</label> 
+            <select id="ticketUrgencyRank" class="clean-select-element" required style="background-color: #ffffff;"> 
+              <option value="standard" selected>Standard Operational Support</option> 
+              <option value="high">High Escalation Priority (Critical Issue)</option> 
+            </select> 
+          </div> 
+          <div class="form-group-block"> 
+            <label class="clean-field-label">Filing Tracking Number (Optional)</label> 
+            <input type="text" id="ticketTrackingCode" class="clean-input-element" placeholder="e.g., F4U-SALE-1029" style="background-color: #ffffff;"> 
+          </div> 
+        </div> 
+
+        <!-- Row 4: Narrative Fields (OPEN & EDITABLE) -->
+        <div class="form-group-block"> 
+          <label class="clean-field-label">Ticket Topic / Subject Header</label> 
+          <input type="text" id="ticketSubject" class="clean-input-element" placeholder="Filing amendment assistance or technical support" required style="background-color: #ffffff;"> 
+        </div> 
+
+        <div class="form-group-block"> 
+          <label class="clean-field-label">Extended Explanation Parameters</label> 
+          <textarea id="ticketBody" class="clean-textarea-element" placeholder="Elaborate on required operational changes or system errors clearly..." required style="background-color: #ffffff;"></textarea> 
+        </div> 
+
+        <button type="submit" id="ticketSubmitBtn" style="width: 100%; padding: 14px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.15s;">File Secure Support Ticket ➔</button> 
+      </form> 
+    </div> 
+  </div> 
+</div>
+
+
+
+ 
+        <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <script src="assets/js/client-master-ledger.js"></script>
+
+  <script src="assets/js/client-navigation.js"></script>
+
+  <script src="assets/js/client-footer.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  // 1. Core Element Selectors Reference Mapping
+  const statusStrip = document.getElementById("supportDeskStatusStrip");
+  const chatWrapper = document.getElementById("liveChatInterfaceWrapper");
+  const ticketPane  = document.getElementById("supportTicketInterfaceWrapper");
+  const chatWindow  = document.getElementById("chatStreamingTargetWindow");
+  const chatForm    = document.getElementById("chatMessageDispatchForm");
+  const ticketForm  = document.getElementById("createSupportTicketForm");
+
+  // 2. Real-Time Portal Widget Header Clock Engine
+  function runPortalClock() {
+    const el = document.getElementById("portal-clock");
+    if (el) {
+      el.textContent = new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+  }
+  setInterval(runPortalClock, 1000);
+  runPortalClock();
+
+  // 3. Core Self-Healing Database Handshake Initialization
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    if (lib && typeof lib.createClient === 'function') {
+      client = lib.createClient("https://supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
+      });
+      window.supabaseInstance = client;
+      window.supabaseClient = client;
+      window.supabase = client;
+    }
+  }
+
+  if (!client || typeof client.from !== 'function') return;
+
+  // 4. Secure Session Verification Guard Routing
+  const { data: { session } } = await client.auth.getSession();
+  if (!session || !session.user) {
+    window.location.href = "portal-login.html";
+    return;
+  }
+
+  const authenticatedUserEmail = session.user.email;
+  const authenticatedUserUid   = session.user.id;
+
+
+   // --- AUTONOMOUS PROFILE AUTOFILL LOOKUP (Direct Table Fetch & Lock) ---
+  async function autofillUserProfileMetrics() {
+    try {
+      console.log(`📡 [Profile AutoFill] Querying rows from public.client_profiles for user match: [${authenticatedUserEmail}]`);
+      
+      const { data: profile, error } = await client
+        .from('client_profiles')
+        .select('first_name, last_name, email_address, phone_number, company_name')
+        .eq('email_address', authenticatedUserEmail.toLowerCase())
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const emailFieldIn = document.getElementById("ticketEmailAddress");
+      const firstNameIn = document.getElementById("ticketFirstName");
+      const lastNameIn  = document.getElementById("ticketLastName");
+      const phoneFieldIn = document.getElementById("ticketPhoneNumber");
+
+      // Shared styling to gray out and lock fields programmatically
+      const disabledFieldStyleText = "background-color: #f1f5f9 !important; cursor: not-allowed !important; color: #475569 !important; font-weight: 600 !important; border-color: #e2e8f0 !important;";
+
+      if (profile) {
+        if (emailFieldIn)  emailFieldIn.value  = profile.email_address ? profile.email_address.toLowerCase() : authenticatedUserEmail.toLowerCase();
+        if (firstNameIn)  firstNameIn.value  = profile.first_name || "Valued";
+        if (lastNameIn)   lastNameIn.value   = profile.last_name || "Client";
+        if (phoneFieldIn) phoneFieldIn.value = profile.phone_number || "Not Provided";
+
+        if (emailFieldIn)  { emailFieldIn.disabled  = true; emailFieldIn.style.cssText  = disabledFieldStyleText; }
+        if (firstNameIn)  { firstNameIn.disabled  = true; firstNameIn.style.cssText  = disabledFieldStyleText; }
+        if (lastNameIn)   { lastNameIn.disabled   = true; lastNameIn.style.cssText   = disabledFieldStyleText; }
+        if (phoneFieldIn) { phoneFieldIn.disabled = true; phoneFieldIn.style.cssText = disabledFieldStyleText; }
+        
+        window.activeUserCompanyNameCache = profile.company_name || "Not Specified";
+        console.log("✓ Profile metrics mapped and personal inputs programmatically locked.");
+      } else {
+        console.log("ℹ️ No public profile row located. Using global session fallbacks for fields initialization.");
+        
+        if (emailFieldIn)  { emailFieldIn.value  = authenticatedUserEmail.toLowerCase(); emailFieldIn.disabled  = true; emailFieldIn.style.cssText  = disabledFieldStyleText; }
+        if (firstNameIn)  { firstNameIn.value  = "Valued";                             firstNameIn.disabled  = true; firstNameIn.style.cssText  = disabledFieldStyleText; }
+        if (lastNameIn)   { lastNameIn.value   = "Client";                             lastNameIn.disabled   = true; lastNameIn.style.cssText   = disabledFieldStyleText; }
+        if (phoneFieldIn) { phoneFieldIn.value = "Not Provided";                       phoneFieldIn.disabled = true; phoneFieldIn.style.cssText = disabledFieldStyleText; }
+        
+        window.activeUserCompanyNameCache = "Not Specified";
+      }
+    } catch (err) {
+      console.warn("⚠️ Autofill Engine delayed profile fetch lookup:", err.message);
+      if (document.getElementById("ticketEmailAddress")) {
+        document.getElementById("ticketEmailAddress").value = authenticatedUserEmail.toLowerCase();
+      }
+    }
+  }
+
+  // --- STAGE 1: DYNAMIC OPERATING BUSINESS HOURS SWITCH ENGINE ---
+  function evaluateSupportDeskWorkingHours() {
+    const rightNow = new Date();
+    const currentDay = rightNow.getDay(); 
+    const currentHour = rightNow.getHours(); 
+
+    // Operating Frame Constraints: Mon-Fri, 8:00 AM - 6:00 PM (8 to 18)
+    const isBusinessDay = currentDay >= 1 && currentDay <= 5;
+    const isWorkingHour = currentHour >= 8 && currentHour < 18;
+
+    const statusPulseDot = document.querySelector(".status-pulse-dot");
+    const stripTextTarget = document.getElementById("status-strip-text-target");
+
+    if (isBusinessDay && isWorkingHour) {
+      if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#e6f4ea; color:#137333; border:1px solid #cbd5e1;";
+      if (statusPulseDot) statusPulseDot.style.background = "#137333";
+      if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Help Desk Active.</strong> Instant real-time messaging layers are unlocked. (${rightNow.toLocaleTimeString()})`;
+      
+      if (chatWrapper) chatWrapper.style.display = "flex";
+      if (ticketPane) ticketPane.style.display = "none";
+    } else {
+      if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#fff3cd; color:#856404; border:1px solid #cbd5e1;";
+      if (statusPulseDot) statusPulseDot.style.background = "#856404";
+      if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Desk Standby.</strong> Technicians respond within 12h. Please file a structured support ticket. (${rightNow.toLocaleTimeString()})`;
+      
+      if (chatWrapper) chatWrapper.style.display = "none";
+      if (ticketPane) ticketPane.style.display = "block";
+    }
+  }
+
+  // Force prioritization flow execution order cleanly
+  await autofillUserProfileMetrics();
+  evaluateSupportDeskWorkingHours();
+
+
+  // --- STAGE 2: REAL-TIME CHAT WRITE CONTROLLER ---
+  if (chatForm) {
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const inputEl = document.getElementById("chatMessageInput");
+      if (!inputEl) return;
+      
+      const msg = inputEl.value.trim();
+      if (!msg) return;
+
+      const clientBubble = document.createElement("div");
+      clientBubble.className = "chat-bubble-client";
+      clientBubble.textContent = msg;
+      if (chatWindow) { 
+        chatWindow.appendChild(clientBubble); 
+        chatWindow.scrollTop = chatWindow.scrollHeight; 
+      }
+      inputEl.value = "";
+
+      try {
+        await client.from('chat_messages').insert([{ 
+          client_id: authenticatedUserUid, 
+          sender_type: 'client', 
+          message_content: msg, 
+          is_read_by_admin: false, 
+          is_read_by_client: true 
+        }]);
+      } catch(err) { 
+        console.error("✕ Chat dispatch error:", err.message); 
+      }
+    });
+  }
+
+  // --- STAGE 3: AFTER-HOURS TICKET WRITE CONTROLLER ---
+  if (ticketForm) {
+    ticketForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const sub = document.getElementById("ticketSubject").value.trim();
+      const trackCode = document.getElementById("ticketTrackingCode").value.trim() || "GENERAL_HELP";
+      const body = document.getElementById("ticketBody").value.trim();
+      const ticketSubmitBtn = document.getElementById("ticketSubmitBtn");
+
+      if (ticketSubmitBtn) { 
+        ticketSubmitBtn.disabled = true; 
+        ticketSubmitBtn.textContent = "Logging Support Ticket... 📡"; 
+      }
+
+      try {
+        const resolvedCompanyName = window.activeUserCompanyNameCache || "Not Specified";
+        
+        // Mapped 100% directly to your true public.support_tickets DDL schema rules
+        const { error: ticketError } = await client.from('support_tickets').insert([{
+          ticket_id: "ITSM-" + Math.floor(100000 + Math.random() * 900000),
+          client_id: authenticatedUserUid,
+          company_name: resolvedCompanyName,
+          subject: sub,
+          description: body,
+          priority: 'Medium',
+          status: 'New',
+          assigned_agent: 'Unassigned'
+        }]);
+
+        if (ticketError) throw ticketError;
+        alert(`✅ Support ticket registered successfully. Reference metrics assigned to back-office queues.`);
+        ticketForm.reset();
+        
+        // Re-trigger autofill sequence to preserve locked data states on form values refresh
+        await autofillUserProfileMetrics();
+      } catch(err) { 
+        alert("✕ Data Constraint Failure: " + (err.message || "Invalid columns maps.")); 
+      } finally { 
+        if (ticketSubmitBtn) { 
+          ticketSubmitBtn.disabled = false; 
+          ticketSubmitBtn.textContent = "File Secure Support Ticket ➔"; 
+        } 
+      }
+    });
+  }
+
+  // --- STAGE 4: INTERFACE SIDEBAR CONTROL WRAPPERS ---
+  window.toggleSidebarAccordion = function(btn) {
+    if (!btn) return;
+    const panel = btn.nextElementSibling;
+    if (panel) {
+      panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+    }
+  };
+
+  const portalLogout = document.getElementById("portalLogoutBtn");
+  if (portalLogout) {
+    portalLogout.addEventListener("click", () => {
+      client.auth.signOut().then(() => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+        window.location.replace("portal-login.html");
+      });
+    });
+  }
+});
+</script>
+</body>
+</html>

@@ -1,54 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Order New Services | filings4u</title>
-    <meta name="theme-color" content="#10b981">
-    <link rel="icon" type="image/png" href="images/fav.png">
-    <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="assets/css/client.css">
-    <link rel="stylesheet" href="assets/css/client-toggle.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Service Marketplace Catalog | filings4u</title>
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0a1f44;
+      --text-muted: #475569;
+      --emerald: #10b981;
+      --sidebar-width: 260px;
+    }
+    body, html {
+      margin: 0 !important; padding: 0 !important;
+      min-height: 100vh !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      background-color: var(--bg-light) !important;
+      color: var(--text-dark) !important;
+    }
+    .dashboard-wrapper { display: flex !important; width: 100% !important; }
+    .portal-sidebar {
+      width: var(--sidebar-width) !important; background: var(--white) !important;
+      border-right: 1px solid var(--border-color) !important;
+      display: flex !important; flex-direction: column !important;
+      position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important;
+    }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase; padding: 4px 10px !important; border-radius: 12px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; }
+    .accordion-panel { max-height: 500px; overflow: hidden !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; }
+    .nav-item:hover, .nav-item.active { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; }
+    .portal-header { background: var(--white) !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; min-height: 60px !important; }
+    .content-container { padding: 32px 40px !important; box-sizing: border-box !important; }
+    
+    /* 🛒 CATALOG SPECIFIC GRID ARCHITECTURE */
+    .storefront-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; width: 100%; margin-top: 20px; }
+    .product-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); transition: transform 0.2s, box-shadow 0.2s; }
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.03); }
+    .price-tag { font-size: 1.5rem; font-weight: 800; color: var(--text-dark); margin: 12px 0; }
+    .buy-btn { width: 100%; padding: 10px; background: var(--text-dark); color: white; border: none; font-weight: 700; font-size: 0.85rem; border-radius: 6px; cursor: pointer; text-align: center; text-decoration: none; display: block; box-sizing: border-box; }
+    .buy-btn:hover { background: var(--emerald); }
+  </style>
 </head>
 <body>
-    <div class="dashboard-wrapper">
+  <div class="dashboard-wrapper">
 
-        <!-- 🖥️ MAIN VIEWPORT GRID -->
-        <main class="portal-main">
-            <header class="portal-header">
-                <div class="welcome-text">
-                    <h1>Corporate Offerings</h1>
-                    <p>Launch business formations, apply for corporate designations, or obtain compliance tokens instantly</p>
-                </div>
-                   <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 16px !important;">
-          <!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
-          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
-            <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
-              <span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
-              <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-            </a>
-          </div>
-          
-          <!-- PORTAL CLOCK SYSTEM CONTAINER -->
-          <div class="header-clock-pill" style="background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 6px 12px !important; border-radius: 6px !important; font-family: monospace !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; height: 32px !important; white-space: nowrap !important;">
-            <span>⏱️</span>
-            <span id="portal-clock">Syncing...</span>
-          </div>
-          
-          <div>
-            <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 6px 12px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; font-size: 0.8rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; height: 32px !important;">
-          </div>
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-dark);">Service Marketplace Catalog</h1>
         </div>
-            </header>
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700;">
+          ⏱️ <span id="portal-clock">Syncing...</span>
+        </div>
+      </header>
 
-            <div class="content-container">
-                <div id="servicesProcurementCatalogGrid" style="display: grid !important; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important; gap: 24px !important;">
-                    <p style="font-size: 0.82rem !important; color: var(--text-muted) !important;">Hydrating core system utility prices matrix catalog...</p>
-                </div>
+      <div class="content-container">
+        <div style="margin-bottom: 24px; text-align: left;">
+          <h2 style="margin: 0; font-size: 1.35rem; font-weight: 800;">Expand Your Corporate Footprint</h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 4px 0 0 0;">Select statutory corporate filings, register out-of-state entities, or dispatch custom operational packages dynamically.</p>
+        </div>
+
+        <!-- 🛒 SLEEK DYNAMIC PRODUCT CATALOG CARDS WORKSPACE -->
+        <div class="storefront-grid" id="marketplace-catalog-container">
+          
+          <!-- Product 1: LLC Formation (Routes straight to wizard) -->
+          <div class="product-card">
+            <div>
+              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🏢</span>
+              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">New LLC Registration</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">Complete formation mapping package including customized Articles of Organization templates.</p>
             </div>
-        </main>
-    </div>
+            <div>
+              <div class="price-tag">$199<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> + state fees</span></div>
+              <a href="wizard.html?service=llc-formation" class="buy-btn">Launch Setup Wizard ➔</a>
+            </div>
+          </div>
+
+          <!-- Product 2: Foreign Qualification (Routes straight to wizard) -->
+          <div class="product-card">
+            <div>
+              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🌐</span>
+              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Foreign Qualification</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">Authorize your existing corporate structure to expand and conduct business in alternative states legally.</p>
+            </div>
+            <div>
+              <div class="price-tag">$249<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> + state fees</span></div>
+              <a href="wizard.html?service=foreign-qualification" class="buy-btn">Launch Setup Wizard ➔</a>
+            </div>
+          </div>
+
+          <!-- Product 3: EIN Tax ID Generation (Standalone Item Checkout Modals) -->
+          <div class="product-card">
+            <div>
+              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🔢</span>
+              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Employer Identification Number (EIN)</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">Secure your federal employer tax ID reference token from the IRS to open commercial bank vaults.</p>
+            </div>
+            <div>
+              <div class="price-tag">$79<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> (Flat Rate)</span></div>
+              <button onclick="window.triggerStandaloneCheckout('EIN Tax ID Registration', 79)" class="buy-btn">Process Secure Checkout ➔</button>
+            </div>
+          </div>
+
+          <!-- Product 4: Annual Compliance Report (Standalone Item Checkout Modals) -->
+          <div class="product-card">
+            <div>
+              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🔄</span>
+              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Corporate Annual Report Filing</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">File your mandatory state periodic disclosure reports to lock your business entities into Good Standing status.</p>
+            </div>
+            <div>
+              <div class="price-tag">$99<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> + state fees</span></div>
+              <button onclick="window.triggerStandaloneCheckout('Annual Report Filing Service', 99)" class="buy-btn">Process Secure Checkout ➔</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+ 
+  
       <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -60,5 +141,93 @@
   <script src="assets/js/client-navigation.js"></script>
 
   <script src="assets/js/client-footer.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
+
+      function runPortalClock() {
+        const el = document.getElementById("portal-clock");
+        if (el) el.textContent = new Date().toLocaleTimeString();
+      }
+      setInterval(runPortalClock, 1000);
+      runPortalClock();
+
+      // 🟢 COUPLING CORE SELF-HEALING DATABASE Handshake (Matches portal-engine.js)
+      let client = window.supabaseInstance || window.supabaseClient;
+      if (!client || typeof client.from !== 'function') {
+        const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+        if (lib && typeof lib.createClient === 'function') {
+          client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+          window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+        }
+      }
+
+      let sessionObj = null;
+      try {
+        const { data: { session } } = await client.auth.getSession();
+        if (session) sessionObj = session;
+      } catch (e) {}
+
+      if (!sessionObj) {
+        const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
+        if (token) {
+          try { const p = JSON.parse(token); sessionObj = p.currentSession || p; } catch(err) {}
+        }
+      }
+
+      if (!sessionObj || !sessionObj.user) {
+        window.location.href = "portal-login.html";
+        return;
+      }
+
+      const userEmailAddress = sessionObj.user.email;
+
+      // 🟢 STANDALONE CHECKOUT DISPATCH BRIDGE
+      window.triggerStandaloneCheckout = async function(serviceName, costAmount) {
+        const generateTrackingToken = "F4U-" + Math.random().toString(36).substring(2, 7).toUpperCase() + "-" + Math.random().toString(36).substring(2, 5).toUpperCase();
+        
+        const payload = {
+          tracking_number: generateTrackingToken,
+          email_address: userEmailAddress,
+          first_name: localStorage.getItem("first_name") || "Customer",
+          last_name: localStorage.getItem("last_name") || "User",
+          phone_number: "+1-555-0199",
+          company_name: "Asset Formation Lane",
+          selected_service: serviceName,
+          selected_plan: "Standard Standalone Package",
+          selected_upsells: "Marketplace Direct Entry",
+          total_paid_amount: costAmount,
+          account_created: true
+        };
+
+        if (!confirm(`🛒 Secure Purchase Authorization: Confirm initialization checkout entry for [${serviceName}] totaling $${costAmount}?`)) return;
+
+        try {
+          // Push row configuration directly to public.orders table schema maps
+          const { error } = await client.from('orders').insert([payload]);
+          if (error) throw error;
+
+          alert(`✅ Transaction complete! Order registered under Code Reference: ${generateTrackingToken}. Routing to live status progress tracker...`);
+          window.location.href = `client-status.html?token=${generateTrackingToken}`;
+
+        } catch (fault) {
+          console.error("✕ Marketplace dispatch tracking exception: ", fault);
+          alert("✕ Transaction Denied: Processing pipeline structural lock occurred: " + fault.message);
+        }
+      };
+      window.toggleSidebarAccordion = function(btn) {
+        if (!btn) return;
+        const panel = btn.nextElementSibling;
+        if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+      };
+
+      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+        client.auth.signOut().then(() => { window.localStorage.clear(); window.sessionStorage.clear(); window.location.replace("portal-login.html"); });
+      });
+    });
+  </script>
 </body>
 </html>

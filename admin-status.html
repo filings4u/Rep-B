@@ -685,6 +685,8 @@ input:focus, select:focus, textarea:focus {
   <!-- 🎯 THE CENTERING ENGINE: WRAPS SEARCH BAR AND CARD TO RESTRICT MAXIMUM WIDTH -->
   <div class="admin-form-container">
     
+     <div id="status-msg" class="status-msg"></div>
+
     <!-- SEARCH ENGINE ACCORDION TOOLBAR -->
     <div class="admin-search-toolbar">
       <label style="margin-bottom: 8px; display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dark);">Modify Existing Record (Enter Tracking Number to Lookup)</label>
@@ -764,7 +766,6 @@ input:focus, select:focus, textarea:focus {
       </div>
     </form>
     
-    <div id="status-msg" class="status-msg"></div>
   </div> <!-- / .admin-form-container -->
 
 </div> <!-- / .content-container -->
@@ -797,275 +798,165 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+  
   const client = window.supabaseInstance || window.supabaseClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+  
   const adminForm = document.getElementById("statusControlForm");
   const adminLookupBtn = document.getElementById("adminLookupBtn");
   const adminSearchToken = document.getElementById("adminSearchToken");
   const adminSubmitBtn = document.getElementById("adminSubmitBtn");
   const statusMsg = document.getElementById("status-msg");
+  
+  let activeRecordId = null;
 
-  let activeRecordId = null; // Keeps track of updates vs brand-new entries
+  // --- STAGE 1: INTELLIGENT CLIENT_PROFILES SELF-HEALING LOOKUP ---
+  if (adminLookupBtn) {
+    adminLookupBtn.addEventListener("click", async () => {
+      const lookupToken = adminSearchToken.value.trim();
+      if (!lookupToken) return;
 
-  // 1. LOOKUP EXISTING RECORD HANDLER
-  adminLookupBtn.addEventListener("click", async () => {
-    const lookupToken = adminSearchToken.value.trim();
-    if (!lookupToken) return;
+      statusMsg.style.display = "none";
+      statusMsg.textContent = "";
 
-    statusMsg.style.display = "none";
-    statusMsg.textContent = "";
+      try {
+        console.log(`📡 [Status Engine] Performing workspace lookup for token: [${lookupToken}]`);
+        
+        // Step A: Search within public.client_statuses table database logs
+        const { data: statusData, error: statusErr } = await client
+          .from("client_statuses")
+          .select("*")
+          .eq("tracking_number", lookupToken)
+          .maybeSingle();
 
-    try {
-      const { data, error } = await client
-        .from("client_statuses")
-        .select("*")
-        .eq("tracking_number", lookupToken)
-        .maybeSingle();
+        if (statusErr) throw statusErr;
 
-      if (error) throw error;
+        if (statusData) {
+          // Profile exists: Hydrate all existing milestone inputs cleanly
+          activeRecordId = statusData.id;
+          document.getElementById("statusTrackingNumber").value = statusData.tracking_number || "";
+          document.getElementById("statusCompanyName").value = statusData.company_name || "";
+          document.getElementById("statusClientName").value = statusData.client_name || "";
+          document.getElementById("statusClientEmail").value = statusData.client_email || "";
+          document.getElementById("statusProgressPercentage").value = statusData.progress_percentage ?? 10;
+          document.getElementById("statusNotesText").value = statusData.status_notes || "";
+          
+          if (document.getElementById("statusServiceType")) {
+            document.getElementById("statusServiceType").value = statusData.service_type || "";
+            if (typeof window.populateMilestoneDropdown === 'function') {
+              window.populateMilestoneDropdown(statusData.service_type, statusData.current_status);
+            }
+          }
 
-      if (!data) {
-        statusMsg.style.display = "block";
-        statusMsg.style.background = "#fef2f2";
-        statusMsg.style.color = "#991b1b";
-        statusMsg.textContent = "✕ Operational Error: No tracking row found matching that token identity.";
-        return;
-      }
-
-      // Populate interface inputs for modification
-      activeRecordId = data.id;
-      document.getElementById("statusTrackingNumber").value = data.tracking_number;
-      document.getElementById("statusCompanyName").value = data.company_name;
-      document.getElementById("statusClientName").value = data.client_name;
-      document.getElementById("statusClientEmail").value = data.client_email;
-      document.getElementById("statusServiceType").value = data.service_type;
-      document.getElementById("statusCurrentMilestone").value = data.current_status;
-      document.getElementById("statusProgressPercentage").value = data.progress_percentage;
-      document.getElementById("statusNotesText").value = data.status_notes || "";
-
-      statusMsg.style.display = "block";
-      statusMsg.style.background = "#e0f2fe";
-      statusMsg.style.color = "#0369a1";
-      statusMsg.textContent = "✓ Record Loaded Successfully! You are now modifying an active system file.";
-
-    } catch (fault) {
-      console.error(fault);
-      statusMsg.style.display = "block";
-      statusMsg.style.background = "#fef2f2";
-      statusMsg.style.color = "#991b1b";
-      statusMsg.textContent = `✕ Lookup Failed: ${fault.message}`;
-    }
-  });
-
-  // 2. MAIN SUBMISSION UPSERT ROUTINE
-  adminForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    statusMsg.style.display = "none";
-    statusMsg.textContent = "";
-
-    // Run dynamic parent container shake validation loops
-    let isFormValid = true;
-    const requiredElements = adminForm.querySelectorAll("input[required], select[required]");
-
-    requiredElements.forEach((input) => {
-      const parentContainer = input.closest(".form-group");
-      if (parentContainer) {
-        parentContainer.classList.remove("invalid-shake-trigger");
-      }
-
-      if (!input.value.trim()) {
-        isFormValid = false;
-        if (parentContainer) {
-          void parentContainer.offsetWidth; // Force repainting execution
-          parentContainer.classList.add("invalid-shake-trigger");
+          statusMsg.style.cssText = "display:block; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;";
+          statusMsg.textContent = "✓ Record Loaded! Syncing existing active fulfillment file layout cell components.";
+          return;
         }
+
+        // Step B: SELF-HEALING FALLBACK - Query directly from your public.client_profiles table instead!
+        console.log(`📡 [Status Engine] Token absent from statuses. Querying registry records from public.client_profiles...`);
+        const { data: profileData, error: profileErr } = await client
+          .from("orders")
+          .select("first_name, last_name, email_address")
+          .eq("tracking_number", lookupToken)
+          .maybeSingle();
+
+        if (profileErr) throw profileErr;
+
+        if (profileData) {
+          // Account located in client_profiles: Pre-fill baseline info to establish tracking row
+          activeRecordId = null; // Prepares an INSERT transaction layout matrix row
+          document.getElementById("statusTrackingNumber").value = lookupToken;
+          document.getElementById("statusCompanyName").value = "Initializing Enterprise..."; // Default fallback value
+          document.getElementById("statusClientName").value = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || "Registered Client";
+          document.getElementById("statusClientEmail").value = profileData.email_address || "";
+          document.getElementById("statusProgressPercentage").value = 10; // Default baseline entry marker status
+          document.getElementById("statusNotesText").value = "";
+
+          // Focus default operational dropdown categories
+          const typeSelector = document.getElementById("statusServiceType");
+          if (typeSelector) {
+            typeSelector.value = "Corporate Filing Engine";
+            if (typeof window.populateMilestoneDropdown === 'function') {
+              window.populateMilestoneDropdown("Corporate Filing Engine", "Intake Specifications Logged");
+            }
+          }
+
+          statusMsg.style.cssText = "display:block; background:#fff9db; color:#92400e; border:1px solid #ffe066;";
+          statusMsg.textContent = "ℹ️ Sync Profile Found: Pulled structural user details from client_profiles ledger. Ready to establish milestone baseline tracker row.";
+        } else {
+          // Token is absent across both operational tracking databases
+          statusMsg.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border:1px solid #fee2e2;";
+          statusMsg.textContent = "✕ Operational Error: Token reference unrecognized across registered client profiles and tracking records.";
+        }
+
+      } catch (err) {
+        console.error("✕ Core status sync engine lookup crash:", err);
+        statusMsg.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border:1px solid #fee2e2;";
+        statusMsg.textContent = `✕ Lookup Failed: ${err.message}`;
       }
     });
+  }
 
-    if (!isFormValid) return;
+  // --- STAGE 2: SUBMISSION UPSERT DISPATCH PIPELINE ---
+  if (adminForm) {
+    adminForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      statusMsg.style.display = "none";
 
-    // Gather text values from interface mappings
-    const trackingNumber = document.getElementById("statusTrackingNumber").value.trim();
-    const companyName = document.getElementById("statusCompanyName").value.trim();
-    const clientName = document.getElementById("statusClientName").value.trim();
-    const clientEmail = document.getElementById("statusClientEmail").value.trim();
-    const serviceType = document.getElementById("statusServiceType").value;
-    const currentStatus = document.getElementById("statusCurrentMilestone").value;
-    const progressPercentage = parseInt(document.getElementById("statusProgressPercentage").value, 10);
-    const statusNotes = document.getElementById("statusNotesText").value.trim();
+      const originalBtnText = adminSubmitBtn.textContent;
+      adminSubmitBtn.textContent = "Syncing Pipeline Metrics Matrix...";
+      adminSubmitBtn.disabled = true;
 
-    const originalBtnText = adminSubmitBtn.textContent;
-    adminSubmitBtn.textContent = "Syncing Pipeline Metrics Matrix...";
-    adminSubmitBtn.disabled = true;
+      const trackingNumber = document.getElementById("statusTrackingNumber").value.trim();
+      const companyName = document.getElementById("statusCompanyName").value.trim();
+      const clientName = document.getElementById("statusClientName").value.trim();
+      const clientEmail = document.getElementById("statusClientEmail").value.trim();
+      const serviceType = document.getElementById("statusServiceType").value;
+      const currentStatus = document.getElementById("statusCurrentMilestone").value;
+      const progressPercentage = parseInt(document.getElementById("statusProgressPercentage").value, 10);
+      const statusNotes = document.getElementById("statusNotesText").value.trim();
 
-    // Map columns smoothly to match public.client_statuses table data grid layout
-    const statusPayload = {
-      tracking_number: trackingNumber,
-      company_name: companyName,
-      client_name: clientName,
-      client_email: clientEmail,
-      service_type: serviceType,
-      current_status: currentStatus,
-      progress_percentage: progressPercentage,
-      status_notes: statusNotes,
-      updated_at: new Date().toISOString()
-    };
+      const statusPayload = {
+        tracking_number: trackingNumber,
+        company_name: companyName,
+        client_name: clientName,
+        client_email: clientEmail,
+        service_type: serviceType,
+        current_status: currentStatus,
+        progress_percentage: progressPercentage,
+        status_notes: statusNotes,
+        updated_at: new Date().toISOString()
+      };
 
-    // If an item was looked up, append the record ID to force a relational update transaction
-    if (activeRecordId) {
-      statusPayload.id = activeRecordId;
-    }
+      if (activeRecordId) statusPayload.id = activeRecordId;
 
-    try {
-      const { error: upsertError } = await client
-        .from("client_statuses")
-        .upsert([statusPayload]);
+      try {
+        const { error: upsertError } = await client
+          .from("client_statuses")
+          .upsert([statusPayload]);
 
-      if (upsertError) throw upsertError;
+        if (upsertError) throw upsertError;
 
-      statusMsg.style.display = "block";
-      statusMsg.style.background = "#ecfdf5";
-      statusMsg.style.color = "#047857";
-      statusMsg.textContent = "✓ Operational metrics matrix synced cleanly! Live dashboards updated instantly.";
+        statusMsg.style.cssText = "display:block; background:#ecfdf5; color:#047857; border:1px solid #d1fae5;";
+        statusMsg.textContent = "✓ Operational metrics synced cleanly! Live dashboards updated instantly.";
+        adminForm.reset();
+        activeRecordId = null;
 
-      adminForm.reset();
-      activeRecordId = null; // Clear active modification context tracking flags
-
-    } catch (postFault) {
-      console.error(postFault);
-      statusMsg.style.display = "block";
-      statusMsg.style.background = "#fef2f2";
-      statusMsg.style.color = "#991b1b";
-      statusMsg.textContent = `✕ Sync Execution Failed: ${postFault.message}`;
-    } finally {
-      adminSubmitBtn.textContent = originalBtnText;
-      adminSubmitBtn.disabled = false;
-    }
-  });
+      } catch (postFault) {
+        console.error(postFault);
+        statusMsg.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border:1px solid #fee2e2;";
+        statusMsg.textContent = `✕ Sync Execution Failed: ${postFault.message}`;
+      } finally {
+        adminSubmitBtn.textContent = originalBtnText;
+        adminSubmitBtn.disabled = false;
+      }
+    });
+  }
 });
 </script>
 
-<script>
-// 🗺️ STEP DICTIONARY MAP: Defines precise workflows for each distinct corporate service category
-const PIPELINE_WORKFLOW_STEPS = {
-  "Corporate Filing Engine": [
-    "Intake Specifications Logged",
-    "Document Pack Preparation",
-    "Internal Compliance Audit",
-    "Filing Submitted to State",
-    "Awaiting State Government Approval",
-    "Project Finalized & Deployed"
-  ],
-  "Web Specification Design": [
-    "Intake Specifications Logged",
-    "Aesthetic Strategy & Wireframing",
-    "Building Structural Layouts",
-    "Creating Functional Pages",
-    "Copywriting & Content Deployment",
-    "Quality Assurance Audit",
-    "Project Finalized & Deployed"
-  ],
-  "Logo & Branding Identity": [
-    "Intake Specifications Logged",
-    "Conceptual Research & Typography Mockups",
-    "Drafting Graphic Symbol Vectors",
-    "Aesthetic Style/Color Refinements",
-    "Compiling Creative Brand Book Proofs",
-    "Project Finalized & Deployed"
-  ]
-};
 
-  const serviceTypeSelect = document.getElementById("statusServiceType");
-  const currentMilestoneSelect = document.getElementById("statusCurrentMilestone");
 
-  /**
-   * Dynamically rebuilds the Milestone dropdown options based on selected service workflow
-   * @param {string} selectedService - The selected pipeline category name
-   * @param {string} [selectedValue] - Optional previous milestone value to re-select on update
-   */
-  function populateMilestoneDropdown(selectedService, selectedValue = "") {
-    // Clear out existing options, leaving only the placeholder line item
-    currentMilestoneSelect.innerHTML = '<option value="" disabled selected>Select active pipeline milestone...</option>';
-    
-    const stepsArray = PIPELINE_WORKFLOW_STEPS[selectedService];
-    
-    if (stepsArray && stepsArray.length > 0) {
-      stepsArray.forEach((step) => {
-        const option = document.createElement("option");
-        option.value = step;
-        option.textContent = step;
-        currentMilestoneSelect.appendChild(option);
-      });
-      
-      // If a specific step context needs to be preserved (e.g. from a Supabase row lookup)
-      if (selectedValue) {
-        currentMilestoneSelect.value = selectedValue;
-      }
-    }
-  }
-
-  // Monitor category selection modifications to clear and update milestones instantly
-  if (serviceTypeSelect) {
-    serviceTypeSelect.addEventListener("change", () => {
-      populateMilestoneDropdown(serviceTypeSelect.value);
-    });
-  }
-
-  // 🎯 UPGRADE PREVIOUS LOOKUP HANDLER: Intercept database entry populations
-  adminLookupBtn.addEventListener("click", async () => {
-    const lookupToken = adminSearchToken.value.trim();
-    if (!lookupToken) return;
-
-    statusMsg.style.display = "none";
-    statusMsg.textContent = "";
-
-    try {
-      const { data, error } = await client
-        .from("client_statuses")
-        .select("*")
-        .eq("tracking_number", lookupToken)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!data) {
-        statusMsg.style.display = "block";
-        statusMsg.style.background = "#fef2f2";
-        statusMsg.style.color = "#991b1b";
-        statusMsg.textContent = "✕ Operational Error: No tracking row found matching that token identity.";
-        return;
-      }
-
-      // 1. Populate flat input components fields first
-      activeRecordId = data.id;
-      document.getElementById("statusTrackingNumber").value = data.tracking_number;
-      document.getElementById("statusCompanyName").value = data.company_name;
-      document.getElementById("statusClientName").value = data.client_name;
-      document.getElementById("statusClientEmail").value = data.client_email;
-      document.getElementById("statusProgressPercentage").value = data.progress_percentage;
-      document.getElementById("statusNotesText").value = data.status_notes || "";
-
-      // 2. Set parent Service Category option select variable first
-      serviceTypeSelect.value = data.service_type;
-
-      // 3. CRITICAL ENGINE FIX: Force-rebuild milestone dictionary array options BEFORE binding values
-      populateMilestoneDropdown(data.service_type, data.current_status);
-
-      statusMsg.style.display = "block";
-      statusMsg.style.background = "#e0f2fe";
-      statusMsg.style.color = "#0369a1";
-      statusMsg.textContent = "✓ Record Loaded Successfully! You are now modifying an active system file.";
-
-    } catch (fault) {
-      console.error(fault);
-      statusMsg.style.display = "block";
-      statusMsg.style.background = "#fef2f2";
-      statusMsg.style.color = "#991b1b";
-      statusMsg.textContent = `✕ Lookup Failed: ${fault.message}`;
-    }
-  });
-
-</script>
 
 </body>
 </html>

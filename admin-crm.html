@@ -38,34 +38,102 @@
     .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
     .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
   </style>
+
+  <style>
+/* Main Canvas Workspace Layout */
+.content-container {
+  display: grid !important;
+  grid-template-columns: 280px 1fr !important; /* Left Metric Rail Deck | Right Extended Customer Grid */
+  gap: 24px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 24px !important;
+  align-items: start !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+@media (max-width: 1100px) {
+  .content-container {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Left Sidebar Multi-Card Layout Grid Container */
+.metrics-stack-deck {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  width: 100% !important;
+}
+
+.metric-card-box {
+  background: #ffffff !important;
+  border: 1px solid var(--border-color, #e2e8f0) !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+  box-sizing: border-box !important;
+}
+
+.metric-subtitle {
+  display: block !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #64748b !important;
+  font-weight: 700 !important;
+  margin-bottom: 6px !important;
+}
+
+.metric-headline {
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+  color: #0f172a !important;
+}
+
+.urgency-alert-color { color: #dc2626 !important; }
+.success-status-color { color: #16a34a !important; }
+.operational-status-color { color: #2563eb !important; }
+
+/* Dashboard Panel Component Formatting Modifiers */
+.console-card.custom-elevation {
+  background: #ffffff !important;
+  border: 1px solid var(--border-color, #e2e8f0) !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03) !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.crm-search-input {
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  border: 1px solid #cbd5e1 !important;
+  font-size: 0.85rem !important;
+  width: 300px !important;
+  outline: none !important;
+  transition: all 0.15s !important;
+}
+.crm-search-input:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+}
+
+.ledger-row-entry {
+  border-bottom: 1px solid var(--border-color, #e2e8f0) !important;
+  transition: background-color 0.15s !important;
+}
+.ledger-row-entry:hover {
+  background-color: #f8fafc !important;
+}
+</style>
+
 </head>
 <body>
   <div class="dashboard-wrapper">
-    <aside class="portal-sidebar">
-      <div class="sidebar-brand-block">
-        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-        <div><div class="admin-badge">Directorate Admin</div></div>
-      </div>
-      <nav class="sidebar-accordion-menu">
-        <button class="accordion-trigger" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▼</span></button>
-        <div class="accordion-panel">
-          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-          <a href="admin-billing.html" class="nav-item"><span>💰</span> Sales & Price Audit</a>
-          <a href="admin-blog.html" class="nav-item"><span>📰</span> Manage Insights Blog</a>
-          <a href="admin-faqs.html" class="nav-item"><span>🚀</span> Manage FAQs Matrix</a>
-        </div>
-        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Operations & CRM <span class="chevron">▲</span></button>
-        <div class="accordion-panel" style="max-height: 600px;">
-          <a href="admin-crm.html" class="nav-item active"><span>👥</span> Customer CRM</a>
-          <a href="admin-service-manager.html" class="nav-item"><span>⚙️</span> Service Fulfillment</a>
-          <a href="admin-compliance-audit.html" class="nav-item"><span>🛡️</span> Compliance Audit</a>
-          <a href="admin-entity-master.html" class="nav-item"><span>🏢</span> Entity Master Ledger</a>
-        </div>
-      </nav>
-      <div class="sidebar-footer-lock">
-        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
-      </div>
-    </aside>
+
 
     <main class="portal-main">
       <header class="portal-header">
@@ -78,139 +146,235 @@
         </div>
       </header>
 
-      <div class="content-container">
-        <div class="console-card">
-          <h2>Active Platform Subscriptions & Accounts</h2>
-          <div style="overflow-x:auto !important;">
-            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-              <thead>
-                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
-                  <th style="padding:12px !important;">Customer Account</th>
-                  <th style="padding:12px !important;">Company Entity</th>
-                  <th style="padding:12px !important;">Tracking Reference</th>
-                  <th style="padding:12px !important;">Filing Service Tier</th>
-                  <th style="padding:12px !important; text-align:right !important;">Status</th>
-                </tr>
-              </thead>
-              <tbody id="admin-crm-target-box">
-                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Establishing database matrix connection...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+<div class="content-container">
+  
+  <!-- COLUMN 1: LEFT VERTICAL PROFILE SUMMARY RAIL DECK -->
+  <div class="metrics-stack-deck">
+    <div class="metric-card-box">
+      <span class="metric-subtitle">Total Managed Profiles</span>
+      <h3 class="metric-headline" id="metric-total-clients">--</h3>
+    </div>
+    
+    <div class="metric-card-box">
+      <span class="metric-subtitle">Premium Accounts</span>
+      <h3 class="metric-headline operational-status-color" id="metric-registered-accounts">--</h3>
+    </div>
+    
+    <div class="metric-card-box">
+      <span class="metric-subtitle">Flagged Anomalies</span>
+      <h3 class="metric-headline urgency-alert-color" id="metric-guest-leads">--</h3>
+    </div>
+    
+   <!-- Replace your old CRM Core Status card structure with this updated layout -->
+<div class="metric-card-box">
+  <span class="metric-subtitle">CRM Core Status</span>
+  <h3 class="metric-headline success-status-color">100%</h3>
+</div>
+
+  </div>
+
+  <!-- COLUMN 2: RIGHT EXTENDED ACCOUNT BALANCING LEDGER MATRIX -->
+  <div class="console-card custom-elevation">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h2 style="margin: 0; font-size: 1.2rem; font-weight: 850; color: #0f172a;">Active Platform Subscriptions & Accounts</h2>
+        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">Review ongoing business corporate assets, account tier assignments, and active backend operations records.</p>
       </div>
+      <div>
+<!-- Ensure the input field inside your main card looks exactly like this -->
+<input type="text" id="crmGlobalSearchField" placeholder="Filter profiles by email, name...">
+      </div>
+    </div>
+
+    <div style="overflow-x:auto !important; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0); width: 100%;">
+      <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+        <thead>
+          <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color, #e2e8f0) !important; color:#64748b !important; font-weight: 700;">
+            <th style="padding:14px 12px !important;">Customer Account</th>
+            <th style="padding:14px 12px !important;">Company Entity</th>
+            <th style="padding:14px 12px !important;">Tracking Reference</th>
+            <th style="padding:14px 12px !important;">Filing Service Tier</th>
+            <th style="padding:14px 12px !important; text-align:right !important;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="admin-crm-target-box">
+          <tr>
+            <td colspan="5" style="padding:30px !important; text-align:center !important; color:#64748b !important; font-style: italic;">Establishing database matrix connection...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
     </main>
   </div>
 
+ <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
+  <!-- 1. The Global Library Core MUST load absolute first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. The Configuration setup creates window.supabaseClient immediately -->
   <script src="assets/js/supabase-config.js"></script>
+  
+  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-master-ledger.js"></script>
+
+   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      // 1. Establish strict UI layout selector references
-      const crmTableBody = document.getElementById("admin-crm-target-box");
-      const searchField  = document.getElementById("crmGlobalSearchField");
+  // 1. Resolve UI Layout Selector References
+  const crmTableBody = document.getElementById("admin-crm-target-box");
+  const searchField = document.getElementById("crmGlobalSearchField");
 
-      if (!crmTableBody) {
-        throw new Error("✕ Critical UI Error: Cannot locate table body element anchor 'admin-crm-target-box' in document tree.");
+  if (!crmTableBody) {
+    console.error("✕ Critical UI Error: Cannot locate table body element anchor 'admin-crm-target-box' in document tree.");
+    return;
+  }
+
+  // 2. Fetch Master Configuration Client Connection
+  const client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ System Error: Supabase connection manager uninitialized.</td></tr>`;
+    return;
+  }
+
+  let localCrmCacheArray = [];
+
+  // Helper utility to prevent script injection strings
+  function escapeStringInput(text) {
+    if (!text) return "";
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // --- STAGE 1: READ PIPELINE (Queries public.admin_crm table directly) ---
+  async function fetchAndHydrateCrmMatrix() {
+    try {
+      console.log("📡 [CRM Engine] Extracting portfolios directly from public.admin_crm...");
+      
+      const { data: crmRecords, error: queryError } = await client
+        .from('admin_crm')
+        .select('id, client_name, email, account_tier, compliance_status, last_login')
+        .order('client_name', { ascending: true });
+
+      if (queryError) {
+        throw new Error(`Postgres Exception [Code ${queryError.code}]: ${queryError.message}`);
       }
 
-      // 2. Fetch master configuration client connection layers
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase connection manager uninitialized.</td></tr>`;
-        throw new Error("✕ Initialization Error: Supabase client infrastructure missing from global window context.");
-      }
+      localCrmCacheArray = crmRecords || [];
+      
+      calculateCrmSummaryStatistics(localCrmCacheArray);
+      renderCrmGridDataRows(localCrmCacheArray);
+    } catch (crmFault) {
+      console.error("✕ CRM Data Synchronization Halted:", crmFault.message);
+      crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+    }
+  }
 
-      let localCrmCacheArray = [];
+  // --- STAGE 2: SUMMARY METRICS DECK COUNTER GENERATION ---
+  function calculateCrmSummaryStatistics(crmRecords) {
+    const totalClientsBadge = document.getElementById("metric-total-clients");
+    const activeAccountsBadge = document.getElementById("metric-registered-accounts");
+    const urgentAuditsBadge = document.getElementById("metric-guest-leads");
 
-      async function fetchAndHydrateCrmMatrix() {
-        try {
-          console.log("📡 [CRM Engine] Extracting unique client portfolios directly from public.orders...");
+    if (totalClientsBadge) totalClientsBadge.textContent = crmRecords.length;
+    
+    if (crmRecords && crmRecords.length >= 0) {
+      const highTierCount = crmRecords.filter(item => {
+        const tier = String(item.account_tier || '').toLowerCase();
+        return tier.includes('premium') || tier.includes('enterprise');
+      }).length;
 
-          // 🟢 EXCLUSIVE DATA QUERY: Pull transactional profiles from your orders table schema
-          const { data: ordersData, error: queryError } = await client
-            .from('orders')
-            .select('id, company_name, email, plan_tier, status, tracking_number, created_at')
-            .order('created_at', { ascending: false });
+      const flaggedCount = crmRecords.filter(item => {
+        const comp = String(item.compliance_status || '').toLowerCase();
+        return comp !== 'verified' && comp !== '';
+      }).length;
+      
+      if (activeAccountsBadge) activeAccountsBadge.textContent = highTierCount;
+      if (urgentAuditsBadge) urgentAuditsBadge.textContent = flaggedCount;
+    }
+  }
 
-          if (queryError) {
-            throw new Error(`Postgres Exception [Code ${queryError.code}]: ${queryError.message}`);
-          }
+  // --- STAGE 3: DISPLAY ENGINE (Renders rows matching public.admin_crm format rules) ---
+  function renderCrmGridDataRows(dataset) {
+    crmTableBody.innerHTML = "";
 
-          localCrmCacheArray = ordersData || [];
-          renderCrmGridDataRows(localCrmCacheArray);
+    if (!dataset || dataset.length === 0) {
+      crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:#64748b; font-size:0.875rem; font-weight:600;">No matching corporate client rows managed inside public.admin_crm.</td></tr>`;
+      return;
+    }
 
-        } catch (crmFault) {
-          console.error("✕ CRM Data Synchronization Halted:", crmFault.message);
-          crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+    dataset.forEach(rowItem => {
+      try {
+        const trElement = document.createElement("tr");
+        trElement.className = "ledger-row-entry";
+        trElement.style.cssText = "border-bottom:1px solid #e2e8f0; font-size:0.85rem; background:#ffffff; color:#0f172a;";
+
+        const clientEmail = rowItem.email || "unregistered-account@email.com";
+        const profileName = rowItem.client_name || "Unnamed Corporation Account";
+        
+        // FIX: Extract first section of UUID string safely before formatting to uppercase
+        const rawIdStr = String(rowItem.id || '00000000');
+        const referenceId = rawIdStr.includes('-') ? rawIdStr.split('-')[0].toUpperCase() : rawIdStr.substring(0, 8).toUpperCase();
+        
+        const tierRank = String(rowItem.account_tier || 'Standard').toUpperCase();
+        const rawStatus = String(rowItem.compliance_status || 'Verified').trim();
+
+        let statusStyle = "background:#e6f4ea; color:#137333;"; // Verified green fallback
+        if (rawStatus.toLowerCase() === 'pending' || rawStatus.toLowerCase() === 'action required') {
+          statusStyle = "background:#fffbe6; color:#b45309;"; // Orange attention warning badge
+        } else if (rawStatus.toLowerCase() === 'suspended' || rawStatus.toLowerCase() === 'flagged') {
+          statusStyle = "background:#fee2e2; color:#991b1b;"; // Red danger breach badge
         }
+
+        trElement.innerHTML = `
+          <td style="padding:14px 12px; font-weight:600; color:#0f172a;">${escapeStringInput(clientEmail)}</td>
+          <td style="padding:14px 12px; color:#475569; font-weight:500;">${escapeStringInput(profileName)}</td>
+          <td style="padding:14px 12px; font-family:monospace; color:#64748b; font-size:0.8rem;">F4U-${escapeStringInput(referenceId)}</td>
+          <td style="padding:14px 12px;"><span style="font-size:10px; padding:4px 8px; border-radius:6px; font-weight:700; background:#f1f5f9; color:#475569; letter-spacing:0.3px;">${escapeStringInput(tierRank)}</span></td>
+          <td style="padding:14px 12px; text-align:right;"><span style="${statusStyle} padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">${escapeStringInput(rawStatus)}</span></td>
+        `;
+        crmTableBody.appendChild(trElement);
+      } catch (rowError) {
+        console.error("✕ Row rendering skipped due to field parse anomaly:", rowError, rowItem);
       }
-
-      function renderCrmGridDataRows(dataset) {
-        crmTableBody.innerHTML = "";
-
-        if (!dataset || dataset.length === 0) {
-          crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No matching client accounts found inside orders table data.</td></tr>`;
-          return;
-        }
-
-        dataset.forEach(rowItem => {
-          const trElement = document.createElement("tr");
-          trElement.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
-
-          const userEmail = rowItem.email || "unregistered-guest@email.com";
-          const corporateName = rowItem.company_name || "Unnamed Enterprise Group";
-          const trackingCode = rowItem.tracking_number || rowItem.id;
-          const tierPlan = String(rowItem.plan_tier || 'Starter').toUpperCase();
-          const currentStatus = String(rowItem.status || '').toLowerCase().trim();
-
-          let statusStyle = "background:#fffbe6; color:#b45309;"; // Pending colors configuration
-          if (currentStatus === 'paid' || currentStatus === 'fulfillment lane') {
-            statusStyle = "background:#e6f4ea; color:#137333;"; // Active profile colors
-          }
-
-          trElement.innerHTML = `
-            <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeStringInput(userEmail)}</td>
-            <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeStringInput(corporateName)}</td>
-            <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem;">${escapeStringInput(trackingCode)}</td>
-            <td style="padding:14px 12px;"><span style="font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; background:#f1f5f9; color:#475569; letter-spacing:0.5px;">${escapeStringInput(tierPlan)}</span></td>
-            <td style="padding:14px 12px; text-align:right;"><span style="${statusStyle} padding:4px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${escapeStringInput(rowItem.status)}</span></td>
-          `;
-
-          crmTableBody.appendChild(trElement);
-        });
-      }
-
-      // 🔍 3. INSTANT CLIENT-SIDE PROPERTY SEARCH FILTERING
-      if (searchField) {
-        searchField.addEventListener("input", (event) => {
-          const matchQuery = event.target.value.toLowerCase().trim();
-          
-          const filteredResults = localCrmCacheArray.filter(item => {
-            return (
-              String(item.email || '').toLowerCase().includes(matchQuery) ||
-              String(item.company_name || '').toLowerCase().includes(matchQuery) ||
-              String(item.tracking_number || '').toLowerCase().includes(matchQuery) ||
-              String(item.plan_tier || '').toLowerCase().includes(matchQuery)
-            );
-          });
-          
-          renderCrmGridDataRows(filteredResults);
-        });
-      }
-
-      function escapeStringInput(text) {
-        if (!text) return "";
-        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-      }
-
-      // Fire main execution loop on window setup frame
-      await fetchAndHydrateCrmMatrix();
     });
-  </script>
+  }
+
+  // --- STAGE 4: PROPERTY TEXT FILTER SEARCH ENGINE (Targets public.admin_crm keys) ---
+  if (searchField) {
+    searchField.addEventListener("input", (event) => {
+      const matchQuery = event.target.value.toLowerCase().trim();
+      const filteredResults = localCrmCacheArray.filter(item => {
+        if (!item) return false;
+        return (
+          String(item.email || '').toLowerCase().includes(matchQuery) || 
+          String(item.client_name || '').toLowerCase().includes(matchQuery) || 
+          String(item.account_tier || '').toLowerCase().includes(matchQuery) || 
+          String(item.compliance_status || '').toLowerCase().includes(matchQuery)
+        );
+      });
+      renderCrmGridDataRows(filteredResults);
+    });
+  }
+
+  // Fire main execution loop thread
+  await fetchAndHydrateCrmMatrix();
+});
+</script>
+
+
 </body>
 </html>

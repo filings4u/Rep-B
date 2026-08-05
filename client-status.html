@@ -254,45 +254,48 @@
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
-  // Replace with your real project connection credentials
   const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+  
   const client = window.supabaseInstance || window.supabaseClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+  
   const lookupBtn = document.getElementById("clientLookupBtn");
   const searchInput = document.getElementById("clientSearchToken");
   const portfolioContainer = document.getElementById("portfolioGridContainer");
   const errorBox = document.getElementById("clientErrorBox");
+  
+  let realtimeChannel = null;
 
-  // Sync real-time portal widget clock function
+  // 1. Synchronize Real-time Portal Widget Header Clock
   function runPortalClock() {
     const clockElement = document.getElementById("portal-clock");
-    if (clockElement) {
-      clockElement.textContent = new Date().toLocaleTimeString();
-    }
+    if (clockElement) clockElement.textContent = new Date().toLocaleTimeString();
   }
   setInterval(runPortalClock, 1000);
   runPortalClock();
 
-  // Parse token straight out of URL parameter routing (?token=XYZ) if active
+  // 2. Parse URL parameters to handle direct notification links
   const urlParamToken = new URLSearchParams(window.location.search).get("token");
   if (urlParamToken) {
-    searchInput.value = urlParamToken;
+    if (searchInput) searchInput.value = urlParamToken;
     executePortfolioLookup(urlParamToken);
   }
 
-  lookupBtn.addEventListener("click", () => {
-    executePortfolioLookup(searchInput.value.trim());
-  });
-
+  if (lookupBtn && searchInput) {
+    lookupBtn.addEventListener("click", () => {
+      executePortfolioLookup(searchInput.value.trim());
+    });
+  }
+  // --- STAGE 3: DATA STREAM & RENDERING HANDLER ---
   async function executePortfolioLookup(token) {
     if (!token) return;
-    errorBox.style.display = "none";
-    errorBox.textContent = "";
-    portfolioContainer.innerHTML = ""; // Clear active viewport workspace nodes
+    
+    if (errorBox) errorBox.style.display = "none";
+    if (portfolioContainer) portfolioContainer.innerHTML = ""; 
 
     try {
-      // Query every row tracking file mapped to this client token identifier identity
+      console.log(`📡 [Client Portal] Fetching status states for tracking token: [${token}]`);
+      
       const { data, error } = await client
         .from("client_statuses")
         .select("*")
@@ -301,16 +304,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (error) throw error;
 
-      // 🟢 THE AUTOMATED INTRODUCTORY QUEUE ENGINE OVERRIDE
+      // 🟢 THE AUTOMATED INTRODUCTORY QUEUE ENGINE OVERRIDE (Fallback for blank/initial rows)
       if (!data || data.length === 0) {
-        console.log("ℹ️ No row records found in table database. Rendering virtual initialization card matrix...");
-        
-        // Pull backup customer properties from regional fallback systems
+        console.log("ℹ️ No records found in database table. Rendering virtual queue matrix...");
         const fallbackName = localStorage.getItem("first_name") ? (localStorage.getItem("first_name") + " " + (localStorage.getItem("last_name") || "")).trim() : "Valued Client";
         const fallbackPlan = localStorage.getItem("selected_plan") || localStorage.getItem("service_title") || "Corporate Order Filing Package";
-        
-        const autoProgressPercentage = 15; // Sets your baseline entry indicator bar load status natively
-        
+        const autoProgressPercentage = 15;
+
         const baselineQueueCardHtml = `
           <div class="service-status-card">
             <div class="card-top-meta-row">
@@ -320,17 +320,14 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
               <span class="live-milestone-pill pill-production" style="background-color: #fef3c7; color: #d97706;">ORDER IN QUEUE</span>
             </div>
-            
             <div class="ledger-metrics-grid">
               <div class="ledger-column"><span class="lbl">Primary Assignee</span><span class="val">${fallbackName}</span></div>
               <div class="ledger-column"><span class="lbl">Tracking Code</span><span class="val" style="font-family: monospace;">${token}</span></div>
               <div class="ledger-column"><span class="lbl">Last Update Sync</span><span class="val">${new Date().toLocaleDateString()}</span></div>
             </div>
-            
             <div class="remarks-notice-box">
               <strong>Latest Desk Remarks:</strong> Your documentation suite has been successfully processed into our high-priority environment queue. Structural data extraction parameters are actively verifying.
             </div>
-            
             <div style="width: 100%;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <label style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted); margin: 0;">Production Sprint Progression Track</label>
@@ -342,83 +339,109 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </div>
         `;
-        
-        portfolioContainer.insertAdjacentHTML("beforeend", baselineQueueCardHtml);
-        return; // Complete structural block execution early
+        if (portfolioContainer) portfolioContainer.insertAdjacentHTML("beforeend", baselineQueueCardHtml);
+        establishRealtimeWebSocketListener(token);
+        return; 
       }
 
-      // Loop through arrays data parameters to construct separate interface element blocks
+      // Loop through available database fields to render metric milestone cards
       data.forEach((record) => {
         const percentage = Math.min(Math.max(parseInt(record.progress_percentage, 10) || 0, 0), 100);
-
-        // Define clean conditional context badge status color layers
-        const isFinished = percentage === 100 || record.current_status.toLowerCase().includes("finalized") || record.current_status.toLowerCase().includes("complete");
+        const isFinished = percentage === 100 || String(record.current_status).toLowerCase().includes("finalized") || String(record.current_status).toLowerCase().includes("complete");
         const pillClass = isFinished ? "pill-completed" : "pill-production";
-
-        // Determine if it is a downloadable file item or a design production sprint stream
-        const isFiling = record.service_type.toLowerCase().includes("filing") || record.service_type.toLowerCase().includes("document");
+        const isFiling = String(record.service_type || '').toLowerCase().includes("filing") || String(record.service_type || '').toLowerCase().includes("document");
+        
         let dynamicActionElement = "";
-
         if (isFiling && isFinished) {
-          // Deliver write-protected deep routing path directly straight into your compliance verification vault downloads engine page
           dynamicActionElement = `
-            <a href="client-compliance.html?token=${encodeURIComponent(record.tracking_number)}" class="vault-redirect-btn">
+            <a href="client-compliance.html?token=${encodeURIComponent(record.tracking_number)}" class="vault-redirect-btn" style="display: block; text-align: center; margin-top: 12px; font-weight: 700;">
               📥 Access Corporate Vault Records ➔
             </a>
           `;
         } else if (isFiling) {
           dynamicActionElement = `
-            <div class="remarks-notice-box" style="border-left-color: var(--staff-red);">
-              ⏳ <strong>Filing Processing Bounds Status:</strong> Your statutory legal paperwork sets have been dispatched to state systems. Vault downloads open instantly upon processing checkout clearance verification.
+            <div class="remarks-notice-box" style="border-left-color: #ef4444;">
+              ⏳ <strong>Filing Processing Bounds Status:</strong> Your paperwork sets have been dispatched to state systems. Vault downloads open instantly upon processing checkout clearance verification.
             </div>
           `;
         } else {
-          // Deliver live progress monitoring tracks for Web Layouts, Graphics, Monograms, and Custom Code
           dynamicActionElement = `
             <div style="width: 100%;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <label style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted); margin: 0;">Production Sprint Progression Track</label>
                 <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">${percentage}%</span>
               </div>
-              <div class="project-progress-track">
-                <div class="project-progress-fill" style="width: ${percentage}%;"></div>
+              <div class="project-progress-track" style="background: #e2e8f0; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+                <div class="project-progress-fill" style="width: ${percentage}%; background: #2563eb; height: 100%;"></div>
               </div>
             </div>
           `;
         }
 
-        // Compile full multi-column portfolio asset layout strings cards properties block
         const cardHtmlString = `
-          <div class="service-status-card">
-            <div class="card-top-meta-row">
+          <div class="service-status-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div class="card-top-meta-row" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
               <div>
-                <h3 class="service-title-text">${record.service_type}</h3>
-                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Account: ${record.company_name}</span>
+                <h3 class="service-title-text" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a;">${record.service_type}</h3>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Account: ${record.company_name}</span>
               </div>
-              <span class="live-milestone-pill ${pillClass}">${record.current_status}</span>
+              <span class="live-milestone-pill ${pillClass}" style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">${record.current_status}</span>
             </div>
-            
-            <div class="ledger-metrics-grid">
-              <div class="ledger-column"><span class="lbl">Primary Assignee</span><span class="val">${record.client_name}</span></div>
-              <div class="ledger-column"><span class="lbl">Tracking Code</span><span class="val" style="font-family: monospace;">${record.tracking_number}</span></div>
-              <div class="ledger-column"><span class="lbl">Last Update Sync</span><span class="val">${new Date(record.updated_at).toLocaleDateString()}</span></div>
+            <div class="ledger-metrics-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; font-size: 0.8rem;">
+              <div class="ledger-column"><span class="lbl" style="display: block; color: #64748b; font-weight: 600;">Primary Assignee</span><span class="val" style="font-weight: 700; color: #0f172a;">${record.client_name}</span></div>
+              <div class="ledger-column"><span class="lbl" style="display: block; color: #64748b; font-weight: 600;">Tracking Code</span><span class="val" style="font-family: monospace; font-weight: 700; color: #0f172a;">${record.tracking_number}</span></div>
+              <div class="ledger-column"><span class="lbl" style="display: block; color: #64748b; font-weight: 600;">Last Update Sync</span><span class="val" style="font-weight: 700; color: #0f172a;">${new Date(record.updated_at).toLocaleDateString()}</span></div>
             </div>
-            
-            <div class="remarks-notice-box">
-              <strong>Latest Desk Remarks:</strong> ${record.status_notes || "Your operational files are active within our processing environment queue. Milestones register instantly upon desk checkouts."}
+            <div class="remarks-notice-box" style="background: #f8fafc; border-left: 4px solid #cbd5e1; padding: 12px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 16px; color: #334155;">
+              <strong>Latest Desk Remarks:</strong> ${record.status_notes || "Your files are active within our processing queue. Milestones register instantly upon desk updates."}
             </div>
             ${dynamicActionElement}
           </div>
         `;
-        portfolioContainer.insertAdjacentHTML("beforeend", cardHtmlString);
+        if (portfolioContainer) portfolioContainer.insertAdjacentHTML("beforeend", cardHtmlString);
       });
+
+      establishRealtimeWebSocketListener(token);
     } catch (fault) {
       console.error(fault);
-      errorBox.textContent = "✕ Network Interface Error: Remote ledger synchronization failure occurred. Please re-try again.";
-      errorBox.style.display = "block";
+      if (errorBox) {
+        errorBox.textContent = "✕ Network Interface Error: Remote ledger synchronization failure occurred. Please re-try again.";
+        errorBox.style.display = "block";
+      }
     }
+  }
+  // --- STAGE 5: WEBSOCKET EVENT SUBSCRIPTION OVERLAY ---
+  // Opens a persistent connection to automatically update layout cards when admin hits submit
+  function establishRealtimeWebSocketListener(token) {
+    if (realtimeChannel) {
+      client.removeChannel(realtimeChannel);
+    }
+
+    console.log(`🚀 [Client Portal] Activating WebSocket listener pipeline channel for tracking code: [${token}]`);
+
+    realtimeChannel = client
+      .channel(`live-client-status-${token}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*", 
+          schema: "public",
+          table: "client_statuses",
+          filter: `tracking_number=eq.${token}`
+        },
+        (payload) => {
+          console.log("🔔 [Client Portal] Real-time mutation broadcast received from admin desk:", payload);
+          executePortfolioLookup(token); // Re-fetch data and draw updated elements instantly
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log("✓ WebSocket channel negotiation connected completely.");
+        }
+      });
   }
 });
 </script>
+
 </body>
 </html>

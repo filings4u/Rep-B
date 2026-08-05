@@ -50,25 +50,92 @@
     .document-action-btn:hover { background: var(--text-dark); color: var(--white); }
     .document-action-btn.delete-type:hover { background: var(--staff-red); color: var(--white); }
   </style>
+  <style>
+.content-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.custom-full-stretch-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.form-split-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 24px !important;
+  margin-bottom: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  .form-split-row { grid-template-columns: 1fr !important; gap: 16px !important; }
+}
+
+.form-group {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.field-label-text {
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 700 !important;
+  margin-bottom: 6px !important;
+  color: #475569 !important;
+}
+
+.form-input-element {
+  width: 100% !important;
+  padding: 11px 14px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 0.9rem !important;
+  color: #0f172a !important;
+  box-sizing: border-box !important;
+}
+.form-input-element:focus {
+  outline: none !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+}
+
+.action-btn-primary {
+  width: 100% !important;
+  padding: 13px !important;
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  cursor: pointer;
+}
+
+.table-responsive-wrapper { overflow-x: auto !important; width: 100% !important; }
+.premium-data-table { width: 100% !important; border-collapse: collapse !important; text-align: left !important; font-size: 0.85rem !important; }
+.premium-data-table th { padding: 12px 14px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; font-size: 0.72rem !important; letter-spacing: 0.05em !important; border-bottom: 2px solid #e2e8f0 !important; }
+.table-initialization-loader { padding: 30px !important; text-align: center !important; color: #64748b !important; }
+
+.status-msg-slat { padding: 12px !important; border-radius: 8px !important; font-size: 0.85rem !important; font-weight: 600 !important; margin-bottom: 16px !important; }
+</style>
+
 </head>
 <body>
   <div class="dashboard-wrapper">
-    <aside class="portal-sidebar">
-      <div class="sidebar-brand-block">
-        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-        <div><div class="admin-badge">Directorate Admin</div></div>
-      </div>
-      <nav class="sidebar-accordion-menu">
-        <button class="accordion-trigger active" onclick="toggleSidebarAccordion(this)"> Control Systems <span class="chevron">▲</span></button>
-        <div class="accordion-panel" style="max-height: 400px;">
-          <a href="admin-dashboard.html" class="nav-item"><span>📊</span> System Hub Home</a>
-          <a href="admin-documents.html" class="nav-item active"><span>📂</span> Document Storage Vault</a>
-        </div>
-      </nav>
-      <div class="sidebar-footer-lock">
-        <button id="adminLogoutBtn" class="logout-btn">Exit Admin Session</button>
-      </div>
-    </aside>
 
     <main class="portal-main">
       <header class="portal-header">
@@ -76,54 +143,76 @@
           <h1>Document Vault & Storage Ledger</h1>
           <p>Audit user asset uploads, delete dead files, and transmit finalized incorporation certificates securely</p>
         </div>
+
+        <div style="display: flex !important; align-items: center !important; gap: 12px !important; background: #ffffff !important; border: 1px solid #e2e8f0 !important; padding: 10px 16px !important; border-radius: 8px !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;">
+        <span style="width: 8px; height: 8px; background: #16a34a; border-radius: 50%; display: inline-block;"></span>
+        <span style="font-size: 0.82rem; font-weight: 700; color: #334155; font-family: monospace !important;" id="portal-clock">--/--/----, --:--:-- --</span>
+      </div>
       </header>
 
-      <div class="content-container">
-        <!-- Document Dispatch Form -->
-        <div class="console-card">
-          <h2>Transmit Document to Client</h2>
-          <form id="vaultTransmissionForm">
+  <main class="portal-main" style="width: auto !important; max-width: 100% !important; padding: 24px !important; margin: 0 !important; box-sizing: border-box !important;">
+  
+
+    <div class="content-container">
+      <!-- Transmit Card (Top) -->
+      <div class="console-card custom-full-stretch-card" style="margin-bottom: 24px !important;">
+        <div class="card-header-wrapper" style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+          <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Transmit Document to Client</h2>
+        </div>
+        
+        <form id="vaultTransmissionForm" novalidate class="styled-clean-form">
+          <div class="form-split-row">
             <div class="form-group">
-              <label>Target Account Email Recipient</label>
-              <select id="transmitRecipientEmail" required>
-                <option value="">-- Synchronizing Customer Profiles... --</option>
+              <label class="field-label-text">Target Customer Profile Recipient</label>
+              <select id="transmitRecipientEmail" class="form-input-element" required>
+                <option value="">-- Synchronizing Registered Client Profiles... --</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Document Classification Label</label>
-              <input type="text" id="transmitDocLabel" required placeholder="e.g., Official Approved LLC Articles">
+              <label class="field-label-text">Document Classification Label</label>
+              <input type="text" id="transmitDocLabel" class="form-input-element" required placeholder="e.g., Official Approved LLC Articles">
             </div>
-            <div class="form-group">
-              <label>Select Local File Asset</label>
-              <input type="file" id="transmitFileField" required>
-            </div>
-            <div id="vault-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px;"></div>
-            <button type="submit" class="action-btn" id="vaultSubmitBtn">Upload & Transmit Asset ➔</button>
-          </form>
-        </div>
-
-        <!-- Master Document Inventory Explorer -->
-        <div class="console-card">
-          <h2>Global Upload Storage Index Matrix</h2>
-          <div style="overflow-x:auto !important;">
-            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-              <thead>
-                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
-                  <th style="padding:12px !important;">Account Owner</th>
-                  <th style="padding:12px !important;">Document Description Label</th>
-                  <th style="padding:12px !important;">Storage Path Target</th>
-                  <th style="padding:12px !important; text-align:right !important;">Vault Operations Actions</th>
-                </tr>
-              </thead>
-              <tbody id="admin-vault-explorer-target-box">
-                <tr><td colspan="4" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Compiling master storage nodes index...</td></tr>
-              </tbody>
-            </table>
           </div>
+
+          <div class="form-group" style="margin-top: 8px; margin-bottom: 20px;">
+            <label class="field-label-text">Select Local File Asset</label>
+            <input type="file" id="transmitFileField" class="form-input-element" required accept="application/pdf,image/*">
+          </div>
+
+          <div id="vault-form-status" class="status-msg-slat" style="display:none;"></div>
+          <button type="submit" class="action-btn-primary" id="vaultSubmitBtn">Upload & Transmit Asset ➔</button>
+        </form>
+      </div>
+
+      <!-- Inventory Matrix (Bottom) -->
+      <div class="console-card custom-full-stretch-card">
+        <div class="card-header-wrapper" style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+          <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Global Upload Storage Index Matrix</h2>
+        </div>
+        
+        <div class="table-responsive-wrapper">
+          <table class="premium-data-table">
+            <thead>
+              <tr>
+                <th>Account Owner</th>
+                <th>Document Description Label</th>
+                <th>Storage Path Target</th>
+                <th style="text-align:right;">Vault Operations Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-vault-explorer-target-box">
+              <tr>
+                <td colspan="4" class="table-initialization-loader">Compiling master storage nodes index...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
+
+  </main>
+</div>
+
 
   <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
   <!-- 1. The Global Library Core MUST load absolute first -->
@@ -138,211 +227,229 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
   
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+ <script>
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      // 1. Resolve Document Explorer Selectors
-      const transmissionForm = document.getElementById("vaultTransmissionForm");
-      const recipientSelect  = document.getElementById("transmitRecipientEmail");
-      const docLabelInput    = document.getElementById("transmitDocLabel");
-      const fileFieldInput   = document.getElementById("transmitFileField");
-      const statusDiv        = document.getElementById("vault-form-status");
-      const submitBtn        = document.getElementById("vaultSubmitBtn");
-      const explorerTableBody = document.getElementById("admin-vault-explorer-target-box");
+  // 1. Resolve Document Explorer Selectors
+  const transmissionForm = document.getElementById("vaultTransmissionForm");
+  const recipientSelect = document.getElementById("transmitRecipientEmail");
+  const docLabelInput = document.getElementById("transmitDocLabel");
+  const fileFieldInput = document.getElementById("transmitFileField");
+  const statusDiv = document.getElementById("vault-form-status");
+  const submitBtn = document.getElementById("vaultSubmitBtn");
+  const explorerTableBody = document.getElementById("admin-vault-explorer-target-box");
 
-      if (!transmissionForm || !recipientSelect || !explorerTableBody || !statusDiv || !submitBtn) {
-        throw new Error("✕ Critical UI Error: Form controls or explorer data list tables are absent.");
+  // Live Portal Widget Header Clock
+  function runVaultClockTick() {
+    const clock = document.getElementById("portal-clock");
+    if (clock) clock.textContent = new Date().toLocaleString();
+  }
+  setInterval(runVaultClockTick, 1000);
+  runVaultClockTick();
+
+  // 2. Fetch Global Database Instance Connections safely
+  const client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    if (explorerTableBody) {
+      explorerTableBody.innerHTML = `<tr><td colspan="4" class="table-initialization-loader" style="color:#ef4444; font-weight:700;">✕ System Error: Supabase connection manager uninitialized.</td></tr>`;
+    }
+    return;
+  }
+
+  function escapeVaultHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // --- STAGE 1: DYNAMICALLY LOOKUP CUSTOMERS STRAIGHT FROM CLIENT_PROFILES ---
+  async function synchronizeRecipientMenu() {
+    try {
+      console.log("📡 [Vault Engine] Fetching authorized portfolios from public.client_profiles...");
+      const { data: profiles, error: syncError } = await client
+        .from('client_profiles')
+        .select('id, email_address, first_name, last_name')
+        .order('email_address', { ascending: true });
+
+      if (syncError) throw syncError;
+
+      if (recipientSelect) {
+        recipientSelect.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+        profiles.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.setAttribute("data-email", p.email_address);
+          opt.textContent = `${p.email_address} (${p.first_name || 'New'} ${p.last_name || 'User'})`;
+          recipientSelect.appendChild(opt);
+        });
+      }
+    } catch (fault) {
+      console.error("✕ Profile Menu Sync Halted:", fault.message);
+      if (recipientSelect) recipientSelect.innerHTML = `<option value="">✕ Failed to sync profile logs</option>`;
+    }
+  }
+  // --- STAGE 2: READ AND STREAM MASTER CLIENT_VAULT RECORDS INDEX ---
+  async function streamGlobalDocumentStorageIndex() {
+    try {
+      console.log("📡 [Vault Explorer] Pulling record rows straight from public.client_vault...");
+      const { data: vaultRecords, error: fetchError } = await client
+        .from('client_vault')
+        .select('id, uploaded_by, file_name, storage_bucket_path, content_type')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      if (!explorerTableBody) return;
+
+      if (!vaultRecords || vaultRecords.length === 0) {
+        explorerTableBody.innerHTML = `<tr><td colspan="4" class="table-initialization-loader">No active customer documents found inside storage vault registries.</td></tr>`;
+        return;
       }
 
-      // 2. Fetch Global Database Instance Connections
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        explorerTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
-        throw new Error("✕ Initialization Error: Database driver references evaluate to unassigned.");
-      }
+      // Fetch user profile email lookups to display readable rows rather than raw UUIDs
+      const { data: profiles } = await client.from('client_profiles').select('id, email_address');
+      const profileMap = {};
+      if (profiles) profiles.forEach(p => profileMap[p.id] = p.email_address);
 
-      // --- STAGE 1: DYNAMICALLY EXTRACT LIVE CUSTOMER LIST FROM ORDERS TABLE ---
-      async function synchronizeRecipientMenu() {
-        try {
-          console.log("📡 [Vault Engine] Mapping distinct emails out of public.orders...");
-          const { data: records, error: syncError } = await client.from('orders').select('email').not('email', 'is', null);
-          if (syncError) throw syncError;
+      explorerTableBody.innerHTML = "";
 
-          const distinctEmails = [...new Set(records.map(row => row.email).filter(Boolean))];
-          recipientSelect.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+      vaultRecords.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.style.cssText = "border-bottom:1px solid #e2e8f0; font-size:0.85rem; background:#ffffff; color:#0f172a;";
+        
+        const ownerEmail = profileMap[row.uploaded_by] || `User: ${String(row.uploaded_by).substring(0,8).toUpperCase()}`;
+        const fileLabel  = row.file_name || "Asset PDF File";
+        const bucketPath = row.storage_bucket_path || "";
+
+        tr.innerHTML = `
+          <td style="padding:14px 12px; font-weight:600; color:#0f172a;">${escapeVaultHtml(ownerEmail)}</td>
+          <td style="padding:14px 12px; color:#475569; font-weight:500;">${escapeVaultHtml(fileLabel)}</td>
+          <td style="padding:14px 12px; font-family:monospace; color:#64748b; font-size:0.8rem; max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeVaultHtml(bucketPath)}">${escapeVaultHtml(bucketPath)}</td>
+          <td style="padding:14px 12px; text-align:right;">
+            <button class="download-trigger" data-path="${bucketPath}" style="padding:4px 8px; font-size:0.75rem; border:1px solid #cbd5e1; border-radius:6px; background:#ffffff; cursor:pointer; font-weight:600; margin-right:4px;">Download</button>
+            <button class="purge-trigger" data-id="${row.id}" data-path="${bucketPath}" style="padding:4px 8px; font-size:0.75rem; border:1px solid #fee2e2; border-radius:6px; background:#fff5f5; color:#dc2626; cursor:pointer; font-weight:600;">Delete</button>
+          </td>
+        `;
+
+        // Download: Request secure signed URL from your authentic 'client_documents_vault' bucket volume
+        tr.querySelector(".download-trigger").addEventListener("click", async function() {
+          const filePathKey = this.getAttribute("data-path");
+          try {
+            const { data: urlData, error: urlError } = await client.storage.from('client_documents_vault').createSignedUrl(filePathKey, 60);
+            if (urlError) throw urlError;
+            window.open(urlData.signedUrl, '_blank');
+          } catch (err) { alert(`✕ Download Request Refused: ${err.message}`); }
+        });
+
+        // Delete File and Row Entry
+        tr.querySelector(".purge-trigger").addEventListener("click", async function() {
+          if (!confirm("Are you sure you want to permanently delete this document from the server vault?")) return;
+          const rowId = this.getAttribute("data-id");
+          const pathKey = this.getAttribute("data-path");
           
-          if (distinctEmails.length === 0) {
-            recipientSelect.innerHTML = `<option value="">-- No Active Profiles Located --</option>`;
-            return;
+          this.disabled = true;
+          this.textContent = "Purging...";
+
+          try {
+            await client.storage.from('client_documents_vault').remove([pathKey]);
+            const { error: dbError } = await client.from('client_vault').delete().eq('id', rowId);
+            if (dbError) throw dbError;
+            await streamGlobalDocumentStorageIndex();
+          } catch (err) { 
+            alert(`✕ Purge Interrupted: ${err.message}`); 
+            await streamGlobalDocumentStorageIndex(); 
           }
+        });
 
-          distinctEmails.forEach(email => {
-            const opt = document.createElement("option");
-            opt.value = email.trim();
-            opt.textContent = email.trim();
-            recipientSelect.appendChild(opt);
-          });
-        } catch (fault) {
-          console.error("✕ Menu Sync Halted:", fault.message);
-          recipientSelect.innerHTML = `<option value="">✕ Failed to sync profile logs</option>`;
-        }
-      }
-
-      // --- STAGE 2: READ AND STREAM MASTER DOCUMENTS INDEX ---
-      async function streamGlobalDocumentStorageIndex() {
-        try {
-          console.log("📡 [Vault Explorer] Fetching records out of public.order_documents...");
-          const { data: documents, error: fetchError } = await client
-            .from('order_documents')
-            .select('id, user_email, document_name, storage_file_path')
-            .order('created_at', { ascending: false });
-
-          if (fetchError) throw fetchError;
-
-          if (!documents || documents.length === 0) {
-            explorerTableBody.innerHTML = `<tr><td colspan="4" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No corporate assets or files discoverable inside storage registries.</td></tr>`;
-            return;
-          }
-
-          explorerTableBody.innerHTML = "";
-
-          documents.forEach(docRow => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
-
-            const ownerEmail = docRow.user_email || "unregistered-guest@email.com";
-            const fileLabel  = docRow.document_name || "Incorporation File Block";
-            const bucketPath = docRow.storage_file_path || "";
-
-            tr.innerHTML = `
-              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeVaultHtml(ownerEmail)}</td>
-              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeVaultHtml(fileLabel)}</td>
-              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-size:0.8rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeVaultHtml(bucketPath)}">${escapeVaultHtml(bucketPath)}</td>
-              <td style="padding:14px 12px; text-align:right;">
-                <button class="document-action-btn download-trigger" data-path="${bucketPath}">Download</button>
-                <button class="document-action-btn delete-type purge-trigger" data-id="${docRow.id}" data-path="${bucketPath}">Delete</button>
-              </td>
-            `;
-
-            // Download Trigger: Request cryptographic signature public URLs from Supabase Storage [0.1]
-            tr.querySelector(".download-trigger").addEventListener("click", async function() {
-              const filePathKey = this.getAttribute("data-path");
-              try {
-                console.log(`📡 [Vault Explorer] Resolving temporary read signature URL for: [${filePathKey}]`);
-                const { data: urlData, error: urlError } = await client.storage.from('llc-vault').createSignedUrl(filePathKey, 60);
-                if (urlError) throw urlError;
-                window.open(urlData.signedUrl, '_blank');
-              } catch (err) {
-                alert(`✕ Read Request Refused: ${err.message}`);
-              }
-            });
-            // Purge Trigger: Structural file drops from both bucket volumes and tracking layers [0.1]
-            tr.querySelector(".purge-trigger").addEventListener("click", async function() {
-              if (!confirm("Are you sure you want to permanently delete this document from the server vault?")) return;
-              
-              const rowId = this.getAttribute("data-id");
-              const filePathKey = this.getAttribute("data-path");
-              this.disabled = true;
-              this.textContent = "Purging...";
-
-              try {
-                console.log(`📡 [Vault Explorer] Dropping file out of bucket: [${filePathKey}]`);
-                const { error: storageError } = await client.storage.from('llc-vault').remove([filePathKey]);
-                if (storageError) throw storageError;
-
-                console.log(`📡 [Vault Explorer] Clearing row entry ID: [${rowId}]`);
-                const { error: dbError } = await client.from('order_documents').delete().eq('id', rowId);
-                if (dbError) throw dbError;
-
-                console.log("✓ [Vault Explorer] Asset file purge successfully completed.");
-                await streamGlobalDocumentStorageIndex();
-              } catch (err) {
-                console.error("✕ Purge Routine Aborted:", err.message);
-                alert(`✕ Purge Interrupted: ${err.message}`);
-                await streamGlobalDocumentStorageIndex();
-              }
-            });
-
-            explorerTableBody.appendChild(tr);
-          });
-        } catch (err) {
-          console.error("✕ Vault Synchronization Exception Blocked:", err.message);
-          explorerTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
-        }
-      }
-
-      // --- STAGE 3: UPLOAD ASSET FILES & LOG TRACKING METRICS ROWS ---
-      transmissionForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        statusDiv.style.display = "none";
-        statusDiv.textContent = "";
-
-        const recipientEmail = recipientSelect.value;
-        const documentLabel  = docLabelInput.value.trim();
-        const targetedFile   = fileFieldInput.files[0];
-
-        if (!recipientEmail || !documentLabel || !targetedFile) {
-          statusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          statusDiv.textContent = "✕ Validation Error: All transmission fields and file streams are required.";
-          return;
-        }
-
-        const originalBtnText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Streaming Payload to Storage Bucket...";
-
-        try {
-          // Construct an isolated file destination string block
-          const fileSanitizedName = `${Date.now()}_${targetedFile.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
-          const destinationStoragePath = `${recipientEmail}/${fileSanitizedName}`;
-
-          console.log(`📡 [Vault Upload] Initializing storage chunk transmission to: [llc-vault/${destinationStoragePath}]`);
-          const { error: storageUploadError } = await client.storage.from('llc-vault').upload(destinationStoragePath, targetedFile, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-          if (storageUploadError) throw storageUploadError;
-
-          console.log("📡 [Vault Upload] File successfully accepted by storage block. Creating trace row inside order_documents...");
-          const { error: dbRowLogValuesError } = await client
-            .from('order_documents')
-            .insert([
-              {
-                user_email: recipientEmail,
-                document_name: documentLabel,
-                storage_file_path: destinationStoragePath,
-                created_at: new Date().toISOString()
-              }
-            ]);
-
-          if (dbRowLogValuesError) throw dbRowLogValuesError;
-
-          console.log("✅ [Vault Upload] Asset deployment sequence executed smoothly.");
-          statusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
-          statusDiv.textContent = "✓ Success! Asset file transmitted to storage buckets and mapped completely onto customer lists.";
-          
-          transmissionForm.reset();
-          await streamGlobalDocumentStorageIndex();
-        } catch (fault) {
-          console.error("✕ Document transmission stream failed:", fault.message);
-          statusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          statusDiv.textContent = `✕ Upload Aborted: ${fault.message}`;
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalBtnText;
-        }
+        explorerTableBody.appendChild(tr);
       });
+    } catch (err) {
+      console.error(err);
+      if (explorerTableBody) {
+        explorerTableBody.innerHTML = `<tr><td colspan="4" class="table-initialization-loader" style="color:#ef4444;">✕ Sync Failure: Check network terminal configuration logs.</td></tr>`;
+      }
+    }
+  }
+  // --- STAGE 3: UPLOAD FILE BINARY & LOG METRICS ROW INTO CLIENT_VAULT ---
+  if (transmissionForm) {
+    transmissionForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (statusDiv) statusDiv.style.display = "none";
 
-      function escapeVaultHtml(str) {
-        if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      const userUuid = recipientSelect ? recipientSelect.value : "";
+      const targetEmail = recipientSelect ? recipientSelect.options[recipientSelect.selectedIndex]?.getAttribute("data-email") : "";
+      const docLabel = docLabelInput ? docLabelInput.value.trim() : "";
+      const targetedFile = fileFieldInput ? fileFieldInput.files[0] : null;
+
+      if (!userUuid || !docLabel || !targetedFile) {
+        if (statusDiv) {
+          statusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border:1px solid #fee2e2;";
+          statusDiv.textContent = "✕ Validation Error: All transmission fields and file streams are required.";
+        }
+        return;
       }
 
-      await synchronizeRecipientMenu();
-      await streamGlobalDocumentStorageIndex();
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Streaming Payload to Storage Bucket...";
+
+      try {
+        const uniqueFileName = `${Date.now()}_${targetedFile.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+        const destinationPath = `${targetEmail}/${uniqueFileName}`;
+
+        console.log(`📡 [Vault Upload] Streaming asset into bucket volume directory: [client_documents_vault/${destinationPath}]`);
+        
+        const { error: storageUploadError } = await client.storage
+          .from('client_documents_vault')
+          .upload(destinationPath, targetedFile, { cacheControl: '3600', upsert: false });
+
+        if (storageUploadError) throw storageUploadError;
+
+        console.log("📡 [Vault Upload] File received. Commit data metrics row to public.client_vault...");
+        
+        // FIX: Replaced syntax-breaking dash comments with standard properties mapping
+        const { error: dbRowLogValuesError } = await client
+          .from('client_vault')
+          .insert([
+            {
+              uploaded_by: userUuid,
+              file_name: docLabel,
+              storage_bucket_path: destinationPath,
+              file_size_bytes: targetedFile.size,
+              bucket_id: 'client_documents_vault',
+              content_type: targetedFile.type || 'application/pdf'
+            }
+          ]);
+
+        if (dbRowLogValuesError) throw dbRowLogValuesError;
+
+        if (statusDiv) {
+          statusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857; border:1px solid #d1fae5;";
+          statusDiv.textContent = "✓ Success! Corporate document safely transmitted to client storage vault ledger.";
+        }
+        
+        transmissionForm.reset();
+        await streamGlobalDocumentStorageIndex();
+
+      } catch (fault) {
+        console.error("✕ Document transmission stream failed:", fault);
+        if (statusDiv) {
+          statusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border:1px solid #fee2e2;";
+          statusDiv.textContent = `✕ Upload Aborted: ${fault.message || "Invalid target configuration."}`;
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      }
     });
-  </script>
+  }
+
+  // Execute structural lifecycle threads on initialization boot frame
+  await synchronizeRecipientMenu();
+  await streamGlobalDocumentStorageIndex();
+});
+</script>
+
+
 </body>
 </html>

@@ -160,3 +160,96 @@ window.handleFailedLoginAttemptTracking = function() {
 window.clearLoginStrikesOnSuccess = function() {
   localStorage.removeItem("f4u_portal_login_strikes");
 };
+
+
+// assets/js/supabase-config.js
+// 🔐 Global Supabase Client Initialization Setup Matrix
+
+(function () {
+  // Replace these placeholders with your actual project keys
+  const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+
+  if (!window.supabase) {
+    console.error("Supabase CDN library was not loaded prior to initialization sequence.");
+    return;
+  }
+
+  // Initialize and attach securely to window context
+  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log("🚀 Supabase Client Workspace successfully established.");
+})();
+
+
+/**
+ * Filings4U Enterprise Synchronization Engine
+ * Central Real-Time Webhook Pipeline Middleware 
+ */
+window.Filings4uSyncEngine = {
+  activeChannels: {},
+
+  // Initialize Real-time Client Listening Portals
+  initGlobalListener: function(client, userEmail, onNotificationCallback) {
+    if (!client || !userEmail) return console.warn("⚡ [Sync Engine] Initialization parameters absent.");
+
+    console.log(`📡 [Sync Engine] Subscribing to live updates for profile: [${userEmail}]`);
+
+    // Channel 1: Listen for specific client notification flags
+    this.activeChannels.portalNotifs = client
+      .channel('public-portal-notifications')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'portal_notifications',
+        filter: `user_email=eq.${userEmail}`
+      }, (payload) => {
+        console.log("🔔 [Sync Engine] Inbound portal alert captured:", payload.new);
+        this.incrementGlobalNotificationBadge();
+        if (typeof onNotificationCallback === 'function') onNotificationCallback(payload.new);
+      })
+      .subscribe();
+
+    // Channel 2: Listen for systemic dashboard broadcasts
+    this.activeChannels.systemBroadcasts = client
+      .channel('global-system-broadcasts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_notifications' }, (payload) => {
+        console.log("📢 [Sync Engine] System broad banner pushed:", payload.new);
+        if (typeof window.showGlobalBannerAlert === 'function') {
+          window.showGlobalBannerAlert(payload.new.message || "System maintenance scheduled.");
+        }
+      })
+      .subscribe();
+  },
+
+  // Updates notification indicator across headers cleanly
+  incrementGlobalNotificationBadge: function() {
+    const badge = document.getElementById("globalNavUnreadCounterBadge");
+    if (!badge) return;
+    
+    let activeCount = parseInt(badge.textContent.trim(), 10) || 0;
+    activeCount += 1;
+    badge.textContent = activeCount;
+    badge.style.display = "inline-flex";
+    
+    // Play light visual entry pop
+    badge.style.transform = "scale(1.2)";
+    setTimeout(() => { badge.style.transform = "scale(1)"; }, 150);
+  },
+
+  // Standardized interface state updating system
+  dispatchPipelineMutation: async function(client, targetTable, recordId, updatedPayload) {
+    console.log(`🚀 [Sync Engine] Broadcasting data mutation across: [public.${targetTable}] for ID: ${recordId}`);
+    
+    // Broadcast mutation to Supabase via database updates
+    const { data, error } = await client
+      .from(targetTable)
+      .update(updatedPayload)
+      .eq('id', recordId);
+      
+    if (error) {
+      console.error(`✕ [Sync Engine] Mutation dispatch failed on table ${targetTable}:`, error.message);
+      throw error;
+    }
+    return data;
+  }
+};

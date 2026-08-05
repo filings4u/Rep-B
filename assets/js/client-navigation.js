@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="accordion-panel d-panel" data-group="account"> 
       <a href="client-dashboard.html" class="nav-item d-link" data-page="client-dashboard.html">📊 Dashboard Home</a> 
       <a href="client-entities.html" class="nav-item d-link" data-page="client-entities.html">🏢 Registered Entities</a> 
-      <a href="client-team.html" class="nav-item d-link" data-page="client-team.html">🔐 Team & Access Control</a>
+      <a href="client-team.html" class="nav-item d-link" data-page="client-team.html">🔐 Team & Access Control</a> 
       <a href="client-services.html" class="nav-item d-link" data-page="client-services.html">🛒 Order New Services</a> 
     </div> 
   </div> 
@@ -162,8 +162,8 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="accordion-panel d-panel" data-group="compliance"> 
       <a href="client-filings.html" class="nav-item d-link" data-page="client-filings.html">⚙️ Active Orders Queue</a> 
       <a href="client-status.html" class="nav-item d-link" data-page="client-status.html">📡 Track Live Progress</a> 
-      <a href="client-registered-agent.html" class="nav-item d-link" data-page="client-registered-agent.html">🛡️ Registered Agent Desk</a>
-      <a href="client-mailroom.html" class="nav-item d-link" data-page="client-mailroom.html">📬 Mailroom & State Notices</a>
+      <a href="client-registered-agent.html" class="nav-item d-link" data-page="client-registered-agent.html">🛡️ Registered Agent Desk</a> 
+      <a href="client-mailroom.html" class="nav-item d-link" data-page="client-mailroom.html">📬 Mailroom & State Notices</a> 
       <a href="client-compliance.html" class="nav-item d-link" data-page="client-compliance.html">🔄 Annual Compliance Monitor</a> 
       <a href="client-vault.html" class="nav-item d-link" data-page="client-vault.html">📂 Secure Corporate Vault</a> 
     </div> 
@@ -179,7 +179,19 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="client-knowledgebase.html" class="nav-item d-link" data-page="client-knowledgebase.html">📰 Corporate Knowledgebase</a> 
     </div> 
   </div> 
+
+  <!-- 🎨 PROJECT MANAGEMENT ACCORDION (NEWLY ADDED) -->
+  <div class="accordion-group"> 
+    <button class="accordion-trigger d-trigger" data-group="projects"> Project Management <span class="chevron">▼</span> </button> 
+    <div class="accordion-panel d-panel" data-group="projects"> 
+      <a href="client-project-web.html" class="nav-item d-link" data-page="client-project-web.html">🌐 Web Design Hub</a> 
+      <a href="client-project-logo.html" class="nav-item d-link" data-page="client-project-logo.html">🎨 Logo Design Hub</a> 
+      <a href="client-project-brand.html" class="nav-item d-link" data-page="client-project-brand.html">✨ Corporate Branding</a> 
+    </div> 
+  </div> 
+
 </nav>
+
 
 
     <div class="sidebar-footer-lock" style="padding-top:10px !important;">
