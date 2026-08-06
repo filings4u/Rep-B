@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Customer Portal Dashboard | filings4u</title>
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
+  <meta name="msapplication-navbutton-color" content="#10b981">
+  <link rel="icon" type="image/png" href="images/fav.png">
+
+  <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* 🖥️ PRIMARY CONTENT AREA STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 16px !important; }
+    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
+    .search-input { padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; }
+    
+    .nav-bell-wrapper { position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important; }
+    .document-vault-download-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+    .document-vault-download-btn:hover { background: var(--text-dark); color: white; }
+    
+    .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
+    .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
+  </style>
+
+  <style>
+  /* ==========================================================================
+     🚀 ONBOARDING MODULE MASTER STYLING EXTENSIONS
+     ========================================================================== */
+  .onboarding-container {
+    padding: 30px 40px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    background-color: var(--bg-light) !important;
+  }
+
+  /* 📊 COMPACT PROGRESS TRACKER HERO GRID */
+  .onboarding-progress-hero {
+    background: #ffffff !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    padding: 24px 32px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 20px !important;
+  }
+
+  .progress-text-box h2 {
+    margin: 0 0 4px 0 !important;
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    color: var(--text-dark) !important;
+  }
+
+  .progress-text-box p {
+    margin: 0 !important;
+    font-size: 0.82rem !important;
+    color: var(--text-muted) !important;
+  }
+
+  .progress-visual-bar-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 400px !important;
+  }
+
+  .progress-outer-track {
+    flex: 1 !important;
+    background: #f1f5f9 !important;
+    height: 10px !important;
+    border-radius: 9999px !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  .progress-fill-bar {
+    width: 25%; /* Dynamically calculated and injected via Javascript */
+    height: 100% !important;
+    background: var(--emerald) !important;
+    border-radius: 9999px !important;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .progress-percentage-label {
+    font-family: monospace !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: var(--text-dark) !important;
+    min-width: 42px !important;
+    text-align: right !important;
+  }
+
+  /* 📐 SPLIT CARD TWO-COLUMN COLUMN MATRIX */
+  .onboarding-split-grid {
+    display: grid !important;
+    grid-template-columns: 1.1fr 0.9fr !important;
+    gap: 24px !important;
+    align-items: start !important;
+    width: 100% !important;
+  }
+
+  .onboarding-card {
+    background: var(--white) !important;
+    border-radius: 10px !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 28px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+    margin-bottom: 24px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .onboarding-card h2 {
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    margin: 0 0 6px 0 !important;
+    color: var(--text-dark) !important;
+  }
+
+  .onboarding-card h2 span {
+    margin-right: 6px !important;
+  }
+
+  .card-subtitle-text {
+    font-size: 0.8rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1.4 !important;
+    margin: 0 0 20px 0 !important;
+  }
+
+  /* DYNAMIC CHEKLIST LAYOUT BLOCKS */
+  .onboarding-checklist {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .checklist-item-row {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 14px 16px !important;
+    background: #f8fafc !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+  }
+
+  .checklist-item-row:hover {
+    border-color: var(--emerald) !important;
+    background: #ffffff !important;
+  }
+
+  .checklist-item-row.completed {
+    background: rgba(16, 185, 129, 0.02) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+  }
+
+  .checklist-checkbox-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    height: 20px !important;
+  }
+
+  .checklist-checkbox-wrapper input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    accent-color: var(--emerald) !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+  }
+
+  .checklist-content-meta h4 {
+    margin: 0 0 2px 0 !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    color: var(--text-dark) !important;
+  }
+
+  .checklist-item-row.completed .checklist-content-meta h4 {
+    text-decoration: line-through !important;
+    color: #94a3b8 !important;
+  }
+
+  .checklist-content-meta p {
+    margin: 0 !important;
+    font-size: 0.78rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1.3 !important;
+  }
+
+  /* INTAKE PROFILER INTERFACE FORM ELEMENTS */
+  .onboarding-form-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .onboarding-field-group {
+    display: flex !important;
+    flex-direction: column !important;
+    text-align: left !important;
+  }
+
+  .onboarding-field-group.full-width {
+    grid-column: span 2 / auto !important;
+  }
+
+  .onboarding-field-group label {
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    color: var(--text-muted) !important;
+    margin-bottom: 6px !important;
+  }
+
+  .onboarding-field-group input, .onboarding-field-group select {
+    padding: 10px 12px !important;
+    font-size: 0.85rem !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    outline: none !important;
+    background: #f8fafc !important;
+    color: var(--text-dark) !important;
+    box-sizing: border-box !important;
+    height: 38px !important;
+    transition: all 0.15s !important;
+  }
+
+  .onboarding-field-group input:focus, .onboarding-field-group select:focus {
+    background: #ffffff !important;
+    border-color: var(--emerald) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.06) !important;
+  }
+
+  .onboarding-submit-btn {
+    width: 100% !important;
+    padding: 12px !important;
+    background: var(--text-dark) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+    transition: background 0.15s !important;
+    box-shadow: 0 2px 4px rgba(10,31,68,0.05) !important;
+  }
+
+  .onboarding-submit-btn:hover {
+    background: #11274c !important;
+  }
+
+  /* MEDIA CAROUSEL STREAM CORES */
+  .video-placeholder-canvas {
+    width: 100% !important;
+    background: #0f172a !important;
+    border-radius: 8px !important;
+    aspect-ratio: 16 / 9 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 14px !important;
+  }
+
+  .video-play-overlay-icon {
+    font-size: 3rem !important;
+    color: rgba(255,255,255,0.85) !important;
+    cursor: pointer !important;
+    transition: transform 0.2s !important;
+  }
+
+  .video-play-overlay-icon:hover {
+    transform: scale(1.1) !important;
+    color: var(--emerald) !important;
+  }
+
+  @media (max-width: 1100px) {
+    .onboarding-split-grid { grid-template-columns: 1fr !important; }
+    .onboarding-container { padding: 20px !important; }
+  }
+  @media (max-width: 640px) {
+    .onboarding-form-row { grid-template-columns: 1fr !important; }
+    .onboarding-field-group.full-width { grid-column: span 1 / auto !important; }
+  }
+</style>
+
+
+</head>
+
+<body>
+  <div class="dashboard-wrapper">
+    <!-- 🖥️ PRIMARY CONTENT AREA -->
+    <main class="portal-main">
+           <!-- UPGRADED COMPACT TOP NAVIGATION BAR ELEMENT -->
+      <header class="portal-header" style="background: #ffffff !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; min-height: 60px !important;">
+        <div class="welcome-text" style="display: flex !important; align-items: center !important;">
+          <h1 style="margin: 0 !important; font-size: 1.25rem !important; font-weight: 800 !important; color: var(--text-dark) !important; letter-spacing: -0.5px !important;">Welcome Back, <span id="clientNameField" style="color: #10b981 !important;"></span></h1>
+        </div>
+        
+        <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 16px !important;">
+          <!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
+          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
+            <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
+              <span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
+              <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
+            </a>
+          </div>
+          
+          <!-- PORTAL CLOCK SYSTEM CONTAINER -->
+          <div class="header-clock-pill" style="background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 6px 12px !important; border-radius: 6px !important; font-family: monospace !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; height: 32px !important; white-space: nowrap !important;">
+            <span>⏱️</span>
+            <span id="portal-clock">Syncing...</span>
+          </div>
+          
+          <div>
+            <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 6px 12px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; font-size: 0.8rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; height: 32px !important;">
+          </div>
+        </div>
+      </header>
+
+<div class="onboarding-container">
+
+  <!-- 📊 PROGRESSIVE COMPLETION METRICS CARD BAR -->
+  <div class="onboarding-progress-hero">
+    <div class="progress-text-box">
+      <h2>Your Onboarding Checklist Progress</h2>
+      <p>Please finish the critical onboarding milestones below to launch your corporate compliance pipeline accounts.</p>
+    </div>
+    <div class="progress-visual-bar-wrapper">
+      <div class="progress-outer-track">
+        <div id="onboardingFillBar" class="progress-fill-bar"></div>
+      </div>
+      <div id="onboardingPercentLabel" class="progress-percentage-label">0%</div>
+    </div>
+  </div>
+
+  <!-- 📐 SPLIT COLUMN PANELS CONFIGURATION MATRIX -->
+  <div class="onboarding-split-grid">
+    
+    <!-- LEFT PANEL SIDE: STEP PROGRESS TRACKER TASKS -->
+    <div class="left-onboarding-column">
+      <div class="onboarding-card">
+        <h2><span>🚀</span> Essential Profile Activation Steps</h2>
+        <p class="card-subtitle-text">Toggle each item check circle once completed. Certain items auto-resolve as you interact with portal forms.</p>
+        
+        <div class="onboarding-checklist">
+          
+          <!-- Task Item 1 -->
+          <div class="checklist-item-row" data-step="1">
+            <div class="checklist-checkbox-wrapper">
+              <input type="checkbox" id="check-step-1" class="onboarding-step-cb">
+            </div>
+            <div class="checklist-content-meta">
+              <h4>Complete Initial Client Profiler</h4>
+              <p>Supply your primary corporate registry entity data parameters using the quick form on the right.</p>
+            </div>
+          </div>
+
+          <!-- Task Item 2 -->
+          <div class="checklist-item-row" data-step="2">
+            <div class="checklist-checkbox-wrapper">
+              <input type="checkbox" id="check-step-2" class="onboarding-step-cb">
+            </div>
+            <div class="checklist-content-meta">
+              <h4>Watch Platform Welcome Video</h4>
+              <p>Review the short 2-minute layout orientation tutorial inside your resources media card.</p>
+            </div>
+          </div>
+
+          <!-- Task Item 3 -->
+          <div class="checklist-item-row" data-step="3">
+            <div class="checklist-checkbox-wrapper">
+              <input type="checkbox" id="check-step-3" class="onboarding-step-cb">
+            </div>
+            <div class="checklist-content-meta">
+              <h4>Download Your Corporate Welcome Kit</h4>
+              <p>Grab your localized company starter guide manual template from the system links below.</p>
+            </div>
+          </div>
+
+          <!-- Task Item 4 -->
+          <div class="checklist-item-row" data-step="4">
+            <div class="checklist-checkbox-wrapper">
+              <input type="checkbox" id="check-step-4" class="onboarding-step-cb">
+            </div>
+            <div class="checklist-content-meta">
+              <h4>Schedule Core Strategy Consultation</h4>
+              <p>Lock down your strategy session allocation mapping inside the Calendar Matrix page.</p>
+            </div>
+          </div>
+
+        </div> <!-- /onboarding-checklist -->
+      </div> <!-- /onboarding-card -->
+
+      <!-- DOWNLOADS AND RESOURCE CARD -->
+      <div class="onboarding-card">
+        <h2><span>📂</span> Immediate Download Assets</h2>
+        <p class="card-subtitle-text">Access essential starter asset kits and tracking guides to accelerate setup workflows.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="timeline-event-row" style="display:flex; justify-content:space-between; align-items:center; background:#ffffff;">
+            <div>
+              <strong style="display:block; color:var(--text-dark);">Filings4U Welcome Kit Packet</strong>
+              <span style="font-size:0.72rem; color:var(--text-muted);">PDF Asset Manual • 4.2 MB</span>
+            </div>
+            <a href="javascript:void(0);" class="document-vault-download-btn" id="downloadWelcomeKitBtn">Download ➔</a>
+          </div>
+          
+          <div class="timeline-event-row" style="display:flex; justify-content:space-between; align-items:center; background:#ffffff;">
+            <div>
+              <strong style="display:block; color:var(--text-dark);">2026 Corporate Compliance Ledger Guide</strong>
+              <span style="font-size:0.72rem; color:var(--text-muted);">Digital Checklist Spreadsheet • 1.8 MB</span>
+            </div>
+            <a href="javascript:void(0);" class="document-vault-download-btn" id="downloadLedgerGuideBtn">Download ➔</a>
+          </div>
+        </div>
+      </div>
+    </div> <!-- /left-onboarding-column -->
+
+    <!-- RIGHT PANEL SIDE: LIVE INTAKE FORM MODULE & VIDEO BROADCAST -->
+    <div class="right-onboarding-column">
+      
+      <!-- WELCOME ORIENTATION MEDIA PANEL -->
+      <div class="onboarding-card">
+        <h2><span>🎬</span> Platform Orientation Guide</h2>
+        <p class="card-subtitle-text">Watch this walk-through video layout to master navigating your compliance system panels.</p>
+        
+        <div class="video-placeholder-canvas" id="onboardingVideoBox">
+          <i class="fa-solid fa-circle-play video-play-overlay-icon" id="videoPlayIcon"></i>
+          <span id="videoPlayingText" style="color:#ffffff; font-weight:700; display:none; font-size:0.9rem;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--emerald); margin-right:8px;"></i> Streaming Overview Tutorial...</span>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE ENTITY PROFILE COMPILER MODULE FORM -->
+      <div class="onboarding-card">
+        <h2><span>🏢</span> Corporate Entity Profiler</h2>
+        <p class="card-subtitle-text">Supply any missing entity data pointers to register your customer data layout mappings cleanly.</p>
+        
+        <form id="onboardingProfileForm" novalidate>
+          <div class="onboarding-form-row">
+            <div class="onboarding-field-group">
+              <label for="obFirstName">First Name</label>
+              <input type="text" id="obFirstName" required placeholder="John">
+            </div>
+            <div class="onboarding-field-group">
+              <label for="obLastName">Last Name</label>
+              <input type="text" id="obLastName" required placeholder="Doe">
+            </div>
+          </div>
+
+          <div class="onboarding-form-row">
+            <div class="onboarding-field-group full-width">
+              <label for="obCompanyName">Target Company Name</label>
+              <input type="text" id="obCompanyName" required placeholder="e.g., Acme Holdings LLC">
+            </div>
+          </div>
+
+          <div class="onboarding-form-row">
+            <div class="onboarding-field-group">
+              <label for="obPhoneNumber">Contact Phone Number</label>
+              <input type="tel" id="obPhoneNumber" required placeholder="(555) 000-0000">
+            </div>
+            <div class="onboarding-field-group">
+              <label for="obState">State of Formation</label>
+              <select id="obState" required>
+                <option value="" disabled selected>Select State...</option>
+                <option value="DE">Delaware</option>
+                <option value="WY">Wyoming</option>
+                <option value="NV">Nevada</option>
+                <option value="IL">Illinois</option>
+                <option value="TX">Texas</option>
+                <option value="FL">Florida</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="onboarding-form-row">
+            <div class="onboarding-field-group full-width">
+              <label for="obStreetAddress">Principal Business Address</label>
+              <input type="text" id="obStreetAddress" required placeholder="123 Corporate Blvd, Suite 100">
+            </div>
+          </div>
+
+          <div id="obFormFeedback" class="action-alert-strip" style="display:none; margin-bottom:15px;"></div>
+
+          <button type="submit" class="onboarding-submit-btn" id="obSubmitBtn">Lock In Account Configuration ➔</button>
+        </form>
+      </div>
+
+    </div> <!-- /right-onboarding-column -->
+
+  </div> <!-- /onboarding-split-grid -->
+
+</div> <!-- /onboarding-container> -->
+
+
+      <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <script src="assets/js/client-master-ledger.js"></script>
+
+  <script src="assets/js/client-navigation.js"></script>
+
+  <script src="assets/js/client-footer.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  // 🟢 SYSTEM CLOCK CORE: Real-Time Live Header Update Loop
+  const clockPill = document.getElementById("portal-clock");
+  function runLiveSystemClock() {
+    if (!clockPill) return;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+    clockPill.textContent = `${dateStr} | ${timeStr}`;
+  }
+  setInterval(runLiveSystemClock, 1000);
+  runLiveSystemClock();
+
+  // 1. Selector Mapping Targets
+  const fillBar = document.getElementById("onboardingFillBar");
+  const percentLabel = document.getElementById("onboardingPercentLabel");
+  const checkboxes = document.querySelectorAll(".onboarding-step-cb");
+  const profileForm = document.getElementById("onboardingProfileForm");
+  const formFeedback = document.getElementById("obFormFeedback");
+  const formSubmitBtn = document.getElementById("obSubmitBtn");
+  
+  // Media & Download Elements
+  const videoPlayIcon = document.getElementById("videoPlayIcon");
+  const videoPlayingText = document.getElementById("videoPlayingText");
+  const btnDownloadWelcome = document.getElementById("downloadWelcomeKitBtn");
+  const btnDownloadLedger = document.getElementById("downloadLedgerGuideBtn");
+
+  if (!fillBar || !percentLabel || checkboxes.length === 0) {
+    console.error("✕ Critical UI Error: Onboarding layout trackers or checklist targets are missing.");
+    return;
+  }
+
+  // 2. Local State Storage Key Definition
+  const STORAGE_KEY = "f4u_onboarding_progress_state";
+  let activeState = {
+    step_1: false,
+    step_2: false,
+    step_3: false,
+    step_4: false
+  };
+
+  // Load existing session metrics from storage if they exist
+  const cachedProgress = localStorage.getItem(STORAGE_KEY);
+  if (cachedProgress) {
+    try {
+      activeState = JSON.parse(cachedProgress);
+    } catch (e) {
+      console.warn("⚠️ Progress state rehydration skipped, resetting state variables.");
+    }
+  }
+
+  // 3. Progress Calculator Core Logic Routine
+  function calculateMetricsProgress() {
+    const totalSteps = checkboxes.length;
+    let completedStepsCount = 0;
+
+    checkboxes.forEach((cb, idx) => {
+      const stepNum = idx + 1;
+      const isItemDone = activeState[`step_${stepNum}`];
+      
+      cb.checked = isItemDone;
+      
+      const parentRow = cb.closest(".checklist-item-row");
+      if (parentRow) {
+        if (isItemDone) {
+          parentRow.classList.add("completed");
+        } else {
+          parentRow.classList.remove("completed");
+        }
+      }
+
+      if (isItemDone) completedStepsCount++;
+    });
+
+    const finalPercent = Math.round((completedStepsCount / totalSteps) * 100);
+    fillBar.style.width = `${finalPercent}%`;
+    percentLabel.textContent = `${finalPercent}%`;
+  }
+
+  // Bind change action listeners to checkboxes to save status updates instantly
+  checkboxes.forEach((cb, idx) => {
+    cb.addEventListener("change", function() {
+      const stepNum = idx + 1;
+      activeState[`step_${stepNum}`] = this.checked;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(activeState));
+      calculateMetricsProgress();
+    });
+  });
+
+  // 4. Interactive Simulation Telemetry Blocks
+  if (videoPlayIcon && videoPlayingText) {
+    videoPlayIcon.addEventListener("click", () => {
+      videoPlayIcon.style.display = "none";
+      videoPlayingText.style.display = "inline-block";
+      
+      // Auto-resolve step 2 after interactive simulation delay trigger
+      setTimeout(() => {
+        activeState.step_2 = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(activeState));
+        calculateMetricsProgress();
+      }, 3000);
+    });
+  }
+
+  function bindMockDownloadStep(triggerBtn, stepPropertyNum) {
+    if (!triggerBtn) return;
+    triggerBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      this.textContent = "Processing File...";
+      
+      setTimeout(() => {
+        this.textContent = "Downloaded ✓";
+        this.style.background = "#e2e8f0";
+        this.style.color = "#475569";
+        
+        activeState[`step_${stepPropertyNum}`] = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(activeState));
+        calculateMetricsProgress();
+      }, 1500);
+    });
+  }
+
+  bindMockDownloadStep(btnDownloadWelcome, 3);
+  bindMockDownloadStep(btnDownloadLedger, 3);
+
+  // 5. Client Profile Submission Form Action Handler
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!formFeedback || !formSubmitBtn) return;
+
+      formFeedback.style.display = "none";
+
+      if (!profileForm.checkValidity()) {
+        formFeedback.textContent = "✕ Validation Error: Please fill in all profile fields before committing.";
+        formFeedback.className = "action-alert-strip";
+        formFeedback.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border-color:rgba(193,82,84,0.15);";
+        return;
+      }
+
+      const originalBtnText = formSubmitBtn.textContent;
+      formSubmitBtn.disabled = true;
+      formSubmitBtn.textContent = "Synchronizing Client Profile Ledger...";
+
+      try {
+        const client = window.supabaseInstance || window.supabaseClient;
+        
+        // Build entity data packet parameters payload
+        const payload = {
+          first_name: document.getElementById("obFirstName").value.trim(),
+          last_name: document.getElementById("obLastName").value.trim(),
+          company_name: document.getElementById("obCompanyName").value.trim(),
+          phone_number: document.getElementById("obPhoneNumber").value.trim(),
+          state: document.getElementById("obState").value,
+          street_address: document.getElementById("obStreetAddress").value.trim(),
+          updated_at: new Date().toISOString()
+        };
+
+        if (client && typeof client.from === 'function') {
+          const { data: { session } } = await client.auth.getSession();
+          if (session?.user) {
+            const { error: patchError } = await client
+              .from('client_profiles')
+              .update(payload)
+              .eq('id', session.user.id);
+
+            if (patchError) throw patchError;
+          }
+        }
+
+        formFeedback.textContent = "✓ Success! Corporate profile metrics safely synchronized.";
+        formFeedback.style.cssText = "display:block; background:#ecfdf5; color:#047857; border-color:rgba(16,185,129,0.15);";
+        
+        // Auto-resolve step 1 task item upon successful form completion
+        activeState.step_1 = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(activeState));
+        calculateMetricsProgress();
+
+      } catch (err) {
+        console.error("✕ Profile configuration save failed:", err.message);
+        formFeedback.textContent = `✕ Connection Blocked: ${err.message || "Failed to commit record updates."}`;
+        formFeedback.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border-color:rgba(193,82,84,0.15);";
+      } finally {
+        formSubmitBtn.disabled = false;
+        formSubmitBtn.textContent = originalBtnText;
+      }
+    });
+  }
+
+  // Run initialization progress metrics check immediately on script boot sequence frame
+  calculateMetricsProgress();
+});
+</script>
+
+</body>
+</html>

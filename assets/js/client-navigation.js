@@ -139,16 +139,19 @@ document.addEventListener("DOMContentLoaded", () => {
     desktopSidebarNode.className = "portal-sidebar";
     desktopSidebarNode.id = "f4uDesktopStaticSidebar";
     desktopSidebarNode.innerHTML = `
-    <div class="sidebar-brand-block">
-        <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-        <div><div class="admin-badge">Client Account</div></div>
-    </div>
+<div class="sidebar-brand-block"> 
+  <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;"> 
+  <div><div class="admin-badge">Client Account</div></div> 
+</div> 
+
 <nav class="sidebar-accordion-menu" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"> 
   
-  <!-- 👤 ACCOUNT ENGINE ACCORDION -->
+  <!-- 👤 ACCOUNT ENGINE ACCORDION --> 
   <div class="accordion-group"> 
-    <button class="accordion-trigger d-trigger" data-group="account"> My Account <span class="chevron">▼</span> </button> 
+    <button type="button" class="accordion-trigger d-trigger" data-group="account"> My Account <span class="chevron">▼</span> </button> 
     <div class="accordion-panel d-panel" data-group="account"> 
+      <!-- 🟢 ADDED: Unified client onboarding progress checkpoint routing link -->
+      <a href="client-onboarding.html" class="nav-item d-link" data-page="client-onboarding.html">🚀 Onboarding Checklist</a>
       <a href="client-dashboard.html" class="nav-item d-link" data-page="client-dashboard.html">📊 Dashboard Home</a> 
       <a href="client-entities.html" class="nav-item d-link" data-page="client-entities.html">🏢 Registered Entities</a> 
       <a href="client-team.html" class="nav-item d-link" data-page="client-team.html">🔐 Team & Access Control</a> 
@@ -156,9 +159,9 @@ document.addEventListener("DOMContentLoaded", () => {
     </div> 
   </div> 
 
-  <!-- ⚖️ STATUTORY FILINGS & COMPLIANCE ACCORDION -->
+  <!-- ⚖️ STATUTORY FILINGS & COMPLIANCE ACCORDION --> 
   <div class="accordion-group"> 
-    <button class="accordion-trigger d-trigger" data-group="compliance"> Filings & Compliance <span class="chevron">▼</span> </button> 
+    <button type="button" class="accordion-trigger d-trigger" data-group="compliance"> Filings & Compliance <span class="chevron">▼</span> </button> 
     <div class="accordion-panel d-panel" data-group="compliance"> 
       <a href="client-filings.html" class="nav-item d-link" data-page="client-filings.html">⚙️ Active Orders Queue</a> 
       <a href="client-status.html" class="nav-item d-link" data-page="client-status.html">📡 Track Live Progress</a> 
@@ -169,9 +172,9 @@ document.addEventListener("DOMContentLoaded", () => {
     </div> 
   </div> 
 
-  <!-- 💳 FINANCES & TECHNICAL HELP ACCORDION -->
+  <!-- 💳 FINANCES & TECHNICAL HELP ACCORDION --> 
   <div class="accordion-group"> 
-    <button class="accordion-trigger d-trigger" data-group="support"> Billing & Support <span class="chevron">▼</span> </button> 
+    <button type="button" class="accordion-trigger d-trigger" data-group="support"> Billing & Support <span class="chevron">▼</span> </button> 
     <div class="accordion-panel d-panel" data-group="support"> 
       <a href="client-account.html" class="nav-item d-link" data-page="client-account.html">💳 Payment Methods & Plans</a> 
       <a href="client-order-history.html" class="nav-item d-link" data-page="client-order-history.html">🧾 Invoices & Statements</a> 
@@ -180,9 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
     </div> 
   </div> 
 
-  <!-- 🎨 PROJECT MANAGEMENT ACCORDION (NEWLY ADDED) -->
+  <!-- 🎨 PROJECT MANAGEMENT ACCORDION --> 
   <div class="accordion-group"> 
-    <button class="accordion-trigger d-trigger" data-group="projects"> Project Management <span class="chevron">▼</span> </button> 
+    <button type="button" class="accordion-trigger d-trigger" data-group="projects"> Project Management <span class="chevron">▼</span> </button> 
     <div class="accordion-panel d-panel" data-group="projects"> 
       <a href="client-project-web.html" class="nav-item d-link" data-page="client-project-web.html">🌐 Web Design Hub</a> 
       <a href="client-project-logo.html" class="nav-item d-link" data-page="client-project-logo.html">🎨 Logo Design Hub</a> 
@@ -191,6 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
   </div> 
 
 </nav>
+
 
 
 
@@ -224,36 +228,46 @@ document.addEventListener("DOMContentLoaded", () => {
         const mobileDropdownTray = document.createElement("div");
         mobileDropdownTray.id = "f4uMobileDropdownContainerTray";
         mobileDropdownTray.innerHTML = `
-        <nav class="sidebar-accordion-menu" style="padding: 0 !important;">
-            <div class="accordion-group">
-                <button class="accordion-trigger m-trigger" data-group="m-account"> My Account <span class="chevron">▼</span> </button>
-                <div class="accordion-panel m-panel" data-group="m-account">
-                    <a href="client-dashboard.html" class="nav-item m-link" data-page="client-dashboard.html">📊 Dashboard Home</a>
-                    <a href="client-entities.html" class="nav-item m-link" data-page="client-entities.html">🏢 My Registered Entities</a>
-                    <a href="client-services.html" class="nav-item m-link" data-page="client-services.html">🛠️ Order New Services</a>
-                </div>
-            </div>
-            <div class="accordion-group">
-                <button class="accordion-trigger m-trigger" data-group="m-compliance"> Filings & Compliance <span class="chevron">▼</span> </button>
-                <div class="accordion-panel m-panel" data-group="m-compliance">
-                    <a href="client-filings.html" class="nav-item m-link" data-page="client-filings.html">⚙️ Active Orders</a>
-                    <a href="client-compliance.html" class="nav-item m-link" data-page="client-compliance.html">🛡️ Compliance Tracker</a>
-                    <a href="client-vault.html" class="nav-item m-link" data-page="client-vault.html">📂 Document Vault</a>
-                </div>
-            </div>
-            <div class="accordion-group">
-                <button class="accordion-trigger m-trigger" data-group="m-support"> Billing & Support <span class="chevron">▼</span> </button>
-                <div class="accordion-panel m-panel" data-group="m-support">
-                    <a href="client-account.html" class="nav-item m-link" data-page="client-account.html">💰 My Account</a>
-                    <a href="client-order-history.html" class="nav-item m-link" data-page="client-order-history.html">💸 Order History</a>
-                    <a href="client-chat.html" class="nav-item m-link" data-page="client-chat.html">💬 Live Chat Support</a>
-                    <a href="client-ticket.html" class="nav-item m-link" data-page="client-ticket.html">🎫 Support Tickets</a>
-                    <a href="client-knowledgebase.html" class="nav-item m-link" data-page="client-knowledgebase.html">📰 Help Resources</a>
-                    <a href="client-status.html" class="nav-item m-link" data-page="client-status.html">✅ Check Order Status</a>
-                </div>
-            </div>
-            <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#0a1f44; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Log Out Session</button>
-        </nav>
+      <nav class="sidebar-accordion-menu" style="padding: 0 !important;"> 
+  
+  <!-- Group 1: My Account -->
+  <div class="accordion-group"> 
+    <button class="accordion-trigger m-trigger" data-group="m-account"> My Account <span class="chevron">▼</span> </button> 
+    <div class="accordion-panel m-panel" data-group="m-account"> 
+      <!-- 🟢 ADDED: Onboarding guide track routing asset link -->
+      <a href="client-onboarding.html" class="nav-item m-link" data-page="client-onboarding.html">🚀 Onboarding Checklist</a>
+      <a href="client-dashboard.html" class="nav-item m-link" data-page="client-dashboard.html">📊 Dashboard Home</a> 
+      <a href="client-entities.html" class="nav-item m-link" data-page="client-entities.html">🏢 My Registered Entities</a> 
+      <a href="client-services.html" class="nav-item m-link" data-page="client-services.html">🛠️ Order New Services</a> 
+    </div> 
+  </div> 
+
+  <!-- Group 2: Filings & Compliance -->
+  <div class="accordion-group"> 
+    <button class="accordion-trigger m-trigger" data-group="m-compliance"> Filings & Compliance <span class="chevron">▼</span> </button> 
+    <div class="accordion-panel m-panel" data-group="m-compliance"> 
+      <a href="client-filings.html" class="nav-item m-link" data-page="client-filings.html">⚙️ Active Orders</a> 
+      <a href="client-compliance.html" class="nav-item m-link" data-page="client-compliance.html">🛡️ Compliance Tracker</a> 
+      <a href="client-vault.html" class="nav-item m-link" data-page="client-vault.html">📂 Document Vault</a> 
+    </div> 
+  </div> 
+
+  <!-- Group 3: Billing & Support -->
+  <div class="accordion-group"> 
+    <button class="accordion-trigger m-trigger" data-group="m-support"> Billing & Support <span class="chevron">▼</span> </button> 
+    <div class="accordion-panel m-panel" data-group="m-support"> 
+      <a href="client-account.html" class="nav-item m-link" data-page="client-account.html">💰 My Account</a> 
+      <a href="client-order-history.html" class="nav-item m-link" data-page="client-order-history.html">💸 Order History</a> 
+      <a href="client-chat.html" class="nav-item m-link" data-page="client-chat.html">💬 Live Chat Support</a> 
+      <a href="client-ticket.html" class="nav-item m-link" data-page="client-ticket.html">🎫 Support Tickets</a> 
+      <a href="client-knowledgebase.html" class="nav-item m-link" data-page="client-knowledgebase.html">📰 Help Resources</a> 
+      <a href="client-status.html" class="nav-item m-link" data-page="client-status.html">✅ Check Order Status</a> 
+    </div> 
+  </div> 
+
+  <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#0a1f44; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Log Out Session</button> 
+</nav>
+
         `;
 
         headerNode.parentNode.insertBefore(mobileBrandedBar, headerNode);
