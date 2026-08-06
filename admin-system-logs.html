@@ -139,7 +139,7 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-  <script>
+ <script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
@@ -153,7 +153,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const filterBtnAdmin = document.getElementById("filter-btn-admin");
   const filterBtnClient = document.getElementById("filter-btn-client");
 
-  // Prevent initialization errors if markup layout anchors are completely missing
   if (!logsTableBody || !statTotal || !statAdmins || !statClients) {
     console.error("✕ Critical UI Error: System logs mounting target box cells or stat counters missing.");
     return;
@@ -179,45 +178,72 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Master local memory log cache array to power zero-latency instant filter tabs swapping
   let localLogsCache = [];
 
-  // --- STAGE 1: READ AND COALESCE REAL-TIME LOG MATRIX EVENTS ---
+  // --- STAGE 1: READ, COMBINE, AND COALESCE BOTH PROFILE MATRIX TABLES ---
   async function synchroniseUnifiedAuditTrail() {
     try {
-      console.log("📡 [Audit Log Engine] Compiling platform telemetry event entries from table grids...");
+      console.log("📡 [Audit Log Engine] Compiling system profile audit trails simultaneously...");
       
-      // Pull and compile event logs directly from your public logs table container
-      const { data: dataLogs, error: logsError } = await client
-        .from('portal_notifications') // Leveraging your master cross-platform logging schema
-        .select('created_at, title, recipient_email, message')
-        .order('created_at', { ascending: false });
+      // Fire parallel queries to pull data records back instantly from both tables
+      const [adminsResponse, clientsResponse] = await Promise.all([
+        client.from('admin_profiles').select('id, email_address, first_name, last_name, hired_date, terminated_date, updated_at'),
+        client.from('client_profiles').select('id, email_address, first_name, last_name, company_name, updated_at')
+      ]);
 
-      if (logsError) throw logsError;
+      if (adminsResponse.error) throw adminsResponse.error;
+      if (clientsResponse.error) throw clientsResponse.error;
 
       // Reset cache parameters safely
       localLogsCache = [];
 
-      if (dataLogs && dataLogs.length > 0) {
-        dataLogs.forEach((item) => {
-          const emailStr = String(item.recipient_email || "").toLowerCase().trim();
+      // A. Coalesce Administrative Operator Data Records
+      if (adminsResponse.data) {
+        adminsResponse.data.forEach((admin) => {
+          const email = String(admin.email_address || "").toLowerCase().trim();
+          const name = `${admin.first_name || ""} ${admin.last_name || ""}`.trim() || "Active Operator";
+          const timestamp = admin.updated_at || admin.hired_date || new Date().toISOString();
           
-          // Determine structural account deployment classification role context vector maps
-          const isAdminRole = emailStr.endsWith("@filings4u.com") || emailStr.endsWith("@roselandcompanies.com");
-          const computedRole = isAdminRole ? "Admin Staff" : "Client Portal";
+          let logDetails = `Staff profile record verified. Hired date parameter: ${admin.hired_date || "Not tracked"}.`;
+          if (admin.terminated_date) {
+            logDetails = `🚨 NOTICE: Profile deactivated. Separation date logged: ${admin.terminated_date}.`;
+          }
 
           localLogsCache.push({
-            timestamp: item.created_at,
-            vector: item.title || "Platform Interaction",
-            email: emailStr || "System Subsystem Loop",
-            role: computedRole,
-            isAdmin: isAdminRole,
-            details: item.message || "No transactional details parameter contexts provided."
+            timestamp: timestamp,
+            vector: admin.terminated_date ? "Deactivation/Termination" : "Operator Clearance Check",
+            email: email,
+            role: "Admin Staff",
+            isAdmin: true,
+            details: `Name: ${name} — ${logDetails}`
           });
         });
       }
 
+      // B. Coalesce Client Portal Customer Data Records
+      if (clientsResponse.data) {
+        clientsResponse.data.forEach((customer) => {
+          const email = String(customer.email_address || "").toLowerCase().trim();
+          const name = `${customer.first_name || ""} ${customer.last_name || ""}`.trim() || "Registered Client";
+          const company = customer.company_name && customer.company_name !== 'Not Specified' ? ` [${customer.company_name}]` : "";
+          const timestamp = customer.updated_at || new Date().toISOString();
+
+          localLogsCache.push({
+            timestamp: timestamp,
+            vector: "Customer Identity Synced",
+            email: email,
+            role: "Client Portal",
+            isAdmin: false,
+            details: `Profile validation event compiled for ${name}${company}. Gateway tracking handshake active.`
+          });
+        });
+      }
+
+      // Sort chronological entries completely so latest updates appear on top row
+      localLogsCache.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
       // Compute and flash metrics into counter grid panels instantly
       calculateAndDisplayStats();
       
-      // Paint data elements to table viewport arrays natively
+      // Paint rows natively to viewport table
       renderLogsTableRows(localLogsCache);
 
     } catch (fault) {
@@ -240,7 +266,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- STAGE 3: CORE DATA TABLE ROW RENDERER ---
   function renderLogsTableRows(filteredLogs) {
     if (!filteredLogs || filteredLogs.length === 0) {
-      logsTableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:var(--text-muted); font-style:italic;">No logged transactional operations match the selected filtration vector framework bounds.</td></tr>`;
+      logsTableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:var(--text-muted); font-style:italic;">No logged profile entries match the selected filtration vector framework bounds.</td></tr>`;
       return;
     }
 
@@ -249,10 +275,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const tr = document.createElement("tr");
       tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
 
-      // Clean timezone formatting bounds parameter
       const logTime = log.timestamp ? new Date(log.timestamp).toLocaleString() : "Unknown Time";
-      
-      // Styling badge maps depending on administrative privileges
       const roleColor = log.isAdmin ? "color:#dc2626; font-weight:700;" : "color:#10b981; font-weight:700;";
 
       tr.innerHTML = `
@@ -302,10 +325,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  // Kick off tracking queries immediately inside the processing frame thread loop
+  // Kick off parallel structural trackers on script startup entry frames
   await synchroniseUnifiedAuditTrail();
 });
 </script>
+
 
 </body>
 </html>
