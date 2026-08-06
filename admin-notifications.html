@@ -120,204 +120,234 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      // 1. Resolve Strict DOM Target Selectors
-      const dispatchForm    = document.getElementById("directNotificationForm");
-      const recipientSelect = document.getElementById("notificationRecipientEmail");
-      const alertTitleInput = document.getElementById("notificationTitle");
-      const alertBodyInput  = document.getElementById("notificationMessage");
-      const formStatusDiv   = document.getElementById("dispatch-form-status");
-      const submitButton    = document.getElementById("dispatchSubmitBtn");
-      const historyTargetBox = document.getElementById("admin-notifications-history-box");
+  // 1. Structural DOM Engine Selectors
+  const dispatchForm = document.getElementById("directNotificationForm");
+  const recipientSelect = document.getElementById("notificationRecipientEmail");
+  const alertTitleInput = document.getElementById("notificationTitle");
+  const alertBodyInput = document.getElementById("notificationMessage");
+  const formStatusDiv = document.getElementById("dispatch-form-status");
+  const submitButton = document.getElementById("dispatchSubmitBtn");
+  const historyTargetBox = document.getElementById("admin-notifications-history-box");
 
-      if (!dispatchForm || !recipientSelect || !historyTargetBox || !formStatusDiv || !submitButton) {
-        throw new Error("✕ Critical UI Error: Missing core layout template dispatch forms or history ledger targets.");
+  if (!dispatchForm || !recipientSelect || !historyTargetBox || !formStatusDiv || !submitButton) {
+    console.error("✕ Critical UI Error: Layout nodes or initialization targets are completely missing.");
+    return;
+  }
+
+  // 2. Safe Database Client Instance Hook
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    if (lib && typeof lib.createClient === 'function') {
+      client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
+      });
+      window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+    }
+  }
+
+  if (!client || typeof client.from !== 'function') {
+    historyTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:#dc2626; font-weight:700;">✕ Connection Error: Supabase engine unreachable.</div>`;
+    return;
+  }
+
+  // Cache object dynamically mapping string emails straight to structural User UUID keys
+  const customerIdentityMap = {};
+  // --- STAGE 1: DYNAMICALLY EXTRACT LIVE CUSTOMER LIST FROM CLIENT_PROFILES ---
+  async function synchronizeRecipientDropdown() {
+    try {
+      console.log("📡 [Alerts Engine] Syncing target emails from public.client_profiles data rows...");
+      
+      const { data: records, error: syncError } = await client
+        .from('client_profiles')
+        .select('id, email_address, first_name, last_name, company_name')
+        .not('email_address', 'is', null);
+
+      if (syncError) throw syncError;
+
+      recipientSelect.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+      if (!records || records.length === 0) {
+        recipientSelect.innerHTML = `<option value="">-- No Active Customer Profiles Located --</option>`;
+        return;
       }
 
-      // 2. Fetch Master Client Initialization Instances Cleanly
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        historyTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</div>`;
-        throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
-      }
+      // Sort profiles alphabetically by first name
+      records.sort((a, b) => (a.first_name || '').localeCompare(b.first_name || ''));
 
-      // --- STAGE 1: DYNAMICALLY EXTRACT LIVE CUSTOMER LIST FROM ORDERS TABLE ---
-      async function synchronizeRecipientDropdown() {
-        try {
-          console.log("📡 [Alerts Engine] Syncing target emails from public.orders data rows...");
-          
-          const { data: records, error: syncError } = await client
-            .from('orders')
-            .select('email')
-            .not('email', 'is', null);
+      records.forEach(profile => {
+        const cleanEmail = String(profile.email_address).toLowerCase().trim();
+        const customerName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+        const businessTag = profile.company_name && profile.company_name !== 'Not Specified' ? ` [${profile.company_name}]` : "";
+        const selectLabel = customerName ? `${customerName}${businessTag} (${cleanEmail})` : cleanEmail;
 
-          if (syncError) throw syncError;
+        // Map the UUID to the unique email address to fulfill foreign key constraints during alert submissions
+        customerIdentityMap[cleanEmail] = profile.id;
 
-          // Compute an absolute distinct set of account emails safely
-          const distinctEmails = [...new Set(records.map(row => row.email).filter(Boolean))];
-          
-          recipientSelect.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
-          
-          if (distinctEmails.length === 0) {
-            recipientSelect.innerHTML = `<option value="">-- No Active Customer Profiles Located --</option>`;
-            return;
-          }
-
-          distinctEmails.forEach(email => {
-            const opt = document.createElement("option");
-            opt.value = email.trim();
-            opt.textContent = email.trim();
-            recipientSelect.appendChild(opt);
-          });
-
-        } catch (dropdownFault) {
-          console.error("✕ Recipient Dropdown Loading Halted:", dropdownFault.message);
-          recipientSelect.innerHTML = `<option value="">✕ Failed to sync profile logs</option>`;
-        }
-      }
-
-      // --- STAGE 2: FETCH AND DISPATCH HISTORICAL DISPATCHED LOGS ---
-      async function streamDispatchedAlertsHistory() {
-        try {
-          console.log("📡 [Alerts Engine] Querying historically pushed log rows from public.notifications...");
-          
-          const { data: alerts, error: fetchError } = await client
-            .from('notifications')
-            .select('id, recipient_email, title, message, created_at')
-            .order('created_at', { ascending: false });
-
-          if (fetchError) {
-            throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
-          }
-
-          if (!alerts || alerts.length === 0) {
-            historyTargetBox.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No administrative alerts logged inside history profiles.</div>`;
-            return;
-          }
-
-          historyTargetBox.innerHTML = "";
-
-          alerts.forEach(alertItem => {
-            const rowWrapper = document.createElement("div");
-            rowWrapper.className = "dispatch-item-row";
-
-            const formattedDate = new Date(alertItem.created_at).toLocaleString('en-US', {
-              month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
-            });
-
-            rowWrapper.innerHTML = `
-              <div class="dispatch-info-meta">
-                <h4>${escapeAlertHtml(alertItem.title)}</h4>
-                <p>${escapeAlertHtml(alertItem.message)}</p>
-                <span class="recipient-tag">📍 Sent to: ${escapeAlertHtml(alertItem.recipient_email)} • ${formattedDate}</span>
-              </div>
-              <button class="delete-row-btn" data-id="${alertItem.id}">Purge</button>
-            `;
-
-            // Bind individual click listeners to the specific item delete button
-            const deleteBtn = rowWrapper.querySelector(".delete-row-btn");
-            deleteBtn.addEventListener("click", async function() {
-              const targetAlertId = this.getAttribute("data-id");
-              this.disabled = true;
-              this.textContent = "Purging...";
-              console.log(`📡 [Alerts Engine] Purging notification row ID: [${targetAlertId}]`);
-
-              try {
-                const { error: deleteError } = await client
-                  .from('notifications')
-                  .delete()
-                  .eq('id', targetAlertId);
-
-                if (deleteError) throw deleteError;
-                console.log("✓ [Alerts Engine] Notification removal verified by server.");
-                await streamDispatchedAlertsHistory(); // Re-fetch logs instantly
-
-              } catch (delFault) {
-                console.error("✕ Database log deletion request refused:", delFault.message);
-                alert(`✕ Purge Interrupted: ${delFault.message}`);
-                this.disabled = false;
-                this.textContent = "Purge";
-              }
-            });
-
-            historyTargetBox.appendChild(rowWrapper);
-          });
-
-        } catch (queryFault) {
-          console.error("✕ Notifications History Synchronization Aborted:", queryFault.message);
-          historyTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check system console logs.</div>`;
-        }
-      }
-
-      // --- STAGE 3: HANDLE PUSH ALERT FORM DISPATCH ACTION SUBMISSIONS ---
-      dispatchForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        formStatusDiv.style.display = "none";
-        formStatusDiv.textContent = "";
-
-        const recipientEmail = recipientSelect.value;
-        const title          = alertTitleInput.value.trim();
-        const message        = alertBodyInput.value.trim();
-
-        if (!recipientEmail || !title || !message) {
-          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          formStatusDiv.textContent = "✕ Validation Error: All form fields are required.";
-          return;
-        }
-
-        const originalBtnLabel = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.textContent = "Transmitting to System Vault...";
-
-        try {
-          console.log(`📡 [Alerts Engine] Injecting notification record cell for: [${recipientEmail}]`);
-          
-          const { error: insertError } = await client
-            .from('notifications')
-            .insert([
-              {
-                recipient_email: recipientEmail,
-                title: title,
-                message: message,
-                is_unread: true,
-                created_at: new Date().toISOString()
-              }
-            ]);
-
-          if (insertError) {
-            throw new Error(`Postgres Transaction Failure [Code ${insertError.code}]: ${insertError.message}`);
-          }
-
-          console.log("✅ [Alerts Engine] Alert successfully pushed to live stream table contexts.");
-          formStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
-          formStatusDiv.textContent = "✓ Real-time account notification dispatched successfully!";
-          
-          dispatchForm.reset();
-          await streamDispatchedAlertsHistory(); // Refresh table loop cells instantly
-
-        } catch (postFault) {
-          console.error("✕ Notification transmission loop disrupted:", postFault.message);
-          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          formStatusDiv.textContent = `✕ Dispatch Aborted: ${postFault.message}`;
-        } finally {
-          submitButton.disabled = false;
-          submitButton.textContent = originalBtnLabel;
-        }
+        const opt = document.createElement("option");
+        opt.value = cleanEmail;
+        opt.textContent = selectLabel;
+        recipientSelect.appendChild(opt);
       });
 
-      function escapeAlertHtml(str) {
-        if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    } catch (fault) {
+      console.error("✕ Recipient Dropdown Loading Halted:", fault.message);
+      recipientSelect.innerHTML = `<option value="">✕ Failed to sync profile logs: ${escapeAlertHtml(fault.message)}</option>`;
+    }
+  }
+
+    // --- STAGE 2: FETCH AND RENDER HISTORICAL TELEMETRY LOGS ---
+  async function streamDispatchedAlertsHistory() {
+    try {
+      console.log("📡 [Alerts Engine] Querying pushed log rows from public.portal_notifications...");
+      const { data: alerts, error: fetchError } = await client
+        .from('portal_notifications')
+        .select('id, recipient_email, title, message, created_at')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      if (!alerts || alerts.length === 0) {
+        historyTargetBox.innerHTML = `
+          <div style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600; background:#f8fafc; border:1px dashed var(--border-color); border-radius:8px;">
+            No administrative alerts logged inside history profiles.
+          </div>`;
+        return;
       }
 
-      // Initialize all operational pipeline stages inside the initial thread frame loop
-      await synchronizeRecipientDropdown();
+      historyTargetBox.innerHTML = "";
+      alerts.forEach(item => {
+        const itemCard = document.createElement("div");
+        itemCard.style.cssText = "padding:16px; margin-bottom:12px; background:#ffffff; border:1px solid var(--border-color); border-radius:8px; font-size:0.85rem; display:flex; justify-content:space-between; align-items:flex-start; gap:16px;";
+
+        const formattedDate = new Date(item.created_at).toLocaleString('en-US', { 
+          month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' 
+        });
+
+        itemCard.innerHTML = `
+          <div style="flex-grow:1;">
+            <h4 style="margin:0 0 6px 0; font-size:0.95rem; color:#0a1f44; font-weight:700;">${escapeAlertHtml(item.title)}</h4>
+            <p style="margin:0 0 10px 0; color:#475569; line-height:1.5;">${escapeAlertHtml(item.message)}</p>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:500; display:block;">
+              📍 Sent to: <span style="font-family:monospace; color:#334155; font-weight:600;">${escapeAlertHtml(item.recipient_email)}</span> • ${formattedDate}
+            </span>
+          </div>
+          <button class="delete-row-btn" data-id="${item.id}" style="cursor:pointer; background:#fef2f2; border:1px solid rgba(239,68,68,0.2); color:#dc2626; padding:6px 12px; font-weight:700; border-radius:6px; font-size:0.75rem; transition:all 0.2s;">Purge</button>
+        `;
+
+        const deleteBtn = itemCard.querySelector(".delete-row-btn");
+        deleteBtn.addEventListener("click", async function() {
+          if (!confirm("Are you sure you want to completely erase this alert trace?")) return;
+          
+          const recordId = this.getAttribute("data-id");
+          this.disabled = true;
+          this.textContent = "Purging...";
+
+          try {
+            const { error: deleteError } = await client
+              .from('portal_notifications')
+              .delete()
+              .eq('id', recordId);
+
+            if (deleteError) throw deleteError;
+            await streamDispatchedAlertsHistory();
+
+          } catch (delFault) {
+            console.error("✕ Database removal request rejected:", delFault.message);
+            alert(`✕ Purge Aborted: ${delFault.message}`);
+            this.disabled = false;
+            this.textContent = "Purge";
+          }
+        });
+
+        historyTargetBox.appendChild(itemCard);
+      });
+
+    } catch (queryFault) {
+      console.error("✕ Notifications History Sync Aborted:", queryFault.message);
+      historyTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:#dc2626; font-weight:700;">✕ Synchronization Failure: Check console log tracking matrices.</div>`;
+    }
+  }
+  // --- STAGE 3: TRANSMIT FORM CONTENT BINDINGS ---
+  dispatchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    formStatusDiv.style.display = "none";
+
+    const targetEmail = recipientSelect.value;
+    const alertTitle = alertTitleInput.value.trim();
+    const alertBody = alertBodyInput.value.trim();
+    const resolvedUserId = customerIdentityMap[targetEmail];
+
+    if (!targetEmail || !alertTitle || !alertBody) {
+      showStatusMsg("✕ Validation Failure: All compositional message elements are required.", true);
+      return;
+    }
+
+    if (!resolvedUserId) {
+      showStatusMsg("✕ Operational Error: Cannot resolve a unique identity account row for this user profile.", true);
+      return;
+    }
+
+    const previousLabel = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = "Transmitting Live Alert Waveform...";
+
+    try {
+      // Omit is_unread and let the Postgres database table constraints handle defaults automatically
+      const { error: insertError } = await client
+        .from('portal_notifications')
+        .insert([{
+          user_id: resolvedUserId,
+          recipient_email: targetEmail,
+          email_address: targetEmail, 
+          title: alertTitle,
+          message: alertBody,
+          is_read: false,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (insertError) throw insertError;
+
+
+      showStatusMsg("✓ Client Alert safely transmitted and projected to dashboard streams.", false);
+      
+      alertTitleInput.value = "";
+      alertBodyInput.value = "";
+
       await streamDispatchedAlertsHistory();
-    });
-  </script>
+
+    } catch (postFault) {
+      console.error("✕ Transmission process broken:", postFault.message);
+      showStatusMsg(`✕ Transaction Refused: ${postFault.message}`, true);
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = previousLabel;
+    }
+  });
+
+  function showStatusMsg(text, isError) {
+    formStatusDiv.textContent = text;
+    formStatusDiv.style.display = "block";
+    formStatusDiv.style.cssText = `display:block; padding:10px; border-radius:6px; font-size:0.8rem; font-weight:700; margin-bottom:15px; 
+      background: ${isError ? "#fef2f2" : "#ecfdf5"}; 
+      color: ${isError ? "#991b1b" : "#047857"}; 
+      border: 1px solid ${isError ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)"};`;
+  }
+
+  function escapeAlertHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  // Run immediate operations on setup initialization
+  await synchronizeRecipientDropdown();
+  await streamDispatchedAlertsHistory();
+});
+</script>
+
+</script>
 </body>
 </html>

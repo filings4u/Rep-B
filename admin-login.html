@@ -1,333 +1,551 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Staff Gateway | filings4u Administrative Suite</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Directorate Security Login</title>
   <link rel="icon" type="image/png" href="images/fav.png">
   
-  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <!-- Inter Font Family Matrix Integration -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
+  <!-- FontAwesome Integration Route -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Platform Scripts -->
+  <script src="https://www.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <script src="assets/js/supabase-config.js"></script>
+
   <style>
     :root {
-      --bg-light: #f8fafc;
-      --white: #ffffff;
-      --border-color: #e2e8f0;
-      --text-dark: #0f172a;
-      --text-muted: #475569;
-      --staff-red: #c15254;
-      --emerald: #10b981;
+      --primary: #0a1f44;
+      --accent: #c15254;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --bg-page: #f8fafc;
     }
-    body, html {
+
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
       margin: 0;
       padding: 0;
+      background-color: var(--bg-page);
       min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-light);
-      color: var(--text-dark);
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* 📐 TRUE FULL-PAGE SPLIT-SCREEN WORKSPACE */
+    .portal-split-wrapper {
+      display: flex;
+      width: 100vw;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDE CANVAS PANEL: Solid Teal-Overlaid Structure Graphic */
+    .brand-hero-side {
+      flex: 1;
+      min-height: 100vh;
+      background: linear-gradient(135deg, rgba(14, 159, 110, 0.88), rgba(6, 95, 70, 0.92)), 
+                  url('https://unsplash.com') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px;
+      color: #ffffff;
+    }
+
+    .hero-content-box {
+      max-width: 480px;
+    }
+
+    .hero-content-box h2 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin: 0 0 16px 0;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .hero-content-box p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.9);
+      margin: 0;
+    }
+
+    /* RIGHT SIDE PORTAL INTERFACE PANEL: Card Alignment Engine */
+    .form-side {
+      flex: 1;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 40px;
+      background-color: var(--bg-page);
     }
-    .login-container {
+
+    .login-card {
+      background: #ffffff;
       width: 100%;
       max-width: 420px;
-      padding: 20px;
-      box-sizing: border-box;
+      padding: 44px 36px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.02);
     }
-    .gateway-card {
-      background: var(--white);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 40px 32px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+
+    .logo-container {
       text-align: center;
-      box-sizing: border-box;
+      margin-bottom: 20px;
     }
-    .logo-block img {
-      height: 38px;
+
+    .logo-container img {
+      height: 32px;
       width: auto;
-      margin-bottom: 8px;
     }
+
+    .badge-row {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
     .badge {
       display: inline-block;
-      background: rgba(193, 82, 84, 0.08);
-      color: var(--staff-red);
-      font-size: 0.65rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 4px 12px;
+      background-color: #f1f5f9;
+      color: #475569;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 14px;
       border-radius: 9999px;
-      margin-bottom: 24px;
-      border: 1px solid rgba(193, 82, 84, 0.15);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid #e2e8f0;
     }
-    h1 {
-      font-size: 1.4rem;
+
+    .login-card h2 {
+      font-size: 1.6rem;
       font-weight: 800;
+      color: var(--primary);
       margin: 0 0 8px 0;
-      color: var(--text-dark);
-      letter-spacing: -0.5px;
+      letter-spacing: -0.02em;
+      text-align: center;
     }
-    p {
+
+    .card-subtitle {
       font-size: 0.85rem;
       color: var(--text-muted);
-      margin: 0 0 32px 0;
-      line-height: 1.4;
+      line-height: 1.5;
+      margin: 0 0 28px 0;
+      text-align: center;
     }
+
     .form-group {
       text-align: left;
       margin-bottom: 20px;
-      position: relative;
     }
+
     .label-row {
+      margin-bottom: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      color: #0f172a;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+    }
+
+    .password-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .toggle-visibility-btn {
+      position: absolute;
+      right: 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #94a3b8;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background-color: #0c1c38;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .security-handshake-badge {
+      margin-top: 18px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding: 12px;
+      border: 1px dashed var(--border-color);
+      border-radius: 8px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--bg-page);
+    }
+
+    .card-footer-links {
+      margin-top: 24px;
+      font-size: 0.85rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
     }
-    label {
-      display: block;
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-dark);
-    }
-    .forgot-link-btn {
+
+    .card-footer-links button {
       background: none;
       border: none;
       padding: 0;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--staff-red);
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      text-decoration: none;
-    }
-    .forgot-link-btn:hover {
-      color: #991b1b;
-      text-decoration: underline;
-    }
-    input {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.9rem;
-      color: var(--text-dark);
-      background: #f8fafc;
-      outline: none;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-    }
-    input:focus {
-      background: var(--white);
-      border-color: var(--staff-red);
-      box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.08);
-    }
-    .submit-btn {
-      width: 100%;
-      background: var(--text-dark);
-      color: var(--white);
-      border: none;
-      padding: 14px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      margin-top: 12px;
-      box-sizing: border-box;
-    }
-    .submit-btn:hover {
-      background: #1e293b;
-    }
-    #status-msg {
-      display: none;
-      font-size: 0.82rem;
+      color: var(--primary);
       font-weight: 600;
-      text-align: left;
-      margin-top: 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .error-msg {
+      display: none;
+      margin-top: 14px;
       padding: 12px;
       border-radius: 6px;
-      line-height: 1.4;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid rgba(239, 68, 68, 0.12);
+    }
+
+    /* 🟢 REPAIRED FLOATING INTERCEPT LAYER SANBOX RULES */
+    .access-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 9999;
+    }
+
+    .access-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .access-modal-box {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 12px;
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .access-modal-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    .access-modal-box p {
+      margin: 0 0 24px 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .access-modal-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    @media screen and (max-width: 960px) {
+      .brand-hero-side { display: none; }
+      .form-side { flex: 1; padding: 20px; }
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <div class="gateway-card">
-      <div class="logo-block"><img src="images/logo.png" alt="filings4u Logo"></div>
-      <div><span class="badge">Internal Staff Slat</span></div>
-      <h1>Directorate Security Login</h1>
-      <p>Authorized access terminal for corporate compliance managers and operational staff parameters.</p>
-      
-      <form id="adminLoginForm" novalidate>
-        <div class="form-group">
-          <div class="label-row">
-            <label>Operator Email Address</label>
-          </div>
-          <input type="email" id="operatorEmail" required placeholder="name@filings4u.com">
+
+  <div class="portal-split-wrapper">
+    
+    <!-- LEFT SIDE PANEL: Brand Banner Canvas Layout (Teal High-Rise Base Graphic) -->
+    <div class="brand-hero-side">
+      <div class="hero-content-box">
+        <h2>Built for Compliance.</h2>
+        <p>The comprehensive hub for managing all your filings, registrations, and agent services throughout your corporate journey.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE PANEL: Main Form Input Card Container -->
+    <section class="form-side">
+      <div class="login-card">
+        
+        <div class="logo-container">
+          <img src="images/logo.png" alt="filings4u Logo">
         </div>
         
-        <div class="form-group" id="passwordFormGroup">
-          <div class="label-row">
-            <label>Operator Password</label>
-            <!-- 🟢 ADDED: Safe Action Trigger for Password Recovery Lifecycle -->
-            <button type="button" id="adminForgotPasswordBtn" class="forgot-link-btn" tabindex="-1">Reset Password</button>
-          </div>
-          <input type="password" id="operatorPassword" required placeholder="••••••••">
+        <div class="badge-row">
+          <span class="badge">Internal Staff Slat</span>
         </div>
         
-        <button type="submit" class="submit-btn" id="loginBtn">Authenticate Session ➔</button>
-      </form>
-      
-      <div id="status-msg"></div>
+        <h2>Directorate Security Login</h2>
+        <p class="card-subtitle">Authorized access terminal for corporate compliance managers and operational staff parameters.</p>
+        
+        <!-- Form Target Bind Identifier -->
+        <form id="adminLoginForm" novalidate>
+          
+          <div class="form-group">
+            <div class="label-row">
+              <label for="operatorEmail">Operator email address</label>
+            </div>
+            <input type="email" id="operatorEmail" required placeholder="name@filings4u.com">
+          </div>
+          
+          <div class="form-group">
+            <div class="label-row">
+              <label for="operatorPassword">Operator password</label>
+            </div>
+            <div class="password-input-wrapper">
+              <input type="password" id="operatorPassword" required placeholder="••••••••" style="padding-right: 48px;">
+              <!-- INTERACTIVE VISIBILITY TOGGLE BUTTON -->
+              <button type="button" class="toggle-visibility-btn" id="passwordToggleBtn" tabindex="-1">
+                <i class="fa-solid fa-eye" id="toggleIcon"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div id="errorMessage" class="error-msg"></div>
+          
+          <button type="submit" class="btn-login" id="loginBtn">Authenticate Session ➔</button>
+          
+          <div class="security-handshake-badge">
+            <i class="fa-solid fa-lock" style="color: var(--accent);"></i> Security Handshake Active
+          </div>
+          
+        </form>
+        
+        <!-- CARD FOOTER LINKS -->
+        <div class="card-footer-links">
+          <button type="button" id="adminForgotPasswordBtn">Forgot Password?</button>
+          <span class="gate-tag">Account Gate</span>
+        </div>
+        
+      </div>
+    </section>
+
+  </div>
+
+  <!-- DYNAMIC ACCESS DENIED MODAL POPUP CONTAINER -->
+  <div class="access-modal-overlay" id="accessDeniedModal">
+    <div class="access-modal-box">
+      <div style="margin-bottom: 20px;">
+        <i class="fa-solid fa-circle-exclamation" style="font-size: 2.5rem; color: var(--accent);"></i>
+      </div>
+      <h3>Access Clearance Denied</h3>
+      <p>Your profile token parameters do not hold the required clearance level to access this administrative workspace directory.</p>
+      <button class="access-modal-btn" id="closeAccessModalBtn" onclick="document.getElementById('accessDeniedModal').classList.remove('active')">Return to Authentication Terminal</button>
     </div>
   </div>
 
-  <!-- INJECT SHARED CLIENT SETUP CONFIG -->
-  <script src="assets/js/supabase-config.js"></script>
+ 
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    "use strict";
-
-    const form = document.getElementById("adminLoginForm");
-    const emailInput = document.getElementById("operatorEmail");
-    const passwordInput = document.getElementById("operatorPassword");
-    const submitBtn = document.getElementById("loginBtn");
-    const statusMsg = document.getElementById("status-msg");
-    const forgotPasswordBtn = document.getElementById("adminForgotPasswordBtn");
-    const passwordGroup = document.getElementById("passwordFormGroup");
-
-    if (!form || !emailInput || !passwordInput || !submitBtn || !statusMsg || !forgotPasswordBtn) {
-      console.error("✕ Critical UI Error: Missing core administrative authorization elements.");
-      return;
-    }
-
-    const client = window.supabaseInstance || window.supabaseClient;
-
-    // Helper to display real-time interactive alert feedback
-    function setAlertMessage(text, type = "error") {
-      statusMsg.style.display = "block";
-      if (type === "success") {
-        statusMsg.style.background = "#ecfdf5";
-        statusMsg.style.color = "#047857";
-      } else if (type === "info") {
-        statusMsg.style.background = "#eff6ff";
-        statusMsg.style.color = "#1e40af";
-      } else {
-        statusMsg.style.background = "#fef2f2";
-        statusMsg.style.color = "#991b1b";
-      }
-      statusMsg.textContent = text;
-    }
-
-    // Helper to validate staff security clearance criteria
-    function isAuthorizedStaffDomain(email) {
-      const sanitized = email.toLowerCase().trim();
-      return sanitized.endsWith("@filings4u.com") || sanitized.endsWith("@roselandcompanies.com");
-    }
-
-    // ========================================================================
-    // 🔥 PART A: DYNAMIC ANONYMOUS FORGOT PASSWORD REQUEST SYSTEM
-    // ========================================================================
-    forgotPasswordBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      statusMsg.style.display = "none";
+    document.addEventListener("DOMContentLoaded", () => {
+      "use strict";
       
-      const email = emailInput.value.trim();
-      if (!email) {
-        setAlertMessage("✕ Validation Error: Please type your operator email address first to receive a recovery token.");
-        emailInput.focus();
+      const form = document.getElementById("adminLoginForm");
+      const emailInput = document.getElementById("operatorEmail");
+      const passwordInput = document.getElementById("operatorPassword");
+      const submitBtn = document.getElementById("loginBtn");
+      const errorDiv = document.getElementById("errorMessage");
+      const forgotPasswordBtn = document.getElementById("adminForgotPasswordBtn");
+      const toggleBtn = document.getElementById("passwordToggleBtn");
+      const toggleIcon = document.getElementById("toggleIcon");
+      const accessModal = document.getElementById("accessDeniedModal");
+
+      if (!form || !emailInput || !passwordInput || !submitBtn || !errorDiv || !forgotPasswordBtn || !toggleBtn || !toggleIcon || !accessModal) {
+        console.error("✕ Critical UI Error: Missing core administrative authorization elements.");
         return;
       }
 
-      if (!isAuthorizedStaffDomain(email)) {
-        setAlertMessage("✕ Access Denied: Recovery token routing restricted to verified staff domains.");
-        return;
+      const client = window.supabaseInstance || window.supabaseClient;
+
+      // 👁️ 1. PASSWORD VISIBILITY TOGGLE ENGINE
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const isPassword = passwordInput.getAttribute("type") === "password";
+        passwordInput.setAttribute("type", isPassword ? "text" : "password");
+        toggleIcon.className = isPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+      });
+
+      function displayError(text) {
+        errorDiv.textContent = text;
+        errorDiv.style.display = "block";
       }
 
-      if (!client || typeof client.auth?.resetPasswordForEmail !== 'function') {
-        setAlertMessage("✕ System Error: Database authorization library dropped connecting contexts.");
-        return;
+      function clearError() {
+        errorDiv.textContent = "";
+        errorDiv.style.display = "none";
       }
 
-      const originalBtnText = forgotPasswordBtn.textContent;
-      forgotPasswordBtn.textContent = "Transmitting...";
-      forgotPasswordBtn.disabled = true;
-
-      try {
-        const { error } = await client.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + "/forgot-password.html"
-        });
-
-        if (error) throw error;
-        
-        setAlertMessage("✓ Transmitted! Check your internal inbox directory folder for a secure password setup link.", "success");
-      } catch (err) {
-        console.error("✕ Reset request failed:", err);
-        setAlertMessage(`✕ Transmission Blocked: ${err.message || "Endpoint error."}`);
-      } finally {
-        forgotPasswordBtn.textContent = originalBtnText;
-        forgotPasswordBtn.disabled = false;
-      }
-    });
-
-    // ========================================================================
-    // 🛡️ PART B: STANDARD OPERATOR GATEWAY LOGINS
-    // ========================================================================
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      statusMsg.style.display = "none";
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!email || !password) {
-        setAlertMessage("✕ Validation Error: Both credentials fields are required.");
-        return;
+      function isAuthorizedStaffDomain(email) {
+        const sanitized = email.toLowerCase().trim();
+        return sanitized.endsWith("@filings4u.com") || sanitized.endsWith("@roselandcompanies.com");
       }
 
-      if (!isAuthorizedStaffDomain(email)) {
-        setAlertMessage("✕ Access Denied: Unrecognized clearance string. This portal is strictly limited to verified administrative operators.");
-        return;
-      }
+      // 🔑 2. DYNAMIC PASSWORD RECOVERY SUBMISSIONS
+      forgotPasswordBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        clearError();
+        const email = emailInput.value.trim();
 
-      const originalBtnText = submitBtn.textContent;
-      submitBtn.textContent = "Verifying Handshake Clearance...";
-      submitBtn.disabled = true;
-
-      if (!client || typeof client.auth?.signInWithPassword !== 'function') {
-        setAlertMessage("✕ System Error: Database authorization client uninitialized.");
-        submitBtn.textContent = originalBtnText;
-        submitBtn.disabled = false;
-        return;
-      }
-
-      try {
-        const { data, error } = await client.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-
-        if (data?.session) {
-          setAlertMessage("✓ Authentication approved! Synchronizing platform token profiles...", "success");
-          setTimeout(() => {
-            window.location.href = "admin-dashboard.html";
-          }, 1000);
-        } else {
-          throw new Error("Handshake aborted: Core user authentication profile failed to stabilize.");
+        if (!email) {
+          displayError("✕ Validation Error: Please type your operator email address first to receive a recovery token.");
+          emailInput.focus();
+          return;
         }
-      } catch (authException) {
-        console.error("✕ Authentication barrier gate crash:", authException.message || authException);
-        setAlertMessage(`✕ Identity Verification Failed: ${authException.message || "Invalid credentials configuration parameters."}`);
-        submitBtn.textContent = originalBtnText;
-        submitBtn.disabled = false;
-      }
+
+        if (!isAuthorizedStaffDomain(email)) {
+          accessModal.classList.add("active");
+          return;
+        }
+
+        if (!client || typeof client.auth?.resetPasswordForEmail !== 'function') {
+          displayError("✕ System Error: Database authorization library dropped connecting contexts.");
+          return;
+        }
+
+        const originalBtnText = forgotPasswordBtn.textContent;
+        forgotPasswordBtn.textContent = "Transmitting...";
+        forgotPasswordBtn.disabled = true;
+
+        try {
+          const { error } = await client.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + "/forgot-password.html"
+          });
+          if (error) throw error;
+          
+          errorDiv.style.background = "#ecfdf5";
+          errorDiv.style.color = "#047857";
+          errorDiv.style.border = "1px solid rgba(16,185,129,0.15)";
+          errorDiv.textContent = "✓ Transmitted! Check your internal inbox directory folder for a secure password setup link.";
+          errorDiv.style.display = "block";
+        } catch (err) {
+          console.error("✕ Reset request failed:", err);
+          displayError(`✕ Transmission Blocked: ${err.message || "Endpoint error."}`);
+        } finally {
+          forgotPasswordBtn.textContent = originalBtnText;
+          forgotPasswordBtn.disabled = false;
+        }
+      });
+
+      // 🛡️ 3. STANDARD OPERATOR GATEWAY LOGINS
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearError();
+        
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+          displayError("✕ Validation Error: Both credentials fields are required.");
+          return;
+        }
+
+        if (!isAuthorizedStaffDomain(email)) {
+          accessModal.classList.add("active");
+          return;
+        }
+
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = "Verifying Handshake Clearance...";
+        submitBtn.disabled = true;
+
+        if (!client || typeof client.auth?.signInWithPassword !== 'function') {
+          displayError("✕ System Error: Database authorization client uninitialized.");
+          submitBtn.textContent = originalBtnText;
+          submitBtn.disabled = false;
+          return;
+        }
+
+        try {
+          const { data, error } = await client.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+
+          if (data?.session) {
+            errorDiv.style.background = "#ecfdf5";
+            errorDiv.style.color = "#047857";
+            errorDiv.style.border = "1px solid rgba(16,185,129,0.15)";
+            errorDiv.textContent = "✓ Authentication approved! Synchronizing platform token profiles...";
+            errorDiv.style.display = "block";
+            
+            setTimeout(() => {
+              window.location.href = "admin-dashboard.html";
+            }, 1000);
+          } else {
+            throw new Error("Handshake aborted: Core user authentication profile failed to stabilize.");
+          }
+        } catch (authException) {
+          console.error("✕ Authentication barrier gate crash:", authException.message || authException);
+          displayError(`✕ Identity Verification Failed: ${authException.message || "Invalid credentials configuration parameters."}`);
+          submitBtn.textContent = originalBtnText;
+          submitBtn.disabled = false;
+        }
+      });
     });
-  });
   </script>
 </body>
 </html>

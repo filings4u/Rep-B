@@ -7,7 +7,6 @@
   <link rel="icon" type="image/png" href="images/fav.png">
   
   <!-- Centralized Design Token Sheets Integration Route -->
-  <link rel="stylesheet" href="assets/css/admin-global-theme.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
   <style>
@@ -463,7 +462,7 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-  <script>
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
@@ -473,20 +472,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const submitBtn = document.getElementById("submitFormBtn");
   const hiredDateInput = document.getElementById("addHiredDate");
 
-  // Automatically set default hired date selector parameters to today's date
   if (hiredDateInput) {
     hiredDateInput.value = new Date().toISOString().split('T')[0];
   }
 
-  // 1. Dynamic Top Header Portal Clock Loop
-  function runPortalClock() {
-    const el = document.getElementById("portal-clock");
-    if (el) el.textContent = new Date().toLocaleTimeString();
-  }
-  setInterval(runPortalClock, 1000);
-  runPortalClock();
-
-  // 2. Core Self-Healing Database Handshake Initialization
+  // 1. Core Self-Healing Database Handshake Initialization
   let client = window.supabaseInstance || window.supabaseClient;
   if (!client || typeof client.from !== 'function') {
     const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
@@ -498,9 +488,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 3. Real-Time Stream Operator Roster Ledger
+  // 2. Real-Time Stream Operator Roster Ledger Data Grid Table
   async function refreshOperatorRosterGrid() {
     try {
+      if (!client || typeof client.from !== 'function') return;
       if (!rosterBox) return;
 
       const { data: admins, error } = await client
@@ -511,7 +502,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
 
       if (!admins || admins.length === 0) {
-        rosterBox.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--text-muted);">No administrators registered.</td></tr>`;
+        rosterBox.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--text-muted);">No administrators registered on the corporate tracking matrix.</td></tr>`;
         return;
       }
 
@@ -526,31 +517,36 @@ document.addEventListener("DOMContentLoaded", async () => {
         const isTerminated = admin.terminated_date !== null;
         
         const statusCell = isTerminated 
-          ? `<span style="color:var(--staff-red); font-weight:700;">Terminated (${new Date(admin.terminated_date).toLocaleDateString()})</span>` 
-          : `<span style="color:var(--emerald); font-weight:700;">Active Duty</span>`;
+          ? `<span style="color:#dc2626; font-weight:700;">Terminated</span>` 
+          : `<span style="color:#10b981; font-weight:700;">Active Duty</span>`;
 
-        // Disable deactivation controls if row matches master super admin user configurations
-        const isProtectedMaster = email === "aerving@filings4u.com" || admin.id === "d9faf338-7b5f-4dfe-ac70-4d485c8781b0";
+        const isProtectedMaster = email === "aerving@filings4u.com";
         const actionBtnHtml = isTerminated 
           ? `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Deactivated</span>`
           : isProtectedMaster
-            ? `<span style="font-size:0.72rem; color:var(--emerald); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">👑 Owner Secure</span>`
+            ? `<span style="font-size:0.72rem; color:#10b981; font-weight:800; text-transform:uppercase;">👑 Master Owner</span>`
             : `<button onclick="window.terminateAdminOperator('${admin.id}', '${escapeHtml(name)}')" class="terminate-btn">✕ Terminate</button>`;
 
         tr.innerHTML = `
-          <td style="padding:12px; font-weight:700; color:var(--text-dark);">${escapeHtml(name)}</td>
-          <td style="padding:12px; font-family:monospace; color:var(--text-muted);">${escapeHtml(email)}</td>
-          <td style="padding:12px; color:var(--text-muted); font-weight:600;">${hired}</td>
+          <td style="padding:12px; font-weight:700; color:#0a1f44;">${escapeHtml(name)}</td>
+          <td style="padding:12px; font-family:monospace; color:#475569;">${escapeHtml(email)}</td>
+          <td style="padding:12px; color:#475569; font-weight:600;">${hired}</td>
           <td style="padding:12px;">${statusCell}</td>
           <td style="padding:12px; text-align:right;">${actionBtnHtml}</td>
         `;
         rosterBox.appendChild(tr);
       });
     } catch (err) {
-      console.error("✕ Roster query crash:", err);
-      rosterBox.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Failed to retrieve admin profiles context.</td></tr>`;
+      console.error("✕ Roster lookup network error:", err);
     }
   }
+
+  // Helper safely gathering existing element values to protect against runtime null exceptions
+  function getInputValue(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  }
+
   // ========================================================================
   // 4. LIFECYCLE ACTION FORM INTERCEPTION ONBOARDING TRIGGER
   // ========================================================================
@@ -560,7 +556,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!feedback || !submitBtn) return;
 
       feedback.style.display = "none";
-      const targetEmail = document.getElementById("addEmailAddress").value.trim().toLowerCase();
+      const targetEmail = getInputValue("addEmailAddress").toLowerCase();
 
       // Enforce internal staff clearing security checks
       if (!targetEmail.endsWith("@filings4u.com") && !targetEmail.endsWith("@roselandcompanies.com")) {
@@ -573,25 +569,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const payload = {
         email_address: targetEmail,
-        first_name: document.getElementById("addFirstName").value.trim(),
-        last_name: document.getElementById("addLastName").value.trim(),
-        phone_number: document.getElementById("addPhoneNumber").value.trim(),
-        street_address: document.getElementById("addStreetAddress").value.trim(),
-        city: document.getElementById("addCity").value.trim(),
-        state: document.getElementById("addState").value.trim(),
-        zip_code: document.getElementById("addZipCode").value.trim(),
-        hired_date: document.getElementById("addHiredDate").value,
-        role: document.getElementById("addRole").value
+        first_name: getInputValue("addFirstName"),
+        last_name: getInputValue("addLastName"),
+        phone_number: getInputValue("addPhoneNumber"),
+        street_address: getInputValue("addStreetAddress"),
+        city: getInputValue("addCity"),
+        state: getInputValue("addState"),
+        zip_code: getInputValue("addZipCode"),
+        hired_date: getInputValue("addHiredDate"),
+        role: getInputValue("addRole")
       };
 
       try {
         console.log("📡 [Auth Engine] Bypassing active session tokens via clean native fetch tunnel...");
 
-        // 🟢 THE CRITICAL FIXED ROUTE: Targets manage-admin-staff instead of document-notification
         const response = await fetch("https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/manage-admin-staff", {
           method: "POST",
           headers: { 
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"
           },
           body: JSON.stringify(payload)
         });
@@ -609,7 +605,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await refreshOperatorRosterGrid();
 
       } catch (err) {
-        console.error("✕ Network Invocation failure exception caught:", err);
+        console.error("✕ Production Tunnel invocation failure exception caught:", err);
         showFeedback(`✕ Onboarding Failed: ${err.message || "Network pre-flight clearance dropped."}`, true);
       } finally {
         submitBtn.disabled = false;
@@ -622,6 +618,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 5. TERMINATE OPERATOR UPDATE ACTION LOOP
   // ========================================================================
   window.terminateAdminOperator = async function(adminId, adminName) {
+    if (!client || typeof client.from !== 'function') {
+      alert("✕ Action Blocked: Supabase client connection is uninitialized.");
+      return;
+    }
     if (!confirm(`⚠️ WARNING: Are you sure you want to terminate operator [${adminName}]?\nThis maps their terminated_date to today and locks account dashboards.`)) return;
 
     try {
@@ -648,7 +648,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function escapeHtml(s) {
     if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'");
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
   // Initialize grid layout table parameters instantly upon page entry
