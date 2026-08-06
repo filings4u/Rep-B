@@ -97,7 +97,7 @@
 
   <script src="assets/js/client-footer.js"></script>
 
- <script>
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
@@ -129,6 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     return;
   }
+  
 
   // 3. User Authentication Guard Routing Verification
   let sessionObj = null;
@@ -148,44 +149,42 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (!sessionObj || !sessionObj.user) {
+    console.log("ℹ️ No active login session detected. Rerouting to gateway access...");
     window.location.href = "portal-login.html";
     return;
   }
 
-  // 🟢 FIX: Force user string outputs directly into verified lowercase parameter states
   const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase();
-  // --- STAGE 2: CASE-NORMALIZED MULTI-TABLE LEDGER READ PIPELINE ---
+
+  // 4. Case-Normalized Multi-Table Query Pipeline
   async function streamInvoiceHistoryLedger() {
     try {
-      // clientSessionEmail is already strictly sanitized and lowercase here
-      console.log(`📡 [Portal Ledger] Querying all history tracks for verified key: [${clientSessionEmail}]`);
+      console.log(`📡 [Portal Ledger] Querying statement matrices for target email: [${clientSessionEmail}]`);
 
       if (!ledgerTableBody) return;
 
-      // 1. Concurrent Fetch Request A: Web Wizard Checkouts
       const queryStandardOrders = client
         .from('orders')
         .select('created_at, selected_service, tracking_number, total_paid_amount')
         .eq('email_address', clientSessionEmail);
 
-      // 2. Concurrent Fetch Request B: Direct Phone Call Terminals
       const queryDashboardOrders = client
         .from('dashboard_orders')
         .select('created_at, selected_service, tracking_number, total_paid_amount')
         .eq('email_address', clientSessionEmail);
 
-      // Execute both table reads simultaneously to eliminate page latency
       const [resStandard, resDashboard] = await Promise.all([queryStandardOrders, queryDashboardOrders]);
 
-      if (resStandard.error) throw resStandard.error;
-      if (resDashboard.error) throw resDashboard.error;
+      if (resStandard.error) console.warn("ℹ️ Web Wizard table empty or unassigned:", resStandard.error.message);
+      if (resDashboard.error) console.warn("ℹ️ Phone Desk staging table empty or unassigned:", resDashboard.error.message);
 
       const standardList  = resStandard.data || [];
       const dashboardList = resDashboard.data || [];
 
-      console.log(`📊 [Ledger Stats] Web rows found: ${standardList.length} | Phone desk rows found: ${dashboardList.length}`);
+      // 🟢 THE FRONTEND FIX: Immediately wipe out the "Reconciling secure transaction profiles..." placeholder
+      // node HTML template string row BEFORE mapping data array parameters
+      ledgerTableBody.innerHTML = "";
 
-      // 3. Unify both independent arrays cleanly into a standard structure
       const unifiedInvoiceManifest = []
         .concat(standardList.map(item => ({
           created_at: item.created_at,
@@ -200,10 +199,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           total_paid_amount: item.total_paid_amount
         })));
 
-      // 4. Chronological Sort: Order merged manifest array cleanly by date descending
       unifiedInvoiceManifest.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-      // Handle empty states safely
       if (unifiedInvoiceManifest.length === 0) {
         ledgerTableBody.innerHTML = `
           <tr>
@@ -216,8 +213,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      // Populate layout statement rows cleanly
-      ledgerTableBody.innerHTML = "";
       unifiedInvoiceManifest.forEach((invoiceItem) => {
         const tr = document.createElement("tr");
         tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
@@ -240,15 +235,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
     } catch (fault) {
-      console.error("✕ Invoice ledger synchronization exception:", fault);
-      ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Reconcile Failure: Database records unassigned.</td></tr>`;
+      console.error("✕ Invoice ledger synchronization exception handled safely:", fault);
+      if (ledgerTableBody) {
+        ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Reconcile Failure: Database records unassigned.</td></tr>`;
+      }
     }
   }
-  // --- STAGE 3: INLINE RECEIPT WINDOW PRINT CONTROLLER ---
+
+  // 5. Popup Receipt Layout Generator - ZERO NESTED TAGS TO PREVENT LEAKS
   window.printStatementReceipt = function(trackingCode, serviceName, amountPaid, dateSettled) {
     const printWindow = window.open("", "_blank", "width=800,height=600");
     if (!printWindow) {
-      alert("✕ Popup blocked! Please enable popups for this portal dashboard to view print layouts.");
+      alert("✕ Popup blocked! Please enable popups to print statement receipts.");
       return;
     }
     
@@ -266,48 +264,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         <p><strong>Filing Service Item:</strong> ${serviceName}</p>
         <h2 style="color:#10b981; font-size:22px; margin-top:30px;">Total Paid: $${amountPaid}</h2>
         <div style="margin-top:50px; border-top:1px dashed #cbd5e1; padding-top:20px; font-size:11px; color:#64748b;">
-          &copy; 2026 filings4u, LLC. All transaction histories processed under secure SSL/TLS environments.
+          &copy; 2026 filings4u, LLC. All transaction histories processed under secure environments.
         </div>
-        <script>window.onload = function() { window.print(); window.close(); }<\/script>
       </body>
       </html>
     `;
     printWindow.document.write(windowContent);
     printWindow.document.close();
+    
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
   };
 
-  // --- STAGE 4: COMPONENT UTILITIES ---
   function escapeInvoiceHtml(s) {
     if (!s) return "";
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "'");
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'");
   }
 
-  window.toggleSidebarAccordion = function(btn) {
-    if (!btn) return;
-    const panel = btn.nextElementSibling;
-    if (panel) {
-      panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
-    }
-  };
-
-  // --- STAGE 5: SYSTEM LIFECYCLE DESTRUCTION TRACK ---
-  document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-    client.auth.signOut().then(() => {
-      window.localStorage.clear();
-      window.sessionStorage.clear();
-      window.location.replace("portal-login.html");
-    });
-  });
-
-  // Execute primary case-normalized dual-read operations track immediately
+  // Execute case-normalized dual-table fetch loop instantly
   await streamInvoiceHistoryLedger();
 });
 </script>
+
 
 </body>
 </html>
