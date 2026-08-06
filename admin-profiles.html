@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Profiles Manager | filings4u Control Suite</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+  
+  <!-- Centralized Design Token Sheets Integration Route -->
+  <link rel="stylesheet" href="assets/css/admin-global-theme.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0a1f44;
+      --text-muted: #475569;
+      --emerald: #10b981;
+      --staff-red: #c15254;
+      --sidebar-width: 260px;
+    }
+    body, html {
+      margin: 0 !important; padding: 0 !important; min-height: 100vh !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      background-color: var(--bg-light) !important; color: var(--text-dark) !important;
+    }
+    .dashboard-wrapper { display: flex !important; width: 100% !important; min-height: 100vh !important; }
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header {
+      background: var(--white) !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important;
+      display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important;
+    }
+    .content-container { padding: 32px 40px !important; box-sizing: border-box !important; display: grid !important; grid-template-columns: 1fr 380px !important; gap: 32px !important; width: 100% !important; }
+    .console-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); height: fit-content; }
+    .form-group { text-align: left; margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-muted); }
+    .form-input-element { width: 100% !important; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.88rem; background: #f8fafc; outline: none; box-sizing: border-box; transition: all 0.2s; }
+    .form-input-element:focus { background: var(--white); border-color: var(--staff-red); box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.06); }
+    .action-btn-primary { width: 100% !important; padding: 12px; background-color: var(--text-dark); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; }
+    .action-btn-primary:hover { background-color: #1e293b; }
+    .terminate-btn { background: none; border: 1px solid var(--border-color); color: var(--staff-red); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .terminate-btn:hover { background: #fef2f2; border-color: var(--staff-red); }
+  </style>
+
+  <style>
+            /* ==========================================================================
+           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important; /* Forces normal native scrolling rules */
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
+            margin-left: var(--sidebar-width) !important; 
+            width: calc(100% - var(--sidebar-width)) !important;
+            min-height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 20px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        /* ⏱️ Input-styled unified date/time pill element */
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            font-size: 0.82rem !important;
+            width: 220px !important;
+            outline: none !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            color: var(--text-dark) !important;
+        }
+
+        .search-input:focus {
+            background: var(--white) !important;
+            border-color: var(--emerald) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        /* CARD CAROUSELS SYSTEM CORES */
+        .stats-row {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+            gap: 20px !important;
+            margin-bottom: 30px !important;
+            width: 100% !important;
+        }
+
+        .stat-card {
+            background: var(--white) !important;
+            padding: 20px !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            box-sizing: border-box !important;
+        }
+
+        .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
+        .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
+
+        .dashboard-grid-layout {
+            display: grid !important;
+            grid-template-columns: 2fr 1fr !important;
+            gap: 24px !important;
+            align-items: start !important;
+            width: 100% !important;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+        }
+
+        .console-card {
+            background: var(--white) !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 24px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            margin-bottom: 24px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+   
+   @media (max-width: 991px) {
+    body, html { overflow-y: auto !important; }
+    .dashboard-wrapper { flex-direction: column !important; }
+    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
+    .portal-main { margin-left: 0 !important; width: 100% !important; }
+    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
+    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
+    .search-input { width: 100% !important; }
+    .content-container { padding: 20px !important; }
+    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+}
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <main class="portal-main">
+      <header class="portal-header">
+        <h1 style="margin: 0; font-size: 1.25rem; font-weight: 800;">Administrative Staff Profiles Manager</h1>
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700;">
+          ⏱️ <span id="portal-clock">Syncing...</span>
+        </div>
+      </header>
+      <div class="content-container">
+        <!-- LEFT: Active Admin Ledger Grid Table -->
+        <div class="console-card">
+          <h2 style="margin:0 0 4px 0; font-size: 1.2rem; font-weight: 800;">Internal Operator Registry Ledger</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 24px 0;">Live oversight roster of authorized compliance managers and system administrators.</p>
+          <div style="overflow-x:auto; background:#ffffff; border-radius:8px; border:1px solid var(--border-color);">
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.85rem;">
+              <thead>
+                <tr style="background:#f8fafc; border-bottom:2px solid var(--border-color); color:var(--text-muted); font-weight:700;">
+                  <th style="padding:12px;">Operator Name</th>
+                  <th style="padding:12px;">Corporate Email</th>
+                  <th style="padding:12px;">Hired Date</th>
+                  <th style="padding:12px;">Status</th>
+                  <th style="padding:12px; text-align:right;">Actions Slat</th>
+                </tr>
+              </thead>
+              <tbody id="admin-roster-target-box">
+                <tr><td colspan="5" style="padding:32px; text-align:center; color:var(--text-muted); font-style:italic;">Querying active operator token sets...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT: Onboard Fresh Administrator Form Slat -->
+        <div class="console-card">
+          <h2 style="margin:0 0 4px 0; font-size: 1.2rem; font-weight: 800;">Onboard New Operator</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 20px 0;">Register profile records and issue a system auth password invite link instantly.</p>
+          
+          <form id="addAdminForm" autocomplete="off">
+            <!-- Row 1: Core Identification Metrics -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label>First Name</label>
+                <input type="text" id="addFirstName" class="form-input-element" placeholder="John" required>
+              </div>
+              <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" id="addLastName" class="form-input-element" placeholder="Doe" required>
+              </div>
+            </div>
+
+            <!-- Row 2: Core Network Credentials -->
+            <div class="form-group">
+              <label>Corporate Email Address</label>
+              <input type="email" id="addEmailAddress" class="form-input-element" placeholder="name@filings4u.com" required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="addPhoneNumber" class="form-input-element" placeholder="(555) 000-0000" required>
+            </div>
+
+            <!-- Row 3: Corporate Physical Location Tracking Parameters -->
+            <div class="form-group">
+              <label>Street Address</label>
+              <input type="text" id="addStreetAddress" class="form-input-element" placeholder="123 Corporate Way" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" id="addCity" class="form-input-element" placeholder="Lyons" required>
+              </div>
+              <div class="form-group">
+                <label>State</label>
+                <input type="text" id="addState" class="form-input-element" placeholder="IL" maxlength="50" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Zip Code</label>
+              <input type="text" id="addZipCode" class="form-input-element" placeholder="60534" required>
+            </div>
+
+            <!-- Row 4: Operational Lifecycle Milestones Tracking Parameters -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label>Hired Date</label>
+                <input type="date" id="addHiredDate" class="form-input-element" required>
+              </div>
+              <div class="form-group">
+                <label>Security Access Level</label>
+                <select id="addRole" class="form-input-element" style="background:#ffffff;" required>
+                  <option value="admin" selected>Standard Admin Operator</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="form-feedback-msg" style="display:none; padding:10px; border-radius:6px; font-size:0.78rem; font-weight:600; margin-bottom:16px; line-height:1.4;"></div>
+
+            <button type="submit" id="submitFormBtn" class="action-btn-primary">Transmit Staff Invitation ➔</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 1. The Global Library Core MUST load absolute first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. The Configuration setup creates window.supabaseClient immediately -->
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-master-ledger.js"></script>
+
+   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-navigation.js"></script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
+
+    const rosterBox = document.getElementById("admin-roster-target-box");
+    const addForm = document.getElementById("addAdminForm");
+    const feedback = document.getElementById("form-feedback-msg");
+    const submitBtn = document.getElementById("submitFormBtn");
+    const hiredDateInput = document.getElementById("addHiredDate");
+
+    // Automatically set default hired date selector parameters to today's date
+    if (hiredDateInput) {
+      hiredDateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // 1. Dynamic Top Header Portal Clock Loop
+    function runPortalClock() {
+      const el = document.getElementById("portal-clock");
+      if (el) el.textContent = new Date().toLocaleTimeString();
+    }
+    setInterval(runPortalClock, 1000);
+    runPortalClock();
+
+    // 2. Core Self-Healing Database Handshake Initialization
+    let client = window.supabaseInstance || window.supabaseClient;
+    if (!client || typeof client.from !== 'function') {
+      const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+      if (lib && typeof lib.createClient === 'function') {
+        client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
+          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
+        });
+        window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+      }
+    }
+
+    // 3. Real-Time Stream Operator Roster Ledger
+    async function refreshOperatorRosterGrid() {
+      try {
+        if (!rosterBox) return;
+
+        const { data: admins, error } = await client
+          .from('admin_profiles')
+          .select('*')
+          .order('hired_date', { ascending: false });
+
+        if (error) throw error;
+
+        if (!admins || admins.length === 0) {
+          rosterBox.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--text-muted);">No administrators registered.</td></tr>`;
+          return;
+        }
+
+        rosterBox.innerHTML = "";
+        admins.forEach((admin) => {
+          const tr = document.createElement("tr");
+          tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
+
+          const name = `${admin.first_name || ""} ${admin.last_name || ""}`.trim() || "Active Operator";
+          const email = admin.email_address;
+          const hired = admin.hired_date ? new Date(admin.hired_date).toLocaleDateString() : "Not Tracked";
+          const isTerminated = admin.terminated_date !== null;
+          
+          const statusCell = isTerminated 
+            ? `<span style="color:var(--staff-red); font-weight:700;">Terminated (${new Date(admin.terminated_date).toLocaleDateString()})</span>` 
+            : `<span style="color:var(--emerald); font-weight:700;">Active Duty</span>`;
+
+          // Disable deactivation controls if row matches master super admin user configurations
+          const isProtectedMaster = email === "aerving@filings4u.com" || admin.id === "d9faf338-7b5f-4dfe-ac70-4d485c8781b0";
+          const actionBtnHtml = isTerminated 
+            ? `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Deactivated</span>`
+            : isProtectedMaster
+              ? `<span style="font-size:0.72rem; color:var(--emerald); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">👑 Owner Secure</span>`
+              : `<button onclick="window.terminateAdminOperator('${admin.id}', '${escapeHtml(name)}')" class="terminate-btn">✕ Terminate</button>`;
+
+          tr.innerHTML = `
+            <td style="padding:12px; font-weight:700; color:var(--text-dark);">${escapeHtml(name)}</td>
+            <td style="padding:12px; font-family:monospace; color:var(--text-muted);">${escapeHtml(email)}</td>
+            <td style="padding:12px; color:var(--text-muted); font-weight:600;">${hired}</td>
+            <td style="padding:12px;">${statusCell}</td>
+            <td style="padding:12px; text-align:right;">${actionBtnHtml}</td>
+          `;
+          rosterBox.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("✕ Roster query crash:", err);
+        rosterBox.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Failed to retrieve admin profiles context.</td></tr>`;
+      }
+    }
+
+    // ========================================================================
+    // 4. LIFECYCLE ACTION FORM INTERCEPTION ONBOARDING TRIGGER
+    // ========================================================================
+    if (addForm) {
+      addForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!feedback || !submitBtn) return;
+
+        feedback.style.display = "none";
+        const targetEmail = document.getElementById("addEmailAddress").value.trim().toLowerCase();
+
+        // Enforce internal staff clearing security checks
+        if (!targetEmail.endsWith("@filings4u.com") && !targetEmail.endsWith("@roselandcompanies.com")) {
+          showFeedback("✕ Access Denied: Onboarding limited to @filings4u.com or @roselandcompanies.com domains.", true);
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Transmitting Team Credentials...";
+
+        const payload = {
+          email_address: targetEmail,
+          first_name: document.getElementById("addFirstName").value.trim(),
+          last_name: document.getElementById("addLastName").value.trim(),
+          phone_number: document.getElementById("addPhoneNumber").value.trim(),
+          street_address: document.getElementById("addStreetAddress").value.trim(),
+          city: document.getElementById("addCity").value.trim(),
+          state: document.getElementById("addState").value.trim(),
+          zip_code: document.getElementById("addZipCode").value.trim(),
+          hired_date: document.getElementById("addHiredDate").value,
+          role: document.getElementById("addRole").value
+        };
+
+        try {
+          console.log("📡 [Auth Engine] Invoking native Supabase SDK connection pipeline...");
+
+          // 🟢 THE SEPARATION FIX: Calls the newly built isolated administrative staff provisioning function
+          const { data, error } = await client.functions.invoke('manage-admin-staff', {
+            body: payload,
+            method: 'POST'
+          });
+
+          if (error) throw error;
+          if (data && data.error) throw new Error(data.error);
+
+          showFeedback("✓ Operator account provisioned! Secure training onboarding invitation email transmitted successfully.", false);
+          addForm.reset();
+          
+          if (hiredDateInput) hiredDateInput.value = new Date().toISOString().split('T')[0];
+          await refreshOperatorRosterGrid();
+
+        } catch (err) {
+          console.error("✕ SDK Invocation failure exception caught:", err);
+          showFeedback(`✕ Onboarding Failed: ${err.message || "Network pre-flight clearance dropped."}`, true);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Transmit Staff Invitation ➔";
+        }
+      });
+    }
+
+
+
+    // 5. Terminate Operator Update Action Loop
+    window.terminateAdminOperator = async function(adminId, adminName) {
+      if (!confirm(`⚠️ WARNING: Are you sure you want to terminate operator [${adminName}]?\nThis maps their terminated_date to today and locks account dashboards.`)) return;
+
+      try {
+        const todayIsoDate = new Date().toISOString().split('T')[0];
+        const { error } = await client
+          .from('admin_profiles')
+          .update({ terminated_date: todayIsoDate })
+          .eq('id', adminId);
+
+        if (error) throw error;
+        await refreshOperatorRosterGrid();
+      } catch (err) {
+        alert(`✕ Action Blocked: ${err.message || "Failed to commit record mutation."}`);
+      }
+    };
+
+    function showFeedback(text, isError) {
+      feedback.textContent = text;
+      feedback.style.display = "block";
+      feedback.style.background = isError ? "#fef2f2" : "#ecfdf5";
+      feedback.style.color = isError ? "#991b1b" : "#047857";
+      feedback.style.border = `1px solid ${isError ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)"}`;
+    }
+
+    function escapeHtml(s) {
+      if (!s) return "";
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'");
+    }
+
+    // Initialize grid layout table parameters instantly upon page entry
+    await refreshOperatorRosterGrid();
+  });
+  </script>
+</body>
+</html>
