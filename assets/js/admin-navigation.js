@@ -169,7 +169,7 @@ desktopSidebarNode.innerHTML = `
       <a href="admin-customer-profile.html" class="nav-item d-link" data-page="admin-customer-profile.html"><span>👤</span> Client Profiler</a> 
       <a href="admin-service-manager.html" class="nav-item d-link" data-page="admin-service-manager.html"><span>⚙️</span> Service Fulfillment</a> 
       <a href="admin-compliance-audit.html" class="nav-item d-link" data-page="admin-compliance-audit.html"><span>🛡️</span> Compliance Audit</a>
-      <a href="admin-entity-master.html" class="nav-item d-link" data-page="admin-entity-master.html"><span>🏢</span> Entity Master Ledger</a>  
+      <a href="admin-entity-master.html" class="nav-item d-link" data-page="admin-entity-master.html"><span>🏢</span> Entity Master Ledger</a>
       <a href="admin-orders.html" class="nav-item d-link" data-page="admin-orders.html"><span>📦</span> Active Orders Queue</a> 
     </div> 
   </div> 
@@ -180,6 +180,7 @@ desktopSidebarNode.innerHTML = `
       Financials & Health <span class="chevron">▼</span> 
     </button> 
     <div class="accordion-panel d-panel" data-group="finance"> 
+      <a href="pay-invoice.html" class="nav-item d-link" data-page="pay-invoice.html"><span>💳</span> Process Invoice Pay</a> 
       <a href="admin-system-logs.html" class="nav-item d-link" data-page="admin-system-logs.html"><span>📋</span> System Event Logs</a> 
     </div> 
   </div> 
@@ -204,6 +205,8 @@ desktopSidebarNode.innerHTML = `
       Intake & Design Hub <span class="chevron">▼</span> 
     </button> 
     <div class="accordion-panel d-panel" data-group="intake"> 
+      <a href="logodesign-intake.html" class="nav-item d-link" data-page="logodesign-intake.html"><span>🎨</span> Logo Design Form</a> 
+      <a href="webdesign-intake.html" class="nav-item d-link" data-page="webdesign-intake.html"><span>🌐</span> Web Ingestion Form</a> 
       <a href="admin-design-hub.html" class="nav-item d-link" data-page="admin-design-hub.html"><span>🚀</span> Shared Design Hub</a> 
     </div> 
   </div> 
@@ -220,6 +223,7 @@ desktopSidebarNode.innerHTML = `
   </div> 
 
 </nav>
+
 
 
 <div class="sidebar-footer-lock" style="padding-top:10px !important; text-align: center; width: 100%; box-sizing: border-box;">
@@ -290,6 +294,7 @@ if (headerNode && headerNode.parentNode) {
       Financials & Health <span class="chevron">▼</span>
     </button>
     <div class="accordion-panel m-panel" data-group="m-finance">
+      <a href="pay-invoice.html" class="nav-item m-link" data-page="pay-invoice.html">Process Invoice Pay</a>
       <a href="admin-system-logs.html" class="nav-item m-link" data-page="admin-system-logs.html">System Event Logs</a>
     </div>
   </div>
@@ -314,6 +319,8 @@ if (headerNode && headerNode.parentNode) {
       Intake & Design Hub <span class="chevron">▼</span>
     </button>
     <div class="accordion-panel m-panel" data-group="m-intake">
+      <a href="logodesign-intake.html" class="nav-item m-link" data-page="logodesign-intake.html">Logo Design Form</a>
+      <a href="webdesign-intake.html" class="nav-item m-link" data-page="webdesign-intake.html">Web Ingestion Form</a>
       <a href="admin-design-hub.html" class="nav-item m-link" data-page="admin-design-hub.html">Shared Design Hub</a>
     </div>
   </div>
@@ -333,6 +340,7 @@ if (headerNode && headerNode.parentNode) {
   <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#dc2626; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Exit Admin Session</button>
 
 </nav>
+
 
 
     `;
