@@ -167,7 +167,7 @@ desktopSidebarNode.innerHTML = `
       <a href="admin-customer-profile.html" class="nav-item d-link" data-page="admin-customer-profile.html"><span>👤</span> Client Profiler</a>
       <a href="admin-service-manager.html" class="nav-item d-link" data-page="admin-service-manager.html"><span>⚙️</span> Service Fulfillment</a>
       <a href="admin-compliance-audit.html" class="nav-item d-link" data-page="admin-compliance-audit.html"><span>🛡️</span> Compliance Audit</a>
-      <span>🏢</span> Entity Master Ledger</a>
+      <a href="admin-entity-master.html" class="nav-item d-link" data-page="admin-entity-master.html"><span>🏢</span> Entity Master Ledger</a>
       <a href="admin-orders.html" class="nav-item d-link" data-page="admin-orders.html"><span>📦</span> Active Orders Queue</a>
     </div>
   </div>
@@ -281,8 +281,7 @@ if (headerNode && headerNode.parentNode) {
       <a href="admin-customer-profile.html" class="nav-item m-link" data-page="admin-customer-profile.html">Client Profiler</a>
       <a href="admin-service-manager.html" class="nav-item m-link" data-page="admin-service-manager.html">Service Fulfillment</a>
       <a href="admin-compliance-audit.html" class="nav-item m-link" data-page="admin-compliance-audit.html">Compliance Audit</a>
-      <!-- 🟢 FIXED: Restored missing opening anchor tag shell seamlessly below -->
-      Entity Master Ledger</a>
+      <a href="admin-entity-master.html" class="nav-item d-link" data-page="admin-entity-master.html"><span>🏢</span> Entity Master Ledger</a>
       <a href="admin-orders.html" class="nav-item m-link" data-page="admin-orders.html">Active Orders Queue</a>
     </div>
   </div>

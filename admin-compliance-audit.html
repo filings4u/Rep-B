@@ -464,7 +464,7 @@
   <script src="assets/js/admin-navigation.js"></script>
 
 
-<script>
+ <script>
 (function() {
   const DB_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
   const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
@@ -479,15 +479,15 @@
       if (typeof supabase === 'undefined') throw new Error("Supabase script driver missing from template head headers.");
       dbClient = supabase.createClient(DB_URL, DB_KEY);
 
-      // A. Pull down entries out of your compliance_deadlines framework table
+      // A. Pull down entries out of your admin_compliance_audit framework table
       const { data: recordRows, error: recordErr } = await dbClient
-        .from('compliance_deadlines')
-        .select('id, user_id, client_email, client_name, filing_name, company_name, expiration_date, status')
-        .order('created_at', { ascending: false });
+        .from('admin_compliance_audit')
+        .select('id, framework_scope, target_jurisdiction, internal_score, audit_status, next_review_date')
+        .order('next_review_date', { ascending: true });
 
       if (recordErr) throw recordErr;
 
-      // B. Hydrate dropdown options matching your active compliance entries table values
+      // B. Hydrate dropdown options matching your active profiles securely
       if (clientMenu) {
         const { data: complianceProfiles, error: complianceErr } = await dbClient
           .from('compliance_deadlines')
@@ -516,26 +516,31 @@
         }
       }
 
-      // C. Print database entries into workspace data table rows
+      // C. Print database entries into compliance audit data table rows
       if (tableElement) {
         tableElement.innerHTML = '';
         if (!recordRows || recordRows.length === 0) {
           tableElement.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No records found inside your database tracking metrics.</td></tr>`;
         } else {
           recordRows.forEach(item => {
-            const isPaid = (item.status === 'Paid');
-            const badgeStyle = isPaid ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;';
-            const displayDate = item.expiration_date ? item.expiration_date : 'No Expiration Date';
+            const status = item.audit_status || 'Compliant';
+            let statusStyle = 'background:#dcfce7; color:#166534;';
+            if (status === 'Pending Review') statusStyle = 'background:#fef3c7; color:#b45309;';
+            if (status === 'Non-Compliant') statusStyle = 'background:#fee2e2; color:#991b1b;';
+
+            const displayDate = item.next_review_date ? item.next_review_date : 'No Review Date';
+            const displayScore = item.internal_score !== null ? `${item.internal_score}%` : 'N/A';
+
             const rowMarkup = `
               <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding:14px 12px; color: #475569;">${escapeDataString(item.client_email)}</td>
-                <td style="padding:14px 12px; color: #1e293b; font-weight: 500;">${escapeDataString(item.client_name)}</td>
-                <td style="padding:14px 12px; font-weight: 600; color: #1e293b;">${escapeDataString(item.filing_name)}</td>
-                <td style="padding:14px 12px; color: #475569;">${escapeDataString(item.company_name)}</td>
+                <td style="padding:14px 12px; color: #475569; font-weight: 500;">System Generated</td>
+                <td style="padding:14px 12px; color: #1e293b; font-weight: 600;">${escapeDataString(item.framework_scope)}</td>
+                <td style="padding:14px 12px; color: #1e293b;">${escapeDataString(item.target_jurisdiction)}</td>
+                <td style="padding:14px 12px; color: #475569; font-weight: 700;">${displayScore}</td>
                 <td style="padding:14px 12px; color: #475569; font-family: monospace;">${displayDate}</td>
                 <td style="padding:14px 12px; text-align:right;">
-                  <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${badgeStyle}">
-                    ${escapeDataString(item.status)}
+                  <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${statusStyle}">
+                    ${escapeDataString(status)}
                   </span>
                 </td>
               </tr>
@@ -544,29 +549,31 @@
           });
         }
       }
-
       // D. Multi-Write Form Submission Controller Pipeline Tracker Block
       if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
         uploadForm.addEventListener('submit', async (e) => {
           e.preventDefault();
+
           const targetSelector = document.getElementById('uploadTargetClientSelector');
           const targetUserId = targetSelector.value;
           const targetEmail = targetSelector.options[targetSelector.selectedIndex].text.trim();
-          const clientName = document.getElementById('formClientName').value;
-          const filingName = document.getElementById('formFilingName').value;
-          const companyName = document.getElementById('formCompanyName').value;
-          const expDateRaw = document.getElementById('formExpirationDate').value;
-          const statusVal = document.getElementById('formStatusSelector').value;
+          
+          const frameworkScope = document.getElementById('formFilingName').value;
+          const targetJurisdiction = document.getElementById('formCompanyName').value;
+          const internalScoreRaw = document.getElementById('formClientName').value;
+          const auditStatus = document.getElementById('formStatusSelector').value;
+          const nextReviewDate = document.getElementById('formExpirationDate').value;
           const fileInput = document.getElementById('uploadFileReference');
 
           if (!targetUserId || targetUserId === '') {
             return showCustomBlurModal('⚠️', 'Input Required', 'Please select a valid target client profile email from the option dropdown menu.');
           }
+
           if (!fileInput.files || fileInput.files.length === 0) {
             return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
           }
 
-          const targetFile = fileInput.files[0]; // Fixes array target
+          const targetFile = fileInput.files[0];
           if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
             return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
           }
@@ -578,27 +585,25 @@
           }
 
           try {
-            // STEP 1: Insert parameters matching database columns format explicitly
+            // STEP 1: Insert parameters matching your admin_compliance_audit database columns format explicitly
             const { data: newRow, error: dbError } = await dbClient
-              .from('compliance_deadlines')
+              .from('admin_compliance_audit')
               .insert([{
-                user_id: targetUserId,
-                client_email: targetEmail,
-                client_name: clientName,
-                filing_name: filingName,
-                company_name: companyName,
-                expiration_date: expDateRaw || null,
-                status: statusVal
+                framework_scope: frameworkScope,
+                target_jurisdiction: targetJurisdiction,
+                internal_score: internalScoreRaw ? parseInt(internalScoreRaw) : null,
+                audit_status: auditStatus,
+                next_review_date: nextReviewDate
               }])
               .select()
               .single();
 
             if (dbError) throw dbError;
 
-            // STEP 2: Use the raw lower-case email directly as the folder name.
+            // STEP 2: Use the raw lower-case email directly as the folder name
             const rawEmailFolder = targetEmail.toLowerCase().trim();
             const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-            const secureStoragePath = `${rawEmailFolder}/${newRow.id}_${fileCleanName}`;
+            const secureStoragePath = `compliance_audits/${rawEmailFolder}/${newRow.id}_${fileCleanName}`;
 
             // STEP 3: Stream physical binary payload straight to storage container vault bucket
             const { data: storageResult, error: vaultWriteError } = await dbClient
@@ -610,18 +615,17 @@
 
             // 🎯 STEP 4: TRIGGER UNBLOCKED EDGE FUNCTION WITHOUT JWT
             try {
-              await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification/', {
+              await fetch('https://supabase.co', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   record: {
                     client_email: targetEmail,
-                    client_name: clientName,
-                    filing_name: filingName,
-                    company_name: companyName,
-                    expiration_date: expDateRaw
+                    framework_scope: frameworkScope,
+                    target_jurisdiction: targetJurisdiction,
+                    internal_score: internalScoreRaw,
+                    next_review_date: nextReviewDate,
+                    audit_status: auditStatus
                   }
                 })
               });
@@ -630,9 +634,7 @@
               console.error('Notification API routing exception caught:', emailErr);
             }
 
-
-
-            showCustomBlurModal('✅', 'Asset Synchronized', `The file binary was successfully committed to your storage vault. Your notification function was fired.`);
+            showCustomBlurModal('✅', 'Asset Synchronized', 'The file binary was successfully committed to your storage vault. Your notification function was fired.');
             uploadForm.reset();
             initAdminConsole(); // Live ledger lines refresh
 
@@ -646,10 +648,9 @@
             }
           }
         });
+
         uploadForm.setAttribute('data-live-listener', 'true');
       }
-
-
     } catch (err) {
       console.error('System Engine Setup Failure:', err);
     }
