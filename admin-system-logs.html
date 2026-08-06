@@ -44,7 +44,38 @@
     
     .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
     .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
-  </style>
+ .filter-tabs-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tab-filter-btn {
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab-filter-btn:hover {
+  background: #f8fafc;
+  color: #0a1f44;
+}
+
+.tab-filter-btn.active {
+  background: #0a1f44 !important;
+  color: #ffffff !important;
+  border-color: #0a1f44 !important;
+  box-shadow: 0 4px 12px rgba(10,31,68,0.15);
+}
+
+ 
+ </style>
 </head>
 <body>
   <div class="dashboard-wrapper">
@@ -108,138 +139,173 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+  <script>
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      // 1. Resolve Document Interface Mount Elements
-      const logsTableBody = document.getElementById("admin-system-logs-target-box");
-      const statTotalEl   = document.getElementById("log-stat-total");
-      const statAdminsEl  = document.getElementById("log-stat-admins");
-      const statClientsEl = document.getElementById("log-stat-clients");
+  // 1. Structural DOM Engine Selectors
+  const logsTableBody = document.getElementById("admin-system-logs-target-box");
+  const statTotal = document.getElementById("log-stat-total");
+  const statAdmins = document.getElementById("log-stat-admins");
+  const statClients = document.getElementById("log-stat-clients");
+  
+  const filterBtnAll = document.getElementById("filter-btn-all");
+  const filterBtnAdmin = document.getElementById("filter-btn-admin");
+  const filterBtnClient = document.getElementById("filter-btn-client");
+
+  // Prevent initialization errors if markup layout anchors are completely missing
+  if (!logsTableBody || !statTotal || !statAdmins || !statClients) {
+    console.error("✕ Critical UI Error: System logs mounting target box cells or stat counters missing.");
+    return;
+  }
+
+  // 2. Safe Database Connection Handshake Hook
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    if (lib && typeof lib.createClient === 'function') {
+      client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
+      });
+      window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+    }
+  }
+
+  if (!client || typeof client.from !== 'function') {
+    logsTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#dc2626; font-weight:700;">✕ Connection Error: Supabase database connection missing.</td></tr>`;
+    return;
+  }
+
+  // Master local memory log cache array to power zero-latency instant filter tabs swapping
+  let localLogsCache = [];
+
+  // --- STAGE 1: READ AND COALESCE REAL-TIME LOG MATRIX EVENTS ---
+  async function synchroniseUnifiedAuditTrail() {
+    try {
+      console.log("📡 [Audit Log Engine] Compiling platform telemetry event entries from table grids...");
       
-      const btnAll     = document.getElementById("filter-btn-all");
-      const btnAdmin   = document.getElementById("filter-btn-admin");
-      const btnClient  = document.getElementById("filter-btn-client");
+      // Pull and compile event logs directly from your public logs table container
+      const { data: dataLogs, error: logsError } = await client
+        .from('portal_notifications') // Leveraging your master cross-platform logging schema
+        .select('created_at, title, recipient_email, message')
+        .order('created_at', { ascending: false });
 
-      if (!logsTableBody) {
-        throw new Error("✕ Critical UI Target Element Missing: 'admin-system-logs-target-box' tbody anchor is absent.");
-      }
+      if (logsError) throw logsError;
 
-      // 2. Fetch Master Client Initialization Instances Cleanly
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        logsTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client connection missing.</td></tr>`;
-        throw new Error("✕ Critical System Error: The global Supabase client connection is unassigned.");
-      }
+      // Reset cache parameters safely
+      localLogsCache = [];
 
-      let masterLogsCacheArray = [];
-
-      async function streamUnifiedSecurityLogs() {
-        try {
-          console.log("📡 [Security Logs Core] Fetching dual-role security telemetry records...");
-
-          // 🟢 RAW DB SOURCE HANDSHAKE: Pull rows straight out of the security log table space
-          const { data: logsData, error: queryError } = await client
-            .from('platform_security_telemetry_logs')
-            .select('id, created_at, action_type, actor_email, account_role, message_details')
-            .order('created_at', { ascending: false });
-
-          if (queryError) {
-            throw new Error(`Postgres Log Query Failure [Code ${queryError.code}]: ${queryError.message}`);
-          }
-
-          masterLogsCacheArray = logsData || [];
+      if (dataLogs && dataLogs.length > 0) {
+        dataLogs.forEach((item) => {
+          const emailStr = String(item.recipient_email || "").toLowerCase().trim();
           
-          // Tabulate card counter balances
-          let totalCount  = masterLogsCacheArray.length;
-          let adminCount  = 0;
-          let clientCount = 0;
+          // Determine structural account deployment classification role context vector maps
+          const isAdminRole = emailStr.endsWith("@filings4u.com") || emailStr.endsWith("@roselandcompanies.com");
+          const computedRole = isAdminRole ? "Admin Staff" : "Client Portal";
 
-          masterLogsCacheArray.forEach(item => {
-            const role = String(item.account_role || '').toUpperCase().trim();
-            if (role === 'ADMIN STAFF') adminCount++;
-            if (role === 'PORTAL CLIENT') clientCount++;
+          localLogsCache.push({
+            timestamp: item.created_at,
+            vector: item.title || "Platform Interaction",
+            email: emailStr || "System Subsystem Loop",
+            role: computedRole,
+            isAdmin: isAdminRole,
+            details: item.message || "No transactional details parameter contexts provided."
           });
-
-          // Hydrate stat summary counters
-          if (statTotalEl)   statTotalEl.textContent   = totalCount.toString();
-          if (statAdminsEl)  statAdminsEl.textContent  = adminCount.toString();
-          if (statClientsEl) statClientsEl.textContent = clientCount.toString();
-
-          renderLogsDataGrid(masterLogsCacheArray);
-
-        } catch (logFault) {
-          console.error("✕ Security Logs Engine processing failure:", logFault.message);
-          logsTableBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center; color: var(--staff-red); font-weight: 600;">✕ Failed to sync cross-platform log streams.</td></tr>`;
-        }
-      }
-
-      function renderLogsDataGrid(dataset) {
-        logsTableBody.innerHTML = "";
-
-        if (!dataset || dataset.length === 0) {
-          logsTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">No matching platform access records matching criteria selection.</td></tr>`;
-          return;
-        }
-
-        dataset.forEach(row => {
-          const tr = document.createElement("tr");
-          tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;";
-
-          const actionType  = row.action_type || "TELEMETRY";
-          const actorEmail  = row.actor_email || "system-node@filings4u.com";
-          const roleLabel   = row.account_role || "CLIENT GATEWAY";
-          const description = row.message_details || "Processed standard access criteria parameters.";
-          
-          const localizedTime = new Date(row.created_at).toLocaleString('en-US', {
-            year: 'numeric', month: 'short', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-          });
-
-          let actionBadgePillColor = "background: #f1f5f9; color: #475569;";
-          if (actionType === 'LOGIN')  actionBadgePillColor = "background: #e6f4ea; color: #137333; font-weight:700;";
-          if (actionType === 'LOGOUT') actionBadgePillColor = "background: #fffbe6; color: #b45309; font-weight:700;";
-
-          tr.innerHTML = `
-            <td style="padding: 14px 12px; font-family: monospace; color: var(--text-muted); font-size: 0.8rem; white-space: nowrap;">${localizedTime}</td>
-            <td style="padding: 14px 12px;"><span style="${actionBadgePillColor} font-size: 10px; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${escapeLogMarkup(actionType)}</span></td>
-            <td style="padding: 14px 12px; font-weight: 700; color: #0f172a;">${escapeLogMarkup(actorEmail)}</td>
-            <td style="padding: 14px 12px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem;">${escapeLogMarkup(roleLabel)}</td>
-            <td style="padding: 14px 12px; text-align: right; color: var(--text-muted); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeLogMarkup(description)}">${escapeLogMarkup(description)}</td>
-          `;
-          logsTableBody.appendChild(tr);
         });
       }
 
-      // 🔍 3. UNIFIED ACCESSIBLE ROUTING TABS FILTRATION CONTROLLERS
-      window.filterSystemLogGrid = function(roleCriteria, elementTrigger) {
-        // Reset interactive visual tabs classes uniformly
-        document.querySelectorAll(".tab-filter-btn").forEach(btn => btn.classList.remove("active"));
-        if (elementTrigger) elementTrigger.classList.add("active");
+      // Compute and flash metrics into counter grid panels instantly
+      calculateAndDisplayStats();
+      
+      // Paint data elements to table viewport arrays natively
+      renderLogsTableRows(localLogsCache);
 
-        if (roleCriteria === 'ALL') {
-          renderLogsDataGrid(masterLogsCacheArray);
-        } else {
-          const isolatedSubset = masterLogsCacheArray.filter(item => {
-            return String(item.account_role || '').toUpperCase().trim() === roleCriteria.toUpperCase().trim();
-          });
-          renderLogsDataGrid(isolatedSubset);
-        }
-      };
+    } catch (fault) {
+      console.error("✕ Audit Pipeline Sync Aborted Exception:", fault.message);
+      logsTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#dc2626; font-weight:700;">✕ Synchronization Failure: ${escapeLogHtml(fault.message)}</td></tr>`;
+    }
+  }
 
-      // Wire onclick triggers safely to standard button layout layers
-      if (btnAll)    btnAll.addEventListener("click", function() { window.filterSystemLogGrid('ALL', this); });
-      if (btnAdmin)  btnAdmin.addEventListener("click", function() { window.filterSystemLogGrid('ADMIN STAFF', this); });
-      if (btnClient) btnClient.addEventListener("click", function() { window.filterSystemLogGrid('PORTAL CLIENT', this); });
+  // --- STAGE 2: IN-MEMORY AGGREGATION & METRICS CALCULATOR ---
+  function calculateAndDisplayStats() {
+    const totalCount = localLogsCache.length;
+    const adminCount = localLogsCache.filter(log => log.isAdmin).length;
+    const clientCount = totalCount - adminCount;
 
-      function escapeLogMarkup(text) {
-        if (!text) return "";
-        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-      }
+    statTotal.textContent = totalCount;
+    statAdmins.textContent = adminCount;
+    statClients.textContent = clientCount;
+  }
 
-      await streamUnifiedSecurityLogs();
+  // --- STAGE 3: CORE DATA TABLE ROW RENDERER ---
+  function renderLogsTableRows(filteredLogs) {
+    if (!filteredLogs || filteredLogs.length === 0) {
+      logsTableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:var(--text-muted); font-style:italic;">No logged transactional operations match the selected filtration vector framework bounds.</td></tr>`;
+      return;
+    }
+
+    logsTableBody.innerHTML = "";
+    filteredLogs.forEach((log) => {
+      const tr = document.createElement("tr");
+      tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
+
+      // Clean timezone formatting bounds parameter
+      const logTime = log.timestamp ? new Date(log.timestamp).toLocaleString() : "Unknown Time";
+      
+      // Styling badge maps depending on administrative privileges
+      const roleColor = log.isAdmin ? "color:#dc2626; font-weight:700;" : "color:#10b981; font-weight:700;";
+
+      tr.innerHTML = `
+        <td style="padding:12px; font-family:monospace; color:#475569;">${logTime}</td>
+        <td style="padding:12px; font-weight:700; color:#0a1f44;">${escapeLogHtml(log.vector)}</td>
+        <td style="padding:12px; font-family:monospace; color:#334155; font-weight:600;">${escapeLogHtml(log.email)}</td>
+        <td style="padding:12px; ${roleColor}">${log.role}</td>
+        <td style="padding:12px; color:#475569; text-align:right;">${escapeLogHtml(log.details)}</td>
+      `;
+      logsTableBody.appendChild(tr);
     });
-  </script>
+  }
+
+  // --- STAGE 4: INTERACTIVE FILTER HANDLERS CONTROLLER ---
+  function updateActiveFilterButtonState(clickedButton) {
+    [filterBtnAll, filterBtnAdmin, filterBtnClient].forEach(btn => {
+      if (btn) btn.classList.remove("active");
+    });
+    if (clickedButton) clickedButton.classList.add("active");
+  }
+
+  if (filterBtnAll) {
+    filterBtnAll.addEventListener("click", function() {
+      updateActiveFilterButtonState(this);
+      renderLogsTableRows(localLogsCache);
+    });
+  }
+
+  if (filterBtnAdmin) {
+    filterBtnAdmin.addEventListener("click", function() {
+      updateActiveFilterButtonState(this);
+      const adminsOnly = localLogsCache.filter(log => log.isAdmin);
+      renderLogsTableRows(adminsOnly);
+    });
+  }
+
+  if (filterBtnClient) {
+    filterBtnClient.addEventListener("click", function() {
+      updateActiveFilterButtonState(this);
+      const clientsOnly = localLogsCache.filter(log => !log.isAdmin);
+      renderLogsTableRows(clientsOnly);
+    });
+  }
+
+  function escapeLogHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  // Kick off tracking queries immediately inside the processing frame thread loop
+  await synchroniseUnifiedAuditTrail();
+});
+</script>
+
 </body>
 </html>
