@@ -5,24 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Staff Gateway | filings4u Administrative Suite</title>
   <link rel="icon" type="image/png" href="images/fav.png">
+  
   <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  
   <style>
-    :root { --bg-light: #f8fafc; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --staff-red: #c15254; --emerald: #10b981; }
-    body, html { margin: 0; padding: 0; min-height: 100vh; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; align-items: center; justify-content: center; }
-    .login-container { width: 100%; max-width: 420px; padding: 20px; box-sizing: border-box; }
-    .gateway-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 12px; padding: 40px 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); text-align: center; box-sizing: border-box; }
-    .logo-block img { height: 38px; width: auto; margin-bottom: 8px; }
-    .badge { display: inline-block; background: rgba(193, 82, 84, 0.08); color: var(--staff-red); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 4px 12px; border-radius: 9999px; margin-bottom: 24px; border: 1px solid rgba(193, 82, 84, 0.15); }
-    h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 8px 0; color: var(--text-dark); letter-spacing: -0.5px; }
-    p { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 32px 0; line-height: 1.4; }
-    .form-group { text-align: left; margin-bottom: 20px; position: relative; }
-    label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
-    input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; transition: all 0.2s ease; }
-    input:focus { background: var(--white); border-color: var(--staff-red); box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.08); }
-    .submit-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.2s ease; margin-top: 12px; box-sizing: border-box; }
-    .submit-btn:hover { background: #1e293b; }
-    #status-msg { display: none; font-size: 0.82rem; font-weight: 600; text-align: left; margin-top: 16px; padding: 12px; border-radius: 6px; line-height: 1.4; }
+    :root {
+      --bg-light: #f8fafc;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0f172a;
+      --text-muted: #475569;
+      --staff-red: #c15254;
+      --emerald: #10b981;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .gateway-card {
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .logo-block img {
+      height: 38px;
+      width: auto;
+      margin-bottom: 8px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(193, 82, 84, 0.08);
+      color: var(--staff-red);
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(193, 82, 84, 0.15);
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+      color: var(--text-dark);
+      letter-spacing: -0.5px;
+    }
+    p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0 0 32px 0;
+      line-height: 1.4;
+    }
+    .form-group {
+      text-align: left;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dark);
+    }
+    .forgot-link-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--staff-red);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+    }
+    .forgot-link-btn:hover {
+      color: #991b1b;
+      text-decoration: underline;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      background: #f8fafc;
+      outline: none;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+    input:focus {
+      background: var(--white);
+      border-color: var(--staff-red);
+      box-shadow: 0 0 0 4px rgba(193, 82, 84, 0.08);
+    }
+    .submit-btn {
+      width: 100%;
+      background: var(--text-dark);
+      color: var(--white);
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      margin-top: 12px;
+      box-sizing: border-box;
+    }
+    .submit-btn:hover {
+      background: #1e293b;
+    }
+    #status-msg {
+      display: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: left;
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -35,15 +167,24 @@
       
       <form id="adminLoginForm" novalidate>
         <div class="form-group">
-          <label>Operator Email Address</label>
+          <div class="label-row">
+            <label>Operator Email Address</label>
+          </div>
           <input type="email" id="operatorEmail" required placeholder="name@filings4u.com">
         </div>
-        <div class="form-group">
-          <label>Security Key Access Password</label>
+        
+        <div class="form-group" id="passwordFormGroup">
+          <div class="label-row">
+            <label>Operator Password</label>
+            <!-- 🟢 ADDED: Safe Action Trigger for Password Recovery Lifecycle -->
+            <button type="button" id="adminForgotPasswordBtn" class="forgot-link-btn" tabindex="-1">Reset Password</button>
+          </div>
           <input type="password" id="operatorPassword" required placeholder="••••••••">
         </div>
+        
         <button type="submit" class="submit-btn" id="loginBtn">Authenticate Session ➔</button>
       </form>
+      
       <div id="status-msg"></div>
     </div>
   </div>
@@ -51,96 +192,142 @@
   <!-- INJECT SHARED CLIENT SETUP CONFIG -->
   <script src="assets/js/supabase-config.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      "use strict";
+  document.addEventListener("DOMContentLoaded", () => {
+    "use strict";
 
-      const form = document.getElementById("adminLoginForm");
-      const emailInput = document.getElementById("operatorEmail");
-      const passwordInput = document.getElementById("operatorPassword");
-      const submitBtn = document.getElementById("loginBtn");
-      const statusMsg = document.getElementById("status-msg");
+    const form = document.getElementById("adminLoginForm");
+    const emailInput = document.getElementById("operatorEmail");
+    const passwordInput = document.getElementById("operatorPassword");
+    const submitBtn = document.getElementById("loginBtn");
+    const statusMsg = document.getElementById("status-msg");
+    const forgotPasswordBtn = document.getElementById("adminForgotPasswordBtn");
+    const passwordGroup = document.getElementById("passwordFormGroup");
 
-      if (!form || !emailInput || !passwordInput || !submitBtn || !statusMsg) {
-        console.error("✕ Critical UI Error: Missing core administrative authorization elements.");
+    if (!form || !emailInput || !passwordInput || !submitBtn || !statusMsg || !forgotPasswordBtn) {
+      console.error("✕ Critical UI Error: Missing core administrative authorization elements.");
+      return;
+    }
+
+    const client = window.supabaseInstance || window.supabaseClient;
+
+    // Helper to display real-time interactive alert feedback
+    function setAlertMessage(text, type = "error") {
+      statusMsg.style.display = "block";
+      if (type === "success") {
+        statusMsg.style.background = "#ecfdf5";
+        statusMsg.style.color = "#047857";
+      } else if (type === "info") {
+        statusMsg.style.background = "#eff6ff";
+        statusMsg.style.color = "#1e40af";
+      } else {
+        statusMsg.style.background = "#fef2f2";
+        statusMsg.style.color = "#991b1b";
+      }
+      statusMsg.textContent = text;
+    }
+
+    // Helper to validate staff security clearance criteria
+    function isAuthorizedStaffDomain(email) {
+      const sanitized = email.toLowerCase().trim();
+      return sanitized.endsWith("@filings4u.com") || sanitized.endsWith("@roselandcompanies.com");
+    }
+
+    // ========================================================================
+    // 🔥 PART A: DYNAMIC ANONYMOUS FORGOT PASSWORD REQUEST SYSTEM
+    // ========================================================================
+    forgotPasswordBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      statusMsg.style.display = "none";
+      
+      const email = emailInput.value.trim();
+      if (!email) {
+        setAlertMessage("✕ Validation Error: Please type your operator email address first to receive a recovery token.");
+        emailInput.focus();
         return;
       }
 
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
+      if (!isAuthorizedStaffDomain(email)) {
+        setAlertMessage("✕ Access Denied: Recovery token routing restricted to verified staff domains.");
+        return;
+      }
 
-        // 1. Reset state messages and apply active loading parameter strings
-        statusMsg.style.display = "none";
-        statusMsg.style.background = "transparent";
-        statusMsg.style.color = "inherit";
-        statusMsg.textContent = "";
+      if (!client || typeof client.auth?.resetPasswordForEmail !== 'function') {
+        setAlertMessage("✕ System Error: Database authorization library dropped connecting contexts.");
+        return;
+      }
 
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
+      const originalBtnText = forgotPasswordBtn.textContent;
+      forgotPasswordBtn.textContent = "Transmitting...";
+      forgotPasswordBtn.disabled = true;
 
-        if (!email || !password) {
-          statusMsg.style.display = "block";
-          statusMsg.style.background = "#fef2f2";
-          statusMsg.style.color = "#991b1b";
-          statusMsg.textContent = "✕ Validation Error: Both credentials fields are required.";
-          return;
-        }
+      try {
+        const { error } = await client.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/forgot-password.html"
+        });
 
-        // 🛡️ SECURITY DOMAIN RESTRICTION CHECK: Block non-internal routing attempts early
-        if (!email.toLowerCase().endsWith("@filings4u.com") && !email.toLowerCase().endsWith("@roselandcompanies.com")) {
-          statusMsg.style.display = "block";
-          statusMsg.style.background = "#fef2f2";
-          statusMsg.style.color = "#991b1b";
-          statusMsg.textContent = "✕ Access Denied: Unrecognized clearance string. This portal is strictly limited to verified administrative operators.";
-          return;
-        }
-
-        const originalBtnText = submitBtn.textContent;
-        submitBtn.textContent = "Verifying Handshake Clearance...";
-        submitBtn.disabled = true;
-
-        const client = window.supabaseInstance || window.supabaseClient;
-        if (!client || typeof client.auth?.signInWithPassword !== 'function') {
-          statusMsg.style.display = "block";
-          statusMsg.style.background = "#fef2f2";
-          statusMsg.style.color = "#991b1b";
-          statusMsg.textContent = "✕ System Error: Database authorization client uninitialized.";
-          submitBtn.textContent = originalBtnText;
-          submitBtn.disabled = false;
-          return;
-        }
-
-        try {
-          // 2. Transmit secure encrypted connection parameters over network gateway channels
-          const { data, error } = await client.auth.signInWithPassword({ email, password });
-
-          if (error) throw error;
-
-          if (data?.session) {
-            statusMsg.style.display = "block";
-            statusMsg.style.background = "#ecfdf5";
-            statusMsg.style.color = "#047857";
-            statusMsg.textContent = "✓ Authentication approved! Synchronizing platform token profiles...";
-
-            // Redirect smoothly to your primary control desk performance matrix hub layout
-            setTimeout(() => {
-              window.location.href = "admin-dashboard.html";
-            }, 1000);
-          } else {
-            throw new Error("Handshake aborted: Core user authentication profile failed to stabilize.");
-          }
-
-        } catch (authException) {
-          console.error("✕ Authentication barrier gate crash:", authException.message || authException);
-          statusMsg.style.display = "block";
-          statusMsg.style.background = "#fef2f2";
-          statusMsg.style.color = "#991b1b";
-          statusMsg.textContent = `✕ Identity Verification Failed: ${authException.message || "Invalid credentials configuration parameters."}`;
-          
-          submitBtn.textContent = originalBtnText;
-          submitBtn.disabled = false;
-        }
-      });
+        if (error) throw error;
+        
+        setAlertMessage("✓ Transmitted! Check your internal inbox directory folder for a secure password setup link.", "success");
+      } catch (err) {
+        console.error("✕ Reset request failed:", err);
+        setAlertMessage(`✕ Transmission Blocked: ${err.message || "Endpoint error."}`);
+      } finally {
+        forgotPasswordBtn.textContent = originalBtnText;
+        forgotPasswordBtn.disabled = false;
+      }
     });
+
+    // ========================================================================
+    // 🛡️ PART B: STANDARD OPERATOR GATEWAY LOGINS
+    // ========================================================================
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      statusMsg.style.display = "none";
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        setAlertMessage("✕ Validation Error: Both credentials fields are required.");
+        return;
+      }
+
+      if (!isAuthorizedStaffDomain(email)) {
+        setAlertMessage("✕ Access Denied: Unrecognized clearance string. This portal is strictly limited to verified administrative operators.");
+        return;
+      }
+
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.textContent = "Verifying Handshake Clearance...";
+      submitBtn.disabled = true;
+
+      if (!client || typeof client.auth?.signInWithPassword !== 'function') {
+        setAlertMessage("✕ System Error: Database authorization client uninitialized.");
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+        return;
+      }
+
+      try {
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        if (data?.session) {
+          setAlertMessage("✓ Authentication approved! Synchronizing platform token profiles...", "success");
+          setTimeout(() => {
+            window.location.href = "admin-dashboard.html";
+          }, 1000);
+        } else {
+          throw new Error("Handshake aborted: Core user authentication profile failed to stabilize.");
+        }
+      } catch (authException) {
+        console.error("✕ Authentication barrier gate crash:", authException.message || authException);
+        setAlertMessage(`✕ Identity Verification Failed: ${authException.message || "Invalid credentials configuration parameters."}`);
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+      }
+    });
+  });
   </script>
 </body>
 </html>
