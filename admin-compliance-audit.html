@@ -479,68 +479,99 @@
       if (typeof supabase === 'undefined') throw new Error("Supabase script driver missing from template head headers.");
       dbClient = supabase.createClient(DB_URL, DB_KEY);
 
-      // A. Pull down entries out of your admin_compliance_audit framework table
-      const { data: recordRows, error: recordErr } = await dbClient
-        .from('admin_compliance_audit')
-        .select('id, framework_scope, target_jurisdiction, internal_score, audit_status, next_review_date')
-        .order('next_review_date', { ascending: true });
+      if (tableElement) {
+        tableElement.innerHTML = '<tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">Querying multiple transaction datasets...</td></tr>';
+      }
 
-      if (recordErr) throw recordErr;
+      // A. Query orders and dashboard_orders tables in parallel pipelines safely
+      const [ordersRes, dashOrdersRes] = await Promise.all([
+        dbClient.from('orders').select('id, client_email, client_name, selected_service, company_name, created_at, order_status'),
+        dbClient.from('dashboard_orders').select('id, email_address, first_name, last_name, selected_service, company_name, hired_date, role')
+      ]);
+
+      const consolidatedRows = [];
+      const uniqueClientsMap = new Map(); // 🟢 FIXED: Declared explicitly at the core boundary level
+
+      // 1. Process data inputs drawn natively from your orders table
+      if (ordersRes.data) {
+        ordersRes.data.forEach(item => {
+          consolidatedRows.push({
+            id: item.id,
+            email: item.client_email || 'anonymous@unknown.com',
+            name: item.client_name || 'Valued Client',
+            scope: item.selected_service || 'Standard Company Formation',
+            company: item.company_name || 'Not Specified',
+            review_date: item.created_at ? new Date(item.created_at) : new Date(),
+            status: item.order_status === 'Paid' ? 'Compliant' : 'Pending Review',
+            score: 100
+          });
+        });
+      }
+
+      // 2. Process data inputs drawn natively from your dashboard_orders desk ledger
+      if (dashOrdersRes.data) {
+        dashOrdersRes.data.forEach(item => {
+          consolidatedRows.push({
+            id: item.id,
+            email: item.email_address || 'internal@filings4u.com',
+            name: `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Internal Operator',
+            scope: item.selected_service || 'Administrative Account Provision',
+            company: item.company_name || 'filings4u Core Infrastructure',
+            review_date: item.hired_date ? new Date(item.hired_date) : new Date(),
+            status: item.role === 'admin' ? 'Compliant' : 'Pending Review',
+            score: 100
+          });
+        });
+      }
+
+      // Sort consolidated rows chronologically to maintain transaction alignment
+      consolidatedRows.sort((a, b) => b.review_date - a.review_date);
 
       // B. Hydrate dropdown options matching your active profiles securely
       if (clientMenu) {
-        const { data: complianceProfiles, error: complianceErr } = await dbClient
-          .from('compliance_deadlines')
-          .select('user_id, client_email')
-          .not('client_email', 'is', null);
-
-        if (!complianceErr && complianceProfiles) {
-          const uniqueClientsMap = new Map();
-          complianceProfiles.forEach(row => {
-            if (row.user_id && row.user_id !== '00000000-0000-0000-0000-000000000000' && row.client_email) {
-              uniqueClientsMap.set(row.client_email.trim(), row.user_id);
-            }
-          });
-
-          if (uniqueClientsMap.size > 0) {
-            const sortedEmails = Array.from(uniqueClientsMap.keys()).sort();
-            clientMenu.innerHTML = '<option value="">-- Choose Target Account Profile Email --</option>';
-            sortedEmails.forEach(email => {
-              const userId = uniqueClientsMap.get(email);
-              const opt = document.createElement('option');
-              opt.value = userId;
-              opt.textContent = email;
-              clientMenu.appendChild(opt);
-            });
+        consolidatedRows.forEach(row => {
+          if (row.email && row.email !== 'anonymous@unknown.com') {
+            uniqueClientsMap.set(row.email.trim(), row.id);
           }
+        });
+
+        if (uniqueClientsMap.size > 0) {
+          const sortedEmails = Array.from(uniqueClientsMap.keys()).sort();
+          clientMenu.innerHTML = '<option value="">-- Choose Target Account Profile Email --</option>';
+          sortedEmails.forEach(email => {
+            const userId = uniqueClientsMap.get(email);
+            const opt = document.createElement('option');
+            opt.value = userId;
+            opt.textContent = email;
+            clientMenu.appendChild(opt);
+          });
         }
       }
 
       // C. Print database entries into compliance audit data table rows
       if (tableElement) {
         tableElement.innerHTML = '';
-        if (!recordRows || recordRows.length === 0) {
-          tableElement.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No records found inside your database tracking metrics.</td></tr>`;
+        if (consolidatedRows.length === 0) {
+          tableElement.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No active record rows found across any database transaction matrices.</td></tr>`;
         } else {
-          recordRows.forEach(item => {
-            const status = item.audit_status || 'Compliant';
+          consolidatedRows.forEach(item => {
             let statusStyle = 'background:#dcfce7; color:#166534;';
-            if (status === 'Pending Review') statusStyle = 'background:#fef3c7; color:#b45309;';
-            if (status === 'Non-Compliant') statusStyle = 'background:#fee2e2; color:#991b1b;';
+            if (item.status === 'Pending Review') statusStyle = 'background:#fef3c7; color:#b45309;';
+            if (item.status === 'Non-Compliant') statusStyle = 'background:#fee2e2; color:#991b1b;';
 
-            const displayDate = item.next_review_date ? item.next_review_date : 'No Review Date';
-            const displayScore = item.internal_score !== null ? `${item.internal_score}%` : 'N/A';
+            const displayDate = item.review_date.toLocaleDateString();
+            const displayScore = `${item.score}%`;
 
             const rowMarkup = `
               <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding:14px 12px; color: #475569; font-weight: 500;">System Generated</td>
-                <td style="padding:14px 12px; color: #1e293b; font-weight: 600;">${escapeDataString(item.framework_scope)}</td>
-                <td style="padding:14px 12px; color: #1e293b;">${escapeDataString(item.target_jurisdiction)}</td>
+                <td style="padding:14px 12px; color: #475569;">${escapeDataString(item.email)}</td>
+                <td style="padding:14px 12px; color: #1e293b; font-weight: 600;">${escapeDataString(item.scope)}</td>
+                <td style="padding:14px 12px; color: #1e293b;">${escapeDataString(item.company)}</td>
                 <td style="padding:14px 12px; color: #475569; font-weight: 700;">${displayScore}</td>
                 <td style="padding:14px 12px; color: #475569; font-family: monospace;">${displayDate}</td>
                 <td style="padding:14px 12px; text-align:right;">
                   <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${statusStyle}">
-                    ${escapeDataString(status)}
+                    ${escapeDataString(item.status)}
                   </span>
                 </td>
               </tr>
@@ -613,9 +644,9 @@
 
             if (vaultWriteError) throw vaultWriteError;
 
-            // 🎯 STEP 4: TRIGGER UNBLOCKED EDGE FUNCTION WITHOUT JWT
+            // 🎯 STEP 4: TRIGGER UNBLOCKED EDGE FUNCTION DISPATCH WITHOUT JWT
             try {
-              await fetch('https://supabase.co', {
+              await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -634,9 +665,9 @@
               console.error('Notification API routing exception caught:', emailErr);
             }
 
-            showCustomBlurModal('✅', 'Asset Synchronized', 'The file binary was successfully committed to your storage vault. Your notification function was fired.');
+            showCustomBlurModal('✅', 'Asset Synchronized', 'The compliance audit record was successfully logged and committed to your storage vault.');
             uploadForm.reset();
-            initAdminConsole(); // Live ledger lines refresh
+            initAdminConsole(); // Live multi-table ledger refresh
 
           } catch (actionErr) {
             console.error('Processing transaction error trace caught:', actionErr);
@@ -690,7 +721,6 @@
   }
 })();
 </script>
-
 
 
 
