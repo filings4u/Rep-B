@@ -99,127 +99,187 @@
   <script src="assets/js/client-footer.js"></script>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      const queueTableBody = document.getElementById("client-filings-queue-target");
+  const queueTableBody = document.getElementById("client-filings-queue-target");
 
-      function runPortalClock() {
-        const el = document.getElementById("portal-clock");
-        if (el) el.textContent = new Date().toLocaleTimeString();
-      }
-      setInterval(runPortalClock, 1000);
-      runPortalClock();
+  function runPortalClock() {
+    const el = document.getElementById("portal-clock");
+    if (el) el.textContent = new Date().toLocaleTimeString();
+  }
+  setInterval(runPortalClock, 1000);
+  runPortalClock();
 
-      // Core Self-Healing Database Handshake
-      let client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-        if (lib && typeof lib.createClient === 'function') {
-          client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-          window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
-        }
-      }
-
-      if (!client || typeof client.from !== 'function') {
-        queueTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Connection dropped.</td></tr>`;
-        return;
-      }
-
-      let sessionObj = null;
-      try {
-        const { data: { session } } = await client.auth.getSession();
-        if (session) sessionObj = session;
-      } catch (e) {}
-
-      if (!sessionObj) {
-        const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
-        if (token) {
-          try { const p = JSON.parse(token); sessionObj = p.currentSession || p; } catch(err) {}
-        }
-      }
-
-      if (!sessionObj || !sessionObj.user) {
-        window.location.href = "portal-login.html";
-        return;
-      }
-
-      const clientSessionEmail = sessionObj.user.email;
-
-      // 🟢 READ CONTROLLER: Query and stream data fields from public.orders table
-      async function streamFilingQueueLedger() {
-        try {
-          const { data: orders, error } = await client
-            .from('orders')
-            .select('company_name, selected_service, selected_plan, tracking_number, total_paid_amount')
-            .eq('email_address', clientSessionEmail.trim().toLowerCase())
-            .order('created_at', { ascending: false });
-
-          if (error) throw error;
-
-          if (!orders || orders.length === 0) {
-            queueTableBody.innerHTML = `
-              <tr>
-                <td colspan="5" style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.88rem;">
-                  <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">⚙️</span>
-                  <strong>No Active Orders Mapped</strong>
-                  <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">Newly completed marketplace checkout filings populate inside this processing log instantly.</p>
-                </td>
-              </tr>`;
-            return;
-          }
-
-          queueTableBody.innerHTML = "";
-          
-          orders.forEach((item) => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
-
-            const product = item.selected_service || "Corporate Filing Asset";
-            const company = item.company_name || "Not Specified";
-            const tracking = item.tracking_number || "F4U-REF-KEY";
-            const pricing = parseFloat(item.total_paid_amount || 0).toFixed(2);
-            const displayPlan = String(item.selected_plan || 'Standard').toUpperCase();
-
-            tr.innerHTML = `
-              <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">
-                ${escapeFilingHtml(product)}
-                <div style="font-size: 0.72rem; color: var(--emerald); font-weight: 700; margin-top: 3px; letter-spacing: 0.5px;">PACKAGE TIER: ${escapeFilingHtml(displayPlan)}</div>
-              </td>
-              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeFilingHtml(company)}</td>
-              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:700;">${escapeFilingHtml(tracking)}</td>
-              <td style="padding:14px 12px; color:#10b981; font-weight:700;">$${pricing}</td>
-              <td style="padding:14px 12px; text-align:right;">
-                <a href="client-status.html?token=${encodeURIComponent(tracking)}" style="text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:4px; font-size:11px; display:inline-block;">Live Track Progress ➔</a>
-              </td>
-            `;
-            queueTableBody.appendChild(tr);
-          });
-
-        } catch (fault) {
-          console.error("✕ Orders log pipeline failure:", fault);
-          queueTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: System registry link unassigned.</td></tr>`;
-        }
-      }
-      function escapeFilingHtml(s) {
-        if (!s) return "";
-        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-      }
-
-      window.toggleSidebarAccordion = function(btn) {
-        if (!btn) return;
-        const panel = btn.nextElementSibling;
-        if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
-      };
-
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-        client.auth.signOut().then(() => { window.localStorage.clear(); window.sessionStorage.clear(); window.location.replace("portal-login.html"); });
+  // Core Self-Healing Database Handshake
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    if (lib && typeof lib.createClient === 'function') {
+      client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
       });
+      window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+    }
+  }
 
-      await streamFilingQueueLedger();
+  if (!client || typeof client.from !== 'function') {
+    queueTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Connection dropped.</td></tr>`;
+    return;
+  }
+
+  let sessionObj = null;
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (session) sessionObj = session;
+  } catch (e) {}
+
+  if (!sessionObj) {
+    const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
+    if (token) {
+      try {
+        const p = JSON.parse(token);
+        sessionObj = p.currentSession || p;
+      } catch(err) {}
+    }
+  }
+
+  if (!sessionObj || !sessionObj.user) {
+    window.location.href = "portal-login.html";
+    return;
+  }
+
+  const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase();
+  // 🟢 READ CONTROLLER: Query, map, and merge records from both orders schemas
+  async function streamFilingQueueLedger() {
+    try {
+      console.log(`📡 [Orders Ledger] Querying dual-matrix pipelines for: [${clientSessionEmail}]`);
+
+      // Fire simultaneous requests to fetch rows from both transaction tables
+      const [adminOrdersResponse, checkoutOrdersResponse] = await Promise.all([
+        client
+          .from('orders')
+          .select('company_name, selected_service, selected_plan, tracking_number, total_paid_amount, created_at')
+          .eq('email_address', clientSessionEmail),
+        client
+          .from('dashboard_orders')
+          .select('company_name, selected_service, selected_plan, tracking_number, total_paid_amount, created_at')
+          .eq('email_address', clientSessionEmail)
+      ]);
+
+      if (adminOrdersResponse.error) throw adminOrdersResponse.error;
+      if (checkoutOrdersResponse.error) throw checkoutOrdersResponse.error;
+
+      let combinedOrders = [];
+
+      // A. Standardize and capture admin-provisioned records
+      if (adminOrdersResponse.data) {
+        adminOrdersResponse.data.forEach(item => {
+          combinedOrders.push({
+            product: item.selected_service || "Corporate Filing Asset",
+            company: item.company_name || "Not Specified",
+            tracking: item.tracking_number || "F4U-REF-KEY",
+            pricing: parseFloat(item.total_paid_amount || 0).toFixed(2),
+            plan: String(item.selected_plan || 'Standard').toUpperCase(),
+            timestamp: item.created_at || new Date().toISOString(),
+            source: "Admin Allocation"
+          });
+        });
+      }
+
+      // B. Standardize and capture self-checkout purchases
+      if (checkoutOrdersResponse.data) {
+        checkoutOrdersResponse.data.forEach(item => {
+          combinedOrders.push({
+            product: item.selected_service || "Marketplace Purchase Asset",
+            company: item.company_name || "Not Specified",
+            tracking: item.tracking_number || "F4U-REF-KEY",
+            pricing: parseFloat(item.total_paid_amount || 0).toFixed(2),
+            plan: String(item.selected_plan || 'Standard').toUpperCase(),
+            timestamp: item.created_at || new Date().toISOString(),
+            source: "Direct Checkout"
+          });
+        });
+      }
+
+      // Chronologically order rows so the most recent order records display on top
+      combinedOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      // Paint data elements to the viewport list matrix
+      renderFilingQueueRows(combinedOrders);
+
+    } catch (fault) {
+      console.error("✕ Unified orders log pipeline failure:", fault);
+      queueTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: System registry connection error.</td></tr>`;
+    }
+  }
+  // --- STAGE 3: CORE DATA TABLE ROW RENDERING INTERFACE ---
+  function renderFilingQueueRows(ordersList) {
+    if (!ordersList || ordersList.length === 0) {
+      queueTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.88rem;">
+            <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">⚙️</span>
+            <strong>No Active Orders Mapped</strong>
+            <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">Newly completed marketplace checkout filings populate inside this processing log instantly.</p>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    queueTableBody.innerHTML = "";
+    ordersList.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
+
+      // Custom allocation indicator badge styles parameters configuration
+      const sourceBadgeStyle = item.source === "Admin Allocation"
+        ? "background:#eff6ff; color:#1e40af; border:1px solid rgba(30,66,175,0.12);"
+        : "background:#f0fdf4; color:#166534; border:1px solid rgba(22,101,52,0.12);";
+
+      tr.innerHTML = `
+        <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">
+          ${escapeFilingHtml(item.product)}
+          <div style="display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap;">
+            <span style="font-size: 0.68rem; color: var(--emerald); font-weight: 800; letter-spacing: 0.5px; text-transform:uppercase;">PACKAGE TIER: ${escapeFilingHtml(item.plan)}</span>
+            <span style="font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; ${sourceBadgeStyle}">${item.source}</span>
+          </div>
+        </td>
+        <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeFilingHtml(item.company)}</td>
+        <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:700;">${escapeFilingHtml(item.tracking)}</td>
+        <td style="padding:14px 12px; color:#10b981; font-weight:700;">$${item.pricing}</td>
+        <td style="padding:14px 12px; text-align:right;">
+          <a href="client-status.html?token=${encodeURIComponent(item.tracking)}" style="text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:4px; font-size:11px; display:inline-block;">Live Track Progress ➔</a>
+        </td>
+      `;
+      queueTableBody.appendChild(tr);
     });
-  </script>
+  }
+
+  function escapeFilingHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  window.toggleSidebarAccordion = function(btn) {
+    if (!btn) return;
+    const panel = btn.nextElementSibling;
+    if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+  };
+
+  document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+    if (!client) return;
+    client.auth.signOut().then(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+      window.location.replace("portal-login.html");
+    });
+  });
+
+  // Execute processing streams on frame startup entry frames
+  await streamFilingQueueLedger();
+});
+</script>
+
 </body>
 </html>
