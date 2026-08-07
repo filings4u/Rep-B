@@ -69,60 +69,9 @@
           <p style="font-size: 0.85rem; color: var(--text-muted); margin: 4px 0 0 0;">Select statutory corporate filings, register out-of-state entities, or dispatch custom operational packages dynamically.</p>
         </div>
 
-        <!-- 🛒 SLEEK DYNAMIC PRODUCT CATALOG CARDS WORKSPACE -->
-        <div class="storefront-grid" id="marketplace-catalog-container">
           
-          <!-- Product 1: LLC Formation (Routes straight to wizard) -->
-          <div class="product-card">
-            <div>
-              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🏢</span>
-              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">New LLC Registration</h4>
-              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">Complete formation mapping package including customized Articles of Organization templates.</p>
-            </div>
-            <div>
-              <div class="price-tag">$199<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> + state fees</span></div>
-              <a href="wizard.html?service=llc-formation" class="buy-btn">Launch Setup Wizard ➔</a>
-            </div>
-          </div>
-
-          <!-- Product 2: Foreign Qualification (Routes straight to wizard) -->
-          <div class="product-card">
-            <div>
-              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🌐</span>
-              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Foreign Qualification</h4>
-              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">Authorize your existing corporate structure to expand and conduct business in alternative states legally.</p>
-            </div>
-            <div>
-              <div class="price-tag">$249<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> + state fees</span></div>
-              <a href="wizard.html?service=foreign-qualification" class="buy-btn">Launch Setup Wizard ➔</a>
-            </div>
-          </div>
-
-          <!-- Product 3: EIN Tax ID Generation (Standalone Item Checkout Modals) -->
-          <div class="product-card">
-            <div>
-              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🔢</span>
-              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Employer Identification Number (EIN)</h4>
-              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">Secure your federal employer tax ID reference token from the IRS to open commercial bank vaults.</p>
-            </div>
-            <div>
-              <div class="price-tag">$79<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> (Flat Rate)</span></div>
-              <button onclick="window.triggerStandaloneCheckout('EIN Tax ID Registration', 79)" class="buy-btn">Process Secure Checkout ➔</button>
-            </div>
-          </div>
-
-          <!-- Product 4: Annual Compliance Report (Standalone Item Checkout Modals) -->
-          <div class="product-card">
-            <div>
-              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🔄</span>
-              <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Corporate Annual Report Filing</h4>
-              <p style="font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0 0; line-height: 1.4;">File your mandatory state periodic disclosure reports to lock your business entities into Good Standing status.</p>
-            </div>
-            <div>
-              <div class="price-tag">$99<span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> + state fees</span></div>
-              <button onclick="window.triggerStandaloneCheckout('Annual Report Filing Service', 99)" class="buy-btn">Process Secure Checkout ➔</button>
-            </div>
-          </div>
+                    <!-- CENTRAL GET STARTED COMPONENT MOUNT POINT -->
+    <div id="filings4u-get-started-root"></div>
 
         </div>
       </div>
@@ -139,6 +88,8 @@
   <script src="assets/js/client-master-ledger.js"></script>
 
   <script src="assets/js/client-navigation.js"></script>
+
+  <script src="assets/js/get-started.js"></script>
 
   <script src="assets/js/client-footer.js"></script>
 
@@ -183,51 +134,17 @@
         return;
       }
 
-      const userEmailAddress = sessionObj.user.email;
+          // 🟢 COUPLING CORE: Fire the dynamic service catalog layout generation engine
+    if (typeof window.renderMasterGetStartedEngine === "function") {
+      console.log("📡 [Get Started Core] Mount point found. Injecting unified marketplace metrics...");
+      window.renderMasterGetStartedEngine("filings4u-get-started-root");
+    } else {
+      console.error("✕ Critical UI Error: get-started.js orchestration file was missing or dropped runtime contexts.");
+    }
 
-      // 🟢 STANDALONE CHECKOUT DISPATCH BRIDGE
-      window.triggerStandaloneCheckout = async function(serviceName, costAmount) {
-        const generateTrackingToken = "F4U-" + Math.random().toString(36).substring(2, 7).toUpperCase() + "-" + Math.random().toString(36).substring(2, 5).toUpperCase();
-        
-        const payload = {
-          tracking_number: generateTrackingToken,
-          email_address: userEmailAddress,
-          first_name: localStorage.getItem("first_name") || "Customer",
-          last_name: localStorage.getItem("last_name") || "User",
-          phone_number: "+1-555-0199",
-          company_name: "Asset Formation Lane",
-          selected_service: serviceName,
-          selected_plan: "Standard Standalone Package",
-          selected_upsells: "Marketplace Direct Entry",
-          total_paid_amount: costAmount,
-          account_created: true
-        };
-
-        if (!confirm(`🛒 Secure Purchase Authorization: Confirm initialization checkout entry for [${serviceName}] totaling $${costAmount}?`)) return;
-
-        try {
-          // Push row configuration directly to public.orders table schema maps
-          const { error } = await client.from('orders').insert([payload]);
-          if (error) throw error;
-
-          alert(`✅ Transaction complete! Order registered under Code Reference: ${generateTrackingToken}. Routing to live status progress tracker...`);
-          window.location.href = `client-status.html?token=${generateTrackingToken}`;
-
-        } catch (fault) {
-          console.error("✕ Marketplace dispatch tracking exception: ", fault);
-          alert("✕ Transaction Denied: Processing pipeline structural lock occurred: " + fault.message);
-        }
-      };
-      window.toggleSidebarAccordion = function(btn) {
-        if (!btn) return;
-        const panel = btn.nextElementSibling;
-        if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
-      };
-
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-        client.auth.signOut().then(() => { window.localStorage.clear(); window.sessionStorage.clear(); window.location.replace("portal-login.html"); });
-      });
     });
+
+    
   </script>
 </body>
 </html>
