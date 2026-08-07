@@ -92,28 +92,32 @@
       </div>
     </div>
   </div>
-
-  <!-- Master Document Asset Table -->
-  <div class="console-card">
-    <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Secure Vault Repository</h2>
-    <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 20px 0;">Permanent record library holding verified corporate files. All assets are write-protected and encrypted at rest.</p>
-    <div style="overflow-x:auto; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color); width: 100%;">
-      <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.88rem;">
-        <thead>
-          <tr style="background:#f8fafc; border-bottom:2px solid var(--border-color); color:var(--text-muted); font-weight:700;">
-            <th style="padding:14px 12px;">Document Asset Item Name</th>
-            <th style="padding:14px 12px;">Asset Classification</th>
-            <th style="padding:14px 12px;">Storage Reference Hash</th>
-            <th style="padding:14px 12px; text-align:right;">Encryption Action</th>
-          </tr>
-        </thead>
-        <tbody id="client-vault-table-body-target">
-          <tr><td colspan="4" style="padding:40px; text-align:center; color:var(--text-muted); font-style:italic;">Initializing hardware vault authentication sync...</td></tr>
-        </tbody>
-      </table>
-    </div>
+<!-- Master Document Asset Table -->
+<div class="console-card">
+  <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Secure Vault Repository</h2>
+  <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 20px 0;">Permanent record library holding verified corporate files. All assets are write-protected and encrypted at rest.</p>
+  
+  <div style="overflow-x:auto; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color); width: 100%;">
+    <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.88rem;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:2px solid var(--border-color); color:var(--text-muted); font-weight:700;">
+          <th style="padding:14px 12px;">Document Asset Item Name</th>
+          <th style="padding:14px 12px;">Asset Classification</th>
+          <!-- 🟢 ADDED: Admin Attribution Header Column -->
+          <th style="padding:14px 12px;">Uploaded By (Admin)</th>
+          <th style="padding:14px 12px;">Storage Reference Hash</th>
+          <th style="padding:14px 12px; text-align:right;">Encryption Action</th>
+        </tr>
+      </thead>
+      <tbody id="client-vault-table-body-target">
+        <tr>
+          <td colspan="5" style="padding:40px; text-align:center; color:var(--text-muted); font-style:italic;">Initializing hardware vault authentication sync...</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
+
 
 <!-- 📦 ASSET VIEWER MODAL OVERLAY WITH NATIVE LIVE IFRAME PREVIEW -->
 <div id="asset-preview-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center;">
@@ -218,20 +222,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       console.log(`📡 [Vault System] Fetching verified database assets for: [${clientSessionEmail}]`);
       
+      // 🟢 UPDATED: Explicitly selecting admin_name from the database table rows
       const { data: vaultDocs, error: vaultError } = await client
         .from('client_vault')
-        .select('id, file_name, storage_bucket_path, content_type, asset_vault_category')
+        .select('id, file_name, storage_bucket_path, content_type, asset_vault_category, admin_name')
         .eq('target_client_email', clientSessionEmail);
 
       if (vaultError) throw vaultError;
 
-      // Map rows cleanly into local caching arrays for client folder organization
       masterDocumentsCache = (vaultDocs || []).map(doc => {
         return {
           id: doc.id,
           name: doc.file_name || "Corporate Document Asset File",
-          type: doc.asset_vault_category || "formation", // Handles: formation, governance, tax, logistics
-          storagePath: doc.storage_bucket_path
+          type: doc.asset_vault_category || "formation", 
+          storagePath: doc.storage_bucket_path,
+          // 🟢 ADDED: Mapping database value into cache matrix
+          adminAuthor: doc.admin_name || "System Administrator"
         };
       });
 
@@ -239,7 +245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (fault) {
       console.error("✕ Vault sync failure:", fault);
-      vaultTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`;
+      vaultTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`;
     }
   }
 
@@ -248,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!documentArray || documentArray.length === 0) {
       vaultTableBody.innerHTML = `
         <tr>
-          <td colspan="4" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;">
+          <td colspan="5" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;">
             <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📂</span>
             <strong>Selected Vault Directory Empty</strong>
             <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">When approved corporate formation charters or fleet logistics assets are uploaded by administrators, they appear instantly here.</p>
@@ -268,8 +274,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const name = item.name || "Corporate Document Asset File";
       const type = String(item.type || 'General Vault').toUpperCase();
       const hashToken = "F4U-" + String(item.id || 'PATH').substring(0, 8).toUpperCase();
+      const author = item.adminAuthor || "System Administrator";
       
-      // 🔐 SECURE ASYNC SIGNED URL GENERATOR
       let secureTargetUrl = "#";
       if (item.storagePath) {
         let cleanStorageKey = String(item.storagePath)
@@ -289,11 +295,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      // Converted download link to a dedicated preview action trigger button
+      // 🟢 UPDATED: Injected a dedicated <td> for the Admin Author matching layout structures
       tr.innerHTML = `
         <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">${escapeVaultHtml(name)}</td>
         <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.75rem;">
           <span style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">${escapeVaultHtml(type)}</span>
+        </td>
+        <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.813rem;">
+          <span style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 4px;">👤 ${escapeVaultHtml(author)}</span>
         </td>
         <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${escapeVaultHtml(hashToken)}</td>
         <td style="padding:14px 12px; text-align:right;">
@@ -303,6 +312,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       vaultTableBody.appendChild(tr);
     }
   }
+
 
   // 🟢 CATEGORY FILTER ACTION ROUTINES
   window.filterVaultCategory = function(categoryKey) {
