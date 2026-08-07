@@ -619,107 +619,132 @@
           });
         }
       }
-      // 3. MULTI-WRITE FORM SUBMISSION CONTROLLER PIPELINE TRACKER
-      if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
-        uploadForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
+  // --- STAGE D: INTELLIGENT ROUTING MATRIX & FORM SUBMISSION CONTROLLER ---
+  if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-          const clientMenuSelector = document.getElementById('uploadTargetClientSelector');
-          const targetEmail = clientMenuSelector.value;
-          const entityName = document.getElementById('formEntityName').value.trim();
-          const filingType = document.getElementById('formFilingType').value.trim();
-          const renewalDate = document.getElementById('formRenewalDate').value;
-          const stateJurisdiction = document.getElementById('formStateJurisdiction').value;
-          const fulfillmentSlug = document.getElementById('formFulfillmentSlug').value;
-          const auditStatus = document.getElementById('formAuditStatus').value;
-          const fileInput = document.getElementById('uploadFileReference');
+      const clientMenuSelector = document.getElementById('uploadTargetClientSelector');
+      const targetEmail = clientMenuSelector.value;
+      const entityName = document.getElementById('formEntityName').value.trim();
+      const filingType = document.getElementById('formFilingType').value.trim();
+      const renewalDate = document.getElementById('formRenewalDate').value;
+      const stateJurisdiction = document.getElementById('formStateJurisdiction').value;
+      const fulfillmentSlug = document.getElementById('formFulfillmentSlug').value;
+      const auditStatus = document.getElementById('formAuditStatus').value;
+      const fileInput = document.getElementById('uploadFileReference');
 
-          if (!targetEmail || targetEmail === '') {
-            return showCustomBlurModal('⚠️', 'Input Required', 'Please select a valid target client profile email from the option dropdown menu.');
-          }
-          if (!fileInput.files || fileInput.files.length === 0) {
-            return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
-          }
+      if (!targetEmail || targetEmail === '') {
+        return showCustomBlurModal('⚠️', 'Input Required', 'Please select a valid target client profile email from the option dropdown menu.');
+      }
+      if (!fileInput.files || fileInput.files.length === 0) {
+        return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
+      }
 
-          const targetFile = fileInput.files[0];
-          if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
-            return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
-          }
+      const targetFile = fileInput.files[0];
+      if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
+        return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
+      }
 
-          const submitBtn = uploadForm.querySelector('button[type="submit"]');
-          if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Syncing Vault Asset...';
-          }
+      // 🟢 INTELLIGENT ROUTING MATRIX: Maps the 48 platform slugs automatically into the 4 frontend segments
+      let computedVaultCategory = "formation"; 
+      const slug = String(fulfillmentSlug).toLowerCase().trim();
 
-          try {
-            // STEP 1: Insert parameters matching your mirrored table columns explicitly 1:1
-            const { data: newRow, error: dbError } = await dbClient
-              .from('admin_compliance_audit')
-              .insert([{ 
-                user_email: targetEmail.toLowerCase().trim(), 
+      // Track 1 & 2: Formations & Core Structural Compliance
+      if (['llc-formation', 'corporations', 'sole-proprietorship', 'dba-registration', 'nonprofits', 'series-llc', 'llc-reinstatement', 'foreign-qualification', 'dissolution'].includes(slug)) {
+        computedVaultCategory = "formation";
+      }
+      // Track 3: Internal Governance Records
+      else if (['operating-agreement', 'corporate-bylaws', 'certificate-of-good-standing', 'apostille-services'].includes(slug)) {
+        computedVaultCategory = "governance";
+      }
+      // Track 4: Taxation Engines
+      else if (['federal-tax', 'state-tax', 'franchise-tax', 'payroll-tax-940-941', 'sales-tax-registration', 'heavy-use-tax-2290', 'employer-id-ein'].includes(slug)) {
+        computedVaultCategory = "tax";
+      }
+      // Track 5: Government Registrations, DOT, Broker & Commercial Logistics Infrastructure Fleet Operations
+      else {
+        computedVaultCategory = "logistics";
+      }
+
+      const submitBtn = uploadForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Syncing Vault Asset...';
+      }
+
+      try {
+        // STEP 1: Insert parameters into admin_compliance_audit table matching new schema layouts 1:1
+        const { data: newRow, error: dbError } = await dbClient
+          .from('admin_compliance_audit')
+          .insert([{ 
+            user_email: targetEmail.toLowerCase().trim(), 
+            entity_name: entityName, 
+            filing_type: filingType, 
+            renewal_date: renewalDate, 
+            state_jurisdiction: stateJurisdiction, 
+            fulfillment_slug: slug,
+            asset_vault_category: computedVaultCategory, // Categorizes the file asset record permanently
+            audit_status: auditStatus 
+          }])
+          .select()
+          .single();
+
+        if (dbError) throw dbError;
+
+        // STEP 2: Structure safe folder paths inside the physical bucket using clean subfolder tags
+        const rawEmailFolder = targetEmail.toLowerCase().trim();
+        const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+        
+        // Storage Path matches the folder layout requirements perfectly
+        const secureStoragePath = `compliance_audits/${rawEmailFolder}/${newRow.admin_audit_id}_${fileCleanName}`;
+
+        // STEP 3: Stream physical binary file payload straight to client_documents_vault storage bucket container
+        const { error: vaultWriteError } = await dbClient
+          .storage
+          .from('client_documents_vault')
+          .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
+
+        if (vaultWriteError) throw vaultWriteError;
+
+        // STEP 4: Send the webhook notification edge trigger packet
+        try {
+          await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              record: { 
+                user_email: targetEmail, 
                 entity_name: entityName, 
                 filing_type: filingType, 
                 renewal_date: renewalDate, 
                 state_jurisdiction: stateJurisdiction, 
-                fulfillment_slug: fulfillmentSlug,
+                asset_vault_category: computedVaultCategory,
                 audit_status: auditStatus 
-              }])
-              .select()
-              .single();
+              } 
+            })
+          });
+        } catch (emailErr) {
+          console.error('Notification Edge API exception caught:', emailErr);
+        }
 
-            if (dbError) throw dbError;
+        showCustomBlurModal('✅', 'Asset Synchronized', 'The compliance audit record was successfully cataloged and mapped into the target folder segment.');
+        uploadForm.reset();
+        initAdminConsole(); // Live data table refresh
 
-            // STEP 2: Structure safe folder paths using lowercase clean email keys
-            const rawEmailFolder = targetEmail.toLowerCase().trim();
-            const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-            const secureStoragePath = `compliance_audits/${rawEmailFolder}/${newRow.admin_audit_id}_${fileCleanName}`;
-
-            // STEP 3: Stream physical binary file payload straight to storage container vault bucket
-            const { error: vaultWriteError } = await dbClient
-              .storage
-              .from('client_documents_vault')
-              .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
-
-            if (vaultWriteError) throw vaultWriteError;
-
-            // STEP 4: TRIGGER UNBLOCKED EDGE FUNCTION DISPATCH
-            try {
-              await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  record: { 
-                    user_email: targetEmail, 
-                    entity_name: entityName, 
-                    filing_type: filingType, 
-                    renewal_date: renewalDate, 
-                    state_jurisdiction: stateJurisdiction, 
-                    audit_status: auditStatus 
-                  } 
-                })
-              });
-              console.log('Notification safely delivered to open Edge Function pipeline.');
-            } catch (emailErr) {
-              console.error('Notification API routing exception caught:', emailErr);
-            }
-
-            showCustomBlurModal('✅', 'Asset Synchronized', 'The compliance audit record was successfully logged and committed 1:1 to the user dashboard vault.');
-            uploadForm.reset();
-            initAdminConsole(); // Live multi-table ledger view refresh
-
-          } catch (actionErr) {
-            console.error('Processing transaction error trace caught:', actionErr);
-            showCustomBlurModal('❌', 'Execution Interrupted', `System processing error verified: ${actionErr.message || actionErr}`);
-          } finally {
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Commit Vault Asset';
-            }
-          }
-        });
-        uploadForm.setAttribute('data-live-listener', 'true');
+      } catch (actionErr) {
+        console.error('Processing transaction error trace caught:', actionErr);
+        showCustomBlurModal('❌', 'Execution Interrupted', `System processing error verified: ${actionErr.message || actionErr}`);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Commit Vault Asset';
+        }
       }
+    });
+    uploadForm.setAttribute('data-live-listener', 'true');
+  }
+
 
     } catch (err) {
       console.error('System Engine Setup Failure:', err);
