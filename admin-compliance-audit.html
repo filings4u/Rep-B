@@ -483,246 +483,244 @@
         tableElement.innerHTML = '<tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">Querying multiple transaction datasets...</td></tr>';
       }
 
-      // A. Query orders and dashboard_orders tables in parallel pipelines safely
-      const [ordersRes, dashOrdersRes] = await Promise.all([
-        dbClient.from('orders').select('id, client_email, client_name, selected_service, company_name, created_at, order_status'),
-        dbClient.from('dashboard_orders').select('id, email_address, first_name, last_name, selected_service, company_name, hired_date, role')
-      ]);
+         // A. Query profiles in parallel across both master transaction tables
+    const [ordersRes, dashOrdersRes] = await Promise.all([
+      dbClient.from('orders').select('client_email, client_name'),
+      dbClient.from('dashboard_orders').select('email_address, first_name, last_name')
+    ]);
 
-      const consolidatedRows = [];
-      const uniqueClientsMap = new Map(); // 🟢 FIXED: Declared explicitly at the core boundary level
+    if (ordersRes.error) throw ordersError;
+    if (dashOrdersRes.error) throw dashOrdersRes.error;
 
-      // 1. Process data inputs drawn natively from your orders table
-      if (ordersRes.data) {
-        ordersRes.data.forEach(item => {
-          consolidatedRows.push({
-            id: item.id,
-            email: item.client_email || 'anonymous@unknown.com',
-            name: item.client_name || 'Valued Client',
-            scope: item.selected_service || 'Standard Company Formation',
-            company: item.company_name || 'Not Specified',
-            review_date: item.created_at ? new Date(item.created_at) : new Date(),
-            status: item.order_status === 'Paid' ? 'Compliant' : 'Pending Review',
-            score: 100
-          });
-        });
-      }
+    // Track unique records using a Map string filter key to drop structural duplicates
+    const uniqueClientsMap = new Map();
 
-      // 2. Process data inputs drawn natively from your dashboard_orders desk ledger
-      if (dashOrdersRes.data) {
-        dashOrdersRes.data.forEach(item => {
-          consolidatedRows.push({
-            id: item.id,
-            email: item.email_address || 'internal@filings4u.com',
-            name: `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Internal Operator',
-            scope: item.selected_service || 'Administrative Account Provision',
-            company: item.company_name || 'filings4u Core Infrastructure',
-            review_date: item.hired_date ? new Date(item.hired_date) : new Date(),
-            status: item.role === 'admin' ? 'Compliant' : 'Pending Review',
-            score: 100
-          });
-        });
-      }
-
-      // Sort consolidated rows chronologically to maintain transaction alignment
-      consolidatedRows.sort((a, b) => b.review_date - a.review_date);
-
-      // B. Hydrate dropdown options matching your active profiles securely
-      if (clientMenu) {
-        consolidatedRows.forEach(row => {
-          if (row.email && row.email !== 'anonymous@unknown.com') {
-            uniqueClientsMap.set(row.email.trim(), row.id);
-          }
-        });
-
-        if (uniqueClientsMap.size > 0) {
-          const sortedEmails = Array.from(uniqueClientsMap.keys()).sort();
-          clientMenu.innerHTML = '<option value="">-- Choose Target Account Profile Email --</option>';
-          sortedEmails.forEach(email => {
-            const userId = uniqueClientsMap.get(email);
-            const opt = document.createElement('option');
-            opt.value = userId;
-            opt.textContent = email;
-            clientMenu.appendChild(opt);
+    // 1. Process and map data profiles from manual admin orders
+    if (ordersRes.data) {
+      ordersRes.data.forEach(item => {
+        const cleanEmail = (item.client_email || '').trim().toLowerCase();
+        if (cleanEmail && cleanEmail !== 'anonymous@unknown.com') {
+          uniqueClientsMap.set(cleanEmail, {
+            email: cleanEmail,
+            fullName: (item.client_name || 'Valued Client').trim()
           });
         }
-      }
+      });
+    }
 
-      // C. Print database entries into compliance audit data table rows
-      if (tableElement) {
-        tableElement.innerHTML = '';
-        if (consolidatedRows.length === 0) {
-          tableElement.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No active record rows found across any database transaction matrices.</td></tr>`;
-        } else {
-          consolidatedRows.forEach(item => {
-            let statusStyle = 'background:#dcfce7; color:#166534;';
-            if (item.status === 'Pending Review') statusStyle = 'background:#fef3c7; color:#b45309;';
-            if (item.status === 'Non-Compliant') statusStyle = 'background:#fee2e2; color:#991b1b;';
-
-            const displayDate = item.review_date.toLocaleDateString();
-            const displayScore = `${item.score}%`;
-
-            const rowMarkup = `
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding:14px 12px; color: #475569;">${escapeDataString(item.email)}</td>
-                <td style="padding:14px 12px; color: #1e293b; font-weight: 600;">${escapeDataString(item.scope)}</td>
-                <td style="padding:14px 12px; color: #1e293b;">${escapeDataString(item.company)}</td>
-                <td style="padding:14px 12px; color: #475569; font-weight: 700;">${displayScore}</td>
-                <td style="padding:14px 12px; color: #475569; font-family: monospace;">${displayDate}</td>
-                <td style="padding:14px 12px; text-align:right;">
-                  <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${statusStyle}">
-                    ${escapeDataString(item.status)}
-                  </span>
-                </td>
-              </tr>
-            `;
-            tableElement.insertAdjacentHTML('beforeend', rowMarkup);
-          });
-        }
-      }
-      // D. Multi-Write Form Submission Controller Pipeline Tracker Block
-      if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
-        uploadForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-
-          const targetSelector = document.getElementById('uploadTargetClientSelector');
-          const targetUserId = targetSelector.value;
-          const targetEmail = targetSelector.options[targetSelector.selectedIndex].text.trim();
+    // 2. Process and map data profiles from self-checkout dashboard orders
+    if (dashOrdersRes.data) {
+      dashOrdersRes.data.forEach(item => {
+        const cleanEmail = (item.email_address || '').trim().toLowerCase();
+        if (cleanEmail && cleanEmail !== 'anonymous@unknown.com') {
+          const combinedName = `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Valued Client';
           
-          const frameworkScope = document.getElementById('formFilingName').value;
-          const targetJurisdiction = document.getElementById('formCompanyName').value;
-          const internalScoreRaw = document.getElementById('formClientName').value;
-          const auditStatus = document.getElementById('formStatusSelector').value;
-          const nextReviewDate = document.getElementById('formExpirationDate').value;
-          const fileInput = document.getElementById('uploadFileReference');
-
-          if (!targetUserId || targetUserId === '') {
-            return showCustomBlurModal('⚠️', 'Input Required', 'Please select a valid target client profile email from the option dropdown menu.');
+          // Only overwrite if entry doesn't exist, preserving baseline naming profiles
+          if (!uniqueClientsMap.has(cleanEmail)) {
+            uniqueClientsMap.set(cleanEmail, {
+              email: cleanEmail,
+              fullName: combinedName
+            });
           }
+        }
+      });
+    }
 
-          if (!fileInput.files || fileInput.files.length === 0) {
-            return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
-          }
+    // B. Clear, alphabetize, and render items inside option selection menu elements
+    if (clientMenu) {
+      clientMenu.innerHTML = '<option value="">-- Choose Target Account Profile Email --</option>';
+      
+      // Sort profiles array alphabetically by client email addresses
+      const sortedProfiles = Array.from(uniqueClientsMap.values()).sort((a, b) => 
+        a.email.localeCompare(b.email)
+      );
 
-          const targetFile = fileInput.files[0];
-          if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
-            return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
-          }
+      sortedProfiles.forEach(profile => {
+        const opt = document.createElement('option');
+        
+        // Pass the raw clean email parameter directly as the option element key value
+        opt.value = profile.email;
+        opt.textContent = `${profile.email} (${profile.fullName})`;
+        clientMenu.appendChild(opt);
+      });
 
-          const submitBtn = uploadForm.querySelector('button[type="submit"]');
-          if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Syncing Vault Asset...';
-          }
+      console.log(`✓ Dropdown Hydrated: ${sortedProfiles.length} unique client accounts successfully consolidated.`);
+    }
 
-          try {
-            // STEP 1: Insert parameters matching your admin_compliance_audit database columns format explicitly
-            const { data: newRow, error: dbError } = await dbClient
-              .from('admin_compliance_audit')
-              .insert([{
-                framework_scope: frameworkScope,
-                target_jurisdiction: targetJurisdiction,
-                internal_score: internalScoreRaw ? parseInt(internalScoreRaw) : null,
-                audit_status: auditStatus,
-                next_review_date: nextReviewDate
-              }])
-              .select()
-              .single();
 
-            if (dbError) throw dbError;
+  // --- STAGE C: PRINT DATABASE ENTRIES INTO COMPLIANCE AUDIT TABLE ROWS ---
+  if (tableElement) {
+    tableElement.innerHTML = '';
+    if (consolidatedRows.length === 0) {
+      tableElement.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No active record rows found across any database transaction matrices.</td></tr>`;
+    } else {
+      consolidatedRows.forEach(item => {
+        let statusStyle = 'background:#dcfce7; color:#166534;';
+        if (item.status === 'Pending Review') statusStyle = 'background:#fef3c7; color:#b45309;';
+        if (item.status === 'Non-Compliant') statusStyle = 'background:#fee2e2; color:#991b1b;';
+        
+        const displayDate = item.review_date ? new Date(item.review_date).toLocaleDateString() : 'N/A';
+        const displayScore = `${item.score}%`;
+        
+        const rowMarkup = `
+          <tr style="border-bottom: 1px solid #e2e8f0; background: #ffffff;">
+            <td style="padding:14px 12px; color: #475569; font-family: monospace;">${escapeDataString(item.email)}</td>
+            <td style="padding:14px 12px; color: #1e293b; font-weight: 600;">${escapeDataString(item.scope)}</td>
+            <td style="padding:14px 12px; color: #1e293b;">${escapeDataString(item.company)}</td>
+            <td style="padding:14px 12px; color: #475569; font-weight: 700;">${displayScore}</td>
+            <td style="padding:14px 12px; color: #475569; font-family: monospace;">${displayDate}</td>
+            <td style="padding:14px 12px; text-align:right;">
+              <span style="padding:4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; ${statusStyle}">
+                ${escapeDataString(item.status)}
+              </span>
+            </td>
+          </tr>
+        `;
+        tableElement.insertAdjacentHTML('beforeend', rowMarkup);
+      });
+    }
+  }
 
-            // STEP 2: Use the raw lower-case email directly as the folder name
-            const rawEmailFolder = targetEmail.toLowerCase().trim();
-            const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-            const secureStoragePath = `compliance_audits/${rawEmailFolder}/${newRow.id}_${fileCleanName}`;
+   // --- STAGE D: MULTI-WRITE FORM SUBMISSION CONTROLLER PIPELINE ---
+  if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const targetSelector = document.getElementById('uploadTargetClientSelector');
+      const targetUserId = targetSelector.value;
+      const targetEmail = targetSelector.options[targetSelector.selectedIndex].text.trim();
+      const frameworkScope = document.getElementById('formFilingName').value;
+      const targetJurisdiction = document.getElementById('formCompanyName').value;
+      const internalScoreRaw = document.getElementById('formClientName').value;
+      const auditStatus = document.getElementById('formStatusSelector').value;
+      const nextReviewDate = document.getElementById('formExpirationDate').value;
+      const fileInput = document.getElementById('uploadFileReference');
 
-            // STEP 3: Stream physical binary payload straight to storage container vault bucket
-            const { data: storageResult, error: vaultWriteError } = await dbClient
-              .storage
-              .from('client_documents_vault')
-              .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
-
-            if (vaultWriteError) throw vaultWriteError;
-
-            // 🎯 STEP 4: TRIGGER UNBLOCKED EDGE FUNCTION DISPATCH WITHOUT JWT
-            try {
-              await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  record: {
-                    client_email: targetEmail,
-                    framework_scope: frameworkScope,
-                    target_jurisdiction: targetJurisdiction,
-                    internal_score: internalScoreRaw,
-                    next_review_date: nextReviewDate,
-                    audit_status: auditStatus
-                  }
-                })
-              });
-              console.log('Notification safely delivered to open Edge Function pipeline.');
-            } catch (emailErr) {
-              console.error('Notification API routing exception caught:', emailErr);
-            }
-
-            showCustomBlurModal('✅', 'Asset Synchronized', 'The compliance audit record was successfully logged and committed to your storage vault.');
-            uploadForm.reset();
-            initAdminConsole(); // Live multi-table ledger refresh
-
-          } catch (actionErr) {
-            console.error('Processing transaction error trace caught:', actionErr);
-            showCustomBlurModal('❌', 'Execution Interrupted', `System processing error verified: ${actionErr.message || actionErr}`);
-          } finally {
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.innerText = 'Commit Vault Asset';
-            }
-          }
-        });
-
-        uploadForm.setAttribute('data-live-listener', 'true');
+      if (!targetUserId || targetUserId === '') {
+        return showCustomBlurModal('⚠️', 'Input Required', 'Please select a valid target client profile email from the option dropdown menu.');
       }
-    } catch (err) {
-      console.error('System Engine Setup Failure:', err);
-    }
+      if (!fileInput.files || fileInput.files.length === 0) {
+        return showCustomBlurModal('⚠️', 'File Missing', 'Please attach an operational asset verification file.');
+      }
+
+      const targetFile = fileInput.files[0];
+      if (targetFile.type !== 'application/pdf' && !targetFile.name.toLowerCase().endsWith('.pdf')) {
+        return showCustomBlurModal('❌', 'Invalid File Type', 'Security Constraint Active: You can only commit official PDF documents into this storage vault repository.');
+      }
+
+      const submitBtn = uploadForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Syncing Vault Asset...';
+      }
+
+      try {
+        // STEP 1: Insert parameters matching your admin_compliance_audit database columns exactly
+        const { data: newRow, error: dbError } = await dbClient
+          .from('admin_compliance_audit')
+          .insert([{ 
+            framework_scope: frameworkScope, 
+            target_jurisdiction: targetJurisdiction, 
+            internal_score: internalScoreRaw ? parseInt(internalScoreRaw, 10) : null, 
+            audit_status: auditStatus, 
+            next_review_date: nextReviewDate,
+            client_email: targetEmail, // Populating for our synchronization trigger mapping
+            company_name: targetJurisdiction
+          }])
+          .select()
+          .single();
+
+        if (dbError) throw dbError;
+
+        // STEP 2: Use the lower-case email directly as the storage folder directory structure name
+        const rawEmailFolder = targetEmail.toLowerCase().trim();
+        const fileCleanName = targetFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+        const secureStoragePath = `compliance_audits/${rawEmailFolder}/${newRow.admin_audit_id}_${fileCleanName}`;
+
+        // STEP 3: Stream physical binary payload straight to storage container vault bucket
+        const { error: vaultWriteError } = await dbClient
+          .storage
+          .from('client_documents_vault')
+          .upload(secureStoragePath, targetFile, { cacheControl: '3600', upsert: false });
+
+        if (vaultWriteError) throw vaultWriteError;
+
+        // STEP 4: TRIGGER UNBLOCKED EDGE FUNCTION DISPATCH 
+        try {
+          await fetch('https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              record: { 
+                client_email: targetEmail, 
+                framework_scope: frameworkScope, 
+                target_jurisdiction: targetJurisdiction, 
+                internal_score: internalScoreRaw, 
+                next_review_date: nextReviewDate, 
+                audit_status: auditStatus 
+              } 
+            })
+          });
+          console.log('Notification safely delivered to open Edge Function pipeline.');
+        } catch (emailErr) {
+          console.error('Notification API routing exception caught:', emailErr);
+        }
+
+        showCustomBlurModal('✅', 'Asset Synchronized', 'The compliance audit record was successfully logged and committed to your storage vault.');
+        uploadForm.reset();
+        initAdminConsole(); // Live multi-table ledger view refresh
+
+      } catch (actionErr) {
+        console.error('Processing transaction error trace caught:', actionErr);
+        showCustomBlurModal('❌', 'Execution Interrupted', `System processing error verified: ${actionErr.message || actionErr}`);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Commit Vault Asset';
+        }
+      }
+    });
+    uploadForm.setAttribute('data-live-listener', 'true');
   }
 
-  // GLOBAL BLURRY ACCESSIBLE CONTEXT OVERLAY MODAL DISPLAY HANDLER FUNCTIONS
-  window.showCustomBlurModal = function(icon, title, message) {
-    const overlay = document.getElementById('complianceCustomModalOverlay');
-    if (overlay) {
-      document.getElementById('modalIconBox').textContent = icon;
-      document.getElementById('modalHeaderTitle').textContent = title;
-      document.getElementById('modalMessageContent').textContent = message;
-      overlay.style.display = 'flex';
-      setTimeout(() => {
-        if (overlay.children[0]) overlay.children[0].style.transform = 'scale(1)';
-      }, 10);
-    }
-  };
-
-  window.closeComplianceModal = function() {
-    const overlay = document.getElementById('complianceCustomModalOverlay');
-    if (overlay) {
-      if (overlay.children[0]) overlay.children[0].style.transform = 'scale(0.95)';
-      overlay.style.display = 'none';
-    }
-  };
-
-  function escapeDataString(text) {
-    if (!text) return '';
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'");
+  } catch (err) {
+    console.error('System Engine Setup Failure:', err);
   }
+}
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAdminConsole);
-  } else {
-    initAdminConsole();
+// --- GLOBAL BLURRY ACCESSIBLE CONTEXT OVERLAY MODAL DISPLAY HANDLER FUNCTIONS ---
+window.showCustomBlurModal = function(icon, title, message) {
+  const overlay = document.getElementById('complianceCustomModalOverlay');
+  if (overlay) {
+    document.getElementById('modalIconBox').textContent = icon;
+    document.getElementById('modalHeaderTitle').textContent = title;
+    document.getElementById('modalMessageContent').textContent = message;
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+      if (overlay.children[0]) overlay.children[0].style.transform = 'scale(1)';
+    }, 10);
   }
+};
+
+window.closeComplianceModal = function() {
+  const overlay = document.getElementById('complianceCustomModalOverlay');
+  if (overlay) {
+    if (overlay.children[0]) overlay.children[0].style.transform = 'scale(0.95)';
+    overlay.style.display = 'none';
+  }
+};
+
+function escapeDataString(text) {
+  if (!text) return '';
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminConsole);
+} else {
+  initAdminConsole();
+}
 })();
 </script>
-
-
-
 </body>
 </html>
