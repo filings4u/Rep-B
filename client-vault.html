@@ -142,7 +142,6 @@
       <span id="modal-field-path" style="font-family: monospace; color: #64748b; font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%;"></span>
       <div style="display: flex; gap: 12px;">
         <button id="modal-close-btn" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.813rem; cursor: pointer;">Close View</button>
-        <a id="modal-download-btn" href="#" download style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.813rem; text-decoration: none; display: inline-flex; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Download Copy ➔</a>
       </div>
     </div>
 
@@ -217,101 +216,117 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase();
 
-  // 🟢 READ CONTROLLER: Loads records directly out of the public.client_vault database ledger
+   // 🟢 READ CONTROLLER: Loads client rows and maps human admin names using parallel caching maps
   async function initializeVaultReconciliation() {
     try {
-      console.log(`📡 [Vault System] Fetching verified database assets for: [${clientSessionEmail}]`);
+      console.log(`📡 [Vault System] Processing asset matrix ledgers...`);
       
-      // 🟢 UPDATED: Explicitly selecting admin_name from the database table rows
-      const { data: vaultDocs, error: vaultError } = await client
-        .from('client_vault')
-        .select('id, file_name, storage_bucket_path, content_type, asset_vault_category, admin_name')
-        .eq('target_client_email', clientSessionEmail);
+      // 1. Fetch vault rows and master administrative profile structures concurrently
+      const [vaultRes, adminRes] = await Promise.all([
+        client.from('client_vault').select('id, file_name, storage_bucket_path, asset_vault_category, admin_name, uploaded_by').eq('target_client_email', clientSessionEmail),
+        client.from('admin_profiles').select('id, first_name, last_name')
+      ]);
 
-      if (vaultError) throw vaultError;
+      if (vaultRes.error) throw vaultRes.error;
 
-      masterDocumentsCache = (vaultDocs || []).map(doc => {
+      // 2. Cache administrator profile names inside a clear room mapping array
+      const localAdminCache = new Map();
+      if (adminRes.data) {
+        adminRes.data.forEach(profile => {
+          const ln = (profile.last_name || '').trim();
+          const fn = (profile.first_name || '').trim();
+          const formattedName = ln && fn ? `${ln}, ${fn}` : (fn || ln || "");
+          if (formattedName) localAdminCache.set(profile.id, formattedName);
+        });
+      }
+
+      // 3. Map vault data rows cleanly against our flat lookup cache maps
+      masterDocumentsCache = (vaultRes.data || []).map(doc => {
+        let resolvedFormattedName = localAdminCache.get(doc.uploaded_by) || doc.admin_name || "System Administrator";
+
+        // Strip fallback string placeholders if present
+        if (resolvedFormattedName.includes("Admin Profile Missing") || resolvedFormattedName.includes("Dashboard")) {
+          resolvedFormattedName = doc.admin_name && !doc.admin_name.includes("Missing") ? doc.admin_name : "System Administrator";
+        }
+
         return {
           id: doc.id,
           name: doc.file_name || "Corporate Document Asset File",
           type: doc.asset_vault_category || "formation", 
           storagePath: doc.storage_bucket_path,
-          // 🟢 ADDED: Mapping database value into cache matrix
-          adminAuthor: doc.admin_name || "System Administrator"
+          adminAuthor: resolvedFormattedName
         };
       });
 
       renderVaultTableRows(masterDocumentsCache);
 
     } catch (fault) {
-      console.error("✕ Vault sync failure:", fault);
+      console.error("✕ Vault sync failure caught:", fault);
       vaultTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`;
     }
   }
-
-  // 🟢 DISPLAY ENGINE: Iterates rows sequentially to compile authenticated Signed URLs and attach modal views
-  async function renderVaultTableRows(documentArray) {
-    if (!documentArray || documentArray.length === 0) {
-      vaultTableBody.innerHTML = `
-        <tr>
-          <td colspan="5" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;">
-            <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📂</span>
-            <strong>Selected Vault Directory Empty</strong>
-            <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">When approved corporate formation charters or fleet logistics assets are uploaded by administrators, they appear instantly here.</p>
-          </td>
-        </tr>`;
-      return;
-    }
-
-    vaultTableBody.innerHTML = "";
-
-    for (const item of documentArray) {
-      const tr = document.createElement("tr");
-      tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff; transition: background 0.15s;";
-      tr.onmouseenter = () => tr.style.background = "#f8fafc";
-      tr.onmouseleave = () => tr.style.background = "#ffffff";
-
-      const name = item.name || "Corporate Document Asset File";
-      const type = String(item.type || 'General Vault').toUpperCase();
-      const hashToken = "F4U-" + String(item.id || 'PATH').substring(0, 8).toUpperCase();
-      const author = item.adminAuthor || "System Administrator";
-      
-      let secureTargetUrl = "#";
-      if (item.storagePath) {
-        let cleanStorageKey = String(item.storagePath)
-          .trim()
-          .replace(/^client_documents_vault\//i, '')
-          .replace(/^\//, '');
-
-        try {
-          const { data, error } = await client.storage
-            .from('client_documents_vault')
-            .createSignedUrl(cleanStorageKey, 900);
-
-          if (error) throw error;
-          if (data && data.signedUrl) secureTargetUrl = data.signedUrl;
-        } catch (urlError) {
-          console.error("✕ Failed to sign secure download token:", urlError);
-        }
-      }
-
-      // 🟢 UPDATED: Injected a dedicated <td> for the Admin Author matching layout structures
-      tr.innerHTML = `
-        <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">${escapeVaultHtml(name)}</td>
-        <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.75rem;">
-          <span style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">${escapeVaultHtml(type)}</span>
+// 🟢 DISPLAY ENGINE: Iterates rows sequentially to compile authenticated Signed URLs and attach modal views
+async function renderVaultTableRows(documentArray) {
+  if (!documentArray || documentArray.length === 0) {
+    vaultTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;">
+          <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📂</span>
+          <strong>Selected Vault Directory Empty</strong>
+          <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">When approved corporate formation charters or fleet logistics assets are uploaded by administrators, they appear instantly here.</p>
         </td>
-        <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.813rem;">
-          <span style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 4px;">👤 ${escapeVaultHtml(author)}</span>
-        </td>
-        <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${escapeVaultHtml(hashToken)}</td>
-        <td style="padding:14px 12px; text-align:right;">
-          <button data-url="${secureTargetUrl}" data-filename="${name}" data-path="${item.storagePath || ''}" class="view-asset-trigger" style="border:none; cursor:pointer; text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:4px; font-size:11px; display:inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👁️ View Document ➔</button>
-        </td>
-      `;
-      vaultTableBody.appendChild(tr);
-    }
+      </tr>`;
+    return;
   }
+
+  vaultTableBody.innerHTML = "";
+
+  for (const item of documentArray) {
+    const tr = document.createElement("tr");
+    tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff; transition: background 0.15s;";
+    tr.onmouseenter = () => tr.style.background = "#f8fafc";
+    tr.onmouseleave = () => tr.style.background = "#ffffff";
+
+    const name = item.name || "Corporate Document Asset File";
+    const type = String(item.type || 'General Vault').toUpperCase();
+    const hashToken = "F4U-" + String(item.id || 'PATH').substring(0, 8).toUpperCase();
+    const author = item.adminAuthor || "System Administrator";
+    
+    let secureTargetUrl = "#";
+    if (item.storagePath) {
+      let cleanStorageKey = String(item.storagePath)
+        .trim()
+        .replace(/^client_documents_vault\//i, '')
+        .replace(/^\//, '');
+
+      try {
+        const { data, error } = await client.storage
+          .from('client_documents_vault')
+          .createSignedUrl(cleanStorageKey, 900);
+
+        if (error) throw error;
+        if (data && data.signedUrl) secureTargetUrl = data.signedUrl;
+      } catch (urlError) {
+        console.error("✕ Failed to sign secure download token:", urlError);
+      }
+    }
+
+    tr.innerHTML = `
+      <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">${escapeVaultHtml(name)}</td>
+      <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.75rem;">
+        <span style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">${escapeVaultHtml(type)}</span>
+      </td>
+      <td style="padding:14px 12px; font-weight:600; color:var(--text-dark); font-size: 0.813rem;">
+        <span style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 4px; font-weight:700;">👤 ${escapeVaultHtml(author)}</span>
+      </td>
+      <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${escapeVaultHtml(hashToken)}</td>
+      <td style="padding:14px 12px; text-align:right;">
+        <button data-url="${secureTargetUrl}" data-filename="${name}" data-path="${item.storagePath || ''}" class="view-asset-trigger" style="border:none; cursor:pointer; text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:4px; font-size:11px; display:inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👁️ View Document ➔</button>
+      </td>
+    `;
+    vaultTableBody.appendChild(tr);
+  }
+}
 
 
   // 🟢 CATEGORY FILTER ACTION ROUTINES
