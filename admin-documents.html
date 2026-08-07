@@ -441,7 +441,7 @@
       // 2. QUERY MASTER VAULT STORAGE MATRIX RECORD LEDGERS
       const { data: vaultRecords, error: vaultQueryFault } = await dbClient
         .from('admin_vault')
-        .select('id, file_name, storage_bucket_path, file_size_bytes, created_at, content_type, uploaded_by, admin_name, target_client_email')
+        .select('id, file_name, storage_bucket_path, file_size_bytes, created_at, content_type, uploaded_by, first_name, last_name, target_client_email')
         .order('created_at', { ascending: false });
 
       if (vaultQueryFault) throw vaultQueryFault;
@@ -484,8 +484,17 @@
 
             const matchedOwnerEmail = item.target_client_email || 'System Isolated Profile';
             
-            // 🟢 CORRECTED MAPPING: Explicitly pulls full display name from cache map index matching admin UUID
-            const displayAdminAuthor = adminNamesMap.get(item.uploaded_by) || item.admin_name || "Super Administrator";
+            // 🟢 STRICT FORMATTING ENFORCEMENT: Compiles "last_name, first initial" natively from row fields
+            const ln = (item.last_name || '').trim();
+            const fn = (item.first_name || '').trim();
+            let displayAdminAuthor = "Super Administrator";
+
+            if (ln && fn) {
+              const firstInitial = fn.charAt(0).toUpperCase();
+              displayAdminAuthor = `${ln}, ${firstInitial}.`; // Output format matching logic: Erving, A.
+            } else if (ln || fn) {
+              displayAdminAuthor = ln || fn;
+            }
 
             tr.innerHTML = `
               <td style="padding:14px 12px; font-family:monospace; color:#475569; font-weight:600; font-size:0.8rem; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeAdminVaultHtml(matchedOwnerEmail)}</td>
@@ -503,7 +512,8 @@
           }
         }
       }
-      // 3. VAULT FORM SUBMISSION TRACKING CONTROLLER HANDLER INTERCEPTOR
+
+        // 3. VAULT FORM SUBMISSION TRACKING CONTROLLER HANDLER INTERCEPTOR
       if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) {
         uploadForm.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -559,8 +569,7 @@
             const finalLabelName = documentLabel || targetFile.name;
 
             const sharedBasePayload = {
-              uploaded_by: activeAdminAuthId, // Logs executing admin's UUID accurately
-              admin_name: activelyOperatingAdminName, // Tracks resolved human profile name
+              uploaded_by: activeAdminAuthId,
               target_client_email: folderEmailKey,
               file_name: finalLabelName,
               storage_bucket_path: fullStorageBucketPath,
@@ -568,7 +577,12 @@
               file_size_bytes: parseInt(targetFile.size, 10),
               content_type: targetFile.type || 'application/pdf',
               bucket_id: 'client_documents_vault',
-              asset_vault_category: selectedVaultFolderTag
+              asset_vault_category: selectedVaultFolderTag,
+              
+              // 🟢 UNIFORM ROW WRITES: Commits clean profile metrics straight to database rows
+              first_name: currentAdminFirstName,
+              last_name: currentAdminLastName,
+              email_address: currentAdminEmailAddress
             };
 
             const { error: adminInsertError } = await dbClient
@@ -582,6 +596,7 @@
               .insert([sharedBasePayload]);
 
             if (clientInsertError) throw clientInsertError;
+
             await dbClient.from('client_compliance').insert([{
               user_email: folderEmailKey,
               entity_name: finalLabelName,
@@ -615,6 +630,7 @@
       console.error('System Vault Explorer Initialization Crash:', err);
     }
   }
+
 
   function showFormNotification(elem, text, isError) {
     if (!elem) return;
