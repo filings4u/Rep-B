@@ -127,141 +127,210 @@
 
 
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      const vaultTableBody = document.getElementById("client-vault-table-body-target");
-      let masterDocumentsCache = [];
+  // 1. Selector Mapping Targets
+  const vaultTableBody = document.getElementById("client-vault-table-body-target");
+  let masterDocumentsCache = [];
 
-      function runPortalClock() {
-        const el = document.getElementById("portal-clock");
-        if (el) el.textContent = new Date().toLocaleTimeString();
-      }
-      setInterval(runPortalClock, 1000);
-      runPortalClock();
+  function runPortalClock() {
+    const el = document.getElementById("portal-clock");
+    if (el) el.textContent = new Date().toLocaleTimeString();
+  }
+  setInterval(runPortalClock, 1000);
+  runPortalClock();
 
-      // Core Self-Healing Database Handshake
-      let client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-        if (lib && typeof lib.createClient === 'function') {
-          client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-          window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
-        }
-      }
+  // Core Self-Healing Database Handshake
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    if (lib && typeof lib.createClient === 'function') {
+      client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
+      });
+      window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+    }
+  }
 
-      if (!client || typeof client.from !== 'function') {
-        vaultTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Vault connection missing.</td></tr>`;
-        return;
-      }
+  if (!client || typeof client.from !== 'function') {
+    vaultTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Vault connection missing.</td></tr>`;
+    return;
+  }
 
-      let sessionObj = null;
+  let sessionObj = null;
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (session) sessionObj = session;
+  } catch (e) {}
+
+  if (!sessionObj) {
+    const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
+    if (token) {
       try {
-        const { data: { session } } = await client.auth.getSession();
-        if (session) sessionObj = session;
-      } catch (e) {}
+        const p = JSON.parse(token);
+        sessionObj = p.currentSession || p;
+      } catch(err) {}
+    }
+  }
 
-      if (!sessionObj) {
-        const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
-        if (token) {
-          try { const p = JSON.parse(token); sessionObj = p.currentSession || p; } catch(err) {}
-        }
-      }
+  if (!sessionObj || !sessionObj.user) {
+    window.location.href = "portal-login.html";
+    return;
+  }
 
-      if (!sessionObj || !sessionObj.user) {
-        window.location.href = "portal-login.html";
-        return;
-      }
+  const activeUserId = sessionObj.user.id;
 
-      // 🟢 READ CONTROLLER: Loads and caches assets from public.documents matching types
-      async function initializeVaultReconciliation() {
-        try {
-          const { data: docs, error } = await client
-            .from('documents')
-            .select('created_at, document_name, storage_url, document_type, id')
-            .in('document_type', ['formation', 'governance', 'tax', 'vault', 'document']);
+  // 🟢 READ CONTROLLER: Loads and processes assets from public.client_vault tied to this client user account
+  async function initializeVaultReconciliation() {
+    try {
+      console.log(`📡 [Vault System] Fetching file parameters for user ID: [${activeUserId}]`);
+      
+      const { data: vaultDocs, error: vaultError } = await client
+        .from('client_vault')
+        .select('id, file_name, storage_bucket_path, file_size_bytes, content_type, created_at, storage_path')
+        .eq('uploaded_by', activeUserId)
+        .order('created_at', { ascending: false });
 
-          if (error) throw error;
-          masterDocumentsCache = docs || [];
-          renderVaultTableRows(masterDocumentsCache);
+      if (vaultError) throw vaultError;
 
-        } catch (fault) {
-          console.error("✕ Vault sync failure:", fault);
-          vaultTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`;
-        }
-      }
+      // Map rows cleanly into local caching matrices for uniform visualization processing
+      masterDocumentsCache = (vaultDocs || []).map(doc => {
+        // Automatically isolate file type dimensions from Content-Type strings or file name endings
+        let resolvedType = 'vault';
+        const nameLower = String(doc.file_name).toLowerCase();
+        const typeLower = String(doc.content_type || '').toLowerCase();
 
-      // 🟢 DISPLAY ENGINE: Iterates and maps entries dynamically into DOM table grids
-      function renderVaultTableRows(documentArray) {
-        if (!documentArray || documentArray.length === 0) {
-          vaultTableBody.innerHTML = `
-            <tr>
-              <td colspan="4" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;">
-                <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📂</span>
-                <strong>Corporate Vault Empty</strong>
-                <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">When approved corporate formation charters or EIN records are finalized by administrators, they appear instantly here.</p>
-              </td>
-            </tr>`;
-          return;
-        }
+        if (nameLower.includes('formation') || nameLower.includes('articles')) resolvedType = 'formation';
+        else if (nameLower.includes('governance') || nameLower.includes('bylaws')) resolvedType = 'governance';
+        else if (nameLower.includes('tax') || nameLower.includes('ein') || nameLower.includes('2290')) resolvedType = 'tax';
+        else if (typeLower.includes('pdf')) resolvedType = 'document';
 
-        vaultTableBody.innerHTML = "";
-        documentArray.forEach((item) => {
-          const tr = document.createElement("tr");
-          tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff; transition: background 0.15s;";
-          tr.onmouseenter = () => tr.style.background = "#f8fafc";
-          tr.onmouseleave = () => tr.style.background = "#ffffff";
-
-          const name = item.document_name || "Corporate Document Asset File";
-          const type = String(item.document_type || 'General Vault').toUpperCase();
-          const hashToken = "F4U-" + String(item.id || 'PATH').substring(0, 8).toUpperCase();
-          const targetUrl = item.storage_url || "#";
-
-          tr.innerHTML = `
-            <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">${escapeVaultHtml(name)}</td>
-            <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.75rem;"><span style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">${escapeVaultHtml(type)}</span></td>
-            <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${escapeVaultHtml(hashToken)}</td>
-            <td style="padding:14px 12px; text-align:right;">
-              <a href="${targetUrl}" target="_blank" class="vault-download-action-btn">📥 Secure Download ➔</a>
-            </td>
-          `;
-          vaultTableBody.appendChild(tr);
-        });
-      }
-
-      // 🟢 CATEGORY FILTER ACTION ROUTINES
-      window.filterVaultCategory = function(categoryKey) {
-        // Toggle visual active card highlight state markers
-        document.querySelectorAll('.vault-folder-card').forEach(card => card.classList.remove('active'));
-        const targetCard = document.getElementById(`filter-${categoryKey === 'all' ? 'all' : categoryKey === 'formation' ? 'formations' : categoryKey === 'governance' ? 'governance' : 'tax'}`);
-        if (targetCard) targetCard.classList.add('active');
-
-        if (categoryKey === 'all') {
-          renderVaultTableRows(masterDocumentsCache);
-        } else {
-          const filtered = masterDocumentsCache.filter(item => String(item.document_type).toLowerCase() === categoryKey);
-          renderVaultTableRows(filtered);
-        }
-      };
-      function escapeVaultHtml(s) {
-        if (!s) return "";
-        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-      }
-
-      window.toggleSidebarAccordion = function(btn) {
-        if (!btn) return;
-        const panel = btn.nextElementSibling;
-        if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
-      };
-
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-        client.auth.signOut().then(() => { window.localStorage.clear(); window.sessionStorage.clear(); window.location.replace("portal-login.html"); });
+        return {
+          id: doc.id,
+          name: doc.file_name,
+          type: resolvedType,
+          sizeBytes: parseInt(doc.file_size_bytes || 0, 10),
+          // Fallback check parameters to build download link tunnels cleanly
+          path: doc.storage_path || doc.storage_bucket_path
+        };
       });
 
-      await initializeVaultReconciliation();
+      renderVaultTableRows(masterDocumentsCache);
+
+    } catch (fault) {
+      console.error("✕ Vault sync failure:", fault);
+      vaultTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`;
+    }
+  }
+  // 🟢 DISPLAY ENGINE: Iterates and maps entries dynamically into DOM table grids
+  function renderVaultTableRows(documentArray) {
+    if (!documentArray || documentArray.length === 0) {
+      vaultTableBody.innerHTML = `
+        <tr>
+          <td colspan="4" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;">
+            <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📂</span>
+            <strong>Corporate Vault Empty</strong>
+            <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">When approved corporate formation charters or EIN records are finalized by administrators, they appear instantly here.</p>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    vaultTableBody.innerHTML = "";
+    documentArray.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff; transition: background 0.15s;";
+      tr.onmouseenter = () => tr.style.background = "#f8fafc";
+      tr.onmouseleave = () => tr.style.background = "#ffffff";
+
+      const name = item.name || "Corporate Document Asset File";
+      const type = String(item.type || 'General Vault').toUpperCase();
+      const hashToken = "F4U-" + String(item.id || 'PATH').substring(0, 8).toUpperCase();
+      
+      // Calculate human-readable file sizes dynamically
+      let displaySize = "0 KB";
+      if (item.sizeBytes > 0) {
+        const kb = item.sizeBytes / 1024;
+        if (kb >= 1024) {
+          displaySize = (kb / 1024).toFixed(1) + " MB";
+        } else {
+          displaySize = kb.toFixed(0) + " KB";
+        }
+      }
+
+       // 🟢 STORAGE BUCKET HANDSHAKE: Resolves direct download endpoints from the client_documents_vault bucket
+      let secureTargetUrl = "#";
+      if (item.path) {
+        // Strip the bucket prefix if it was pre-pended in the database to avoid path duplication crashes
+        const cleanPath = String(item.path).replace(/^client_documents_vault\//, '');
+        
+        // Query the direct public storage path matrix asset from your bucket
+        const { data } = client.storage.from('client_documents_vault').getPublicUrl(cleanPath);
+        if (data && data.publicUrl) secureTargetUrl = data.publicUrl;
+      }
+
+
+      tr.innerHTML = `
+        <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">
+          ${escapeVaultHtml(name)}
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px; font-weight:500;">FILE SIZE: ${displaySize}</div>
+        </td>
+        <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.75rem;">
+          <span style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">${escapeVaultHtml(type)}</span>
+        </td>
+        <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${escapeVaultHtml(hashToken)}</td>
+        <td style="padding:14px 12px; text-align:right;">
+          <a href="${secureTargetUrl}" target="_blank" class="vault-download-action-btn" download style="text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:4px; font-size:11px; display:inline-block;">📥 Secure Download ➔</a>
+        </td>
+      `;
+      vaultTableBody.appendChild(tr);
     });
-  </script>
+  }
+
+  // 🟢 CATEGORY FILTER ACTION ROUTINES
+  window.filterVaultCategory = function(categoryKey) {
+    document.querySelectorAll('.vault-folder-card').forEach(card => card.classList.remove('active'));
+    
+    // Normalizing category layout matching states
+    let searchId = 'filter-all';
+    if (categoryKey === 'formation') searchId = 'filter-formations';
+    else if (categoryKey === 'governance') searchId = 'filter-governance';
+    else if (categoryKey === 'tax') searchId = 'filter-tax';
+
+    const targetCard = document.getElementById(searchId);
+    if (targetCard) targetCard.classList.add('active');
+
+    if (categoryKey === 'all') {
+      renderVaultTableRows(masterDocumentsCache);
+    } else {
+      const filtered = masterDocumentsCache.filter(item => String(item.type).toLowerCase() === categoryKey);
+      renderVaultTableRows(filtered);
+    }
+  };
+
+  function escapeVaultHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  window.toggleSidebarAccordion = function(btn) {
+    if (!btn) return;
+    const panel = btn.nextElementSibling;
+    if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+  };
+
+  document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+    client.auth.signOut().then(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+      window.location.replace("portal-login.html");
+    });
+  });
+
+  // Execute processing streams on frame startup entry frames
+  await initializeVaultReconciliation();
+});
+</script>
 </body>
 </html>
