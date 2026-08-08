@@ -217,28 +217,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase(); 
 
-  // 🟢 READ CONTROLLER: Strict lookup pulling directly from your client_vault database table
+   // 🟢 READ CONTROLLER: Strict lookup pulling directly from your client_vault database table
   async function initializeVaultReconciliation() { 
     try { 
       console.log(`📡 [Vault System] Processing asset matrix ledgers via public.client_vault...`); 
       
-      // Pull columns from public.client_vault using case-insensitive alignment
+      // Pull raw first_name and last_name columns from public.client_vault
       const { data: vaultDocs, error: vaultError } = await client 
         .from('client_vault') 
-        .select('id, file_name, storage_bucket_path, asset_vault_category, admin_name') 
+        .select('id, file_name, storage_bucket_path, asset_vault_category, first_name, last_name') 
         .ilike('target_client_email', clientSessionEmail); 
 
       if (vaultError) throw vaultError; 
 
-      // Map matching table rows cleanly into local interface view parameters 
+      // Map matching table rows cleanly and format the author name string on-screen
       masterDocumentsCache = (vaultDocs || []).map(doc => { 
+        const ln = (doc.last_name || '').trim();
+        const fn = (doc.first_name || '').trim();
+        let displayAuthor = "System Administrator";
+
+        if (ln && fn) {
+          displayAuthor = `${ln}, ${fn.charAt(0).toUpperCase()}.`;
+        } else if (ln || fn) {
+          displayAuthor = ln || fn;
+        }
+
         return { 
           id: doc.id, 
           name: doc.file_name, 
           type: doc.asset_vault_category || "formation", 
           storagePath: doc.storage_bucket_path, 
-          // Pulls the explicit administrative display string parameters from your table schema
-          adminAuthor: doc.admin_name || "System Administrator" 
+          adminAuthor: displayAuthor 
         }; 
       }); 
 
@@ -247,7 +256,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("✕ Vault sync failure caught:", fault); 
       vaultTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`; 
     } 
-  } 
+  }
+
 
   // 🟢 DISPLAY ENGINE: Iterates rows sequentially to compile authenticated Signed URLs and attach modal views 
   async function renderVaultTableRows(documentArray) { 
