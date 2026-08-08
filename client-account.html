@@ -639,6 +639,63 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Run synchronization pipeline routines
   await loadClientAccountMetadata();
 });
+
+// 💳 STRIPE SECURE WALLET MANAGEMENT TUNNEL ROUTINES
+const checkoutTunnelTrigger = document.getElementById("updatePaymentTunnelTrigger");
+
+if (checkoutTunnelTrigger) {
+  checkoutTunnelTrigger.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const originalText = checkoutTunnelTrigger.textContent;
+    checkoutTunnelTrigger.disabled = true;
+    checkoutTunnelTrigger.textContent = "Securing Billing Session Token...";
+
+    try {
+      console.log("📡 [Payment Engine] Dispatching token generation request to edge relay...");
+      
+      // Target your project's serverless edge route endpoint
+      const edgeRelayRoute = "https://lrbimrlbskjweynxlgas.supabase.co";
+      const projectSessionToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+
+      const networkResponse = await fetch(edgeRelayRoute, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": projectSessionToken
+        },
+        body: JSON.stringify({
+          account_user_id: userUid,
+          account_user_email: userEmail,
+          return_redirect_url: window.location.href // Routes customer cleanly back here when finished
+        })
+      });
+
+      if (!networkResponse.ok) {
+        throw new Error(`Stripe gateway handshake rejected with status code: ${networkResponse.status}`);
+      }
+
+      const responsePayload = await networkResponse.json();
+      
+      if (responsePayload && responsePayload.portal_session_url) {
+        console.log("✓ [Billing Tunnel Secured] Handoff confirmed. Executing external redirection router...");
+        // Redirect user directly into Stripe's secure self-service cloud wallet
+        window.location.href = responsePayload.portal_session_url;
+      } else {
+        throw new Error("Invalid response structural signature returned from the payment router node.");
+      }
+
+    } catch (fault) {
+      console.error("✕ Payment tunnel connection collapsed:", fault);
+      alert(`Billing Connection Failure: ${fault.message || "Unable to safely map financial endpoints right now."}`);
+    } finally {
+      if (checkoutTunnelTrigger) {
+        checkoutTunnelTrigger.disabled = false;
+        checkoutTunnelTrigger.textContent = originalBtnLabel;
+      }
+    }
+  });
+}
+
 </script>
 
 
