@@ -441,10 +441,10 @@
           recipientMenu.appendChild(opt); 
         }); 
       }
-      // 2. QUERY MASTER VAULT STORAGE MATRIX RECORD LEDGERS 
+          // 2. QUERY MASTER VAULT STORAGE MATRIX RECORD LEDGERS 
       const { data: vaultRecords, error: vaultQueryFault } = await dbClient 
         .from('admin_vault') 
-        .select('id, file_name, storage_bucket_path, file_size_bytes, created_at, content_type, uploaded_by, admin_name, target_client_email') 
+        .select('id, file_name, storage_bucket_path, file_size_bytes, created_at, content_type, uploaded_by, first_name, last_name, target_client_email') 
         .order('created_at', { ascending: false }); 
 
       if (vaultQueryFault) throw vaultQueryFault; 
@@ -484,8 +484,17 @@
             } 
 
             const matchedOwnerEmail = item.target_client_email || 'System Isolated Profile'; 
-            const displayAdminAuthor = item.admin_name || "System Administrator"; 
 
+            // 🟢 FIXED: Compiles the dynamic on-screen render directly from standard table fields
+            const ln = (item.last_name || '').trim(); 
+            const fn = (item.first_name || '').trim(); 
+            let displayAdminAuthor = "System Administrator"; 
+
+            if (ln && fn) { 
+              displayAdminAuthor = `${ln}, ${fn.charAt(0).toUpperCase()}.`; 
+            } else if (ln || fn) { 
+              displayAdminAuthor = ln || fn; 
+            }
             tr.innerHTML = ` 
               <td style="padding:14px 12px; font-family:monospace; color:#475569; font-weight:600; font-size:0.8rem; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeAdminVaultHtml(matchedOwnerEmail)}</td> 
               <td style="padding:14px 12px; font-weight:700; color:#0f172a;"> 
@@ -502,6 +511,7 @@
           } 
         } 
       }
+
        // 3. VAULT FORM SUBMISSION TRACKING CONTROLLER HANDLER INTERCEPTOR 
       if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) { 
         uploadForm.addEventListener('submit', async (e) => { 
@@ -544,23 +554,23 @@
             submitBtn.disabled = true; 
             submitBtn.textContent = 'Uploading & Transmitting Asset...'; 
           }
-          try { 
+                    try { 
             // 1. RESOLVE EXECUTING ADMINISTRATOR DATA AND FORMAT TO: Lastname, F.
             let submitFirstName = "System"; 
             let submitLastName = "Administrator"; 
             let submitEmailAddress = ""; 
             let resolvedAdminUid = null; 
-            let formattedAdminNameString = "System Administrator";
 
             const activeUserSession = await dbClient.auth.getUser(); 
             if (activeUserSession.data && activeUserSession.data.user) { 
               resolvedAdminUid = activeUserSession.data.user.id; 
               submitEmailAddress = String(activeUserSession.data.user.email).toLowerCase().trim(); 
 
+              // 🟢 THE FIX: Query lookups check BOTH the ID string and the lowercase email index parameter
               const { data: profileNode } = await dbClient 
                 .from('admin_profiles') 
                 .select('first_name, last_name, email_address') 
-                .eq('id', resolvedAdminUid) 
+                .or(`id.eq.${resolvedAdminUid},email_address.eq.${submitEmailAddress}`) 
                 .maybeSingle(); 
 
               if (profileNode) { 
@@ -569,14 +579,16 @@
                 if (profileNode.email_address) { 
                   submitEmailAddress = String(profileNode.email_address).toLowerCase().trim(); 
                 } 
-                
-                if (profileNode.last_name && profileNode.first_name) {
-                  formattedAdminNameString = `${submitLastName}, ${submitFirstName.charAt(0).toUpperCase()}.`;
-                } else {
-                  formattedAdminNameString = submitLastName || submitFirstName || "System Administrator";
+              } else {
+                // Secondary recovery rule: Parse user metadata if database table sync hasn't populated yet
+                const meta = activeUserSession.data.user.user_metadata || {};
+                if (meta.first_name || meta.last_name) {
+                  submitFirstName = (meta.first_name || "System").trim();
+                  submitLastName = (meta.last_name || "Administrator").trim();
                 }
-              } 
-            } 
+              }
+            }
+
 
             // 2. DISPATCH PHYSICAL FILE TO STORAGE ASSETS DISK
             const folderEmailKey = String(targetEmail).trim().toLowerCase(); 
