@@ -156,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="client-entities.html" class="nav-item d-link" data-page="client-entities.html">🏢 Registered Entities</a> 
       <a href="client-team.html" class="nav-item d-link" data-page="client-team.html">🔐 Team & Access Control</a> 
       <a href="client-services.html" class="nav-item d-link" data-page="client-services.html">🛒 Order New Services</a> 
+      <a href="client-account.html" class="nav-item d-link" data-page="client-account.html"> 👩🏼 Account Profile</a> 
     </div> 
   </div> 
 
@@ -176,7 +177,6 @@ document.addEventListener("DOMContentLoaded", () => {
   <div class="accordion-group"> 
     <button type="button" class="accordion-trigger d-trigger" data-group="support"> Billing & Support <span class="chevron">▼</span> </button> 
     <div class="accordion-panel d-panel" data-group="support"> 
-      <a href="client-account.html" class="nav-item d-link" data-page="client-account.html">💳 Payment Methods & Plans</a> 
       <a href="client-order-history.html" class="nav-item d-link" data-page="client-order-history.html">🧾 Invoices & Statements</a> 
       <a href="client-support-center.html" class="nav-item d-link" data-page="client-support-center.html">💬 Support & Live Help Desk</a> 
       <a href="client-knowledgebase.html" class="nav-item d-link" data-page="client-knowledgebase.html">📰 Corporate Knowledgebase</a> 
