@@ -165,235 +165,228 @@
   <script src="assets/js/client-footer.js"></script>
 
 
- <script>
-/**
- * filings4u Platform Architecture
- * Module: client-vault-engine.js (Multi-Segment Folder View Matrix)
- */
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
+<script> 
+/** 
+ * filings4u Platform Architecture 
+ * Module: client-vault-engine.js (Multi-Segment Folder View Matrix) 
+ */ 
+document.addEventListener("DOMContentLoaded", async () => { 
+  "use strict"; 
+  const vaultTableBody = document.getElementById("client-vault-table-body-target"); 
+  let masterDocumentsCache = []; 
 
-  const vaultTableBody = document.getElementById("client-vault-table-body-target");
-  let masterDocumentsCache = [];
-
-  // Core Self-Healing Database Handshake Link
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client || typeof client.from !== 'function') {
-    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-    if (lib && typeof lib.createClient === 'function') {
+  // Core Self-Healing Database Handshake Link 
+  let client = window.supabaseInstance || window.supabaseClient; 
+  if (!client || typeof client.from !== 'function') { 
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null); 
+    if (lib && typeof lib.createClient === 'function') { 
       client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
-      });
-      window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
-    }
-  }
+      }); 
+      window.supabaseInstance = client; 
+      window.supabaseClient = client; 
+      window.supabase = client; 
+    } 
+  } 
 
-  if (!client || typeof client.from !== 'function') {
-    vaultTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Vault connection missing.</td></tr>`;
-    return;
-  }
+  if (!client || typeof client.from !== 'function') { 
+    vaultTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Vault connection missing.</td></tr>`; 
+    return; 
+  } 
 
-  let sessionObj = null;
-  try {
-    const { data: { session } } = await client.auth.getSession();
-    if (session) sessionObj = session;
-  } catch (e) {}
+  let sessionObj = null; 
+  try { 
+    const { data: { session } } = await client.auth.getSession(); 
+    if (session) sessionObj = session; 
+  } catch (e) {} 
 
-  if (!sessionObj) {
-    const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
-    if (token) {
-      try {
-        const p = JSON.parse(token);
-        sessionObj = p.currentSession || p;
-      } catch(err) {}
-    }
-  }
+  if (!sessionObj) { 
+    const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token"); 
+    if (token) { 
+      try { 
+        const p = JSON.parse(token); 
+        sessionObj = p.currentSession || p; 
+      } catch(err) {} 
+    } 
+  } 
 
-  if (!sessionObj || !sessionObj.user) {
-    window.location.href = "portal-login.html";
-    return;
-  }
+  if (!sessionObj || !sessionObj.user) { 
+    window.location.href = "portal-login.html"; 
+    return; 
+  } 
 
-  const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase();
+  const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase(); 
 
-  // 🟢 READ CONTROLLER: Strict lookup pulling directly from your admin_profiles database view
-  async function initializeVaultReconciliation() {
-    try {
-      console.log(`📡 [Vault System] Processing asset matrix ledgers via public.vw_client_vault_metadata...`);
+  // 🟢 READ CONTROLLER: Strict lookup pulling directly from your client_vault database table
+  async function initializeVaultReconciliation() { 
+    try { 
+      console.log(`📡 [Vault System] Processing asset matrix ledgers via public.client_vault...`); 
       
-      // 🟢 THE FIX: Queries your unified database view layer natively to extract the pre-joined human names
-      const { data: vaultDocs, error: vaultError } = await client
-        .from('vw_client_vault_metadata')
-        .select('id, file_name, storage_bucket_path, asset_vault_category, resolved_admin_author')
-        .eq('target_client_email', clientSessionEmail);
+      // Pull columns from public.client_vault using case-insensitive alignment
+      const { data: vaultDocs, error: vaultError } = await client 
+        .from('client_vault') 
+        .select('id, file_name, storage_bucket_path, asset_vault_category, admin_name') 
+        .ilike('target_client_email', clientSessionEmail); 
 
-      if (vaultError) throw vaultError;
+      if (vaultError) throw vaultError; 
 
-      // Map matching view table rows cleanly into local interface view parameters
-      masterDocumentsCache = (vaultDocs || []).map(doc => {
-        return {
-          id: doc.id,
-          name: doc.file_name,
+      // Map matching table rows cleanly into local interface view parameters 
+      masterDocumentsCache = (vaultDocs || []).map(doc => { 
+        return { 
+          id: doc.id, 
+          name: doc.file_name, 
           type: doc.asset_vault_category || "formation", 
-          storagePath: doc.storage_bucket_path,
-          // 🟢 STRICT ENFORCEMENT: Pulls the true server-joined profile name directly from the view parameters
-          adminAuthor: doc.resolved_admin_author || "Admin Operator"
-        };
-      });
+          storagePath: doc.storage_bucket_path, 
+          // Pulls the explicit administrative display string parameters from your table schema
+          adminAuthor: doc.admin_name || "System Administrator" 
+        }; 
+      }); 
 
-      renderVaultTableRows(masterDocumentsCache);
+      renderVaultTableRows(masterDocumentsCache); 
+    } catch (fault) { 
+      console.error("✕ Vault sync failure caught:", fault); 
+      vaultTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`; 
+    } 
+  } 
 
-    } catch (fault) {
-      console.error("✕ Vault sync failure caught:", fault);
-      vaultTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Encryption sync unassigned.</td></tr>`;
-    }
-  }
+  // 🟢 DISPLAY ENGINE: Iterates rows sequentially to compile authenticated Signed URLs and attach modal views 
+  async function renderVaultTableRows(documentArray) { 
+    if (!documentArray || documentArray.length === 0) { 
+      vaultTableBody.innerHTML = ` 
+        <tr> 
+          <td colspan="5" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;"> 
+            <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📂</span> 
+            <strong>Selected Vault Directory Empty</strong> 
+            <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">When approved corporate formation charters or fleet logistics assets are uploaded by administrators, they appear instantly here.</p> 
+          </td> 
+        </tr>`; 
+      return; 
+    } 
 
+    vaultTableBody.innerHTML = ""; 
 
-  // 🟢 DISPLAY ENGINE: Iterates rows sequentially to compile authenticated Signed URLs and attach modal views
-  async function renderVaultTableRows(documentArray) {
-    if (!documentArray || documentArray.length === 0) {
-      vaultTableBody.innerHTML = `
-        <tr>
-          <td colspan="5" style="padding:48px; text-align:center; color:var(--text-muted); background: #f8fafc;">
-            <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📂</span>
-            <strong>Selected Vault Directory Empty</strong>
-            <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">When approved corporate formation charters or fleet logistics assets are uploaded by administrators, they appear instantly here.</p>
-          </td>
-        </tr>`;
-      return;
-    }
+    for (const item of documentArray) { 
+      const tr = document.createElement("tr"); 
+      tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff; transition: background 0.15s;"; 
+      tr.onmouseenter = () => tr.style.background = "#f8fafc"; 
+      tr.onmouseleave = () => tr.style.background = "#ffffff"; 
 
-    vaultTableBody.innerHTML = "";
+      const name = item.name || "Corporate Document Asset File"; 
+      const type = String(item.type || 'General Vault').toUpperCase(); 
+      const hashToken = "F4U-" + String(item.id || 'PATH').substring(0, 8).toUpperCase(); 
+      const author = item.adminAuthor || "System Administrator"; 
 
-    for (const item of documentArray) {
-      const tr = document.createElement("tr");
-      tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff; transition: background 0.15s;";
-      tr.onmouseenter = () => tr.style.background = "#f8fafc";
-      tr.onmouseleave = () => tr.style.background = "#ffffff";
-
-      const name = item.name || "Corporate Document Asset File";
-      const type = String(item.type || 'General Vault').toUpperCase();
-      const hashToken = "F4U-" + String(item.id || 'PATH').substring(0, 8).toUpperCase();
-      const author = item.adminAuthor || "Admin Operator";
-      
-      let secureTargetUrl = "#";
-      if (item.storagePath) {
-        let cleanStorageKey = String(item.storagePath)
-          .trim()
-          .replace(/^client_documents_vault\//i, '')
-          .replace(/^\//, '');
-
-        try {
-          const { data, error } = await client.storage
-            .from('client_documents_vault')
-            .createSignedUrl(cleanStorageKey, 900);
-
-          if (error) throw error;
-          if (data && data.signedUrl) secureTargetUrl = data.signedUrl;
-        } catch (urlError) {
-          console.error("✕ Failed to sign secure download token:", urlError);
-        }
+      let secureTargetUrl = "#"; 
+      if (item.storagePath) { 
+        let cleanStorageKey = String(item.storagePath) 
+          .trim() 
+          .replace(/^client_documents_vault\//i, '') 
+          .replace(/^\//, ''); 
+        try { 
+          const { data, error } = await client.storage 
+            .from('client_documents_vault') 
+            .createSignedUrl(cleanStorageKey, 900); 
+          if (error) throw error; 
+          if (data && data.signedUrl) secureTargetUrl = data.signedUrl; 
+        } catch (urlError) { 
+          console.error("✕ Failed to sign secure download token:", urlError); 
+        } 
       }
 
-      // 🟢 Renders the server-side pre-joined admin display string parameters explicitly
-      tr.innerHTML = `
-        <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">${escapeVaultHtml(name)}</td>
-        <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.75rem;">
-          <span style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">${escapeVaultHtml(type)}</span>
-        </td>
-        <td style="padding:14px 12px; font-weight:600; color:var(--text-dark); font-size: 0.813rem;">
-          <span style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 4px; font-weight:700;">👤 ${escapeVaultHtml(author)}</span>
-        </td>
-        <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${escapeVaultHtml(hashToken)}</td>
-        <td style="padding:14px 12px; text-align:right;">
-          <button data-url="${secureTargetUrl}" data-filename="${name}" data-path="${item.storagePath || ''}" class="view-asset-trigger" style="border:none; cursor:pointer; text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:4px; font-size:11px; display:inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👁️ View Document ➔</button>
-        </td>
-      `;
-      vaultTableBody.appendChild(tr);
-    }
-  }
+      // 🟢 Renders the server-side pre-joined admin display string parameters explicitly 
+      tr.innerHTML = ` 
+        <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">${escapeVaultHtml(name)}</td> 
+        <td style="padding:14px 12px; font-weight:600; color:var(--text-muted); font-size: 0.75rem;"> 
+          <span style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">${escapeVaultHtml(type)}</span> 
+        </td> 
+        <td style="padding:14px 12px; font-weight:600; color:var(--text-dark); font-size: 0.813rem;"> 
+          <span style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 4px; font-weight:700;">👤 ${escapeVaultHtml(author)}</span> 
+        </td> 
+        <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:var(--text-muted);">${escapeVaultHtml(hashToken)}</td> 
+        <td style="padding:14px 12px; text-align:right;"> 
+          <button data-url="${secureTargetUrl}" data-filename="${name}" data-path="${item.storagePath || ''}" class="view-asset-trigger" style="border:none; cursor:pointer; text-decoration:none; background:#0a1f44; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:4px; font-size:11px; display:inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">👁️ View Document ➔</button> 
+        </td> 
+      `; 
+      vaultTableBody.appendChild(tr); 
+    } 
+  } 
 
+  // 🟢 CATEGORY FILTER ACTION ROUTINES 
+  window.filterVaultCategory = function(categoryKey) { 
+    document.querySelectorAll('.vault-folder-card').forEach(card => card.classList.remove('active')); 
+    let searchId = 'filter-all'; 
+    if (categoryKey === 'formation') searchId = 'filter-formations'; 
+    else if (categoryKey === 'governance') searchId = 'filter-governance'; 
+    else if (categoryKey === 'tax') searchId = 'filter-tax'; 
+    else if (categoryKey === 'logistics') searchId = 'filter-logistics'; 
 
-  // 🟢 CATEGORY FILTER ACTION ROUTINES
-  window.filterVaultCategory = function(categoryKey) {
-    document.querySelectorAll('.vault-folder-card').forEach(card => card.classList.remove('active'));
+    const targetCard = document.getElementById(searchId); 
+    if (targetCard) targetCard.classList.add('active'); 
+
+    if (categoryKey === 'all') { 
+      renderVaultTableRows(masterDocumentsCache); 
+    } else { 
+      const filtered = masterDocumentsCache.filter(item => String(item.type).toLowerCase() === categoryKey); 
+      renderVaultTableRows(filtered); 
+    } 
+  }; 
+
+  function escapeVaultHtml(s) { 
+    if (!s) return ""; 
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'"); 
+  } 
+
+  // 📦 ASSET PREVIEW MODAL EVENT ATTACHMENT 
+  (() => { 
+    const modal = document.getElementById("asset-preview-modal"); 
+    const closeCross = document.getElementById("modal-close-top"); 
+    const closeBtn = document.getElementById("modal-close-btn"); 
+    const downloadBtn = document.getElementById("modal-download-btn"); 
+    const iframeViewer = document.getElementById("modalIframeViewer"); 
+    const modalName = document.getElementById("modalAssetName"); 
+    const fieldOwner = document.getElementById('modal-field-owner'); 
+    const fieldPath = document.getElementById('modal-field-path'); 
+
+    if (!modal) return; 
+
+    // Delegated click event watcher listening exclusively for button rows 
+    document.addEventListener("click", (e) => { 
+      const triggerBtn = e.target.closest(".view-asset-trigger"); 
+      if (!triggerBtn) return; 
+      e.preventDefault(); 
+
+      const fileUrl = triggerBtn.getAttribute("data-url"); 
+      const fileName = triggerBtn.getAttribute("data-filename"); 
+      const trackingPath = triggerBtn.getAttribute("data-path"); 
+
+      if (modalName) modalName.textContent = `Inspecting: ${fileName}`; 
+      if (fieldOwner) fieldOwner.textContent = `Client Node: ${clientSessionEmail}`; 
+      if (fieldPath) fieldPath.textContent = trackingPath || 'Secure Storage Stream'; 
+      if (iframeViewer) iframeViewer.setAttribute("src", fileUrl); 
+
+      if (downloadBtn) { 
+        downloadBtn.setAttribute("href", fileUrl); 
+        downloadBtn.setAttribute("download", fileName || 'download'); 
+      } 
+      modal.style.display = 'flex'; 
+    }); 
+
+       const deactivateModalView = () => { 
+      modal.style.display = 'none'; 
+      if (iframeViewer) iframeViewer.setAttribute("src", ""); // Purges cache from memory buffers instantly 
+    }; 
+
+    if (closeCross) closeCross.addEventListener("click", deactivateModalView); 
+    if (closeBtn) closeBtn.addEventListener("click", deactivateModalView); 
     
-    let searchId = 'filter-all';
-    if (categoryKey === 'formation') searchId = 'filter-formations';
-    else if (categoryKey === 'governance') searchId = 'filter-governance';
-    else if (categoryKey === 'tax') searchId = 'filter-tax';
-    else if (categoryKey === 'logistics') searchId = 'filter-logistics';
+    modal.addEventListener("click", (e) => { 
+      if (e.target === modal) deactivateModalView(); 
+    }); 
+  })(); 
 
-    const targetCard = document.getElementById(searchId);
-    if (targetCard) targetCard.classList.add('active');
-
-    if (categoryKey === 'all') {
-      renderVaultTableRows(masterDocumentsCache);
-    } else {
-      const filtered = masterDocumentsCache.filter(item => String(item.type).toLowerCase() === categoryKey);
-      renderVaultTableRows(filtered);
-    }
-  };
-
-  function escapeVaultHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'");
-  }
-
-  // 📦 ASSET PREVIEW MODAL EVENT ATTACHMENT
-  (() => {
-    const modal = document.getElementById("asset-preview-modal");
-    const closeCross = document.getElementById("modal-close-top");
-    const closeBtn = document.getElementById("modal-close-btn");
-    const downloadBtn = document.getElementById("modal-download-btn");
-    const iframeViewer = document.getElementById("modalIframeViewer");
-    const modalName = document.getElementById("modalAssetName");
-    const fieldOwner = document.getElementById('modal-field-owner');
-    const fieldPath = document.getElementById('modal-field-path');
-
-    if (!modal) return;
-
-    // Delegated click event watcher listening exclusively for button rows
-    document.addEventListener("click", (e) => {
-      const triggerBtn = e.target.closest(".view-asset-trigger");
-      if (!triggerBtn) return;
-      e.preventDefault();
-
-      const fileUrl = triggerBtn.getAttribute("data-url");
-      const fileName = triggerBtn.getAttribute("data-filename");
-      const trackingPath = triggerBtn.getAttribute("data-path");
-
-      if (modalName) modalName.textContent = `Inspecting: ${fileName}`;
-      if (fieldOwner) fieldOwner.textContent = `Client Node: ${clientSessionEmail}`;
-      if (fieldPath) fieldPath.textContent = trackingPath || 'Secure Storage Stream';
-
-      if (iframeViewer) iframeViewer.setAttribute("src", fileUrl);
-      if (downloadBtn) {
-        downloadBtn.setAttribute("href", fileUrl);
-        downloadBtn.setAttribute("download", fileName || 'download');
-      }
-
-      modal.style.display = 'flex';
-    });
-
-    const deactivateModalView = () => {
-      modal.style.display = 'none';
-      if (iframeViewer) iframeViewer.setAttribute("src", ""); // Purges cache from memory buffers instantly
-    };
-
-    if (closeCross) closeCross.addEventListener("click", deactivateModalView);
-    if (closeBtn) closeBtn.addEventListener("click", deactivateModalView);
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) deactivateModalView();
-    });
-  })();
-
-  // Run initialization routines on load frames
-  await initializeVaultReconciliation();
-});
-
-</script>
-
+  // Run initialization routines on load frames 
+  await initializeVaultReconciliation(); 
+}); 
+</script> 
 </body>
 </html>
