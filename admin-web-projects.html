@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Admin Terminal Dashboard | filings4u Staff</title>
+  <meta name="theme-color" content="#c15254">
+  <link rel="icon" type="image/png" href="images/fav.png">
+    <style>
+        /* ==========================================================================
+           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important; /* Forces normal native scrolling rules */
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
+            margin-left: var(--sidebar-width) !important; 
+            width: calc(100% - var(--sidebar-width)) !important;
+            min-height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 20px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        /* ⏱️ Input-styled unified date/time pill element */
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            font-size: 0.82rem !important;
+            width: 220px !important;
+            outline: none !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            color: var(--text-dark) !important;
+        }
+
+        .search-input:focus {
+            background: var(--white) !important;
+            border-color: var(--emerald) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
+        }
+
+        .content-container {
+            padding: 40px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        /* CARD CAROUSELS SYSTEM CORES */
+        .stats-row {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+            gap: 20px !important;
+            margin-bottom: 30px !important;
+            width: 100% !important;
+        }
+
+        .stat-card {
+            background: var(--white) !important;
+            padding: 20px !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            box-sizing: border-box !important;
+        }
+
+        .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
+        .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
+
+        .dashboard-grid-layout {
+            display: grid !important;
+            grid-template-columns: 2fr 1fr !important;
+            gap: 24px !important;
+            align-items: start !important;
+            width: 100% !important;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+        }
+
+        .console-card {
+            background: var(--white) !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 24px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            margin-bottom: 24px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+   
+   @media (max-width: 991px) {
+    body, html { overflow-y: auto !important; }
+    .dashboard-wrapper { flex-direction: column !important; }
+    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
+    .portal-main { margin-left: 0 !important; width: 100% !important; }
+    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
+    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
+    .search-input { width: 100% !important; }
+    .content-container { padding: 20px !important; }
+    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
+}
+   </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- 🧱 SCROLLABLE MAIN WORKSPACE -->
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="welcome-text">
+          <h1>Admin Dashboard</h1>
+          <p>System-wide performance overview infrastructure</p>
+        </div>
+        
+        <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX -->
+        <div class="header-actions-wrapper">
+          <!-- 🧱 STRUCTURAL NAVIGATION BELL CONTAINER -->
+          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; margin-right: 5px !important; box-sizing: border-box !important;">
+            <a href="javascript:void(0);" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Central Notifications Channel" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important;">
+              <span class="nav-bell-icon" style="font-size: 1.3rem !important; cursor: pointer !important;">🔔</span>
+              <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.65rem !important; font-weight: 800 !important; padding: 2px 6px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
+            </a>
+          </div>
+
+          <!-- LIVE SYSTEM CLOCK COMPONENT PILL -->
+          <div class="header-clock-pill">
+            <span>⏱️</span>
+            <span id="portal-clock">00/00/0000 | 00:00:00</span>
+          </div>
+
+          <!-- DYNAMIC GLOBAL SEARCH FIELD -->
+          <div>
+            <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
+          </div>
+        </div>
+      </header>
+
+<!-- 📊 TOP LAYER: ADMIN WEB DEVELOPMENT CONTROL COCKPIT -->
+<div class="content-container" style="display: flex; flex-direction: column; gap: 32px; width: 100%; box-sizing: border-box; padding: 24px; background: var(--bg-light);">
+  
+  <!-- 🟢 TWO-COLUMN SPLIT COCKPIT WORKSPACE -->
+  <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; width: 100%; align-items: start;">
+    
+    <!-- COLUMN A (LEFT): RE-SPACED PARAMETERS SUBMISSION CONTAINER -->
+    <div class="console-card custom-full-stretch-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px; box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+      <div class="card-header-wrapper" style="margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px;">
+        <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Manage Website Staging & Projects</h2>
+      </div>
+
+      <form id="adminWebProjectForm" novalidate style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+        <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
+          <div class="form-group">
+            <label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:8px;">Target Customer Recipient</label>
+            <!-- 🟢 ADDED: onchange handler to dynamically isolate chat context whenever a client profile changes -->
+            <select id="adminProjectTargetEmail" onchange="switchAdminWorkspaceChatContext()" class="form-input-element" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; font-size: 0.85rem; height: 42px; box-sizing: border-box;">
+              <option value="">-- Synchronizing Client Account Profiles... --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:8px;">Project Architecture Title</label>
+            <input type="text" id="adminProjectTitle" class="form-input-element" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:6px; font-size: 0.85rem; height: 42px; box-sizing: border-box;" placeholder="e.g., E-Commerce Hub Architecture">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div class="form-group">
+            <label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:8px;">Tracking Reference (Slug)</label>
+            <input type="text" id="adminProjectTrackingRef" class="form-input-element" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:6px; font-family:monospace; font-size: 0.85rem; height: 42px; box-sizing: border-box;" placeholder="e.g., F4U-W3B99">
+          </div>
+          <div class="form-group">
+            <label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:8px;">Current Status Label</label>
+            <input type="text" id="adminProjectStatusLabel" class="form-input-element" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:6px; font-size: 0.85rem; height: 42px; box-sizing: border-box;" placeholder="e.g., Review Stage">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:8px;">Development Milestones (%)</label>
+          <input type="number" id="adminProjectProgressPct" class="form-input-element" required min="0" max="100" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:6px; font-size: 0.85rem; height: 42px; box-sizing: border-box;" placeholder="65">
+        </div>
+
+        <div class="form-group">
+          <label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:8px;">Staging Environment Target (Preview URL Link)</label>
+          <input type="url" id="adminProjectStagingUrl" class="form-input-element" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:6px; font-family:monospace; font-size: 0.85rem; height: 42px; box-sizing: border-box;" placeholder="https://yourcloud.com">
+        </div>
+
+        <div class="form-group">
+          <label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:8px;">Action Required Request Box Note (Optional)</label>
+          <textarea id="adminProjectActionText" class="form-input-element" style="width:100%; padding:12px 14px; border:1px solid #cbd5e1; border-radius:6px; min-height:80px; font-family:inherit; resize:vertical; font-size: 0.85rem; box-sizing: border-box;" placeholder="Type specific asset requests..."></textarea>
+        </div>
+
+        <div id="admin-project-form-status" style="display:none; padding:12px; border-radius:6px; font-size:0.85rem; font-weight:700;"></div>
+        
+        <button type="submit" class="action-btn-primary" id="adminProjectSubmitBtn" style="background:#0a1f44; color:#ffffff; border:none; padding:14px; border-radius:6px; font-weight:700; cursor:pointer; width:100%; margin-top:8px; font-size: 0.875rem;">Push Staging Sandbox Updates ➔</button>
+      </form>
+    </div>
+    <!-- COLUMN B (RIGHT): SYNCHRONIZED SPRINT TIMELINE CHAT STREAM -->
+    <div class="console-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; height: 93vh; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+      
+      <div>
+        <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 16px;">
+          <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Linked Project Sprint Feed</h3>
+          <p style="font-size: 0.75rem; color: #64748b; margin: 4px 0 0 0;">Exchanging live logs with the selected user workspace timeline.</p>
+        </div>
+        
+        <!-- Scrollable Active Chat Log Feed Box canvas wrapper -->
+        <div id="adminSprintChatHistoryBox" style="display: flex; flex-direction: column; gap: 12px; max-height: 64vh; overflow-y: auto; padding-right: 4px; box-sizing: border-box;">
+          <div style="text-align: center; color: #94a3b8; font-size: 0.8rem; font-style: italic; padding: 48px 12px;">
+            Select a target customer profile on the left to activate historical feed streaming logs.
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Admin Reply Submission Slat -->
+      <form id="adminSprintMessageForm" style="display: flex; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 16px; background: #ffffff; margin: 0;">
+        <input type="text" id="adminSprintInputField" style="margin: 0; flex: 1; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; outline: none;" placeholder="Type sprint update response message..." required autocomplete="off" disabled>
+        <button type="submit" id="adminSprintSendBtn" style="height: 42px; padding: 0 18px; background: #0a1f44; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer; white-space: nowrap;" disabled>Send ➔</button>
+      </form>
+
+    </div>
+
+  </div>
+</div>
+
+
+</main>
+</div>
+
+
+   <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
+  <!-- 1. The Global Library Core MUST load absolute first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. The Configuration setup creates window.supabaseClient immediately -->
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-master-ledger.js"></script>
+
+   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-navigation.js"></script>
+  
+<script>
+/**
+ * filings4u Platform Architecture
+ * Module: admin-split-cockpit-engine.js (Dedicated Web Chat Synchronization)
+ */
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  const recipientSelect = document.getElementById("adminProjectTargetEmail");
+  const chatHistoryBox = document.getElementById("adminSprintChatHistoryBox");
+  const chatForm = document.getElementById("adminSprintMessageForm");
+  const chatInput = document.getElementById("adminSprintInputField");
+  const chatSendBtn = document.getElementById("adminSprintSendBtn");
+
+  const projectForm = document.getElementById("adminWebProjectForm");
+  const formStatus = document.getElementById("admin-project-form-status");
+  const submitBtn = document.getElementById("adminProjectSubmitBtn");
+
+  let activeClientEmail = null; 
+  let activeChatChannel = null;
+
+  // Establish Supabase Connection Engine
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client && typeof supabase !== 'undefined') {
+    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+  }
+  if (!client) return;
+
+  // 1. POPULATE UNIQUE CLIENT RECIPIENT EMAILS BY MULTI-TABLE AGGREGATION
+  async function populateClientDropdown() {
+    try {
+      console.log("📡 [Ingestion Matrix] Compiling dual-source email arrays from orders & dashboard_orders...");
+      
+      const [ordersRes, dashOrdersRes] = await Promise.all([
+        client.from('orders').select('client_email, client_name'),
+        client.from('dashboard_orders').select('email_address, first_name, last_name')
+      ]);
+
+      const emailMatrixMap = new Map();
+
+      if (ordersRes.data) {
+        ordersRes.data.forEach(row => {
+          const email = (row.client_email || '').trim().toLowerCase();
+          if (email && email !== 'anonymous@unknown.com') {
+            emailMatrixMap.set(email, row.client_name || 'Valued Client');
+          }
+        });
+      }
+
+      if (dashOrdersRes.data) {
+        dashOrdersRes.data.forEach(row => {
+          const email = (row.email_address || '').trim().toLowerCase();
+          if (email && email !== 'anonymous@unknown.com' && !emailMatrixMap.has(email)) {
+            const compiledName = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+            emailMatrixMap.set(email, compiledName || 'Valued Client');
+          }
+        });
+      }
+
+      if (recipientSelect) {
+        recipientSelect.innerHTML = '<option value="">-- Choose Target Customer Account --</option>';
+        Array.from(emailMatrixMap.keys()).sort().forEach(email => {
+          const name = emailMatrixMap.get(email);
+          const opt = document.createElement('option');
+          opt.value = email;
+          opt.textContent = `${email} (${name})`;
+          recipientSelect.appendChild(opt);
+        });
+      }
+    } catch (e) { 
+      console.error("✕ Dropdown multi-table merge crashed:", e); 
+    }
+  }
+  // 2. CONTEXTUAL RE-ROUTING ENGINE: SELECTION ACTION TRIGGERS (Web Chat Ingestion)
+  window.switchAdminWorkspaceChatContext = async function() {
+    const targetEmail = recipientSelect.value ? recipientSelect.value.trim().toLowerCase() : '';
+    
+    if (activeChatChannel) {
+      activeChatChannel.unsubscribe();
+      activeChatChannel = null;
+    }
+
+    if (!targetEmail) {
+      chatHistoryBox.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.8rem; font-style:italic; padding:48px 12px;">Select a target customer profile on the left to activate historical feed streaming logs.</div>`;
+      if (chatInput) chatInput.disabled = true;
+      if (chatSendBtn) chatSendBtn.disabled = true;
+      activeClientEmail = null;
+      return;
+    }
+
+    activeClientEmail = targetEmail; 
+    if (chatInput) chatInput.disabled = false;
+    if (chatSendBtn) chatSendBtn.disabled = false;
+
+    // A. Query existing chat logs matching active client email context parameters
+    try {
+      const { data: messages, error: chatQueryError } = await client
+        .from('web_projects_chat')
+        .select('*')
+        .eq('client_email', activeClientEmail)
+        .order('created_at', { ascending: true });
+
+      if (chatQueryError) throw chatQueryError;
+
+      chatHistoryBox.innerHTML = "";
+      if (!messages || messages.length === 0) {
+        chatHistoryBox.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.8rem; padding:24px;">Workspace comment timeline empty. Type a sprint note response below to populate logs.</div>`;
+      } else {
+        messages.forEach(msg => appendSprintMessageRow(msg));
+      }
+    } catch (err) { 
+      console.error("✕ Admin historical fetch broken:", err); 
+    }
+
+    // B. Re-bind subscription channels to listen to real-time table insertions by email context
+    activeChatChannel = client
+      .channel(`admin-isolated-sprint-stream-${activeClientEmail.replace(/[^a-z0-9]/g, '')}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'web_projects_chat',
+        filter: `client_email=eq.${activeClientEmail}`
+      }, payload => {
+        console.log("✓ [Admin Feed Sync] Real-time message row intercepted:", payload.new);
+        if (chatHistoryBox.querySelector('div[style*="text-align:center"]')) chatHistoryBox.innerHTML = "";
+        appendSprintMessageRow(payload.new);
+      })
+      .subscribe();
+  };
+  // 3. PERSISTENT REVISIONS AND SPRINT MESSAGE DISPATCH CHANNELS
+  if (chatForm) {
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (!activeClientEmail || !chatInput.value.trim()) return;
+
+      const outgoingMessageText = chatInput.value.trim();
+
+      try {
+        const { error: sendError } = await client
+          .from('web_projects_chat')
+          .insert([{
+            client_email: activeClientEmail,
+            sender_type: 'admin',
+            message_content: outgoingMessageText
+          }]);
+
+        if (sendError) throw sendError;
+        chatInput.value = "";
+      } catch (fault) { 
+        console.error("✕ Reply dispatch rejected by server database layers:", fault); 
+      }
+    });
+  }
+
+  function appendSprintMessageRow(msg) {
+    if (!chatHistoryBox) return;
+    const div = document.createElement("div");
+    const isAdmin = msg.sender_type.toLowerCase() === 'admin';
+    
+    div.style.cssText = `background: ${isAdmin ? "#f8fafc" : "#ffffff"}; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-size: 0.78rem; line-height: 1.4; border-left: 3px solid ${isAdmin ? "#0a1f44" : "#10b981"}; margin-top: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.01);`;
+    div.innerHTML = `<strong style="color: #0f172a; display: block; font-size: 0.72rem; margin-bottom: 2px;">${isAdmin ? "Desk Note [System Architect]" : "Client Note"}:</strong> ${escapeSprintHtml(msg.message_content)}`;
+    
+    chatHistoryBox.appendChild(div);
+    chatHistoryBox.scrollTop = chatHistoryBox.scrollHeight;
+  }
+
+  // 4. CORE DATA INTERCEPTOR FOR PROJECT SANDBOX FORM SUBMISSIONS
+  if (projectForm) {
+    projectForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const targetEmail = recipientSelect.value;
+      const title = document.getElementById("adminProjectTitle").value.trim();
+      const trackingRef = document.getElementById("adminProjectTrackingRef").value.trim();
+      const statusLabel = document.getElementById("adminProjectStatusLabel").value.trim();
+      const progressPct = parseInt(document.getElementById("adminProjectProgressPct").value, 10);
+      const stagingUrl = document.getElementById("adminProjectStagingUrl").value.trim();
+      const actionText = document.getElementById("adminProjectActionText").value.trim();
+
+      if (!targetEmail || !title || !stagingUrl) {
+        showStatus("✕ Input Validation Mismatch: Missing core required profile fields.", true);
+        return;
+      }
+
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Publishing Changes..."; }
+
+      try {
+        const { error: upsertError } = await client
+          .from('web_projects')
+          .upsert({
+            client_email: targetEmail,
+            project_title: title,
+            tracking_ref: trackingRef || "F4U-W3B99",
+            status_label: statusLabel || "In Production",
+            progress_pct: isNaN(progressPct) ? 35 : progressPct,
+            staging_url: stagingUrl,
+            action_required_text: actionText || null,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'client_email' });
+
+        if (upsertError) throw upsertError;
+        showStatus("✓ Success! Web development workspace configurations successfully synchronized.", false);
+      } catch (fault) {
+        showStatus(`✕ Operation Aborted: ${fault.message}`, true);
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Push Staging Sandbox Updates ➔"; }
+      }
+    });
+  }
+
+  function showStatus(text, isError) {
+    if (!formStatus) return;
+    formStatus.textContent = text;
+    formStatus.style.display = "block";
+    formStatus.style.background = isError ? "#fee2e2" : "#ecfdf5";
+    formStatus.style.color = isError ? "#991b1b" : "#047857";
+    setTimeout(() => { formStatus.style.display = "none"; }, 5000);
+  }
+
+  function escapeSprintHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // 🏁 INITIALIZATION BOOTSTRAP TRIGGERS
+  await populateClientDropdown();
+});
+</script>
+
+
+
+</body>
+</html>
