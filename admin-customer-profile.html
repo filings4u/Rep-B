@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Profiler Card Node - filings4u Headquarters</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <style>
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* SIDEBAR DEFINITION */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    
+    /* WORKSPACE FRAME */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 12px !important; }
+    .search-input { padding: 10px 16px !important; border: 1px solid var(--border-color) !important; border-radius: 10px !important; font-size: 0.82rem !important; width: 260px !important; outline: none !important; background: #f8fafc !important; box-sizing: border-box !important; height: 40px !important; color: var(--text-dark) !important; }
+    .search-input:focus { background: var(--white) !important; border-color: var(--emerald) !important; }
+    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
+    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
+  </style>
+
+  <style>
+    :root {
+      --prof-bg: #f8fafc;
+      --prof-panel: #ffffff;
+      --prof-border: #e2e8f0;
+      --prof-text-dark: #0f172a;
+      --prof-text-muted: #475569;
+      --prof-primary: #0f172a;
+    }
+    .prof-body { margin: 0; padding: 0; background: var(--prof-bg); font-family: system-ui, -apple-system, sans-serif; color: var(--prof-text-dark); }
+    .prof-container { padding: 32px 40px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 32px; }
+    .prof-header-bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--prof-border); padding-bottom: 20px; width: 100%; box-sizing: border-box; }
+    .prof-back-btn { text-decoration: none; color: var(--prof-text-muted); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+    .prof-back-btn:hover { color: var(--prof-text-dark); }
+    .prof-grid { display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: start; width: 100%; box-sizing: border-box; }
+    .prof-card { background: var(--prof-panel); border: 1px solid var(--prof-border); border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; }
+    .prof-avatar-circle { width: 100px; height: 100px; border-radius: 50%; border: 2px solid var(--prof-border); background: #f1f5f9; object-fit: cover; margin: 0 auto; }
+    .prof-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; box-sizing: border-box; }
+    .prof-input-group { display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box; }
+    .prof-input-group.full-width { grid-column: span 2; }
+    .prof-input-group label { font-weight: 700; font-size: 0.8rem; color: var(--prof-text-muted); }
+    .prof-field { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff; }
+    .prof-field:focus { border-color: var(--prof-primary); }
+    .prof-field:disabled { background: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; }
+  </style>
+</head>
+
+<body class="crm-body">
+
+   <div class="dashboard-wrapper">
+    <!-- 🧱 SCROLLABLE MAIN WORKSPACE -->
+    <main class="portal-main">
+   
+
+  <div class="crm-layout">
+
+
+<body class="prof-body" style="margin:0; padding:0; background:#f8fafc; font-family:system-ui, -apple-system, sans-serif; color:#0f172a;">
+
+  <div class="prof-container" style="padding: 32px 40px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 32px;">
+    
+    <!-- 📋 ACTION BAR HEADER -->
+    <header class="prof-header-bar" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; width: 100%; box-sizing: border-box;">
+      <div>
+        <a href="admin-crm.html" class="prof-back-btn" style="text-decoration: none; color: #475569; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">📋 Back to CRM Directory</a>
+        <h1 style="margin: 8px 0 0 0; font-size: 1.35rem; font-weight: 850; letter-spacing: -0.025em; color: #0f172a;">Client Operational Profiler</h1>
+      </div>
+      <button type="button" id="profSaveMasterChangesBtn" style="background: #0f172a; color: #fff; border: none; padding: 12px 24px; font-weight: 700; font-size: 0.85rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(10,31,68,0.15);">Save Profile Modifications ➔</button>
+    </header>
+
+    <!-- 🟢 THE HTML HIERARCHY FIX: Added main workspace layout grid wrapper to bound component positioning safely -->
+    <main class="crm-workspace" style="width: 100%; box-sizing: border-box; display: block; margin: 0; padding: 0;">
+      <div class="prof-grid" style="display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: start; width: 100%; box-sizing: border-box;">
+        
+        <!-- COLUMN 1: LEFT COMPONENT PROFILE SUMMARY CARD -->
+        <div class="prof-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; text-align: center;">
+          <img src="images/fav.png" id="profAvatarDisplayNode" class="prof-avatar-circle" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #e2e8f0; background: #f1f5f9; object-fit: cover; margin: 0 auto;" alt="User Avatar">
+          <div>
+            <h2 id="profAccountSummaryTitle" style="margin: 12px 0 2px 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Loading Profile...</h2>
+            <p id="profEmailLabelField" style="margin: 0; font-size: 0.78rem; font-family: monospace; color: #475569; word-break: break-all;">--</p>
+          </div>
+          
+          <div style="border-top: 1px dashed #e2e8f0; padding-top: 16px; text-align: left; display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 0.8rem; color: #475569;">
+              <strong style="color: #0f172a;">Tracking ID:</strong> <span id="profTrackingLabelField" style="font-family: monospace; font-weight: 700;">--</span>
+            </div>
+            <div style="font-size: 0.8rem; color: #475569;">
+              <strong style="color: #0f172a;">Stripe Cust ID:</strong> <span id="profStripeLabelField" style="font-family: monospace; font-size: 0.75rem;">--</span>
+            </div>
+            <div style="font-size: 0.8rem; color: #475569;">
+              <strong style="color: #0f172a;">Ecosystem Status:</strong> <span id="profStatusLabelField" style="font-weight: 700;">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMN 2: RIGHT COMPONENT FORM INFORMATION LEDGER CARD -->
+        <div class="prof-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;">
+          <h3 style="margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Account Parameters Registry</h3>
+          <p style="margin: 0 0 12px 0; font-size: 0.78rem; color: #475569;">Inspect or modify geolocation bounding data, company descriptors, and security parameters mapped below.</p>
+          <!-- 🟢 THE GRID FORM LAYOUT RESOLUTION: Isolated internal block row wrapper controls -->
+          <form id="profMasterOperationsForm" onsubmit="return false;" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">First Name</label>
+              <input type="text" id="profFirstNameField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Last Name</label>
+              <input type="text" id="profLastNameField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Company Legal Designation</label>
+              <input type="text" id="profCompanyField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Phone Contact Field</label>
+              <input type="text" id="profPhoneField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group full-width" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box; grid-column: span 2;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Street Address Lines</label>
+              <input type="text" id="profStreetField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">City Bounding Node</label>
+              <input type="text" id="profCityField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">State Bounding Jurisdiction</label>
+              <input type="text" id="profStateField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Zip Postal Code</label>
+              <input type="text" id="profZipField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+            </div>
+            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Ecosystem Sync Status Controls</label>
+              <select id="profStatusField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+                <option value="Active">Active / Synchronized</option>
+                <option value="Suspended">Suspended / Paused</option>
+              </select>
+            </div>
+          </form>
+          <div id="profSaveBannerAlert" style="display:none; font-size:0.8rem; font-weight:700; padding:12px; border-radius:8px; text-align: center; width:100%; box-sizing:border-box; margin-top:12px;"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+
+
+ <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
+  <!-- 1. The Global Library Core MUST load absolute first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. The Configuration setup creates window.supabaseClient immediately -->
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-master-ledger.js"></script>
+
+   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <script src="assets/js/admin-navigation.js"></script>
+
+<!-- JAVASCRIPT ARCHITECTURE CONTROLLER MODULES -->
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
+
+    const currentUrlParams = new URLSearchParams(window.location.search);
+    const targetEmailParam = currentUrlParams.get("email");
+    const saveBtn = document.getElementById("profSaveMasterChangesBtn");
+    const alertBanner = document.getElementById("profSaveBannerAlert");
+
+    let cachedRowIdPointer = null;
+
+    if (!targetEmailParam) {
+      document.body.innerHTML = `
+        <div style="padding: 60px; text-align: center; color: var(--prof-text-muted);">
+          <h3 style="color: var(--prof-text-dark); font-weight: 850; font-size:1.3rem; margin:0;">No Targeted Account Parameter</h3>
+          <p style="font-size: 0.85rem; margin: 8px 0 16px 0;">Return to the dashboard index tracking cockpit to select a valid client file.</p>
+          <a href="admin-crm.html" style="background:var(--prof-primary); color:#fff; text-decoration:none; padding:10px 20px; font-weight:700; border-radius:6px; font-size:0.8rem;">Open CRM Engine ➔</a>
+        </div>`;
+      return;
+    }
+
+    // Establish Supabase Handshake
+    let client = window.supabaseInstance || window.supabaseClient;
+    if (!client && typeof supabase !== 'undefined') {
+      client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+    }
+    if (!client) return;
+
+    // 📡 1. HYDRATE FIELD MAPS STRICTLY MATCHING RAW CLIENT_PROFILES SCHEMA
+    async function loadTargetProfileMetadata() {
+      try {
+        console.log(`📡 [Profiler Engine] Querying row matching email address: [${targetEmailParam}]`);
+        const { data: profile, error } = await client
+          .from('client_profiles')
+          .select('*')
+          .eq('email_address', targetEmailParam.toLowerCase().trim())
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!profile) {
+          document.body.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--prof-rose); font-weight: 700;">✕ Record trace matching account descriptor [${targetEmailParam}] not found in database.</div>`;
+          return;
+        }
+
+        // Cache the true row primary key identity
+        cachedRowIdPointer = profile.id;
+
+        // Left Panel Summaries Ingestion        // Left Panel Summaries Ingestion
+        document.getElementById("profAccountSummaryTitle").textContent = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "Valued Customer";
+        document.getElementById("profEmailLabelField").textContent = profile.email_address;
+        document.getElementById("profTrackingLabelField").textContent = profile.tracking_number || "Not Provisioned";
+        document.getElementById("profStripeLabelField").textContent = profile.stripe_customer_id || "No Connected Stripe Token";
+        
+        const statusEl = document.getElementById("profStatusLabelField");
+        const statusVal = profile.sync_encryption_status || "Active";
+        statusEl.textContent = statusVal;
+        statusEl.style.color = statusVal.toLowerCase() === 'active' ? 'var(--crm-emerald)' : 'var(--crm-rose)';
+
+        if (profile.avatar_url) {
+          document.getElementById("profAvatarDisplayNode").src = profile.avatar_url;
+        }
+
+        // Form Fields Input Ingestion
+        document.getElementById("profFirstNameField").value = profile.first_name || "";
+        document.getElementById("profLastNameField").value = profile.last_name || "";
+        document.getElementById("profCompanyField").value = profile.company_name || "";
+        document.getElementById("profPhoneField").value = profile.phone_number || "";
+        document.getElementById("profStreetField").value = profile.street_address || "";
+        document.getElementById("profCityField").value = profile.city || "";
+        document.getElementById("profStateField").value = profile.state || "";
+        document.getElementById("profZipField").value = profile.zip_code || "";
+        document.getElementById("profStatusField").value = statusVal;
+
+        console.log("✓ [Profiler Engine] Interface values successfully mapped to target record row.");
+
+      } catch (fault) {
+        console.error("✕ Initialization loop collapsed:", fault);
+      }
+    }
+
+    // 💾 2. MODIFICATION ENGINE: PUSH SAVED EDITS BACK TO ROW INDICES
+    if (saveBtn) {
+      saveBtn.addEventListener("click", async () => {
+        if (!cachedRowIdPointer) return;
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Updating Database Ledgers... 📡";
+
+        const updatePayload = {
+          first_name: document.getElementById("profFirstNameField").value.trim(),
+          last_name: document.getElementById("profLastNameField").value.trim(),
+          company_name: document.getElementById("profCompanyField").value.trim(),
+          phone_number: document.getElementById("profPhoneField").value.trim(),
+          street_address: document.getElementById("profStreetField").value.trim(),
+          city: document.getElementById("profCityField").value.trim(),
+          state: document.getElementById("profStateField").value.trim(),
+          zip_code: document.getElementById("profZipField").value.trim(),
+          sync_encryption_status: document.getElementById("profStatusField").value,
+          updated_at: new Date().toISOString()
+        };
+
+        try {
+          const { error: updateError } = await client
+            .from('client_profiles')
+            .update(updatePayload)
+            .eq('id', cachedRowIdPointer);
+
+          if (updateError) throw updateError;
+
+          showSaveBanner("✓ Modifications locked in. Profile database successfully synchronized.", false);
+          await loadTargetProfileMetadata();
+
+        } catch (fault) {
+          console.error(fault);
+          showSaveBanner(`✕ Modification Rejected: ${fault.message}`, true);
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = "Save Profile Modifications ➔";
+        }
+      });
+    }
+
+    function showSaveBanner(text, isError) {
+      if (!alertBanner) return;
+      alertBanner.textContent = text;
+      alertBanner.style.background = isError ? "#fee2e2" : "#ecfdf5";
+      alertBanner.style.color = isError ? "#991b1b" : "#047857";
+      alertBanner.style.display = "block";
+      setTimeout(() => { if (alertBanner) alertBanner.style.display = "none"; }, 5000);
+    }
+
+    // 🏁 BOOT LIFECYCLE
+    await loadTargetProfileMetadata();
+  });
+  </script>
+</body>
+</html>

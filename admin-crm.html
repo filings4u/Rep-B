@@ -130,87 +130,169 @@
 }
 </style>
 
+<style>
+    :root {
+      --crm-bg: #f8fafc;
+      --crm-panel: #ffffff;
+      --crm-text-dark: #0f172a;
+      --crm-text-muted: #475569;
+      --crm-border: #e2e8f0;
+      --crm-primary: #0f172a;
+      --crm-emerald: #10b981;
+      --crm-amber: #f59e0b;
+      --crm-rose: #ef4444;
+    }
+    .crm-body { margin: 0; padding: 0; background: var(--crm-bg); font-family: system-ui, -apple-system, sans-serif; color: var(--crm-text-dark); }
+    .crm-layout { display: flex; flex-direction: column; width: 100%; min-height: 100vh; box-sizing: border-box; }
+    .crm-header-strip { display: flex; justify-content: space-between; align-items: center; padding: 24px 40px; background: var(--crm-panel); border-bottom: 1px solid var(--crm-border); }
+    .crm-workspace { display: flex; flex-direction: column; gap: 32px; padding: 32px 40px; box-sizing: border-box; flex: 1; }
+    .crm-deck { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; width: 100%; }
+    .crm-card { background: var(--crm-panel); border: 1px solid var(--crm-border); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 8px; }
+    .crm-card-num { font-size: 2.2rem; font-weight: 800; color: var(--crm-primary); line-height: 1; margin: 4px 0 0 0; }
+    .crm-filter-bar { background: var(--crm-panel); border: 1px solid var(--crm-border); border-radius: 12px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.01); }
+    .crm-tabs { display: flex; gap: 8px; }
+    .crm-tab-btn { background: transparent; border: none; padding: 8px 16px; font-weight: 700; font-size: 0.825rem; color: var(--crm-text-muted); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .crm-tab-btn.active { background: #f1f5f9; color: var(--crm-text-dark); }
+    .crm-search-input { width: 320px; padding: 10px 14px; border: 1px solid var(--crm-border); border-radius: 8px; font-size: 0.85rem; height: 40px; box-sizing: border-box; outline: none; transition: border 0.15s; }
+    .crm-search-input:focus { border-color: var(--crm-primary); }
+    .crm-grid-panel { background: var(--crm-panel); border: 1px solid var(--crm-border); border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); overflow: hidden; width: 100%; }
+    .crm-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+    .crm-table th { background: #f8fafc; border-bottom: 2px solid var(--crm-border); padding: 14px 20px; color: var(--crm-text-muted); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .crm-table td { padding: 16px 20px; border-bottom: 1px solid var(--crm-border); vertical-align: middle; }
+    .crm-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
+    .crm-badge.active { background: #d1fae5; color: #065f46; }
+    .crm-badge.encrypted { background: #e0f2fe; color: #0369a1; }
+    .crm-badge.suspended { background: #fee2e2; color: #b91c1c; }
+    .crm-action-btn { background: #f1f5f9; color: var(--crm-text-dark); border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .crm-action-btn:hover { background: #e2e8f0; }
+    .crm-action-btn.delete { background: #fff5f5; color: var(--crm-rose); border-color: #fca5a5; }
+    .crm-action-btn.delete:hover { background: #fee2e2; }
+    .crm-drawer { position: fixed; top: 0; right: -420px; width: 420px; height: 100vh; background: var(--crm-panel); border-left: 1px solid var(--crm-border); box-shadow: -10px 0 30px rgba(0,0,0,0.05); z-index: 100; transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; }
+    .crm-drawer.open { right: 0; }
+    .crm-drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.15); backdrop-filter: blur(2px); z-index: 99; display: none; }
+    .crm-drawer-overlay.open { display: block; }
+    .crm-input-group { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+    .crm-input-group label { font-weight: 700; font-size: 0.8rem; color: var(--crm-text-muted); }
+    .crm-field { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; height: 42px; box-sizing: border-box; outline: none; }
+    .crm-field:focus { border-color: var(--crm-primary); }
+  </style>
 </head>
-<body>
-  <div class="dashboard-wrapper">
+<body class="crm-body">
 
-
+   <div class="dashboard-wrapper">
+    <!-- 🧱 SCROLLABLE MAIN WORKSPACE -->
     <main class="portal-main">
-      <header class="portal-header">
-        <div class="welcome-text">
-          <h1>Customer CRM Profile Matrix</h1>
-          <p>Global portfolio client communication and identity tracking ledger</p>
-        </div>
-        <div class="header-actions-wrapper">
-          <input type="text" id="crmGlobalSearchField" class="search-input" placeholder="Filter profiles by email or company...">
-        </div>
-      </header>
+   
 
-<div class="content-container">
-  
-  <!-- COLUMN 1: LEFT VERTICAL PROFILE SUMMARY RAIL DECK -->
-  <div class="metrics-stack-deck">
-    <div class="metric-card-box">
-      <span class="metric-subtitle">Total Managed Profiles</span>
-      <h3 class="metric-headline" id="metric-total-clients">--</h3>
-    </div>
+  <div class="crm-layout">
     
-    <div class="metric-card-box">
-      <span class="metric-subtitle">Premium Accounts</span>
-      <h3 class="metric-headline operational-status-color" id="metric-registered-accounts">--</h3>
-    </div>
-    
-    <div class="metric-card-box">
-      <span class="metric-subtitle">Flagged Anomalies</span>
-      <h3 class="metric-headline urgency-alert-color" id="metric-guest-leads">--</h3>
-    </div>
-    
-   <!-- Replace your old CRM Core Status card structure with this updated layout -->
-<div class="metric-card-box">
-  <span class="metric-subtitle">CRM Core Status</span>
-  <h3 class="metric-headline success-status-color">100%</h3>
-</div>
-
-  </div>
-
-  <!-- COLUMN 2: RIGHT EXTENDED ACCOUNT BALANCING LEDGER MATRIX -->
-  <div class="console-card custom-elevation">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <!-- 📢 HEADER MATRIX SUMMARY CONSOLE BANNER -->
+    <header class="crm-header-strip">
       <div>
-        <h2 style="margin: 0; font-size: 1.2rem; font-weight: 850; color: #0f172a;">Active Platform Subscriptions & Accounts</h2>
-        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">Review ongoing business corporate assets, account tier assignments, and active backend operations records.</p>
+        <h1 style="margin: 0; font-size: 1.4rem; font-weight: 850; letter-spacing: -0.02em;">CRM Operations Dashboard</h1>
+        <p style="margin: 4px 0 0 0; font-size: 0.825rem; color: var(--crm-text-muted);">Manage platform registrations, adjust accounting records, check anomalies, and provision profiles.</p>
       </div>
-      <div>
-<!-- Ensure the input field inside your main card looks exactly like this -->
-<input type="text" id="crmGlobalSearchField" placeholder="Filter profiles by email, name...">
+      <button type="button" onclick="openIntakeDrawer()" style="background: var(--crm-primary); color: #fff; border: none; padding: 10px 20px; font-weight: 700; font-size: 0.825rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(10,31,68,0.15);">+ Add New Profile</button>
+    </header>
+
+    <main class="crm-workspace">
+      <!-- 📦 THE SEAMLESS CRM VIEW LAYOUT CARDS -->
+      <div class="crm-deck">
+        <div class="crm-card">
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-text-muted); letter-spacing: 0.05em;">Total Managed Profiles</span>
+          <h3 class="crm-card-num" id="metric-total-clients">--</h3>
+        </div>
+        <div class="crm-card">
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: #0369a1; letter-spacing: 0.05em;">Active Encryptions</span>
+          <h3 class="crm-card-num" id="metric-registered-accounts" style="color: #0369a1;">--</h3>
+        </div>
+        <div class="crm-card">
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-rose); letter-spacing: 0.05em;">Suspended Records</span>
+          <h3 class="crm-card-num" id="metric-guest-leads" style="color: var(--crm-rose);">--</h3>
+        </div>
+        <div class="crm-card">
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-emerald); letter-spacing: 0.05em;">CRM Core Status</span>
+          <h3 class="crm-card-num" style="color: var(--crm-emerald);">100%</h3>
+        </div>
       </div>
-    </div>
 
-    <div style="overflow-x:auto !important; background: #ffffff; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0); width: 100%;">
-      <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-        <thead>
-          <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color, #e2e8f0) !important; color:#64748b !important; font-weight: 700;">
-            <th style="padding:14px 12px !important;">Customer Account</th>
-            <th style="padding:14px 12px !important;">Company Entity</th>
-            <th style="padding:14px 12px !important;">Tracking Reference</th>
-            <th style="padding:14px 12px !important;">Filing Service Tier</th>
-            <th style="padding:14px 12px !important; text-align:right !important;">Status</th>
-          </tr>
-        </thead>
-        <tbody id="admin-crm-target-box">
-          <tr>
-            <td colspan="5" style="padding:30px !important; text-align:center !important; color:#64748b !important; font-style: italic;">Establishing database matrix connection...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+      <div class="crm-filter-bar">
+        <div class="crm-tabs">
+          <button type="button" class="crm-tab-btn active" id="tab-all" onclick="filterCrmByTab('all')">All Accounts</button>
+          <button type="button" class="crm-tab-btn" id="tab-active" onclick="filterCrmByTab('active')">Active Systems</button>
+          <button type="button" class="crm-tab-btn" id="tab-suspended" onclick="filterCrmByTab('suspended')">Suspended</button>
+        </div>
+        <input type="text" id="crmGlobalSearchField" class="crm-search-input" placeholder="Search by name, email, company...">
+      </div>
 
-</div>
-
-
+      <div class="crm-grid-panel">
+        <table class="crm-table">
+          <thead>
+            <tr>
+              <th>Customer Account</th>
+              <th>Company Entity</th>
+              <th>Tracking Reference</th>
+              <th>Location Bounds</th>
+              <th style="text-align: right;">Status Actions Core</th>
+            </tr>
+          </thead>
+          <tbody id="admin-crm-target-box">
+            <tr>
+              <td colspan="5" style="padding: 48px; text-align: center; color: var(--crm-text-muted); font-style: italic;">Establishing database matrix connection...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </main>
   </div>
+
+
+  <!-- 📥 CANVAS DRAWER: COMPOSE MANUAL INTAKE PROVISIONS -->
+  <div class="crm-drawer-overlay" id="drawerOverlay" onclick="closeIntakeDrawer()"></div>
+  <div class="crm-drawer" id="intakeDrawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--crm-border); padding-bottom: 16px;">
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800;">Manual Account Intake</h3>
+      <button type="button" onclick="closeIntakeDrawer()" style="background: transparent; border: none; font-size: 1.25rem; cursor: pointer; color: var(--crm-text-muted);">&times;</button>
+    </div>
+    
+    <form id="crmQuickProvisionForm" novalidate style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="crm-input-group">
+        <label>First Name</label>
+        <input type="text" id="crmNewFirst" required class="crm-field" placeholder="John">
+      </div>
+      <div class="crm-input-group">
+        <label>Last Name</label>
+        <input type="text" id="crmNewLast" required class="crm-field" placeholder="Doe">
+      </div>
+      <div class="crm-input-group">
+        <label>Email Address</label>
+        <input type="email" id="crmNewEmail" required class="crm-field" placeholder="johndoe@example.com">
+      </div>
+         <div class="crm-input-group">
+        <label>Company Legal Name</label>
+        <input type="text" id="crmNewCompany" class="crm-field" placeholder="Global Logistics LLC">
+      </div>
+      <div class="crm-input-group">
+        <label>Filing Service Track / Description</label>
+        <input type="text" id="crmNewPlan" class="crm-field" placeholder="Corporate Formation Filing">
+      </div>
+      <div class="crm-input-group">
+        <label>Account Class Tier</label>
+        <select id="crmNewTier" class="crm-field" style="background: #fff;">
+          <option value="Standard" selected>Standard Member</option>
+          <option value="Premium">Premium Fleet Tier</option>
+        </select>
+      </div>
+
+      <div id="crmFormStatusText" style="display:none; font-size:0.75rem; font-weight:700; padding:8px; border-radius:4px; text-align:center; width:100%; box-sizing:border-box;"></div>
+
+      <button type="submit" id="crmSubmitBtn" style="background: var(--crm-primary); color: #fff; border: none; padding: 14px; font-weight: 700; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-top: 12px; box-shadow: 0 4px 6px rgba(10,31,68,0.15); width:100%; display:block;">Enroll Profile & Send Invite ➔</button>
+    </form>
+  </div>
+
+   </main>
+  </div>
+
 
  <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
   <!-- 1. The Global Library Core MUST load absolute first -->
@@ -225,156 +307,366 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
+<!-- JAVASCRIPT CRM INTERFACES ENGINE -->
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
 
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
+    const tableBody = document.getElementById("admin-crm-target-box");
+    const searchField = document.getElementById("crmGlobalSearchField");
+    const quickForm = document.getElementById("crmQuickProvisionForm");
+    const formStatus = document.getElementById("crmFormStatusText");
+    const submitBtn = document.getElementById("crmSubmitBtn");
 
-  // 1. Resolve UI Layout Selector References
-  const crmTableBody = document.getElementById("admin-crm-target-box");
-  const searchField = document.getElementById("crmGlobalSearchField");
+    const totalProfilesLabel = document.getElementById("metric-total-clients");
+    const activeAccountsLabel = document.getElementById("metric-registered-accounts");
+    const suspendedAccountsLabel = document.getElementById("metric-guest-leads");
 
-  if (!crmTableBody) {
-    console.error("✕ Critical UI Error: Cannot locate table body element anchor 'admin-crm-target-box' in document tree.");
-    return;
-  }
+    let liveCrmChannel = null;
+    let MasterCrmProfilesCacheList = [];
+    let activeFilterTab = 'all';
 
-  // 2. Fetch Master Configuration Client Connection
-  const client = window.supabaseInstance || window.supabaseClient;
-  if (!client || typeof client.from !== 'function') {
-    crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ System Error: Supabase connection manager uninitialized.</td></tr>`;
-    return;
-  }
+    // 🟢 SIDEBAR DRAWER INTERACTIVE CANVAS CONTROLS
+    window.openIntakeDrawer = function() {
+      document.getElementById("intakeDrawer").classList.add("open");
+      document.getElementById("drawerOverlay").classList.add("open");
+    };
+    window.closeIntakeDrawer = function() {
+      document.getElementById("intakeDrawer").classList.remove("open");
+      document.getElementById("drawerOverlay").classList.remove("open");
+      if (quickForm) quickForm.reset();
+      if (formStatus) formStatus.style.display = "none";
+    };
 
-  let localCrmCacheArray = [];
+    // Establish Supabase Connection Handshake
+    let client = window.supabaseInstance || window.supabaseClient;
+    if (!client && typeof supabase !== 'undefined') {
+      client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+    }
+    if (!client) return;
 
-  // Helper utility to prevent script injection strings
-  function escapeStringInput(text) {
-    if (!text) return "";
-    return String(text)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+    // 📡 1. DATA ENVIRONMENT HYDRATION PIPELINE MATCHING VALIDATED SCHEMA FIELDS
+    async function reloadPlatformCrmProfilesLedger() {
+      try {
+        const { data: profiles, error } = await client
+          .from('client_profiles')
+          .select('*')
+          .order('updated_at', { ascending: false });
 
-  // --- STAGE 1: READ PIPELINE (Queries public.admin_crm table directly) ---
-  async function fetchAndHydrateCrmMatrix() {
-    try {
-      console.log("📡 [CRM Engine] Extracting portfolios directly from public.admin_crm...");
-      
-      const { data: crmRecords, error: queryError } = await client
-        .from('admin_crm')
-        .select('id, client_name, email, account_tier, compliance_status, last_login')
-        .order('client_name', { ascending: true });
+        if (error) throw error;
 
-      if (queryError) {
-        throw new Error(`Postgres Exception [Code ${queryError.code}]: ${queryError.message}`);
+        MasterCrmProfilesCacheList = profiles || [];
+        
+        // Calculate Metrics Counters from validated sync status columns
+        const totalCount = MasterCrmProfilesCacheList.length;
+        const activeCount = MasterCrmProfilesCacheList.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'active').length;
+        const suspendedCount = MasterCrmProfilesCacheList.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'suspended').length;
+
+        if (totalProfilesLabel) totalProfilesLabel.textContent = totalCount;
+        if (activeAccountsLabel) activeAccountsLabel.textContent = activeCount;
+        if (suspendedAccountsLabel) suspendedAccountsLabel.textContent = suspendedCount;
+
+        applyFuzzyFiltrationLookupGrid();
+
+      } catch (fault) {
+        console.error("✕ CRM Hydration crashed:", fault);
+        if (tableBody) {
+          tableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:var(--crm-rose); font-weight:700;">✕ Connection Error: ${fault.message}</td></tr>`;
+        }
+      }
+    }
+
+    // 📊 2. PROCESS COMBINED SEGMENTED TABS AND FUZZY FILTER lookups
+    window.filterCrmByTab = function(tabId) {
+      activeFilterTab = tabId;
+      document.querySelectorAll(".crm-tab-btn").forEach(btn => btn.classList.remove("active"));
+      const targetBtn = document.getElementById(`tab-${tabId}`);
+      if (targetBtn) targetBtn.classList.add("active");
+      applyFuzzyFiltrationLookupGrid();
+    };
+
+    function applyFuzzyFiltrationLookupGrid() {
+      const searchCriteria = searchField ? searchField.value.toLowerCase().trim() : '';
+      let dataset = MasterCrmProfilesCacheList;
+
+      // Slice dataset by tab category selectors
+      if (activeFilterTab === 'active') {
+        dataset = dataset.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'active');
+      } else if (activeFilterTab === 'suspended') {
+        dataset = dataset.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'suspended');
       }
 
-      localCrmCacheArray = crmRecords || [];
-      
-      calculateCrmSummaryStatistics(localCrmCacheArray);
-      renderCrmGridDataRows(localCrmCacheArray);
-    } catch (crmFault) {
-      console.error("✕ CRM Data Synchronization Halted:", crmFault.message);
-      crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
-    }
-  }
+      // Layer text matching configurations natively over category selections
+      if (searchCriteria) {
+        dataset = dataset.filter(p => {
+          const first = (p.first_name || '').toLowerCase();
+          const last = (p.last_name || '').toLowerCase();
+          const fullName = `${first} ${last}`;
+          return (
+            fullName.includes(searchCriteria) ||
+            String(p.email_address || '').toLowerCase().includes(searchCriteria) ||
+            String(p.company_name || '').toLowerCase().includes(searchCriteria)
+          );
+        });
+      }
 
-  // --- STAGE 2: SUMMARY METRICS DECK COUNTER GENERATION ---
-  function calculateCrmSummaryStatistics(crmRecords) {
-    const totalClientsBadge = document.getElementById("metric-total-clients");
-    const activeAccountsBadge = document.getElementById("metric-registered-accounts");
-    const urgentAuditsBadge = document.getElementById("metric-guest-leads");
-
-    if (totalClientsBadge) totalClientsBadge.textContent = crmRecords.length;
-    
-    if (crmRecords && crmRecords.length >= 0) {
-      const highTierCount = crmRecords.filter(item => {
-        const tier = String(item.account_tier || '').toLowerCase();
-        return tier.includes('premium') || tier.includes('enterprise');
-      }).length;
-
-      const flaggedCount = crmRecords.filter(item => {
-        const comp = String(item.compliance_status || '').toLowerCase();
-        return comp !== 'verified' && comp !== '';
-      }).length;
-      
-      if (activeAccountsBadge) activeAccountsBadge.textContent = highTierCount;
-      if (urgentAuditsBadge) urgentAuditsBadge.textContent = flaggedCount;
-    }
-  }
-
-  // --- STAGE 3: DISPLAY ENGINE (Renders rows matching public.admin_crm format rules) ---
-  function renderCrmGridDataRows(dataset) {
-    crmTableBody.innerHTML = "";
-
-    if (!dataset || dataset.length === 0) {
-      crmTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:#64748b; font-size:0.875rem; font-weight:600;">No matching corporate client rows managed inside public.admin_crm.</td></tr>`;
-      return;
+      renderCrmTableLedgerGrid(dataset);
     }
 
-    dataset.forEach(rowItem => {
-      try {
-        const trElement = document.createElement("tr");
-        trElement.className = "ledger-row-entry";
-        trElement.style.cssText = "border-bottom:1px solid #e2e8f0; font-size:0.85rem; background:#ffffff; color:#0f172a;";
+    // 📊 3. DENSE REALTIME GRID GENERATOR ROW ASSEMBLER MATRIX
+    function renderCrmTableLedgerGrid(profilesList) {
+      if (!tableBody) return;
 
-        const clientEmail = rowItem.email || "unregistered-account@email.com";
-        const profileName = rowItem.client_name || "Unnamed Corporation Account";
-        
-        // FIX: Extract first section of UUID string safely before formatting to uppercase
-        const rawIdStr = String(rowItem.id || '00000000');
-        const referenceId = rawIdStr.includes('-') ? rawIdStr.split('-')[0].toUpperCase() : rawIdStr.substring(0, 8).toUpperCase();
-        
-        const tierRank = String(rowItem.account_tier || 'Standard').toUpperCase();
-        const rawStatus = String(rowItem.compliance_status || 'Verified').trim();
+      if (!profilesList || profilesList.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="padding:48px; text-align:center; color:var(--crm-text-muted); font-style:italic;">No custom tracking profiles found matching active scope constraints.</td></tr>`;
+        return;
+      }
 
-        let statusStyle = "background:#e6f4ea; color:#137333;"; // Verified green fallback
-        if (rawStatus.toLowerCase() === 'pending' || rawStatus.toLowerCase() === 'action required') {
-          statusStyle = "background:#fffbe6; color:#b45309;"; // Orange attention warning badge
-        } else if (rawStatus.toLowerCase() === 'suspended' || rawStatus.toLowerCase() === 'flagged') {
-          statusStyle = "background:#fee2e2; color:#991b1b;"; // Red danger breach badge
+      tableBody.innerHTML = "";
+      profilesList.forEach(profile => {
+        const tr = document.createElement("tr");
+
+        const first = profile.first_name || '';
+        const last = profile.last_name || '';
+        const compName = profile.company_name || "Not Specified";
+        const trackRef = profile.tracking_number || "No Ref Allocated";
+        const status = String(profile.sync_encryption_status || 'Active').trim();
+        const displayLocation = (profile.city && profile.state) ? `${profile.city}, ${profile.state}` : "Awaiting Input...";
+
+        let badgeMarkup = `<span class="crm-badge active">Active</span>`;
+        if (status.toLowerCase() === 'suspended') {
+          badgeMarkup = `<span class="crm-badge suspended">Suspended</span>`;
         }
 
-        trElement.innerHTML = `
-          <td style="padding:14px 12px; font-weight:600; color:#0f172a;">${escapeStringInput(clientEmail)}</td>
-          <td style="padding:14px 12px; color:#475569; font-weight:500;">${escapeStringInput(profileName)}</td>
-          <td style="padding:14px 12px; font-family:monospace; color:#64748b; font-size:0.8rem;">F4U-${escapeStringInput(referenceId)}</td>
-          <td style="padding:14px 12px;"><span style="font-size:10px; padding:4px 8px; border-radius:6px; font-weight:700; background:#f1f5f9; color:#475569; letter-spacing:0.3px;">${escapeStringInput(tierRank)}</span></td>
-          <td style="padding:14px 12px; text-align:right;"><span style="${statusStyle} padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">${escapeStringInput(rawStatus)}</span></td>
+        tr.innerHTML = `
+          <td style="font-size:0.9rem;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <img src="${profile.avatar_url || 'images/fav.png'}" style="width:32px; height:32px; border-radius:50%; background:#f1f5f9; object-fit:cover; border:1px solid var(--crm-border);">
+              <div>
+                <div style="font-weight:700; color:var(--crm-text-dark);">${escapeCrmTextHtml(first)} ${escapeCrmTextHtml(last)}</div>
+                <div style="font-size:0.75rem; color:var(--crm-text-muted); font-family:monospace; margin-top:2px;">${profile.email_address}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--crm-text-muted); font-weight:600;">${escapeCrmTextHtml(compName)}</td>
+          <td style="font-family:monospace; color:var(--crm-text-dark); font-weight:700; font-size:0.8rem;">${escapeCrmTextHtml(trackRef)}</td>
+          <td style="color:var(--crm-text-muted); font-size:0.825rem; font-weight:600;">${escapeCrmTextHtml(displayLocation)}</td>
+          <td style="text-align:right; white-space:nowrap;">
+            <div style="display:inline-flex; align-items:center; gap:8px;">
+              ${badgeMarkup}
+              <button type="button" class="crm-action-btn" onclick="navigateToCustomerDetailedProfile('${profile.email_address}')">View</button>
+              <button type="button" class="crm-action-btn delete" onclick="triggerCustomerProfileTermination('${profile.id}', '${profile.email_address}')">Delete</button>
+            </div>
+          </td>
         `;
-        crmTableBody.appendChild(trElement);
-      } catch (rowError) {
-        console.error("✕ Row rendering skipped due to field parse anomaly:", rowError, rowItem);
-      }
-    });
-  }
-
-  // --- STAGE 4: PROPERTY TEXT FILTER SEARCH ENGINE (Targets public.admin_crm keys) ---
-  if (searchField) {
-    searchField.addEventListener("input", (event) => {
-      const matchQuery = event.target.value.toLowerCase().trim();
-      const filteredResults = localCrmCacheArray.filter(item => {
-        if (!item) return false;
-        return (
-          String(item.email || '').toLowerCase().includes(matchQuery) || 
-          String(item.client_name || '').toLowerCase().includes(matchQuery) || 
-          String(item.account_tier || '').toLowerCase().includes(matchQuery) || 
-          String(item.compliance_status || '').toLowerCase().includes(matchQuery)
-        );
+        tableBody.appendChild(tr);
       });
-      renderCrmGridDataRows(filteredResults);
-    });
-  }
+    }
 
-  // Fire main execution loop thread
-  await fetchAndHydrateCrmMatrix();
-});
-</script>
+    if (searchField) {
+      searchField.addEventListener("input", applyFuzzyFiltrationLookupGrid);
+    }
+
+    // 👤 4. VIEW PROFILE COMPONENT LINK REDIRECT ROUTER
+    window.navigateToCustomerDetailedProfile = function(clientTargetEmail) {
+      if (!clientTargetEmail) return;
+      window.location.href = `admin-customer-profile.html?email=${encodeURIComponent(clientTargetEmail.toLowerCase().trim())}`;
+    };
+
+       // 🟢 REPLACED: Old browser confirm handler swapped for high-utility custom DOM overlay modal controls
+    let activeDeletionUuidPointer = null;
+    let activeDeletionEmailPointer = null;
+
+    window.triggerCustomerProfileTermination = function(profileUuid, targetEmail) {
+      if (!profileUuid || !targetEmail) return;
+
+      activeDeletionUuidPointer = profileUuid;
+      activeDeletionEmailPointer = targetEmail;
+
+      const modalOverlay = document.getElementById("crmDeleteModalOverlay");
+      const targetLabel = document.getElementById("crmDeleteTargetEmail");
+      
+      if (!modalOverlay || !targetLabel) return;
+
+      targetLabel.textContent = `[${targetEmail}]`;
+
+      modalOverlay.style.display = "flex";
+      setTimeout(() => {
+        modalOverlay.style.opacity = "1";
+        modalOverlay.firstElementChild.style.transform = "scale(1)";
+      }, 10);
+    };
+
+    window.closeCrmDeleteModal = function() {
+      const modalOverlay = document.getElementById("crmDeleteModalOverlay");
+      if (!modalOverlay) return;
+
+      modalOverlay.style.opacity = "0";
+      modalOverlay.firstElementChild.style.transform = "scale(0.95)";
+      
+      setTimeout(() => {
+        modalOverlay.style.display = "none";
+        activeDeletionUuidPointer = null;
+        activeDeletionEmailPointer = null;
+      }, 200);
+    };
+
+    const modalConfirmBtn = document.getElementById("crmModalConfirmDeleteBtn");
+    if (modalConfirmBtn) {
+      modalConfirmBtn.addEventListener("click", async () => {
+        if (!activeDeletionUuidPointer || !activeDeletionEmailPointer) return;
+
+        modalConfirmBtn.disabled = true;
+        modalConfirmBtn.textContent = "Purging Profile Ledger...";
+
+        try {
+          const { error: dbError } = await client
+            .from('client_profiles')
+            .delete()
+            .eq('id', activeDeletionUuidPointer);
+
+          if (dbError) throw dbError;
+
+          closeCrmDeleteModal();
+          await reloadPlatformCrmProfilesLedger();
+
+        } catch (fault) {
+          console.error("✕ CRM Deletion execution error caught:", fault);
+          alert(`✕ Cloud Operations Aborted: ${fault.message || "Database validation constraints exception."}`);
+        } finally {
+          modalConfirmBtn.disabled = false;
+          modalConfirmBtn.textContent = "Delete Permanently";
+        }
+      });
+    }
+
+    // 📡 6. INTERCEPT INGESTION FORM FOR NEW CUSTOMER ACCOUNT CREATIONS
+    if (quickForm) {
+      quickForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const fName = document.getElementById("crmNewFirst").value.trim();
+        const lName = document.getElementById("crmNewLast").value.trim();
+        const email = document.getElementById("crmNewEmail").value.trim().toLowerCase();
+        const company = document.getElementById("crmNewCompany").value.trim();
+        const phone = document.getElementById("crmNewPhone").value.trim();
+        const status = document.getElementById("crmNewStatus").value;
+
+        if (!fName || !lName || !email) {
+          showCrmBanner("✕ First Name, Last Name, and target Email addresses are required fields.", true);
+          return;
+        }
+
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Provisioning Record... 📡"; }
+
+        try {
+          // Manual Account Intake Setup requires generating a valid primary identifier UUID
+          const resolvedUserUuid = gen_random_uuid_placeholder();
+
+          const { error: insertError } = await client
+            .from('client_profiles')
+            .insert([{
+              id: resolvedUserUuid,
+              email_address: email,
+              first_name: fName,
+              last_name: lName,
+              phone_number: phone || "Not Provided",
+              company_name: company || "Not Specified",
+              sync_encryption_status: status,
+              tracking_number: "F4U-" + Math.floor(100000 + Math.random() * 900000),
+              updated_at: new Date().toISOString()
+            }]);
+
+          if (insertError) throw insertError;
+
+          // Dispatch email invitation hooks downstream to the notification triggers engine
+          await fetch("https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/welcome-email-update-password", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + client.supabaseKey
+            },
+            body: JSON.stringify({
+              action_trigger: "crm_manual_invite",
+              target_email: email,
+              customer_name: `${fName} ${lName}`
+            })
+          });
+
+          showCrmBanner("✓ Success! Profile established and authentication email invite routed.", false);
+          setTimeout(() => { closeIntakeDrawer(); }, 1500);
+          await reloadPlatformCrmProfilesLedger();
+
+        } catch (fault) {
+          console.error(fault);
+          showCrmBanner(`✕ Ingest Failure: ${fault.message}`, true);
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Enroll Profile & Send Invite ➔"; }
+        }
+      });
+    }
+
+    function showCrmBanner(text, isError) {
+      if (!formStatus) return;
+      formStatus.textContent = text;
+      formStatus.style.background = isError ? "#fee2e2" : "#ecfdf5";
+      formStatus.style.color = isError ? "#991b1b" : "#047857";
+      formStatus.style.display = "block";
+    }
+
+    function escapeCrmTextHtml(s) {
+      if (!s) return "";
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function gen_random_uuid_placeholder() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    // 📡 7. OPEN DYNAMIC OVER-THE-AIR CHANNELS FOR CRM REPLICATION BROADCASTS
+    async function bindLiveCrmRealtimeFeed() {
+      if (liveCrmChannel) liveCrmChannel.unsubscribe();
+      
+      liveCrmChannel = client
+        .channel('admin-crm-profiles-live-sync-stream-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'client_profiles' }, async () => {
+          console.log("⚡ CRM Matrix Sync: client_profiles modification caught. Re-rendering datagrid...");
+          await reloadPlatformCrmProfilesLedger();
+        })
+        .subscribe();
+    }
+
+    // 🏁 MOUNT MOUNT LIFECYCLE CONTROLLER COCKPIT INITIALIZATION
+    await reloadPlatformCrmProfilesLedger();
+    await bindLiveCrmRealtimeFeed();
+  });
+  </script>
 
 
+  <!-- 🟢 CUSTOM CONFIRMATION MODAL DIALOG CONTAINER -->
+  <div id="crmDeleteModalOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.3); backdrop-filter: blur(4px); z-index: 999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease-in-out;">
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; width: 480px; max-width: 90%; border-radius: 16px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column; gap: 20px; transform: scale(0.95); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+      
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="background: #fee2e2; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.25rem;">⚠️</div>
+        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em;">Confirm Permanent Deletion</h3>
+      </div>
+
+      <p id="crmDeleteModalMessage" style="margin: 0; font-size: 0.875rem; color: #475569; line-height: 1.5;">
+        Are you absolutely sure you want to delete profile record tracking <strong id="crmDeleteTargetEmail" style="color: #0f172a; word-break: break-all;">[andre_erving@yahoo.com]</strong> from CRM indexes? This action cannot be reversed.
+      </p>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end; width: 100%; box-sizing: border-box; margin-top: 8px;">
+        <button type="button" onclick="closeCrmDeleteModal()" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; font-weight: 700; font-size: 0.85rem; border-radius: 8px; cursor: pointer; transition: background 0.15s;">Cancel</button>
+        <button type="button" id="crmModalConfirmDeleteBtn" style="background: #dc2626; color: #ffffff; border: none; padding: 10px 18px; font-weight: 700; font-size: 0.85rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2); transition: background 0.15s;" onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">Delete Permanently</button>
+      </div>
+
+    </div>
+  </div>
+
+  
 </body>
 </html>
