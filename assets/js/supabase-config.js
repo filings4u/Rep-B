@@ -414,3 +414,41 @@ window.Filings4uSyncEngine = {
     }
   });
 })();
+
+/**
+ * filings4u Platform Architecture
+ * Global Script Attachment: Multi-Page Digital Ticking Clock Engine
+ */
+(function() {
+  "use strict";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // 🟢 GLOBAL INITIALIZATION: Targets the unified clock container ID present on any layout page
+    const clockElement = document.getElementById("portal-notifications-clock");
+    
+    if (!clockElement) {
+      // Gracefully exits if the active page layout template does not contain a clock node placeholder
+      return;
+    }
+
+    function updateGlobalClockTime() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      
+      hours = hours % 12;
+      hours = hours ? hours : 12; // Normalizes hour '0' to '12' cleanly
+
+      clockElement.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    // Fire the calculation instantly on thread startup to eliminate layout pop
+    updateGlobalClockTime();
+    
+    // Bind continuous ticking loop to execute precisely every 1000 milliseconds
+    setInterval(updateGlobalClockTime, 1000);
+    console.log("✓ [Global Clock Engine] High-priority ticking thread successfully attached to layout node.");
+  });
+})();
