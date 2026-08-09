@@ -312,3 +312,105 @@ window.Filings4uSyncEngine = {
   }
 };
 
+/**
+ * filings4u Platform Architecture
+ * Global Script Attachment: Isolated Client Home Greetings Hydrator Engine
+ */
+(function() {
+  "use strict";
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 🟢 CONSTRAINT 1: Restrict execution path strictly to the client home dashboard layout page
+    const currentPathUrl = window.location.pathname.toLowerCase();
+    if (!currentPathUrl.includes("client-dashboard.html") && currentPathUrl !== "/client-dashboard" && currentPathUrl !== "/") {
+      console.log("ℹ️ [Global Greetings Engine] Execution skipped: Current view track requires explicit static page header titles.");
+      return;
+    }
+
+    let client = window.supabaseInstance || window.supabaseClient;
+    if (!client && typeof supabase !== 'undefined') {
+      client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+    }
+    if (!client) return;
+
+    try {
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !session || !session.user) return;
+
+      const userEmail = String(session.user.email).trim().toLowerCase();
+
+      const welcomeHeaderNode = document.querySelector(".welcome-text h1");
+      if (!welcomeHeaderNode) return;
+
+      // 🟢 PIPELINE RESOLUTION: Pulls name parameters from validated table schema column keys natively
+      let resolvedFirstName = "";
+
+      // Match Track A: Attempt profile verification lookup out of public.client_profiles ledger matrix rows
+      try {
+        const { data: profileMatch } = await client
+          .from('client_profiles')
+          .select('first_name, name')
+          .eq('email_address', userEmail)
+          .limit(1)
+          .maybeSingle();
+
+        if (profileMatch) {
+          resolvedFirstName = (profileMatch.first_name || profileMatch.name || "").trim().split(' ')[0];
+        }
+      } catch (err) { console.warn("client_profiles scan skipped", err); }
+
+      // Match Track B: Fallback search via public.orders using the correct verified email_address column
+      if (!resolvedFirstName) {
+        const { data: orderMatch } = await client
+          .from('orders')
+          .select('first_name')
+          .eq('email_address', userEmail)
+          .limit(1)
+          .maybeSingle();
+
+        if (orderMatch && orderMatch.first_name) {
+          resolvedFirstName = orderMatch.first_name.trim().split(' ')[0];
+        }
+      }
+
+      // Match Track C: Fallback search via public.dashboard_orders using the verified email_address column
+      if (!resolvedFirstName) {
+        const { data: dashOrderMatch } = await client
+          .from('dashboard_orders')
+          .select('first_name')
+          .eq('email_address', userEmail)
+          .limit(1)
+          .maybeSingle();
+
+        if (dashOrderMatch && dashOrderMatch.first_name) {
+          resolvedFirstName = dashOrderMatch.first_name.trim().split(' ')[0];
+        }
+      }
+
+      // If no historical name entry lines are logged anywhere, fall back safely onto a clean default asset string
+      if (!resolvedFirstName) {
+        resolvedFirstName = "Valued Member";
+      }
+
+      // 🟢 DOM INJECTION LAYER WITH MICRO-INTERACTION FADE
+      if (welcomeHeaderNode) {
+        const stylizedFormattedName = resolvedFirstName.charAt(0).toUpperCase() + resolvedFirstName.slice(1);
+        const safeEscapedName = stylizedFormattedName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        
+        welcomeHeaderNode.style.transition = "opacity 0.2s ease-in-out";
+        welcomeHeaderNode.style.opacity = "0";
+        
+        welcomeHeaderNode.innerHTML = `Welcome Back, <span style="color: var(--emerald, #10b981); font-weight: 850;">${safeEscapedName}</span>`;
+        
+        setTimeout(() => {
+          welcomeHeaderNode.style.opacity = "1";
+        }, 30);
+        
+        console.log(`✓ [Global Greetings Engine] Flawlessly hydrated customer homepage header banner node: [${safeEscapedName}]`);
+      }
+
+    } catch (fault) {
+      console.warn("⚠️ Global welcome message pipeline skipped context evaluation:", fault.message);
+    }
+  });
+})();

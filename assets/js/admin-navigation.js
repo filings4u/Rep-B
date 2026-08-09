@@ -144,86 +144,86 @@ desktopSidebarNode.innerHTML = `
   <div><div class="admin-badge" style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; margin-top:4px; display:inline-block;">Admin Dashboard</div></div>
 </div>
 
-<nav class="sidebar-accordion-menu"> 
-  
+<nav class="sidebar-accordion-menu">
   <!-- Group 1: Control Systems -->
-  <div class="accordion-group"> 
-    <button type="button" class="accordion-trigger d-trigger" data-group="core" onclick="toggleSidebarAccordion(this)"> 
-      Control Systems <span class="chevron">▼</span> 
-    </button> 
-    <div class="accordion-panel d-panel" data-group="core"> 
-      <a href="admin-dashboard.html" class="nav-item d-link" data-page="admin-dashboard.html"><span>📊</span> System Hub Home</a> 
-      <a href="admin-billing.html" class="nav-item d-link" data-page="admin-billing.html"><span>💰</span> Sales & Price Audit</a> 
-      <a href="admin-blog.html" class="nav-item d-link" data-page="admin-blog.html"><span>📰</span> Manage Insights Blog</a> 
-      <a href="admin-faqs.html" class="nav-item d-link" data-page="admin-faqs.html"><span>🚀</span> Manage FAQs Matrix</a> 
-    </div> 
-  </div> 
+  <div class="accordion-group">
+    <button type="button" class="accordion-trigger d-trigger" data-group="core" onclick="toggleSidebarAccordion(this)">
+      Control Systems <span class="chevron">▼</span>
+    </button>
+    <div class="accordion-panel d-panel" data-group="core">
+      <a href="admin-dashboard.html" class="nav-item d-link" data-page="admin-dashboard.html"><span>📊</span> System Hub Home</a>
+      <a href="admin-billing.html" class="nav-item d-link" data-page="admin-billing.html"><span>💰</span> Sales & Price Audit</a>
+      <a href="admin-blog.html" class="nav-item d-link" data-page="admin-blog.html"><span>📰</span> Manage Insights Blog</a>
+      <a href="admin-faqs.html" class="nav-item d-link" data-page="admin-faqs.html"><span>🚀</span> Manage FAQs Matrix</a>
+    </div>
+  </div>
 
   <!-- Group 2: Operations & CRM -->
-  <div class="accordion-group"> 
-    <button type="button" class="accordion-trigger d-trigger" data-group="crm" onclick="toggleSidebarAccordion(this)"> 
-      Operations & CRM <span class="chevron">▼</span> 
-    </button> 
-    <div class="accordion-panel d-panel" data-group="crm"> 
-      <a href="admin-crm.html" class="nav-item d-link" data-page="admin-crm.html"><span>👥</span> Customer CRM</a> 
-      <a href="admin-customer-profile.html" class="nav-item d-link" data-page="admin-customer-profile.html"><span>👤</span> Client Profiler</a> 
-      <a href="admin-service-manager.html" class="nav-item d-link" data-page="admin-service-manager.html"><span>⚙️</span> Service Fulfillment</a> 
+  <div class="accordion-group">
+    <button type="button" class="accordion-trigger d-trigger" data-group="crm" onclick="toggleSidebarAccordion(this)">
+      Operations & CRM <span class="chevron">▼</span>
+    </button>
+    <div class="accordion-panel d-panel" data-group="crm">
+      <a href="admin-crm.html" class="nav-item d-link" data-page="admin-crm.html"><span>👥</span> Customer CRM</a>
+      <a href="admin-customer-profile.html" class="nav-item d-link" data-page="admin-customer-profile.html"><span>👤</span> Client Profiler</a>
+      <a href="admin-service-manager.html" class="nav-item d-link" data-page="admin-service-manager.html"><span>⚙️</span> Service Fulfillment</a>
       <a href="admin-compliance-audit.html" class="nav-item d-link" data-page="admin-compliance-audit.html"><span>🛡️</span> Compliance Audit</a>
-      <a href="admin-entity-master.html" class="nav-item d-link" data-page="admin-entity-master.html"><span>🏢</span> Entity Master Ledger</a>
-      <a href="admin-orders.html" class="nav-item d-link" data-page="admin-orders.html"><span>📦</span> Active Orders Queue</a> 
-    </div> 
-  </div> 
+      <a href="admin-entities-ledger.html" class="nav-item d-link" data-page="admin-entities-ledger.html"><span>🏢</span> Entity Master Ledger</a>
+      <a href="admin-orders.html" class="nav-item d-link" data-page="admin-orders.html"><span>📦</span> Active Orders Queue</a>
+    </div>
+  </div>
 
   <!-- Group 3: Financials & Health -->
-  <div class="accordion-group"> 
-    <button type="button" class="accordion-trigger d-trigger" data-group="finance" onclick="toggleSidebarAccordion(this)"> 
-      Financials & Health <span class="chevron">▼</span> 
-    </button> 
-    <div class="accordion-panel d-panel" data-group="finance"> 
-      <a href="pay-invoice.html" class="nav-item d-link" data-page="pay-invoice.html"><span>💳</span> Process Invoice Pay</a> 
-      <a href="admin-system-logs.html" class="nav-item d-link" data-page="admin-system-logs.html"><span>📋</span> System Event Logs</a> 
-    </div> 
-  </div> 
+  <div class="accordion-group">
+    <button type="button" class="accordion-trigger d-trigger" data-group="finance" onclick="toggleSidebarAccordion(this)">
+      Financials & Health <span class="chevron">▼</span>
+    </button>
+    <div class="accordion-panel d-panel" data-group="finance">
+      <a href="pay-invoice.html" class="nav-item d-link" data-page="pay-invoice.html"><span>💳</span> Process Invoice Pay</a>
+      <a href="admin-system-logs.html" class="nav-item d-link" data-page="admin-system-logs.html"><span>📋</span> System Event Logs</a>
+    </div>
+  </div>
 
   <!-- Group 4: Communication & Tools -->
-  <div class="accordion-group"> 
-    <button type="button" class="accordion-trigger d-trigger" data-group="tools" onclick="toggleSidebarAccordion(this)"> 
-      Communication & Tools <span class="chevron">▼</span> 
-    </button> 
-    <div class="accordion-panel d-panel" data-group="tools"> 
-      <a href="admin-chat.html" class="nav-item d-link" data-page="admin-chat.html"><span>💬</span> Client Chat</a> 
-      <a href="admin-documents.html" class="nav-item d-link" data-page="admin-documents.html"><span>📂</span> Document Vault</a> 
-      <a href="admin-appointments.html" class="nav-item d-link" data-page="admin-appointments.html"><span>⏰</span> Session Allocations</a> 
-      <a href="admin-notifications.html" class="nav-item d-link" data-page="admin-notifications.html"><span>🔔</span> Alerts Log</a> 
-      <a href="admin-notifications-center.html" class="nav-item d-link" data-page="admin-notifications-center.html"><span>📡</span> Dispatch Broadcast</a> 
-    </div> 
-  </div> 
+  <div class="accordion-group">
+    <button type="button" class="accordion-trigger d-trigger" data-group="tools" onclick="toggleSidebarAccordion(this)">
+      Communication & Tools <span class="chevron">▼</span>
+    </button>
+    <div class="accordion-panel d-panel" data-group="tools">
+      <a href="admin-chat.html" class="nav-item d-link" data-page="admin-chat.html"><span>💬</span> Client Chat</a>
+      <a href="admin-documents.html" class="nav-item d-link" data-page="admin-documents.html"><span>📂</span> Document Vault</a>
+      <a href="admin-appointments.html" class="nav-item d-link" data-page="admin-appointments.html"><span>⏰</span> Session Allocations</a>
+      <a href="admin-notifications.html" class="nav-item d-link" data-page="admin-notifications.html"><span>🔔</span> Alerts Log</a>
+      <a href="admin-notifications-center.html" class="nav-item d-link" data-page="admin-notifications-center.html"><span>📡</span> Dispatch Broadcast</a>
+    </div>
+  </div>
 
   <!-- Group 5: Intake & Design Hub -->
-  <div class="accordion-group"> 
-    <button type="button" class="accordion-trigger d-trigger" data-group="intake" onclick="toggleSidebarAccordion(this)"> 
-      Intake & Design Hub <span class="chevron">▼</span> 
-    </button> 
-    <div class="accordion-panel d-panel" data-group="intake"> 
-      <a href="logodesign-intake.html" class="nav-item d-link" data-page="logodesign-intake.html"><span>🎨</span> Logo Design Form</a> 
-      <a href="webdesign-intake.html" class="nav-item d-link" data-page="webdesign-intake.html"><span>🌐</span> Web Ingestion Form</a> 
-      <a href="admin-design-hub.html" class="nav-item d-link" data-page="admin-design-hub.html"><span>🚀</span> Shared Design Hub</a> 
-    </div> 
-  </div> 
+  <div class="accordion-group">
+    <button type="button" class="accordion-trigger d-trigger" data-group="intake" onclick="toggleSidebarAccordion(this)">
+      Intake & Design Hub <span class="chevron">▼</span>
+    </button>
+    <div class="accordion-panel d-panel" data-group="intake">
+      <a href="logodesign-intake.html" class="nav-item d-link" data-page="logodesign-intake.html"><span>🎨</span> Logo Design Form</a>
+      <a href="webdesign-intake.html" class="nav-item d-link" data-page="webdesign-intake.html"><span>🌐</span> Web Ingestion Form</a>
+      <!-- 🟢 ADDED: Web Projects Slat Interface Link -->
+      <a href="admin-web-projects.html" class="nav-item d-link" data-page="admin-web-projects.html"><span>💻</span> Web Design Projects</a>
+    </div>
+  </div>
 
   <!-- Group 6: HQ Infrastructure -->
-  <div class="accordion-group"> 
-    <button type="button" class="accordion-trigger d-trigger" data-group="hq" onclick="toggleSidebarAccordion(this)"> 
-      HQ Infrastructure <span class="chevron">▼</span> 
-    </button> 
-    <div class="accordion-panel d-panel" data-group="hq"> 
-      <a href="admin-status.html" class="nav-item d-link" data-page="admin-status.html"><span>🚦</span> System Status Tracker</a> 
-      <a href="admin-global-settings.html" class="nav-item d-link" data-page="admin-global-settings.html"><span>🔧</span> Global Config</a> 
-    </div> 
-  </div> 
-
+  <div class="accordion-group">
+    <button type="button" class="accordion-trigger d-trigger" data-group="hq" onclick="toggleSidebarAccordion(this)">
+      HQ Infrastructure <span class="chevron">▼</span>
+    </button>
+    <div class="accordion-panel d-panel" data-group="hq">
+      <!-- 🟢 ADDED: Packages Slat Interface Link -->
+      <a href="admin-packages.html" class="nav-item d-link" data-page="admin-packages.html"><span>📦</span> Freight Package Matrix</a>
+      <a href="admin-status.html" class="nav-item d-link" data-page="admin-status.html"><span>🚦</span> System Status Tracker</a>
+      <a href="admin-global-settings.html" class="nav-item d-link" data-page="admin-global-settings.html"><span>🔧</span> Global Config</a>
+    </div>
+  </div>
 </nav>
-
 
 
 <div class="sidebar-footer-lock" style="padding-top:10px !important; text-align: center; width: 100%; box-sizing: border-box;">
@@ -259,7 +259,6 @@ if (headerNode && headerNode.parentNode) {
     mobileDropdownTray.id = "f4uMobileDropdownContainerTray";
     mobileDropdownTray.innerHTML = `
 <nav class="sidebar-accordion-menu" style="padding: 0 !important;">
-  
   <!-- Group 1: Control Systems -->
   <div class="accordion-group">
     <button type="button" class="accordion-trigger m-trigger" data-group="m-core" onclick="toggleSidebarAccordion(this)">
@@ -283,7 +282,7 @@ if (headerNode && headerNode.parentNode) {
       <a href="admin-customer-profile.html" class="nav-item m-link" data-page="admin-customer-profile.html">Client Profiler</a>
       <a href="admin-service-manager.html" class="nav-item m-link" data-page="admin-service-manager.html">Service Fulfillment</a>
       <a href="admin-compliance-audit.html" class="nav-item m-link" data-page="admin-compliance-audit.html">Compliance Audit</a>
-      <a href="admin-entity-master.html" class="nav-item m-link" data-page="admin-entity-master.html">Entity Master Ledger</a>
+      <a href="admin-entities-ledger.html" class="nav-item m-link" data-page="admin-entities-ledger.html">Entity Master Ledger</a>
       <a href="admin-orders.html" class="nav-item m-link" data-page="admin-orders.html">Active Orders Queue</a>
     </div>
   </div>
@@ -321,7 +320,8 @@ if (headerNode && headerNode.parentNode) {
     <div class="accordion-panel m-panel" data-group="m-intake">
       <a href="logodesign-intake.html" class="nav-item m-link" data-page="logodesign-intake.html">Logo Design Form</a>
       <a href="webdesign-intake.html" class="nav-item m-link" data-page="webdesign-intake.html">Web Ingestion Form</a>
-      <a href="admin-design-hub.html" class="nav-item m-link" data-page="admin-design-hub.html">Shared Design Hub</a>
+      <!-- 🟢 ADDED: Web Projects Slat Interface Link -->
+      <a href="admin-web-projects.html" class="nav-item m-link" data-page="admin-web-projects.html">Web Design Projects</a>
     </div>
   </div>
 
@@ -331,6 +331,8 @@ if (headerNode && headerNode.parentNode) {
       HQ Infrastructure <span class="chevron">▼</span>
     </button>
     <div class="accordion-panel m-panel" data-group="m-hq">
+      <!-- 🟢 ADDED: Packages Slat Interface Link -->
+      <a href="admin-packages.html" class="nav-item m-link" data-page="admin-packages.html">Freight Package Matrix</a>
       <a href="admin-status.html" class="nav-item m-link" data-page="admin-status.html">System Status Tracker</a>
       <a href="admin-global-settings.html" class="nav-item m-link" data-page="admin-global-settings.html">Global Config</a>
     </div>
@@ -338,9 +340,7 @@ if (headerNode && headerNode.parentNode) {
 
   <!-- Session Termination Button -->
   <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#dc2626; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Exit Admin Session</button>
-
 </nav>
-
 
 
     `;
