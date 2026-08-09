@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Customer Portal Dashboard | filings4u</title>
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
+  <meta name="msapplication-navbutton-color" content="#10b981">
+  <link rel="icon" type="image/png" href="images/fav.png">
+
+  <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* 🖥️ PRIMARY CONTENT AREA STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 16px !important; }
+    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
+    .search-input { padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; }
+    
+    .nav-bell-wrapper { position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important; }
+    .document-vault-download-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+    .document-vault-download-btn:hover { background: var(--text-dark); color: white; }
+    
+    .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
+    .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
+  </style>
+</head>
+
+<body style="margin: 0; padding: 0; background: #f8fafc; font-family: system-ui, -apple-system, sans-serif;">
+
+    <div class="dashboard-wrapper">
+    <!-- 🖥️ PRIMARY CONTENT AREA -->
+    <main class="portal-main">
+
+  <!-- 🟢 MASTER BLOCK DISPLAY WRAPPER -->
+  <div style="display: block; width: 100%; min-height: 100vh; padding: 24px 32px 32px 32px; box-sizing: border-box; background: #f1f5f9; overflow-y: auto; position: relative;">
+
+    <!-- 📢 TOP BANNER STRIP STATUS HUB -->
+    <div style="width: 100%; display: block; margin-bottom: 28px; box-sizing: border-box; position: relative; height: auto;">
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <h2 style="margin: 0; font-size: 1.25rem; font-weight: 850; color: #0f172a;">Client Communication Center</h2>
+              <!-- 🕒 LIVE DIGITAL CLOCK DISPLAY NODE -->
+              <div id="portal-notifications-clock" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; background: #f1f5f9; color: #0f172a; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: nowrap;">00:00:00 AM</div>
+            </div>
+            <p style="font-size: 0.78rem; color: #64748b; margin: 4px 0 0 0;">Review processing approvals, verification requirements, and direct guidance sent by administrative personnel.</p>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <span id="clientUnreadAlertsCounterPill" style="background: #e2e8f0; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;">0 Unread Alerts</span>
+            <button type="button" onclick="markAllClientAlertsAsReadEngine()" style="background: #0f172a; color: white; border: none; padding: 8px 16px; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: background 0.2s; white-space: nowrap;">Mark All Read</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🛠️ BOTTOM LAYER REAL-TIME ACTIVITY STREAM WORKSPACE -->
+    <div style="display: grid; grid-template-columns: 1fr; gap: 32px; width: 100%; max-width: 100%; box-sizing: border-box; align-items: start; position: relative;">
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px; box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 50vh; display: flex; flex-direction: column; gap: 16px; width: 100%;">
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">Account Alerts Feed History</h3>
+        
+        <!-- Dynamic Stream Ingestion Target Element Container Box -->
+        <div id="clientNotificationsStreamHistoryTarget" style="display: flex; flex-direction: column; gap: 14px; width: 100%; box-sizing: border-box;">
+          <div style="text-align: center; color: #94a3b8; font-size: 0.85rem; padding: 60px 12px; font-style: italic;">
+            Connecting to secure messaging channels...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+    </main>
+    </div>
+
+
+      <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <script src="assets/js/client-master-ledger.js"></script>
+
+  <script src="assets/js/client-navigation.js"></script>
+
+  <script src="assets/js/client-footer.js"></script>
+
+
+<script>
+/**
+ * filings4u Platform Architecture
+ * Module: client-notifications-center.js (Isolated Clock & Defensive Hydrator)
+ */
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  // 🟢 THE FIX: Safely binds execution context directly to your layout container element ID
+  function initializeLiveNotificationsClock() {
+    const clockElement = document.getElementById("portal-notifications-clock");
+    if (!clockElement) {
+      console.warn("⚠️ DOM Delay: Clock container [#portal-notifications-clock] not found yet.");
+      return;
+    }
+
+    function updateClockTime() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      
+      hours = hours % 12;
+      hours = hours ? hours : 12; // Normalizes hour '0' directly to '12'
+
+      clockElement.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    updateClockTime();
+    setInterval(updateClockTime, 1000);
+    console.log("✓ [Clock Engine] System runtime loop successfully attached and ticking.");
+  }
+
+
+  // Fire clock instantly on thread start
+  initializeLiveNotificationsClock();
+
+  const streamBox = document.getElementById("clientNotificationsStreamHistoryTarget");
+  const unreadCounter = document.getElementById("clientUnreadAlertsCounterPill");
+  let liveClientNotificationsChannel = null;
+
+  // Establish Supabase Connection Handshake
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client && typeof supabase !== 'undefined') {
+    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+  }
+  if (!client) {
+    console.error("✕ Supabase connection error: Instance references missing from window context.");
+    return;
+  }
+
+  // Verify Active Login Session Properties
+  const { data: { session }, error: sessionError } = await client.auth.getSession();
+  if (sessionError || !session || !session.user) {
+    window.location.href = "portal-login.html";
+    return;
+  }
+
+  const userEmail = String(session.user.email).trim().toLowerCase();
+  const userUid = session.user.id;
+
+  // 1. QUERY SYSTEM FOR ALERTS MATCHING THE LOGGED-IN CUSTOMER PROFILE
+  async function loadClientNotificationsFeed() {
+    try {
+      console.log(`📡 [Portal Ingestion] Fetching direct alerts for client: ${userEmail}`);
+      const { data: notices, error: fetchError } = await client
+        .from('portal_notifications')
+        .select('*')
+        .or(`email_address.eq.${userEmail},recipient_email.eq.${userEmail},user_id.eq.${userUid}`)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      // Calculate unread badge indices metrics dynamically
+      const totalUnreadCount = notices ? notices.filter(n => !n.is_read).length : 0;
+      if (unreadCounter) {
+        unreadCounter.textContent = `${totalUnreadCount} Unread Alerts`;
+        unreadCounter.style.background = totalUnreadCount > 0 ? '#fee2e2' : '#e2e8f0';
+        unreadCounter.style.color = totalUnreadCount > 0 ? '#b91c1c' : '#475569';
+      }
+
+      if (!notices || notices.length === 0) {
+        streamBox.innerHTML = `
+          <div style="text-align:center; color:var(--text-muted); font-size:0.875rem; padding:60px 12px; font-style:italic;">
+            You do not have any account alerts or process messages logged currently.
+          </div>`;
+        return;
+      }
+
+      streamBox.innerHTML = "";
+      notices.forEach(notice => {
+        const rowBox = document.createElement("div");
+        const wasRead = notice.is_read === true;
+
+        rowBox.style.cssText = `padding: 18px; border: 1px solid ${wasRead ? "var(--border-color)" : "#cbd5e1"}; background: ${wasRead ? "#ffffff" : "rgba(16,185,129,0.01)"}; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); border-left: 4px solid ${wasRead ? "#94a3b8" : "var(--emerald)"}; position: relative; transition: all 0.2s; box-sizing: border-box; width: 100%;`;
+        
+        rowBox.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; width:100%;">
+            <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                ${!wasRead ? `<span style="display:inline-block; width:6px; height:6px; background:var(--emerald); border-radius:50%;"></span>` : ""}
+                <strong style="font-size:0.925rem; color:var(--text-dark);">${escapeClientAlertHtml(notice.title)}</strong>
+              </div>
+              <p style="margin:4px 0 0 0; font-size:0.825rem; color:var(--text-muted); line-height:1.45; white-space:pre-wrap;">${escapeClientAlertHtml(notice.message)}</p>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px; justify-content:space-between; height:100%; min-width:90px;">
+              <span style="font-size:10px; color:var(--text-muted); font-family:monospace;">${new Date(notice.created_at).toLocaleDateString([], {month:'short', day:'numeric'})} ${new Date(notice.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+              ${!wasRead ? `<button type="button" onclick="acknowledgeSingleClientAlertRow('${notice.id}')" style="background:var(--text-dark); color:#ffffff; border:none; padding:4px 10px; font-size:10px; font-weight:700; border-radius:4px; cursor:pointer;">Mark Read</button>` : ""}
+            </div>
+          </div>
+        `;
+        streamBox.appendChild(rowBox);
+      });
+
+    } catch (fault) {
+      console.error("✕ Customer notification feed compilation failure:", fault);
+    }
+  }
+
+  // 2. ACKNOWLEDGE AN INDIVIDUAL ACCOUNT ALERT NOTIFICATION ROW
+  window.acknowledgeSingleClientAlertRow = async function(notificationId) {
+    if (!notificationId) return;
+    try {
+      const { error } = await client
+        .from('portal_notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+      await loadClientNotificationsFeed();
+    } catch (err) {
+      console.error("✕ Failed to mark single notification row as read:", err);
+    }
+  };
+
+  // 3. BULK ACKNOWLEDGE MARK ALL ACCOUNT ALERTS AS READ
+  window.markAllClientAlertsAsReadEngine = async function() {
+    try {
+      const { error } = await client
+        .from('portal_notifications')
+        .update({ is_read: true })
+        .or(`email_address.eq.${userEmail},recipient_email.eq.${userEmail}`)
+        .eq('is_read', false);
+
+      if (error) throw error;
+      await loadClientNotificationsFeed();
+    } catch (err) {
+      console.error("✕ Bulk client notification tracking update rejected:", err);
+    }
+  };
+
+  function escapeClientAlertHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // 4. BIND LIVE BROADCAST LISTENERS FOR INSTANT OVER-THE-AIR RE-RENDERS
+  async function bindLiveClientNotificationsRealtimeFeed() {
+    if (liveClientNotificationsChannel) liveClientNotificationsChannel.unsubscribe();
+
+    liveClientNotificationsChannel = client
+      .channel(`client-portal-notifications-live-stream-${userUid}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'portal_notifications'
+      }, async payload => {
+        console.log("✓ [Client Alerts Hub] Intercepted incoming over-the-air notification matrix update:", payload);
+        
+        const isTargetUser = payload.new && (
+          String(payload.new.email_address).toLowerCase() === userEmail ||
+          String(payload.new.recipient_email).toLowerCase() === userEmail ||
+          payload.new.user_id === userUid
+        );
+
+        if (isTargetUser || payload.eventType === 'DELETE') {
+          await loadClientNotificationsFeed();
+        }
+      })
+      .subscribe();
+  }
+
+  // Execute database hydrations sequentially
+  await loadClientNotificationsFeed();
+  await bindLiveClientNotificationsRealtimeFeed();
+});
+</script>
+
+</body>
+</html>

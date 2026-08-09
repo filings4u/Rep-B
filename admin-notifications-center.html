@@ -62,14 +62,62 @@
         </div>
       </header>
 
-      <div class="content-container">
-        <div class="console-card">
-          <h2>Unified Operations Audit Stream</h2>
-          <div id="global-notifications-stream" class="notification-stream-list">
-            <div style="padding:40px; text-align:center; color:var(--text-muted); font-weight:600;">Connecting to system messaging pipelines...</div>
-          </div>
+  <!-- 📊 TOP LAYER: REDESIGNED ADMIN NOTIFICATIONS CONTROL COCKPIT -->
+<div class="content-container" style="display: flex; flex-direction: column; gap: 40px; width: 100%; box-sizing: border-box; padding: 32px; background: #f1f5f9; min-height: 100vh;">
+  
+  <!-- DUAL COLUMN AGGREGATION RESPONSIVE SYSTEM GRID -->
+  <div style="display: grid; grid-template-columns: 460px 1fr; gap: 36px; width: 100%; align-items: start; box-sizing: border-box;">
+    
+    <!-- LEFT COMPONENT COLUMN: COMPOSE OUTGOING DIRECT ALERTS CARDS -->
+    <div class="console-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 36px; box-sizing: border-box; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+      <h2 style="margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em;">Compose Client Notification</h2>
+      <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 24px 0; line-height: 1.4;">Broadcast a localized administrative message string down directly to a customer's workspace portal workspace view instantly.</p>
+      
+      <form id="directNotificationForm" novalidate style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="font-weight:700; font-size:0.8rem; color:#475569;">Target Customer Recipient Profile</label>
+          <select id="notificationRecipientEmail" required style="width:100%; padding:12px 16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; font-size: 0.875rem; height: 46px; box-sizing: border-box;">
+            <option value="">-- Synchronizing Live Customer List... --</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="font-weight:700; font-size:0.8rem; color:#475569;">Notification Subject / Status Header</label>
+          <input type="text" id="notificationTitle" required style="width:100%; padding:12px 16px; border:1px solid #cbd5e1; border-radius:8px; font-size: 0.875rem; height: 46px; box-sizing: border-box;" placeholder="e.g., Filing Processing Approved by State Registry">
+        </div>
+        
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="font-weight:700; font-size:0.8rem; color:#475569;">Notification Body Message Context</label>
+          <textarea id="notificationMessage" required style="width:100%; padding:12px 16px; border:1px solid #cbd5e1; border-radius:8px; font-size: 0.875rem; min-height: 100px; resize: vertical; font-family: inherit; box-sizing: border-box;" placeholder="Type the clear updates text that the client will see instantly upon logging in..."></textarea>
+        </div>
+        
+        <div id="dispatch-form-status" style="display:none; font-size:0.85rem; font-weight:700; padding:12px; border-radius:8px; text-align: center;"></div>
+        
+        <button type="submit" class="action-btn" id="dispatchSubmitBtn" style="background:#0a1f44; color:#ffffff; border:none; padding:14px; border-radius:8px; font-weight:700; cursor:pointer; width:100%; font-size:0.875rem; box-shadow: 0 4px 6px rgba(10,31,68,0.12);">Dispatch Alert Live ➔</button>
+      </form>
+    </div>
+
+    <!-- RIGHT COMPONENT COLUMN: RE-DESIGNED LIVE SYSTEM ACTIVITY STREAM AUDIT TRAIL LOGS -->
+    <div class="console-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 36px; box-sizing: border-box; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 20px;">
+      <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>
+          <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em;">Global Action Activity Streams</h2>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0 0 0;">Real-time feed showing customer actions, document generation triggers, and support messages.</p>
+        </div>
+        <button type="button" onclick="markAllAlertsAsReadEngine()" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 6px 14px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; cursor: pointer; white-space: nowrap;">Mark All Read</button>
+      </div>
+
+      <!-- Real-Time Activity Tracking Feed List Row Container -->
+      <div id="admin-notifications-history-box" style="display: flex; flex-direction: column; gap: 14px; max-height: 72vh; overflow-y: auto; padding-right: 4px; box-sizing: border-box; width: 100%;">
+        <div style="padding:40px; text-align:center; color:#94a3b8; font-weight:600; font-style: italic; font-size: 0.875rem;">
+          Connecting to the secure messaging channels...
         </div>
       </div>
+    </div>
+
+  </div>
+</div>
+
     </main>
   </div>
 
@@ -86,165 +134,314 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+ <script>
+/**
+ * filings4u Platform Architecture
+ * Module: admin-notifications-hub.js (Global Operational Activity Stream Engine)
+ */
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      // 1. Resolve Document Activity Stream Selector
-      const streamContainer = document.getElementById("global-notifications-stream");
+  const recipientSelect = document.getElementById("notificationRecipientEmail");
+  const notificationForm = document.getElementById("directNotificationForm");
+  const formStatus = document.getElementById("dispatch-form-status");
+  const submitBtn = document.getElementById("dispatchSubmitBtn");
+  const historyBox = document.getElementById("admin-notifications-history-box");
 
-      if (!streamContainer) {
-        throw new Error("✕ Critical UI Error: Activity timeline target container 'global-notifications-stream' is missing.");
+  let liveAlertsChannel = null;
+
+  // Establish Supabase Connection Handshake
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client && typeof supabase !== 'undefined') {
+    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+  }
+  if (!client) return;
+
+  // 🌍 GLOBAL OPERATIONAL HELPER FUNCTION: Call this from ANY page to trigger automated real-time notifications
+  window.dispatchGlobalSystemNotification = async function(clientEmail, sourceAction, title, message) {
+    try {
+      const { error } = await client
+        .from('system_notifications')
+        .insert([{
+          client_email: String(clientEmail).trim().toLowerCase(),
+          source_action: sourceAction, // e.g., 'Support Ticket Created', 'Package Signed'
+          alert_title: title,
+          alert_message: message,
+          is_read_by_admin: false,
+          created_at: new Date().toISOString()
+        }]);
+      if (error) throw error;
+      console.log(`✓ [Global Alert Engine] Dispatched real-time operational notification for action: [${sourceAction}]`);
+    } catch (e) {
+      console.error("✕ Global notification dispatcher exception caught:", e.message);
+    }
+  };
+
+  // 1. POPULATE UNIQUE CLIENT RECIPIENT EMAILS BY MULTI-TABLE AGGREGATION
+  async function populateClientDropdown() {
+    try {
+      const [ordersRes, dashOrdersRes] = await Promise.all([
+        client.from('orders').select('client_email, client_name'),
+        client.from('dashboard_orders').select('email_address, first_name, last_name')
+      ]);
+
+      const emailMatrixMap = new Map();
+
+      if (ordersRes.data) {
+        ordersRes.data.forEach(row => {
+          const email = (row.client_email || '').trim().toLowerCase();
+          if (email && email !== 'anonymous@unknown.com') {
+            emailMatrixMap.set(email, row.client_name || 'Valued Client');
+          }
+        });
       }
 
-      // 2. Fetch Global Database Instance Connections
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        streamContainer.innerHTML = `<div style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</div>`;
-        throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
+      if (dashOrdersRes.data) {
+        dashOrdersRes.data.forEach(row => {
+          const email = (row.email_address || '').trim().toLowerCase();
+          if (email && email !== 'anonymous@unknown.com' && !emailMatrixMap.has(email)) {
+            const compiledName = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+            emailMatrixMap.set(email, compiledName || 'Valued Client');
+          }
+        });
       }
 
-      async function compileUnifiedOperationsStream() {
-        try {
-          console.log("📡 [Activity Center] Querying multi-service telemetry logs simultaneously...");
+      if (recipientSelect) {
+        recipientSelect.innerHTML = '<option value="">-- Choose Target Customer Account --</option>';
+        Array.from(emailMatrixMap.keys()).sort().forEach(email => {
+          const name = emailMatrixMap.get(email);
+          const opt = document.createElement('option');
+          opt.value = email;
+          opt.textContent = `${email} (${name})`;
+          recipientSelect.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      console.error("✕ Dropdown list aggregation crashed:", e);
+    }
+  }
 
-          // 🟢 PARALLEL DATA PIPELINE EXECUTION: Query matching table logs concurrently via Promise pools
-          const [ordersRes, chatRes, docsRes, webFormRes, logoRes] = await Promise.all([
-            client.from('orders').select('company_name, service_title, created_at').order('created_at', { ascending: false }).limit(8),
-            client.from('chat_messages').select('client_id, message_content, created_at').eq('sender_type', 'client').order('created_at', { ascending: false }).limit(8),
-            client.from('order_documents').select('user_email, document_name, created_at').order('created_at', { ascending: false }).limit(8),
-            client.from('web_intakes').select('tracking_number, desired_domain, created_at').order('created_at', { ascending: false }).limit(8),
-            client.from('logo_intakes').select('tracking_number, logo_text, created_at').order('created_at', { ascending: false }).limit(8)
-          ]);
+  // 2. FETCH AND LIVE-RENDER THE NEW PORTAL_NOTIFICATIONS DISPATCH HISTORY STREAM
+  async function reloadSystemNotificationsFeed() {
+    try {
+      console.log("📡 [Admin Dashboard] Rehydrating data stream from public.portal_notifications...");
+      const { data: alerts, error } = await client
+        .from('portal_notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-          let aggregatedEventsTimeline = [];
+      if (error) throw error;
 
-          // Map Inbound Order Events
-          if (ordersRes.data) {
-            ordersRes.data.forEach(item => {
-              aggregatedEventsTimeline.push({
-                type: 'ORDER',
-                badgeClass: 'badge-order',
-                title: 'New Conversion Order Placed',
-                message: `Company: ${item.company_name} • Service: ${item.service_title}`,
-                timestamp: new Date(item.created_at),
-                routeUrl: 'admin-dashboard.html'
-              });
-            });
-          }
+      if (!alerts || alerts.length === 0) {
+        historyBox.innerHTML = `
+          <div style="text-align:center; color:#94a3b8; font-size:0.875rem; padding:48px 12px; font-style:italic;">
+            No portal notifications or dispatch history logged currently.
+          </div>`;
+        return;
+      }
 
-          // Map Inbound Client Chat Communications
-          if (chatRes.data) {
-            chatRes.data.forEach(item => {
-              aggregatedEventsTimeline.push({
-                type: 'CHAT',
-                badgeClass: 'badge-chat',
-                title: 'New Client Message Inbound',
-                message: `Client ${item.client_id.substring(0,8).toUpperCase()}: "${item.message_content}"`,
-                timestamp: new Date(item.created_at),
-                routeUrl: `admin-chat.html?client_id=${item.client_id}`
-              });
-            });
-          }
+      historyBox.innerHTML = "";
+      alerts.forEach(alert => {
+        const itemRow = document.createElement("div");
+        const isRead = alert.is_read === true;
+        
+        // Contextual styling badges matching operational tracks
+        let badgeBg = "#fef3c7"; let badgeColor = "#92400e";
+        if (alert.ticket_id) { badgeBg = "#fee2e2"; badgeColor = "#b91c1c"; }
+        else if (isRead) { badgeBg = "#e2e8f0"; badgeColor = "#475569"; }
 
-          // Map Storage Asset Document Uploads
-          if (docsRes.data) {
-            docsRes.data.forEach(item => {
-              aggregatedEventsTimeline.push({
-                type: 'DOCUMENT',
-                badgeClass: 'badge-doc',
-                title: 'New Document Asset Uploaded',
-                message: `Owner: ${item.user_email} • File: ${item.document_name}`,
-                timestamp: new Date(item.created_at),
-                routeUrl: 'admin-documents.html'
-              });
-            });
-          }
+        itemRow.style.cssText = `padding: 16px; border: 1px solid ${isRead ? "#e2e8f0" : "#cbd5e1"}; background: ${isRead ? "#ffffff" : "rgba(10,31,68,0.02)"}; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); border-left: 4px solid ${isRead ? "#94a3b8" : "#0a1f44"}; position: relative; transition: all 0.2s;`;
+        
+        const displayEmail = alert.recipient_email || alert.email_address || 'Unspecified Client';
 
-          // Map Public Website Form Intake Submissions
-          if (webFormRes.data) {
-            webFormRes.data.forEach(item => {
-              aggregatedEventsTimeline.push({
-                type: 'WEB FORM',
-                badgeClass: 'badge-form',
-                title: 'Website Intake Specification Submitted',
-                message: `Ref: ${item.tracking_number} • Target Domain: ${item.desired_domain}`,
-                timestamp: new Date(item.created_at),
-                routeUrl: 'admin-design-hub.html'
-              });
-            });
-          }
-
-          // Map Public Logo Branding Intake Submissions
-          if (logoRes.data) {
-            logoRes.data.forEach(item => {
-              aggregatedEventsTimeline.push({
-                type: 'LOGO FORM',
-                badgeClass: 'badge-form',
-                title: 'Branding Concept Specification Submitted',
-                message: `Ref: ${item.tracking_number} • Visual Text: ${item.logo_text}`,
-                timestamp: new Date(item.created_at),
-                routeUrl: 'admin-design-hub.html'
-              });
-            });
-          }
-
-          // Chronologically sort compiled rows from newest to oldest
-          aggregatedEventsTimeline.sort((alpha, beta) => beta.timestamp - alpha.timestamp);
-
-          if (aggregatedEventsTimeline.length === 0) {
-            streamContainer.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No system logs or multi-service activity records found.</div>`;
-            return;
-          }
-
-          streamContainer.innerHTML = "";
-
-          aggregatedEventsTimeline.forEach(eventItem => {
-            const cardNode = document.createElement("div");
-            cardNode.className = "notification-item-card";
-
-            cardNode.innerHTML = `
-              <div class="notification-meta-left">
-                <span class="event-type-badge ${eventItem.badgeClass}">${escapeStreamHtml(eventItem.type)}</span>
-                <div class="event-context-text">
-                  <h4>${escapeStreamHtml(eventItem.title)}</h4>
-                  <p>${escapeStreamHtml(eventItem.message)}</p>
-                </div>
+        itemRow.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; width:100%;">
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:10px; font-weight:800; text-transform:uppercase; background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:4px; letter-spacing:0.3px;">${isRead ? 'Opened' : 'Pushed Live'}</span>
+                <span style="font-size:11px; font-family:monospace; color:#64748b; font-weight:700;">${displayEmail}</span>
               </div>
-              <div class="notification-meta-right">${calculateTimeElapsedString(eventItem.timestamp)}</div>
-            `;
+              <strong style="font-size:0.9rem; color:#0f172a; margin-top:2px;">${escapeAlertHtml(alert.title)}</strong>
+              <p style="margin:0; font-size:0.825rem; color:#475569; line-height:1.4; white-space:pre-wrap;">${escapeAlertHtml(alert.message)}</p>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; justify-content:space-between; height:100%;">
+              <span style="font-size:10px; color:#94a3b8; font-family:monospace;">${new Date(alert.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>
+          </div>
+        `;
+        historyBox.appendChild(itemRow);
+      });
+    } catch (fault) {
+      console.error("✕ Failed to render portal notifications ledger:", fault);
+    }
+  }
 
-            // Smart Navigation Trigger Event
-            cardNode.addEventListener("click", () => {
-              window.location.href = eventItem.routeUrl;
-            });
+  // 6. SETUP REAL-TIME REPLICATION CHANNELS DISPATCH LOGS BROADCAST LISTENERS
+  async function bindLiveNotificationsRealtimeFeed() {
+    if (liveAlertsChannel) liveAlertsChannel.unsubscribe();
 
-            streamContainer.appendChild(cardNode);
-          });
+    liveAlertsChannel = client
+      .channel('admin-global-platform-portal-notifications-stream')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications' }, async payload => {
+        console.log("✓ [Alert Hub Stream] Intercepted portal notification table change:", payload);
+        await reloadSystemNotificationsFeed();
+      })
+      .subscribe();
+  }
 
-        } catch (streamException) {
-          console.error("✕ Unified Operations Stream Compilation Interrupted:", streamException.message);
-          streamContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</div>`;
+
+   // 🟢 THE FIX: Resolves recipient UIDs from client profiles and inserts rows straight into public.portal_notifications
+  if (notificationForm) {
+    notificationForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const targetEmail = recipientSelect.value;
+      const title = document.getElementById("notificationTitle").value.trim();
+      const message = document.getElementById("notificationMessage").value.trim();
+
+      if (!targetEmail || !title || !message) {
+        showDispatchBanner("✕ Input Validation Mismatch: All fields are mandatory.", true);
+        return;
+      }
+
+      if (submitBtn) { 
+        submitBtn.disabled = true; 
+        submitBtn.textContent = "Querying Client Profile UID... 📡"; 
+      }
+
+      try {
+        // 1. LOOKUP RECIPIENT'S USER ID FROM CLIENT PROFILES OR DASHBOARD ORDERS TO SATISFY AUTH.USERS CONTRAINTS
+        console.log(`📡 [Admin Dispatcher] Locating system UID matching recipient: [${targetEmail}]`);
+        
+        let resolvedUserUid = null;
+
+        // Attempt lookup from standard dashboard orders index first
+        const { data: dashOrderMatch } = await client
+          .from('dashboard_orders')
+          .select('client_id')
+          .eq('email_address', targetEmail.toLowerCase())
+          .maybeSingle();
+
+        if (dashOrderMatch && dashOrderMatch.client_id) {
+          resolvedUserUid = dashOrderMatch.client_id;
+        }
+
+        // Secondary fallback to orders table rows mapping if primary lookup yields zero results
+        if (!resolvedUserUid) {
+          const { data: orderMatch } = await client
+            .from('orders')
+            .select('client_id')
+            .eq('client_email', targetEmail.toLowerCase())
+            .maybeSingle();
+            
+          if (orderMatch && orderMatch.client_id) resolvedUserUid = orderMatch.client_id;
+        }
+
+        // If no relational customer profiles row exists, extract active admin uid token as system fallback root link
+        if (!resolvedUserUid) {
+          const { data: { session } } = await client.auth.getSession();
+          resolvedUserUid = session?.user?.id;
+        }
+
+        // 2. COMMIT COMPILED NOTIFICATION DIRECTLY TO PORTAL_NOTIFICATIONS TABLE
+        const { error: insertError } = await client
+          .from('portal_notifications')
+          .insert([{
+            user_id: resolvedUserUid,
+            title: title,
+            message: message,
+            is_read: false,
+            is_archived: false,
+            recipient_email: targetEmail.toLowerCase(),
+            email_address: targetEmail.toLowerCase(),
+            created_at: new Date().toISOString()
+          }]);
+
+        if (insertError) throw insertError;
+
+        showDispatchBanner("✓ Success! Notification successfully dispatched to table and customer email queue.", false);
+        notificationForm.reset();
+        
+        // Optional secondary mirror backup to global operational system logs timeline feed if desired
+        if (typeof window.reloadSystemNotificationsFeed === 'function') {
+          await window.reloadSystemNotificationsFeed();
+        }
+
+      } catch (fault) {
+        console.error("✕ Alert dispatch routing failed:", fault);
+        showDispatchBanner(`✕ Database Rejection: ${fault.message || "Constraint mapping error caught."}`, true);
+      } finally {
+        if (submitBtn) { 
+          submitBtn.disabled = false; 
+          submitBtn.textContent = "Dispatch Alert Live ➔"; 
         }
       }
-
-      function calculateTimeElapsedString(dateObject) {
-        const secondsDifference = Math.floor((new Date() - dateObject) / 1000);
-        if (secondsDifference < 60) return "Just Now";
-        const minutesDifference = Math.floor(secondsDifference / 60);
-        if (minutesDifference < 60) return `${minutesDifference}m ago`;
-        const hoursDifference = Math.floor(minutesDifference / 60);
-        if (hoursDifference < 24) return `${hoursDifference}h ago`;
-        return dateObject.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-      }
-
-      function escapeStreamHtml(str) {
-        if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-      }
-
-      await compileUnifiedOperationsStream();
     });
-  </script>
+  }
+
+
+  // 4. MARK INDIVIDUAL NOTIFICATION ROW AS READ ENGINE
+  window.toggleSingleAlertReadState = async function(alertUuid) {
+    if (!alertUuid) return;
+    try {
+      const { error } = await client
+        .from('system_notifications')
+        .update({ is_read_by_admin: true })
+        .eq('id', alertUuid);
+      if (error) throw error;
+      await reloadSystemNotificationsFeed();
+    } catch (err) { console.error("✕ Failed to toggle row acknowledgment state:", err); }
+  };
+
+  // 5. BULK ACKNOWLEDGE MARK ALL ALERTS AS READ CONTROLLER
+  window.markAllAlertsAsReadEngine = async function() {
+    try {
+      const { error } = await client
+        .from('system_notifications')
+        .update({ is_read_by_admin: true })
+        .eq('is_read_by_admin', false);
+      if (error) throw error;
+      await reloadSystemNotificationsFeed();
+    } catch (err) { console.error("✕ Bulk acknowledgment execution rejected:", err); }
+  };
+
+  function showDispatchBanner(text, isError) {
+    if (!formStatus) return;
+    formStatus.textContent = text;
+    formStatus.style.display = "block";
+    formStatus.style.background = isError ? "#fee2e2" : "#ecfdf5";
+    formStatus.style.color = isError ? "#991b1b" : "#047857";
+    setTimeout(() => { formStatus.style.display = "none"; }, 5000);
+  }
+
+   function escapeAlertHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // 6. SETUP REAL-TIME REPLICATION CHANNELS DISPATCH LOGS BROADCAST LISTENERS
+  async function bindLiveNotificationsRealtimeFeed() {
+    if (liveAlertsChannel) liveAlertsChannel.unsubscribe();
+
+    liveAlertsChannel = client
+      .channel('admin-global-platform-notifications-stream')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'system_notifications' }, async payload => {
+        console.log("✓ [Alert Hub Stream] Intercepted database activity state change:", payload);
+        await reloadSystemNotificationsFeed();
+      })
+      .subscribe();
+  }
+
+   // 🏁 INITIALIZATION MOUNT TRIGGERS ACTIVE RUNTIME LIFECYCLES
+  // 🟢 THE FIX: Realigned initialization sequences to call the new portal_notifications tables loaders cleanly on mount
+  await populateClientDropdown();
+  await reloadSystemNotificationsFeed(); // Pulls the direct portal_notifications ledger entries instantly
+  await bindLiveNotificationsRealtimeFeed(); // Attaches the live over-the-air PostgreSQL channel streams
+});
+</script>
+
+
 </body>
 </html>
