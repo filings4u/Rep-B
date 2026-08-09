@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <button type="button" class="accordion-trigger d-trigger" data-group="account"> My Account <span class="chevron">▼</span> </button> 
     <div class="accordion-panel d-panel" data-group="account"> 
       <!-- 🟢 ADDED: Unified client onboarding progress checkpoint routing link -->
-      <a href="client-onboarding.html" class="nav-item d-link" data-page="client-onboarding.html">🚀 Onboarding Checklist</a>
+      <!-- <a href="client-onboarding.html" class="nav-item d-link" data-page="client-onboarding.html">🚀 Onboarding Checklist</a> -->
       <a href="client-dashboard.html" class="nav-item d-link" data-page="client-dashboard.html">📊 Dashboard Home</a> 
       <a href="client-entities.html" class="nav-item d-link" data-page="client-entities.html">🏢 Registered Entities</a> 
       <a href="client-team.html" class="nav-item d-link" data-page="client-team.html">🔐 Team & Access Control</a> 
@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="accordion-panel d-panel" data-group="projects"> 
       <a href="client-project-web.html" class="nav-item d-link" data-page="client-project-web.html">🌐 Web Design Hub</a> 
       <a href="client-project-logo.html" class="nav-item d-link" data-page="client-project-logo.html">🎨 Logo Design Hub</a> 
-      <a href="client-project-brand.html" class="nav-item d-link" data-page="client-project-brand.html">✨ Corporate Branding</a> 
+      <a href="client-packages.html" class="nav-item d-link" data-page="client-project-brand.html">🚛 Logistics packages</a> 
     </div> 
   </div> 
 

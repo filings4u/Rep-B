@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Customer Portal Dashboard | filings4u</title>
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
+  <meta name="msapplication-navbutton-color" content="#10b981">
+  <link rel="icon" type="image/png" href="images/fav.png">
+
+  <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* 🖥️ PRIMARY CONTENT AREA STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 16px !important; }
+    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
+    .search-input { padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; }
+    
+    .nav-bell-wrapper { position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important; }
+    .document-vault-download-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+    .document-vault-download-btn:hover { background: var(--text-dark); color: white; }
+    
+    .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
+    .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-wrapper">
+    <!-- 🖥️ PRIMARY CONTENT AREA -->
+    <main class="portal-main">
+           <!-- UPGRADED COMPACT TOP NAVIGATION BAR ELEMENT -->
+      <header class="portal-header" style="background: #ffffff !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; min-height: 60px !important;">
+        <div class="welcome-text" style="display: flex !important; align-items: center !important;">
+          <h1 style="margin: 0 !important; font-size: 1.25rem !important; font-weight: 800 !important; color: var(--text-dark) !important; letter-spacing: -0.5px !important;">Welcome Back, <span id="clientNameField" style="color: #10b981 !important;"></span></h1>
+        </div>
+        
+        <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 16px !important;">
+          <!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
+          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
+            <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
+              <span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
+              <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
+            </a>
+          </div>
+          
+          <!-- PORTAL CLOCK SYSTEM CONTAINER -->
+          <div class="header-clock-pill" style="background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 6px 12px !important; border-radius: 6px !important; font-family: monospace !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; height: 32px !important; white-space: nowrap !important;">
+            <span>⏱️</span>
+            <span id="portal-clock">Syncing...</span>
+          </div>
+          
+          <div>
+            <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 6px 12px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; font-size: 0.8rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; height: 32px !important;">
+          </div>
+        </div>
+      </header>
+
+<!-- 🟢 MASTER BLOCK DISPLAY WRAPPER: Matches elite logistics workspace layouts cleanly -->
+<div style="display: block; width: 100%; min-height: 100vh; padding: 24px 32px 32px 32px; box-sizing: border-box; background: var(--bg-light); overflow-y: auto; position: relative;">
+
+  <!-- 📂 TOP ROW CONTAINER: FULL-WIDTH LOGISTICS PACKET PREVIEW SUITE -->
+  <div style="width: 100%; display: block; margin-bottom: 28px; box-sizing: border-box; position: relative; height: auto;">
+    <div class="console-card" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; min-height: 520px; height: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; width: 100%; position: relative;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; box-sizing: border-box; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: inline-block; width: 8px; height: 8px; background: var(--emerald); border-radius: 50%;"></span>
+          <strong id="freightPacketHeaderContextLabel" style="font-size: 0.8rem; color: var(--text-dark);">Syncing Setup Portfolio Layers...</strong>
+        </div>
+        <div style="display: flex; gap: 8px; box-sizing: border-box;">
+          <a id="freightPacketDownloadBtn" href="#" target="_blank" class="team-btn" style="text-decoration: none; background: var(--text-dark); color: white; padding: 6px 14px; font-size: 11px; font-weight: 700; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: none; cursor: pointer; transition: opacity 0.2s;">📥 Download Full PDF Packet</a>
+        </div>
+      </div>
+
+      <!-- Live PDF / Embedded Document Review Canvas Container -->
+      <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #ffffff !important; border-radius: 8px; padding: 0; overflow: hidden; border: 1px solid var(--border-color); min-height: 420px; box-sizing: border-box; width: 100%; position: relative;">
+        <iframe id="freightPacketStagingPdfTarget" src="about:blank" style="width: 100%; height: 100%; min-height: 420px; border: none; background: #ffffff !important; display: block;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🛠️ BOTTOM ROW CONTAINER: OPERATIONS MATRIX SPLIT COCKPIT -->
+  <div style="display: grid; grid-template-columns: 320px 1fr; gap: 32px; width: 100%; max-width: 100%; box-sizing: border-box; align-items: start; margin-top: 12px; padding-bottom: 48px; position: relative; clear: both;">
+    
+    <!-- LEFT PANEL: PORTFOLIO AUDIT CHECKS MATRIX -->
+    <div class="brand-left-panel" style="display: flex; flex-direction: column; gap: 20px; box-sizing: border-box;">
+      <div class="console-card" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-sizing: border-box; width: 100%; height: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+          <h2 id="freightPacketTitleHeader" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-dark);">Freight Setup Portfolio</h2>
+          <span id="freightPacketStatusPill" style="background: #ecfdf5; color: #047857; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap;">Executed</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 20px;">Tracking Code: <span id="freightTrackingRefLabel" style="font-family: monospace; font-weight: 700; color: var(--text-dark);">F4U-PENDING</span></div>
+        
+        <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; font-weight: 700; color: var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Compiled Component Index</h4>
+        <!-- 🟢 DYNAMIC LAYOUT FIELD: Populates specific list strings conditional to active profile data rows -->
+        <ul id="freightIndividualComponentList" style="margin: 0; padding: 0 0 0 16px; font-size: 0.75rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px; line-height: 1.4;">
+          <li>Compiling contract documentation indices...</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: COMPLIANCE NOTICE SLAT, E-SIGN ENGINE & SYSTEM CLOCK -->
+    <div class="brand-right-panel" style="display: flex; flex-direction: column; gap: 20px; min-width: 0; box-sizing: border-box;">
+      
+      <!-- TOP STATUS: LIVE CLOCK & COMPLIANCE VERIFICATION BANNER -->
+      <div class="console-card" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-dark);">Compliance Verification</h3>
+          <!-- 🕒 LIVE DIGITAL CLOCK DISPLAY NODE -->
+          <div id="portal-clock" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; background: var(--bg-light); color: var(--text-dark); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color);">00:00:00 AM</div>
+        </div>
+        <p style="font-size: 0.76rem; color: var(--text-muted); line-height: 1.5; margin: 0;">This documentation portfolio matches the operational profile parameters compiled by logistics compliance teams. Review carefully and provide your digital authorization signature parameters directly below.</p>
+      </div>
+
+      <!-- BOTTOM COMPONENT: INTERACTIVE CANVAS ELECTRONIC SIGNATURE PAD -->
+      <div class="console-card" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 14px;">
+        <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">Authorized Electronic Signature</h4>
+        
+        <!-- Raw Interactive Signature Capturing Pad Screen Canvas -->
+        <div style="width: 100%; height: 130px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; position: relative; overflow: hidden; cursor: crosshair; box-sizing: border-box;">
+          <canvas id="freightPortalSignaturePad" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block;"></canvas>
+          <div id="sigPadPlaceholderText" style="position: absolute; width: 100%; text-align: center; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: #94a3b8; pointer-events: none; -webkit-user-select: none; user-select: none;">Use cursor or touchscreen to write legal signature parameters here...</div>
+        </div>
+
+        <!-- Interactive Control Bar Operations Button Slats -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <button type="button" onclick="clearFreightSignatureCanvas()" style="background: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 6px 14px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Clear Canvas</button>
+          <button type="button" id="freightSubmitSignatureBtn" style="background: var(--emerald); color: white; border: none; padding: 8px 18px; font-size: 0.78rem; font-weight: 700; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(16,185,129,0.15);">Lock & Execute Packet ➔</button>
+        </div>
+        <div id="sig-submit-status-label" style="display: none; font-size: 0.72rem; font-weight: 700; padding: 6px; border-radius: 4px; text-align: center;"></div>
+      </div>
+
+    </div>
+</div>
+
+    </main>
+  </div>
+
+
+      <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
+ 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script src="assets/js/supabase-config.js"></script>
+  
+  <script src="assets/js/client-master-ledger.js"></script>
+
+  <script src="assets/js/client-navigation.js"></script>
+
+  <script src="assets/js/client-footer.js"></script>
+
+
+
+<script>
+/**
+ * filings4u Platform Architecture
+ * Module: client-freight-packages.js (Dynamic Triple-Track Receiver Engine)
+ */
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
+
+  const previewIframe = document.getElementById("freightPacketStagingPdfTarget");
+  const downloadBtn = document.getElementById("freightPacketDownloadBtn");
+  const headerContext = document.getElementById("freightPacketHeaderContextLabel");
+
+  // Interface Grid Object Mappings
+  const headerTitle = document.getElementById("freightPacketTitleHeader");
+  const statusPill = document.getElementById("freightPacketStatusPill");
+  const trackingRef = document.getElementById("freightTrackingRefLabel");
+  const componentsList = document.getElementById("freightIndividualComponentList");
+
+  let liveFreightChannel = null;
+
+  // Establish Supabase Connection Handshake
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client && typeof supabase !== 'undefined') {
+    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+  }
+  if (!client) return;
+
+  // Verify Active Login Session Properties
+  const { data: { session }, error: sessionError } = await client.auth.getSession();
+  if (sessionError || !session || !session.user) {
+    window.location.href = "portal-login.html";
+    return;
+  }
+
+  const userEmail = String(session.user.email).trim().toLowerCase();
+
+  // 1. QUERY FREIGHT PACKAGES METADATA FROM THE DATABASE
+  async function loadDynamicFreightPackageData() {
+    try {
+      console.log(`📡 [Logistics Client Portal] Syncing freight packets for account: ${userEmail}`);
+      const { data: packet, error: fetchError } = await client
+        .from('freight_packages')
+        .select('*')
+        .eq('client_email', userEmail)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (packet) {
+        applyFreightPacketFieldsToUI(packet);
+      } else {
+        if (headerContext) headerContext.textContent = "No Generated Onboarding Packets Found";
+        if (previewIframe) previewIframe.setAttribute("src", "about:blank");
+        if (downloadBtn) downloadBtn.style.display = "none";
+        if (componentsList) componentsList.innerHTML = `<li style="font-style:italic;">No active portfolio track documents mapped to this profile.</li>`;
+      }
+    } catch (fault) {
+      console.error("✕ Failed to synchronize client freight documentation:", fault);
+    }
+  }
+  // 2. APPLY FREIGHT DATABASE OBJECTS DIRECTLY TO PORTAL INTERFACE GRID
+  function applyFreightPacketFieldsToUI(packet) {
+    if (!packet) return;
+
+    const trackType = packet.package_track || "Broker Shipper";
+    let formattedTrackLabel = "Broker-to-Shipper Portfolio";
+    if (trackType === "Broker Carrier") formattedTrackLabel = "Broker-to-Carrier Portfolio";
+    if (trackType === "Owner Operator") formattedTrackLabel = "Owner Operator Carrier Portfolio";
+
+    if (headerTitle) headerTitle.textContent = packet.info_company_name || formattedTrackLabel;
+    if (headerContext) headerContext.textContent = `${formattedTrackLabel} — Active Setup`;
+    if (trackingRef) trackingRef.textContent = packet.tracking_ref;
+    
+    if (statusPill) {
+      statusPill.textContent = packet.status_label || "Executed";
+      statusPill.style.background = '#ecfdf5';
+      statusPill.style.color = '#047857';
+    }
+
+    // Embed the dynamic compiled document link straight onto the viewport frame layout canvas
+    if (packet.compiled_packet_url) {
+      if (previewIframe) previewIframe.setAttribute("src", packet.compiled_packet_url);
+      if (downloadBtn) {
+        downloadBtn.setAttribute("href", packet.compiled_packet_url);
+        downloadBtn.style.display = "inline-flex";
+      }
+    } else {
+      if (previewIframe) previewIframe.setAttribute("src", "about:blank");
+      if (downloadBtn) downloadBtn.style.display = "none";
+    }
+
+    // 🟢 CONDITIONAL INDEX ENGINE: Renders the precise checklist items matching their profile track type
+    if (componentsList) {
+      componentsList.innerHTML = "";
+      let checklistArray = [];
+
+      if (trackType === "Broker Shipper") {
+        checklistArray = [
+          "1. Custom Generated Cover Page",
+          "2. Corporate Introduction Slat",
+          "3. MC Certificate Authority File",
+          "4. BMC-84/85 Insurance Bond Contract",
+          "5. Corporate W-9 Clearance Form",
+          "6. General Liability & Umbrella Binder",
+          "7. Information Page Details Sheet",
+          "8. SCAC Code Document Certification",
+          "9. Unified Carrier Registration (UCR)",
+          "10. Brokerage Contacts Directory Page",
+          "11. Brokerage ACH Banking Instructions"
+        ];
+      } else if (trackType === "Broker Carrier") {
+        checklistArray = [
+          "1. Broker / Carrier Agreement Legal Contract",
+          "2. Carrier Profile Intake Sheet",
+          "3. Corporate W-9 Clearance Form",
+          "4. Quick Pay Direct Deposit Authorization",
+          "5. MC Certificate Operating Authority",
+          "6. Corporate Contact Information Directory"
+        ];
+      } else if (trackType === "Owner Operator") {
+        checklistArray = [
+          "1. Custom Generated Cover Page Layout",
+          "2. MC Certificate Operating Authority",
+          "3. Corporate W-9 Clearance Form",
+          "4. BIPD & Motor Cargo Insurance Binder",
+          "5. Unified Carrier Registration (UCR Document)",
+          "6. SCAC Code Document Certification",
+          "7. Factoring Remittance & Billing Page",
+          "8. Information Page Details Sheet",
+          "9. Contacts Emergency Directory Sheet"
+        ];
+      }
+
+      checklistArray.forEach(itemText => {
+        const li = document.createElement("li");
+        li.style.cssText = "display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.76rem;";
+        li.innerHTML = `<span style="color: var(--emerald); font-weight: 900; font-size: 0.85rem;">✓</span> <span>${itemText}</span>`;
+        componentsList.appendChild(li);
+      });
+    }
+  }
+
+  // 3. ESTABLISH ISOLATED BROADCAST ENGINE SUBSCRIPTION LOOPS
+  async function initializeRealtimeFreightFeed() {
+    if (liveFreightChannel) liveFreightChannel.unsubscribe();
+
+    liveFreightChannel = client
+      .channel(`client-freight-stream-${userEmail.replace(/[^a-z0-9]/g, '')}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'freight_packages',
+        filter: `client_email=eq.${userEmail}`
+      }, payload => {
+        console.log("✓ [Freight Sync Engine] Live update packet matrix state shift intercepted:", payload);
+        if (payload.eventType === 'DELETE') {
+          window.location.reload();
+        } else {
+          applyFreightPacketFieldsToUI(payload.new);
+        }
+      })
+      .subscribe();
+  }
+
+  // 🏁 EXECUTE PORTAL ENGINE INITIALIZATION MOUNT
+  await loadDynamicFreightPackageData();
+  await initializeRealtimeFreightFeed();
+
+    // 🟢 PORTAL CLOCK SYSTEM MOTOR ENGINE RUNTIME LOOP
+  function initializeLiveFreightClock() {
+    const clockElement = document.getElementById("portal-clock");
+    if (!clockElement) return;
+
+    function refreshTimeDisplay() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      
+      hours = hours % 12;
+      hours = hours ? hours : 12; // Formats hour '0' to '12' smoothly
+
+      clockElement.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    refreshTimeDisplay();
+    setInterval(refreshTimeDisplay, 1000);
+  }
+
+  // 🖊️ INTERACTIVE ELECTRONIC CANVAS SIGNATURE CAPTURING ENGINE
+  const sigCanvas = document.getElementById("freightPortalSignaturePad");
+  const sigPlaceholder = document.getElementById("sigPadPlaceholderText");
+  const submitSigBtn = document.getElementById("freightSubmitSignatureBtn");
+  const sigStatus = document.getElementById("sig-submit-status-label");
+  let isDrawingSignature = false;
+  let lastDrawX = 0;
+  let lastDrawY = 0;
+
+  if (sigCanvas) {
+    const ctx = sigCanvas.getContext("2d");
+
+    // Standardize canvas dimensions relative to bounding layouts dynamically
+    function resizeSigCanvasBoundingBox() {
+      const rect = sigCanvas.parentElement.getBoundingClientRect();
+      sigCanvas.width = rect.width;
+      sigCanvas.height = rect.height;
+      ctx.strokeStyle = "#0f172a"; // Corporate clean navy layout dark stroke ink
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+    }
+
+    resizeSigCanvasBoundingBox();
+    window.addEventListener("resize", resizeSigCanvasBoundingBox);
+
+    // Canvas Desktop Cursor Drawing Mouse Event Overrides
+    sigCanvas.addEventListener("mousedown", (e) => {
+      isDrawingSignature = true;
+      if (sigPlaceholder) sigPlaceholder.style.display = "none";
+      const rect = sigCanvas.getBoundingClientRect();
+      lastDrawX = e.clientX - rect.left;
+      lastDrawY = e.clientY - rect.top;
+    });
+
+    sigCanvas.addEventListener("mousemove", (e) => {
+      if (!isDrawingSignature) return;
+      const rect = sigCanvas.getBoundingClientRect();
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+
+      ctx.beginPath();
+      ctx.moveTo(lastDrawX, lastDrawY);
+      ctx.lineTo(currentX, currentY);
+      ctx.stroke();
+
+      lastDrawX = currentX;
+      lastDrawY = currentY;
+    });
+
+    window.addEventListener("mouseup", () => { isDrawingSignature = false; });
+
+    // Canvas Mobile Smartphone Touch Surface Event Handlers Overrides
+    sigCanvas.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        isDrawingSignature = true;
+        if (sigPlaceholder) sigPlaceholder.style.display = "none";
+        const rect = sigCanvas.getBoundingClientRect();
+        lastDrawX = e.touches[0].clientX - rect.left;
+        lastDrawY = e.touches[0].clientY - rect.top;
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    sigCanvas.addEventListener("touchmove", (e) => {
+      if (isDrawingSignature && e.touches.length === 1) {
+        const rect = sigCanvas.getBoundingClientRect();
+        const currentX = e.touches[0].clientX - rect.left;
+        const currentY = e.touches[0].clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(lastDrawX, lastDrawY);
+        ctx.lineTo(currentX, currentY);
+        ctx.stroke();
+
+        lastDrawX = currentX;
+        lastDrawY = currentY;
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    sigCanvas.addEventListener("touchend", () => { isDrawingSignature = false; });
+
+    // Structural Canvas Cleanup Helper Routine
+    window.clearFreightSignatureCanvas = function() {
+      ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+      if (sigPlaceholder) sigPlaceholder.style.display = "block";
+      if (sigStatus) sigStatus.style.display = "none";
+    };
+  }
+
+  // 💾 SUBMIT AUTHORIZED E-SIGNATURE PACKAGE LEDGER STATE
+  if (submitSigBtn) {
+    submitSigBtn.addEventListener("click", async () => {
+      if (submitSigBtn.disabled) return;
+      
+      if (sigStatus) {
+        sigStatus.textContent = "Locking Document Ledger Parameters...";
+        sigStatus.style.display = "block";
+        sigStatus.style.background = "#e0f2fe";
+        sigStatus.style.color = "#0369a1";
+      }
+
+      submitSigBtn.disabled = true;
+
+      try {
+        // Update package authorization parameters inside target metadata rows
+        const { error: signatureCommitError } = await client
+          .from('freight_packages')
+          .update({
+            status_label: "Executed & Verified",
+            updated_at: new Date().toISOString()
+          })
+          .eq('client_email', userEmail);
+
+        if (signatureCommitError) throw signatureCommitError;
+
+        if (sigStatus) {
+          sigStatus.textContent = "✓ Legal Verification Successfully Authorized!";
+          sigStatus.style.background = "#ecfdf5";
+          sigStatus.style.color = "#047857";
+        }
+        
+        // Refresh local UI states automatically to display clean execution badges
+        if (statusPill) {
+          statusPill.textContent = "Executed & Verified";
+          statusPill.style.background = '#d1fae5';
+          statusPill.style.color = '#065f46';
+        }
+      } catch (err) {
+        console.error("✕ Electronic authentication failed:", err);
+        submitSigBtn.disabled = false;
+        if (sigStatus) {
+          sigStatus.textContent = `✕ Legal Verification Aborted: ${err.message}`;
+          sigStatus.style.background = "#fee2e2";
+          sigStatus.style.color = "#991b1b";
+        }
+      }
+    });
+  }
+
+  // Trigger modules inside active runtime initialization queues
+  initializeLiveFreightClock();
+
+});
+</script>
+
+
+</body>
+</html>

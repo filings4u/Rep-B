@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         if (trackingRef) trackingRef.textContent = project.tracking_ref;
         
-           // 🟢 THE FIX: Re-ordered hydration sequence to map data variables BEFORE executing the view render
+      // 🟢 THE FIX: Lowercased the 'U' keys to perfectly match your admin upsert field names
         activeConceptUrls[1] = project.concept_url_1 || "images/fav.png";
         activeConceptUrls[2] = project.concept_url_2 || "images/fav.png";
         activeConceptUrls[3] = project.concept_url_3 || "images/fav.png";
@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-     // 2. BRAND CONCEPT DECK VIEWER SWITCH INTERCEPTOR (Fixed Timing & Placeholders)
+   // 2. BRAND CONCEPT DECK VIEWER SWITCH INTERCEPTOR (Lower-case Field Key Correction)
   window.setLogoConceptViewLayer = function(tabIndex) {
     const tab1 = document.getElementById("conceptTabBtn1");
     const tab2 = document.getElementById("conceptTabBtn2");
@@ -268,22 +268,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       targetBtn.style.color = "var(--text-dark)";
     }
 
-    // Resolve URL from active cached rows or default to a clear blank canvas state string
+    // Resolve URL from active cached rows using lowercase key references
     const targetImgUrl = (activeConceptUrls && activeConceptUrls[tabIndex]) ? activeConceptUrls[tabIndex] : "";
 
     canvasImage.style.opacity = "0";
     setTimeout(() => {
-      // 🟢 THE FIX: If no image has been pushed by admin yet, fallback to a clean system placeholder image
       if (!targetImgUrl || targetImgUrl === "images/fav.png" || targetImgUrl.includes("undefined")) {
         canvasImage.setAttribute("src", "images/fav.png"); 
-        canvasImage.style.maxHeight = "120px"; // Keeps the brand icon scaled cleanly as an icon placeholder
+        canvasImage.style.maxHeight = "120px";
       } else {
         canvasImage.setAttribute("src", targetImgUrl);
-        canvasImage.style.maxHeight = "100%"; // Restores full-width stretch capacity for true artwork
+        canvasImage.style.maxHeight = "100%";
       }
       canvasImage.style.opacity = "1";
     }, 150);
   };
+
 
 
     // 🟢 CANVAS FALLBACK SAFETY INTERCEPTOR
