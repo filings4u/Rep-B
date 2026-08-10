@@ -333,7 +333,7 @@
 </div>
 
 <!-- 🔒 FORCED IDENTITY COMPLIANCE MODAL BACKDROP -->
-<div id="forcedProfileComplianceModalMask" style="display: flex; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; z-index: 9999; align-items: center; justify-content: center; box-sizing: border-box; padding: 20px;">
+<div id="forcedProfileComplianceModalMask" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; z-index: 9999; align-items: center; justify-content: center; box-sizing: border-box; padding: 20px;">
   
   <div style="background: var(--white); width: 100%; max-width: 750px; padding: 36px 40px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); box-sizing: border-box;">
     
@@ -343,7 +343,7 @@
     
     
       
-      <!-- TWO-COLUMN ROW 1: First Name & Last Name Split -->
+      <!-- ROW 1: First Name & Last Name Split -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div class="form-group-item">
           <label class="form-label-text">First Name</label>
@@ -355,7 +355,7 @@
         </div>
       </div>
       
-      <!-- TWO-COLUMN ROW 2: Phone Number & Street Address Split -->
+      <!-- ROW 2: Phone Number & Street Address Split -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div class="form-group-item">
           <label class="form-label-text">Phone Number</label>
@@ -367,13 +367,13 @@
         </div>
       </div>
 
-      <!-- FULL-WIDTH ROW 3: Locked Administrative Account Email Profile -->
+      <!-- ROW 3: Locked Administrative Account Email Profile -->
       <div class="form-group-item" style="width: 100% !important;">
         <label class="form-label-text">Account Email Address (Locked)</label>
         <input type="text" id="setupEmailAddress" disabled style="display: block !important; width: 100% !important; padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; font-size: 0.88rem !important; outline: none !important; background: #e2e8f0 !important; color: #475569 !important; font-weight: 600 !important; cursor: not-allowed !important; height: 38px !important; box-sizing: border-box !important;">
       </div>
       
-      <!-- MULTI-COLUMN ROW 4: Compact City, State, & Zip Alignment -->
+      <!-- ROW 4: Compact City, State, & Zip Alignment -->
       <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px;">
         <div class="form-group-item">
           <label class="form-label-text">City</label>
@@ -391,15 +391,16 @@
       
       <div id="complianceFormErrorAlertBanner" style="display: none; color: #b91c1c; font-size: 0.78rem; font-weight: 700; background: #fef2f2; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(185,28,28,0.1);"></div>
       
-      <!-- 🟢 TWO-COLUMN BUTTON GRID WITH 24PX TOP MARGIN -->
+      <!-- BUTTON GRID CONTEXT -->
       <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 24px; width: 100%;">
         <button type="button" id="modalDismissComplianceCloseBtn" style="background: #cbd5e1 !important; color: var(--text-dark) !important; border: none !important; padding: 0 14px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.85rem !important; cursor: pointer !important; height: 42px !important; box-sizing: border-box !important;">Close Window</button>
-        <button type="submit" class="chat-action-btn" style="width: 100% !important; margin: 0 !important; height: 42px !important; box-sizing: border-box !important;">Save Profile & Unlock Chat</button>
+        <button type="submit" id="modalComplianceSubmitBtn" class="chat-action-btn" style="width: 100% !important; margin: 0 !important; height: 42px !important; box-sizing: border-box !important;">Save Profile & Unlock Chat</button>
       </div>
 
     </form>
   </div>
 </div>
+
 
 
 
@@ -567,167 +568,158 @@
       evaluateSupportDeskWorkingHours();
 
 
-          // --- STAGE 1.5: PROFILE LOOKUP DATA-STORE HYDRATOR & COMPLIANCE GATE ---
-      async function autofillUserProfileMetrics() {
-        try {
-          console.log(`📡 [Contact Ingestion Engine] Scanning client registry for user email: [${clientEmail}]`);
-          
-          let compiledPhone = null;
-          let compiledFirstName = "";
-          let compiledLastName = "";
-          let compiledCompanyName = "Not Specified";
-          let compiledStreet = "";
-          let compiledCity = "";
-          let compiledState = "";
-          let compiledZip = "";
+// --- STAGE 1.5: PROFILE LOOKUP DATA-STORE HYDRATOR & COMPLIANCE GATE ---
+async function autofillUserProfileMetrics() {
+  try {
+    console.log(`📡 [Contact Ingestion Engine] Scanning client registry for user email: [${clientEmail}]`);
+    
+    let compiledPhone = null;
+    let compiledFirstName = "";
+    let compiledLastName = "";
+    let compiledCompanyName = "Not Specified";
+    let compiledStreet = "";
+    let compiledCity = "";
+    let compiledState = "";
+    let compiledZip = "";
 
-          // 1. Scan master client profile rows using your unified schema matching keys
-          const { data: profile } = await client
+    // 1. Scan master client profile rows using your unified schema matching keys
+    const { data: profile } = await client
+      .from('client_profiles')
+      .select('first_name, last_name, phone_number, company_name, street_address, city, state, zip_code')
+      .eq('email_address', clientEmail)
+      .maybeSingle();
+
+    if (profile) {
+      if (profile.phone_number) compiledPhone = profile.phone_number;
+      if (profile.first_name) compiledFirstName = profile.first_name;
+      if (profile.last_name) compiledLastName = profile.last_name;
+      if (profile.company_name) compiledCompanyName = profile.company_name;
+      if (profile.street_address) compiledStreet = profile.street_address;
+      if (profile.city) compiledCity = profile.city;
+      if (profile.state) compiledState = profile.state;
+      if (profile.zip_code) compiledZip = profile.zip_code;
+    }
+
+    // 2. 🚨 CRITICAL STRUCTURAL VALIDATION CHECK: Stop chat if primary parameters are empty
+    const isProfileIncomplete = !compiledFirstName.trim() || !compiledLastName.trim() || !compiledPhone.trim() || !clientEmail.trim();
+
+    if (isProfileIncomplete) {
+      console.warn("⚠️ [Compliance Gate] Incomplete identification metadata block caught. Freezing timeline pipelines.");
+      
+      // Lock down visibility states on background elements
+      if (chatWrapper) chatWrapper.style.display = "none";
+      
+      // Pop open the blurred modal overlay view layer
+      const complianceModal = document.getElementById("forcedProfileComplianceModalMask");
+      if (complianceModal) complianceModal.style.display = "flex";
+
+      // 🟢 FIXED: Text instruction removed, hydration completes cleanly
+      const setupEmailField = document.getElementById("setupEmailAddress");
+      if (setupEmailField) setupEmailField.value = clientEmail;
+
+      // Bind the submission form interceptor inside the compliance overlay loop
+      const complianceForm = document.getElementById("forcedIdentityComplianceSubmissionForm");
+      if (complianceForm) {
+        complianceForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          
+          const errorBanner = document.getElementById("complianceFormErrorAlertBanner");
+          if (errorBanner) errorBanner.style.display = "none";
+
+          const newFields = {
+            id: clientActiveUserId,
+            email_address: clientEmail,
+            first_name: document.getElementById("setupFirstName").value.trim(),
+            last_name: document.getElementById("setupLastName").value.trim(),
+            phone_number: document.getElementById("setupPhoneNumber").value.trim(),
+            street_address: document.getElementById("setupStreetAddress").value.trim(),
+            city: document.getElementById("setupCity").value.trim(),
+            state: document.getElementById("setupState").value.trim(),
+            zip_code: document.getElementById("setupZipCode").value.trim(),
+            updated_at: new Date().toISOString()
+          };
+
+          console.log("💾 [Compliance Gate] Upserting user profile record variables straight to database table...");
+          
+          const { error: upsertError } = await client
             .from('client_profiles')
-            .select('first_name, last_name, phone_number, company_name, street_address, city, state, zip_code')
-            .eq('email_address', clientEmail)
-            .maybeSingle();
+            .upsert([newFields], { onConflict: 'id' });
 
-          if (profile) {
-            if (profile.phone_number) compiledPhone = profile.phone_number;
-            if (profile.first_name) compiledFirstName = profile.first_name;
-            if (profile.last_name) compiledLastName = profile.last_name;
-            if (profile.company_name) compiledCompanyName = profile.company_name;
-            if (profile.street_address) compiledStreet = profile.street_address;
-            if (profile.city) compiledCity = profile.city;
-            if (profile.state) compiledState = profile.state;
-            if (profile.zip_code) compiledZip = profile.zip_code;
-          }
-
-          // 2. 🚨 CRITICAL STRUCTURAL VALIDATION CHECK: Stop chat if primary parameters are empty
-          const isProfileIncomplete = !compiledFirstName.trim() || 
-                                      !compiledLastName.trim() || 
-                                      !compiledPhone.trim() || 
-                                      !clientEmail.trim();
-
-          if (isProfileIncomplete) {
-            console.warn("⚠️ [Compliance Gate] Incomplete identification metadata block caught. Freezing timeline pipelines.");
-            
-            // Lock down visibility states on background elements
-            if (chatWrapper) chatWrapper.style.display = "none";
-            
-            // Pop open the blurred modal overlay view layer
-            const complianceModal = document.getElementById("forcedProfileComplianceModalMask");
-            if (complianceModal) complianceModal.style.display = "flex";
-
-            // Add this line directly beneath your complianceModal.style.display = "flex"; step:
-const setupEmailField = document.getElementById("setupEmailAddress");
-if (setupEmailField) setupEmailField.value = clientEmail;
-
-
-            // Bind the submission form interceptor inside the compliance overlay loop
-            const complianceForm = document.getElementById("forcedIdentityComplianceSubmissionForm");
-            if (complianceForm) {
-              complianceForm.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                
-                const errorBanner = document.getElementById("complianceFormErrorAlertBanner");
-                if (errorBanner) errorBanner.style.display = "none";
-
-                const newFields = {
-                  id: clientActiveUserId,
-                  email_address: clientEmail,
-                  first_name: document.getElementById("setupFirstName").value.trim(),
-                  last_name: document.getElementById("setupLastName").value.trim(),
-                  phone_number: document.getElementById("setupPhoneNumber").value.trim(),
-                  street_address: document.getElementById("setupStreetAddress").value.trim(),
-                  city: document.getElementById("setupCity").value.trim(),
-                  state: document.getElementById("setupState").value.trim(),
-                  zip_code: document.getElementById("setupZipCode").value.trim(),
-                  updated_at: new Date().toISOString()
-                };
-
-                console.log("💾 [Compliance Gate] Upserting user profile record variables straight to database table...");
-                
-                const { error: upsertError } = await client
-                  .from('client_profiles')
-                  .upsert([newFields], { onConflict: 'id' });
-
-                if (upsertError) {
-                  console.error("✕ Profile configuration rewrite rejected:", upsertError.message);
-                  if (errorBanner) {
-                    errorBanner.textContent = `✕ Configuration Error: ${upsertError.message}`;
-                    errorBanner.style.display = "block";
-                  }
-                  return;
-                }
-
-                // Hide modal, restart page metrics cleanly to bypass overlay checks on rerun
-                if (complianceModal) complianceModal.style.display = "none";
-                window.location.reload();
-              });
+          if (upsertError) {
+            console.error("✕ Profile configuration rewrite rejected:", upsertError.message);
+            if (errorBanner) {
+              errorBanner.textContent = `✕ Configuration Error: ${upsertError.message}`;
+              errorBanner.style.display = "block";
             }
-            return; // Halt further initialization sequences until compliance is satisfied
+            return;
           }
 
-          // 3. 📄 TRANSPARENCY CARD INJECTION: Inform user what data streams straight to the admin panel
-          const transmissionCard = document.getElementById("profileTransmissionDataCard");
-          const stringTarget = document.getElementById("profileHandshakeVerificationString");
-          
-          if (transmissionCard && stringTarget) {
-            transmissionCard.style.display = "block";
-            stringTarget.innerHTML = `
-              NAME    : ${window.escapeClientChatMarkup(compiledFirstName)} ${window.escapeClientChatMarkup(compiledLastName)}<br>
-              EMAIL   : ${window.escapeClientChatMarkup(clientEmail)}<br>
-              PHONE   : ${window.escapeClientChatMarkup(compiledPhone)}<br>
-              COMPANY : ${window.escapeClientChatMarkup(compiledCompanyName)}<br>
-              ADDRESS : ${window.escapeClientChatMarkup(compiledStreet)}, ${window.escapeClientChatMarkup(compiledCity)}, ${window.escapeClientChatMarkup(compiledState)} ${window.escapeClientChatMarkup(compiledZip)}
-            `.trim();
-          }
-
-          // Inject into ticket backup form elements safely
-          const firstNameIn = document.getElementById("ticketFirstName");
-          const lastNameIn = document.getElementById("ticketLastName");
-          const emailFieldIn = document.getElementById("ticketEmailAddress");
-          const phoneFieldIn = document.getElementById("ticketPhoneNumber");
-
-          if (emailFieldIn) emailFieldIn.value = clientEmail;
-          if (firstNameIn) firstNameIn.value = compiledFirstName;
-          if (lastNameIn) lastNameIn.value = compiledLastName;
-          if (phoneFieldIn) phoneFieldIn.value = compiledPhone.trim();
-
-          [emailFieldIn, firstNameIn, lastNameIn, phoneFieldIn].forEach(field => {
-            if (field) field.disabled = true;
-          });
-
-          window.activeUserCompanyNameCache = compiledCompanyName;
-          window.activeUserFirstNameCache = compiledFirstName;
-          window.activeUserLastNameCache = compiledLastName;
-          window.activeUserPhoneCache = compiledPhone;
-          window.activeUserStreetCache = compiledStreet;
-          window.activeUserCityCache = compiledCity;
-          window.activeUserStateCache = compiledState;
-          window.activeUserZipCache = compiledZip;
-          console.log("✓ Core customer profiles database layers compiled and elements locked.");
-
-        } catch (err) {
-          console.warn("⚠️ Autofill Engine delayed profile fetch lookup:", err.message);
-        }
+          // Hide modal, restart page metrics cleanly to bypass overlay checks on rerun
+          if (complianceModal) complianceModal.style.display = "none";
+          window.location.reload();
+        });
       }
-document.getElementById("modalDismissComplianceCloseBtn")?.addEventListener("click", () => {
-  console.warn("⚠️ [Compliance Gate] Verification aborted by user. Blocking timeline hydration pathways.");
-  
-  // 1. Explicitly guarantee the chat container stays hidden and locked out
-  if (chatWrapper) {
-    chatWrapper.style.display = "none";
+
+      // 🟢 FIXED: Close button listener moved safely inside the scope context layer to prevent execution errors
+      document.getElementById("modalDismissComplianceCloseBtn")?.addEventListener("click", () => {
+        console.warn("⚠️ [Compliance Gate] Verification aborted by user. Blocking timeline hydration pathways.");
+        if (chatWrapper) chatWrapper.style.display = "none";
+        if (msgLogBox) {
+          msgLogBox.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.85rem; font-weight:600;">🔒 Access Denied: Profile authentication required.</div>`;
+        }
+        window.location.replace("client-dashboard.html");
+      });
+
+      return; // Halt further initialization sequences until compliance is satisfied
+    }
+
+    // 3. 📄 TRANSPARENCY CARD INJECTION: Inform user what data streams straight to the admin panel
+    const transmissionCard = document.getElementById("profileTransmissionDataCard");
+    const stringTarget = document.getElementById("profileHandshakeVerificationString");
+    
+    if (transmissionCard && stringTarget) {
+      transmissionCard.style.display = "block";
+      stringTarget.innerHTML = `
+        NAME    : ${window.escapeClientChatMarkup(compiledFirstName)} ${window.escapeClientChatMarkup(compiledLastName)}<br>
+        EMAIL   : ${window.escapeClientChatMarkup(clientEmail)}<br>
+        PHONE   : ${window.escapeClientChatMarkup(compiledPhone)}<br>
+        COMPANY : ${window.escapeClientChatMarkup(compiledCompanyName)}<br>
+        ADDRESS : ${window.escapeClientChatMarkup(compiledStreet)}, ${window.escapeClientChatMarkup(compiledCity)}, ${window.escapeClientChatMarkup(compiledState)} ${window.escapeClientChatMarkup(compiledZip)}
+      `.trim();
+    }
+
+    // Inject into ticket backup form elements safely
+    const firstNameIn = document.getElementById("ticketFirstName");
+    const lastNameIn = document.getElementById("ticketLastName");
+    const emailFieldIn = document.getElementById("ticketEmailAddress");
+    const phoneFieldIn = document.getElementById("ticketPhoneNumber");
+
+    if (emailFieldIn) emailFieldIn.value = clientEmail;
+    if (firstNameIn) firstNameIn.value = compiledFirstName;
+    if (lastNameIn) lastNameIn.value = compiledLastName;
+    if (phoneFieldIn) phoneFieldIn.value = compiledPhone.trim();
+
+    [emailFieldIn, firstNameIn, lastNameIn, phoneFieldIn].forEach(field => {
+      if (field) field.disabled = true;
+    });
+
+    window.activeUserCompanyNameCache = compiledCompanyName;
+    window.activeUserFirstNameCache = compiledFirstName;
+    window.activeUserLastNameCache = compiledLastName;
+    window.activeUserPhoneCache = compiledPhone;
+    window.activeUserStreetCache = compiledStreet;
+    window.activeUserCityCache = compiledCity;
+    window.activeUserZipCache = compiledZip;
+    console.log("✓ Core customer profiles database layers compiled and elements locked.");
+
+  } catch (err) {
+    console.warn("⚠️ Autofill Engine delayed profile fetch lookup:", err.message);
   }
-  
-  // 2. Clear out the workspace logs container to prevent orphaned layout rendering leaks
-  if (msgLogBox) {
-    msgLogBox.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.85rem; font-weight:600;">🔒 Access Denied: Profile authentication required.</div>`;
-  }
+}
 
-  // 3. Immediately kick the unverified session safely back to the dashboard home page
-  window.location.replace("client-dashboard.html");
-});
+// Fire profile compilation gate on load setup matrix sequence
+await autofillUserProfileMetrics();
 
-
-      await autofillUserProfileMetrics();
 
 
       // --- STAGE 2: DYNAMIC CHAT HISTORY TIMELINE ENGINE ---
