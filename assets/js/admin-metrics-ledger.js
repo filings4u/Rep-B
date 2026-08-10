@@ -1,6 +1,6 @@
 /**
  * 📁 FILE PATH: assets/js/admin-metrics-ledger.js
- * Responsibility: Mathematical tabulation of platform revenue metrics from database fields
+ * Responsibility: Mathematical tabulation of platform revenue metrics from database fields (CORRECTED)
  */
 (function() {
   "use strict";
@@ -11,7 +11,7 @@
 
   async function initializeMetricsHandshake() {
     const revenueEl = document.getElementById("stat-total-revenue");
-    const activeEl  = document.getElementById("stat-active-users");
+    const activeEl = document.getElementById("stat-active-users");
     const pendingEl = document.getElementById("stat-pending-filings");
 
     let client = window.supabaseInstance || window.supabaseClient;
@@ -21,27 +21,28 @@
     }
 
     try {
-      // Query the specific table target columns cleanly
+      // 🟢 FIXED COLUMNS LOOKUP: Pulling your exact production column schema structures
       const { data: metricsGrid, error } = await client
         .from('orders')
-        .select('total_fee, status');
+        .select('total_paid_amount, account_created');
 
       if (error) throw error;
 
       let runtimeRevenueSum = 0;
       let activeEntitiesCount = 0;
-      let pendingAuditsCount  = 0;
+      let pendingAuditsCount = 0;
 
       if (metricsGrid && metricsGrid.length > 0) {
         metricsGrid.forEach(orderRow => {
-          const rowFee = parseFloat(orderRow.total_fee || 0);
+          // 🟢 FIXED SCHEMA PROPERTY: Maps onto total_paid_amount natively
+          const rowFee = parseFloat(orderRow.total_paid_amount || 0);
           runtimeRevenueSum += rowFee;
 
-          const rawStatus = String(orderRow.status || '').toLowerCase().trim();
-          
-          if (rawStatus === 'paid' || rawStatus === 'fulfillment lane') {
+          // Evaluate account tracking status fields matching your schema properties
+          const isProvisioned = orderRow.account_created === true;
+          if (isProvisioned) {
             activeEntitiesCount++;
-          } else if (rawStatus === 'pending' || rawStatus === 'audit required') {
+          } else {
             pendingAuditsCount++;
           }
         });
@@ -49,7 +50,7 @@
 
       // Bind calculations safely into the user interface text elements
       if (revenueEl) revenueEl.textContent = `$${runtimeRevenueSum.toFixed(2)}`;
-      if (activeEl)  activeEl.textContent  = activeEntitiesCount.toString();
+      if (activeEl) activeEl.textContent = activeEntitiesCount.toString();
       if (pendingEl) pendingEl.textContent = pendingAuditsCount.toString();
 
     } catch (metricFault) {

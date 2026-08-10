@@ -27,56 +27,66 @@ window.toggleSidebarAccordion = function(buttonElement) {
     } 
 }; 
 
-// --- 2. PIPELINE SYSTEM RUNTIME STARTER LOOP --- 
-document.addEventListener("DOMContentLoaded", () => { 
-    verifyAndStreamStrictAdminGrid(); 
-}); 
+// --- 2. PIPELINE SYSTEM RUNTIME STARTER LOOP --- (CORRECTED)
+document.addEventListener("DOMContentLoaded", () => {
+  verifyAndStreamStrictAdminGrid();
+});
 
-async function verifyAndStreamStrictAdminGrid() { 
-    console.log("📊 [Strict Engine] Commencing structural interface element validations..."); 
-    
-    // Catch UI target anchors strictly 
-    const salesTableBody = document.getElementById("admin-global-sales-target-box"); 
-    const clientDropdown = document.getElementById("adminClientDropdown"); 
-    const commsStreamBox = document.getElementById("admin-inbox-live-stream-box"); 
-    const staffEmailLog = document.getElementById("liveStaffEmailDisplayLog"); 
-    const revenueCard = document.getElementById("stat-total-revenue"); 
-    const activeCard = document.getElementById("stat-active-users"); 
-    const pendingCard = document.getElementById("stat-pending-filings"); 
+async function verifyAndStreamStrictAdminGrid() {
+  console.log("📊 [Strict Engine] Commencing structural interface element validations...");
 
-    // Enforce element tracking validation checks 
-    if (!salesTableBody) { 
-        throw new Error("✕ Critical UI Target Element Missing: 'admin-global-sales-target-box' tbody anchor is absent from the HTML layout."); 
-    } 
-    if (!clientDropdown) console.error("✕ UI Verification Alert: Dropdown target element ID 'adminClientDropdown' is missing."); 
-    if (!commsStreamBox) console.error("✕ UI Verification Alert: Inbox logging element ID 'admin-inbox-live-stream-box' is missing."); 
-    if (!staffEmailLog) console.error("✕ UI Verification Alert: Staff tracking display label element ID 'liveStaffEmailDisplayLog' is missing."); 
-    if (!revenueCard || !activeCard || !pendingCard) { 
-        console.warn("⚠ UI Verification Alert: One or more score status cards element targets evaluate to absent."); 
-    } 
+  // Catch UI target anchors strictly
+  const salesTableBody = document.getElementById("admin-global-sales-target-box");
+  const clientDropdown = document.getElementById("adminClientDropdown");
+  const commsStreamBox = document.getElementById("admin-inbox-live-stream-box");
+  const staffEmailLog = document.getElementById("liveStaffEmailDisplayLog");
+  const revenueCard = document.getElementById("stat-total-revenue");
+  const activeCard = document.getElementById("stat-active-users");
+  const pendingCard = document.getElementById("stat-pending-filings");
 
-    // Fetch master client initialization instances cleanly 
-    const client = window.supabaseInstance || window.supabaseClient; 
-    if (!client || typeof client.from !== 'function') { 
-        throw new Error("✕ Critical System Error: The global Supabase client connection has not been initialized on the window scope namespace layout."); 
-    } 
+  // 🟢 FIXED PERIMETER SAFETY: Warn instead of crashing to prevent breaking client-side pages
+  if (!salesTableBody) {
+    console.log("ℹ️ [Strict Engine] Target anchor 'admin-global-sales-target-box' absent. Skipping admin-specific ledger hydration on this portal view.");
+    return; 
+  }
 
-    // --- ENFORCE ABSOLUTE USER VALIDITY CONTROL CHANNELS --- 
-    console.log("🔒 [Strict Engine] Running session authentication layer check..."); 
-    const { data: sessionData, error: authError } = await client.auth.getSession(); 
-    if (authError) { 
-        throw new Error(`✕ Cryptographic Session Authorization Rejected: ${authError.message}`); 
-    } 
-    if (!sessionData || !sessionData.session || !sessionData.session.user) { 
-        if (staffEmailLog) { 
-            staffEmailLog.innerHTML = `<span style="color:var(--staff-red); font-weight:700;">✕ Administrative Session Invalid</span>`; 
-        } 
-        throw new Error("✕ Unauthenticated Command Error: No active administrative user session token detected. Access to database rows has been halted safely."); 
-    } 
-    const currentStaffEmail = sessionData.session.user.email; 
-    if (staffEmailLog) { 
-        staffEmailLog.innerHTML = `<span><i class="fa-solid fa-user-shield"></i> Operator Session: ${currentStaffEmail}</span>`; 
+  if (!clientDropdown) console.error("✕ UI Verification Alert: Dropdown target element ID 'adminClientDropdown' is missing.");
+  if (!commsStreamBox) console.error("✕ UI Verification Alert: Inbox logging element ID 'admin-inbox-live-stream-box' is missing.");
+  if (!staffEmailLog) console.error("✕ UI Verification Alert: Staff tracking display label element ID 'liveStaffEmailDisplayLog' is missing.");
+  if (!revenueCard || !activeCard || !pendingCard) {
+    console.warn("⚠ UI Verification Alert: One or more score status cards element targets evaluate to absent.");
+  }
+
+  // Fetch master client initialization instances cleanly
+  let client = window.supabaseInstance || window.supabaseClient;
+  
+  // 🟢 FIXED SAFETY TIMEOUT: Gracefully handles script loading races instead of throwing an error
+  if (!client || typeof client.from !== 'function') {
+    console.log("📡 [Strict Engine] Connection loading. Scheduling re-verification handshakes...");
+    setTimeout(verifyAndStreamStrictAdminGrid, 200);
+    return;
+  }
+
+  // --- ENFORCE ABSOLUTE USER VALIDITY CONTROL CHANNELS ---
+  console.log("🔒 [Strict Engine] Running session authentication layer check...");
+  const { data: sessionData, error: authError } = await client.auth.getSession();
+  
+  if (authError) {
+    throw new Error(`✕ Cryptographic Session Authorization Rejected: ${authError.message}`);
+  }
+
+  if (!sessionData || !sessionData.session || !sessionData.session.user) {
+    if (staffEmailLog) {
+      staffEmailLog.innerHTML = `<span style="color:var(--staff-red); font-weight:700;">✕ Administrative Session Invalid</span>`;
     }
+    throw new Error("✕ Unauthenticated Command Error: No active administrative user session token detected. Access to database rows has been halted safely.");
+  }
+
+  const currentStaffEmail = sessionData.session.user.email;
+  if (staffEmailLog) {
+    staffEmailLog.innerHTML = `<span><i class="fa-solid fa-user-shield"></i> Operator Session: ${currentStaffEmail}</span>`;
+  }
+
     // --- EXECUTE DIRECT PRODUCTION DATA QUERY MATRIX --- 
     try { 
         console.log(`📡 [Strict Engine] Dispatching database request payload out to table space for user: [${currentStaffEmail}]`); 
@@ -179,70 +189,79 @@ function escapeHtml(str) {
         .replace(/'/g, "&#39;"); 
 } 
 
-// --- 3. ATTACH NOTIFICATION PUSH LOGIC STRICTLY TO SUBMIT ACTIONS --- 
-document.addEventListener("DOMContentLoaded", () => { 
-    const alertForm = document.getElementById("adminAlertForm"); 
-    const alertStatusDiv = document.getElementById("alertStatus"); 
-    const dropdownSelect = document.getElementById("adminClientDropdown"); 
+// ============================================================================
+// --- 3. ATTACH NOTIFICATION PUSH LOGIC STRICTLY TO SUBMIT ACTIONS (CORRECTED) ---
+// ============================================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const alertForm = document.getElementById("adminAlertForm");
+  const alertStatusDiv = document.getElementById("alertStatus");
+  const dropdownSelect = document.getElementById("adminClientDropdown");
 
-    if (alertForm) { 
-        alertForm.addEventListener("submit", async (event) => { 
-            event.preventDefault(); 
-            if (!dropdownSelect || !alertStatusDiv) return; 
+  if (alertForm) {
+    alertForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!dropdownSelect || !alertStatusDiv) return;
 
-            const targetAccountEmail = dropdownSelect.value; 
-            const notificationTitle = document.getElementById("alertTitle")?.value || ""; 
-            const notificationBody = document.getElementById("alertMessage")?.value || ""; 
-            let clientInstance = window.supabaseInstance || window.supabaseClient; 
+      const targetAccountEmail = dropdownSelect.value;
+      const notificationTitle = document.getElementById("alertTitle")?.value || "";
+      const notificationBody = document.getElementById("alertMessage")?.value || "";
 
-            if (!clientInstance) { 
-                throw new Error("✕ Messaging Request Dropped: Active database connection reference unavailable."); 
-            } 
+      let clientInstance = window.supabaseInstance || window.supabaseClient;
+      if (!clientInstance) {
+        throw new Error("✕ Messaging Request Dropped: Active database connection reference unavailable.");
+      }
 
-            if (!targetAccountEmail || !notificationTitle || !notificationBody) { 
-                alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;"; 
-                alertStatusDiv.textContent = "✕ Validation Error: All form fields are required."; 
-                return; 
-            } 
+      if (!targetAccountEmail || !notificationTitle || !notificationBody) {
+        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+        alertStatusDiv.textContent = "✕ Validation Error: All form fields are required.";
+        return;
+      }
 
-            alertStatusDiv.style.cssText = "color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600;"; 
-            alertStatusDiv.textContent = "Processing dispatch matrix hooks..."; 
+      alertStatusDiv.style.cssText = "color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+      alertStatusDiv.textContent = "Processing dispatch matrix hooks...";
 
-            try { 
-                // Look up the unique id from client_profiles based on selected email address
-                const { data: profileData, error: profileErr } = await clientInstance
-                    .from('client_profiles')
-                    .select('id')
-                    .eq('email', lower(targetAccountEmail))
-                    .maybeSingle();
+      try {
+        // 🟢 FIXED: Normalizing string natively in JavaScript using .toLowerCase() 
+        const cleanTargetEmail = String(targetAccountEmail).trim().toLowerCase();
 
-                if (profileErr || !profileData) {
-                    throw new Error("Target client account profile id tracking lookups returned unassigned.");
-                }
+        // 🟢 FIXED COLUMN SCHEMA: Querying your exact 'email_address' table column matching client_profiles
+        const { data: profileData, error: profileErr } = await clientInstance
+          .from('client_profiles')
+          .select('id')
+          .eq('email_address', cleanTargetEmail)
+          .maybeSingle();
 
-                // Maps directly into your public.portal_notifications table properties
-                const { error: insertError } = await clientInstance 
-                    .from('portal_notifications') 
-                    .insert([ { 
-                        user_id: profileData.id,
-                        recipient_email: targetAccountEmail, 
-                        title: notificationTitle, 
-                        message: notificationBody, 
-                        is_read: false, 
-                        created_at: new Date().toISOString() 
-                    } ]); 
+        if (profileErr || !profileData) {
+          throw new Error("Target client account profile id tracking lookups returned unassigned.");
+        }
 
-                if (insertError) throw insertError; 
+        // Maps directly into your public.portal_notifications table properties
+        const { error: insertError } = await clientInstance
+          .from('portal_notifications')
+          .insert([
+            {
+              user_id: profileData.id,
+              recipient_email: cleanTargetEmail,
+              email_address: cleanTargetEmail, // Aligns with alternative schema validation cells safely
+              title: notificationTitle,
+              message: notificationBody,
+              is_read: false,
+              created_at: new Date().toISOString()
+            }
+          ]);
 
-                alertStatusDiv.style.cssText = "color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700;"; 
-                alertStatusDiv.textContent = "✓ Real-Time Alert Pushed Successfully!"; 
-                alertForm.reset(); 
-            } catch (postFault) { 
-                alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;"; 
-                alertStatusDiv.textContent = `✕ Dispatch Failed: Check system console logs.`; 
-                throw new Error(`✕ Notification Entry Injection Failure: ${postFault.message}`); 
-            } 
-        }); 
-    } 
-}); 
+        if (insertError) throw insertError;
+
+        alertStatusDiv.style.cssText = "color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700;";
+        alertStatusDiv.textContent = "✓ Real-Time Alert Pushed Successfully!";
+        alertForm.reset();
+
+      } catch (postFault) {
+        alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;";
+        alertStatusDiv.textContent = `✕ Dispatch Failed: Check system console logs.`;
+        throw new Error(`✕ Notification Entry Injection Failure: ${postFault.message}`);
+      }
+    });
+  }
+});
 })(); // ✅ CLOSES ROOT MODULE SCOPE CORRECTLY HERE
