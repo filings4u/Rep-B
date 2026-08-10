@@ -291,156 +291,138 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
 
-   // 🟢 THE FIX: Resolves recipient UIDs from client profiles and inserts rows straight into public.portal_notifications
+    // ========================================================================
+  // 3. ENTERPRISE NOTIFICATION ROUTER FORM SUBMISSION CONTROLLER
+  // ========================================================================
   if (notificationForm) {
     notificationForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      e.stopPropagation();
 
-      const targetEmail = recipientSelect.value;
-      const title = document.getElementById("notificationTitle").value.trim();
-      const message = document.getElementById("notificationMessage").value.trim();
+      if (!recipientSelect || !formStatus || !submitBtn) return;
+      formStatus.style.display = "none";
 
-      if (!targetEmail || !title || !message) {
-        showDispatchBanner("✕ Input Validation Mismatch: All fields are mandatory.", true);
+      const targetCustomerEmail = recipientSelect.value;
+      const alertTitle = document.getElementById("notificationTitle").value.trim();
+      const alertMessage = document.getElementById("notificationMessage").value.trim();
+
+      if (!targetCustomerEmail) {
+        showHubFeedback("✕ Operational Error: You must select a valid target customer account from the dropdown matrix.", true);
+        return;
+      }
+      if (!alertTitle || !alertMessage) {
+        showHubFeedback("✕ Operational Error: Notification Title and Message parameters cannot be left blank.", true);
         return;
       }
 
-      if (submitBtn) { 
-        submitBtn.disabled = true; 
-        submitBtn.textContent = "Querying Client Profile UID... 📡"; 
-      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Dispatched Live Stream Triggers... 📡";
 
       try {
-        // 1. LOOKUP RECIPIENT'S USER ID FROM CLIENT PROFILES OR DASHBOARD ORDERS TO SATISFY AUTH.USERS CONTRAINTS
-        console.log(`📡 [Admin Dispatcher] Locating system UID matching recipient: [${targetEmail}]`);
-        
-        let resolvedUserUid = null;
+        console.log(`📡 [Notification Engine] Commencing account lookup for target recipient: [${targetCustomerEmail}]`);
 
-        // Attempt lookup from standard dashboard orders index first
-        const { data: dashOrderMatch } = await client
-          .from('dashboard_orders')
-          .select('client_id')
-          .eq('email_address', targetEmail.toLowerCase())
+        // 🟢 FIXED ROUTING HANDSHAKE: Resolves the customer's true auth user_id matching the selected email
+        const { data: matchedClient, error: lookupError } = await client
+          .from('client_profiles') 
+          .select('id')
+          .eq('email_address', targetCustomerEmail)
           .maybeSingle();
 
-        if (dashOrderMatch && dashOrderMatch.client_id) {
-          resolvedUserUid = dashOrderMatch.client_id;
+        if (lookupError) throw lookupError;
+        
+        let targetedUuid = matchedClient ? matchedClient.id : null;
+        
+        // Safety Fallback Check: If account is not in client_profiles, alert the operator immediately
+        if (!targetedUuid) {
+          throw new Error(`Target profile record could not be resolved inside client_profiles for ${targetCustomerEmail}. Account tracking aborted.`);
         }
 
-        // Secondary fallback to orders table rows mapping if primary lookup yields zero results
-        if (!resolvedUserUid) {
-          const { data: orderMatch } = await client
-            .from('orders')
-            .select('client_id')
-            .eq('client_email', targetEmail.toLowerCase())
-            .maybeSingle();
-            
-          if (orderMatch && orderMatch.client_id) resolvedUserUid = orderMatch.client_id;
-        }
+        console.log(`✓ [Notification Engine] Resolved Target User ID: [${targetedUuid}]. Committing ledger rows...`);
 
-        // If no relational customer profiles row exists, extract active admin uid token as system fallback root link
-        if (!resolvedUserUid) {
-          const { data: { session } } = await client.auth.getSession();
-          resolvedUserUid = session?.user?.id;
-        }
-
-        // 2. COMMIT COMPILED NOTIFICATION DIRECTLY TO PORTAL_NOTIFICATIONS TABLE
+        // STEP 2: Insert data row exactly matching your PostgreSQL schema constraints
+        // This instantly fires off the background webhook to 'send-notification-email'
         const { error: insertError } = await client
           .from('portal_notifications')
           .insert([{
-            user_id: resolvedUserUid,
-            title: title,
-            message: message,
+            user_id: targetedUuid,                // 🟢 Connects notification directly to selected customer account id
+            title: alertTitle,
+            message: alertMessage,
             is_read: false,
             is_archived: false,
-            recipient_email: targetEmail.toLowerCase(),
-            email_address: targetEmail.toLowerCase(),
+            recipient_email: targetCustomerEmail, // Matches your schema metadata track
+            email_address: targetCustomerEmail,   // Matches your alternative tracking cell
             created_at: new Date().toISOString()
           }]);
 
         if (insertError) throw insertError;
 
-        showDispatchBanner("✓ Success! Notification successfully dispatched to table and customer email queue.", false);
+        showHubFeedback("✓ Notification successfully pushed live! Secure mail transmission queued over active webhook channel.", false);
         notificationForm.reset();
         
-        // Optional secondary mirror backup to global operational system logs timeline feed if desired
-        if (typeof window.reloadSystemNotificationsFeed === 'function') {
-          await window.reloadSystemNotificationsFeed();
-        }
+        // Re-calculate the admin dashboard history log stream view instantly
+        await reloadSystemNotificationsFeed();
 
       } catch (fault) {
-        console.error("✕ Alert dispatch routing failed:", fault);
-        showDispatchBanner(`✕ Database Rejection: ${fault.message || "Constraint mapping error caught."}`, true);
+        console.error("✕ Notification hub execution failed:", fault);
+        showHubFeedback(`✕ Dispatch Failed: ${fault.message || "Pipeline interception aborted."}`, true);
       } finally {
-        if (submitBtn) { 
-          submitBtn.disabled = false; 
-          submitBtn.textContent = "Dispatch Alert Live ➔"; 
-        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Authorize Live Push & Dispatch Notification ➔";
       }
     });
   }
 
 
-  // 4. MARK INDIVIDUAL NOTIFICATION ROW AS READ ENGINE
-  window.toggleSingleAlertReadState = async function(alertUuid) {
-    if (!alertUuid) return;
-    try {
-      const { error } = await client
-        .from('system_notifications')
-        .update({ is_read_by_admin: true })
-        .eq('id', alertUuid);
-      if (error) throw error;
-      await reloadSystemNotificationsFeed();
-    } catch (err) { console.error("✕ Failed to toggle row acknowledgment state:", err); }
-  };
 
-  // 5. BULK ACKNOWLEDGE MARK ALL ALERTS AS READ CONTROLLER
-  window.markAllAlertsAsReadEngine = async function() {
-    try {
-      const { error } = await client
-        .from('system_notifications')
-        .update({ is_read_by_admin: true })
-        .eq('is_read_by_admin', false);
-      if (error) throw error;
-      await reloadSystemNotificationsFeed();
-    } catch (err) { console.error("✕ Bulk acknowledgment execution rejected:", err); }
-  };
-
-  function showDispatchBanner(text, isError) {
+   // ========================================================================
+  // 4. OPERATIONAL INTERFACE FEEDBACK & ESCAPING UTILITIES
+  // ========================================================================
+  function showHubFeedback(text, isError) {
     if (!formStatus) return;
     formStatus.textContent = text;
     formStatus.style.display = "block";
-    formStatus.style.background = isError ? "#fee2e2" : "#ecfdf5";
+    formStatus.style.background = isError ? "#fef2f2" : "#ecfdf5";
     formStatus.style.color = isError ? "#991b1b" : "#047857";
-    setTimeout(() => { formStatus.style.display = "none"; }, 5000);
+    formStatus.style.border = `1px solid ${isError ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)"}`;
   }
 
-   function escapeAlertHtml(s) {
+  function escapeAlertHtml(s) {
     if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
-  // 6. SETUP REAL-TIME REPLICATION CHANNELS DISPATCH LOGS BROADCAST LISTENERS
+  // ========================================================================
+  // 5. REAL-TIME OVER-THE-AIR WEBSOCKET CHANNEL LISTENERS
+  // ========================================================================
   async function bindLiveNotificationsRealtimeFeed() {
     if (liveAlertsChannel) liveAlertsChannel.unsubscribe();
-
+    
+    // Listen for database changes to display background pushes instantly
     liveAlertsChannel = client
-      .channel('admin-global-platform-notifications-stream')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'system_notifications' }, async payload => {
-        console.log("✓ [Alert Hub Stream] Intercepted database activity state change:", payload);
+      .channel('admin-portal-notifications-live-stream')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'portal_notifications' 
+      }, async () => {
         await reloadSystemNotificationsFeed();
       })
       .subscribe();
   }
 
-   // 🏁 INITIALIZATION MOUNT TRIGGERS ACTIVE RUNTIME LIFECYCLES
-  // 🟢 THE FIX: Realigned initialization sequences to call the new portal_notifications tables loaders cleanly on mount
+  // ========================================================================
+  // 6. IMMEDIATE COMPONENT INITIALIZATION SWEETS
+  // ========================================================================
   await populateClientDropdown();
-  await reloadSystemNotificationsFeed(); // Pulls the direct portal_notifications ledger entries instantly
-  await bindLiveNotificationsRealtimeFeed(); // Attaches the live over-the-air PostgreSQL channel streams
+  await reloadSystemNotificationsFeed();
+  await bindLiveNotificationsRealtimeFeed();
 });
 </script>
+
 
 
 </body>
