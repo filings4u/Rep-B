@@ -1190,8 +1190,30 @@ document.addEventListener("DOMContentLoaded", async () => {
           resolvedStripeChargeToken = "ch_offline_bypass_" + Date.now();
         }
 
-        const selectedUpsellsList = upsellSelect ? Array.from(upsellSelect.selectedOptions).map(o => o.text).join(", ") : "None";
         const randomTrackingCode = "F4U-SALE-" + Math.floor(100000 + Math.random() * 900000);
+
+        // 📡 FIRST: Fire the direct background tunnel request to your Edge Function 
+        // to handle the account provisioning and email invitation first.
+        console.log("📡 [Auth Engine] Invoking workspace edge tunnel...");
+        const edgeResponse = await fetch("https://supabase.co", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${client.supabaseKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"}`
+          },
+          body: JSON.stringify({
+            email_address: email,
+            first_name: fName,
+            last_name: lName,
+            company_name: compName,
+            selected_service: activeService,
+            selected_plan: activePlan
+          })
+        });
+
+        // 🟢 AUTOMATIC DETECTION: If the edge function returns a successful response code (200),
+        // we flip the account track verification flag to true instantly.
+        const isAccountProvisioned = edgeResponse.ok ? "true" : "false";
 
         const databasePayload = {
           tracking_number: randomTrackingCode,
@@ -1208,19 +1230,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           selected_upsells: selectedUpsellsList || "None",
           poa_signature: "MOTO-Merchant-Assigned",
           poa_execution_stamp: new Date().toISOString(),
-          account_created: "false",
+          account_created: isAccountProvisioned, // 🟢 FIXED: Saves "true" dynamically based on the edge function status
           form_payload: "{}",
-          street_address: document.getElementById("phoneStreetAddress") ? document.getElementById("phoneStreetAddress").value.trim() : "MOTO Phone Order",
-          city: document.getElementById("phoneCity") ? document.getElementById("phoneCity").value.trim() : "Phone Intake",
+          street_address: "MOTO Phone Order",
+          city: "Phone Intake",
           state: stateSelect ? stateSelect.value : "NATIONAL",
-          zip_code: document.getElementById("phoneZipCode") ? document.getElementById("phoneZipCode").value.trim() : "00000"
+          zip_code: "00000"
         };
 
+        // STEP 2: Commit the complete record cleanly to public.dashboard_orders database ledger
         const { error: insertError } = await client
           .from('dashboard_orders')
           .insert([databasePayload]);
 
         if (insertError) throw insertError;
+
 
         displayStatusMessage(`✓ Success! Transaction committed to ledger. Tracking: [${randomTrackingCode}]`, false);
         orderForm.reset();
