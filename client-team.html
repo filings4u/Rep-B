@@ -130,163 +130,228 @@
   <script src="assets/js/client-footer.js"></script>
 
 
-  <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+  <!-- 📁 FILE PATH: assets/js/client-teams.js -->
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      const teamTableBody = document.getElementById("team-roster-feed-target");
-      const addMemberForm = document.getElementById("add-team-member-form");
-      
-      function runPortalClock() {
-        const el = document.getElementById("portal-clock");
-        if (el) el.textContent = new Date().toLocaleTimeString();
-      }
-      setInterval(runPortalClock, 1000);
-      runPortalClock();
+  const teamTableBody = document.getElementById("team-roster-feed-target");
+  const addMemberForm = document.getElementById("add-team-member-form");
 
-      // 🟢 SYNCHRONIZED STORAGE SELECTION ENHANCEMENT (Matches portal-engine.js)
-      let client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-        if (lib && typeof lib.createClient === 'function') {
-          client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-          window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
-        }
-      }
-
-      if (!client || typeof client.from !== 'function') {
-        teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Connection dropped.</td></tr>`;
-        return;
-      }
-
-      let sessionObj = null;
-      try {
-        const { data: { session } } = await client.auth.getSession();
-        if (session) sessionObj = session;
-      } catch (e) {}
-
-      if (!sessionObj) {
-        const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
-        if (token) {
-          try { const p = JSON.parse(token); sessionObj = p.currentSession || p; } catch(err) {}
-        }
-      }
-
-      const activeUserEmail = (sessionObj && sessionObj.user) ? sessionObj.user.email : "";
-
-      // 🟢 READ CONTROLLER: Load profiles matrix data loops cleanly
-      async function syncTeamDirectoryGrid() {
-        try {
-          const { data: profiles, error } = await client
-            .from('client_profiles')
-            .select('first_name, last_name, email_address, phone_number, id')
-            .order('first_name', { ascending: true });
-
-          if (error) throw error;
-
-          if (!profiles || profiles.length === 0) {
-            teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:32px; text-align:center; color:var(--text-muted); font-style:italic;">No secondary team profiles recorded for this workspace dashboard.</td></tr>`;
-            return;
-          }
-
-          teamTableBody.innerHTML = "";
-          profiles.forEach((row) => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
-            
-            const name = ((row.first_name || "") + " " + (row.last_name || "")).trim() || "Associate Member";
-            const email = row.email_address || "Not Provided";
-            
-            const isMaster = activeUserEmail && email.toLowerCase() === activeUserEmail.toLowerCase();
-            const role = isMaster ? "Master Admin" : (row.phone_number === "View Only" ? "View Only Specialist" : "Associate Manager");
-            const bg = isMaster ? "#dcfce7" : "#f1f5f9";
-            const col = isMaster ? "#15803d" : "#475569";
-            
-            const actionsHtml = isMaster 
-              ? `<span style="font-size:11px; color:var(--text-muted); font-weight:700; font-style:italic;">Protected Primary Seat</span>`
-              : `<button onclick="window.revokePrivileges('${row.id}')" style="background:none; border:none; color:var(--staff-red); font-weight:700; font-size:11px; cursor:pointer; text-decoration:underline;">Revoke Privilege</button>`;
-
-            tr.innerHTML = `
-              <td style="padding:14px 12px; font-weight:700;">${escapeHtml(name)}</td>
-              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:600;">${escapeHtml(email)}</td>
-              <td style="padding:14px 12px;"><span style="background:${bg}; color:${col}; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${role}</span></td>
-              <td style="padding:14px 12px; text-align:right;">${actionsHtml}</td>
-            `;
-            teamTableBody.appendChild(tr);
-          });
-        } catch (err) {
-          console.error(err);
-          teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Query Failure: Ledger access error.</td></tr>`;
-        }
-      }
-      // 🟢 CREATE CONTROLLER: Insert profile invitation rows
-      if (addMemberForm) {
-        addMemberForm.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const btn = addMemberForm.querySelector("button[type='submit']");
-          if (btn) { btn.disabled = true; btn.innerText = "Provisioning..."; }
-
-          const f = document.getElementById("team_first_name").value.trim();
-          const l = document.getElementById("team_last_name").value.trim();
-          const em = document.getElementById("team_email_address").value.trim().toLowerCase();
-          const tier = document.getElementById("team_role_tier").value;
-
-          try {
-            const { error } = await client.from('client_profiles').insert([{
-              first_name: f, last_name: l, email_address: em,
-              phone_number: tier === "View Only Specialist" ? "View Only" : "Active Member"
-            }]);
-            if (error) throw error;
-            alert(`✅ Seat privileges provisioned successfully for: ${em}`);
-            addMemberForm.reset();
-            await syncTeamDirectoryGrid();
-          } catch (err) {
-            alert("✕ Conflict Constraint: Profile execution rejected: " + err.message);
-          } finally {
-            if (btn) { btn.disabled = false; btn.innerText = "Authorize Seat ➔"; }
-          }
-        });
-      }
-
-      // 🟢 DELETE CONTROLLER: Erase row profiles securely
-      window.revokePrivileges = async function(id) {
-        if (!confirm("⚠️ Are you completely certain you want to revoke this seat's data portal clearance parameters?")) return;
-        try {
-          const { error } = await client.from('client_profiles').delete().eq('id', id);
-          if (error) throw error;
-          alert("✅ Privileges successfully truncated.");
-          await syncTeamDirectoryGrid();
-        } catch (err) {
-          alert("✕ Authorization Exception occurred: " + err.message);
-        }
-      };
-
-      function escapeHtml(s) {
-        if (!s) return "";
-        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-      }
-
-      window.toggleSidebarAccordion = function(btn) {
-        if (!btn) return;
-        const panel = btn.nextElementSibling;
-        if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
-      };
-
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-        client.auth.signOut().then(() => { window.localStorage.clear(); window.sessionStorage.clear(); window.location.replace("portal-login.html"); });
-      });
-
-      await syncTeamDirectoryGrid();
-    });
-
-      function runPortalClock() {
+  function runPortalClock() {
     const el = document.getElementById("portal-clock");
     if (el) el.textContent = new Date().toLocaleTimeString();
   }
   setInterval(runPortalClock, 1000);
   runPortalClock();
-  </script>
+
+  // 🟢 SYNCHRONIZED STORAGE SELECTION ENHANCEMENT
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    if (lib && typeof lib.createClient === 'function') {
+      client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+      window.supabaseInstance = client;
+      window.supabaseClient = client;
+      window.supabase = client;
+    }
+  }
+
+  if (!client || typeof client.from !== 'function') {
+    teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Connection dropped.</td></tr>`;
+    return;
+  }
+
+  let sessionObj = null;
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (session) sessionObj = session;
+  } catch (e) {}
+
+  if (!sessionObj) {
+    const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
+    if (token) {
+      try {
+        const p = JSON.parse(token);
+        sessionObj = p.currentSession || p;
+      } catch(err) {}
+    }
+  }
+
+  if (!sessionObj || !sessionObj.user) {
+    window.location.href = "portal-login.html";
+    return;
+  }
+
+  const activeUserEmail = String(sessionObj.user.email).trim().toLowerCase();
+
+  // 🟢 SECURE ISOLATED READ CONTROLLER: Loads team profiles filtered strictly by shared corporate boundaries
+  async function syncTeamDirectoryGrid() {
+    try {
+      console.log(`📡 [Team Hub] Verifying corporate perimeter bounds for: [${activeUserEmail}]`);
+
+      // STEP 1: Query the active user's own profile card to discover their company_name alignment
+      const { data: currentUserProfile, error: profileErr } = await client
+        .from('client_profiles')
+        .select('company_name')
+        .eq('email_address', activeUserEmail)
+        .maybeSingle();
+
+      if (profileErr) throw profileErr;
+      
+      const targetCompany = currentUserProfile ? currentUserProfile.company_name : "Not Specified";
+
+      // 🟢 FIXED PERIMETER BOUNDARY: Filter the total query using the verified corporate tracking key
+      // This forces data isolation so customers only view their own team members.
+      const { data: profiles, error } = await client
+        .from('client_profiles')
+        .select('first_name, last_name, email_address, phone_number, id')
+        .eq('company_name', targetCompany)
+        .order('first_name', { ascending: true });
+
+      if (error) throw error;
+
+      if (!profiles || profiles.length === 0) {
+        teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:32px; text-align:center; color:var(--text-muted); font-style:italic;">No secondary team profiles recorded for this workspace dashboard.</td></tr>`;
+        return;
+      }
+
+      teamTableBody.innerHTML = "";
+      profiles.forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
+
+        const name = ((row.first_name || "") + " " + (row.last_name || "")).trim() || "Associate Member";
+        const email = row.email_address || "Not Provided";
+        
+        const isMaster = activeUserEmail && email.toLowerCase() === activeUserEmail.toLowerCase();
+        const role = isMaster ? "Master Admin" : (row.phone_number === "View Only" ? "View Only Specialist" : "Associate Manager");
+        
+        const bg = isMaster ? "#dcfce7" : "#f1f5f9";
+        const col = isMaster ? "#15803d" : "#475569";
+        
+        const actionsHtml = isMaster 
+          ? `<span style="font-size:11px; color:var(--text-muted); font-weight:700; font-style:italic;">Protected Primary Seat</span>` 
+          : `<button onclick="window.revokePrivileges('${row.id}')" style="background:none; border:none; color:var(--staff-red); font-weight:700; font-size:11px; cursor:pointer; text-decoration:underline;">Revoke Privilege</button>`;
+
+        tr.innerHTML = `
+          <td style="padding:14px 12px; font-weight:700;">${escapeHtml(name)}</td>
+          <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:600;">${escapeHtml(email)}</td>
+          <td style="padding:14px 12px;"><span style="background:${bg}; color:${col}; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${role}</span></td>
+          <td style="padding:14px 12px; text-align:right;">${actionsHtml}</td>
+        `;
+        teamTableBody.appendChild(tr);
+      });
+
+    } catch (err) {
+      console.error(err);
+      teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Query Failure: Ledger access error.</td></tr>`;
+    }
+  }
+  // 🟢 CREATE CONTROLLER: Insert profile invitation rows (CORRECTED)
+  if (addMemberForm) {
+    addMemberForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const btn = addMemberForm.querySelector("button[type='submit']");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Provisioning...";
+      }
+
+      const f = document.getElementById("team_first_name").value.trim();
+      const l = document.getElementById("team_last_name").value.trim();
+      const em = document.getElementById("team_email_address").value.trim().toLowerCase();
+      const tier = document.getElementById("team_role_tier").value;
+
+      try {
+        // 🟢 FIXED BOUNDARY SEED: Query the parent's company context to attach to the invitation row
+        const { data: parentProfile } = await client
+          .from('client_profiles')
+          .select('company_name')
+          .eq('email_address', activeUserEmail)
+          .maybeSingle();
+
+        const parentCompany = parentProfile ? parentProfile.company_name : "Not Specified";
+
+        // Insert new row securely mapped into the identical corporate track
+        const { error } = await client
+          .from('client_profiles')
+          .insert([{ 
+            first_name: f, 
+            last_name: l, 
+            email_address: em, 
+            company_name: parentCompany, // 🟢 FIXED: Preserves account isolation during team inserts
+            phone_number: tier === "View Only Specialist" ? "View Only" : "Active Member" 
+          }]);
+
+        if (error) throw error;
+
+        alert(`✅ Seat privileges provisioned successfully for: ${em}`);
+        addMemberForm.reset();
+        await syncTeamDirectoryGrid();
+
+      } catch (err) {
+        alert("✕ Conflict Constraint: Profile execution rejected: " + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "Authorize Seat ➔";
+        }
+      }
+    });
+  }
+
+  // 🟢 DELETE CONTROLLER: Erase row profiles securely
+  window.revokePrivileges = async function(id) {
+    if (!confirm("⚠️ Are you completely certain you want to revoke this seat's data portal clearance parameters?")) return;
+    
+    try {
+      const { error } = await client.from('client_profiles').delete().eq('id', id);
+      if (error) throw error;
+      
+      alert("✅ Privileges successfully truncated.");
+      await syncTeamDirectoryGrid();
+    } catch (err) {
+      alert("✕ Authorization Exception occurred: " + err.message);
+    }
+  };
+
+  function escapeHtml(s) {
+    if (!s) return "";
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "'");
+  }
+
+  window.toggleSidebarAccordion = function(btn) {
+    if (!btn) return;
+    const panel = btn.nextElementSibling;
+    if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+  };
+
+  document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+    client.auth.signOut().then(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+      window.location.replace("portal-login.html");
+    });
+  });
+
+  // Start initialization streams
+  await syncTeamDirectoryGrid();
+});
+
+function runPortalClock() {
+  const el = document.getElementById("portal-clock");
+  if (el) el.textContent = new Date().toLocaleTimeString();
+}
+setInterval(runPortalClock, 1000);
+runPortalClock();
+</script>
+
 </body>
 </html>
