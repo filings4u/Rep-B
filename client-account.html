@@ -435,7 +435,7 @@
 <script>
 /**
  * filings4u Platform Architecture
- * Module: client-account-controller.js (Unified Profile Management)
+ * Module: client-account-controller.js (Unified Profile Management - CORRECTED)
  */
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
@@ -456,12 +456,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const fieldState = document.getElementById("accountState");
   const fieldZip = document.getElementById("accountZipCode");
 
+  // Global Registry Memory Caches for Stripe Card Modification Blocks
+  window.cachedStripeCustomerId = null;
+
   // Establish Supabase Connection Engine
   let client = window.supabaseInstance || window.supabaseClient;
   if (!client && typeof supabase !== 'undefined') {
     client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
   }
-
   if (!client) {
     console.error("✕ Core initialization failure: Supabase connection engine unassigned.");
     return;
@@ -481,11 +483,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadClientAccountMetadata() {
     try {
       console.log(`📡 [Account Matrix] Querying data nodes for user session: ${authUserEmail}`);
-      
-      // Step A: Load base parameters straight from your profiles index row table
+
+      // Step A: Load base parameters straight from your profiles index row table 
+      // 🟢 FIXED: Requesting stripe_customer_id explicitly from client_profiles schema
       const { data: profile, error: queryError } = await client
         .from("client_profiles")
-        .select("first_name, last_name, phone_number, street_address, city, state, zip_code, avatar_url, email_address")
+        .select("first_name, last_name, phone_number, street_address, city, state, zip_code, avatar_url, email_address, stripe_customer_id")
         .eq("id", userUid)
         .maybeSingle();
 
@@ -501,17 +504,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (fieldCity) fieldCity.value = profile.city || "";
         if (fieldState) fieldState.value = profile.state || "";
         if (fieldZip) fieldZip.value = profile.zip_code || "";
-        
         if (profile.avatar_url && avatarPreview) avatarPreview.src = profile.avatar_url;
         if (profile.email_address) resolvedCustomerEmail = profile.email_address;
+        
+        // 🟢 FIXED: Caching the verified customer token string safely for upcoming billing management cards
+        if (profile.stripe_customer_id) {
+          window.cachedStripeCustomerId = profile.stripe_customer_id.trim();
+        }
       }
 
       // Step B: Fallback pipeline to extract from order tracking layers if profile value is missing
       if (!profile || !profile.email_address) {
+        // 🟢 FIXED: Adjusted column matches to search the table space using email strings instead of incompatible auth user UUIDs
         const { data: dashOrder } = await client
           .from("dashboard_orders")
           .select("email_address")
-          .eq("id", userUid)
+          .eq("email_address", authUserEmail)
+          .limit(1)
           .maybeSingle();
 
         if (dashOrder && dashOrder.email_address) {
@@ -519,12 +528,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
           const { data: coreOrder } = await client
             .from("orders")
-            .select("client_email")
-            .eq("id", userUid)
+            .select("email_address")
+            .eq("email_address", authUserEmail)
+            .limit(1)
             .maybeSingle();
 
-          if (coreOrder && coreOrder.client_email) {
-            resolvedCustomerEmail = coreOrder.client_email;
+          if (coreOrder && coreOrder.email_address) {
+            resolvedCustomerEmail = coreOrder.email_address;
           }
         }
       }
@@ -536,7 +546,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (err) {
       console.error("✕ Failed to compile customer ledger parameters:", err);
-      showNotification("✕ System Connection Refused: Unable to load profile parameters.", true);
+      showAccountFeedback("✕ System Connection Refused: Unable to load profile parameters.", true);
     }
   }
 
@@ -545,13 +555,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     avatarInput.addEventListener("change", async () => {
       if (!avatarInput.files || avatarInput.files.length === 0) return;
       const file = avatarInput.files[0];
-      
       if (avatarStatusText) avatarStatusText.textContent = "Processing upload...";
-      
+
       try {
         const fileExt = file.name.split('.').pop();
         const storageFilePath = `avatars/${userUid}_${Date.now()}.${fileExt}`;
-        
+
         const { error: uploadError } = await client.storage
           .from("client_documents_vault")
           .upload(storageFilePath, file, { cacheControl: "3600", upsert: true });
@@ -568,9 +577,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           .eq("id", userUid);
 
         if (updateError) throw updateError;
-
         if (avatarPreview) avatarPreview.src = publicUrl;
         if (avatarStatusText) avatarStatusText.textContent = "✓ Avatar synchronized.";
+
       } catch (fault) {
         console.error("✕ Avatar sync transaction aborted:", fault);
         if (avatarStatusText) avatarStatusText.textContent = "✕ Upload failed.";
@@ -585,7 +594,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       showNotification("Synchronizing complete profile records matrix...", false);
 
       try {
-        // Double updates both contact credentials and mailing paths via a single database transactional record payload write
         const { error: updateError } = await client
           .from("client_profiles")
           .update({
@@ -602,6 +610,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (updateError) throw updateError;
         showNotification("✓ Success! Profile matrix and coordinates registered securely.", false);
+
       } catch (err) {
         showNotification(`✕ Synchronization failure: ${err.message}`, true);
       }
@@ -613,12 +622,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     event.stopPropagation();
     const popup = document.getElementById("emailLockTooltipPopup");
     if (!popup) return;
-    
     const isVisible = popup.style.display === "block";
     popup.style.display = isVisible ? "none" : "block";
   };
 
-  // Close the popup instantly if user clicks anywhere outside of the frame canvas boundary node
   document.addEventListener("click", () => {
     const popup = document.getElementById("emailLockTooltipPopup");
     if (popup) popup.style.display = "none";
@@ -631,78 +638,79 @@ document.addEventListener("DOMContentLoaded", async () => {
     formStatus.style.background = isError ? "#fee2e2" : "#ecfdf5";
     formStatus.style.color = isError ? "#991b1b" : "#047857";
     formStatus.style.border = `1px solid ${isError ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)"}`;
-    
-    setTimeout(() => { formStatus.style.display = "none"; }, 5000);
+    setTimeout(() => {
+      formStatus.style.display = "none";
+    }, 5000);
   }
 
-  // Run synchronization pipeline routines
+  // 🟢 6. STRIPE SECURE SELF-SERVICE WALLET MANAGEMENT PORTAL LINK
+  const checkoutTunnelTrigger = document.getElementById("updatePaymentTunnelTrigger");
+  if (checkoutTunnelTrigger) {
+    checkoutTunnelTrigger.addEventListener("click", async (e) => {
+      e.preventDefault();
+      
+      const originalText = checkoutTunnelTrigger.textContent;
+      checkoutTunnelTrigger.disabled = true;
+      checkoutTunnelTrigger.textContent = "Securing Billing Session Token...";
+
+      try {
+        console.log("📡 [Payment Engine] Dispatching token generation request to customer billing portal edge relay...");
+        
+        // 🟢 FIXED ENDPOINT PATH: Pointing explicitly to your serverless sub-path instead of the root url
+        const edgeRelayRoute = "https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-billing-portal";
+        const projectSessionToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+
+        const networkResponse = await fetch(edgeRelayRoute, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": projectSessionToken
+          },
+          body: JSON.stringify({
+            account_user_id: userUid,
+            account_user_email: authUserEmail,
+            stripe_customer_id: window.cachedStripeCustomerId || null,
+            return_redirect_url: window.location.href
+          })
+        });
+
+        if (!networkResponse.ok) {
+          throw new Error(`Stripe gateway handshake rejected with status code: ${networkResponse.status}`);
+        }
+
+        const responsePayload = await networkResponse.json();
+        
+        if (responsePayload && responsePayload.portal_session_url) {
+          console.log("✓ [Billing Tunnel Secured] Handoff confirmed. Executing external redirection router...");
+          window.location.href = responsePayload.portal_session_url;
+        } else {
+          throw new Error("Invalid response structural signature returned from the payment router edge node.");
+        }
+
+      } catch (fault) {
+        console.error("✕ Payment tunnel connection collapsed:", fault);
+        alert(`Billing Connection Failure: ${fault.message || "Unable to safely map financial endpoints right now."}`);
+      } finally {
+        if (checkoutTunnelTrigger) {
+          checkoutTunnelTrigger.disabled = false;
+          checkoutTunnelTrigger.textContent = originalText;
+        }
+      }
+    });
+  }
+
+  // Run initialization profile loader routines
   await loadClientAccountMetadata();
 });
 
-// 💳 STRIPE SECURE WALLET MANAGEMENT TUNNEL ROUTINES
-const checkoutTunnelTrigger = document.getElementById("updatePaymentTunnelTrigger");
-
-if (checkoutTunnelTrigger) {
-  checkoutTunnelTrigger.addEventListener("click", async (e) => {
-    e.preventDefault();
-    const originalText = checkoutTunnelTrigger.textContent;
-    checkoutTunnelTrigger.disabled = true;
-    checkoutTunnelTrigger.textContent = "Securing Billing Session Token...";
-
-    try {
-      console.log("📡 [Payment Engine] Dispatching token generation request to edge relay...");
-      
-      // Target your project's serverless edge route endpoint
-      const edgeRelayRoute = "https://lrbimrlbskjweynxlgas.supabase.co";
-      const projectSessionToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-
-      const networkResponse = await fetch(edgeRelayRoute, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": projectSessionToken
-        },
-        body: JSON.stringify({
-          account_user_id: userUid,
-          account_user_email: userEmail,
-          return_redirect_url: window.location.href // Routes customer cleanly back here when finished
-        })
-      });
-
-      if (!networkResponse.ok) {
-        throw new Error(`Stripe gateway handshake rejected with status code: ${networkResponse.status}`);
-      }
-
-      const responsePayload = await networkResponse.json();
-      
-      if (responsePayload && responsePayload.portal_session_url) {
-        console.log("✓ [Billing Tunnel Secured] Handoff confirmed. Executing external redirection router...");
-        // Redirect user directly into Stripe's secure self-service cloud wallet
-        window.location.href = responsePayload.portal_session_url;
-      } else {
-        throw new Error("Invalid response structural signature returned from the payment router node.");
-      }
-
-    } catch (fault) {
-      console.error("✕ Payment tunnel connection collapsed:", fault);
-      alert(`Billing Connection Failure: ${fault.message || "Unable to safely map financial endpoints right now."}`);
-    } finally {
-      if (checkoutTunnelTrigger) {
-        checkoutTunnelTrigger.disabled = false;
-        checkoutTunnelTrigger.textContent = originalBtnLabel;
-      }
-    }
-  });
+function runPortalClock() {
+  const el = document.getElementById("portal-clock");
+  if (el) el.textContent = new Date().toLocaleTimeString();
 }
-
-  function runPortalClock() {
-    const el = document.getElementById("portal-clock");
-    if (el) el.textContent = new Date().toLocaleTimeString();
-  }
-  setInterval(runPortalClock, 1000);
-  runPortalClock();
-
+setInterval(runPortalClock, 1000);
+runPortalClock();
 </script>
+
 
 
 </body>
