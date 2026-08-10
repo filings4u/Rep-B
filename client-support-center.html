@@ -796,6 +796,73 @@ await autofillUserProfileMetrics();
         await establishRealtimeChatSynchronization();
       }
 
+
+ // --- STAGE 3.5: AFTER-HOURS TICKET HANDLER & SUCCESS MARKUP (FIXED FIELDS) ---
+document.getElementById("structuredSupportTicketForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  const submitFormBtn = e.target.querySelector('button[type="submit"]');
+  const messageInput = document.getElementById("ticketMessagePayload");
+  
+  // Extract locked elements directly out of the verified layout field values on-screen
+  const fNameVal = document.getElementById("ticketFirstName")?.value || "";
+  const lNameVal = document.getElementById("ticketLastName")?.value || "";
+  const phoneVal = document.getElementById("ticketPhoneNumber")?.value || "";
+
+  if (!messageInput || !messageInput.value.trim()) return;
+  
+  submitFormBtn.disabled = true;
+  submitFormBtn.textContent = "Transmitting File Case...";
+
+  try {
+    console.log("🚀 [Ticket Engine] Pushing after-hours payload straight to database table space...");
+    
+    // 🟢 FIXED PAYLOAD: Explicitly maps raw data straight from the form elements
+    const { error: ticketError } = await client
+      .from('after_hours_tickets')
+      .insert([{
+        id: clientActiveUserId,
+        email_address: clientEmail,
+        first_name: fNameVal.trim() || null,
+        last_name: lNameVal.trim() || null,
+        phone_number: phoneVal.trim() || null,
+        ticket_message: messageInput.value.trim()
+      }]);
+
+    if (ticketError) throw ticketError;
+
+    // SUCCESS ELEMENT REPLACEMENT
+    const ticketPanelCard = document.getElementById("afterHoursTicketFormPanel");
+    if (ticketPanelCard) {
+      ticketPanelCard.innerHTML = `
+        <div style="text-align: center; padding: 20px 0;">
+          <div style="font-size: 3rem; margin-bottom: 16px;">📥</div>
+          <h3 style="margin: 0 0 10px 0; font-size: 1.4rem; font-weight: 800; color: #15803d;">Support Ticket Filed Safely</h3>
+          <p style="margin: 0 0 24px 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; max-width: 550px; margin-left: auto; margin-right: auto;">
+            Thank you! Your statutory query parameters have been logged securely. An automated backup transcript is routing to <strong>${window.escapeClientChatMarkup(clientEmail)}</strong>, and a core operator will review your account on the next business day.
+          </p>
+          <button id="ticketReturnHomeDashboardBtn" class="chat-action-btn" style="margin: 0 auto; width: 220px; height: 42px;">Return to Dashboard Home</button>
+        </div>
+      `;
+      
+      document.getElementById("ticketReturnHomeDashboardBtn")?.addEventListener("click", () => {
+        window.location.replace("client-dashboard.html");
+      });
+    }
+
+  } catch (err) {
+    console.error("✕ Ticket layout submission rejected:", err.message);
+    alert(`✕ Transmission Refused: ${err.message}`);
+  } finally {
+    if (submitFormBtn) {
+      submitFormBtn.disabled = false;
+      submitFormBtn.textContent = "File Support Case";
+    }
+  }
+});
+
+
+
       // --- STAGE 4: TEXT MESSAGE DISPATCH ENGINE (ALIGNED PATHWAYS) ---
       window.dispatchClientChatMessage = async function() {
         const rawText = textInputField.value.trim();
@@ -857,29 +924,45 @@ await autofillUserProfileMetrics();
           window.scrollChatTimelineToAbsoluteBottom();
         }
       };
-      // --- STAGE 5: GRAPHIC TIMELINE CONSTRUCTORS (ORIENTED) ---
-      window.appendSingleChatMessageBubbleToUI = function(msgRow) {
-        const currentSender = String(msgRow.sender_type || '').toLowerCase();
-        
-        // 🟢 CLIENT VIEW BUBBLE FIXED: Local user 'client' aligns right, remote user 'admin' aligns left
-        const isClientSent = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
 
-        const rowWrapper = document.createElement("div");
-        rowWrapper.className = isClientSent ? "msg-row client-sent" : "msg-row staff-sent";
+ // --- STAGE 5: GRAPHIC TIMELINE CONSTRUCTORS (ORIENTED) ---
+window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+  const msgLogBox = document.getElementById("clientChatMessagesLog");
+  if (!msgLogBox || !msgRow) return;
 
-        const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        let secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
+  const currentSender = String(msgRow.sender_type || '').toLowerCase();
+  
+  // 🟢 CLIENT VIEW BUBBLE FIXED: Local user 'client' aligns right, remote user 'admin' aligns left
+  const isClientSent = currentSender === 'client' || currentSender === 'user' || currentSender === 'customer';
 
-        rowWrapper.innerHTML = `
-          <div class="msg-bubble">
-            <div>${secureCleanText}</div>
-            <span class="msg-timestamp">${readableTime}</span>
-          </div>
-        `;
+  const rowWrapper = document.createElement("div");
+  rowWrapper.className = isClientSent ? "msg-row client-sent" : "msg-row staff-sent";
 
-        msgLogBox.appendChild(rowWrapper);
-        window.scrollChatTimelineToAbsoluteBottom();
-      };
+  const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  let secureCleanText = window.escapeClientChatMarkup(msgRow.message_content || "");
+
+  rowWrapper.innerHTML = `
+    <div class="msg-bubble">
+      <div>${secureCleanText}</div>
+      <span class="msg-timestamp">${readableTime}</span>
+    </div>
+  `;
+
+  msgLogBox.appendChild(rowWrapper);
+  window.scrollChatTimelineToAbsoluteBottom();
+};
+
+// 🟢 CRITICAL MOUNT SEQUENCE ORDER (Keep at the absolute bottom of the script)
+// 1. Run profile compliance gates first
+await autofillUserProfileMetrics();
+
+// 2. Check if we are in business hours before spinning up streams
+if (chatWrapper && chatWrapper.style.display !== "none") {
+  // Now these can safely find window.appendSingleChatMessageBubbleToUI!
+  await streamClientChatTimelineLogs();
+  await establishRealtimeChatSynchronization();
+}
+
 
       // Document attachment input control binders
       if (paperclipBtn && hiddenFileInput) {
