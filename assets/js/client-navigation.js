@@ -258,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="accordion-panel m-panel" data-group="m-support"> 
       <a href="client-account.html" class="nav-item m-link" data-page="client-account.html">💰 My Account</a> 
       <a href="client-order-history.html" class="nav-item m-link" data-page="client-order-history.html">💸 Order History</a> 
-      <a href="client-chat.html" class="nav-item m-link" data-page="client-chat.html">💬 Live Chat Support</a> 
+      <a href="client-support-center.html" class="nav-item m-link" data-page="client-support-center.html">💬 Live Chat Support</a> 
       <a href="client-ticket.html" class="nav-item m-link" data-page="client-ticket.html">🎫 Support Tickets</a> 
       <a href="client-knowledgebase.html" class="nav-item m-link" data-page="client-knowledgebase.html">📰 Help Resources</a> 
       <a href="client-status.html" class="nav-item m-link" data-page="client-status.html">✅ Check Order Status</a> 
