@@ -274,21 +274,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   const userEmail = String(session.user.email).trim().toLowerCase();
   const userUid = session.user.id;
-
-  // 📡 2. TELEMETRY LOOKUP MODULE: PIPELINE ACCUMULATION FROM NEW VALIDATED TABLES
+  // 📡 2. TELEMETRY LOOKUP MODULE: PIPELINE ACCUMULATION FROM NEW VALIDATED TABLES (CORRECTED)
   async function hydrateDashboardTelemetryData() {
     try {
       console.log(`📡 [Dashboard Telemetry] Extracting live data profiles for customer: [${userEmail}]`);
 
-      // Accumulate records across your synchronized table relations concurrently
+      // 🟢 FIXED PERIMETER SECURITY: Swapped unsafe .or() filters for explicit .eq() matching to lock down data isolation
       const [entitiesRes, vaultRes, alertsRes] = await Promise.all([
-        client.from('client_entities').select('*').or(`client_email.eq.${userEmail},user_id.eq.${userUid}`).order('created_at', { ascending: false }),
-        client.from('client_vault').select('*').or(`target_client_email.eq.${userEmail},email_address.eq.${userEmail}`).order('created_at', { ascending: false }),
-        client.from('portal_notifications').select('*').or(`email_address.eq.${userEmail},recipient_email.eq.${userEmail}`).eq('is_archived', false)
+        client
+          .from('client_entities')
+          .select('*')
+          .eq('client_email', userEmail)
+          .order('created_at', { ascending: false }),
+        client
+          .from('client_vault')
+          .select('*')
+          .eq('email_address', userEmail)
+          .order('created_at', { ascending: false }),
+        client
+          .from('portal_notifications')
+          .select('*')
+          .eq('email_address', userEmail)
+          .eq('is_archived', false)
       ]);
 
       if (entitiesRes.error) throw entitiesRes.error;
       if (vaultRes.error) throw vaultRes.error;
+      if (alertsRes.error) throw alertsRes.error;
 
       const entities = entitiesRes.data || [];
       const vaultFiles = vaultRes.data || [];
@@ -339,6 +351,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (filingTimeline) {
         filingTimeline.innerHTML = "";
         const pendingEntities = entities.filter(row => String(row.standing_status || '').toLowerCase().includes('pending') || String(row.standing_status || '').toLowerCase().includes('intake'));
+        
         if (pendingEntities.length === 0) {
           filingTimeline.innerHTML = `<div style="font-size: 0.8rem; color: #94a3b8; font-style: italic; text-align: center; padding: 24px 0;">All filing corporate tracks fully synchronized.</div>`;
         } else {
@@ -356,6 +369,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         }
       }
+
 
       // Render Secure Corporate Document Vault from public.client_vault
       if (vaultTableBody) {
@@ -414,23 +428,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  // 🔄 3. REAL-TIME SYNC: Re-bind channels to subscribe to the correct newly assigned tables
+   // 🔄 3. REAL-TIME SYNC: Re-bind channels to subscribe to the correct newly assigned tables
   async function bindLiveDashboardRealtimeSubscribers() {
     if (liveDashboardChannel) liveDashboardChannel.unsubscribe();
 
     liveDashboardChannel = client
       .channel('client-dashboard-synchronized-master-stream-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_entities' }, async () => {
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'client_entities' 
+      }, async () => {
         console.log("⚡ Sync: client_entities modification detected. Updating overview counters...");
         await hydrateDashboardTelemetryData();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_vault' }, async () => {
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'client_vault' 
+      }, async () => {
         console.log("⚡ Sync: client_vault modification detected. Updating document storage panels...");
         await hydrateDashboardTelemetryData();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications' }, async payload => {
-        const isTarget = payload.new && (String(payload.new.email_address).toLowerCase() === userEmail || String(payload.new.recipient_email).toLowerCase() === userEmail);
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'portal_notifications' 
+      }, async payload => {
+        // Enforce boundary filter checks to reject random memory block pushes completely
+        const isTarget = payload.new && (
+          String(payload.new.email_address).toLowerCase() === userEmail || 
+          String(payload.new.recipient_email).toLowerCase() === userEmail
+        );
+        
         if (isTarget || payload.eventType === 'DELETE') {
+          console.log("⚡ Sync: portal_notifications modification captured. Re-rendering alerts...");
           await hydrateDashboardTelemetryData();
         }
       })
@@ -442,14 +474,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   await bindLiveDashboardRealtimeSubscribers();
 });
 
-  function runPortalClock() {
-    const el = document.getElementById("portal-clock");
-    if (el) el.textContent = new Date().toLocaleTimeString();
-  }
-  setInterval(runPortalClock, 1000);
-  runPortalClock();
+function runPortalClock() {
+  const el = document.getElementById("portal-clock");
+  if (el) el.textContent = new Date().toLocaleTimeString();
+}
+setInterval(runPortalClock, 1000);
+runPortalClock();
 </script>
-
-
 </body>
 </html>

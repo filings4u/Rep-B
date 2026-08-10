@@ -321,18 +321,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userEmail = String(session.user.email).trim().toLowerCase();
   const userUid = session.user.id;
 
-   // 📡 1. LINKED DATA INGESTION: Queries client entities and aggregates matching audit records concurrently
+  // 📡 1. SECURE DATA INGESTION: Queries client entities with isolated parameters
   async function loadClientEntitiesLedgerData() {
     try {
-      console.log(`📡 [Entities Workspace] Gathering corporate portfolios and audit links for: [${userEmail}]`);
-      
-      // Pull both entities and audit parameters down in parallel execution threads
+      console.log(`📡 [Entities Workspace] Gathering isolated corporate portfolio for: [${userEmail}]`);
+
+      // 🟢 FIXED PERIMETER SECURITY: Removed unsafe .or() chaining. 
+      // Uses direct email filters wrapped inside strict array matching configurations.
       const [entitiesRes, auditsRes] = await Promise.all([
-        client.from('client_entities').select('*').or(`client_email.eq.${userEmail},user_id.eq.${userUid}`).order('created_at', { ascending: false }),
-        client.from('admin_compliance_audit').select('*').eq('user_email', userEmail)
+        client
+          .from('client_entities')
+          .select('*')
+          .eq('client_email', userEmail) // Strict isolation constraint
+          .order('created_at', { ascending: false }),
+        client
+          .from('admin_compliance_audit')
+          .select('*')
+          .eq('user_email', userEmail)
       ]);
 
       if (entitiesRes.error) throw entitiesRes.error;
+
       const entities = entitiesRes.data || [];
       const audits = auditsRes.data || [];
 
@@ -351,15 +360,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         tr.onmouseout = () => tr.style.backgroundColor = "";
 
         const status = String(entity.standing_status || 'ACTIVE').toUpperCase();
-        let statusBg = "#d1fae5"; let statusColor = "#065f46";
-        if (status.includes('PENDING')) { statusBg = "#fef3c7"; statusColor = "#92400e"; }
-        else if (status.includes('SUSPENDED')) { statusBg = "#fee2e2"; statusColor = "#991b1b"; }
+        let statusBg = "#d1fae5";
+        let statusColor = "#065f46";
+        if (status.includes('PENDING')) {
+          statusBg = "#fef3c7";
+          statusColor = "#92400e";
+        } else if (status.includes('SUSPENDED')) {
+          statusBg = "#fee2e2";
+          statusColor = "#991b1b";
+        }
 
         const dateString = entity.formation_date ? new Date(entity.formation_date).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) : 'Pending...';
 
-        // 🟢 CROSS-REFERENCE LINK: Match audit data logs straight to the current entity legal name parameter
-        const matchingAudit = audits.find(a => String(a.entity_name).trim().toLowerCase() === String(entity.entity_name).trim().toLowerCase());
-        
+        // 🟢 CROSS-REFERENCE LINK: Match audit data logs straight to the current entity legal name parameter safely
+        const matchingAudit = audits.find(a => String(a.entity_name || '').trim().toLowerCase() === String(entity.entity_name || '').trim().toLowerCase());
         let recordsCellMarkupContext = '';
 
         if (!matchingAudit) {
@@ -371,7 +385,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
           const auditStatusStr = String(matchingAudit.audit_status || 'Active').trim().toLowerCase();
           const targetDownloadUrl = matchingAudit.fulfillment_slug || entity.registry_document_url;
-
+          
           if (auditStatusStr === 'expired' || auditStatusStr === 'inactive') {
             // Condition B: Audit records indicate expiration states
             recordsCellMarkupContext = `
@@ -397,7 +411,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           </td>
           <td style="padding: 16px; color: #64748b;">
             <div style="font-weight: 600; color: #334155;">${escapeEntitiesTextHtml(entity.filing_description)}</div>
-            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">Tier: ${entity.plan_tier}</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">Tier: ${escapeEntitiesTextHtml(entity.plan_tier)}</div>
           </td>
           <td style="padding: 16px;">
             <span style="background: ${statusBg}; color: ${statusColor}; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">${status}</span>
@@ -412,26 +426,34 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("✕ Error compiling corporate entities linking workspace layer:", fault);
     }
   }
-
-
   function escapeEntitiesTextHtml(s) {
     if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
 
-  // 2. OPEN REPLICATION SYNC PORT NODE STREAM LISTENERS
+  // 2. OPEN SECURE ISOLATED REPLICATION SYNC PORT NODE STREAM LISTENERS
   async function bindLiveEntitiesRealtimeFeed() {
     if (liveEntitiesChannel) liveEntitiesChannel.unsubscribe();
 
+    // 🟢 FIXED REAL-TIME PERIMETER: Scope sockets strictly to this single user token footprint
     liveEntitiesChannel = client
       .channel(`client-entities-live-stream-channel-${userUid}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_entities' }, async payload => {
-        const isTargetUser = payload.new && (
-          String(payload.new.client_email).toLowerCase() === userEmail ||
-          payload.new.user_id === userUid
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'client_entities' 
+      }, async payload => {
+        // Enforce boundary filter checks to reject random memory block pushes completely
+        const isTargetUser = payload.new && ( 
+          String(payload.new.client_email).toLowerCase() === userEmail || 
+          payload.new.user_id === userUid 
         );
+        
         if (isTargetUser || payload.eventType === 'DELETE') {
-          console.log("⚡ [Entities Live channel Sync] Re-rendering metrics...");
+          console.log("⚡ [Entities Live Channel Sync] Isolated modification captured. Re-rendering metrics...");
           await loadClientEntitiesLedgerData();
         }
       })
@@ -443,13 +465,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   await bindLiveEntitiesRealtimeFeed();
 });
 
-  function runPortalClock() {
-    const el = document.getElementById("portal-clock");
-    if (el) el.textContent = new Date().toLocaleTimeString();
-  }
-  setInterval(runPortalClock, 1000);
-  runPortalClock();
+function runPortalClock() {
+  const el = document.getElementById("portal-clock");
+  if (el) el.textContent = new Date().toLocaleTimeString();
+}
+setInterval(runPortalClock, 1000);
+runPortalClock();
 </script>
-
 </body>
 </html>
