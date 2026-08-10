@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Team & Access Control | filings4u</title>
+   <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
+  <meta name="msapplication-navbutton-color" content="#10b981">
+  <link rel="icon" type="image/png" href="images/fav.png">
   <style>
     :root {
       --bg-light: #f4f6f9;
@@ -12,7 +16,7 @@
       --border-color: #e2e8f0;
       --text-dark: #0a1f44;
       --text-muted: #475569;
-      --emerald: #10b981;
+      --emerald: #0a1f44;
       --staff-red: #c15254;
       --sidebar-width: 260px;
     }
@@ -185,69 +189,92 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const activeUserEmail = String(sessionObj.user.email).trim().toLowerCase();
 
-  // 🟢 SECURE ISOLATED READ CONTROLLER: Loads team profiles filtered strictly by shared corporate boundaries
-  async function syncTeamDirectoryGrid() {
-    try {
-      console.log(`📡 [Team Hub] Verifying corporate perimeter bounds for: [${activeUserEmail}]`);
+ //  Secure Isolated Read Controller: Strips out fallback strings to prevent data clusters
+async function syncTeamDirectoryGrid() {
+  try {
+    console.log(`📡 [Team Hub] Verifying corporate perimeter bounds for: [${activeUserEmail}]`);
 
-      // STEP 1: Query the active user's own profile card to discover their company_name alignment
-      const { data: currentUserProfile, error: profileErr } = await client
-        .from('client_profiles')
-        .select('company_name')
-        .eq('email_address', activeUserEmail)
-        .maybeSingle();
+    // STEP 1: Query the active user's own profile card to check their company_name alignment
+    const { data: currentUserProfile, error: profileErr } = await client
+      .from('client_profiles')
+      .select('company_name')
+      .eq('email_address', activeUserEmail)
+      .maybeSingle();
 
-      if (profileErr) throw profileErr;
+    if (profileErr) throw profileErr;
+    
+    // Normalize and clean up trailing spaces or capitalization anomalies
+    const targetCompany = currentUserProfile && currentUserProfile.company_name 
+      ? currentUserProfile.company_name.trim() 
+      : "";
+
+    let profiles = [];
+
+    // 🟢 SECURE BOUNDARY ISOLATION BLOCK: 
+    // If the company name is empty, null, or matches the generic fallback string, 
+    // we block the group search completely. They are a single entity with no team members yet.
+    if (!targetCompany || targetCompany.toLowerCase() === "not specified") {
+      console.log("🔒 [Team Hub] Unassigned corporate track detected. Isolating view strictly to the active session seat.");
       
-      const targetCompany = currentUserProfile ? currentUserProfile.company_name : "Not Specified";
+      const { data: singleProfile, error: singleErr } = await client
+        .from('client_profiles')
+        .select('first_name, last_name, email_address, phone_number, id')
+        .eq('email_address', activeUserEmail);
 
-      // 🟢 FIXED PERIMETER BOUNDARY: Filter the total query using the verified corporate tracking key
-      // This forces data isolation so customers only view their own team members.
-      const { data: profiles, error } = await client
+      if (singleErr) throw singleErr;
+      profiles = singleProfile || [];
+    } else {
+      // If a valid custom company string exists, pull only members tied to that specific business group
+      console.log(`🔒 [Team Hub] Valid corporate group found [${targetCompany}]. Streaming matching profiles...`);
+      
+      const { data: groupProfiles, error: groupErr } = await client
         .from('client_profiles')
         .select('first_name, last_name, email_address, phone_number, id')
         .eq('company_name', targetCompany)
         .order('first_name', { ascending: true });
 
-      if (error) throw error;
-
-      if (!profiles || profiles.length === 0) {
-        teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:32px; text-align:center; color:var(--text-muted); font-style:italic;">No secondary team profiles recorded for this workspace dashboard.</td></tr>`;
-        return;
-      }
-
-      teamTableBody.innerHTML = "";
-      profiles.forEach((row) => {
-        const tr = document.createElement("tr");
-        tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
-
-        const name = ((row.first_name || "") + " " + (row.last_name || "")).trim() || "Associate Member";
-        const email = row.email_address || "Not Provided";
-        
-        const isMaster = activeUserEmail && email.toLowerCase() === activeUserEmail.toLowerCase();
-        const role = isMaster ? "Master Admin" : (row.phone_number === "View Only" ? "View Only Specialist" : "Associate Manager");
-        
-        const bg = isMaster ? "#dcfce7" : "#f1f5f9";
-        const col = isMaster ? "#15803d" : "#475569";
-        
-        const actionsHtml = isMaster 
-          ? `<span style="font-size:11px; color:var(--text-muted); font-weight:700; font-style:italic;">Protected Primary Seat</span>` 
-          : `<button onclick="window.revokePrivileges('${row.id}')" style="background:none; border:none; color:var(--staff-red); font-weight:700; font-size:11px; cursor:pointer; text-decoration:underline;">Revoke Privilege</button>`;
-
-        tr.innerHTML = `
-          <td style="padding:14px 12px; font-weight:700;">${escapeHtml(name)}</td>
-          <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:600;">${escapeHtml(email)}</td>
-          <td style="padding:14px 12px;"><span style="background:${bg}; color:${col}; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${role}</span></td>
-          <td style="padding:14px 12px; text-align:right;">${actionsHtml}</td>
-        `;
-        teamTableBody.appendChild(tr);
-      });
-
-    } catch (err) {
-      console.error(err);
-      teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Query Failure: Ledger access error.</td></tr>`;
+      if (groupErr) throw groupErr;
+      profiles = groupProfiles || [];
     }
+
+    if (!profiles || profiles.length === 0) {
+      teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:32px; text-align:center; color:var(--text-muted); font-style:italic;">No secondary team profiles recorded for this workspace dashboard.</td></tr>`;
+      return;
+    }
+
+    teamTableBody.innerHTML = "";
+    profiles.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
+
+      const name = ((row.first_name || "") + " " + (row.last_name || "")).trim() || "Associate Member";
+      const email = row.email_address || "Not Provided";
+      
+      const isMaster = activeUserEmail && email.toLowerCase() === activeUserEmail.toLowerCase();
+      const role = isMaster ? "Master Admin" : (row.phone_number === "View Only" ? "View Only Specialist" : "Associate Manager");
+      
+      const bg = isMaster ? "#dcfce7" : "#f1f5f9";
+      const col = isMaster ? "#15803d" : "#475569";
+      
+      const actionsHtml = isMaster 
+        ? `<span style="font-size:11px; color:var(--text-muted); font-weight:700; font-style:italic;">Protected Primary Seat</span>` 
+        : `<button onclick="window.revokePrivileges('${row.id}')" style="background:none; border:none; color:var(--staff-red); font-weight:700; font-size:11px; cursor:pointer; text-decoration:underline;">Revoke Privilege</button>`;
+
+      tr.innerHTML = `
+        <td style="padding:14px 12px; font-weight:700;">${escapeHtml(name)}</td>
+        <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:600;">${escapeHtml(email)}</td>
+        <td style="padding:14px 12px;"><span style="background:${bg}; color:${col}; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${role}</span></td>
+        <td style="padding:14px 12px; text-align:right;">${actionsHtml}</td>
+      `;
+      teamTableBody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error(err);
+    teamTableBody.innerHTML = `<tr><td colspan="4" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Query Failure: Ledger access error.</td></tr>`;
   }
+}
+
   // 🟢 CREATE CONTROLLER: Insert profile invitation rows (CORRECTED)
   if (addMemberForm) {
     addMemberForm.addEventListener("submit", async (e) => {
