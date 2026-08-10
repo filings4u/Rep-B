@@ -499,7 +499,7 @@
     <main class="portal-main">
         <header class="portal-header">
             <div style="text-align: left;">
-                <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Secure Corporate Support Helpdesk</h1>
+                <h1 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Support Help Center</h1>
             </div>
 
              <div>
@@ -627,6 +627,36 @@ document.addEventListener("DOMContentLoaded", async () => {
         throw new Error("✕ Critical UI Error: Chat logs container frames or form inputs are missing from layout trees.");
     }
 
+     // --- STAGE 1: DYNAMIC OPERATING BUSINESS HOURS SWITCH ENGINE ---
+  function evaluateSupportDeskWorkingHours() {
+    const rightNow = new Date();
+    const currentDay = rightNow.getDay(); 
+    const currentHour = rightNow.getHours(); 
+
+    // Operating Frame Constraints: Mon-Fri, 8:00 AM - 6:00 PM (8 to 18)
+    const isBusinessDay = currentDay >= 1 && currentDay <= 5;
+    const isWorkingHour = currentHour >= 8 && currentHour < 18;
+
+    const statusPulseDot = document.querySelector(".status-pulse-dot");
+    const stripTextTarget = document.getElementById("status-strip-text-target");
+        if (isBusinessDay && isWorkingHour) {
+          if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#e6f4ea; color:#137333; border:1px solid #cbd5e1;";
+          if (statusPulseDot) statusPulseDot.style.background = "#137333";
+          if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Help Desk Active.</strong> Instant real-time messaging layers are unlocked. (${rightNow.toLocaleTimeString()})`;
+          if (chatWrapper) chatWrapper.style.display = "flex";
+          if (ticketPane) ticketPane.style.display = "none";
+        } else {
+          if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#fff3cd; color:#856404; border:1px solid #cbd5e1;";
+          if (statusPulseDot) statusPulseDot.style.background = "#856404";
+          if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Desk Standby.</strong> Technicians respond within 12h. Please file a structured support ticket. (${rightNow.toLocaleTimeString()})`;
+          if (chatWrapper) chatWrapper.style.display = "none";
+          if (ticketPane) ticketPane.style.display = "block";
+        }
+    }
+
+    // Force prioritization flow execution order cleanly
+    await autofillUserProfileMetrics();
+    evaluateSupportDeskWorkingHours();
     // 2. Fetch Global Database Instance Connections
     const client = window.supabaseInstance || window.supabaseClient;
     if (!client || typeof client.from !== 'function') {

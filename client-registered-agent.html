@@ -51,8 +51,10 @@
     .copy-badge { position: absolute; top: 12px; right: 12px; background: #e2e8f0; color: var(--text-muted); font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; cursor: pointer; border: none; text-transform: uppercase; }
     .copy-badge:hover { background: var(--text-dark); color: white; }
   </style>
+
 </head>
 <body>
+
   <div class="dashboard-wrapper">
 
     <main class="portal-main">
@@ -130,117 +132,208 @@
 
   <script src="assets/js/client-footer.js"></script>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+<style>
+  /* 🟢 SECURE PRE-RENDER MASK: Keeps page data locked out of view until auth lookups complete */
+  .moto-wrapper, .moto-container, #agent-entities-list-target {
+    display: none !important;
+  }
+</style>
 
-      const agentTableBody = document.getElementById("agent-entities-list-target");
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      function runPortalClock() {
-        const el = document.getElementById("portal-clock");
-        if (el) el.textContent = new Date().toLocaleTimeString();
-      }
-      setInterval(runPortalClock, 1000);
-      runPortalClock();
+  const agentTableBody = document.getElementById("agent-entities-list-target");
+  const targetWrapper = document.querySelector(".moto-wrapper") || document.querySelector(".moto-container") || document.body;
 
-      // Core Self-Healing Database Handshake
-      let client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-        if (lib && typeof lib.createClient === 'function') {
-          client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1Mj40NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-          window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
-        }
-      }
+  function runPortalClock() {
+    const el = document.getElementById("portal-clock");
+    if (el) el.textContent = new Date().toLocaleTimeString();
+  }
+  setInterval(runPortalClock, 1000);
+  runPortalClock();
 
-      if (!client || typeof client.from !== 'function') {
-        agentTableBody.innerHTML = `<tr><td colspan="3" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Connection dropped.</td></tr>`;
-        return;
-      }
+  // Core Self-Healing Database Handshake Loop
+  let client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    if (lib && typeof lib.createClient === 'function') {
+      client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+      window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+    }
+  }
 
-      let sessionObj = null;
-      try {
-        const { data: { session } } = await client.auth.getSession();
-        if (session) sessionObj = session;
-      } catch (e) {}
+  if (!client || typeof client.from !== 'function') {
+    if (targetWrapper) targetWrapper.style.setProperty("display", "block", "important");
+    agentTableBody.innerHTML = `<tr><td colspan="3" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Connection dropped.</td></tr>`;
+    return;
+  }
 
-      if (!sessionObj) {
-        const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
-        if (token) {
-          try { const p = JSON.parse(token); sessionObj = p.currentSession || p; } catch(err) {}
-        }
-      }
+  let sessionObj = null;
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (session) sessionObj = session;
+  } catch (e) {}
 
-      if (!sessionObj || !sessionObj.user) {
-        window.location.href = "portal-login.html";
-        return;
-      }
+  if (!sessionObj || !sessionObj.user) {
+    window.location.href = "portal-login.html";
+    return;
+  }
 
-      const clientSessionEmail = sessionObj.user.email;
+  const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase();
 
-      // 🟢 READ PIPELINE: Query and stream registered entities list under agent coverage
-      async function streamRegisteredAgentLedger() {
-        try {
-          const { data: orders, error } = await client
-            .from('orders')
-            .select('company_name, form_payload, tracking_number')
-            .eq('email_address', clientSessionEmail.trim().toLowerCase());
+  // 🛡️ SECURITY REGISTERED AGENT ACCESS PERIMETER GATE
+  async function enforceRegisteredAgentClearance() {
+    try {
+      console.log(`📡 [Security Perimeter] Checking registered agent purchase records for: [${clientSessionEmail}]`);
 
-          if (error) throw error;
+      // Fetch transaction histories in parallel across both source tables
+      const [ordersCheck, dashOrdersCheck] = await Promise.all([
+        client.from('orders').select('selected_service, selected_upsells').eq('email_address', clientSessionEmail),
+        client.from('dashboard_orders').select('selected_service, selected_upsells').eq('email_address', clientSessionEmail)
+      ]);
 
-          const coveredCompanies = orders ? orders.filter(item => item.company_name && item.company_name !== 'Not Specified') : [];
+      if (ordersCheck.error) throw ordersCheck.error;
+      if (dashOrdersCheck.error) throw dashOrdersCheck.error;
 
-          if (coveredCompanies.length === 0) {
-            agentTableBody.innerHTML = `<tr><td colspan="3" style="padding:24px; text-align:center; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active entities found receiving agent representation services.</td></tr>`;
-            return;
-          }
+      const combinedRows = [...(ordersCheck.data || []), ...(dashOrdersCheck.data || [])];
 
-          agentTableBody.innerHTML = "";
-          
-          coveredCompanies.forEach((item) => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
-
-            const payload = item.form_payload || {};
-            const stateChoice = payload.state || payload.llc_principal_state || "IL"; // Resolves form fields safely
-
-            tr.innerHTML = `
-              <td style="padding:12px; font-weight:700; color:var(--text-dark);">${escapeAgentHtml(item.company_name)}</td>
-              <td style="padding:12px; font-family:monospace; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${escapeAgentHtml(stateChoice)}</td>
-              <td style="padding:12px; text-align:right;"><span style="background:#e6f4ea; color:#137333; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">Covered</span></td>
-            `;
-            agentTableBody.appendChild(tr);
-          });
-
-        } catch (fault) {
-          console.error("✕ Agent tracker synchronization breakdown:", fault);
-          agentTableBody.innerHTML = `<tr><td colspan="3" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: System registry offline.</td></tr>`;
-        }
-      }
-      // Clipboard Utility Execution Handler
-      window.copyAgentAddressToClipboard = function() {
-        const textToCopy = "FILINGS4U REGISTERED AGENT LLC\n123 Main Street, Suite 400\nSpringfield, IL 62701";
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          alert("📋 Address copied to clipboard successfully!");
-        }).catch((err) => {
-          console.error("Could not copy text: ", err);
-        });
-      };
-
-      window.toggleSidebarAccordion = function(btn) {
-        if (!btn) return;
-        const panel = btn.nextElementSibling;
-        if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
-      };
-
-      document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
-        client.auth.signOut().then(() => { window.localStorage.clear(); window.sessionStorage.clear(); window.location.replace("portal-login.html"); });
+      // Look for explicit service titles or add-on items containing registered agent indicators
+      const hasPurchasedAgent = combinedRows.some(row => {
+        const serviceText = String(row.selected_service || '').toLowerCase();
+        const upsellText = String(row.selected_upsells || '').toLowerCase();
+        return serviceText.includes('registered-agent') || serviceText.includes('registered agent') || 
+               upsellText.includes('registered_agent') || upsellText.includes('registered agent');
       });
 
-      await streamRegisteredAgentLedger();
+      // 🟢 CONTROL ROUTING TRANSITION: If no active contract is found, unmask layout wrapper to insert the alert panel popup card on-screen
+      if (!hasPurchasedAgent) {
+        console.warn("🔒 [Security Perimeter] Access Denied: No active Registered Agent contract found.");
+        
+        if (targetWrapper) {
+          targetWrapper.style.setProperty("display", "block", "important");
+          targetWrapper.innerHTML = `
+            <div style="max-width: 550px; margin: 80px auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); font-family: system-ui, sans-serif;">
+              <div style="font-size: 3rem; margin-bottom: 16px;">🛡️</div>
+              <h2 style="margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 800; color: #0a1f44; letter-spacing: -0.02em;">Service Access Restricted</h2>
+              <p style="margin: 0 0 24px 0; font-size: 0.9rem; color: #475569; line-height: 1.5;">The Registered Agent Compliance Panel is hidden because your profile does not have an active agent representation contract registered.</p>
+              <a href="client-dashboard.html" style="display: inline-block; background: #0a1f44; color: #ffffff; font-weight: 700; font-size: 0.82rem; padding: 10px 20px; border-radius: 6px; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">Return to Home Dashboard</a>
+            </div>`;
+        }
+        return false;
+      }
+
+      // If they have access, unmask your complete core dashboard data blocks smoothly
+      if (targetWrapper) targetWrapper.style.setProperty("display", "block", "important");
+      return true;
+
+    } catch (err) {
+      console.error("✕ Security checkpoint verification crashed:", err);
+      return false;
+    }
+  }
+
+  // 🟢 SECURE READ PIPELINE: Queries and streams registered entities list under agent coverage safely
+  async function streamRegisteredAgentLedger() {
+    try {
+      // Execute the security access guard checkpoint prior to executing table selects
+      const isCleared = await enforceRegisteredAgentClearance();
+      if (!isCleared) return; // Completely halt subsequent execution threads if they don't hold clearance
+
+      console.log(`📡 [Orders Ledger] Querying dual-matrix pipelines for agent assets: [${clientSessionEmail}]`);
+
+      // Standardized to query via your strict production 'email_address' schema parameters
+      const [adminOrdersResponse, checkoutOrdersResponse] = await Promise.all([
+        client.from('orders').select('company_name, form_payload, tracking_number, selected_service, selected_upsells').eq('email_address', clientSessionEmail),
+        client.from('dashboard_orders').select('company_name, form_payload, tracking_number, selected_service, selected_upsells').eq('email_address', clientSessionEmail)
+      ]);
+
+      if (adminOrdersResponse.error) throw adminOrdersResponse.error;
+      if (checkoutOrdersResponse.error) throw checkoutOrdersResponse.error;
+
+      const allSourceOrders = [...(adminOrdersResponse.data || []), ...(checkoutOrdersResponse.data || [])];
+      
+      const coveredCompanies = allSourceOrders.filter(item => {
+        if (!item.company_name || item.company_name === 'Not Specified') return false;
+        const svcText = String(item.selected_service || '').toLowerCase();
+        const upsellText = String(item.selected_upsells || '').toLowerCase();
+        return svcText.includes('registered-agent') || svcText.includes('registered agent') || 
+               upsellText.includes('registered_agent') || upsellText.includes('registered agent');
+      });
+
+      if (coveredCompanies.length === 0) {
+        agentTableBody.innerHTML = `<tr><td colspan="3" style="padding:24px; text-align:center; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active entities found receiving agent representation services.</td></tr>`;
+        return;
+      }
+
+      agentTableBody.innerHTML = "";
+      const seenCompanyNames = new Set();
+
+      coveredCompanies.forEach((item) => {
+        const normalizedName = String(item.company_name).trim().toLowerCase();
+        if (seenCompanyNames.has(normalizedName)) return;
+        seenCompanyNames.add(normalizedName);
+
+        const tr = document.createElement("tr");
+        tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
+
+        let payload = {};
+        if (item.form_payload) {
+          try {
+            payload = typeof item.form_payload === 'string' ? JSON.parse(item.form_payload) : item.form_payload;
+          } catch (e) {
+            payload = {};
+          }
+        }
+
+        const stateChoice = payload.state || payload.llc_principal_state || "IL";
+
+        tr.innerHTML = `
+          <td style="padding:12px; font-weight:700; color:var(--text-dark);">${escapeAgentHtml(item.company_name)}</td>
+          <td style="padding:12px; font-family:monospace; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${escapeAgentHtml(stateChoice)}</td>
+          <td style="padding:12px; text-align:right;"><span style="background:#e6f4ea; color:#137333; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">Covered</span></td>
+        `;
+        agentTableBody.appendChild(tr);
+      });
+
+    } catch (fault) {
+      console.error("✕ Registered Agent ledger compilation fault:", fault);
+      if (targetWrapper) targetWrapper.style.setProperty("display", "block", "important");
+      agentTableBody.innerHTML = `<tr><td colspan="3" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Agent registers unassigned.</td></tr>`;
+    }
+  }
+
+  // Clipboard Utility Execution Handler
+  window.copyAgentAddressToClipboard = function() {
+    const textToCopy = "FILINGS4U REGISTERED AGENT LLC\n123 Main Street, Suite 400\nSpringfield, IL 62701";
+    navigator.clipboard.writeText(textToCopy).then(() => { alert("📋 Address copied to clipboard successfully!"); });
+  };
+
+  function escapeAgentHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  window.toggleSidebarAccordion = function(btn) {
+    if (!btn) return;
+    const panel = btn.nextElementSibling;
+    if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+  };
+
+  document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
+    client.auth.signOut().then(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+      window.location.replace("portal-login.html");
     });
-  </script>
+  });
+
+  await streamRegisteredAgentLedger();
+});
+</script>
+
+
 </body>
 </html>

@@ -32,90 +32,94 @@ document.addEventListener("DOMContentLoaded", () => {
     verifyAndStreamStrictAdminGrid(); 
 }); 
 
-async function verifyAndStreamStrictAdminGrid() { 
-    console.log("📊 [Strict Engine] Commencing structural interface element validations..."); 
-    
-    // Catch UI target anchors strictly 
-    const salesTableBody = document.getElementById("admin-global-sales-target-box"); 
-    const clientDropdown = document.getElementById("adminClientDropdown"); 
-    const commsStreamBox = document.getElementById("admin-inbox-live-stream-box"); 
-    const staffEmailLog = document.getElementById("liveStaffEmailDisplayLog"); 
-    const revenueCard = document.getElementById("stat-total-revenue"); 
-    const activeCard = document.getElementById("stat-active-users"); 
-    const pendingCard = document.getElementById("stat-pending-filings"); 
+async function verifyAndStreamStrictAdminGrid() {
+  console.log("📊 [Strict Engine] Commencing structural interface element validations...");
 
-    // Enforce element tracking validation checks 
-    if (!salesTableBody) { 
-        throw new Error("✕ Critical UI Target Element Missing: 'admin-global-sales-target-box' tbody anchor is absent from the HTML layout."); 
-    } 
-    if (!clientDropdown) console.error("✕ UI Verification Alert: Dropdown target element ID 'adminClientDropdown' is missing."); 
-    if (!commsStreamBox) console.error("✕ UI Verification Alert: Inbox logging element ID 'admin-inbox-live-stream-box' is missing."); 
-    if (!staffEmailLog) console.error("✕ UI Verification Alert: Staff tracking display label element ID 'liveStaffEmailDisplayLog' is missing."); 
-    if (!revenueCard || !activeCard || !pendingCard) { 
-        console.warn("⚠ UI Verification Alert: One or more score status cards element targets evaluate to absent."); 
-    } 
+  // 1. Core Supabase Instance Checks
+  const client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    throw new Error("✕ Critical System Error: The global Supabase client connection has not been initialized on the window scope namespace layout.");
+  }
 
-    // Fetch master client initialization instances cleanly 
-    const client = window.supabaseInstance || window.supabaseClient; 
-    if (!client || typeof client.from !== 'function') { 
-        throw new Error("✕ Critical System Error: The global Supabase client connection has not been initialized on the window scope namespace layout."); 
-    } 
+  // 2. Resolve document layout targets across multi-view layers
+  const salesTableBody = document.getElementById("admin-global-sales-target-box");
+  const clientDropdown = document.getElementById("adminClientDropdown");
+  const commsStreamBox = document.getElementById("admin-inbox-live-stream-box");
+  const staffEmailLog = document.getElementById("liveStaffEmailDisplayLog");
+  const revenueCard = document.getElementById("stat-total-revenue");
+  const activeCard = document.getElementById("stat-active-users");
+  const pendingCard = document.getElementById("stat-pending-filings");
 
-    // --- ENFORCE ABSOLUTE USER VALIDITY CONTROL CHANNELS --- 
-    console.log("🔒 [Strict Engine] Running session authentication layer check..."); 
-    const { data: sessionData, error: authError } = await client.auth.getSession(); 
-    if (authError) { 
-        throw new Error(`✕ Cryptographic Session Authorization Rejected: ${authError.message}`); 
-    } 
-    if (!sessionData || !sessionData.session || !sessionData.session.user) { 
-        if (staffEmailLog) { 
-            staffEmailLog.innerHTML = `<span style="color:var(--staff-red); font-weight:700;">✕ Administrative Session Invalid</span>`; 
-        } 
-        throw new Error("✕ Unauthenticated Command Error: No active administrative user session token detected. Access to database rows has been halted safely."); 
-    } 
-    const currentStaffEmail = sessionData.session.user.email; 
-    if (staffEmailLog) { 
-        staffEmailLog.innerHTML = `<span><i class="fa-solid fa-user-shield"></i> Operator Session: ${currentStaffEmail}</span>`; 
+  // 3. 🟢 GLOBAL SECURITY PASSTHROUGH: Validate session metrics first so ALL pages remain securely authenticated
+  console.log("🔒 [Strict Engine] Running session authentication layer check...");
+  const { data: sessionData, error: authError } = await client.auth.getSession();
+  
+  if (authError) {
+    throw new Error(`✕ Cryptographic Session Authorization Rejected: ${authError.message}`);
+  }
+
+  if (!sessionData || !sessionData.session || !sessionData.session.user) {
+    if (staffEmailLog) {
+      staffEmailLog.innerHTML = `<span style="color:var(--staff-red); font-weight:700;">✕ Administrative Session Invalid</span>`;
     }
-    // --- EXECUTE DIRECT PRODUCTION DATA QUERY MATRIX --- 
-    try { 
-        console.log(`📡 [Strict Engine] Dispatching database request payload out to table space for user: [${currentStaffEmail}]`); 
-        
-        // 🟢 RAW DB SOURCE HANDSHAKE: Request data columns matching your explicit orders table parameters
-        const { data: records, error: queryError } = await client 
-            .from('orders') 
-            .select('id, company_name, email_address, selected_plan, total_paid_amount, account_created, tracking_number, created_at') 
-            .order('created_at', { ascending: false }); 
+    throw new Error("✕ Unauthenticated Command Error: No active administrative user session token detected. Access to database rows has been halted safely.");
+  }
 
-        if (queryError) { 
-            throw new Error(`Postgres Database Operational Exception [Code ${queryError.code || 'UNKNOWN'}]: ${queryError.message}`); 
-        } 
+  const currentStaffEmail = sessionData.session.user.email;
+  
+  // Hydrate the universal shield operator layout element on both chat and analytics pages smoothly
+  if (staffEmailLog) {
+    staffEmailLog.innerHTML = `<span><i class="fa-solid fa-user-shield"></i> Operator Session: ${currentStaffEmail}</span>`;
+  }
 
-        // Check for valid array configurations 
-        if (!records || records.length === 0) { 
-            console.warn("ℹ️ [Strict Engine] System connected successfully, but no rows match inside table: [public.orders]."); 
-            salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">The platform database table is currently empty.</td></tr>`; 
-            return; 
-        } 
+  // 4. 🟢 TARGETED CONDITIONAL EXIT: Safely step out now if we are on the Chat view window
+  if (!salesTableBody) {
+    console.log("ℹ️ [Strict Engine] View validation complete: Chat canvas detected. Handing thread control over to roster synchronizers.");
+    return; // Safely exits without skipping core session metrics or dashboard verification flows
+  }
 
-        // Initialize calculation registers 
-        let totalRevenueCounter = 0; 
-        let totalActiveCounter = 0; 
-        let pendingAuditsCounter = 0; 
-        let logStreamMarkup = ""; 
-        salesTableBody.innerHTML = ""; 
+  // 5. Ledger-Specific Interface Alerts (Only processed if on the dashboard grid page)
+  if (!clientDropdown) console.error("✕ UI Verification Alert: Dropdown target element ID 'adminClientDropdown' is missing.");
+  if (!commsStreamBox) console.error("✕ UI Verification Alert: Inbox logging element ID 'admin-inbox-live-stream-box' is missing.");
+  
+  if (!revenueCard || !activeCard || !pendingCard) {
+    console.warn("⚠ UI Verification Alert: One or more score status cards element targets evaluate to absent.");
+  }
 
-        // Hydrate search target selectors dropdown options cleanly 
-        if (clientDropdown) { 
-            clientDropdown.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`; 
-            const uniqueEmails = [...new Set(records.map(row => row.email_address).filter(Boolean))]; 
-            uniqueEmails.forEach(email => { 
-                const opt = document.createElement("option"); 
-                opt.value = email; 
-                opt.textContent = email; 
-                clientDropdown.appendChild(opt); 
-            }); 
-        } 
+  // --- 6. EXECUTE DIRECT PRODUCTION DATA QUERY MATRIX ---
+  try {
+    console.log(`📡 [Strict Engine] Dispatching database request payload out to table space for user: [${currentStaffEmail}]`);
+    
+    const { data: records, error: queryError } = await client
+      .from('orders')
+      .select('id, company_name, email_address, selected_plan, total_paid_amount, account_created, tracking_number, created_at')
+      .order('created_at', { ascending: false });
+
+    if (queryError) {
+      throw new Error(`Postgres Database Operational Exception [Code ${queryError.code || 'UNKNOWN'}]: ${queryError.message}`);
+    }
+
+    if (!records || records.length === 0) {
+      console.warn("ℹ️ [Strict Engine] System connected successfully, but no rows match inside table: [public.orders].");
+      salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">The platform database table is currently empty.</td></tr>`;
+      return;
+    }
+
+    // Initialize calculation registers
+    let totalRevenueCounter = 0;
+    let totalActiveCounter = 0;
+    let pendingAuditsCounter = 0;
+
+    if (clientDropdown) {
+      clientDropdown.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
+      const uniqueEmails = [...new Set(records.map(row => row.email_address).filter(Boolean))];
+      uniqueEmails.forEach(email => {
+        const opt = document.createElement("option");
+        opt.value = email;
+        opt.textContent = email;
+        clientDropdown.appendChild(opt);
+      });
+    }
 
         // Run record sets rendering loops 
         records.forEach((rowItem) => { 

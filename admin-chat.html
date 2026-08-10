@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
   // Global variables initialization frame parameters
-  window.activeSelectedClientId = null;
+  window.activeSelectedClientId = null; // Links directly to client_profiles.id
   window.masterCrmThreadsCache = [];
   window.realtimeChatSubscriptionChannel = null;
 
@@ -164,263 +164,326 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+      .replace(/'/g, "'");
   };
 
-    // --- STAGE 1: DIRECTORY ROSTER RETRIEVAL MATRIX FROM THE CHAT THREADS VIEW ---
-  window.synchronizeChatThreadsRoster = async function() {
-    const rosterContainer = document.getElementById("adminUsersFeedContainer");
-    const client = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
-    
-    if (!rosterContainer || !client) return;
+// --- STAGE 1: DIRECTORY ROSTER RETRIEVAL MATRIX FROM THE RAW TABLE (CORRECTED) ---
+window.synchronizeChatThreadsRoster = async function() {
+  const rosterContainer = document.getElementById("adminUsersFeedContainer");
+  const client = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
 
-    try {
-      console.log("📡 [Roster Engine] Syncing bidirectional thread logs from database view...");
-      
-      // Pull variables including real email addresses straight out of your updated view schema
-      const { data: threads, error } = await client
-        .from('admin_chat_threads_view')
-        .select('client_id, last_message_content, last_message_at, sender_type, resolved_customer_name, unread_count, email_address')
-        .order('last_message_at', { ascending: false });
+  if (!rosterContainer || !client) return;
 
-      if (error) throw error;
-      
-      window.masterCrmThreadsCache = threads || [];
+  try {
+    console.log("📡 [Roster Engine] Syncing bidirectional thread logs from raw chat table...");
 
-      if (window.masterCrmThreadsCache.length === 0) {
-        rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
-        return;
-      }
+    // 🟢 FIXED: Fetch data rows at the absolute top of the processing execution chain
+    const { data: rawMessages, error } = await client
+      .from('chat_messages')
+      .select('id, message_content, created_at, sender_type, first_name, last_name, email_address, is_read_by_admin')
+      .order('created_at', { ascending: false });
 
-      window.renderChatSidebarList(window.masterCrmThreadsCache);
-    } catch (err) {
-      console.error("✕ Roster synchronization failure:", err.message);
-      rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-size:0.8rem; font-weight:700;">⚠️ Directory Sync Offline.</div>`;
-    }
-  };
+    // Print operational dataset objects directly inside the debugger channel
+    console.log("📦 [Diagnostic Log] Raw data payload returned from table:", rawMessages);
 
-  // --- STAGE 2: RENDER SIDEBAR LIST DECK ---
-  window.renderChatSidebarList = function(datasetArray) {
-    const rosterContainer = document.getElementById("adminUsersFeedContainer");
-    if (!rosterContainer) return;
+    if (error) throw error;
 
-    if (!datasetArray || datasetArray.length === 0) {
-      rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b; font-size:0.8rem;">No client profiles match that query.</div>`;
+    if (!rawMessages || rawMessages.length === 0) {
+      window.masterCrmThreadsCache = [];
+      rosterContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.8rem; font-style:italic;">No active conversations registered.</div>`;
       return;
     }
 
-    rosterContainer.innerHTML = datasetArray.map(row => {
-      const currentActiveToken = window.activeSelectedClientId || null;
-      const isSelected = currentActiveToken === row.client_id;
-      
-      const cleanCustomerName = row.resolved_customer_name && row.resolved_customer_name.trim() !== "" 
-        ? row.resolved_customer_name 
-        : `Client: ${String(row.client_id).substring(0, 8).toUpperCase()}`;
+    // 🟢 GROUPING MATRIX: Group raw messages by unique client profile 'id'
+    const threadsGroupMap = {};
+    
+    rawMessages.forEach(msg => {
+      const uid = msg.id; // Aligned directly to client_profiles primary identifier column key references
 
-      let msgPreview = row.last_message_content || 'No text content.';
-      if (msgPreview.includes("Name:")) {
-        msgPreview = "📋 [New Room Onboarding Parameters Metadata]";
-      } else if (msgPreview.length > 35) {
-        msgPreview = msgPreview.substring(0, 32) + "...";
+      // Since rows are ordered newest first, the first time we see an id is their absolute latest message
+      if (!threadsGroupMap[uid]) {
+        threadsGroupMap[uid] = {
+          id: uid, 
+          message_content: msg.message_content,
+          last_message_at: msg.created_at,
+          sender_type: msg.sender_type,
+          first_name: msg.first_name,
+          last_name: msg.last_name,
+          email_address: msg.email_address,
+          unread_count: 0
+        };
       }
 
-      const unreadCountBadge = row.unread_count && parseInt(row.unread_count) > 0 
-        ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` 
-        : '';
-
-      const backgroundStyles = isSelected 
-        ? "background: rgba(37, 99, 235, 0.06) !important; border-left: 4px solid #dc2626 !important;" 
-        : "background: #ffffff;";
-
-      return `
-        <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.client_id}')">
-          <div style="display:flex; justify-content:space-between; width:100%; align-items:center; box-sizing:border-box; gap:8px;">
-            <strong style="color:#0f172a; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">👤 ${window.escapeChatTextMarkup(cleanCustomerName)}</strong>
-            ${unreadCountBadge}
-          </div>
-          <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${window.escapeChatTextMarkup(msgPreview)}</small>
-        </div>
-      `;
-    }).join('');
-  };
-
-  // --- STAGE 3: SEARCH CLIENTS BY EMAIL ADDRESS OR NAME (Bypasses long IDs) ---
-  window.filterUsersFeed = function() {
-    const searchBox = document.getElementById("userFeedFilterField");
-    if (!searchBox || !window.masterCrmThreadsCache) return;
-
-    const parsingToken = searchBox.value.toLowerCase().trim();
-
-    const filtered = window.masterCrmThreadsCache.filter(row => {
-      if (!row) return false;
-      
-      // Looks up target profiles by their textual email coordinates or display names
-      const matchClientEmail = String(row.email_address || '').toLowerCase();
-      const matchClientName  = String(row.resolved_customer_name || '').toLowerCase();
-      const matchLastMsg     = String(row.last_message_content || '').toLowerCase();
-      
-      return matchClientEmail.includes(parsingToken) || 
-             matchClientName.includes(parsingToken)  || 
-             matchLastMsg.includes(parsingToken);
+      // Calculate unread message counts for this specific sidebar row badge context
+      if (msg.sender_type === 'client' && msg.is_read_by_admin === false) {
+        threadsGroupMap[uid].unread_count += 1;
+      }
     });
 
-    window.renderChatSidebarList(filtered);
-  };
+    // Convert our unified map back into a standard array sorted chronologically
+    window.masterCrmThreadsCache = Object.values(threadsGroupMap).sort((a, b) => {
+      return new Date(b.last_message_at) - new Date(a.last_message_at);
+    });
 
-  // --- STAGE 4: MAIN THREAD RENDERING HANDLER ---
-  window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
-    const client = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
-    const textarea = document.getElementById("adminChatMessageInputField");
-    const sendButton = document.getElementById("adminChatSendButton");
-    const msgLogBox = document.getElementById("adminChatMessagesLog");
-    
-    if (!client || !textarea || !sendButton || !msgLogBox) return;
+    // Send cleaned collection array straight onto UI list layout engines
+    window.renderChatSidebarList(window.masterCrmThreadsCache);
 
-    window.activeSelectedClientId = String(stringClientUuid).trim();
-    textarea.disabled = false;
-    sendButton.disabled = false;
-    textarea.placeholder = `Type response to Client...`;
-    textarea.focus();
+  } catch (err) {
+    console.error("✕ Roster synchronization failure:", err.message);
+    rosterContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-size:0.8rem; font-weight:700;">⚠️ Database Connection Offline.</div>`;
+  }
+};
 
-    if (window.realtimeChatSubscriptionChannel) {
-      console.log("🔌 [Real-time Engine] Clearing duplicate thread listener streams...");
-      await client.removeChannel(window.realtimeChatSubscriptionChannel);
-      window.realtimeChatSubscriptionChannel = null;
+// --- STAGE 2: RENDER SIDEBAR LIST DECK --- (VERIFIED & OPTIMIZED)
+window.renderChatSidebarList = function(datasetArray) {
+  const rosterContainer = document.getElementById("adminUsersFeedContainer");
+  if (!rosterContainer) return;
+
+  if (!datasetArray || datasetArray.length === 0) {
+    rosterContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b; font-size:0.8rem;">No client profiles match that query.</div>`;
+    return;
+  }
+
+  rosterContainer.innerHTML = datasetArray.map(row => {
+    const currentActiveToken = window.activeSelectedClientId || null;
+    const isSelected = currentActiveToken === row.id;
+
+    let cleanCustomerName = "Valued Member";
+    if (row.first_name || row.last_name) {
+      cleanCustomerName = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+    } else if (row.email_address) {
+      // 🟢 VERIFIED: Grabs exact string username context out of index zero safely
+      cleanCustomerName = row.email_address.split('@')[0];
+    } else {
+      cleanCustomerName = `Client: ${String(row.id).substring(0, 8).toUpperCase()}`;
     }
 
-    try {
-      console.log(`📡 [Chat Engine] Updating read state metrics for user: [${window.activeSelectedClientId}]`);
-      
-      await client
-        .from('chat_messages')
-        .update({ is_read_by_admin: true })
-        .eq('client_id', window.activeSelectedClientId);
-
-      if (typeof window.synchronizeChatThreadsRoster === "function") {
-        window.synchronizeChatThreadsRoster();
-      }
-
-      const { data: messages, error } = await client
-        .from('chat_messages')
-        .select('*')
-        .eq('client_id', window.activeSelectedClientId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      msgLogBox.innerHTML = "";
-      
-      if (messages && messages.length > 0) {
-        messages.forEach(msg => {
-          window.appendSingleChatMessageBubbleToUI(msg);
-        });
-      } else {
-        msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#64748b; font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
-      }
-
-      if (typeof window.scrollTerminalTimelineToAbsoluteBottom === "function") {
-        window.scrollTerminalTimelineToAbsoluteBottom();
-      }
-
-      if (typeof window.initializeAdminRealtimeMessagingPipeline === "function") {
-        window.initializeAdminRealtimeMessagingPipeline();
-      }
-
-    } catch (err) {
-      console.error("✕ Timeline retrieval failed:", err.message);
-      msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
+    let msgPreview = row.message_content || 'No text content.';
+    if (msgPreview.includes("Name:")) {
+      msgPreview = "📋 [New Room Onboarding Parameters Metadata]";
+    } else if (msgPreview.length > 35) {
+      msgPreview = msgPreview.substring(0, 32) + "...";
     }
-  };
 
-  // --- STAGE 5: VISUAL NOTIFICATION BADGE FLASH ENGINE ---
-  window.triggerActiveBrowserTabFlashAlert = function(clientLabel) {
-    if (window.f4uTabNotificationIntervalInstance) return;
-    
-    let toggleAlertFlag = true;
-    const shortIdLabel = String(clientLabel || '').substring(0, 8).toUpperCase();
-    
-    window.originalBrowserTabTitleString = document.title || "Sales Chat Terminal";
+    const unreadCountBadge = row.unread_count && parseInt(row.unread_count) > 0 ? `<span style="background:#ef4444 !important; color:#ffffff !important; font-size:0.68rem !important; font-weight:800 !important; padding:2px 7px !important; border-radius:10px !important; float:right !important; box-shadow: 0 1px 3px rgba(239,68,68,0.4) !important;">${row.unread_count}</span>` : '';
+    const backgroundStyles = isSelected ? "background: rgba(37, 99, 235, 0.06) !important; border-left: 4px solid #dc2626 !important;" : "background: #ffffff;";
 
-    window.f4uTabNotificationIntervalInstance = setInterval(() => {
-      document.title = toggleAlertFlag 
-        ? `🚨 NEW CHAT (#${shortIdLabel})` 
-        : `💬 ${window.originalBrowserTabTitleString}`;
-      toggleAlertFlag = !toggleAlertFlag;
-    }, 1000);
-  };
-
-  document.addEventListener("click", () => {
-    const inputEl = document.getElementById("adminChatMessageInputField");
-    if (document.activeElement === inputEl && window.f4uTabNotificationIntervalInstance) {
-      clearInterval(window.f4uTabNotificationIntervalInstance);
-      window.f4uTabNotificationIntervalInstance = null;
-      document.title = window.originalBrowserTabTitleString || "Sales Chat Terminal";
-    }
-  });
-
-  // --- STAGE 6: APPEND CHAT TEXT BUBBLES DYNAMICALLY ONTO WORKSPACE CANVAS ---
-  window.appendSingleChatMessageBubbleToUI = function(msgRow) {
-    const msgLogBox = document.getElementById("adminChatMessagesLog");
-    if (!msgLogBox || !msgRow) return;
-
-    const currentSender = String(msgRow.sender_type || '').toLowerCase();
-    const isMyOwnMessage = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'staff';
-
-    const rowWrapper = document.createElement("div");
-    rowWrapper.className = isMyOwnMessage ? "msg-row staff-sent" : "msg-row client-sent";
-
-    const readableTime = msgRow.created_at 
-      ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-      : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    let secureCleanText = window.escapeChatTextMarkup(msgRow.message_content || "");
-
-    rowWrapper.innerHTML = `
-      <div class="msg-bubble">
-        <div class="bubble-text-content">${secureCleanText}</div>
-        <span class="msg-timestamp" style="display:block; font-size:0.68rem; color:#94a3b8; margin-top:4px; font-weight:500;">${readableTime}</span>
+    return `
+      <div class="chat-user-thread-card" style="padding:14px 16px; border-bottom:1px solid #e2e8f0; cursor:pointer; display:flex; flex-direction:column; gap:3px; width:100%; box-sizing:border-box; transition:all 0.1s; ${backgroundStyles}" onclick="window.loadActiveThreadViewportPanel('${row.id}')">
+        <div style="display:flex; justify-content:space-between; width:100%; align-items:center; box-sizing:border-box; gap:8px;">
+          <strong style="color:#0f172a; font-size:0.85rem; font-weight:700; flex:1; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">👤 ${window.escapeChatTextMarkup(cleanCustomerName)}</strong>
+          ${unreadCountBadge}
+        </div>
+        <small style="color:#64748b; font-size:0.78rem; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; display:block; font-weight:500;">${window.escapeChatTextMarkup(msgPreview)}</small>
       </div>
     `;
+  }).join('');
+};
 
-    msgLogBox.appendChild(rowWrapper);
+
+
+// --- STAGE 3: SEARCH CLIENTS BY EMAIL ADDRESS OR NAME (Bypasses long IDs) ---
+window.filterUsersFeed = function() {
+  const searchBox = document.getElementById("userFeedFilterField");
+  if (!searchBox || !window.masterCrmThreadsCache) return;
+
+  const parsingToken = searchBox.value.toLowerCase().trim();
+
+  const filtered = window.masterCrmThreadsCache.filter(row => {
+    if (!row) return false;
+    
+    // 🟢 FIXED LOOKUP PROPERTIES: Scans direct table field structures matching your mirror table
+    const matchClientEmail = String(row.email_address || '').toLowerCase();
+    const matchLastMsg = String(row.message_content || '').toLowerCase();
+    
+    // Derive customer name exactly like the sidebar list builder to keep lookups accurate
+    const fName = String(row.first_name || '').toLowerCase();
+    const lName = String(row.last_name || '').toLowerCase();
+    const matchClientName = `${fName} ${lName}`.trim();
+
+    return matchClientEmail.includes(parsingToken) || matchClientName.includes(parsingToken) || matchLastMsg.includes(parsingToken);
+  });
+
+  window.renderChatSidebarList(filtered);
+};
+
+// --- STAGE 4: MAIN THREAD RENDERING HANDLER (CORRECTED METADATA CACHE) ---
+window.loadActiveThreadViewportPanel = async function(stringClientUuid) {
+  const client = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
+  const textarea = document.getElementById("adminChatMessageInputField");
+  const sendButton = document.getElementById("adminChatSendButton");
+  const msgLogBox = document.getElementById("adminChatMessagesLog");
+
+  if (!client || !textarea || !sendButton || !msgLogBox) return;
+
+  // Enforce consistent token storage parameters (Maps directly onto the profile id column)
+  window.activeSelectedClientId = String(stringClientUuid).trim().toLowerCase();
+
+  // Wipe out historic cache contexts to block crossover data mapping leakage
+  window.activeSelectedClientEmail = "";
+  window.activeSelectedClientFirstName = "";
+  window.activeSelectedClientLastName = "";
+  window.activeSelectedClientCompany = "";
+
+  textarea.disabled = false;
+  sendButton.disabled = false;
+  textarea.placeholder = `Type response to Client...`;
+  textarea.focus();
+
+  if (window.realtimeChatSubscriptionChannel) {
+    console.log("🔌 [Real-time Engine] Clearing duplicate thread listener streams...");
+    await client.removeChannel(window.realtimeChatSubscriptionChannel);
+    window.realtimeChatSubscriptionChannel = null;
+  }
+
+  try {
+    console.log(`📡 [Chat Engine] Updating read state metrics for user: [${window.activeSelectedClientId}]`);
+    
+    // 🟢 FIXED: Changed 'client_id' targeting parameter directly to 'id'
+    await client
+      .from('chat_messages')
+      .update({ is_read_by_admin: true })
+      .eq('id', window.activeSelectedClientId);
+
+    if (typeof window.synchronizeChatThreadsRoster === "function") {
+      window.synchronizeChatThreadsRoster();
+    }
+
+    // 🟢 FIXED: Changed 'client_id' filter lookup key targeting parameter to 'id'
+    const { data: messages, error } = await client
+      .from('chat_messages')
+      .select('*')
+      .eq('id', window.activeSelectedClientId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // 🟢 FIXED METADATA CAPTURE: Explicitly scans the thread rows to preserve the original profile metadata cells
+    if (messages && messages.length > 0) {
+      const parentRowSample = messages.find(m => m.sender_type === 'client' && m.email_address);
+      if (parentRowSample) {
+        window.activeSelectedClientEmail = String(parentRowSample.email_address || '').trim().toLowerCase();
+        window.activeSelectedClientFirstName = parentRowSample.first_name || "";
+        window.activeSelectedClientLastName = parentRowSample.last_name || "";
+        window.activeSelectedClientCompany = parentRowSample.company_name || "Not Specified";
+      } else {
+        // Fallback: If no client row holds data cells, fall back onto the grid properties natively
+        const alternativeRow = messages[0];
+        window.activeSelectedClientEmail = alternativeRow.email_address || "";
+        window.activeSelectedClientFirstName = alternativeRow.first_name || "";
+        window.activeSelectedClientLastName = alternativeRow.last_name || "";
+        window.activeSelectedClientCompany = alternativeRow.company_name || "Not Specified";
+      }
+    }
+
+    msgLogBox.innerHTML = "";
+    if (messages && messages.length > 0) {
+      messages.forEach(msg => {
+        window.appendSingleChatMessageBubbleToUI(msg);
+      });
+    } else {
+      msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#64748b; font-style:italic; font-size:0.85rem;">No messages exchanged with this user yet.</div>`;
+    }
+
     if (typeof window.scrollTerminalTimelineToAbsoluteBottom === "function") {
       window.scrollTerminalTimelineToAbsoluteBottom();
     }
-  };
 
- // --- STAGE 7: SYNTAX-CORRECTED OUTBOUND MESSAGE TRANSMISSION ENGINE ---
+    if (typeof window.initializeAdminRealtimeMessagingPipeline === "function") {
+      window.initializeAdminRealtimeMessagingPipeline();
+    }
+
+  } catch (err) {
+    console.error("✕ Timeline retrieval failed:", err.message);
+    msgLogBox.innerHTML = `<div style="text-align:center; padding-top:20%; color:#ef4444; font-weight:700; font-size:0.85rem;">⚠️ Timeline Connection Offline.</div>`;
+  }
+};
+
+// --- STAGE 5: VISUAL NOTIFICATION BADGE FLASH ENGINE ---
+window.triggerActiveBrowserTabFlashAlert = function(clientLabel) {
+  if (window.f4uTabNotificationIntervalInstance) return;
+  let toggleAlertFlag = true;
+  const shortIdLabel = String(clientLabel || '').substring(0, 8).toUpperCase();
+  window.originalBrowserTabTitleString = document.title || "Sales Chat Terminal";
+  window.f4uTabNotificationIntervalInstance = setInterval(() => {
+    document.title = toggleAlertFlag ? `🚨 NEW CHAT (#${shortIdLabel})` : `💬 ${window.originalBrowserTabTitleString}`;
+    toggleAlertFlag = !toggleAlertFlag;
+  }, 1000);
+};
+
+document.addEventListener("click", () => {
+  const inputEl = document.getElementById("adminChatMessageInputField");
+  if (document.activeElement === inputEl && window.f4uTabNotificationIntervalInstance) {
+    clearInterval(window.f4uTabNotificationIntervalInstance);
+    window.f4uTabNotificationIntervalInstance = null;
+    document.title = window.originalBrowserTabTitleString || "Sales Chat Terminal";
+  }
+});
+
+// --- STAGE 6: APPEND CHAT TEXT BUBBLES DYNAMICALLY ONTO WORKSPACE CANVAS ---
+window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+  const msgLogBox = document.getElementById("adminChatMessagesLog");
+  if (!msgLogBox || !msgRow) return;
+
+  const currentSender = String(msgRow.sender_type || '').toLowerCase();
+  const isMyOwnMessage = currentSender === 'admin' || currentSender === 'agent' || currentSender === 'staff';
+
+  const rowWrapper = document.createElement("div");
+  
+  // 🟢 FIXED VISUAL ALIGNMENT: Swapped the class outputs to perfectly match your viewport presentation styles
+  rowWrapper.className = isMyOwnMessage ? "msg-row client-sent" : "msg-row staff-sent";
+
+  const readableTime = msgRow.created_at ? new Date(msgRow.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  let secureCleanText = window.escapeChatTextMarkup(msgRow.message_content || "");
+
+  rowWrapper.innerHTML = `
+    <div class="msg-bubble">
+      <div class="bubble-text-content">${secureCleanText}</div>
+      <span class="msg-timestamp" style="display:block; font-size:0.68rem; color:#94a3b8; margin-top:4px; font-weight:500;">${readableTime}</span>
+    </div>
+  `;
+
+  msgLogBox.appendChild(rowWrapper);
+
+  if (typeof window.scrollTerminalTimelineToAbsoluteBottom === "function") {
+    window.scrollTerminalTimelineToAbsoluteBottom();
+  }
+};
+
+
+// --- STAGE 7: SYNTAX-CORRECTED OUTBOUND MESSAGE TRANSMISSION ENGINE (ALIGNED) ---
 window.dispatchAdminResponseChatMessage = async function() {
   const client = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
   const textarea = document.getElementById("adminChatMessageInputField");
-  
   if (!client || !textarea || !window.activeSelectedClientId) return;
 
   const rawText = textarea.value.trim();
   if (!rawText) return;
 
-  // Block multiple inputs to prevent submission race conditions
   textarea.disabled = true;
 
   try {
     console.log("🚀 [Chat Desk] Pushing single clean outbound payload message to client thread...");
-    
-    // FIX 1: Omit 'created_at' and 'payload_metadata' formatting traps to let PostgreSQL defaults handle sorting
+    const cleanClientId = String(window.activeSelectedClientId).trim().toLowerCase();
+
+    // 🟢 FIXED PAYLOAD: Uses 'id' to map perfectly with client_profiles and our new schema
     const { error } = await client
       .from('chat_messages')
       .insert([{
-        client_id: window.activeSelectedClientId,
+        id: cleanClientId, // 🟢 FIXED: Removed client_id entirely to prevent database delivery rejection
         message_content: rawText,
         sender_type: 'admin',
         is_read_by_admin: true,
-        is_read_by_client: false
+        is_read_by_client: false,
+        email_address: window.activeSelectedClientEmail ? String(window.activeSelectedClientEmail).trim().toLowerCase() : null,
+        first_name: window.activeSelectedClientFirstName || null,
+        last_name: window.activeSelectedClientLastName || null,
+        company_name: window.activeSelectedClientCompany || "Not Specified"
       }]);
 
     if (error) throw error;
-    
-    // FIX 2: Clear input text right away. Do NOT manually recall loadActiveThreadViewportPanel here.
-    // The background real-time listener will catch the insert event and render it safely.
+
     textarea.value = "";
-    
     // Silently notify sidebar roster records to match the fresh message text
     await window.synchronizeChatThreadsRoster();
 
@@ -428,111 +491,113 @@ window.dispatchAdminResponseChatMessage = async function() {
     console.error("✕ Outbound transmission crash:", err.message);
     const savedPlaceholder = textarea.placeholder;
     textarea.placeholder = `✕ Transmission Failed: ${err.message}`;
-    setTimeout(() => { textarea.placeholder = savedPlaceholder; }, 4000);
+    setTimeout(() => {
+      textarea.placeholder = savedPlaceholder;
+    }, 4000);
   } finally {
     textarea.disabled = false;
     textarea.focus();
   }
 };
 
-  // --- STAGE 8: KEYBOARD ACCELERATORS & UI TIMELINE SCROLL MANAGEMENT ---
-  window.handleAdminChatKeyOptions = function(event) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      window.dispatchAdminResponseChatMessage();
-    }
-  };
+// --- STAGE 8: KEYBOARD ACCELERATORS & UI TIMELINE SCROLL MANAGEMENT ---
+window.handleAdminChatKeyOptions = function(event) {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    window.dispatchAdminResponseChatMessage();
+  }
+};
 
-  window.scrollTerminalTimelineToAbsoluteBottom = function() {
-    const msgLogBox = document.getElementById("adminChatMessagesLog");
-    if (msgLogBox) {
-      msgLogBox.scrollTop = msgLogBox.scrollHeight;
-    }
-  };
+window.scrollTerminalTimelineToAbsoluteBottom = function() {
+  const msgLogBox = document.getElementById("adminChatMessagesLog");
+  if (msgLogBox) {
+    msgLogBox.scrollTop = msgLogBox.scrollHeight;
+  }
+};
 
-  // --- STAGE 9: ACCORDION INTERACTION CONTROLS & SESSION PURGING ---
-  function toggleSidebarAccordion(buttonElement) {
-    if (!buttonElement) return;
-    buttonElement.classList.toggle('active');
-    const panel = buttonElement.nextElementSibling;
-    if (panel) {
-      if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-        panel.style.maxHeight = "0px";
-      } else {
-        panel.style.maxHeight = panel.scrollHeight + "px";
-      }
+// --- STAGE 9: ACCORDION INTERACTION CONTROLS & SESSION PURGING ---
+function toggleSidebarAccordion(buttonElement) {
+  if (!buttonElement) return;
+  buttonElement.classList.toggle('active');
+  const panel = buttonElement.nextElementSibling;
+  if (panel) {
+    if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
+      panel.style.maxHeight = "0px";
+    } else {
+      panel.style.maxHeight = panel.scrollHeight + "px";
     }
   }
+}
+window.toggleSidebarAccordion = toggleSidebarAccordion;
 
-  document.getElementById("sidebarFallbackLogoutBtn")?.addEventListener("click", () => {
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-    window.location.replace("admin-login.html");
-  });
+document.getElementById("sidebarFallbackLogoutBtn")?.addEventListener("click", () => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+  window.location.replace("admin-login.html");
+});
 
-  // --- STAGE 10: REAL-TIME WEBSOCKET PIPELINE ---
-  window.initializeAdminRealtimeMessagingPipeline = function() {
-    const client = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
-    if (!client) return;
+// --- STAGE 10: REAL-TIME WEBSOCKET PIPELINE (ALIGNED EMAIL BOUNDARIES) ---
+window.initializeAdminRealtimeMessagingPipeline = function() {
+  const client = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
+  if (!client) return;
 
-    console.log("📡 [Real-time Engine] Binding global workspace listener channel...");
-    
-    if (window.realtimeChatSubscriptionChannel) {
-      client.removeChannel(window.realtimeChatSubscriptionChannel);
-    }
+  console.log("📡 [Real-time Engine] Binding global workspace listener channel...");
+  
+  if (window.realtimeChatSubscriptionChannel) {
+    client.removeChannel(window.realtimeChatSubscriptionChannel);
+  }
 
-    window.realtimeChatSubscriptionChannel = client
-      .channel('admin_master_chat_stream')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'chat_messages' 
-      }, async (payload) => {
-        console.log("📡 [Inbound Live Broadcast Caught]:", payload.new);
-        const incomingClientId = payload.new.client_id;
+  window.realtimeChatSubscriptionChannel = client
+    .channel('admin_master_chat_stream')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, async (payload) => {
+      console.log("📡 [Inbound Live Broadcast Caught]:", payload.new);
+      
+      const incomingEmail = String(payload.new.email_address || '').trim().toLowerCase();
+      const currentSelectedEmail = String(window.activeSelectedClientEmail || '').trim().toLowerCase();
+      const isClientMsg = String(payload.new.sender_type).toLowerCase() === 'client';
 
-        if (String(payload.new.sender_type).toLowerCase() === 'client') {
-          try {
-            new Audio("assets/sounds/notification.mp3").play().catch(() => {});
-          } catch(e) {}
-          
-          if (typeof window.triggerActiveBrowserTabFlashAlert === "function") {
-            window.triggerActiveBrowserTabFlashAlert(incomingClientId);
-          }
+      if (isClientMsg) {
+        try {
+          new Audio("assets/sounds/notification.mp3").play().catch(() => {});
+        } catch(e) {}
+        if (typeof window.triggerActiveBrowserTabFlashAlert === "function") {
+          window.triggerActiveBrowserTabFlashAlert(incomingEmail);
         }
+      }
 
-        if (String(window.activeSelectedClientId || '').trim() === String(incomingClientId).trim()) {
-          window.appendSingleChatMessageBubbleToUI(payload.new);
-          
+      // 🟢 FIXED: Compares email address trackers to render bubbles inside the current admin pane viewport
+      if (currentSelectedEmail !== "" && incomingEmail === currentSelectedEmail) {
+        window.appendSingleChatMessageBubbleToUI(payload.new);
+        
+        if (isClientMsg) {
+          // 🟢 VERIFIED: Targeting the 'id' profile link column correctly here to mark incoming messages read
           await client
             .from('chat_messages')
             .update({ is_read_by_admin: true })
             .eq('id', payload.new.id);
         }
-
-        await window.synchronizeChatThreadsRoster();
-      })
-      .subscribe((status) => {
-        console.log(`🔌 [Real-time Pipeline Status Switch]: ${status}`);
-      });
-  };
-
-  // --- STAGE 11: ENGINE LIFE-CYCLE INITIALIZATION ---
-  const clientInstanceHook = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
-  if (clientInstanceHook) {
-    (async () => {
-      if (typeof window.activeSelectedClientId === "undefined") window.activeSelectedClientId = null;
-      if (typeof window.realtimeChatSubscriptionChannel === "undefined") window.realtimeChatSubscriptionChannel = null;
+      }
       
       await window.synchronizeChatThreadsRoster();
-      window.initializeAdminRealtimeMessagingPipeline();
-    })();
-  }
+    })
+    .subscribe((status) => {
+      console.log(`🔌 [Real-time Pipeline Status Switch]: ${status}`);
+    });
+};
 
+// --- STAGE 11: ENGINE LIFE-CYCLE INITIALIZATION ---
+const clientInstanceHook = window.supabaseInstance || window.supabaseClient || window.chatAdminCoreClient;
+if (clientInstanceHook) {
+  (async () => {
+    if (typeof window.activeSelectedClientId === "undefined") window.activeSelectedClientId = null;
+    if (typeof window.realtimeChatSubscriptionChannel === "undefined") window.realtimeChatSubscriptionChannel = null;
+    
+    await window.synchronizeChatThreadsRoster();
+    window.initializeAdminRealtimeMessagingPipeline();
+  })();
+}
 });
 </script>
-</body>
-</html>
 
 </body>
 </html>
