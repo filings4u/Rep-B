@@ -275,7 +275,7 @@ async function syncTeamDirectoryGrid() {
   }
 }
 
-  // 🟢 CREATE CONTROLLER: Insert profile invitation rows (CORRECTED)
+  // 🟢 SECURE CREATE CONTROLLER: Prevents fallback data clusters during member provisioning
   if (addMemberForm) {
     addMemberForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -292,23 +292,28 @@ async function syncTeamDirectoryGrid() {
       const tier = document.getElementById("team_role_tier").value;
 
       try {
-        // 🟢 FIXED BOUNDARY SEED: Query the parent's company context to attach to the invitation row
+        // 1. Query the parent's corporate identity context string
         const { data: parentProfile } = await client
           .from('client_profiles')
           .select('company_name')
           .eq('email_address', activeUserEmail)
           .maybeSingle();
 
-        const parentCompany = parentProfile ? parentProfile.company_name : "Not Specified";
+        const rawCompany = parentProfile && parentProfile.company_name ? parentProfile.company_name.trim() : "";
 
-        // Insert new row securely mapped into the identical corporate track
+        // 🟢 FIXED GATE CHECK: Blocks creation if parent belongs to a generic unassigned cluster group string
+        if (!rawCompany || rawCompany.toLowerCase() === "not specified") {
+          throw new Error("Your account profile is currently marked as 'Not Specified'. Please update your legal company profile name in settings before provisioning additional team members.");
+        }
+
+        // 2. Insert new row securely mapped into the identical corporate track
         const { error } = await client
           .from('client_profiles')
           .insert([{ 
             first_name: f, 
             last_name: l, 
             email_address: em, 
-            company_name: parentCompany, // 🟢 FIXED: Preserves account isolation during team inserts
+            company_name: rawCompany, 
             phone_number: tier === "View Only Specialist" ? "View Only" : "Active Member" 
           }]);
 
@@ -379,6 +384,7 @@ function runPortalClock() {
 setInterval(runPortalClock, 1000);
 runPortalClock();
 </script>
+
 
 </body>
 </html>
