@@ -528,14 +528,19 @@
     const uploadForm = document.getElementById('complianceUploadForm');
 
     try {
-      // 🟢 FIXED INITIALIZATION NAMESPACE PATH
-      const supabaseModule = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-      if (!supabaseModule || typeof supabaseModule.createClient !== 'function') {
-        throw new Error("Supabase script driver missing or uninitialized on the window scope namespace layout.");
+      // 🟢 SAFE CHECK FALLBACK Matrix: Check window cache instances first to eliminate type collisions
+      if (window.supabaseInstance || window.supabaseClient) {
+        dbClient = window.supabaseInstance || window.supabaseClient;
+        console.log("🚀 [Compliance Engine] Connected cleanly using active window session instance.");
+      } else if (window.supabase && typeof window.supabase.createClient === 'function') {
+        dbClient = window.supabase.createClient(DB_URL, DB_KEY);
+      } else if (typeof supabase !== 'undefined' && typeof supabase.createClient === 'function') {
+        dbClient = supabase.createClient(DB_URL, DB_KEY);
       }
 
-      // Initialize the scoped client instance securely
-      dbClient = supabaseModule.createClient(DB_URL, DB_KEY);
+      if (!dbClient) {
+        throw new Error("Supabase JS core library could not be resolved or initialized inside this context scope.");
+      }
 
       // 1. POPULATE CUSTOMERS INTO DROPDOWN FROM ORDERS TABLES CONCURRENTLY
       console.log("📡 [Compliance Engine] Hydrating cross-table client profile registries...");
@@ -579,7 +584,7 @@
           clientMenu.appendChild(opt);
         });
 
-        // Auto-fill form inputs on profile dropdown selection swap
+        // Clear out duplicates before re-binding to prevent memory leaks
         clientMenu.removeEventListener('change', handleClientDropdownChange);
         clientMenu.addEventListener('change', handleClientDropdownChange);
       }
@@ -596,6 +601,7 @@
           if (filingInput) filingInput.value = meta.service || '';
         }
       }
+
 
       // --- 2. QUERY AND PRINT DISPATCHED AUDITS MATCHING NEW 1:1 RESTRUCTURE ---
       try {
