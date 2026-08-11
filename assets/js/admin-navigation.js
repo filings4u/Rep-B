@@ -191,6 +191,8 @@ desktopSidebarNode.innerHTML = `
     </button>
     <div class="accordion-panel d-panel" data-group="tools">
       <a href="admin-chat.html" class="nav-item d-link" data-page="admin-chat.html"><span>💬</span> Client Chat</a>
+      <!-- 🟢 ADDED: After-Hours Structured Tickets Dashboard Link -->
+      <a href="admin-tickets.html" class="nav-item d-link" data-page="admin-tickets.html"><span>📋</span> After-Hours Tickets</a>
       <a href="admin-documents.html" class="nav-item d-link" data-page="admin-documents.html"><span>📂</span> Document Vault</a>
       <a href="admin-appointments.html" class="nav-item d-link" data-page="admin-appointments.html"><span>⏰</span> Session Allocations</a>
       <a href="admin-notifications.html" class="nav-item d-link" data-page="admin-notifications.html"><span>🔔</span> Alerts Log</a>
@@ -206,7 +208,6 @@ desktopSidebarNode.innerHTML = `
     <div class="accordion-panel d-panel" data-group="intake">
       <a href="logodesign-intake.html" class="nav-item d-link" data-page="logodesign-intake.html"><span>🎨</span> Logo Design Form</a>
       <a href="webdesign-intake.html" class="nav-item d-link" data-page="webdesign-intake.html"><span>🌐</span> Web Ingestion Form</a>
-      <!-- 🟢 ADDED: Web Projects Slat Interface Link -->
       <a href="admin-web-projects.html" class="nav-item d-link" data-page="admin-web-projects.html"><span>💻</span> Web Design Projects</a>
     </div>
   </div>
@@ -217,13 +218,13 @@ desktopSidebarNode.innerHTML = `
       HQ Infrastructure <span class="chevron">▼</span>
     </button>
     <div class="accordion-panel d-panel" data-group="hq">
-      <!-- 🟢 ADDED: Packages Slat Interface Link -->
       <a href="admin-packages.html" class="nav-item d-link" data-page="admin-packages.html"><span>📦</span> Freight Package Matrix</a>
       <a href="admin-status.html" class="nav-item d-link" data-page="admin-status.html"><span>🚦</span> System Status Tracker</a>
       <a href="admin-global-settings.html" class="nav-item d-link" data-page="admin-global-settings.html"><span>🔧</span> Global Config</a>
     </div>
   </div>
 </nav>
+
 
 
 <div class="sidebar-footer-lock" style="padding-top:10px !important; text-align: center; width: 100%; box-sizing: border-box;">
@@ -305,6 +306,8 @@ if (headerNode && headerNode.parentNode) {
     </button>
     <div class="accordion-panel m-panel" data-group="m-tools">
       <a href="admin-chat.html" class="nav-item m-link" data-page="admin-chat.html">Client Chat</a>
+      <!-- 🟢 ADDED: After-Hours Structured Tickets Dashboard Link -->
+      <a href="admin-tickets.html" class="nav-item m-link" data-page="admin-tickets.html">After-Hours Tickets</a>
       <a href="admin-documents.html" class="nav-item m-link" data-page="admin-documents.html">Document Vault</a>
       <a href="admin-appointments.html" class="nav-item m-link" data-page="admin-appointments.html">Session Allocations</a>
       <a href="admin-notifications.html" class="nav-item m-link" data-page="admin-notifications.html">Alerts Log</a>
@@ -320,7 +323,6 @@ if (headerNode && headerNode.parentNode) {
     <div class="accordion-panel m-panel" data-group="m-intake">
       <a href="logodesign-intake.html" class="nav-item m-link" data-page="logodesign-intake.html">Logo Design Form</a>
       <a href="webdesign-intake.html" class="nav-item m-link" data-page="webdesign-intake.html">Web Ingestion Form</a>
-      <!-- 🟢 ADDED: Web Projects Slat Interface Link -->
       <a href="admin-web-projects.html" class="nav-item m-link" data-page="admin-web-projects.html">Web Design Projects</a>
     </div>
   </div>
@@ -331,7 +333,6 @@ if (headerNode && headerNode.parentNode) {
       HQ Infrastructure <span class="chevron">▼</span>
     </button>
     <div class="accordion-panel m-panel" data-group="m-hq">
-      <!-- 🟢 ADDED: Packages Slat Interface Link -->
       <a href="admin-packages.html" class="nav-item m-link" data-page="admin-packages.html">Freight Package Matrix</a>
       <a href="admin-status.html" class="nav-item m-link" data-page="admin-status.html">System Status Tracker</a>
       <a href="admin-global-settings.html" class="nav-item m-link" data-page="admin-global-settings.html">Global Config</a>
@@ -341,6 +342,7 @@ if (headerNode && headerNode.parentNode) {
   <!-- Session Termination Button -->
   <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#dc2626; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Exit Admin Session</button>
 </nav>
+
 
 
     `;
