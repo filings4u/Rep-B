@@ -1,6 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <script src="assets/js/supabase-config.js"></script>
+
+  <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
+<script>
+  (function() {
+    "use strict";
+    // Define the exact project storage lookup path signature
+    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
+    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
+    
+    // Synchronously check local storage cache arrays before browser can paint any HTML elements
+    const rawSessionJson = localStorage.getItem(sessionTokenKey);
+    let isAuthenticated = false;
+    let userRole = null;
+
+    if (rawSessionJson) {
+      try {
+        const sessionData = JSON.parse(rawSessionJson);
+        if (sessionData && sessionData.access_token) {
+          isAuthenticated = true;
+          // Extract nested metadata flags out of JWT payload context securely
+          if (sessionData.user && sessionData.user.user_metadata) {
+            userRole = sessionData.user.user_metadata.role;
+          }
+          if (sessionData.user && !userRole && sessionData.user.email) {
+            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
+              userRole = 'admin';
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Security parsing failure:", e);
+      }
+    }
+
+    // Determine current view file track rules path parameters
+    const pagePathString = window.location.pathname.toLowerCase();
+    const isAdminViewPage = pagePathString.includes('/admin-');
+
+    if (!isAuthenticated) {
+      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
+      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
+      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
+      
+      // Inject CSS rule to hide everything in case browser delays routing
+      document.documentElement.style.display = "none";
+      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
+    }
+
+    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
+    if (isAdminViewPage && userRole !== 'admin') {
+      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
+      window.location.replace("client-dashboard.html");
+      document.documentElement.style.display = "none";
+      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
+    }
+  })();
+</script>
+
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Logo Design Production Workspace | filings4u</title>
@@ -159,9 +220,6 @@
  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <script src="assets/js/supabase-config.js"></script>
-
-
   <script src="assets/js/client-navigation.js"></script>
 
   <script src="assets/js/client-footer.js"></script>
