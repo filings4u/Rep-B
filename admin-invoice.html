@@ -385,6 +385,10 @@
       .invoice-app-container { grid-template-columns: 1fr; margin: 20px auto; }
     }
   </style>
+  <!-- 📦 EXTERNAL JURISDICTIONAL DATA STORES AND PRICE MATRICES -->
+<script src="assets/js/state-pricing.js"></script>
+<script src="assets/js/government-pricing.js"></script>
+
 </head>
 <body>
   <div class="dashboard-wrapper">
@@ -421,94 +425,111 @@
   </header>
 
   
-  <div class="invoice-app-container">
-    
-    <!-- LEFT PANEL: ITEMIZATION LAYOUT HUB -->
-    <div class="studio-panel-card">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">
-        <div>
-          <h1 style="margin:0; font-size:1.4rem; font-weight:850;">Invoice Deployment Studio</h1>
-          <p style="margin:4px 0 0 0; font-size:0.8rem; color:var(--text-muted);">Emit customized billing logs directly to client account portfolios.</p>
-        </div>
-        <span style="font-size:0.68rem; font-weight:800; background:rgba(193,82,84,0.08); color:var(--staff-red); padding:4px 10px; border-radius:12px;">BILLER MATRIX</span>
+  <div class="invoice-app-container" style="max-width: 1440px !important; grid-template-columns: 1fr 1fr !important; padding: 20px 40px;">
+  
+  <!-- LEFT FRAME: DYNAMIC BILLING SPECIFICATION CONTROLS DESK -->
+  <div class="studio-panel-card" style="display: flex; flex-direction: column; gap: 20px;">
+    <div>
+      <h2 style="margin:0; font-size:1.25rem; font-weight:850; color:var(--text-dark);">1. Billing Parameters Selector</h2>
+      <p style="margin:4px 0 0 0; font-size:0.8rem; color:var(--text-muted);">Configure item parameters, add modifiers, and compile them onto the invoice canvas with a click.</p>
+    </div>
+
+    <!-- Dropdown: Choose Service -->
+    <div class="form-group-item">
+      <label class="form-label-text">Select Corporate Service</label>
+      <select id="phoneServiceTitle" class="form-input-control" style="width:100%; font-weight:700; height:42px; background:#fff; border:1px solid #cbd5e1;"></select>
+    </div>
+
+    <!-- Plan Tiers Toggle Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+      <div class="studio-tier-card dynamic-tier-btn active" data-tier="starter" style="border: 2px solid var(--text-dark); border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; background: #fff;">
+        <strong style="font-size:0.8rem; display:block;">Starter</strong>
+        <span id="tier-preview-price-starter" style="font-size:0.9rem; color:var(--emerald); font-weight:700;">$0.00</span>
+      </div>
+      <div class="studio-tier-card dynamic-tier-btn" data-tier="compliance" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; background: #fff;">
+        <strong style="font-size:0.8rem; display:block;">Compliance</strong>
+        <span id="tier-preview-price-compliance" style="font-size:0.9rem; color:var(--emerald); font-weight:700;">$0.00</span>
+      </div>
+      <div class="studio-tier-card dynamic-tier-btn" data-tier="enterprise" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; background: #fff;">
+        <strong style="font-size:0.8rem; display:block;">Enterprise</strong>
+        <span id="tier-preview-price-enterprise" style="font-size:0.9rem; color:var(--emerald); font-weight:700;">$0.00</span>
+      </div>
+    </div>
+
+    <!-- Dropdown: Select State Surcharge -->
+    <div class="form-grid-layout" style="grid-template-columns: 1fr 1fr; margin:0; gap:16px;">
+      <div class="form-group-item">
+        <label class="form-label-text">Filing Jurisdiction State</label>
+        <select id="invoiceJurisdictionStateSelect" class="form-input-control" style="width:100%; background:#fff; height:42px; border:1px solid #cbd5e1;">
+          <option value="">-- No State Fees Applied --</option>
+        </select>
+      </div>
+      <div class="form-group-item">
+        <label class="form-label-text">Apply Surcharge Modifier</label>
+        <div id="stateFeesDisplayBadge" style="font-size:0.85rem; font-weight:700; height:42px; display:flex; align-items:center; background:#f1f5f9; padding:0 14px; border-radius:8px; border:1px solid var(--border-color); color:var(--text-muted);">+$0.00 Surcharge</div>
+      </div>
+    </div>
+
+    <!-- Checklist Layout for Optional Platform Upsell Add-ons -->
+    <div>
+      <label class="form-label-text" style="display:block; margin-bottom:8px;">Strategic Platform Upsell Add-ons</label>
+      <div id="invoiceUpsellsCheckboxGroupWrapper" style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border:1px solid var(--border-color); border-radius:10px; max-height:160px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- Strategic Add Button -->
+    <button type="button" id="invoiceCompileItemsToLedgerActionBtn" style="background:var(--emerald) !important; color:white; border:none; border-radius:8px; height:44px; font-weight:700; cursor:pointer; font-size:0.9rem; width:100%;">⚡ Compile Selections Onto Invoice Ledger ➔</button>
+  </div>
+
+  <!-- RIGHT FRAME: LIVE ITEMIZED CANVAS LEDGER & DEPLOYMENT DESK -->
+  <div class="studio-panel-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 20px;">
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:1.25rem; font-weight:850; color:var(--text-dark);">2. Live Itemized Invoice Canvas</h2>
+        <span id="canvasInvoiceCodeLabel" style="font-family:monospace; font-size:0.8rem; font-weight:800; color:var(--staff-red);">INV-000000</span>
       </div>
 
-      <h3 style="margin:0 0 8px 0; font-size:0.95rem; font-weight:800;">Billable Items Entry Ledger</h3>
-      <table class="invoice-table-ledger">
-        <thead>
-          <tr>
-            <th style="width: 45%;">Service Catalogue Item</th>
-            <th style="width: 20%;">Plan Tier</th>
-            <th style="width: 10%;">Qty</th>
-            <th style="width: 15%;">Unit ($)</th>
-            <th style="width: 10%; text-align: right;">Total</th>
-          </tr>
-        </thead>
-        <tbody id="invoiceLineItemsInputTargetLogs">
-          <!-- Dynamic Row Template 1 Injection Target -->
-          <tr class="invoice-item-row">
-            <td>
-              <select class="form-input-control line-service-select" style="width:100%;" required>
-                <option value="">-- Choose Catalogue Service --</option>
-              </select>
-            </td>
-            <td>
-              <select class="form-input-control line-tier-select" style="width:100%;" required>
-                <option value="starter">Starter Plan</option>
-                <option value="compliance">Compliance Plan</option>
-                <option value="enterprise">Enterprise Plan</option>
-              </select>
-            </td>
-            <td><input type="number" class="form-input-control line-qty" value="1" min="1" style="width:100%; text-align:center;"></td>
-            <td><input type="number" class="form-input-control line-price" value="0.00" step="0.01" style="width:100%;" readonly></td>
-            <td class="line-total-row-string" style="text-align:right; font-weight:700; color:var(--text-dark);">$0.00</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="display:flex; gap:12px; margin-top:16px; padding-bottom:24px; border-bottom:1px solid var(--border-color);">
-        <button type="button" id="invoiceAddNewLineRowBtn" class="action-btn-slat secondary-btn-slat" style="height:34px; font-size:0.78rem;">➕ Add Next Line Item</button>
+      <!-- Itemized Table Viewport Layout -->
+      <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px;">
+        <table class="invoice-table-ledger" style="margin:0;">
+          <thead>
+            <tr style="position:sticky; top:0; z-index:10;">
+              <th style="padding:10px;">Item Description</th>
+              <th style="padding:10px; text-align:center; width:10%;">Qty</th>
+              <th style="padding:10px; text-align:right; width:20%;">Price</th>
+              <th style="padding:10px; text-align:right; width:15%;">Total</th>
+              <th style="padding:10px; text-align:center; width:10%;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="invoiceCanvasItemsTableBodyLogs">
+            <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">No line items compiled yet. Configure parameters on the left to begin.</td></tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- Financial Calculation Register Blocks -->
-      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px; margin-top:24px; text-align:right;">
-        <div style="display:flex; justify-content:flex-end; width:300px; font-size:0.88rem; color:var(--text-muted);">
-          <span style="flex:1; text-align:left; font-weight:600;">Subtotal Balance:</span>
-          <span id="registerInvoiceSubtotalString">$0.00</span>
+      <!-- Live Price Registers and Dynamic Modifications Section -->
+      <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; align-items: start; background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div class="form-group-item" style="margin:0;"><label class="form-label-text">Select Recipient Account Profile</label><select id="invoiceTargetClientDropdownSelector" class="form-input-control" required style="width:100%; background:#fff; height:38px; border:1px solid #cbd5e1;"></select></div>
+          <div class="form-group-item" style="margin:0;"><label class="form-label-text">Grace Due Date</label><input type="date" id="invoicePaymentGraceLimitDate" class="form-input-control" required style="width:100%; background:#fff; height:38px; border:1px solid #cbd5e1;"></div>
         </div>
-        <div style="display:flex; justify-content:flex-end; width:300px; font-size:1.25rem; color:var(--text-dark); border-top:2px solid var(--border-color); padding-top:12px; margin-top:6px;">
-          <span style="flex:1; text-align:left; font-weight:800;">Grand Total Due:</span>
-          <strong id="registerInvoiceGrandTotalString" style="color:var(--staff-red);">$0.00</strong>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85rem; text-align:right;">
+          <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted); font-weight:600;">Subtotal:</span><span id="registerInvoiceSubtotalString" style="font-weight:700;">$0.00</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-weight:600;">Discount ($):</span><input type="number" id="invoiceManualDiscountInput" value="0.00" min="0" step="0.01" style="width:80px; height:26px; text-align:right; padding:2px;" class="form-input-control"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-weight:600;">Tax Adjust (%):</span><input type="number" id="invoiceTaxRegisterPercentageInput" value="0" min="0" max="100" style="width:80px; height:26px; text-align:right; padding:2px;" class="form-input-control"></div>
+          <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:8px; margin-top:4px; font-size:1.15rem;"><span style="font-weight:800; color:var(--text-dark);">Total Due:</span><strong id="registerInvoiceGrandTotalString" style="color:var(--staff-red); font-weight:850;">$0.00</strong></div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT PANEL: DESTINATION CONTROL CARDS -->
-    <div style="display:flex; flex-direction:column; gap:24px;">
-      <div class="studio-panel-card">
-        <h2 style="margin:0 0 16px 0; font-size:1.05rem; font-weight:800;">Target Client Profile</h2>
-        <form id="masterInvoiceGenerationDeploymentForm">
-          <div class="form-group-item">
-            <label class="form-label-text">Recipient Account Email</label>
-            <select id="invoiceTargetClientDropdownSelector" class="form-input-control" required style="width:100%;">
-              <option value="">-- Loading Registered System Profiles --</option>
-            </select>
-          </div>
-          <div class="form-group-item">
-            <label class="form-label-text">Invoice Code Tracking Token</label>
-            <input type="text" id="invoiceCustomReferenceTokenInput" class="form-input-control" required readonly style="width:100%; font-family:monospace; font-weight:700; background:#e2e8f0; cursor:not-allowed;">
-          </div>
-          <div class="form-group-item">
-            <label class="form-label-text">Payment Grace Due Date Limit</label>
-            <input type="date" id="invoicePaymentGraceLimitDate" class="form-input-control" required style="width:100%;">
-          </div>
-          
-          <div id="invoiceStatusAlertBanner" style="display:none; padding:10px; font-size:0.8rem; font-weight:700; border-radius:6px; margin-bottom:12px;"></div>
-          
-          <button type="submit" id="invoiceSubmitDispatchActionBtn" class="action-btn-slat" style="width:100%; margin-top:8px;">Emit Invoice Payload & Dispatch Email ➔</button>
-        </form>
-      </div>
+    <!-- Dispatch Deployment Bottom Action Bar -->
+    <div style="margin-top: 12px; width: 100%;">
+      <div id="invoiceStatusAlertBanner" style="display:none; padding:10px; font-size:0.8rem; font-weight:700; border-radius:6px; margin-bottom:12px; text-align:center;"></div>
+      <button type="button" id="invoiceSubmitDispatchActionBtn" class="action-btn-slat" style="background:var(--text-dark) !important; color:white; height:44px; font-weight:700; cursor:pointer;">Emit Complete Invoice & Dispatch Email Notification ➔</button>
     </div>
+  </div>
+
+</div>
+
 
   </div>
 </main>
@@ -526,258 +547,467 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-  <script>
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
-  const lineItemsTargetBox = document.getElementById("invoiceLineItemsInputTargetLogs");
+  // Left Section Element Reference Targets Hooks
+  const serviceSelect = document.getElementById("phoneServiceTitle");
+  const stateSelect = document.getElementById("invoiceJurisdictionStateSelect");
+  const stateSurchargeBadge = document.getElementById("stateFeesDisplayBadge");
+  const upsellsWrapper = document.getElementById("invoiceUpsellsCheckboxGroupWrapper");
+  const compileItemsBtn = document.getElementById("invoiceCompileItemsToLedgerActionBtn");
+  const tierCards = document.querySelectorAll(".dynamic-tier-btn");
+
+  // Right Section Element Reference Targets Hooks
+  const canvasInvoiceCodeLabel = document.getElementById("canvasInvoiceCodeLabel");
+  const canvasTableBody = document.getElementById("invoiceCanvasItemsTableBodyLogs");
+  const clientDropdown = document.getElementById("invoiceTargetClientDropdownSelector");
+  const graceDateInput = document.getElementById("invoicePaymentGraceLimitDate");
   const subtotalRegister = document.getElementById("registerInvoiceSubtotalString");
   const grandTotalRegister = document.getElementById("registerInvoiceGrandTotalString");
-  const clientDropdown = document.getElementById("invoiceTargetClientDropdownSelector");
-  const invoiceForm = document.getElementById("masterInvoiceGenerationDeploymentForm");
+  const discountInput = document.getElementById("invoiceManualDiscountInput");
+  const taxInput = document.getElementById("invoiceTaxRegisterPercentageInput");
+  const submitInvoiceBtn = document.getElementById("invoiceSubmitDispatchActionBtn");
   const statusBanner = document.getElementById("invoiceStatusAlertBanner");
-  const tokenInput = document.getElementById("invoiceCustomReferenceTokenInput");
 
-  let globalServicesCatalogCache = [];
-
-  // Auto-generate formal invoice tracking token codes
-  if (tokenInput) tokenInput.value = "INV-" + Math.floor(100000 + Math.random() * 900000);
+  // Memory Datastore Collection Caches
+  let cachedServicesCatalog = [];
+  let cachedStateFeesCatalog = [];
+  let cachedUpsellsCatalog = [];
+  let activeCompiledInvoiceItemsArray = [];
+  let currentlySelectedTier = "starter";
 
   const client = window.supabaseInstance || window.supabaseClient;
   if (!client) return;
 
-  // --- STAGE 1: DOWNLOAD CUSTOMER & CATALOG DATA STORES CONCURRENTLY ---
-  async function initializeStudioDataLayers() {
+  // Generate Unique Invoice Token Identifier Code 
+  const randomInvoiceCode = "INV-" + Math.floor(100000 + Math.random() * 900000);
+  if (canvasInvoiceCodeLabel) canvasInvoiceCodeLabel.textContent = randomInvoiceCode;
+
+  // --- STAGE 1: PARALLEL DATABASE CATALOG SYNCHRONIZER ENGINE ---
+  async function downloadMasterBillingCatalogs() {
     try {
-      console.log("📡 [Invoice Studio] Syncing profiles and pricing catalogs...");
+      console.log("📡 [Enterprise Biller] Hydrating dimensional master product tables...");
       
-      const [profilesRes, servicesRes] = await Promise.all([
-        client.from('client_profiles').select('id, email_address').order('email_address'),
-        client.from('services').select('*').order('service_title')
+      const [servicesRes, statesRes, upsellsRes, profilesRes] = await Promise.all([
+        client.from('services').select('*').order('service_title'),
+        client.from('state_filing_fees').select('*').order('state_name'),
+        client.from('platform_upsells').select('*').order('upsell_name'),
+        client.from('client_profiles').select('id, email_address').order('email_address')
       ]);
 
-      if (profilesRes.error) throw profilesRes.error;
       if (servicesRes.error) throw servicesRes.error;
+      if (statesRes.error) throw statesRes.error;
+      if (upsellsRes.error) throw upsellsRes.error;
+      if (profilesRes.error) throw profilesRes.error;
 
-      globalServicesCatalogCache = servicesRes.data || [];
+      cachedServicesCatalog = servicesRes.data || [];
+      cachedStateFeesCatalog = statesRes.data || [];
+      cachedUpsellsCatalog = upsellsRes.data || [];
 
-      // Populate Client Accounts Selector Dropdown
+       // Populate Services Dropdown Menu Groups Dynamically from Script Files
+      if (serviceSelect) {
+        // Core structure of your requested categories and option layouts
+        serviceSelect.innerHTML = `
+          <optgroup label="🏢 Entity Formation & Structuring">
+            <option value="llc-formation">LLC Formation</option>
+            <option value="corporations">Corporations (C/S-Corp)</option>
+            <option value="sole-proprietorship">Sole Proprietorship</option>
+            <option value="dba-registration">DBA Registration</option>
+            <option value="nonprofits">Nonprofit Organization</option>
+            <option value="series-llc">Series LLC</option>
+          </optgroup>
+          <optgroup label="📜 Corporate Maintenance & Compliance">
+            <option value="foreign-qualification">Foreign Qualification</option>
+            <option value="certificate-of-good-standing">Certificate of Good Standing</option>
+            <option value="llc-reinstatement">LLC Reinstatement Processing</option>
+            <option value="annual-reports">Annual Reports</option>
+            <option value="operating-agreement">Operating Agreement</option>
+            <option value="registered-agent">Registered Agent</option>
+            <option value="business-licenses">Business Licenses</option>
+            <option value="dissolution">Entity Dissolution</option>
+          </optgroup>
+            <optgroup label="🔑 Federal Tax & Corporate Identity">
+            <option value="employer-id-ein">Employer ID (EIN)</option>
+            <option value="cage-code">CAGE Code</option>
+            <option value="duns-number">DUNS Number Procurement</option>
+            <option value="minority-certificate">Minority Certificate</option>
+          </optgroup>
+          <optgroup label="🚛 Trucking Logistics & DOT Authority">
+            <option value="owner-operators">Owner Operators Trucker Authority</option>
+            <option value="broker-authority">Broker Authority</option>
+            <option value="ucr-registration">UCR Registration</option>
+            <option value="scac-code">SCAC Code Registration</option>
+            <option value="dot-consortium">DOT Consortium</option>
+            <option value="driver-file">Driver Qualification File</option>
+            <option value="process-agents-boc-3">Process Agent (BOC-3)</option>
+            <option value="ifta-registration">IFTA Registration</option>
+            <option value="hazmat-registration">HAZMAT Registration</option>
+            <option value="dot-permits">Licenses & Permits</option>
+          </optgroup>
+          <optgroup label="📊 Financial Services">
+            <option value="federal-tax">Federal Income Tax</option>
+            <option value="franchise-tax">Franchise Tax Filing</option>
+            <option value="sales-tax-registration">Sales Tax Registration</option>
+            <option value="apostille-services">Apostille Authentication Services</option>
+          </optgroup>
+          <optgroup label="🎨 Branding & Creative Services">
+            <option value="web-design">Web Design Package</option>
+            <option value="logo-design">Logo Design Package</option>
+          </optgroup>
+        `;
+
+        console.log("⚡ [Invoice Studio] Intercepting dropdown rows to inject fluid external script price tiers...");
+
+        // Resolve reference files handles safely
+        const govPricingSource = window.FILINGS4U_GOVERNMENT_PRICING || {};
+        const servicePlanSource = window.CENTRAL_SERVICE_PLAN_DB || {};
+
+        // Loop through every freshly injected option element to map data attributes
+        serviceSelect.querySelectorAll("option").forEach(opt => {
+          const slug = opt.value;
+          
+          // Match object paths inside either file registry
+          const match = servicePlanSource[slug] || govPricingSource[slug] || {};
+
+          // Extract values fallback to 0.00 if unmapped
+          const starterPrice = parseFloat(match.starter || match.base_price_starter || 0).toFixed(2);
+          const compliancePrice = parseFloat(match.compliance || match.base_price_compliance || 0).toFixed(2);
+          const enterprisePrice = parseFloat(match.enterprise || match.base_price_enterprise || 0).toFixed(2);
+
+          // 🟢 AUTOMATED INJECTION: Append data nodes onto option targets live
+          opt.setAttribute("data-starter", starterPrice);
+          opt.setAttribute("data-compliance", compliancePrice);
+          opt.setAttribute("data-enterprise", enterprisePrice);
+        });
+
+        // Set default row state selection cleanly on boot
+        serviceSelect.value = "llc-formation";
+      }
+
+
+      // Populate State Jurisdictions Menu
+      if (stateSelect) {
+        stateSelect.innerHTML = `<option value="">-- No State Fees Applied --</option>`;
+        cachedStateFeesCatalog.forEach(st => {
+          const opt = document.createElement("option");
+          opt.value = st.state_code;
+          opt.textContent = `${st.state_name} (${st.state_code})`;
+          stateSelect.appendChild(opt);
+        });
+      }
+
+      // Populate Upsells Checklist Block Layout
+      if (upsellsWrapper) {
+        upsellsWrapper.innerHTML = "";
+        cachedUpsellsCatalog.forEach(up => {
+          const div = document.createElement("div");
+          div.style.cssText = "display:flex; align-items:center; gap:8px; font-size:0.82rem; padding:2px 0;";
+          div.innerHTML = `
+            <input type="checkbox" class="invoice-upsell-checkbox" value="${up.upsell_slug}" id="up-${up.upsell_slug}" data-price="${up.price}" data-name="${up.upsell_name}">
+            <label href="#up-${up.upsell_slug}" style="cursor:pointer; color:var(--text-dark); font-weight:600;">${up.upsell_name} <span style="color:var(--emerald);">(+$${parseFloat(up.price).toFixed(2)})</span></label>
+          `;
+          upsellsWrapper.appendChild(div);
+        });
+      }
+
+      // Populate Recipient Profiles Dropdown
       if (clientDropdown && profilesRes.data) {
         clientDropdown.innerHTML = `<option value="">-- Choose Recipient Profile --</option>`;
-        profilesRes.data.forEach(row => {
+        profilesRes.data.forEach(user => {
           const opt = document.createElement("option");
-          opt.value = row.email_address;
-          opt.dataset.uid = row.id;
-          opt.textContent = row.email_address;
+          opt.value = user.email_address;
+          opt.dataset.uid = user.id;
+          opt.textContent = user.email_address;
           clientDropdown.appendChild(opt);
         });
       }
 
-      // Populate Initial Row Dropdown Options Array Lookups
-      const initialRowSelect = lineItemsTargetBox.querySelector(".line-service-select");
-      if (initialRowSelect) hydrateServiceSelectDropdownOptions(initialRowSelect);
+      updatePricingTiersPreviews();
 
-    } catch (err) {
-      console.error("✕ Initialization failure:", err.message);
+    } catch (fault) {
+      console.error("✕ Master table hydration failed:", fault.message);
     }
   }
 
-  function hydrateServiceSelectDropdownOptions(selectElement) {
-    if (!selectElement) return;
-    selectElement.innerHTML = `<option value="">-- Choose Catalogue Service --</option>`;
-    globalServicesCatalogCache.forEach(svc => {
-      const opt = document.createElement("option");
-      opt.value = svc.slug;
-      opt.textContent = svc.service_title;
-      selectElement.appendChild(opt);
-    });
-  }
+  // --- STAGE 2: PARALLEL DATABASE CATALOG SYNCHRONIZER ENGINE (FIXED MAPS) ---
+  async function initializeStudioDataLayers() {
+    try {
+      console.log("📡 [Invoice Studio] Hydrating client metrics and structural table spaces...");
+      
+      const [profilesRes, statesRes, upsellsRes] = await Promise.all([
+        client.from('client_profiles').select('id, email_address').order('email_address'),
+        client.from('state_filing_fees').select('*').order('state_name'),
+        client.from('platform_upsells').select('*').order('upsell_name')
+      ]);
 
-  // --- STAGE 2: LIVE CALCULATION & TIER MATCHING ENGINES ---
-  window.calculateStudioInvoiceTotals = function() {
-    let subtotalSum = 0;
-    const rows = lineItemsTargetBox.querySelectorAll("tr");
+      if (profilesRes.error) throw profilesRes.error;
+      
+      if (!statesRes.error && statesRes.data) cachedStateFeesCatalog = statesRes.data;
 
-    rows.forEach(row => {
-      const serviceSelect = row.querySelector(".line-service-select");
-      const tierSelect = row.querySelector(".line-tier-select");
-      const qtyInput = row.querySelector(".line-qty");
-      const priceInput = row.querySelector(".line-price");
-      const totalText = row.querySelector(".line-total-row-string");
-
-      const chosenSlug = serviceSelect?.value;
-      const chosenTier = tierSelect?.value || 'starter';
-      const qty = parseInt(qtyInput?.value || 0);
-
-      // Locate product matches inside memory cache lists
-      const matchedSvc = globalServicesCatalogCache.find(s => s.slug === chosenSlug);
-      let unitPrice = 0;
-
-      if (matchedSvc) {
-        if (chosenTier === 'starter') unitPrice = parseFloat(matchedSvc.base_price_starter || 0);
-        else if (chosenTier === 'compliance') unitPrice = parseFloat(matchedSvc.base_price_compliance || 0);
-        else if (chosenTier === 'enterprise') unitPrice = parseFloat(matchedSvc.base_price_enterprise || 0);
+      // Populate Recipient Profiles Dropdown
+      if (clientDropdown && profilesRes.data) {
+        clientDropdown.innerHTML = `<option value="">-- Choose Recipient Profile --</option>`;
+        profilesRes.data.forEach(user => {
+          const opt = document.createElement("option");
+          opt.value = user.email_address;
+          opt.dataset.uid = user.id;
+          opt.textContent = user.email_address;
+          clientDropdown.appendChild(opt);
+        });
       }
 
-      if (priceInput) priceInput.value = unitPrice.toFixed(2);
-      
-      const calculatedRowTotal = qty * unitPrice;
-      if (totalText) totalText.textContent = `$${calculatedRowTotal.toFixed(2)}`;
-      
-      subtotalSum += calculatedRowTotal;
-    });
+      // Populate State Jurisdictions Menu
+      if (stateSelect && statesRes.data) {
+        stateSelect.innerHTML = `<option value="">-- No State Fees Applied --</option>`;
+        statesRes.data.forEach(st => {
+          const opt = document.createElement("option");
+          opt.value = st.state_code;
+          opt.textContent = `${st.state_name} (${st.state_code})`;
+          stateSelect.appendChild(opt);
+        });
+      }
 
-    if (subtotalRegister) subtotalRegister.textContent = `$${subtotalSum.toFixed(2)}`;
-    if (grandTotalRegister) grandTotalRegister.textContent = `$${subtotalSum.toFixed(2)}`;
-  };
+      // Populate Upsells Checklist Block Layout
+      if (upsellsWrapper && upsellsRes.data) {
+        upsellsWrapper.innerHTML = "";
+        upsellsRes.data.forEach(up => {
+          const div = document.createElement("div");
+          div.style.cssText = "display:flex; align-items:center; gap:8px; font-size:0.82rem; padding:2px 0;";
+          div.innerHTML = `
+            <input type="checkbox" class="invoice-upsell-checkbox" value="${up.upsell_slug}" id="up-${up.upsell_slug}" data-price="${up.price}" data-name="${up.upsell_name}">
+            <label for="up-${up.upsell_slug}" style="cursor:pointer; color:var(--text-dark); font-weight:600;">${up.upsell_name} <span style="color:var(--emerald);">(+$${parseFloat(up.price).toFixed(2)})</span></label>
+          `;
+          upsellsWrapper.appendChild(div);
+        });
+      }
 
-  // Append new itemized row templates cleanly
-  document.getElementById("invoiceAddNewLineRowBtn")?.addEventListener("click", () => {
-    const tr = document.createElement("tr");
-    tr.className = "invoice-item-row";
-    tr.innerHTML = `
-      <td><select class="form-input-control line-service-select" style="width:100%;" required></select></td>
-      <td>
-        <select class="form-input-control line-tier-select" style="width:100%;" required>
-          <option value="starter">Starter Plan</option>
-          <option value="compliance">Compliance Plan</option>
-          <option value="enterprise">Enterprise Plan</option>
-        </select>
-      </td>
-      <td><input type="number" class="form-input-control line-qty" value="1" min="1" style="width:100%; text-align:center;"></td>
-      <td><input type="number" class="form-input-control line-price" value="0.00" step="0.01" style="width:100%;" readonly></td>
-      <td class="line-total-row-string" style="text-align:right; font-weight:700; color:var(--text-dark);">$0.00</td>
-    `;
-    lineItemsTargetBox.appendChild(tr);
-    
-    const newSelect = tr.querySelector(".line-service-select");
-    hydrateServiceSelectDropdownOptions(newSelect);
-    bindLiveCalculationInputListeners();
-  });
+      // 🟢 RESOLVE SCRIPT REFERENCE POINTERS LIVE
+      const govPricingSource = window.FILINGS4U_GOVERNMENT_PRICING || {};
+      const servicePlanSource = window.CENTRAL_SERVICE_PLAN_DB || {};
 
-  function bindLiveCalculationInputListeners() {
-    lineItemsTargetBox.querySelectorAll("input, select").forEach(el => {
-      el.removeEventListener("change", window.calculateStudioInvoiceTotals);
-      el.removeEventListener("input", window.calculateStudioInvoiceTotals);
-      el.addEventListener("change", window.calculateStudioInvoiceTotals);
-      el.addEventListener("input", window.calculateStudioInvoiceTotals);
-    });
+      console.log("⚡ [Invoice Studio] Injecting external file prices straight onto drop-down options...");
+
+      // Intercept options to parse custom configuration data files mapping attributes
+      if (serviceSelect) {
+        serviceSelect.querySelectorAll("option").forEach(opt => {
+          const slug = opt.value;
+          const match = servicePlanSource[slug] || govPricingSource[slug] || {};
+
+          // Fallback seamlessly to hardcoded variables defaults if lookup tables match empty
+          const sPrice = parseFloat(match.starter || match.base_price_starter || 0).toFixed(2);
+          const cPrice = parseFloat(match.compliance || match.base_price_compliance || 0).toFixed(2);
+          const ePrice = parseFloat(match.enterprise || match.base_price_enterprise || 0).toFixed(2);
+
+          opt.setAttribute("data-starter", sPrice);
+          opt.setAttribute("data-compliance", cPrice);
+          opt.setAttribute("data-enterprise", ePrice);
+        });
+      }
+
+      // 🟢 FORCE IMMEDIATE INTERFACE SYNC ON REBOOT
+      updatePricingTiersPreviews();
+
+    } catch (err) {
+      console.error("✕ Ingestion failure:", err.message);
+    }
   }
 
-  await initializeStudioDataLayers();
-  bindLiveInvoiceCalculationListeners(); // Triggers base listeners bindings layout parameters
-  // --- STAGE 3: FORM EMISSION & DISPATCH PIPELINE ---
-  invoiceForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
+
+  // --- STAGE 3: COMPILE ITEMIZATIONS ONTO CANVAS LEDGER ---
+  compileItemsBtn?.addEventListener("click", () => {
+    const selectedSlug = serviceSelect.value;
+    const svcMatch = cachedServicesCatalog.find(s => s.slug === selectedSlug);
+    if (!svcMatch) return;
+
+    let basePrice = 0;
+    if (currentlySelectedTier === "starter") basePrice = parseFloat(svcMatch.base_price_starter || 0);
+    else if (currentlySelectedTier === "compliance") basePrice = parseFloat(svcMatch.base_price_compliance || 0);
+    else if (currentlySelectedTier === "enterprise") basePrice = parseFloat(svcMatch.base_price_enterprise || 0);
+
+    // 1. Add Main Core Base Service Line
+    activeCompiledInvoiceItemsArray.push({
+      item_id: "svc_" + Date.now(),
+      title: `${svcMatch.service_title} (${currentlySelectedTier.toUpperCase()})`,
+      qty: 1,
+      price: basePrice
+    });
+
+    // 2. Add State Surcharge Line if chosen
+    if (stateSelect.value) {
+      const stMatch = cachedStateFeesCatalog.find(s => s.state_code === stateSelect.value);
+      if (stMatch && parseFloat(stMatch.corporate_surcharge) > 0) {
+        activeCompiledInvoiceItemsArray.push({
+          item_id: "state_" + Date.now(),
+          title: `State Filing Surcharge: ${stMatch.state_name}`,
+          qty: 1,
+          price: parseFloat(stMatch.corporate_surcharge)
+        });
+      }
+    }
+
+    // 3. Add Selected Upsells Checklist Items
+    upsellsWrapper.querySelectorAll(".invoice-upsell-checkbox:checked").forEach(cb => {
+      activeCompiledInvoiceItemsArray.push({
+        item_id: "up_" + Math.random().toString(36).substr(2, 5),
+        title: `${cb.dataset.name}`,
+        qty: 1,
+        price: parseFloat(cb.dataset.price || 0)
+      });
+      cb.checked = false; // Clear checkbox check mark state locally
+    });
+
+    stateSelect.value = "";
+    if (stateSurchargeBadge) stateSurchargeBadge.textContent = "+$0.00 Surcharge";
+
+    renderItemizedInvoiceCanvas();
+  });
+
+  function renderItemizedInvoiceCanvas() {
+    if (activeCompiledInvoiceItemsArray.length === 0) {
+      canvasTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">No line items compiled yet. Configure parameters on the left to begin.</td></tr>`;
+      recalculateCanvasInvoiceTotals();
+      return;
+    }
+
+    canvasTableBody.innerHTML = "";
+    activeCompiledInvoiceItemsArray.forEach((item, index) => {
+      const tr = document.createElement("tr");
+      const itemTotal = item.qty * item.price;
+      
+      tr.innerHTML = `
+        <td style="padding:10px; font-weight:600; color:var(--text-dark);">${escapeHtml(item.title)}</td>
+        <td style="padding:10px; text-align:center;"><input type="number" class="form-input-control canvas-qty" value="${item.qty}" min="1" data-idx="${index}" style="width:100%; text-align:center; height:28px; padding:2px; background:#fff; border:1px solid #cbd5e1; border-radius:4px;"></td>
+        <td style="padding:10px; text-align:right; font-family:monospace; font-weight:500;">$${parseFloat(item.price).toFixed(2)}</td>
+        <td style="padding:10px; text-align:right; font-weight:700; color:var(--text-dark); font-family:monospace;">$${itemTotal.toFixed(2)}</td>
+        <td style="padding:10px; text-align:center;"><button type="button" class="remove-canvas-line-btn" data-idx="${index}" style="background:none; border:none; color:var(--staff-red); font-weight:800; cursor:pointer; font-size:1.1rem;">✕</button></td>
+      `;
+      canvasTableBody.appendChild(tr);
+    });
+
+    // Bind item modifications sub-listeners inside canvas columns rows layout
+    canvasTableBody.querySelectorAll(".canvas-qty").forEach(input => {
+      input.addEventListener("input", function() {
+        const idx = parseInt(this.dataset.idx);
+        const nextQty = parseInt(this.value) || 1;
+        activeCompiledInvoiceItemsArray[idx].qty = nextQty;
+        renderItemizedInvoiceCanvas();
+      });
+    });
+
+    canvasTableBody.querySelectorAll(".remove-canvas-line-btn").forEach(btn => {
+      btn.addEventListener("click", function() {
+        const idx = parseInt(this.dataset.idx);
+        activeCompiledInvoiceItemsArray.splice(idx, 1);
+        renderItemizedInvoiceCanvas();
+      });
+    });
+
+    recalculateCanvasInvoiceTotals();
+  }
+
+  function recalculateCanvasInvoiceTotals() {
+    let subtotalSum = 0;
+    activeCompiledInvoiceItemsArray.forEach(item => {
+      subtotalSum += (item.qty * item.price);
+    });
+
+    const manualDiscount = parseFloat(discountInput?.value || 0);
+    const taxRatePercent = parseFloat(taxInput?.value || 0) / 100;
+    
+    let runningBalance = subtotalSum - manualDiscount;
+    if (runningBalance < 0) runningBalance = 0;
+
+    const totalCalculatedTaxAmount = runningBalance * taxRatePercent;
+    const finalGrandTotalDue = runningBalance + totalCalculatedTaxAmount;
+
+    if (subtotalRegister) subtotalRegister.textContent = `$${subtotalSum.toFixed(2)}`;
+    if (grandTotalRegister) grandTotalRegister.textContent = `$${finalGrandTotalDue.toFixed(2)}`;
+  }
+
+  discountInput?.addEventListener("input", recalculateCanvasInvoiceTotals);
+  taxInput?.addEventListener("input", recalculateCanvasInvoiceTotals);
+
+  await downloadMasterBillingCatalogs();
+  // --- STAGE 4: EMIT COMPLETE ENTERPRISE INVOICE RECORD PACKAGE ---
+  submitInvoiceBtn?.addEventListener("click", async () => {
     if (statusBanner) statusBanner.style.display = "none";
     
     const selectedOpt = clientDropdown.options[clientDropdown.selectedIndex];
     const clientUid = selectedOpt?.dataset.uid;
     const targetEmail = clientDropdown.value;
-    const invoiceCode = tokenInput.value;
-    const dueDateVal = document.getElementById("invoicePaymentGraceLimitDate")?.value;
-    const grandTotalRawStr = grandTotalRegister.textContent.replace('$', '');
+    const invoiceCode = randomInvoiceCode;
+    const dueDateVal = graceDateInput?.value;
     
+    const rawSubtotal = parseFloat(subtotalRegister.textContent.replace('$', '')) || 0;
+    const rawDiscount = parseFloat(discountInput?.value || 0);
+    const rawTaxPercent = parseFloat(taxInput?.value || 0);
+    const rawGrandTotal = parseFloat(grandTotalRegister.textContent.replace('$', '')) || 0;
+
+    if (activeCompiledInvoiceItemsArray.length === 0) {
+      showStudioStatusBanner("✕ Validation Failure: Cannot emit an empty invoice. Compile items on left first.", true);
+      return;
+    }
     if (!clientUid || !targetEmail || !dueDateVal) {
-      if (statusBanner) {
-        statusBanner.style.cssText = "display:block; background:#fef2f2; color:#b91c1c;";
-        statusBanner.textContent = "✕ Configuration Error: Please resolve recipient profile and grace limits.";
-      }
+      showStudioStatusBanner("✕ Validation Failure: Please select a valid customer profile and choose a due date deadline.", true);
       return;
     }
 
-    const submitActionBtn = document.getElementById("invoiceSubmitDispatchActionBtn");
-    if (submitActionBtn) {
-      submitActionBtn.disabled = true;
-      submitActionBtn.textContent = "Emitting Transactional Records... 📡";
-    }
+    submitInvoiceBtn.disabled = true;
+    submitInvoiceBtn.textContent = "Deploying Enterprise Ledger Row... 📡";
 
     try {
-      // 1. Gather all line fields into a clean structured tracking array
-      const itemizedLinesArray = [];
-      const rows = lineItemsTargetBox.querySelectorAll("tr.invoice-item-row");
-      
-      rows.forEach(row => {
-        const svcSelect = row.querySelector(".line-service-select");
-        const tierSelect = row.querySelector(".line-tier-select");
-        const qtyVal = parseInt(row.querySelector(".line-qty")?.value || 1);
-        const priceVal = parseFloat(row.querySelector(".line-price")?.value || 0);
-        
-        const titleText = svcSelect?.options[svcSelect.selectedIndex]?.text || "Unknown Service";
-        
-        itemizedLinesArray.push({
-          slug: svcSelect?.value || "unmapped",
-          service_title: titleText,
-          tier: tierSelect?.value || "starter",
-          qty: qtyVal,
-          price: priceVal,
-          total: qtyVal * priceVal
-        });
-      });
+      console.log(`💾 [Invoice Studio] Compiling JSON lines array package data payload for code: [${invoiceCode}]`);
 
-      console.log(`💾 [Invoice Studio] Deploying transaction parameters for code: [${invoiceCode}]`);
-
-      // 2. Write the record directly into your production client_invoices table space
+      // Write transaction row details straight into public.client_invoices table space
       const { error: insertError } = await client
         .from('client_invoices')
         .insert([{
           invoice_code: invoiceCode,
           client_id: clientUid,
           email_address: targetEmail.toLowerCase().trim(),
-          subtotal: parseFloat(grandTotalRawStr),
-          tax_percentage: 0.00,
-          grand_total: parseFloat(grandTotalRawStr),
+          subtotal: rawSubtotal,
+          tax_percentage: rawTaxPercent,
+          grand_total: rawGrandTotal,
           payment_status: 'Unpaid',
           due_date: dueDateVal,
-          itemized_lines: itemizedLinesArray,
+          // Saves the complete structural itemized nested dictionary blocks array natively
+          itemized_lines: activeCompiledInvoiceItemsArray,
           created_at: new Date().toISOString()
         }]);
 
       if (insertError) throw insertError;
 
-      // 3. RENDER SUCCESS ELEMENT REPLACEMENT & CLEAR LAYOUT
-      if (statusBanner) {
-        statusBanner.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
-        statusBanner.textContent = "✓ Success! Invoice entries saved and secure email notification triggered.";
-      }
-
+      showStudioStatusBanner("✓ Success! Complete invoice record saved to backend table and secure payment notification email fired.", false);
+      
+      // Clean form containers back to defaults baseline definitions
       invoiceForm.reset();
-      if (tokenInput) tokenInput.value = "INV-" + Math.floor(100000 + Math.random() * 900000);
+      if (discountInput) discountInput.value = "0.00";
+      if (taxInput) taxInput.value = "0";
+      activeCompiledInvoiceItemsArray = [];
       
-      // Reset line entry row canvas arrays back to default baseline template parameters
-      lineItemsTargetBox.innerHTML = `
-        <tr class="invoice-item-row">
-          <td><select class="form-input-control line-service-select" style="width:100%;" required><option value="">-- Choose Catalogue Service --</option></select></td>
-          <td><select class="form-input-control line-tier-select" style="width:100%;" required><option value="starter">Starter Plan</option><option value="compliance">Compliance Plan</option><option value="enterprise">Enterprise Plan</option></select></td>
-          <td><input type="number" class="form-input-control line-qty" value="1" min="1" style="width:100%; text-align:center;"></td>
-          <td><input type="number" class="form-input-control line-price" value="0.00" step="0.01" style="width:100%;" readonly></td>
-          <td class="line-total-row-string" style="text-align:right; font-weight:700; color:var(--text-dark);">$0.00</td>
-        </tr>
-      `;
+      renderItemizedInvoiceCanvas();
       
-      const resetSelect = lineItemsTargetBox.querySelector(".line-service-select");
-      if (resetSelect) hydrateServiceSelectDropdownOptions(resetSelect);
-      
-      bindLiveCalculationInputListeners();
-      window.calculateStudioInvoiceTotals();
+      // Auto-cycle a fresh new invoice code token reference mapping string for the next operation
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
 
     } catch (err) {
-      console.error("✕ Invoice compilation fault:", err.message);
-      if (statusBanner) {
-        statusBanner.style.cssText = "display:block; background:#fef2f2; color:#b91c1c;";
-        statusBanner.textContent = `✕ Emission Failure: ${err.message}`;
-      }
-    } finally {
-      if (submitActionBtn) {
-        submitActionBtn.disabled = false;
-        submitActionBtn.textContent = "Emit Invoice Payload & Dispatch Email ➔";
-      }
+      console.error("✕ Invoice emission rejected:", err.message);
+      showStudioStatusBanner(`✕ Emission Failure: ${err.message}`, true);
+      submitInvoiceBtn.disabled = false;
+      submitInvoiceBtn.textContent = "Emit Complete Invoice & Dispatch Email Notification ➔";
     }
   });
 
-  // Attach runtime bindings listener metrics on window start
-  function bindLiveInvoiceCalculationListeners() {
-    bindLiveCalculationInputListeners();
+  function showStudioStatusBanner(text, isError) {
+    if (!statusBanner) return;
+    statusBanner.textContent = text;
+    statusBanner.style.display = "block";
+    statusBanner.style.background = isError ? "#fef2f2" : "#ecfdf5";
+    statusBanner.style.color = isError ? "#b91c1c" : "#047857";
   }
 });
 </script>
