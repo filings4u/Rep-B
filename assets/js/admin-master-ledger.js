@@ -27,10 +27,10 @@ window.toggleSidebarAccordion = function(buttonElement) {
     } 
 }; 
 
-// --- 2. PIPELINE SYSTEM RUNTIME STARTER LOOP --- 
-document.addEventListener("DOMContentLoaded", () => { 
-    verifyAndStreamStrictAdminGrid(); 
-}); 
+// --- 2. PIPELINE SYSTEM RUNTIME STARTER LOOP ---
+document.addEventListener("DOMContentLoaded", () => {
+  verifyAndStreamStrictAdminGrid();
+});
 
 async function verifyAndStreamStrictAdminGrid() {
   console.log("📊 [Strict Engine] Commencing structural interface element validations...");
@@ -50,7 +50,7 @@ async function verifyAndStreamStrictAdminGrid() {
   const activeCard = document.getElementById("stat-active-users");
   const pendingCard = document.getElementById("stat-pending-filings");
 
-  // 3. 🟢 GLOBAL SECURITY PASSTHROUGH: Validate session metrics first so ALL pages remain securely authenticated
+  // 3. GLOBAL SECURITY PASSTHROUGH: Validate session metrics first so ALL pages remain securely authenticated
   console.log("🔒 [Strict Engine] Running session authentication layer check...");
   const { data: sessionData, error: authError } = await client.auth.getSession();
   
@@ -72,16 +72,15 @@ async function verifyAndStreamStrictAdminGrid() {
     staffEmailLog.innerHTML = `<span><i class="fa-solid fa-user-shield"></i> Operator Session: ${currentStaffEmail}</span>`;
   }
 
-  // 4. 🟢 TARGETED CONDITIONAL EXIT: Safely step out now if we are on the Chat view window
+  // 4. TARGETED CONDITIONAL EXIT: Safely step out now if we are on the Chat view window
   if (!salesTableBody) {
     console.log("ℹ️ [Strict Engine] View validation complete: Chat canvas detected. Handing thread control over to roster synchronizers.");
-    return; // Safely exits without skipping core session metrics or dashboard verification flows
+    return; 
   }
 
   // 5. Ledger-Specific Interface Alerts (Only processed if on the dashboard grid page)
   if (!clientDropdown) console.error("✕ UI Verification Alert: Dropdown target element ID 'adminClientDropdown' is missing.");
   if (!commsStreamBox) console.error("✕ UI Verification Alert: Inbox logging element ID 'admin-inbox-live-stream-box' is missing.");
-  
   if (!revenueCard || !activeCard || !pendingCard) {
     console.warn("⚠ UI Verification Alert: One or more score status cards element targets evaluate to absent.");
   }
@@ -89,26 +88,37 @@ async function verifyAndStreamStrictAdminGrid() {
   // --- 6. EXECUTE DIRECT PRODUCTION DATA QUERY MATRIX ---
   try {
     console.log(`📡 [Strict Engine] Dispatching database request payload out to table space for user: [${currentStaffEmail}]`);
-    
-    const { data: records, error: queryError } = await client
-      .from('orders')
-      .select('id, company_name, email_address, selected_plan, total_paid_amount, account_created, tracking_number, created_at')
-      .order('created_at', { ascending: false });
 
-    if (queryError) {
-      throw new Error(`Postgres Database Operational Exception [Code ${queryError.code || 'UNKNOWN'}]: ${queryError.message}`);
+    // 🟢 PARALLEL FETCH CONTEXT: Pull active sales orders and pending ticket counts simultaneously
+    const [ordersResponse, ticketsCountResponse] = await Promise.all([
+      client.from('orders').select('id, company_name, email_address, selected_plan, total_paid_amount, account_created, tracking_number, created_at').order('created_at', { ascending: false }),
+      client.from('after_hours_tickets').select('ticket_id', { count: 'exact', head: true }).eq('status', 'Pending')
+    ]);
+
+    if (ordersResponse.error) {
+      throw new Error(`Postgres Database Operational Exception [Code ${ordersResponse.error.code || 'UNKNOWN'}]: ${ordersResponse.error.message}`);
     }
 
-    if (!records || records.length === 0) {
+    const records = ordersResponse.data || [];
+    
+    // 🟢 DYNAMIC COUNT CONVERSION: Pull the exact count matching pending parameters safely
+    const totalPendingTicketsCount = ticketsCountResponse.count || 0;
+
+    if (records.length === 0) {
       console.warn("ℹ️ [Strict Engine] System connected successfully, but no rows match inside table: [public.orders].");
       salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">The platform database table is currently empty.</td></tr>`;
+      
+      // Still display the pending after-hours count card even if sales rows are zero
+      if (pendingCard) pendingCard.textContent = totalPendingTicketsCount.toString();
       return;
     }
 
     // Initialize calculation registers
     let totalRevenueCounter = 0;
     let totalActiveCounter = 0;
-    let pendingAuditsCounter = 0;
+    let logStreamMarkup = "";
+
+    salesTableBody.innerHTML = "";
 
     if (clientDropdown) {
       clientDropdown.innerHTML = `<option value="">-- Choose Target Account Profile --</option>`;
@@ -121,130 +131,160 @@ async function verifyAndStreamStrictAdminGrid() {
       });
     }
 
-        // Run record sets rendering loops 
-        records.forEach((rowItem) => { 
-            const feeValue = parseFloat(rowItem.total_paid_amount || 0); 
-            totalRevenueCounter += feeValue; 
+    // Run record sets rendering loops
+    records.forEach((rowItem) => {
+      const feeValue = parseFloat(rowItem.total_paid_amount || 0);
+      totalRevenueCounter += feeValue;
 
-            // Calculate active accounts vs pending intakes using your account_created boolean flag
-            if (rowItem.account_created === true) { 
-                totalActiveCounter++; 
-            } else { 
-                pendingAuditsCounter++; 
-            } 
+      // Calculate active accounts using your account_created boolean flag
+      if (rowItem.account_created === true) {
+        totalActiveCounter++;
+      }
 
-            const logTime = new Date(rowItem.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); 
-            logStreamMarkup += `<p style="margin: 0 0 8px 0; line-height: 1.4; text-align: left; font-size: 0.82rem; color: #475569;">📬 <strong>[${logTime}] Order Sync:</strong> ${escapeHtml(rowItem.company_name)} placed ${rowItem.selected_plan}</p>`; 
+      const logTime = new Date(rowItem.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Resolve escape text safely before generating template literals strings
+      const escapedCompany = (typeof escapeHtml === "function") ? escapeHtml(rowItem.company_name) : String(rowItem.company_name);
+      const escapedPlan = (typeof escapeHtml === "function") ? escapeHtml(rowItem.selected_plan) : String(rowItem.selected_plan);
+      const escapedEmail = (typeof escapeHtml === "function") ? escapeHtml(rowItem.email_address) : String(rowItem.email_address);
 
-            const tr = document.createElement("tr"); 
-            tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;"; 
+      logStreamMarkup += `<p style="margin: 0 0 8px 0; line-height: 1.4; text-align: left; font-size: 0.82rem; color: #475569;">📬 <strong>[${logTime}] Order Sync:</strong> ${escapedCompany} placed ${escapedPlan}</p>`;
 
-            const trackingToken = rowItem.tracking_number || rowItem.id; 
-            const targetEmail = rowItem.email_address || ""; 
+      const tr = document.createElement("tr");
+      tr.style.cssText = "border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-dark); background: #ffffff;";
+      
+      const trackingToken = rowItem.tracking_number || rowItem.id;
 
-            tr.innerHTML = ` 
-                <td style="padding: 14px 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${escapeHtml(rowItem.company_name)}</td> 
-                <td style="padding: 14px 12px; color: var(--text-muted); text-align: left;">${escapeHtml(rowItem.email_address)}</td> 
-                <td style="padding: 14px 12px; text-align: left;"><span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #334155; text-transform: uppercase;">${escapeHtml(rowItem.selected_plan)}</span></td> 
-                <td style="padding: 14px 12px; font-weight: 800; color: #0f172a; text-align: left;">$${feeValue.toFixed(2)}</td> 
-                <td style="padding: 14px 12px; text-align: right;"> 
-                    <button class="view-details-action" onclick="window.navigateToAdminProfileViewCard('${encodeURIComponent(trackingToken)}', '${encodeURIComponent(targetEmail)}')" style="padding: 6px 14px; font-size: 11px; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Manage</button> 
-                </td> 
-            `; 
-            salesTableBody.appendChild(tr); 
-        }); 
+      tr.innerHTML = `
+        <td style="padding: 14px 12px; font-weight: 700; color: var(--text-dark); text-align: left;">${escapedCompany}</td>
+        <td style="padding: 14px 12px; color: var(--text-muted); text-align: left;">${escapedEmail}</td>
+        <td style="padding: 14px 12px; text-align: left;"><span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; background: #f1f5f9; color: #334155; text-transform: uppercase;">${escapedPlan}</span></td>
+        <td style="padding: 14px 12px; font-weight: 800; color: #0f172a; text-align: left;">$${feeValue.toFixed(2)}</td>
+        <td style="padding: 14px 12px; text-align: right;">
+          <button class="view-details-action" onclick="window.navigateToAdminProfileViewCard('${encodeURIComponent(trackingToken)}', '${encodeURIComponent(escapedEmail)}')" style="padding: 6px 14px; font-size: 11px; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Manage</button>
+        </td>
+      `;
+      salesTableBody.appendChild(tr);
+    });
 
-        // Commit metrics calculations up to display view elements 
-        if (revenueCard) revenueCard.textContent = `$${totalRevenueCounter.toFixed(2)}`; 
-        if (activeCard) activeCard.textContent = totalActiveCounter.toString(); 
-        if (pendingCard) pendingCard.textContent = pendingAuditsCounter.toString(); 
-        if (commsStreamBox && logStreamMarkup !== "") commsStreamBox.innerHTML = logStreamMarkup; 
+    // Commit metrics calculations up to display view elements
+    if (revenueCard) revenueCard.textContent = `$${totalRevenueCounter.toFixed(2)}`;
+    if (activeCard) activeCard.textContent = totalActiveCounter.toString();
+    
+    // 🟢 FIXED VISUAL ELEMENT: Populates card count metric accurately out of your actual after-hours table records
+    if (pendingCard) pendingCard.textContent = totalPendingTicketsCount.toString();
+    
+    if (commsStreamBox && logStreamMarkup !== "") commsStreamBox.innerHTML = logStreamMarkup;
 
-    } catch (queryFault) { 
-        salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--staff-red); font-weight: 600; font-size: 0.85rem;">✕ Execution Halted: Check system console logs.</td></tr>`; 
-        throw queryFault; 
-    } 
+  } catch (queryFault) {
+    console.error("✕ Strict Engine crash caught:", queryFault.message);
+    if (salesTableBody) {
+      salesTableBody.innerHTML = `<tr><td colspan="5" style="padding: 30px; text-align: center; color: var(--staff-red); font-weight: 600; font-size: 0.85rem;">✕ Execution Halted: Check system console logs.</td></tr>`;
+    }
+    throw queryFault;
+  }
 }
-window.navigateToAdminProfileViewCard = function(token, email) { 
-    if (!token) return; 
-    window.location.href = `admin-profile-view.html?token=${token}&email=${email}`; 
-}; 
 
-function escapeHtml(str) { 
-    if (!str) return ""; 
+window.navigateToAdminProfileViewCard = function(token, email) {
+  if (!token) return;
+  window.location.href = `admin-profile-view.html?token=${token}&email=${email}`;
+};
+
+  // Universal safe visual text string markup loader utility
+  function escapeHtml(str) {
+    if (!str) return "";
     return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;"); 
-} 
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;");
+  }
 
-// --- 3. ATTACH NOTIFICATION PUSH LOGIC STRICTLY TO SUBMIT ACTIONS --- 
-document.addEventListener("DOMContentLoaded", () => { 
-    const alertForm = document.getElementById("adminAlertForm"); 
-    const alertStatusDiv = document.getElementById("alertStatus"); 
-    const dropdownSelect = document.getElementById("adminClientDropdown"); 
+  // --- 3. ATTACH NOTIFICATION PUSH LOGIC STRICTLY TO SUBMIT ACTIONS ---
+  document.addEventListener("DOMContentLoaded", () => {
+    const alertForm = document.getElementById("adminAlertForm");
+    const alertStatusDiv = document.getElementById("alertStatus");
+    const dropdownSelect = document.getElementById("adminClientDropdown");
 
-    if (alertForm) { 
-        alertForm.addEventListener("submit", async (event) => { 
-            event.preventDefault(); 
-            if (!dropdownSelect || !alertStatusDiv) return; 
+    if (alertForm) {
+      alertForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        
+        if (!dropdownSelect || !alertStatusDiv) return;
 
-            const targetAccountEmail = dropdownSelect.value; 
-            const notificationTitle = document.getElementById("alertTitle")?.value || ""; 
-            const notificationBody = document.getElementById("alertMessage")?.value || ""; 
-            let clientInstance = window.supabaseInstance || window.supabaseClient; 
+        const targetAccountEmail = dropdownSelect.value;
+        const notificationTitle = document.getElementById("alertTitle")?.value || "";
+        const notificationBody = document.getElementById("alertMessage")?.value || "";
 
-            if (!clientInstance) { 
-                throw new Error("✕ Messaging Request Dropped: Active database connection reference unavailable."); 
-            } 
+        let clientInstance = window.supabaseInstance || window.supabaseClient;
+        if (!clientInstance) {
+          throw new Error("✕ Messaging Request Dropped: Active database connection reference unavailable.");
+        }
 
-            if (!targetAccountEmail || !notificationTitle || !notificationBody) { 
-                alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;"; 
-                alertStatusDiv.textContent = "✕ Validation Error: All form fields are required."; 
-                return; 
-            } 
+        if (!targetAccountEmail || !notificationTitle || !notificationBody) {
+          if (alertStatusDiv) {
+            alertStatusDiv.style.cssText = "display: block; color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600; background: #fef2f2; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(193,82,84,0.1);";
+            alertStatusDiv.textContent = "✕ Validation Error: All form fields are required.";
+          }
+          return;
+        }
 
-            alertStatusDiv.style.cssText = "color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600;"; 
-            alertStatusDiv.textContent = "Processing dispatch matrix hooks..."; 
+        if (alertStatusDiv) {
+          alertStatusDiv.style.cssText = "display: block; color: var(--text-dark); font-size: 0.8rem; margin-top: 10px; font-weight: 600; background: #f1f5f9; padding: 8px 12px; border-radius: 6px;";
+          alertStatusDiv.textContent = "Processing dispatch matrix hooks...";
+        }
 
-            try { 
-                // Fetch user profile id safely using lowercase email formatting
-                const { data: profile, error: profileError } = await clientInstance
-                    .from('client_profiles')
-                    .select('id')
-                    .eq('email', String(targetAccountEmail).toLowerCase())
-                    .maybeSingle();
+        try {
+          console.log(`📡 [Notification Engine] Querying client metadata registry for: [${targetAccountEmail}]`);
+          
+          // 🟢 FIXED: Adjusted matching column string to query email_address from public table
+          const { data: profile, error: profileError } = await clientInstance
+            .from('client_profiles')
+            .select('id')
+            .eq('email_address', String(targetAccountEmail).toLowerCase().trim())
+            .maybeSingle();
 
-                if (profileError || !profile) {
-                    throw new Error("Target account lookup failed: Corresponding client_profiles record missing.");
-                }
+          if (profileError || !profile) {
+            throw new Error("Target account lookup failed: Corresponding client_profiles record missing.");
+          }
 
-                // Maps directly into your exact table definition (portal_notifications)
-                const { error: insertError } = await clientInstance 
-                    .from('portal_notifications') 
-                    .insert([ { 
-                        user_id: profile.id,
-                        recipient_email: targetAccountEmail, 
-                        title: notificationTitle, 
-                        message: notificationBody, 
-                        is_read: false,
-                        is_archived: false,
-                        created_at: new Date().toISOString() 
-                    } ]); 
+          console.log("💾 [Notification Engine] Inserting transaction row into public.portal_notifications...");
 
-                if (insertError) throw insertError; 
+          // 🟢 TARGETS PORTAL_NOTIFICATIONS: Maps variables directly to your exact table structure
+          const { error: insertError } = await clientInstance
+            .from('portal_notifications')
+            .insert([
+              {
+                user_id: profile.id, // Must match an existing token reference key in auth.users(id)
+                title: notificationTitle.trim(),
+                message: notificationBody.trim(),
+                recipient_email: String(targetAccountEmail).toLowerCase().trim(),
+                email_address: String(targetAccountEmail).toLowerCase().trim(),
+                is_read: false,
+                is_archived: false,
+                created_at: new Date().toISOString()
+              }
+            ]);
 
-                alertStatusDiv.style.cssText = "color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700;"; 
-                alertStatusDiv.textContent = "✓ Real-Time Alert Pushed Successfully!"; 
-                alertForm.reset(); 
-            } catch (postFault) { 
-                alertStatusDiv.style.cssText = "color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600;"; 
-                alertStatusDiv.textContent = `✕ Dispatch Failed: Check system console logs.`; 
-                throw new Error(`✕ Notification Entry Injection Failure: ${postFault.message}`); 
-            } 
-        }); 
-    } 
-}); 
-})(); // ✅ CLOSES ROOT MODULE SCOPE CORRECTLY HERE
+          if (insertError) throw insertError;
+
+          if (alertStatusDiv) {
+            alertStatusDiv.style.cssText = "display: block; color: var(--emerald); font-size: 0.8rem; margin-top: 10px; font-weight: 700; background: #ecfdf5; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.1);";
+            alertStatusDiv.textContent = "✓ Real-Time Alert & Email Trigger Dispatched Successfully!";
+          }
+          
+          alertForm.reset();
+
+        } catch (postFault) {
+          console.error("✕ Notification insertion failed:", postFault.message);
+          if (alertStatusDiv) {
+            alertStatusDiv.style.cssText = "display: block; color: var(--staff-red); font-size: 0.8rem; margin-top: 10px; font-weight: 600; background: #fef2f2; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(193,82,84,0.1);";
+            alertStatusDiv.textContent = `✕ Dispatch Failed: ${postFault.message}`;
+          }
+        }
+      });
+    }
+  });
+
+})(); // ✅ CLOSES ROOT MODULE SCOPE SAFELY
