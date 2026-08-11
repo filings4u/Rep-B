@@ -481,8 +481,7 @@
 <main class="portal-main">
   <header class="portal-header">
     <div class="welcome-text">
-      <h1>Admin Dashboard</h1>
-      <p>System-wide performance overview infrastructure</p>
+      <h1>System Event Logs</h1>
     </div>
     
     <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX -->
@@ -508,8 +507,7 @@
     </div>
   </header>
 
-   <!-- JURISDICTIONAL LIVE VIEW MATRIX PORTAL CONTENT Container -->
-  <div class="audit-container">
+<div class="audit-container">
     <div class="log-card">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:16px; margin-bottom:20px; width: 100%;">
         <div>
@@ -519,7 +517,6 @@
         <span style="font-size:0.68rem; font-weight:800; background:rgba(193,82,84,0.08); color:var(--staff-red); padding:4px 12px; border-radius:12px; border:1px solid rgba(193,82,84,0.15); font-family:monospace;">ROOT ACCESS ACTIVE</span>
       </div>
 
-      <!-- Live Category Filters Bar Links -->
       <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; width: 100%;">
         <span style="font-size:0.75rem; font-weight:700; color:var(--text-dark); text-transform:uppercase;">Filter Categories:</span>
         <button class="filter-btn active" data-cat="ALL">All Event Traces</button>
@@ -531,7 +528,6 @@
         <button class="filter-btn" data-cat="COMPLIANCE">🛡️ Compliance Audits</button>
       </div>
 
-      <!-- Scrolled Table Container Element Layout Frame -->
       <div style="width:100% !important; overflow-x:auto !important; border:1px solid var(--border-color); border-radius:8px; -webkit-overflow-scrolling: touch;">
         <table class="log-table">
           <thead>
@@ -545,12 +541,13 @@
             </tr>
           </thead>
           <tbody id="masterSystemEventLogsOutputTarget">
-            <tr><td colspan="6" style="padding:40px; text-align:center; color:var(--text-muted); font-style:italic;">Establishing multi-token data socket streams...</td></tr>
+            <tr><td colspan="6" style="padding:40px; text-align:center; color:var(--text-muted); font-style:italic;">Establishing data socket streams...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
+
 
   <!-- 📥 MODAL BLUR BACKGROUND POPUP BOX (REPLACES ALERT BOX) -->
   <div id="auditBlurModalMask" class="custom-blur-overlay">
@@ -592,7 +589,7 @@
       if (mask) mask.style.display = "none";
     };
 
-    document.addEventListener("DOMContentLoaded", async () => {
+ document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
 
       const logTargetBox = document.getElementById("masterSystemEventLogsOutputTarget");
@@ -608,11 +605,8 @@
       const client = window.supabaseInstance || window.supabaseClient;
       if (!client) return;
 
-      // --- STAGE 1: TIMELINE AUDIT ROWS REHYDRATION QUERY ---
       async function reloadPlatformSystemAuditLedger() {
         try {
-          console.log("📡 [Root Audit] Synchronizing public.system_event_logs table spaces...");
-          
           let queryEngine = client.from('system_event_logs').select('*');
           if (activeCategoryFilter !== "ALL") {
             queryEngine = queryEngine.eq('event_category', activeCategoryFilter);
@@ -625,8 +619,8 @@
           renderPlatformSystemAuditLogs();
 
         } catch (err) {
-          console.error("✕ Audit fetch crashed:", err.message);
-                   if (logTargetBox) {
+          console.error(err);
+          if (logTargetBox) {
             logTargetBox.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Rejected: ${err.message}</td></tr>`;
           }
         }
@@ -662,7 +656,6 @@
         });
       }
 
-      // --- STAGE 2: REAL-TIME INTERACTION EVENT CONTROLLERS ---
       filterBtns.forEach(btn => {
         btn.addEventListener("click", async function() {
           filterBtns.forEach(b => b.classList.remove("active"));
@@ -672,20 +665,15 @@
         });
       });
 
-      // --- STAGE 3: REAL-TIME POSTGRES CHANGES WIRE UNPACK METRICS ---
       client.channel('system-live-logs-matrix-stream')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_event_logs' }, async (payload) => {
-          console.log("🔔 [Sockets Notification] Intercepted new baseline event audit entry:", payload.new);
-          
-          // Trigger a dynamic non-blocking pop-up notification window on matching layout insert captures
-          window.showAuditCustomModal("⚡", `Live Activity Intercepted`, `User [${payload.new.actor_email}] executed action ${payload.new.event_action} under ${payload.new.event_category} module segment parameters.`);
-
           if (activeCategoryFilter === "ALL" || payload.new.event_category === activeCategoryFilter) {
             masterLogsDataCache.unshift(payload.new);
             if (masterLogsDataCache.length > 100) masterLogsDataCache.pop();
             renderPlatformSystemAuditLogs();
           }
         }).subscribe();
+
 
       // Execute primary live table hydration loop metrics on mount
       await reloadPlatformSystemAuditLedger();
