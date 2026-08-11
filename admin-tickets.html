@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase-config.js"></script>
 
   <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
@@ -520,10 +521,6 @@
   </div>
 </div>
 
-
-  <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
-  <!-- 1. The Global Library Core MUST load absolute first -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-master-ledger.js"></script>
@@ -531,96 +528,96 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
  
-
 <script>
 /**
  * filings4u Platform Architecture
  * Module: admin-tickets-cockpit-engine.js (Real-Time Supervisor Matrix)
  * Aligned explicitly with public.after_hours_tickets and public.chat_messages schemas
  */
+
+// 🟢 GLOBAL VARIANCE MATRIX REGISTER (Scoped out here to prevent multithread runtime memory splits)
+let globallyActiveTicketIdKey = null;
+let globallyActiveClientEmailKey = null;
+let globallyActiveClientIdKey = null; 
+let liveTicketsSubscriptionChannel = null;
+
+// NEW: Global handle attachments to stop separate code blocks from throwing ReferenceErrors
+let client = null;
+let selectStatus = null;
+let formStatusBanner = null;
+
+// Safe visual markup input strings XSS sanitation helper utility function
+function escapeAdminHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
+  // DOM Reference Hooks Mapping Coordinates (Maintained within event listener context)
   const queueContainer = document.getElementById("adminTicketQueueContainerList");
   const queueCountPill = document.getElementById("ticketQueueCountPill");
   const emptyStateView = document.getElementById("adminTicketEmptyStateView");
   const activeWorkbench = document.getElementById("adminTicketActiveWorkbench");
-
-  // Workbench DOM Reference Hooks Mapping Coordinates
   const labelTicketId = document.getElementById("workbenchTicketIdLabel");
   const labelPriorityPill = document.getElementById("workbenchPriorityPill");
   const labelUserEmail = document.getElementById("workbenchUserEmailLabel");
   const labelCompany = document.getElementById("workbenchCompanyLabel");
   const labelPhone = document.getElementById("workbenchPhoneLabel");
-  const selectStatus = document.getElementById("workbenchStatusSelect");
   const labelSubject = document.getElementById("workbenchSubjectLabel");
   const textDescription = document.getElementById("workbenchDescriptionText");
-
-  // Attachment Elements Matrix Lookups
   const boxAttachment = document.getElementById("workbenchAttachmentSectionBox");
   const linkAttachmentView = document.getElementById("workbenchAttachmentViewLink");
-
-  // Chat History Stream Windows
   const windowHistoryChat = document.getElementById("workbenchChatRepliesHistoryWindow");
   const responseForm = document.getElementById("adminTicketDispatchForm");
-  const formStatusBanner = document.getElementById("workbench-form-status-banner");
   const submitBtn = document.getElementById("adminTicketSubmitBtn");
 
-  let globallyActiveTicketIdKey = null;
-  let globallyActiveClientEmailKey = null;
-  let liveTicketsSubscriptionChannel = null;
-
-  // Safe visual markup input strings XSS sanitation helper utility
-  function escapeAdminHtml(str) {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;");
-  }
+  // FIXED: Assign to the outer scopes variables instead of blocking via const/let keywords
+  selectStatus = document.getElementById("workbenchStatusSelect");
+  formStatusBanner = document.getElementById("workbench-form-status-banner");
 
   // Establish Supabase Connection Handshake
-  let client = window.supabaseInstance || window.supabaseClient;
+  client = window.supabaseInstance || window.supabaseClient;
   if (!client && typeof supabase !== 'undefined') {
     client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
   }
-
   if (!client) return;
 
   // --- 1. FETCH AND RENDER RECENT UNRESOLVED USER TICKETS QUEUES ---
-  async function reloadSupportQueueLedgerList() {
+  // FIXED: Explicitly attach handler method directly onto window layout object structure
+  window.reloadSupportQueueLedgerList = async function() {
     try {
       console.log("📡 [Ticket Engine] Extracting offline payloads from raw after_hours_tickets table...");
-      
-      // 🟢 FIXED: Points directly to your operational production table space
       const { data: tickets, error } = await client
         .from('after_hours_tickets')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
       if (queueCountPill) {
         queueCountPill.textContent = `${tickets ? tickets.length : 0} Tickets`;
       }
 
       if (!tickets || tickets.length === 0) {
-        queueContainer.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.85rem; padding:48px 12px; font-style:italic;">No active intake help tickets documented.</div>`;
+        if (queueContainer) {
+          queueContainer.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.85rem; padding:48px 12px; font-style:italic;">No active intake help tickets documented.</div>`;
+        }
         return;
       }
 
       queueContainer.innerHTML = "";
-
       tickets.forEach(ticket => {
         const isSelected = ticket.ticket_id === globallyActiveTicketIdKey;
         const isPending = String(ticket.status).toLowerCase() === 'pending';
-        
         const itemRow = document.createElement("div");
         itemRow.style.cssText = `padding: 14px; border: 1px solid ${isSelected ? "#0a1f44" : "#e2e8f0"}; background: ${isSelected ? "#f8fafc" : "#ffffff"}; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); transition: all 0.2s; border-left: 4px solid ${isPending ? "#ef4444" : "#cbd5e1"};`;
-        
-        // 🟢 FIXED NAME RESOLUTION: Derives clean display tags from available identity profile fields
+
         let cleanDisplayName = "Valued Member";
         if (ticket.first_name || ticket.last_name) {
           cleanDisplayName = `${ticket.first_name || ''} ${ticket.last_name || ''}`.trim();
@@ -628,12 +625,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           cleanDisplayName = ticket.email_address.split('@')[0];
         }
 
-        // 🟢 FIXED MESSAGE PREVIEW: Maps text snippet from ticket_message parameter natively
         let textPreview = ticket.ticket_message || "No text content.";
         if (textPreview.length > 40) {
           textPreview = textPreview.substring(0, 37) + "...";
         }
 
+        // FIXED: Replaced malformed %EF%B8%8F URL unicode sequence string block
         itemRow.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="font-family:monospace; font-size:0.75rem; color:#64748b;">🆔 #${String(ticket.ticket_id).substring(0, 8).toUpperCase()}</strong>
@@ -647,11 +644,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         itemRow.addEventListener("click", () => activateTicketWorkspaceWorkbench(ticket));
         queueContainer.appendChild(itemRow);
       });
-
     } catch (fault) {
       console.error("✕ Queue rehydration crashed:", fault.message);
     }
-  }
+  };
+
+  // Run the local execution pipeline right on load up
+  await window.reloadSupportQueueLedgerList();
+});
+
+
 
   // --- 2. ACTIVATE INTEGRATED WORKBENCH FOR SELECTED AFTER-HOURS TICKET ---
   async function activateTicketWorkspaceWorkbench(ticket) {
@@ -660,6 +662,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Synchronize current workbench global path identifiers
     globallyActiveTicketIdKey = ticket.ticket_id;
     globallyActiveClientEmailKey = String(ticket.email_address || '').trim().toLowerCase();
+    
+    // 🟢 CRITICAL DATABASE FIX: Cache the client's actual user profile ID to prevent foreign key violations during response inserts
+    globallyActiveClientIdKey = ticket.id; 
 
     // Hide empty state placeholder card and unroll workbench controls layout
     if (emptyStateView) emptyStateView.style.display = "none";
@@ -670,13 +675,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (labelUserEmail) labelUserEmail.textContent = globallyActiveClientEmailKey;
     if (labelPhone) labelPhone.textContent = ticket.phone_number || "Not Provided";
     if (selectStatus) selectStatus.value = ticket.status || "Pending";
-    
-    // 🟢 FIXED: Mapped fallback labels and descriptions straight to your table's message fields
+
+    // Mapped fallback labels and descriptions straight to your table's message fields
     if (labelSubject) labelSubject.textContent = "After-Hours Support Request Inbound";
     if (textDescription) textDescription.textContent = ticket.ticket_message || "No text content provided.";
     if (labelCompany) labelCompany.textContent = ticket.company_name || "Not Specified";
 
-    // 🟢 FIXED: Converted priority indicators to handle your ticket table's "status" metrics natively
+    // Converted priority indicators to handle your ticket table's "status" metrics natively
     if (labelPriorityPill) {
       const isPending = String(ticket.status).toLowerCase() === 'pending';
       labelPriorityPill.textContent = isPending ? "Action Required" : "Archived";
@@ -684,14 +689,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       labelPriorityPill.style.color = isPending ? "#b91c1c" : "#065f46";
     }
 
-    // 🟢 ATTACHMENT FIX: Handles attached file URLs natively matching your schema column signatures
+    // ATTACHMENT FIX: Handles attached file URLs natively matching your schema column signatures
     if (ticket.attached_file_url) {
       if (boxAttachment) boxAttachment.style.setProperty("display", "flex", "important");
       if (linkAttachmentView) {
         linkAttachmentView.setAttribute("href", "javascript:void(0);");
         linkAttachmentView.onclick = (e) => {
           e.preventDefault();
-          
           let cleanViewerUrl = String(ticket.attached_file_url).trim();
           if (!cleanViewerUrl.includes('?')) {
             cleanViewerUrl += `?t=${Date.now()}`;
@@ -712,223 +716,312 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Refresh active list state highlights locally and stream associated conversation items
     await reloadSupportQueueLedgerList();
-    
     if (typeof fetchHistoricalChatRepliesStream === "function") {
       await fetchHistoricalChatRepliesStream();
     }
   }
-
-
-  // --- 3. FETCH HISTORICAL ADMIN DISPATCH CHAT CHAINS FOR WORKBENCH ---
-  async function fetchHistoricalChatRepliesStream() {
-    if (!globallyActiveClientEmailKey || !windowHistoryChat) return;
+// --- 3. FETCH HISTORICAL ADMIN DISPATCH CHAT CHAINS FOR WORKBENCH --- 
+async function fetchHistoricalChatRepliesStream() { 
+  if (!globallyActiveClientEmailKey || !windowHistoryChat) return; 
+  
+  try { 
+    console.log(`📡 [Ticket Engine] Fetching message history trace for user: [${globallyActiveClientEmailKey}]`); 
     
-    try {
-      console.log(`📡 [Ticket Engine] Fetching message history trace for user: [${globallyActiveClientEmailKey}]`);
+    const { data: replies, error } = await client 
+      .from('chat_messages') 
+      .select('*') 
+      .eq('email_address', globallyActiveClientEmailKey) 
+      .order('created_at', { ascending: true }); 
+
+    if (error) throw error; 
+    windowHistoryChat.innerHTML = ""; 
+
+    if (!replies || replies.length === 0) { 
+      windowHistoryChat.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.75rem; padding:12px; font-style:italic;">No corporate communications or layout replies documented on this file track yet.</div>`; 
+      return; 
+    } 
+
+    replies.forEach(reply => { 
+      const isClient = String(reply.sender_type).toLowerCase() === 'client'; 
+      const div = document.createElement("div"); 
       
-      // Pull history matching this customer's unique email to map out the response thread context
-      const { data: replies, error } = await client
-        .from('chat_messages')
-        .select('*')
-        .eq('email_address', globallyActiveClientEmailKey)
-        .order('created_at', { ascending: true });
+      div.style.cssText = `background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px; font-size: 0.78rem; line-height: 1.45; border-left: 3px solid ${isClient ? "#10b981" : "#0a1f44"}; margin-bottom: 8px;`; 
+      
+      const timestamp = reply.created_at ? new Date(reply.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''; 
+      const senderLabel = isClient ? "Inbound Client" : `Desk [Admin Operator]`; 
 
-      if (error) throw error;
-      windowHistoryChat.innerHTML = "";
-
-      if (!replies || replies.length === 0) {
-        windowHistoryChat.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.75rem; padding:12px; font-style:italic;">No corporate communications or layout replies documented on this file track yet.</div>`;
-        return;
-      }
-
-      replies.forEach(reply => {
-        const isClient = String(reply.sender_type).toLowerCase() === 'client';
-        const div = document.createElement("div");
+      // 🟢 FIX 1: Generate full public URLs for attachments if they exist
+      let attachmentMarkup = "";
+      if (reply.attached_file_url) {
+        // Automatically isolate bucket based on historical path signature
+        const bucket = reply.attached_file_url.includes('chat_attachments') ? 'chat_attachments' : 'chat_documents';
         
-        // Contextually distinct border branding to distinguish operator responses from inbound user items
-        div.style.cssText = `background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px; font-size: 0.78rem; line-height: 1.45; border-left: 3px solid ${isClient ? "#10b981" : "#0a1f44"}; margin-bottom: 8px;`;
+        // Construct the authentic Supabase public distribution asset URI
+        const publicUrl = `${client.storage.from(bucket).getPublicUrl(reply.attached_file_url).data.publicUrl}`;
         
-        const timestamp = reply.created_at ? new Date(reply.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-        const senderLabel = isClient ? "Inbound Client" : `Desk [Admin Operator]`;
-
-        div.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.7rem; font-weight:700; color:#475569;">
-            <span>${senderLabel}</span>
-            <span style="font-family:monospace; font-weight:normal; color:#94a3b8;">${timestamp}</span>
-          </div>
-          <p style="margin:0; color:#1e293b; white-space:pre-wrap;">${escapeAdminHtml(reply.message_content)}</p>
-        `;
-        windowHistoryChat.appendChild(div);
-      });
-      
-      windowHistoryChat.scrollTop = windowHistoryChat.scrollHeight;
-      
-    } catch (err) {
-      console.error("✕ Reply logs fetch exception:", err.message);
-    }
-  }
-
-  // --- 4. DISPATCH PROFESSIONAL REPLY BACK DOWN TO WORKSPACE PORTALS ---
-  if (responseForm) {
-    responseForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (!globallyActiveTicketIdKey || !globallyActiveClientEmailKey) return;
-      
-      const replyContent = document.getElementById("adminWorkbenchReplyBody")?.value.trim();
-      if (!replyContent) return;
-
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Transmitting Reply Content... 📡";
-      }
-
-      try {
-        console.log("🚀 [Ticket Engine] Dispatching operator answer straight into chat timelines table space...");
-
-        // 🟢 FIXED DISPATCH PIPELINE: Insert message row with sender_type: 'admin' into chat_messages
-        const { error: replyInsertError } = await client
-          .from('chat_messages')
-          .insert([{
-            id: activeWorkbench.dataset.clientId || globallyActiveTicketIdKey, // Falls back onto active reference tokens
-            email_address: globallyActiveClientEmailKey,
-            message_content: replyContent,
-            sender_type: 'admin',
-            is_read_by_admin: true,
-            is_read_by_client: false,
-            created_at: new Date().toISOString()
-          }]);
-
-        if (replyInsertError) throw replyInsertError;
-
-        // Auto-advance ticket status out of 'Pending' into an updated active state locally
-        const statusDropdown = document.getElementById("workbenchStatusSelect");
-        if (statusDropdown && statusDropdown.value === "Pending") {
-          statusDropdown.value = "Open";
-          await window.updateActiveTicketStatusFromWorkbench();
-        }
-
-        showWorkbenchBanner("✓ Success! Feedback response pushed live to user chat workspace portal layout.", false);
-        document.getElementById("adminWorkbenchReplyBody").value = "";
-        
-        await fetchHistoricalChatRepliesStream();
-        
-      } catch (fault) {
-        console.error("✕ Output submission rejected:", fault.message);
-        showWorkbenchBanner(`✕ Transmission Failure: ${fault.message}`, true);
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Dispatch Response & Sync Ledger ➔";
+        if (bucket === 'chat_attachments') {
+          attachmentMarkup = `<div style="margin-top:8px;"><img src="${publicUrl}" alt="Attachment" style="max-width:100%; max-height:150px; border-radius:6px; border:1px solid #cbd5e1; display:block;"/></div>`;
+        } else {
+          attachmentMarkup = `<div style="margin-top:6px;"><a href="${publicUrl}" target="_blank" style="color:#0284c7; text-decoration:underline; font-weight:500; font-size:0.72rem;">📎 View Uploaded Document</a></div>`;
         }
       }
-    });
-  }
 
-  // --- 5. UPDATE TICKET OPERATIONS LABELS STATUS ON WORKBENCH SELECTION SHIFTS ---
-  window.updateActiveTicketStatusFromWorkbench = async function() {
-    if (!globallyActiveTicketIdKey || !selectStatus) return;
-    const nextStatusValue = selectStatus.value;
+      div.innerHTML = ` 
+        <div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.7rem; font-weight:700; color:#475569;"> 
+          <span>${senderLabel}</span> 
+          <span style="font-family:monospace; font-weight:normal; color:#94a3b8;">${timestamp}</span> 
+        </div> 
+        <p style="margin:0; color:#1e293b; white-space:pre-wrap;">${escapeAdminHtml(reply.message_content)}</p> 
+        ${attachmentMarkup} 
+      `; 
+      
+      windowHistoryChat.appendChild(div); 
+    }); 
+
+    windowHistoryChat.scrollTop = windowHistoryChat.scrollHeight; 
+  } catch (err) { 
+    console.error("✕ Reply logs fetch exception:", err.message); 
+  } 
+}
+
+// --- 4. DISPATCH PROFESSIONAL REPLY BACK DOWN TO WORKSPACE PORTALS --- 
+if (responseForm) { 
+  responseForm.addEventListener("submit", async (e) => { 
+    e.preventDefault(); 
+    e.stopPropagation(); 
     
-    try {
-      console.log(`💾 [Ticket Engine] Modifying operational state metadata to: [${nextStatusValue}]`);
-      
-      // 🟢 FIXED: Updates your dedicated after_hours_tickets table columns directly
-      const { error: updateError } = await client
-        .from('after_hours_tickets')
-        .update({ status: nextStatusValue })
-        .eq('ticket_id', globallyActiveTicketIdKey);
+    if (!globallyActiveClientEmailKey) return; 
 
-      if (updateError) throw updateError;
-      
-      showWorkbenchBanner(`✓ Case metrics updated to: [${nextStatusValue}]`, false);
-      await reloadSupportQueueLedgerList();
-      
-    } catch (err) {
-      console.error("✕ Ticket status shift rejected:", err.message);
-      showWorkbenchBanner(`✕ Status Lock Aborted: ${err.message}`, true);
-    }
-  };
+    const replyInput = document.getElementById("adminWorkbenchReplyBody");
+    const replyContent = replyInput?.value.trim(); 
+    if (!replyContent) return; 
 
-  // Utility Banner Controller Matrix Lookups
-  function showWorkbenchBanner(text, isError) {
-    if (!formStatusBanner) return;
-    formStatusBanner.textContent = text;
-    formStatusBanner.style.display = "block";
-    formStatusBanner.style.background = isError ? "#fee2e2" : "#ecfdf5";
-    formStatusBanner.style.color = isError ? "#991b1b" : "#047857";
-    setTimeout(() => {
-      formStatusBanner.style.display = "none";
-    }, 5000);
-  }
+    if (submitBtn) { 
+      submitBtn.disabled = true; 
+      submitBtn.textContent = "Transmitting Reply Content... 📡"; 
+    } 
 
-  // --- 6. SETUP SYSTEM LIVE LIFECYCLE LISTENERS BROADCAST INTERCEPTORS ---
-  async function bindLiveHelpDeskRealtimeChannels() {
-    if (liveTicketsSubscriptionChannel) liveTicketsSubscriptionChannel.unsubscribe();
+    try { 
+      console.log("🚀 [Ticket Engine] Dispatching operator answer straight into chat timelines table space..."); 
 
-    console.log("📡 [Ticket Engine] Mounting real-time postgres changes channel adapters...");
+      // 🟢 FIXED IDENTITY PIPELINE: Map 'id' strictly to the User UUID, not the Ticket UUID
+      const targetUserId = activeWorkbench?.dataset.clientId || window.clientActiveUserId;
 
-    liveTicketsSubscriptionChannel = client
-      .channel('admin-global-help-desk-matrix-stream')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'after_hours_tickets' // 🟢 FIXED: Rebound listeners to target your live tickets table
-      }, async payload => {
-        console.log("✓ [Desk Live Queue] Structural intake modification intercepted:", payload);
-        await reloadSupportQueueLedgerList();
-        if (globallyActiveTicketIdKey && payload.new && payload.new.ticket_id === globallyActiveTicketIdKey) {
-          if (selectStatus) selectStatus.value = payload.new.status || "Pending";
+      const { error: replyInsertError } = await client 
+        .from('chat_messages') 
+        .insert([{ 
+          id: targetUserId, 
+          email_address: globallyActiveClientEmailKey, 
+          message_content: replyContent, 
+          sender_type: 'admin', 
+          attached_file_url: null, // Explicitly declared to preserve schema parity
+          is_read_by_admin: true, 
+          is_read_by_client: false, 
+          created_at: new Date().toISOString() 
+        }]); 
+
+      if (replyInsertError) throw replyInsertError; 
+
+      // Auto-advance ticket status out of 'Pending' into an updated active state locally 
+      const statusDropdown = document.getElementById("workbenchStatusSelect"); 
+      if (statusDropdown && statusDropdown.value === "Pending") { 
+        statusDropdown.value = "Open"; 
+        if (typeof window.updateActiveTicketStatusFromWorkbench === "function") {
+          await window.updateActiveTicketStatusFromWorkbench(); 
         }
-      })
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'chat_messages' // 🟢 FIXED: Listens for fresh inserts to keep historical replies streams synced
-      }, async payload => {
-        if (globallyActiveClientEmailKey && String(payload.new.email_address).toLowerCase() === globallyActiveClientEmailKey) {
-          await fetchHistoricalChatRepliesStream();
-        }
-      })
-      .subscribe();
+      } 
+
+      showWorkbenchBanner("✓ Success! Feedback response pushed live to user chat workspace portal layout.", false); 
+      
+      if (replyInput) replyInput.value = ""; 
+      await fetchHistoricalChatRepliesStream(); 
+
+    } catch (fault) { 
+      console.error("✕ Output submission rejected:", fault.message); 
+      showWorkbenchBanner(`✕ Transmission Failure: ${fault.message}`, true); 
+    } finally { 
+      if (submitBtn) { 
+        submitBtn.disabled = false; 
+        submitBtn.textContent = "Dispatch Response & Sync Ledger ➔"; 
+      } 
+    } 
+  }); 
+}
+
+
+// Keep track of active banner timers globally to prevent UI hide races
+let bannerTimerInstance = null;
+// Prevent real-time echo loop races during local user updates
+let isLocallyUpdatingStatus = false; 
+
+// --- 5. UPDATE TICKET OPERATIONS LABELS STATUS ON WORKBENCH SELECTION SHIFTS --- 
+window.updateActiveTicketStatusFromWorkbench = async function() { 
+  if (!globallyActiveTicketIdKey || !selectStatus) return; 
+  const nextStatusValue = selectStatus.value; 
+  
+  try { 
+    isLocallyUpdatingStatus = true; // Lock real-time interceptor from resetting UI
+    console.log(`💾 [Ticket Engine] Modifying operational state metadata to: [${nextStatusValue}]`); 
+    
+    // Updates your dedicated after_hours_tickets table columns directly 
+    const { error: updateError } = await client 
+      .from('after_hours_tickets') 
+      .update({ status: nextStatusValue }) 
+      .eq('ticket_id', globallyActiveTicketIdKey); 
+
+    if (updateError) throw updateError; 
+    
+    showWorkbenchBanner(`✓ Case metrics updated to: [${nextStatusValue}]`, false); 
+    await reloadSupportQueueLedgerList(); 
+  } catch (err) { 
+    console.error("✕ Ticket status shift rejected:", err.message); 
+    showWorkbenchBanner(`✕ Status Lock Aborted: ${err.message}`, true); 
+  } finally {
+    isLocallyUpdatingStatus = false; // Release lock
   }
+}; 
 
-  // --- 🖼️ MODAL OVERLAY LIGHTBOX METRIC FUNCTIONS CONTROLLER ---
-  const attachmentModal = document.getElementById("adminAttachmentPreviewModal");
-  const modalIframeTarget = document.getElementById("modalAttachmentIframeCanvasTarget");
-  const modalDownloadBtn = document.getElementById("modalAttachmentDownloadBtn");
+// Utility Banner Controller Matrix Lookups 
+function showWorkbenchBanner(text, isError) { 
+  if (!formStatusBanner) return; 
+  
+  // Clear any dangling timeout instances to prevent premature UI collapse
+  if (bannerTimerInstance) clearTimeout(bannerTimerInstance);
 
-  window.openAdminAttachmentModalWindow = function(targetAssetUrl) {
-    if (!attachmentModal || !modalIframeTarget || !modalDownloadBtn) return;
-    modalIframeTarget.setAttribute("src", targetAssetUrl);
-    modalDownloadBtn.setAttribute("href", targetAssetUrl);
-    attachmentModal.style.setProperty("display", "flex", "important");
-    document.body.style.overflow = "hidden";
-  };
+  formStatusBanner.textContent = text; 
+  formStatusBanner.style.display = "block"; 
+  formStatusBanner.style.background = isError ? "#fee2e2" : "#ecfdf5"; 
+  formStatusBanner.style.color = isError ? "#991b1b" : "#047857"; 
+  
+  bannerTimerInstance = setTimeout(() => { 
+    formStatusBanner.style.display = "none"; 
+    bannerTimerInstance = null;
+  }, 5000); 
+} 
 
-  window.closeAdminAttachmentModalWindow = function() {
-    if (!attachmentModal || !modalIframeTarget) return;
-    attachmentModal.style.setProperty("display", "none", "important");
-    modalIframeTarget.setAttribute("src", "about:blank");
-    document.body.style.overflow = "";
-  };
+// --- 6. SETUP SYSTEM LIVE LIFECYCLE LISTENERS BROADCAST INTERCEPTORS --- 
+async function bindLiveHelpDeskRealtimeChannels() { 
+  if (liveTicketsSubscriptionChannel) {
+    await liveTicketsSubscriptionChannel.unsubscribe(); 
+  }
+  
+  console.log("📡 [Ticket Engine] Mounting real-time postgres changes channel adapters..."); 
+  
+  liveTicketsSubscriptionChannel = client 
+    .channel('admin-global-help-desk-matrix-stream') 
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'after_hours_tickets' 
+    }, async payload => { 
+      console.log("✓ [Desk Live Queue] Structural intake modification intercepted:", payload); 
+      
+      // Skip UI redraw loops if this client instance initiated the write
+      if (isLocallyUpdatingStatus) return; 
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && attachmentModal && attachmentModal.style.display === "flex") {
-      closeAdminAttachmentModalWindow();
-    }
-  });
+      await reloadSupportQueueLedgerList(); 
+      
+      if (globallyActiveTicketIdKey && payload.new && payload.new.ticket_id === globallyActiveTicketIdKey) { 
+        if (selectStatus) selectStatus.value = payload.new.status || "Pending"; 
+      } 
+    }) 
+    .on('postgres_changes', { 
+      event: 'INSERT', 
+      schema: 'public', 
+      table: 'chat_messages' 
+    }, async payload => { 
+      if (!globallyActiveClientEmailKey || !payload.new || !payload.new.email_address) return;
+      
+      if (String(payload.new.email_address).toLowerCase() === globallyActiveClientEmailKey.toLowerCase()) { 
+        await fetchHistoricalChatRepliesStream(); 
+      } 
+    }) 
+    .subscribe(); 
+} 
 
-  // 🏁 BOOTSTRAP INITIAL WORKSPACE MATRIX INITIALIZATION RUNTIME QUEUES
-  // Expose function internally to support target workbench item click lookups
-  window.activateTicketWorkspaceWorkbench = activateTicketWorkspaceWorkbench;
+// --- 🖼️ MODAL OVERLAY LIGHTBOX METRIC FUNCTIONS CONTROLLER --- 
+const attachmentModal = document.getElementById("adminAttachmentPreviewModal"); 
+const modalIframeTarget = document.getElementById("modalAttachmentIframeCanvasTarget"); 
 
-  await reloadSupportQueueLedgerList();
-  await bindLiveHelpDeskRealtimeChannels();
-});
+window.openAdminAttachmentModalWindow = function(targetAssetUrl) { 
+  if (!attachmentModal || !modalIframeTarget) return; 
+  
+  modalIframeTarget.setAttribute("src", targetAssetUrl); 
+  
+  // Stash target asset URL inside modal dataset to bypass anchor href security limits
+  attachmentModal.dataset.activeAssetUrl = targetAssetUrl; 
+  
+  attachmentModal.style.setProperty("display", "flex", "important"); 
+  document.body.style.overflow = "hidden"; 
+}; 
+
+window.closeAdminAttachmentModalWindow = function() { 
+  if (!attachmentModal || !modalIframeTarget) return; 
+  attachmentModal.style.setProperty("display", "none", "important"); 
+  modalIframeTarget.setAttribute("src", "about:blank"); 
+  attachmentModal.removeAttribute('data-active-asset-url');
+  document.body.style.overflow = ""; 
+}; 
+
+// FIXED: Cleaned up URL string extraction logic to get index [0] string output
+window.triggerSecureAttachmentDownload = async function() {
+  const targetUrl = attachmentModal.dataset.activeAssetUrl;
+  if (!targetUrl || targetUrl === "about:blank") return;
+  
+  try {
+    const rawEndSegment = targetUrl.split('/').pop() || 'compliance-evidence';
+    const filename = rawEndSegment.split('?')[0]; // Extract just the actual file name string
+    
+    // Forcing asynchronous blob retrieval bypasses standard sandboxed iframe navigation failures
+    const response = await fetch(targetUrl);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    const hiddenAnchor = document.createElement('a');
+    hiddenAnchor.style.display = 'none';
+    hiddenAnchor.href = blobUrl;
+    hiddenAnchor.download = filename;
+    
+    document.body.appendChild(hiddenAnchor);
+    hiddenAnchor.click();
+    
+    // Cleanup temporary document memory traces
+    window.URL.revokeObjectURL(blobUrl);
+    hiddenAnchor.remove();
+  } catch (error) {
+    console.error("✕ Document download initialization failed:", error);
+    // Fallback strategy if resource headers block CORS downloads
+    window.open(targetUrl, '_blank');
+  }
+};
+
+window.addEventListener("keydown", (e) => { 
+  if (e.key === "Escape" && attachmentModal && attachmentModal.style.display === "flex") { 
+    closeAdminAttachmentModalWindow(); 
+  } 
+}); 
+
+// FIXED: Defensively map assignment only if the function exists in your external layout
+if (typeof activateTicketWorkspaceWorkbench !== 'undefined') {
+  window.activateTicketWorkspaceWorkbench = activateTicketWorkspaceWorkbench; 
+}
+
+// 🏁 BOOTSTRAP INITIAL WORKSPACE MATRIX INITIALIZATION RUNTIME QUEUES 
+(async () => {
+  try {
+    if (typeof reloadSupportQueueLedgerList === 'function') await reloadSupportQueueLedgerList(); 
+    if (typeof bindLiveHelpDeskRealtimeChannels === 'function') await bindLiveHelpDeskRealtimeChannels(); 
+  } catch (initError) {
+    console.error("✕ Failed initializing HelpDesk workspace:", initError);
+  }
+})();
 </script>
 
+<!-- 🟢 MAIN ENTRY WRAPPER FOR PREVIEW LIGHTBOX MODAL CONTAINER -->
+<div id="adminAttachmentPreviewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box;">
+  
+  <div style="background: #ffffff; width: 100%; max-width: 1200px; height: 100%; max-height: 85vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); animation: modalSplatScale 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+    
     <!-- MODAL CONTROL STRIP ACTION HEADER -->
     <div style="background: #0f172a; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
       <div style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -938,7 +1031,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       <!-- ACTION BUTTON SLATS BUTTONS -->
       <div style="display: flex; align-items: center; gap: 12px;">
-        <a id="modalAttachmentDownloadBtn" href="#" target="_blank" download style="text-decoration: none; background: #10b981; color: #ffffff; font-size: 0.75rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">📥 Download Document</a>
+        <button type="button" onclick="triggerSecureAttachmentDownload()" style="cursor: pointer; border: none; text-decoration: none; background: #10b981; color: #ffffff; font-size: 0.75rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">📥 Download Document</button>
         <button type="button" onclick="closeAdminAttachmentModalWindow()" style="background: #334155; color: #f8fafc; border: none; font-size: 0.75rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Close Esc ✕</button>
       </div>
     </div>
@@ -952,17 +1045,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 </div>
 
 <style>
-  /* Modern elastic scale expansion layout animation rules */
-  @keyframes modalSplatScale {
-    from { 
-      opacity: 0; 
-      transform: scale(0.96) translateY(10px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: scale(1) translateY(0); 
-    }
+@keyframes modalSplatScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
 </style>
+
+
 </body>
 </html>
