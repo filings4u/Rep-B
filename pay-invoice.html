@@ -3,83 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Secure Secure Document Payment Portal | filings4u</title>
+  <title>Secure Billing Settlement | filings4u Checkout</title>
+  <meta name="theme-color" content="#0f172a">
   <link rel="icon" type="image/png" href="images/fav.png">
-
-  <!-- SECURE STRIPE ELEMENTS INFRASTRUCTURE CDN -->
-  <script src="https://js.stripe.com/v3/"></script>
+  
   <style>
-    :root { --bg-light: #f8fafc; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --staff-red: #c15254; --emerald: #10b981; }
-    body, html { margin: 0; padding: 0; min-height: 100vh; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; align-items: center; justify-content: center; }
-    .checkout-container { width: 100%; max-width: 540px; padding: 40px 20px; box-sizing: border-box; }
-    .checkout-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 12px; padding: 40px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); box-sizing: border-box; text-align: left; }
-    .brand-logo img { height: 35px; width: auto; margin-bottom: 24px; display: block; }
-    
-    /* MODULAR ITEM DETAIL SLATS */
-    .bill-meta-header { border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px; }
-    .bill-meta-header h1 { font-size: 1.3rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-dark); letter-spacing: -0.5px; }
-    .bill-meta-header p { font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
-    
-    .invoice-detail-slat { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
-    .detail-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.88rem; }
-    .detail-row:last-child { margin-bottom: 0; padding-top: 12px; border-top: 1px dashed var(--border-color); }
-    .detail-row label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
-    .detail-row span { font-weight: 600; color: var(--text-dark); }
-    
-    /* HARDENED STRIPE SECURE EMBED COMPONENT SLAT */
-    .stripe-element-mount-wrapper { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin: 24px 0; box-sizing: border-box; }
-    .stripe-element-mount-wrapper:focus-within { border-color: var(--text-dark); background: var(--white); }
-    #secureCardElementContainer { width: 100%; min-height: 20px; }
-    
-    .submit-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.2s ease; box-sizing: border-box; }
-    .submit-btn:hover { background: #1e293b; }
-    #loader-box { padding: 40px; text-align: center; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
+    :root {
+      --bg-light: #f8fafc;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --emerald: #10b981;
+      --staff-red: #c15254;
+    }
+
+    body, html {
+      margin: 0 !important; padding: 0 !important;
+      min-height: 100vh !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      background-color: var(--bg-light) !important;
+      color: var(--text-dark) !important;
+    }
+
+    .checkout-wrapper {
+      max-width: 650px; margin: 60px auto;
+      padding: 0 20px; box-sizing: border-box;
+    }
+
+    .checkout-card {
+      background: var(--white); border-radius: 16px;
+      border: 1px solid var(--border-color); padding: 40px;
+      box-shadow: 0 10px 15px -3px rgba(15,23,42,0.05); box-sizing: border-box;
+    }
+
+    .item-row-strip {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;
+    }
+
+    .checkout-btn {
+      background: var(--text-dark); color: var(--white); border: none;
+      border-radius: 8px; font-weight: 700; font-size: 0.95rem; height: 46px;
+      width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 6px -1px rgba(15,23,42,0.15); transition: background 0.2s;
+    }
+
+    .checkout-btn:hover { background: #1e293b; }
+    .checkout-btn:disabled { background: #94a3b8; cursor: not-allowed; }
   </style>
 </head>
 <body>
-  <div class="checkout-container">
-    <!-- Main Token Loader -->
-    <div id="loader-box" class="checkout-card">
-      Synchronizing secure transaction parameters over the wire...
-    </div>
 
-    <!-- Active Checkout Panel Form Card -->
-    <div id="checkout-main-panel" class="checkout-card" style="display: none;">
-      <div class="brand-logo"><img src="images/logo.png" alt="filings4u Logo"></div>
+  <div class="checkout-wrapper">
+    <div id="clientInvoiceCheckoutCardView" class="checkout-card">
       
-      <div class="bill-meta-header">
-        <h1 id="view-doc-title">Account Statement Statement</h1>
-        <p id="view-client-email">loading-recipient@email.com</p>
+      <!-- HEADER LAYER AREA -->
+      <div style="text-align: center; margin-bottom: 32px; border-bottom: 1px solid var(--border-color); padding-bottom: 24px;">
+        <img src="images/logo.png" alt="filings4u Logo" style="width: 150px; height: auto; margin-bottom: 16px;">
+        <h1 style="margin: 0; font-size: 1.3rem; font-weight: 850; color: var(--text-dark);">Secure Invoice Settlement</h1>
+        <p id="checkoutInvoiceCodeDisplay" style="margin: 4px 0 0 0; font-family: monospace; font-size: 0.82rem; color: var(--text-muted);">Syncing code references...</p>
       </div>
 
-      <div class="invoice-detail-slat">
-        <div class="detail-row">
-          <label>Fulfillment Line Item</label>
-          <span id="view-description">--</span>
-        </div>
-        <div class="detail-row">
-          <label>Maturity Due Expiration</label>
-          <span id="view-due-date" style="font-family: monospace;">--</span>
-        </div>
-        <div class="detail-row">
-          <label>Absolute Balance Due</label>
-          <span id="view-total-cost" style="font-size: 1.1rem; font-weight: 800; color: var(--text-dark);">0.00</span>
+      <!-- TARGET ITEMIZATION LOG CONTAINER -->
+      <div style="margin-bottom: 24px;">
+        <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Itemized Invoice Summary</span>
+        <div id="checkoutItemizedSummaryRowsBox" style="display: flex; flex-direction: column; width: 100%;">
+          <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 24px 0; font-style: italic;">Loading balance summaries...</div>
         </div>
       </div>
 
-      <form id="publicCheckoutPaymentForm" novalidate>
-        <div style="text-align: left;">
-          <label style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dark);">Secure Credit Card Details</label>
-          <div class="stripe-element-mount-wrapper">
-            <div id="secureCardElementContainer"></div>
-          </div>
-        </div>
-        <button type="submit" class="submit-btn" id="paySubmitBtn">Clear Balance Securely ➔</button>
-      </form>
+      <!-- BALANCE BREAKDOWN FOOTPAD -->
+      <div style="border-top: 2px dashed var(--border-color); padding-top: 16px; margin-bottom: 32px; text-align: right;">
+        <p id="checkoutDueDateDisplayString" style="margin: 0; font-size: 0.82rem; color: var(--text-muted);"></p>
+        <h2 style="margin: 6px 0 0 0; font-size: 1.5rem; font-weight: 850; color: var(--text-dark);">Amount Due: <span id="checkoutGrandTotalDisplayString" style="color: var(--staff-red);">$0.00</span></h2>
+      </div>
+
+      <!-- INTERACTIVE SUBMIT SETTLE CONTROLS TRIGGER -->
+      <div id="checkoutActionContainerBlock">
+        <button type="button" id="clientProcessPaymentActionBtn" class="checkout-btn">Authorize Payment Settlement</button>
+      </div>
+      <div id="checkoutInlineFeedbackBanner" style="display: none; padding: 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 16px;"></div>
+
     </div>
   </div>
 
-  <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
+
+   <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
   <!-- 1. The Global Library Core MUST load absolute first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
@@ -92,181 +102,128 @@
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-    <script>
+
+  <script>
     document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
 
-      // 1. Resolve Document View Port Component Anchors
-      const loaderBox     = document.getElementById("loader-box");
-      const mainPanel     = document.getElementById("checkout-main-panel");
-      const docTitleEl    = document.getElementById("view-doc-title");
-      const clientEmailEl = document.getElementById("view-client-email");
-      const descriptionEl = document.getElementById("view-description");
-      const dueDateEl     = document.getElementById("view-due-date");
-      const totalCostEl   = document.getElementById("view-total-fee");
-      const payForm       = document.getElementById("publicCheckoutPaymentForm");
-      const paySubmitBtn  = document.getElementById("paySubmitBtn");
+      const codeLabel = document.getElementById("checkoutInvoiceCodeDisplay");
+      const rowsBox = document.getElementById("checkoutItemizedSummaryRowsBox");
+      const dateLabel = document.getElementById("checkoutDueDateDisplayString");
+      const totalLabel = document.getElementById("checkoutGrandTotalDisplayString");
+      const paymentBtn = document.getElementById("clientProcessPaymentActionBtn");
+      const feedbackBanner = document.getElementById("checkoutInlineFeedbackBanner");
 
-      if (!loaderBox || !mainPanel || !payForm || !paySubmitBtn) {
-        throw new Error("✕ Critical UI Error: Form controls or loading display modal structures are unassigned.");
-      }
+      // Extract raw target reference tokens directly out of browser address routing parameters
+      const urlParameters = new URLSearchParams(window.location.search);
+      const activeInvoiceIdToken = urlParameters.get("invoice_id");
 
-      // 2. Scan URL Context for Strict Token Tracking Parameter Strings
-      const urlQueryScanner = new URLSearchParams(window.location.search);
-      const invoiceTokenKey  = urlQueryScanner.get("token");
-
-      if (!invoiceTokenKey) {
-        loaderBox.style.color = "var(--staff-red)";
-        loaderBox.textContent = "✕ Navigation Exception: Required secure statement verification token parameter string is missing.";
-        throw new Error("✕ Parameter Verification Failed: Direct navigation blocked without an absolute token reference key.");
-      }
-
-      // 3. Verify Database Engine Client Connection Layer
       const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        loaderBox.style.color = "var(--staff-red)";
-        loaderBox.textContent = "✕ System Error: Supabase client infrastructure connection missing.";
-        throw new Error("✕ Initialization Error: Supabase database interface layer is unassigned.");
+      if (!client || !activeInvoiceIdToken) {
+        rowsBox.innerHTML = `<div style="text-align:center; color:var(--staff-red); font-weight:700; padding:20px 0;">✕ Invalid Request: Mismatched or missing checkout tokens parameters.</div>`;
+        if (paymentBtn) paymentBtn.disabled = true;
+        return;
       }
 
-      // 4. Initialize Secure Stripe Input Fields Mount Framework (Client Checkout)
-      const stripeInstance = Stripe("pk_test_51P3b7RHzWq7XvB2Lz8X9K3R4V7m8N2M1K9J5I3H7G6F5D4S3A2Q1W0E9R8T7Y6U5I4O3P2M1N0B9V8C7X6Z5");
-      const stripeElements = stripeInstance.elements();
-      
-      const fieldStylingSizingOptions = {
-        style: {
-          base: {
-            color: "#0f172a",
-            fontFamily: "system-ui, sans-serif",
-            fontSize: "15px",
-            "::placeholder": { color: "#94a3b8" }
-          },
-          invalid: { color: "#c15254", iconColor: "#c15254" }
-        }
-      };
-
-      const secureCardElement = stripeElements.create("card", fieldStylingSizingOptions);
-      secureCardElement.mount("#secureCardElementContainer");
-
-      let resolvedStatementPayloadRow = null;
-
-      // --- STAGE 1: FETCH TARGET UNIFIED INVOICE/QUOTE ROW MATRIX ---
-      async function extractClientInvoiceParameters() {
+      // --- STAGE 1: SYNC LAYOUT RECORDS FROM CLIENT_INVOICES ---
+      async function populateClientCheckoutInvoiceCanvas() {
         try {
-          console.log(`📡 [Checkout Engine] Resolving billing values for token reference string: [${invoiceTokenKey}]`);
-          
-          const { data: invoiceRecords, error: fetchError } = await client
-            .from('invoices')
+          const { data: record, error } = await client
+            .from('client_invoices')
             .select('*')
-            .eq('token_hash', invoiceTokenKey)
-            .limit(1);
+            .eq('invoice_id', activeInvoiceIdToken)
+            .maybeSingle();
 
-          if (fetchError) throw fetchError;
-
-          if (!invoiceRecords || invoiceRecords.length === 0) {
-            loaderBox.style.color = "var(--staff-red)";
-            loaderBox.textContent = "✕ Statement Expired: This token parameter string does not point to an active balance sheet cell.";
+          if (error) throw error;
+          if (!record) {
+            rowsBox.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:20px 0;">✕ Error: Specified billing target profile does not exist.</div>`;
+            if (paymentBtn) paymentBtn.disabled = true;
             return;
           }
 
-          resolvedStatementPayloadRow = invoiceRecords[0];
-          
-          const documentClassification = String(resolvedStatementPayloadRow.document_type || 'invoice').toUpperCase();
-          const targetRecipientEmail   = resolvedStatementPayloadRow.client_email || "billing-account@email.com";
-          const statementItemContext   = resolvedStatementPayloadRow.line_item_description || "Custom Corporate Solutions";
-          const absoluteFeeTotalCost   = parseFloat(resolvedStatementPayloadRow.total_amount || 0).toFixed(2);
-          
-          const formattedCalendarDueDate = new Date(resolvedStatementPayloadRow.due_date).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'short', day: '2-digit'
-          });
+          // Lock global tracking status parameters immediately
+          paymentBtn.dataset.invoiceId = record.invoice_id;
+          paymentBtn.dataset.invoiceCode = record.invoice_code;
 
-          // Hydrate public-facing display components cleanly
-          if (docTitleEl)    docTitleEl.textContent    = `Secure Platform ${documentClassification}`;
-          if (clientEmailEl) clientEmailEl.textContent = targetRecipientEmail;
-          if (descriptionEl) descriptionEl.textContent = statementItemContext;
-          if (dueDateEl)     dueDateEl.textContent     = formattedCalendarDueDate;
-          if (totalCostEl)   totalCostEl.textContent   = `$${absoluteFeeTotalCost}`;
+          if (codeLabel) codeLabel.textContent = `REFERENCE CODE: ${record.invoice_code}`;
+          if (dateLabel) dateLabel.textContent = `Grace Payment Deadline: ${record.due_date || 'Upon Receipt'}`;
+          if (totalLabel) totalLabel.textContent = `$${parseFloat(record.grand_total || 0).toFixed(2)}`;
 
-          // Swap loader screen grids frames visibility metrics parameters
-          loaderBox.style.display = "none";
-          mainPanel.style.display = "block";
+          // Check if invoice has been completed previously
+          if (String(record.payment_status).toLowerCase() === 'paid') {
+            renderSuccessfulSettlementUIState();
+            return;
+          }
+
+          // Build itemized rows lines template array loops layout
+          rowsBox.innerHTML = "";
+          const lines = record.itemized_lines || [];
+          
+          if (lines.length === 0) {
+            rowsBox.innerHTML = `<div class="item-row-strip" style="color:var(--text-muted);">Standard Platform Filing Plan allocation <strong style="font-weight:700; color:var(--text-dark);">$${parseFloat(record.grand_total).toFixed(2)}</strong></div>`;
+          } else {
+            lines.forEach(item => {
+              const row = document.createElement("div");
+              row.className = "item-row-strip";
+              row.innerHTML = `
+                <div>
+                  <strong style="color:var(--text-dark); display:block; font-weight:600;">${item.service_title}</strong>
+                  <small style="color:var(--text-muted); text-transform:uppercase; font-size:10px; font-weight:500;">Plan Tier: ${item.tier} (x${item.qty})</small>
+                </div>
+                <strong style="color:var(--text-dark); font-weight:700;">$${parseFloat(item.total || 0).toFixed(2)}</strong>
+              `;
+              rowsBox.appendChild(row);
+            });
+          }
 
         } catch (fault) {
-          console.error("✕ Statement Extraction Halted:", fault.message);
-          loaderBox.style.color = "var(--staff-red)";
-          loaderBox.textContent = `✕ Connection Refused: ${fault.message}`;
+          console.error("✕ Canvas sync crashed:", fault.message);
+          rowsBox.innerHTML = `<div style="text-align:center; color:var(--staff-red); font-size:0.85rem;">⚠️ System synchronization interrupted.</div>`;
         }
       }
 
-      // --- STAGE 2: SUBMIT TRANSACTION PROCESS AND WRITE COMPLETED TRANSACTION LINE ITEMS ---
-      payForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        if (!resolvedStatementPayloadRow) {
-          alert("✕ Transaction Halted: Core target statement variables have not stabilized completely.");
-          return;
+      function renderSuccessfulSettlementUIState() {
+        if (paymentBtn) {
+          paymentBtn.disabled = true;
+          paymentBtn.textContent = "Payment Completed ✓";
+          paymentBtn.style.background = "var(--emerald)";
         }
+        if (feedbackBanner) {
+          feedbackBanner.style.cssText = "display:block; background:#ecfdf5; color:#047857; border:1px solid rgba(16,185,129,0.1);";
+          feedbackBanner.innerHTML = `<strong>✨ Transaction Finalized Safely!</strong><br>This invoice has been completed. A processing clearance confirmation receipt has been dispatched to your files vault records.`;
+        }
+      }
 
-        const originalBtnLabelText = paySubmitBtn.textContent;
-        paySubmitBtn.disabled = true;
-        paySubmitBtn.textContent = "Clearing Funds across Merchant Nodes...";
+      // --- STAGE 2: EXECUTE INVOICE SETTLE SUBMISSION ACTIONS ---
+      paymentBtn?.addEventListener("click", async () => {
+        paymentBtn.disabled = true;
+        paymentBtn.textContent = "Authorizing Funds Transfer... 💳";
 
         try {
-          console.log("📡 [Checkout Engine] Tokenizing credit parameters over Stripe gateways...");
-          const { token, error: tokenFault } = await stripeInstance.createToken(secureCardElement);
-          if (tokenFault) throw tokenFault;
+          console.log(`💾 [Checkout Engine] Updating database tracking values for: [${activeInvoiceIdToken}]`);
 
-          console.log(`✓ [Checkout Engine] Tokenization verified by backend merchant fields: [${token.id}]`);
-          
-          // Auto-generate standard unique transaction identifier prefixes
-          const uniqueOrderTrackingKey = `F4U-BILL-${Math.floor(100000 + Math.random() * 900000)}`;
+          // Execute a clean record update modifying status metrics field variables from 'Unpaid' over to 'Paid'
+          const { error: updateError } = await client
+            .from('client_invoices')
+            .update({ payment_status: 'Paid' })
+            .eq('invoice_id', activeInvoiceIdToken);
 
-          console.log("📡 [Checkout Engine] Transmitting order row allocation record to public.orders...");
+          if (updateError) throw updateError;
 
-          // 🟢 DIRECT TRANSFERS: Push successful transaction row variables straight into fulfillment grids
-          const { error: ordersTableInsertionError } = await client
-            .from('orders')
-            .insert([
-              {
-                tracking_number: uniqueOrderTrackingKey,
-                company_name: `Billed Entity (Ref: ${resolvedStatementPayloadRow.id})`,
-                service_title: resolvedStatementPayloadRow.line_item_description,
-                plan_tier: 'invoice ad-hoc',
-                total_fee: parseFloat(resolvedStatementPayloadRow.total_amount),
-                status: 'paid', // Triggers processing workflows and pushes delivery email notifications instantly
-                tax_id_status: 'Fulfillment Lane',
-                poa_signed_state: true,
-                user_id: "00000000-0000-0000-0000-000000000000",
-                email: resolvedStatementPayloadRow.client_email,
-                poa_signature_verification_string: `Invoice Token Checkout Handshake ID: ${token.id}`,
-                stripe_payment_id: token.id
-              }
-            ]);
+          renderSuccessfulSettlementUIState();
 
-          if (ordersTableInsertionError) throw ordersTableInsertionError;
-
-          console.log("📡 [Checkout Engine] Order cleared. Deleting finalized statement record cell out of invoices table...");
-          await client.from('invoices').delete().eq('id', resolvedStatementPayloadRow.id);
-
-          // Clear workspace view ports tree entirely and display transaction completion certificates
-          mainPanel.innerHTML = `
-            <div style="text-align: center; padding: 20px 0;">
-              <div style="font-size: 40px; margin-bottom: 16px;">✓</div>
-              <h1 style="font-size: 1.4rem; font-weight: 800; margin: 0 0 8px 0; color: var(--text-dark);">Balance Reconciled Successfully!</h1>
-              <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">Your payment has been successfully cleared across merchant servers. A digital receipt has been routed to your inbox parameters, and tracking tracking row code [${uniqueOrderTrackingKey}] is open inside processing tracks.</p>
-              <div style="font-family: monospace; font-size: 0.78rem; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px dashed var(--border-color); color: var(--text-muted);">Transaction Receipt Key Trace: ${token.id}</div>
-            </div>
-          `;
-
-        } catch (checkoutException) {
-          console.error("✕ Transaction Checkout Pipeline Broken:", checkoutException.message || checkoutException);
-          alert(`✕ Payment Processing Aborted: ${checkoutException.message || "Invalid merchant configurations detected."}`);
-          paySubmitBtn.disabled = false;
-          paySubmitBtn.textContent = originalBtnText;
+         } catch (postFault) {
+          console.error("✕ Checkout execution failed:", postFault.message);
+          paymentBtn.disabled = false;
+          paymentBtn.textContent = "Authorize Payment Settlement";
+          if (feedbackBanner) {
+            feedbackBanner.style.cssText = "display:block; background:#fef2f2; color:#b91c1c; border:1px solid rgba(193,82,84,0.1);";
+            feedbackBanner.textContent = `✕ Payment Refused: ${postFault.message}`;
+          }
         }
       });
 
-      await extractClientInvoiceParameters();
+      await populateClientCheckoutInvoiceCanvas();
     });
   </script>
 </body>

@@ -732,25 +732,27 @@ body, html {
           </p>
           <p id="liveStaffEmailDisplayLog" style="font-size:0.8rem !important; margin:10px 0 0 0 !important; color:var(--staff-red) !important; font-weight:700 !important; text-align: left;"></p>
         </div>
-        <!-- 📋 NEW CARD COMPONENT: LIVE OFFLINE TICKETS METRIC AND ROUTING BOARD PANEL -->
+
+
+<!-- 💰 INVOICE DEPLOYMENT SUMMARY HUB AND OUTSTANDING LEDGER TRACKER -->
 <div class="console-card" style="margin-top: 24px !important; box-sizing: border-box; width: 100% !important;">
   <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 14px; box-sizing: border-box;">
     <div>
-      <span style="font-size: 0.65rem; font-weight: 800; color: var(--staff-red); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">📋 Queue Monitoring Matrix</span>
-      <h2 style="margin: 0 !important; font-size: 1.05rem !important;">Offline Intake Metrics</h2>
+      <span style="font-size: 0.65rem; font-weight: 800; color: var(--staff-red); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">💰 Transaction Studio Terminal</span>
+      <h2 style="margin: 0 !important; font-size: 1.05rem !important;">Corporate Invoicing Hub</h2>
     </div>
     <!-- Live dynamic unread badge counter linking natively to our counter variables scripts -->
-    <span style="background: #fee2e2; color: #b91c1c; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(185,28,28,0.1); white-space: nowrap;">Live Monitoring</span>
+    <span id="adminDashboardUnpaidInvoiceCounterBadge" style="background: #fee2e2; color: #b91c1c; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(185,28,28,0.1); white-space: nowrap;">0 Outstanding</span>
   </div>
 
   <p style="margin: 0 0 16px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; text-align: left;">
-    Review outstanding case parameters and incoming query items submitted by platform clients outside active operations shift windows.
+    Structure itemized billing statements, load service tiers out of the database directory, and review your current unpaid corporate receivables over the air.
   </p>
 
   <!-- QUICK NAVIGATION DISPATCH ACCESS BUTTON COMPONENT LAYER -->
   <div style="width: 100%; display: block; box-sizing: border-box;">
-    <a href="admin-tickets.html" style="background: var(--text-dark); color: #ffffff; text-decoration: none; font-size: 0.82rem; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; height: 38px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;">
-      Review Tickets Board &nbsp; ➔
+    <a href="admin-invoice.html" style="background: var(--text-dark); color: #ffffff; text-decoration: none; font-size: 0.82rem; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; height: 38px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;">
+      Launch Invoice Studio &nbsp; ➔
     </a>
   </div>
 </div>
@@ -939,6 +941,21 @@ body, html {
       await renderSalesLedgerMatrix();
       await initializeLiveCommunicationStream();
     });
+
+    // Locate your existing Promise.all block inside admin-dashboard scripts and expand it:
+const [ordersResponse, ticketsCountResponse, invoicesCountResponse] = await Promise.all([
+  client.from('orders').select('id, company_name, email_address, selected_plan, total_paid_amount, account_created, tracking_number, created_at').order('created_at', { ascending: false }),
+  client.from('after_hours_tickets').select('ticket_id', { count: 'exact', head: true }).eq('status', 'Pending'),
+  // 🟢 NEW STATS HOOK: Query exactly how many records inside client_invoices are currently 'Unpaid'
+  client.from('client_invoices').select('invoice_id', { count: 'exact', head: true }).eq('payment_status', 'Unpaid')
+]);
+
+// Then, add this element assignment update line right below your pendingCard assignment loops:
+const unpaidInvoicesBadge = document.getElementById("adminDashboardUnpaidInvoiceCounterBadge");
+if (unpaidInvoicesBadge) {
+  unpaidInvoicesBadge.textContent = `${invoicesCountResponse.count || 0} Outstanding`;
+}
+
   </script>
 
 </body>
