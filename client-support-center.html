@@ -797,14 +797,13 @@ await autofillUserProfileMetrics();
       }
 
 
- // --- STAGE 3.5: AFTER-HOURS TICKET HANDLER & SUCCESS MARKUP (FIXED FIELDS) ---
+ // --- STAGE 3.5: SUPPORT CENTER BACKUP FORM TIME-SMART OVERRIDE ---
 document.getElementById("structuredSupportTicketForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   
   const submitFormBtn = e.target.querySelector('button[type="submit"]');
   const messageInput = document.getElementById("ticketMessagePayload");
   
-  // Extract locked elements directly out of the verified layout field values on-screen
   const fNameVal = document.getElementById("ticketFirstName")?.value || "";
   const lNameVal = document.getElementById("ticketLastName")?.value || "";
   const phoneVal = document.getElementById("ticketPhoneNumber")?.value || "";
@@ -815,23 +814,52 @@ document.getElementById("structuredSupportTicketForm")?.addEventListener("submit
   submitFormBtn.textContent = "Transmitting File Case...";
 
   try {
-    console.log("🚀 [Ticket Engine] Pushing after-hours payload straight to database table space...");
-    
-    // 🟢 FIXED PAYLOAD: Explicitly maps raw data straight from the form elements
-    const { error: ticketError } = await client
-      .from('after_hours_tickets')
-      .insert([{
-        id: clientActiveUserId,
-        email_address: clientEmail,
-        first_name: fNameVal.trim() || null,
-        last_name: lNameVal.trim() || null,
-        phone_number: phoneVal.trim() || null,
-        ticket_message: messageInput.value.trim()
-      }]);
+    const rightNow = new Date();
+    const currentDay = rightNow.getDay();
+    const currentHour = rightNow.getHours();
+    const isBusinessDay = currentDay >= 1 && currentDay <= 5;
+    const isWorkingHour = currentHour >= 8 && currentHour < 18;
 
-    if (ticketError) throw ticketError;
+    if (isBusinessDay && isWorkingHour) {
+      // ☀️ DAYTIME BYPASS: Deliver directly to chat channels, bypassing tickets database and blocking fake alerts
+      console.log("☀️ [Form Overrider] Active shift window caught. Re-routing input stream into live chat messages...");
+      
+      const { error: chatError } = await client
+        .from('chat_messages')
+        .insert([{
+          id: clientActiveUserId,
+          email_address: clientEmail,
+          first_name: fNameVal.trim() || null,
+          last_name: lNameVal.trim() || null,
+          message_content: messageInput.value.trim(),
+          sender_type: 'client',
+          is_read_by_admin: false,
+          is_read_by_client: true,
+          created_at: rightNow.toISOString()
+        }]);
 
-    // SUCCESS ELEMENT REPLACEMENT
+      if (chatError) throw chatError;
+    } else {
+      // 🌙 AFTER HOURS: Intended path, save to tickets table to trigger background Resend dispatches
+      console.log("🌙 [Form Overrider] Offline shift window confirmed. Processing standard after-hours row insert...");
+      
+      const { error: ticketError } = await client
+        .from('after_hours_tickets')
+        .insert([{
+          id: clientActiveUserId,
+          email_address: clientEmail,
+          first_name: fNameVal.trim() || null,
+          last_name: lNameVal.trim() || null,
+          phone_number: phoneVal.trim() || null,
+          ticket_message: messageInput.value.trim(),
+          status: 'Pending',
+          created_at: rightNow.toISOString()
+        }]);
+
+      if (ticketError) throw ticketError;
+    }
+
+    // Modern Success Element Injection
     const ticketPanelCard = document.getElementById("afterHoursTicketFormPanel");
     if (ticketPanelCard) {
       ticketPanelCard.innerHTML = `
@@ -839,7 +867,7 @@ document.getElementById("structuredSupportTicketForm")?.addEventListener("submit
           <div style="font-size: 3rem; margin-bottom: 16px;">📥</div>
           <h3 style="margin: 0 0 10px 0; font-size: 1.4rem; font-weight: 800; color: #15803d;">Support Ticket Filed Safely</h3>
           <p style="margin: 0 0 24px 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; max-width: 550px; margin-left: auto; margin-right: auto;">
-            Thank you! Your statutory query parameters have been logged securely. An automated backup transcript is routing to <strong>${window.escapeClientChatMarkup(clientEmail)}</strong>, and a core operator will review your account on the next business day.
+            Thank you! Your statutory parameters have been compiled securely. Our operational specialist teams will look over your active account records on the upcoming business day shift window.
           </p>
           <button id="ticketReturnHomeDashboardBtn" class="chat-action-btn" style="margin: 0 auto; width: 220px; height: 42px;">Return to Dashboard Home</button>
         </div>
@@ -851,7 +879,7 @@ document.getElementById("structuredSupportTicketForm")?.addEventListener("submit
     }
 
   } catch (err) {
-    console.error("✕ Ticket layout submission rejected:", err.message);
+    console.error("✕ Form submission failed:", err.message);
     alert(`✕ Transmission Refused: ${err.message}`);
   } finally {
     if (submitFormBtn) {
@@ -860,6 +888,7 @@ document.getElementById("structuredSupportTicketForm")?.addEventListener("submit
     }
   }
 });
+
 
 
 

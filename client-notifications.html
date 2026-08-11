@@ -84,6 +84,45 @@
             Connecting to secure messaging channels...
           </div>
         </div>
+<!-- 📥 INTEGRATED NOTIFICATION REPLY MODAL BACKDROP (BLURRED ACTION HUB) -->
+<div id="clientNotificationReplyModalMask" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; z-index: 99999; align-items: center; justify-content: center; box-sizing: border-box; padding: 20px;">
+  <div style="background: #ffffff; width: 100%; max-width: 650px; padding: 32px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
+    
+    <!-- Header Block -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.25rem;">📤</span>
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 850; color: #0a1f44;">File Ticket Response Desk</h3>
+      </div>
+      <button type="button" onclick="closeNotificationReplyModalEngine()" style="background: none; border: none; font-size: 1.15rem; color: #94a3b8; cursor: pointer; font-weight: 700;">✕</button>
+    </div>
+
+    <!-- Original Context Memo -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; border-left: 3px solid #0a1f44;">
+      <span style="display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Original Administrator Notice</span>
+      <p id="replyModalContextTextString" style="margin: 0; font-size: 0.8rem; color: #334155; font-style: italic; line-height: 1.45;"></p>
+    </div>
+
+    <!-- Reply Form Ingestion Matrix -->
+    <form id="notificationReplySubmissionForm" style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.3px;">Your Response Message Parameters</label>
+        <textarea id="replyModalMessageBodyInput" required style="display: block; width: 100%; height: 140px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.88rem; outline: none; background: #ffffff; resize: none; box-sizing: border-box; line-height: 1.5;" placeholder="Provide additional verification documents tracking details or clarifications required..."></textarea>
+      </div>
+
+      <!-- Action Banner -->
+      <div id="replyModalInlineStatusBanner" style="display: none; font-size: 0.78rem; font-weight: 700; padding: 8px 12px; border-radius: 6px;"></div>
+
+      <!-- Button Deck -->
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 8px;">
+        <button type="button" onclick="closeNotificationReplyModalEngine()" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-weight: 700; font-size: 0.82rem; border-radius: 6px; cursor: pointer; height: 40px; box-sizing: border-box;">Cancel Abort</button>
+        <button type="submit" id="replyModalSubmitActionBtn" style="background: #0f172a; color: #ffffff; border: none; font-weight: 700; font-size: 0.82rem; border-radius: 6px; cursor: pointer; height: 40px; box-sizing: border-box;">Transmit Ticket Reply ➔</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
       </div>
     </div>
 
@@ -105,196 +144,380 @@
   <script src="assets/js/client-footer.js"></script>
 
 
+
+
 <script>
-/**
- * filings4u Platform Architecture
- * Module: client-notifications-center.js (Isolated Clock & Defensive Hydrator)
- */
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
-  // 🟢 THE FIX: Safely binds execution context directly to your layout container element ID
-  function initializeLiveNotificationsClock() {
-    const clockElement = document.getElementById("portal-notifications-clock");
-    if (!clockElement) {
-      console.warn("⚠️ DOM Delay: Clock container [#portal-notifications-clock] not found yet.");
-      return;
-    }
+  // 1. Resolve Global DOM Interface Elements
+  const alertsTargetFeed = document.getElementById("clientNotificationsStreamHistoryTarget");
+  const unreadCounterBadge = document.getElementById("clientUnreadAlertsCounterPill");
+  
+  const replyModalMask = document.getElementById("clientNotificationReplyModalMask");
+  const contextTextElement = document.getElementById("replyModalContextTextString");
+  const replySubmissionForm = document.getElementById("notificationReplySubmissionForm");
+  const submitActionBtn = document.getElementById("replyModalSubmitActionBtn");
+  const modalErrorBanner = document.getElementById("replyModalInlineStatusBanner");
 
-    function updateClockTime() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      
-      hours = hours % 12;
-      hours = hours ? hours : 12; // Normalizes hour '0' directly to '12'
+  let masterNotificationsCacheArray = [];
+  let realtimeNotificationsListenerChannel = null;
 
-      clockElement.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
-    }
+  // Local Scope Verification Variables
+  let clientActiveUserId = null;
+  let clientEmail = null;
+  let activeUserFirstNameCache = "Valued";
+  let activeUserLastNameCache = "Client";
+  let activeUserPhoneCache = "Not Provided";
 
-    updateClockTime();
-    setInterval(updateClockTime, 1000);
-    console.log("✓ [Clock Engine] System runtime loop successfully attached and ticking.");
+  // Escape Markup Sanitizer to Prevent XSS Exploits
+  function escapeNotificationHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;");
   }
 
-
-  // Fire clock instantly on thread start
-  initializeLiveNotificationsClock();
-
-  const streamBox = document.getElementById("clientNotificationsStreamHistoryTarget");
-  const unreadCounter = document.getElementById("clientUnreadAlertsCounterPill");
-  let liveClientNotificationsChannel = null;
-
-  // Establish Supabase Connection Handshake
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client && typeof supabase !== 'undefined') {
-    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
-  }
-  if (!client) {
-    console.error("✕ Supabase connection error: Instance references missing from window context.");
+  // 2. Fetch Master Client Initialization Instances Cleanly
+  const client = window.supabaseInstance || window.supabaseClient;
+  if (!client || typeof client.from !== 'function') {
+    if (alertsTargetFeed) {
+      alertsTargetFeed.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444; font-weight:700; font-size:0.85rem;">✕ Connection Failure: Supabase core configuration layer uninitialized.</div>`;
+    }
     return;
   }
 
-  // Verify Active Login Session Properties
+  // 3. Authenticate Active Workspace Session Tokens
   const { data: { session }, error: sessionError } = await client.auth.getSession();
-  if (sessionError || !session || !session.user) {
-    window.location.href = "portal-login.html";
+  if (sessionError || !session) {
+    window.location.replace("portal-login.html");
     return;
   }
 
-  const userEmail = String(session.user.email).trim().toLowerCase();
-  const userUid = session.user.id;
+  clientActiveUserId = String(session.user.id).trim();
+  clientEmail = String(session.user.email).trim().toLowerCase();
 
-  // 1. QUERY SYSTEM FOR ALERTS MATCHING THE LOGGED-IN CUSTOMER PROFILE
-  async function loadClientNotificationsFeed() {
+  // --- STAGE 1.5: PROFILE PRE-LOAD DATA HOOK METRICS ---
+  async function loadUserMetaDataContext() {
     try {
-      console.log(`📡 [Portal Ingestion] Fetching direct alerts for client: ${userEmail}`);
-      const { data: notices, error: fetchError } = await client
-        .from('portal_notifications')
+      const { data: profile } = await client
+        .from('client_profiles')
+        .select('first_name, last_name, phone_number')
+        .eq('id', clientActiveUserId)
+        .maybeSingle();
+
+      if (profile) {
+        if (profile.first_name) activeUserFirstNameCache = profile.first_name;
+        if (profile.last_name) activeUserLastNameCache = profile.last_name;
+        if (profile.phone_number) activeUserPhoneCache = profile.phone_number;
+      }
+    } catch (e) {
+      console.warn("⚠️ Meta data context scan bypassed:", e.message);
+    }
+  }
+  await loadUserMetaDataContext();
+  // --- STAGE 2: STREAM RETRIEVAL ENGINE FOR ADMINISTRATIVE NOTICES ---
+  window.synchronizeClientAlertsTimelineFeed = async function() {
+    if (!alertsTargetFeed) return;
+
+    try {
+      console.log("📡 [Alerts Engine] Syncing admin notices out of chat table records...");
+      
+      // 🟢 EXPLICIT SCHEMALING: Query messages belonging to this client where sender is the admin desk
+      const { data: records, error } = await client
+        .from('chat_messages')
         .select('*')
-        .or(`email_address.eq.${userEmail},recipient_email.eq.${userEmail},user_id.eq.${userUid}`)
-        .eq('is_archived', false)
+        .eq('id', clientActiveUserId)
+        .eq('sender_type', 'admin')
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
 
-      // Calculate unread badge indices metrics dynamically
-      const totalUnreadCount = notices ? notices.filter(n => !n.is_read).length : 0;
-      if (unreadCounter) {
-        unreadCounter.textContent = `${totalUnreadCount} Unread Alerts`;
-        unreadCounter.style.background = totalUnreadCount > 0 ? '#fee2e2' : '#e2e8f0';
-        unreadCounter.style.color = totalUnreadCount > 0 ? '#b91c1c' : '#475569';
+      masterNotificationsCacheArray = records || [];
+
+      // Calculate unread items count dynamically using is_read_by_client column parameter flags
+      const unreadItems = masterNotificationsCacheArray.filter(m => m.is_read_by_client === false);
+      if (unreadCounterBadge) {
+        unreadCounterBadge.textContent = `${unreadItems.length} Unread Alerts`;
+        unreadCounterBadge.style.background = unreadItems.length > 0 ? "#fee2e2" : "#e2e8f0";
+        unreadCounterBadge.style.color = unreadItems.length > 0 ? "#b91c1c" : "#475569";
       }
 
-      if (!notices || notices.length === 0) {
-        streamBox.innerHTML = `
-          <div style="text-align:center; color:var(--text-muted); font-size:0.875rem; padding:60px 12px; font-style:italic;">
-            You do not have any account alerts or process messages logged currently.
-          </div>`;
+      if (masterNotificationsCacheArray.length === 0) {
+        alertsTargetFeed.innerHTML = `
+          <div style="text-align:center; color:#94a3b8; font-size:0.85rem; padding:48px 12px; font-style:italic;">
+            No formal account alerts or administrative notifications documented on this ledger card.
+          </div>
+        `;
         return;
       }
 
-      streamBox.innerHTML = "";
-      notices.forEach(notice => {
-        const rowBox = document.createElement("div");
-        const wasRead = notice.is_read === true;
+      alertsTargetFeed.innerHTML = "";
 
-        rowBox.style.cssText = `padding: 18px; border: 1px solid ${wasRead ? "var(--border-color)" : "#cbd5e1"}; background: ${wasRead ? "#ffffff" : "rgba(16,185,129,0.01)"}; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.01); border-left: 4px solid ${wasRead ? "#94a3b8" : "var(--emerald)"}; position: relative; transition: all 0.2s; box-sizing: border-box; width: 100%;`;
+      // Render notifications to account feed container layout grids
+      masterNotificationsCacheArray.forEach((msg, idx) => {
+        const isUnread = msg.is_read_by_client === false;
+        const readableDate = msg.created_at ? new Date(msg.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Recent';
         
-        rowBox.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; width:100%;">
-            <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                ${!wasRead ? `<span style="display:inline-block; width:6px; height:6px; background:var(--emerald); border-radius:50%;"></span>` : ""}
-                <strong style="font-size:0.925rem; color:var(--text-dark);">${escapeClientAlertHtml(notice.title)}</strong>
-              </div>
-              <p style="margin:4px 0 0 0; font-size:0.825rem; color:var(--text-muted); line-height:1.45; white-space:pre-wrap;">${escapeClientAlertHtml(notice.message)}</p>
-            </div>
-            
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px; justify-content:space-between; height:100%; min-width:90px;">
-              <span style="font-size:10px; color:var(--text-muted); font-family:monospace;">${new Date(notice.created_at).toLocaleDateString([], {month:'short', day:'numeric'})} ${new Date(notice.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-              ${!wasRead ? `<button type="button" onclick="acknowledgeSingleClientAlertRow('${notice.id}')" style="background:var(--text-dark); color:#ffffff; border:none; padding:4px 10px; font-size:10px; font-weight:700; border-radius:4px; cursor:pointer;">Mark Read</button>` : ""}
+        const rowWrapper = document.createElement("div");
+        rowWrapper.style.cssText = `
+          padding: 16px 20px;
+          border: 1px solid ${isUnread ? "rgba(16, 185, 129, 0.25)" : "#e2e8f0"};
+          background: ${isUnread ? "rgba(16, 185, 129, 0.02)" : "#ffffff"};
+          border-radius: 10px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          cursor: pointer;
+          transition: transform 0.15s, border-color 0.15s;
+          position: relative;
+          border-left: 4px solid ${isUnread ? "#10b981" : "#cbd5e1"};
+        `;
+
+        rowWrapper.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:12px;">
+            <span style="font-size:0.68rem; font-weight:800; color:#64748b; font-family:monospace;">✉️ MESSAGE REFERENCE: #${String(msg.message_id).substring(0,8).toUpperCase()}</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${isUnread ? '<span style="background:#ef4444; color:white; font-size:9px; font-weight:800; padding:1px 6px; border-radius:4px; text-transform:uppercase;">New</span>' : ''}
+              <span style="font-size:0.7rem; color:#94a3b8; font-weight:500;">${readableDate}</span>
             </div>
           </div>
+          <p style="margin:4px 0; font-size:0.88rem; color:#1e293b; line-height:1.5; white-space:pre-wrap;">${escapeNotificationHtml(msg.message_content)}</p>
+          <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:4px; padding-top:6px; border-top:1px solid #f1f5f9;">
+            <span style="font-size:0.75rem; font-weight:700; color:#0f172a; display:inline-flex; align-items:center; gap:4px;">Reply & Open Support Case File ➔</span>
+          </div>
         `;
-        streamBox.appendChild(rowBox);
+
+        // Bind interactive element actions
+        rowWrapper.addEventListener("click", () => window.openNotificationReplyModalEngine(msg));
+        alertsTargetFeed.appendChild(rowWrapper);
       });
 
-    } catch (fault) {
-      console.error("✕ Customer notification feed compilation failure:", fault);
-    }
-  }
-
-  // 2. ACKNOWLEDGE AN INDIVIDUAL ACCOUNT ALERT NOTIFICATION ROW
-  window.acknowledgeSingleClientAlertRow = async function(notificationId) {
-    if (!notificationId) return;
-    try {
-      const { error } = await client
-        .from('portal_notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-      await loadClientNotificationsFeed();
     } catch (err) {
-      console.error("✕ Failed to mark single notification row as read:", err);
+      console.error("✕ Alerts ingestion pipeline failed:", err.message);
+    }
+  };
+  // --- STAGE 3: INTERACTIVE REPLY MODAL CONTROL CONTROLLERS ---
+  window.openNotificationReplyModalEngine = function(msgObject) {
+    if (!replyModalMask || !contextTextElement) return;
+
+    // Reset old form input values and error display overlays cleanly
+    document.getElementById("replyModalMessageBodyInput").value = "";
+    if (modalErrorBanner) modalErrorBanner.style.display = "none";
+
+    // Bind original administrator message trace elements to context string target
+    contextTextElement.textContent = msgObject.message_content;
+    
+    // Store current tracking reference IDs onto form element canvas node caches
+    replySubmissionForm.dataset.targetMessageId = msgObject.message_id;
+    replySubmissionForm.dataset.originalContent = msgObject.message_content;
+
+    // Slide open the blurred action overlay view panel smoothly
+    replyModalMask.style.display = "flex";
+    document.body.style.overflow = "hidden"; // Turn off main window scroll chains
+
+    // Trigger update to clear the unread badge flag for this specific row inside Supabase
+    if (msgObject.is_read_by_client === false) {
+      window.markSingleAlertAsReadLocally(msgObject.message_id);
     }
   };
 
-  // 3. BULK ACKNOWLEDGE MARK ALL ACCOUNT ALERTS AS READ
+  window.closeNotificationReplyModalEngine = function() {
+    if (replyModalMask) {
+      replyModalMask.style.display = "none";
+      document.body.style.overflow = ""; // Re-enable background layout canvas scrolls
+    }
+  };
+
+   // --- STAGE 4: TIME-AWARE INTELLIGENT DISPATCH MATRIX (FIXED ROUTING) ---
+  if (replySubmissionForm) {
+    replySubmissionForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const textBodyInput = document.getElementById("replyModalMessageBodyInput");
+      if (!textBodyInput || !textBodyInput.value.trim()) return;
+
+      if (submitActionBtn) {
+        submitActionBtn.disabled = true;
+        submitActionBtn.textContent = "Transmitting Reply Content... 📡";
+      }
+      if (modalErrorBanner) modalErrorBanner.style.display = "none";
+
+      try {
+        const originalAdminText = replySubmissionForm.dataset.originalContent || "";
+        const userReplyText = textBodyInput.value.trim();
+        const compiledTextPayload = `[REPLY TO ADMINISTRATOR NOTICE]\n-----------------------------\nOriginal Notice:\n"${originalAdminText}"\n-----------------------------\nClient Response:\n${userReplyText}`;
+
+        // 🟢 BUSINESS HOURS CALCULATION: Check if current time is Mon-Fri, 8 AM - 6 PM
+        const rightNow = new Date();
+        const currentDay = rightNow.getDay();
+        const currentHour = rightNow.getHours();
+        const isBusinessDay = currentDay >= 1 && currentDay <= 5;
+        const isWorkingHour = currentHour >= 8 && currentHour < 18;
+
+        if (isBusinessDay && isWorkingHour) {
+          // ☀️ DAYTIME: Route directly into live chat message channels stream
+          console.log("☀️ [Routing Matrix] Daytime window confirmed. Piping response directly into public.chat_messages...");
+          
+          const { error: chatError } = await client
+            .from('chat_messages')
+            .insert([{
+              id: clientActiveUserId,
+              email_address: clientEmail,
+              first_name: activeUserFirstNameCache || null,
+              last_name: activeUserLastNameCache || null,
+              message_content: compiledTextPayload,
+              sender_type: 'client',
+              is_read_by_admin: false,
+              is_read_by_client: true,
+              created_at: rightNow.toISOString()
+            }]);
+
+          if (chatError) throw chatError;
+          
+          if (modalErrorBanner) {
+            modalErrorBanner.textContent = "✓ Success! Message delivered straight to active live support desk workspace.";
+            modalErrorBanner.style.cssText = "display: block; background: #ecfdf5; color: #047857; font-weight: 700; padding: 8px 12px; border-radius: 6px;";
+          }
+        } else {
+          // 🌙 AFTER HOURS: Route straight to after-hours database tables (Triggers Webhook & Resend Emails)
+          console.log("🌙 [Routing Matrix] Offline hours window caught. Piping response into public.after_hours_tickets...");
+          
+          const { error: ticketError } = await client
+            .from('after_hours_tickets')
+            .insert([{
+              id: clientActiveUserId,
+              email_address: clientEmail,
+              first_name: activeUserFirstNameCache || null,
+              last_name: activeUserLastNameCache || null,
+              phone_number: activeUserPhoneCache || null,
+              ticket_message: compiledTextPayload,
+              status: 'Pending',
+              created_at: rightNow.toISOString()
+            }]);
+
+          if (ticketError) throw ticketError;
+
+          if (modalErrorBanner) {
+            modalErrorBanner.textContent = "✓ Success! Ticket response compiled and dispatched to admin after-hours desk.";
+            modalErrorBanner.style.cssText = "display: block; background: #fffbeb; color: #b45309; font-weight: 700; padding: 8px 12px; border-radius: 6px;";
+          }
+        }
+
+        setTimeout(() => {
+          window.closeNotificationReplyModalEngine();
+          window.synchronizeClientAlertsTimelineFeed();
+        }, 1500);
+
+      } catch (fault) {
+        console.error("✕ Reply routing rejected:", fault.message);
+        if (modalErrorBanner) {
+          modalErrorBanner.textContent = `✕ Transmission Failure: ${fault.message}`;
+          modalErrorBanner.style.cssText = "display: block; background: #fef2f2; color: #b91c1c; font-weight: 700; padding: 8px 12px; border-radius: 6px;";
+        }
+      } finally {
+        if (submitActionBtn) {
+          submitActionBtn.disabled = false;
+          submitActionBtn.textContent = "Transmit Ticket Reply ➔";
+        }
+      }
+    });
+  }
+
+  // --- STAGE 5: READ MANAGEMENT UPDATE STATE CONTROL DRIVERS ---
+  window.markSingleAlertAsReadLocally = async function(targetMessageIdKey) {
+    if (!targetMessageIdKey) return;
+    try {
+      // 🟢 EXPLICIT SCHEMALING: Updates single notification read state flag parameters natively
+      await client
+        .from('chat_messages')
+        .update({ is_read_by_client: true })
+        .eq('message_id', targetMessageIdKey);
+
+      // Instantly optimize local collection matrices without requiring a hard network query refresh
+      masterNotificationsCacheArray = masterNotificationsCacheArray.map(item => {
+        if (item.message_id === targetMessageIdKey) {
+          return { ...item, is_read_by_client: true };
+        }
+        return item;
+      });
+
+      // Recalculate unread badge items counts quickly
+      const unreadItems = masterNotificationsCacheArray.filter(m => m.is_read_by_client === false);
+      if (unreadCounterBadge) {
+        unreadCounterBadge.textContent = `${unreadItems.length} Unread Alerts`;
+        unreadCounterBadge.style.background = unreadItems.length > 0 ? "#fee2e2" : "#e2e8f0";
+        unreadCounterBadge.style.color = unreadItems.length > 0 ? "#b91c1c" : "#475569";
+      }
+    } catch (e) {
+      console.warn("✕ Single update task delayed:", e.message);
+    }
+  };
+
   window.markAllClientAlertsAsReadEngine = async function() {
+    if (masterNotificationsCacheArray.length === 0) return;
     try {
+      console.log("💾 [Alerts Engine] Pushing bulk read updates out to table rows...");
+      
+      // 🟢 EXPLICIT SCHEMALING: Bulk updates all unread admin messages belonging to this client identifier
       const { error } = await client
-        .from('portal_notifications')
-        .update({ is_read: true })
-        .or(`email_address.eq.${userEmail},recipient_email.eq.${userEmail}`)
-        .eq('is_read', false);
+        .from('chat_messages')
+        .update({ is_read_by_client: true })
+        .eq('id', clientActiveUserId)
+        .eq('sender_type', 'admin')
+        .eq('is_read_by_client', false);
 
       if (error) throw error;
-      await loadClientNotificationsFeed();
-    } catch (err) {
-      console.error("✕ Bulk client notification tracking update rejected:", err);
+
+      await window.synchronizeClientAlertsTimelineFeed();
+    } catch (fault) {
+      console.error("✕ Bulk update operation rejected:", fault.message);
     }
   };
 
-  function escapeClientAlertHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
+  // --- STAGE 6: REAL-TIME POSTGRES LIVE PIPELINE SYNCHRONIZER ---
+  async function bindLiveNotificationsRealtimeSockets() {
+    if (realtimeNotificationsListenerChannel) realtimeNotificationsListenerChannel.unsubscribe();
 
-  // 4. BIND LIVE BROADCAST LISTENERS FOR INSTANT OVER-THE-AIR RE-RENDERS
-  async function bindLiveClientNotificationsRealtimeFeed() {
-    if (liveClientNotificationsChannel) liveClientNotificationsChannel.unsubscribe();
+    console.log(`📡 [Alerts Engine] Binding real-time websocket listener for: [${clientEmail}]`);
 
-    liveClientNotificationsChannel = client
-      .channel(`client-portal-notifications-live-stream-${userUid}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'portal_notifications'
-      }, async payload => {
-        console.log("✓ [Client Alerts Hub] Intercepted incoming over-the-air notification matrix update:", payload);
+    realtimeNotificationsListenerChannel = client
+      .channel(`client-realtime-notifications-stream-${clientEmail}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `email_address=eq.${clientEmail}`
+      }, async (payload) => {
+        console.log("🔔 [Alerts Sockets] Inbound row insertion activity intercepted:", payload);
         
-        const isTargetUser = payload.new && (
-          String(payload.new.email_address).toLowerCase() === userEmail ||
-          String(payload.new.recipient_email).toLowerCase() === userEmail ||
-          payload.new.user_id === userUid
-        );
-
-        if (isTargetUser || payload.eventType === 'DELETE') {
-          await loadClientNotificationsFeed();
+        // Trigger a fresh feed rehydration loop only if the incoming record is an admin notice response
+        if (payload.new && String(payload.new.sender_type).toLowerCase() === 'admin') {
+          await window.synchronizeClientAlertsTimelineFeed();
         }
       })
       .subscribe();
   }
 
-  // Execute database hydrations sequentially
-  await loadClientNotificationsFeed();
-  await bindLiveClientNotificationsRealtimeFeed();
+  // --- STAGE 7: DIGITAL PORTAL LIVE SYSTEMS CLOCK RUNTIME ---
+  function runNotificationsSystemClock() {
+    const clockEl = document.getElementById("portal-notifications-clock");
+    if (clockEl) {
+      clockEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+  }
+  setInterval(runNotificationsSystemClock, 1000);
+  runNotificationsSystemClock();
+
+  // 🟢 CRITICAL MOUNT SEQUENCE INITIALIZATION
+  await window.synchronizeClientAlertsTimelineFeed();
+  await bindLiveNotificationsRealtimeSockets();
 });
 </script>
-
 </body>
 </html>
