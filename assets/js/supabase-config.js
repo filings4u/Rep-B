@@ -531,3 +531,36 @@ window.Filings4uSyncEngine = {
     console.log("✓ [Global Clock Engine] High-priority ticking thread successfully attached to layout node.");
   });
 })();
+
+/**
+ * Global Enterprise Logging Pipeline Hook
+ * Fires events directly out to the serverless general_notifications engine
+ */
+window.logPlatformActivityEvent = async function(category, action, description, meta = {}) {
+  try {
+    const client = window.supabaseInstance || window.supabaseClient;
+    if (!client) return;
+
+    const { data: { session } } = await client.auth.getSession();
+    const email = session?.user?.email || "anonymous-visitor@filings4u.com";
+    const role = (email.toLowerCase().endsWith('@filings4u.com')) ? "admin" : "client";
+
+    // Asynchronously dispatch the packet without blocking active page rendering loops
+    fetch('https://supabase.co', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actor_email: email,
+        actor_role: role,
+        event_category: category,
+        event_action: action,
+        event_description: description,
+        payload_metadata: meta,
+        ip_address: "127.0.0.1" // Fallback local router address mapping hook
+      })
+    }).catch(err => console.warn("Logging transmission packet delayed:", err));
+
+  } catch (e) {
+    console.error("✕ Platform Activity Event compilation aborted:", e.message);
+  }
+};
