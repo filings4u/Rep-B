@@ -1,266 +1,239 @@
-// ============================================================================
-// 📁 BLOCK 1: Dynamic Interaction Inactivity Engine & Route Guard
-// ============================================================================
+/**
+ * filings4u Platform Architecture
+ * Module: supabase-config.js (Unified Production-Grade Route Guard Matrix)
+ * Mandatory Placement Requirement: Must be loaded inside the <head> tag across all views.
+ */
 (function() {
   "use strict";
 
+  // ============================================================================
+  // 🔒 STAGE 0: COLD FAST SYNCHRONOUS HEAD PRE-RENDER FIREWALL (BLOCKS FLASHING)
+  // ============================================================================
+  const STORAGE_HASH = "lrbimrlbskjweynxlgas"; 
+  const CORE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
+  const SUPABASE_URL = `https://${STORAGE_HASH}.supabase.co`;
+  const LOCAL_SESSION_KEY = `sb-${STORAGE_HASH}-auth-token`;
+
+  const currentPath = window.location.pathname.toLowerCase();
+  const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
+  const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
+  const isExemptPage = currentPath.includes('login') || currentPath.includes('signin') || currentPath.includes('update-password');
+
+  // Inject a secure background blur element to catch layout painting artifacts early
+  window.injectSecureBlurInterceptionOverlay = function() {
+    if (document.getElementById("securePerimeterBlurMaskOverlayNode")) return;
+    const blur = document.createElement("div");
+    blur.id = "securePerimeterBlurMaskOverlayNode";
+    blur.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:#ffffff; backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px); z-index:999999; display:flex; align-items:center; justify-content:center; font-family:sans-serif; color:#0f172a; font-weight:700; font-size:1.1rem;";
+    blur.innerHTML = "<div>🔒 Secure Perimeter Active. Verification In Progress...</div>";
+    document.documentElement.appendChild(blur);
+  };
+
+  if (!isExemptPage && (isAdminPage || isClientPage)) {
+    const rawSessionJson = localStorage.getItem(LOCAL_SESSION_KEY);
+    let hasValidTokenCache = false;
+    let cachedUserEmail = "";
+
+    if (rawSessionJson) {
+      try {
+        const sessionData = JSON.parse(rawSessionJson);
+        if (sessionData && sessionData.access_token && sessionData.user) {
+          hasValidTokenCache = true;
+          cachedUserEmail = String(sessionData.user.email || "").toLowerCase().trim();
+        }
+      } catch (e) {
+        console.error("✕ Local storage validation parse error:", e);
+      }
+    }
+
+    // Fast synchronous bounce to block page rendering completely if tokens are missing
+    if (!hasValidTokenCache) {
+      document.documentElement.style.display = "none"; // Forces immediate blank canvas
+      window.location.replace(isAdminPage ? "admin-login.html" : "portal-login.html");
+      throw new Error("🔒 Authorization Halted: Session context token unassigned.");
+    }
+
+    // Fast local domain guard validation check
+    if (isAdminPage && !cachedUserEmail.endsWith('@filings4u.com')) {
+      document.documentElement.style.display = "none";
+      window.location.replace("admin-login.html");
+      throw new Error("🛡️ Authorization Halted: Insufficient credentials domain footprint.");
+    }
+  }
+
+  // ============================================================================
+  // 📁 STAGE 1: DYNAMIC WORKSPACE INTERACTION INACTIVITY ENGINE 
+  // ============================================================================
   let activityTimerReference = null;
 
-  // PART 1: Core Interaction Activity Monitor with Dynamic Timing Matrix
   window.initializeTabInactivityMonitorEngine = function(clientInstance) {
-    const currentPath = window.location.pathname.toLowerCase();
+    if (isExemptPage || (!isAdminPage && !isClientPage)) return;
 
-    // Ignore monitoring entirely on public authentication screens
-    if (currentPath.includes('login') || currentPath.includes('signin') || currentPath.includes('update-password')) return;
-
-    const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
-    const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
-    if (!isAdminPage && !isClientPage) return;
-
-    // 🟢 DYNAMIC LIMIT SETTING: 15 minutes for admins, 5 minutes for customers
     const INACTIVITY_LIMIT_MS = isAdminPage ? (15 * 60 * 1000) : (5 * 60 * 1000);
     const logLabel = isAdminPage ? "15-Min Admin Limit" : "5-Min Customer Limit";
-
     console.log(`⏱️ [Inactivity Engine] Monitoring user workspace interactions (${logLabel})...`);
 
-    //  Central clearance mechanism routing users out on threshold breach
     async function executeSecureInactivityLogout() {
-      console.warn("🚨 [Inactivity Engine] Inactivity threshold exceeded. Purging credentials...");
-
-      if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
-        window.injectSecureBlurInterceptionOverlay();
-      }
-
+      console.warn("Palisade Warning: Inactivity threshold exceeded. Purging credentials...");
+      window.injectSecureBlurInterceptionOverlay();
+      
       try {
         await clientInstance.auth.signOut();
       } catch (logoutFault) {
         console.error("[Inactivity Engine Error] Clean signout blocked:", logoutFault);
       }
 
-      // Sweep temporary browser storage contexts cleanly
       localStorage.removeItem("f4u_stripe_client_secret");
       localStorage.removeItem("f4u_portal_login_strikes");
       localStorage.removeItem("f4u_active_tracking_token");
 
-      // Dynamic routing to their respective login portals
-      if (isAdminPage) {
-        window.location.replace("admin-login.html");
-      } else {
-        window.location.replace("portal-login.html");
-      }
+      window.location.replace(isAdminPage ? "admin-login.html" : "portal-login.html");
     }
 
-    // 🟢 TIMER RESET HANDSHAKE: Keeps session active on clicks, scrolls, or keypresses
     function resetInactivityCountdown() {
-      if (activityTimerReference) {
-        clearTimeout(activityTimerReference);
-      }
+      if (activityTimerReference) clearTimeout(activityTimerReference);
       activityTimerReference = setTimeout(executeSecureInactivityLogout, INACTIVITY_LIMIT_MS);
     }
 
-    // Standard high-fidelity interaction event triggers
-    const activeSensoryEvents = [
-      "mousedown",
-      "mousemove",
-      "keypress",
-      "scroll",
-      "touchstart",
-      "click"
-    ];
-
-    // Attach interaction surveillance triggers safely to the window frame
+    const activeSensoryEvents = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"];
     activeSensoryEvents.forEach(eventName => {
       window.addEventListener(eventName, resetInactivityCountdown, { passive: true });
     });
 
-    // Run the initial countdown sequence immediately on page activation
     resetInactivityCountdown();
   };
 
-
-// PART 2: Client Page Gate Lock Down Router (CORRECTED)
-window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
-  const currentPath = window.location.pathname.toLowerCase();
-  
-  if (currentPath.includes('update-password')) {
-    console.log("🔑 [Route Perimeter Guard] Password update page bypassed to preserve token handshakes.");
-    return;
-  }
-  if (currentPath.includes('login') || currentPath.includes('signin')) {
-    console.log("🔓 [Route Perimeter Guard] Login view context detected. Perimeter checks disabled.");
-    return;
-  }
-
-  const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
-  const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
-  if (!isAdminPage && !isClientPage) return;
-
-  if (typeof window.initializeTabInactivityMonitorEngine === "function") {
-    window.initializeTabInactivityMonitorEngine(clientInstance);
-  }
-
-  const activeStoredToken = localStorage.getItem("f4u_active_tracking_token");
-  if (activeStoredToken === "F4U-UNKNOWN" || activeStoredToken === "UNKNOWN") {
-    localStorage.removeItem("f4u_active_tracking_token");
-  }
-
-  console.log("🛡️ [Route Perimeter Guard] Assessing session token authenticity...");
-  const { data: { session } } = await clientInstance.auth.getSession();
-  const activeUser = session?.user;
-
-  // 🟢 SECURE AREA LOCK DOWN EJECTION
-  if (!activeUser) {
-    console.warn("🚨 Access Denied: Unauthenticated visitor blocked. Redirecting to appropriate security gate...");
-    
-    if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
-      window.injectSecureBlurInterceptionOverlay();
-    }
-    
-    setTimeout(() => {
-      // 🟢 FIXED REDIRECTION: Route users to their respective login gates dynamically
-      if (isAdminPage) {
-        window.location.replace("admin-login.html");
-      } else {
-        window.location.replace("portal-login.html");
-      }
-    }, 1500);
-    return;
-  }
-
-  // Admin email domain verification checks
-  if (isAdminPage) {
-    const emailString = (activeUser.email || "").toLowerCase();
-    
-    // 🟢 FIXED SECURITY BOUNDARY: Rejects non-corporate email domains on admin layouts
-    if (!emailString.endsWith('@filings4u.com')) {
-      console.warn("🔒 Security Alert: Non-admin profile detected on admin route. Ejecting...");
-      
-      if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
-        window.injectSecureBlurInterceptionOverlay();
-      }
-      
-      await clientInstance.auth.signOut();
-      
-      setTimeout(() => {
-        window.location.replace("admin-login.html");
-      }, 1500);
-    }
-  }
-};
-})();
-
-// ============================================================================
-// FRONTEND ROUTE PERIMETER GUARD ENGINE (PART 2 OF 2 - INTEGRATED INITIALIZATION)
-// ============================================================================
-window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
-  const currentPath = window.location.pathname.toLowerCase();
-
-  // 🛡️ CRITICAL SAFETIES: If they are resetting their password, immediately break away!
-  // This blocks the global router from pre-emptively eating the hash token and causing JWT errors.
-  if (currentPath.includes('update-password')) {
-    console.log("🔑 [Route Perimeter Guard] Password update page bypassed to preserve token handshakes.");
-    return;
-  }
-  if (currentPath.includes('login') || currentPath.includes('signin')) {
-    console.log("🔓 [Route Perimeter Guard] Login view context detected. Perimeter checks disabled.");
-    return;
-  }
-
-  const isAdminPage = currentPath.includes('admin-') || currentPath.includes('/admin');
-  const isClientPage = currentPath.includes('client-') || currentPath.includes('/client');
-  if (!isAdminPage && !isClientPage) return;
-
-  if (typeof window.initializeTabInactivityMonitorEngine === "function") {
-    window.initializeTabInactivityMonitorEngine(clientInstance);
-  }
-
-  const activeStoredToken = localStorage.getItem("f4u_active_tracking_token");
-  if (activeStoredToken === "F4U-UNKNOWN" || activeStoredToken === "UNKNOWN") {
-    localStorage.removeItem("f4u_active_tracking_token");
-  }
-
-  console.log("🛡️ [Route Perimeter Guard] Assessing session token authenticity...");
-  const { data: { session } } = await clientInstance.auth.getSession();
-  const activeUser = session?.user;
-
-  if (!activeUser) {
-    if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
-      window.injectSecureBlurInterceptionOverlay();
-    }
-    setTimeout(() => {
-      // 🟢 FIXED REDIRECTION: Sends users back to their respective, explicit login files instead of the home landing page
-      if (isAdminPage) {
-        window.location.replace("admin-login.html");
-      } else {
-        window.location.replace("portal-login.html");
-      }
-    }, 1500);
-    return;
-  }
-
-  if (isAdminPage) {
-    const emailString = (activeUser.email || "").toLowerCase();
-    if (!emailString.endsWith('@filings4u.com')) {
-      console.warn("🔒 Security Alert: Non-admin profile detected on admin route. Ejecting...");
-      if (typeof window.injectSecureBlurInterceptionOverlay === "function") {
-        window.injectSecureBlurInterceptionOverlay();
-      }
-      await clientInstance.auth.signOut();
-      setTimeout(() => {
-        // 🟢 FIXED EJECTION: Directs unauthorized profiles instantly to your admin gate
-        window.location.replace("admin-login.html");
-      }, 1500);
-    }
-  }
-};
-
-// ============================================================================
-// 📁 BLOCK 2: Authenticated Form Execution & 2-Strike Security Handler (CORRECTED)
-// ============================================================================
-window.executePortalProfileAuthentication = async function(email, password, clientInstance) {
-  const errorAlert = document.getElementById("login-error-display");
-  
-  try {
-    console.log("📡 [Auth Flow] Transmitting credentials packet securely...");
-    const { data, error } = await clientInstance.auth.signInWithPassword({ email, password });
-    
-    if (error) {
-      if (error.message.toLowerCase().includes("invalid login credentials") || error.status === 400) {
-        window.handleFailedLoginAttemptTracking();
-      }
-      if (errorAlert) errorAlert.innerText = error.message;
+  // ============================================================================
+  // 🛡️ STAGE 2: ASYNCHRONOUS BACKEND NETWORK ROUTE GUARDIAN MATRIX
+  // ============================================================================
+  window.enforceSynchronousRoutePerimeterGuard = async function(clientInstance) {
+    if (currentPath.includes('update-password')) {
+      console.log("🔑 [Route Perimeter Guard] Password update page bypassed to preserve token handshakes.");
       return;
     }
+    if (currentPath.includes('login') || currentPath.includes('signin')) {
+      console.log("🔓 [Route Perimeter Guard] Login view context detected. Perimeter checks disabled.");
+      return;
+    }
+    if (!isAdminPage && !isClientPage) return;
 
-    window.clearLoginStrikesOnSuccess();
-
-    // 🟢 DYNAMIC GATE ROUTER & INACTIVITY TIMEOUT TRIGGER
-    const activeUser = data.user;
-    const emailString = (activeUser.email || "").toLowerCase();
-    const currentPath = window.location.pathname.toLowerCase();
-
-    // Determine role by email domain or matching page context
-    const isAdmin = emailString.endsWith('@filings4u.com') || currentPath.includes('admin');
-
-    // Trigger the Tab Inactivity Monitor Engine instantly on success
     if (typeof window.initializeTabInactivityMonitorEngine === "function") {
       window.initializeTabInactivityMonitorEngine(clientInstance);
     }
 
-    // 🟢 Route users explicitly to their corresponding secure workspaces
-    if (isAdmin) {
-      console.log("🔓 [Auth Flow] Admin profile validated. Routing to internal admin console...");
-      window.location.replace("admin-dashboard.html");
-    } else {
-      console.log("🔓 [Auth Flow] Customer profile validated. Routing to client workspace...");
-      window.location.replace("client-dashboard.html");
+    const activeStoredToken = localStorage.getItem("f4u_active_tracking_token");
+    if (activeStoredToken === "F4U-UNKNOWN" || activeStoredToken === "UNKNOWN") {
+      localStorage.removeItem("f4u_active_tracking_token");
     }
 
-  } catch (unexpectedException) {
-    console.error("✕ Critical Authentication Routine Fault Caught: ", unexpectedException.message);
-    if (errorAlert) errorAlert.innerText = "An unexpected processing system exception halted sign in.";
+    console.log("Aegis Status: Assessing session token authenticity...");
+    const { data: { session } } = await clientInstance.auth.getSession();
+    const activeUser = session?.user;
+
+    if (!activeUser) {
+      window.injectSecureBlurInterceptionOverlay();
+      setTimeout(() => {
+        window.location.replace(isAdminPage ? "admin-login.html" : "portal-login.html");
+      }, 1500);
+      return;
+    }
+
+    if (isAdminPage) {
+      const emailString = (activeUser.email || "").toLowerCase();
+      if (!emailString.endsWith('@filings4u.com')) {
+        console.warn("Security Alert: Non-admin profile detected on admin route. Ejecting...");
+        window.injectSecureBlurInterceptionOverlay();
+        await clientInstance.auth.signOut();
+        setTimeout(() => {
+          window.location.replace("admin-login.html");
+        }, 1500);
+      }
+    }
+  };
+
+  // ============================================================================
+  // ⚙️ STAGE 3: CORE CLIENT GLOBAL SCOPE INITIALIZATION HANDSHAKE
+  // ============================================================================
+  if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, CORE_ANON_KEY);
+    window.supabaseInstance = window.supabaseClient;
+
+    // Attach lifecycle watchers immediately upon document DOM mount
+    document.addEventListener("DOMContentLoaded", async () => {
+      await window.enforceSynchronousRoutePerimeterGuard(window.supabaseClient);
+    });
+  } else {
+    // Re-verify tracking loops on content build if library script loads asynchronously
+    document.addEventListener("DOMContentLoaded", async () => {
+      const asyncSupabase = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+      if (asyncSupabase && typeof asyncSupabase.createClient === 'function') {
+        window.supabaseClient = asyncSupabase.createClient(SUPABASE_URL, CORE_ANON_KEY);
+        window.supabaseInstance = window.supabaseClient;
+        await window.enforceSynchronousRoutePerimeterGuard(window.supabaseClient);
+      }
+    });
   }
-};
+
+})();
+
+  // ============================================================================
+  // 📁 STAGE 4: AUTHENTICATED FORM EXECUTION & 2-STRIKE SECURITY HANDLER
+  // ============================================================================
+  window.executePortalProfileAuthentication = async function(email, password, clientInstance) {
+    const errorAlert = document.getElementById("login-error-display");
+    
+    try {
+      console.log("📡 [Auth Flow] Transmitting credentials packet securely...");
+      
+      const { data, error } = await clientInstance.auth.signInWithPassword({ 
+        email: String(email).trim().toLowerCase(), 
+        password: password 
+      });
+
+      if (error) {
+        if (error.message.toLowerCase().includes("invalid login credentials") || error.status === 400) {
+          if (typeof window.handleFailedLoginAttemptTracking === "function") {
+            window.handleFailedLoginAttemptTracking();
+          }
+        }
+        if (errorAlert) errorAlert.innerText = error.message;
+        return;
+      }
+
+      if (typeof window.clearLoginStrikesOnSuccess === "function") {
+        window.clearLoginStrikesOnSuccess();
+      }
+
+      // 🟢 DYNAMIC GATE ROUTER & INACTIVITY TIMEOUT TRIGGER
+      const activeUser = data.user;
+      const emailString = (activeUser.email || "").toLowerCase();
+      const currentPath = window.location.pathname.toLowerCase();
+
+      // Determine role strictly by email domain matching matrix or page context rules
+      const isAdmin = emailString.endsWith('@filings4u.com') || currentPath.includes('admin');
+
+      // Trigger the Tab Inactivity Monitor Engine instantly on success
+      if (typeof window.initializeTabInactivityMonitorEngine === "function") {
+        window.initializeTabInactivityMonitorEngine(clientInstance);
+      }
+
+      // 🟢 Route users explicitly to their corresponding secure workspaces
+      if (isAdmin) {
+        console.log("🔓 [Auth Flow] Admin profile validated. Routing to internal admin console...");
+        window.location.replace("admin-dashboard.html");
+      } else {
+        console.log("🔓 [Auth Flow] Customer profile validated. Routing to client workspace...");
+        window.location.replace("client-dashboard.html");
+      }
+
+    } catch (unexpectedException) {
+      console.error("✕ Critical Authentication Routine Fault Caught:", unexpectedException.message);
+      if (errorAlert) {
+        errorAlert.innerText = "An unexpected processing system exception halted sign in.";
+      }
+    }
+  };
+
 
 // ============================================================================
 // 🎯 THE 2-STRIKE FAILURE LOCK SYSTEM (CORRECTED)
