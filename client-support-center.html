@@ -321,15 +321,13 @@
   <script src="assets/js/client-navigation.js"></script>
   <script src="assets/js/client-footer.js"></script>
 
-  <!-- ⚙️ REAL-TIME SUPPORT DESK WORKSPACE CONTROLLER CORE -->
+<!-- ⚙️ REAL-TIME SUPPORT DESK WORKSPACE CONTROLLER CORE -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   "use strict";
 
   // --- 1. CORE DOM INTERFACE VIEWPORTS ---
   const chatMessagesLog = document.getElementById("clientChatMessagesLog");
-  const liveChatWorkspacePanel = document.getElementById("liveChatWorkspacePanel");
-  const afterHoursTicketFormPanel = document.getElementById("afterHoursTicketFormPanel");
   const complianceForm = document.getElementById("forcedIdentityComplianceSubmissionForm");
   const modalSubmitBtn = document.getElementById("modalComplianceSubmitBtn");
   const complianceModalMask = document.getElementById("forcedProfileComplianceModalMask");
@@ -373,18 +371,28 @@ document.addEventListener("DOMContentLoaded", function() {
     if (chatMessagesLog) chatMessagesLog.scrollTop = chatMessagesLog.scrollHeight;
   }
 
-  // --- 2. ISOLATED CLIENT INITIALIZATION ENGINE ---
+   // --- 2. ISOLATED CLIENT INITIALIZATION ENGINE ---
   function initializeIsolatedClient() {
     try {
-      dedicatedClientInstance = supabase.createClient(
-        "https://lrbimrlbskjweynxlgas.supabase.co", 
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"
-      );
-      console.log("🚀 [Workspace Initialization] Dedicated service channel connected safely.");
+      // 🟢 THE COLLISION FIXED: Checks all possible global namespaces to find the correct CDN function reference
+      const supabaseBuilder = window.supabase || window.Supabase || supabase;
+      
+      if (supabaseBuilder && typeof supabaseBuilder.createClient === 'function') {
+        dedicatedClientInstance = supabaseBuilder.createClient(
+          "https://lrbimrlbskjweynxlgas.supabase.co", 
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"
+        );
+        console.log("🚀 [Workspace Initialization] Dedicated service channel connected safely using unified global namespace.");
+      } else {
+        // Fallback: If global objects are completely overwritten, extract it straight from the window client instance tracker
+        dedicatedClientInstance = window.supabaseInstance || window.supabaseClient;
+        console.log("🚀 [Workspace Initialization] Falling back to pre-warmed shared global instance tracking context.");
+      }
     } catch (err) {
       console.error("✕ Dedicated Client Initialization Failed:", err.message);
     }
   }
+
 
   // --- 3. DYNAMIC OPERATING BUSINESS HOURS SWITCH ENGINE ---
   function evaluateSupportDeskWorkingHours() {
@@ -404,17 +412,12 @@ document.addEventListener("DOMContentLoaded", function() {
       if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#e6f4ea; color:#137333; border:1px solid #cbd5e1; box-sizing:border-box; width:100%;";
       if (statusPulseDot) statusPulseDot.style.background = "#137333";
       if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Help Desk Active.</strong> Instant real-time messaging layers are unlocked.`;
-      
-      if (liveChatWorkspacePanel) liveChatWorkspacePanel.style.setProperty("display", "flex", "important");
-      if (afterHoursTicketFormPanel) afterHoursTicketFormPanel.style.setProperty("display", "none", "important");
     } else {
       if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#fff3cd; color:#856404; border:1px solid #cbd5e1; box-sizing:border-box; width:100%;";
       if (statusPulseDot) statusPulseDot.style.background = "#856404";
       if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Desk Standby.</strong> Technicians respond within 12h. Please file a structured support ticket.`;
-      
-      if (liveChatWorkspacePanel) liveChatWorkspacePanel.style.setProperty("display", "none", "important");
-      if (afterHoursTicketFormPanel) afterHoursTicketFormPanel.style.setProperty("display", "block", "important");
     }
+    return { isBusinessDay, isWorkingHour };
   }
 
   // --- 4. PROFILE LOOKUP DATA-STORE HYDRATOR & COMPLIANCE GATE ---
@@ -432,7 +435,6 @@ document.addEventListener("DOMContentLoaded", function() {
       return;
     }
 
-    // Map table row values to cache layout parameters
     if (profile) {
       cachedProfileRecord = {
         first_name: String(profile.first_name || "").trim(),
@@ -454,8 +456,6 @@ document.addEventListener("DOMContentLoaded", function() {
     if (!cachedProfileRecord.first_name || !cachedProfileRecord.last_name || !cachedProfileRecord.phone_number || !cachedProfileRecord.street_address) {
       console.warn("⚠️ [Compliance Gate] Incomplete identification metadata block caught.");
       
-      if (liveChatWorkspacePanel) liveChatWorkspacePanel.style.setProperty("display", "none", "important");
-      if (afterHoursTicketFormPanel) afterHoursTicketFormPanel.style.setProperty("display", "none", "important");
       if (complianceModalMask) complianceModalMask.style.setProperty("display", "flex", "important");
       
       const setupEmailField = document.getElementById("setupEmailAddress");
@@ -482,7 +482,6 @@ document.addEventListener("DOMContentLoaded", function() {
     if (lIn) lIn.value = cachedProfileRecord.last_name;
     if (pIn) pIn.value = cachedProfileRecord.phone_number;
 
-    // Trigger operating window configurations dynamically
     evaluateSupportDeskWorkingHours();
   }
 
@@ -502,7 +501,7 @@ document.addEventListener("DOMContentLoaded", function() {
         email_address: String(window.clientEmail).trim().toLowerCase(),
         first_name: document.getElementById("setupFirstName").value.trim(),
         last_name: document.getElementById("setupLastName").value.trim(),
-                phone_number: document.getElementById("setupPhoneNumber").value.trim(),
+        phone_number: document.getElementById("setupPhoneNumber").value.trim(),
         street_address: document.getElementById("setupStreetAddress").value.trim(),
         city: document.getElementById("setupCity").value.trim(),
         state: document.getElementById("setupState").value.trim(),
@@ -712,12 +711,10 @@ document.addEventListener("DOMContentLoaded", function() {
     submitFormBtn.disabled = true;
 
     try {
+      const timeContext = evaluateSupportDeskWorkingHours();
       const rightNow = new Date();
-      const currentHour = rightNow.getHours();
-      const currentDay = rightNow.getDay();
-      const isWorkingHour = currentDay >= 1 && currentDay <= 5 && currentHour >= 9 && currentHour < 19;
 
-      if (isWorkingHour) {
+      if (timeContext.isBusinessDay && timeContext.isWorkingHour) {
         // 🟢 MIRRORED COLUMN SCHEMA INSERTION LAYER: Pipes directly into support_tickets ITSM system table
         const { error: ticketError } = await dedicatedClientInstance
           .from('support_tickets')
@@ -801,7 +798,7 @@ document.addEventListener("DOMContentLoaded", function() {
     paperclipBtn.addEventListener("click", () => hiddenFileInput.click());
     hiddenFileInput.addEventListener("change", function() {
       if (this.files && this.files.length > 0) {
-        window.activeStagedFilePayload = this.files[0];
+        window.activeStagedFilePayload = this.files[0]; // Extract array index [0] to avoid canvas freeze lockouts
         if (previewBar && previewString) {
           previewString.textContent = `📎 Attachment Ready: ${window.activeStagedFilePayload.name}`;
           previewBar.style.display = "flex";
@@ -840,10 +837,9 @@ document.addEventListener("DOMContentLoaded", function() {
       await autofillUserProfileMetrics();
 
       // Launch chat history pipelines if compliance verification passed
-      if (liveChatWorkspacePanel && liveChatWorkspacePanel.style.display !== "none") {
-        await window.streamClientChatTimelineLogs();
-        window.establishRealtimeChatSynchronization();
-      }
+      await window.streamClientChatTimelineLogs();
+      window.establishRealtimeChatSynchronization();
+      
     } catch (e) {
       console.error("✕ Support Portal System Initialization Error:", e.message);
     }
@@ -877,6 +873,7 @@ document.addEventListener("DOMContentLoaded", function() {
   runSupportCenterBootstrap();
 });
 </script>
+
 
 
 </body>
