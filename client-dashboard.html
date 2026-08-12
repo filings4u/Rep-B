@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-config.js"></script>
 
   <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
@@ -260,8 +260,6 @@
 
 
       <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
- 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script src="assets/js/client-navigation.js"></script>
 
@@ -331,159 +329,171 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   const userEmail = String(session.user.email).trim().toLowerCase();
   const userUid = session.user.id;
-  // 📡 2. TELEMETRY LOOKUP MODULE: PIPELINE ACCUMULATION FROM NEW VALIDATED TABLES (CORRECTED)
-  async function hydrateDashboardTelemetryData() {
-    try {
-      console.log(`📡 [Dashboard Telemetry] Extracting live data profiles for customer: [${userEmail}]`);
 
-      // 🟢 FIXED PERIMETER SECURITY: Swapped unsafe .or() filters for explicit .eq() matching to lock down data isolation
-      const [entitiesRes, vaultRes, alertsRes] = await Promise.all([
-        client
-          .from('client_entities')
-          .select('*')
-          .eq('client_email', userEmail)
-          .order('created_at', { ascending: false }),
-        client
-          .from('client_vault')
-          .select('*')
-          .eq('email_address', userEmail)
-          .order('created_at', { ascending: false }),
-        client
-          .from('portal_notifications')
-          .select('*')
-          .eq('email_address', userEmail)
-          .eq('is_archived', false)
-      ]);
+  
+  
+ // 📡 2. TELEMETRY LOOKUP MODULE: PIPELINE ACCUMULATION FROM NEW VALIDATED TABLES (CORRECTED)
+async function hydrateDashboardTelemetryData() {
+  try {
+    console.log(`📡 [Dashboard Telemetry] Extracting live data profiles for customer: [${userEmail}]`);
 
-      if (entitiesRes.error) throw entitiesRes.error;
-      if (vaultRes.error) throw vaultRes.error;
-      if (alertsRes.error) throw alertsRes.error;
+    // 🟢 FIXED PERIMETER SECURITY: Swapped unsafe .or() filters for explicit .eq() matching to lock down data isolation
+    const [entitiesRes, vaultRes, alertsRes] = await Promise.all([
+      client
+        .from('client_entities')
+        .select('*')
+        .eq('client_email', userEmail)
+        .order('created_at', { ascending: false }),
+      client
+        .from('client_vault')
+        .select('*')
+        .eq('email_address', userEmail)
+        .order('created_at', { ascending: false }),
+      client
+        .from('chat_messages')
+        .select('*')
+        .eq('id', userUid) // Maps to your core authorization session variable
+        .eq('sender_type', 'admin')
+        .order('created_at', { ascending: false })
+    ]);
 
-      const entities = entitiesRes.data || [];
-      const vaultFiles = vaultRes.data || [];
-      const alerts = alertsRes.data || [];
+    if (entitiesRes.error) throw entitiesRes.error;
+    if (vaultRes.error) throw vaultRes.error;
+    if (alertsRes.error) throw alertsRes.error;
 
-      // Map Numerical Top Card Telemetry Counters
-      const activeEntitiesCount = entities.filter(row => String(row.standing_status || '').toLowerCase() === 'active').length;
-      const ongoingFilingsCount = entities.filter(row => String(row.standing_status || '').toLowerCase().includes('pending') || String(row.standing_status || '').toLowerCase().includes('intake')).length;
-      const unreadAlertsCount = alerts.filter(n => !n.is_read).length;
+    const entities = entitiesRes.data || [];
+    const vaultFiles = vaultRes.data || [];
+    const alerts = alertsRes.data || [];
 
-      if (activeEntitiesLabel) activeEntitiesLabel.textContent = activeEntitiesCount;
-      if (ongoingFilingsLabel) ongoingFilingsLabel.textContent = ongoingFilingsCount;
-      if (complianceAlertsLabel) {
-        complianceAlertsLabel.textContent = unreadAlertsCount;
-        complianceAlertsLabel.style.color = unreadAlertsCount > 0 ? '#ef4444' : '#0a1f44';
-      }
+    // Map Numerical Top Card Telemetry Counters
+    const activeEntitiesCount = entities.filter(row => String(row.standing_status || '').toLowerCase() === 'active').length;
+    const ongoingFilingsCount = entities.filter(row => String(row.standing_status || '').toLowerCase().includes('pending') || String(row.standing_status || '').toLowerCase().includes('intake')).length;
+    const unreadAlertsCount = alerts.filter(n => n.is_read_by_client === false).length;
 
-      // Render Corporate Entities Ledger Table Rows
-      if (entitiesTableBody) {
-        entitiesTableBody.innerHTML = "";
-        if (entities.length === 0) {
-          entitiesTableBody.innerHTML = `<tr><td colspan="4" style="color: #94a3b8; padding: 24px 12px; font-style: italic; text-align: center;">No registered corporate entity items cataloged.</td></tr>`;
-        } else {
-          entities.slice(0, 5).forEach(row => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.15s;";
-            tr.onmouseover = () => tr.style.backgroundColor = "#f8fafc";
-            tr.onmouseout = () => tr.style.backgroundColor = "";
-            tr.onclick = () => window.location.href = "client-entities.html";
-
-            const status = String(row.standing_status || 'ACTIVE').toUpperCase();
-            let colorStyle = '#10b981';
-            if (status.includes('PENDING')) colorStyle = '#f59e0b';
-            else if (status.includes('SUSPENDED') || status.includes('INACTIVE')) colorStyle = '#ef4444';
-
-            tr.innerHTML = `
-              <td style="padding: 12px; font-weight: 700; color: #1e293b;">${escapeDashboardTextHtml(row.entity_name)}</td>
-              <td style="padding: 12px; color: #475569;">${escapeDashboardTextHtml(row.filing_description)}</td>
-              <td style="padding: 12px; font-family: monospace; font-weight: 600; color: #64748b;">${row.plan_tier}</td>
-              <td style="padding: 12px; text-align: right; font-weight: 800; font-size: 0.78rem; color: ${colorStyle}; text-transform: uppercase;">${status}</td>
-            `;
-            entitiesTableBody.appendChild(tr);
-          });
-        }
-      }
-
-      // Render Chronological Compliance Timelines (Ongoing Filings)
-      if (filingTimeline) {
-        filingTimeline.innerHTML = "";
-        const pendingEntities = entities.filter(row => String(row.standing_status || '').toLowerCase().includes('pending') || String(row.standing_status || '').toLowerCase().includes('intake'));
-        
-        if (pendingEntities.length === 0) {
-          filingTimeline.innerHTML = `<div style="font-size: 0.8rem; color: #94a3b8; font-style: italic; text-align: center; padding: 24px 0;">All filing corporate tracks fully synchronized.</div>`;
-        } else {
-          pendingEntities.slice(0, 3).forEach(item => {
-            const div = document.createElement("div");
-            div.style.cssText = "display: flex; align-items: flex-start; gap: 12px; padding: 10px; border-left: 3px solid #f59e0b; background: #fffdeb; border-radius: 0 8px 8px 0; cursor: pointer;";
-            div.onclick = () => window.location.href = "client-filings.html";
-            div.innerHTML = `
-              <div style="flex: 1;">
-                <div style="font-weight: 700; font-size: 0.85rem; color: #0a1f44;">Intake Processing Pending</div>
-                <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Target Entity: ${escapeDashboardTextHtml(item.entity_name)}</div>
-              </div>
-            `;
-            filingTimeline.appendChild(div);
-          });
-        }
-      }
-
-
-      // Render Secure Corporate Document Vault from public.client_vault
-      if (vaultTableBody) {
-        vaultTableBody.innerHTML = "";
-        if (vaultFiles.length === 0) {
-          vaultTableBody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8; padding: 24px 12px; font-style: italic; text-align: center;">No active compiled document packages found inside your vault track.</td></tr>`;
-        } else {
-          vaultFiles.slice(0, 5).forEach(file => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom: 1px solid #f1f5f9; transition: background 0.15s;";
-            tr.onmouseover = () => tr.style.backgroundColor = "#f8fafc";
-            tr.onmouseout = () => tr.style.backgroundColor = "";
-
-            tr.innerHTML = `
-              <td style="padding: 12px; font-weight: 700; color: #1e293b;">${escapeDashboardTextHtml(file.file_name)}</td>
-              <td style="padding: 12px; font-family: monospace; color: #64748b; font-size: 0.78rem;">${escapeDashboardTextHtml(file.asset_vault_category || 'Formation Document')}</td>
-              <td style="padding: 12px; text-align: right;">
-                <a href="client-vault.html" style="background: #0a1f44; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; text-decoration: none; display: inline-block; box-shadow: 0 1px 2px rgba(10,31,68,0.15);">Open Vault ➔</a>
-              </td>
-            `;
-            vaultTableBody.appendChild(tr);
-          });
-        }
-      }
-
-      // Render Live Action Notification Feeds Stream
-      if (alertsFeedTarget) {
-        alertsFeedTarget.innerHTML = "";
-        if (alerts.length === 0) {
-          alertsFeedTarget.innerHTML = `<p style="font-size: 0.85rem; color: #94a3b8; font-style: italic; text-align: center; padding: 24px 0;">No new system alert directives recorded.</p>`;
-        } else {
-          alerts.slice(0, 3).forEach(alert => {
-            const div = document.createElement("div");
-            const isUnread = !alert.is_read;
-            div.style.cssText = `display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid ${isUnread ? '#fca5a5' : '#e2e8f0'}; background: ${isUnread ? '#fff5f5' : '#ffffff'}; border-left: 4px solid ${isUnread ? '#ef4444' : '#94a3b8'}; cursor: pointer;`;
-            div.onclick = () => window.location.href = "client-notifications.html";
-            div.innerHTML = `
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="font-size: 0.85rem; color: #0a1f44;">${alert.title}</strong>
-                <span style="font-size: 10px; color: #94a3b8; font-family: monospace;">${new Date(alert.created_at).toLocaleDateString([], {month:'short', day:'numeric'})}</span>
-              </div>
-              <p style="margin: 0; font-size: 0.78rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${alert.message}</p>
-            `;
-            alertsFeedTarget.appendChild(div);
-          });
-        }
-      }
-
-    } catch (fault) {
-      console.error("✕ Dashboard telemetry data rehydration broken:", fault);
+    if (activeEntitiesLabel) activeEntitiesLabel.textContent = activeEntitiesCount;
+    if (ongoingFilingsLabel) ongoingFilingsLabel.textContent = ongoingFilingsCount;
+    if (complianceAlertsLabel) {
+      complianceAlertsLabel.textContent = unreadAlertsCount;
+      complianceAlertsLabel.style.color = unreadAlertsCount > 0 ? '#ef4444' : '#0a1f44';
     }
-  }
 
-  function escapeDashboardTextHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // Render Corporate Entities Ledger Table Rows
+    if (entitiesTableBody) {
+      entitiesTableBody.innerHTML = "";
+      if (entities.length === 0) {
+        entitiesTableBody.innerHTML = `<tr><td colspan="4" style="color: #94a3b8; padding: 24px 12px; font-style: italic; text-align: center;">No registered corporate entity items cataloged.</td></tr>`;
+      } else {
+        entities.slice(0, 5).forEach(row => {
+          const tr = document.createElement("tr");
+          tr.style.cssText = "border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.15s;";
+          tr.onmouseover = () => tr.style.backgroundColor = "#f8fafc";
+          tr.onmouseout = () => tr.style.backgroundColor = "";
+          tr.onclick = () => window.location.href = "client-entities.html";
+          const status = String(row.standing_status || 'ACTIVE').toUpperCase();
+          let colorStyle = '#10b981';
+          if (status.includes('PENDING')) colorStyle = '#f59e0b';
+          else if (status.includes('SUSPENDED') || status.includes('INACTIVE')) colorStyle = '#ef4444';
+          tr.innerHTML = `
+            <td style="padding: 12px; font-weight: 700; color: #1e293b;">${escapeDashboardTextHtml(row.entity_name)}</td>
+            <td style="padding: 12px; color: #475569;">${escapeDashboardTextHtml(row.filing_description)}</td>
+            <td style="padding: 12px; font-family: monospace; font-weight: 600; color: #64748b;">${row.plan_tier}</td>
+            <td style="padding: 12px; text-align: right; font-weight: 800; font-size: 0.78rem; color: ${colorStyle}; text-transform: uppercase;">${status}</td>
+          `;
+          entitiesTableBody.appendChild(tr);
+        });
+      }
+    }
+
+    // Render Chronological Compliance Timelines (Ongoing Filings)
+    if (filingTimeline) {
+      filingTimeline.innerHTML = "";
+      const pendingEntities = entities.filter(row => String(row.standing_status || '').toLowerCase().includes('pending') || String(row.standing_status || '').toLowerCase().includes('intake'));
+      if (pendingEntities.length === 0) {
+        filingTimeline.innerHTML = `<div style="font-size: 0.8rem; color: #94a3b8; font-style: italic; text-align: center; padding: 24px 0;">All filing corporate tracks fully synchronized.</div>`;
+      } else {
+        pendingEntities.slice(0, 3).forEach(item => {
+          const div = document.createElement("div");
+          div.style.cssText = "display: flex; align-items: flex-start; gap: 12px; padding: 10px; border-left: 3px solid #f59e0b; background: #fffdeb; border-radius: 0 8px 8px 0; cursor: pointer;";
+          div.onclick = () => window.location.href = "client-filings.html";
+          div.innerHTML = `
+            <div style="flex: 1;">
+              <div style="font-weight: 700; font-size: 0.85rem; color: #0a1f44;">Intake Processing Pending</div>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Target Entity: ${escapeDashboardTextHtml(item.entity_name)}</div>
+            </div>
+          `;
+          filingTimeline.appendChild(div);
+        });
+      }
+    }
+
+    // Render Secure Corporate Document Vault from public.client_vault
+    if (vaultTableBody) {
+      vaultTableBody.innerHTML = "";
+      if (vaultFiles.length === 0) {
+        vaultTableBody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8; padding: 24px 12px; font-style: italic; text-align: center;">No active compiled document packages found inside your vault track.</td></tr>`;
+      } else {
+        vaultFiles.slice(0, 5).forEach(file => {
+          const tr = document.createElement("tr");
+          tr.style.cssText = "border-bottom: 1px solid #f1f5f9; transition: background 0.15s;";
+          tr.onmouseover = () => tr.style.backgroundColor = "#f8fafc";
+          tr.onmouseout = () => tr.style.backgroundColor = "";
+          tr.innerHTML = `
+            <td style="padding: 12px; font-weight: 700; color: #1e293b;">${escapeDashboardTextHtml(file.file_name)}</td>
+            <td style="padding: 12px; font-family: monospace; color: #64748b; font-size: 0.78rem;">${escapeDashboardTextHtml(file.asset_vault_category || 'Formation Document')}</td>
+            <td style="padding: 12px; text-align: right;">
+              <a href="client-vault.html" style="background: #0a1f44; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; text-decoration: none; display: inline-block; box-shadow: 0 1px 2px rgba(10,31,68,0.15);">Open Vault ➔</a>
+            </td>
+          `;
+          vaultTableBody.appendChild(tr);
+        });
+      }
+    }
+
+    // Render Live Action Notification Feeds Stream matching your exact structural card parameters
+    if (alertsFeedTarget) {
+      alertsFeedTarget.innerHTML = "";
+      if (alerts.length === 0) {
+        alertsFeedTarget.innerHTML = `<p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; font-style: italic; text-align: center; padding: 32px 0;">No active system alert directives recorded.</p>`;
+      } else {
+        // Slice newest 3 entries for compact dashboard layout balancing
+        alerts.slice(0, 3).forEach(alert => {
+          const isUnread = alert.is_read_by_client === false;
+          const dateObj = new Date(alert.created_at);
+          const timeString = isNaN(dateObj.getTime()) ? 'Recent' : dateObj.toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          });
+
+          const div = document.createElement("div");
+          div.style.cssText = `display: flex; gap: 12px; background: ${isUnread ? 'rgba(16, 185, 129, 0.02)' : '#ffffff'}; border: 1px solid ${isUnread ? 'rgba(16, 185, 129, 0.25)' : '#e2e8f0'}; padding: 12px; border-radius: 10px; border-left: 4px solid ${isUnread ? '#10b981' : '#cbd5e1'}; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box; width: 100%;`;
+          div.onclick = () => window.location.href = "client-notifications.html";
+
+          div.innerHTML = `
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                <h4 style="font-size: 0.88rem; font-weight: 700; color: #0a1f44; margin: 0;">Admin Notice</h4>
+                <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 500;">${timeString}</span>
+              </div>
+              <p style="font-size: 0.8rem; color: #475569; margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+                ${escapeDashboardTextHtml(alert.message_content)}
+              </p>
+            </div>
+          `;
+          alertsFeedTarget.appendChild(div);
+        });
+      }
+    }
+
+  } catch (fault) {
+    console.error("✕ Dashboard telemetry data rehydration broken:", fault);
   }
+}
+
+function escapeDashboardTextHtml(s) {
+  if (!s) return "";
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 
 // 🔄 3. REAL-TIME SYNC: Re-bind channels to subscribe to the correct newly assigned tables 
 async function bindLiveDashboardRealtimeSubscribers() { 
@@ -533,6 +543,9 @@ function runPortalClock() {
 }
 setInterval(runPortalClock, 1000);
 runPortalClock();
+
 </script>
+
+
 </body>
 </html>

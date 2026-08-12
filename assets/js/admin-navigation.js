@@ -190,7 +190,7 @@ desktopSidebarNode.innerHTML = `
     </button>
     <div class="accordion-panel d-panel" data-group="tools">
       <a href="admin-chat.html" class="nav-item d-link" data-page="admin-chat.html"><span>💬</span> Client Chat Workspace</a>
-      <a href="admin-tickets.html" class="nav-item d-link" data-page="admin-tickets.html"><span>📋</span> After-Hours Tickets</a>
+      <a href="admin-tickets.html" class="nav-item d-link" data-page="admin-tickets.html"><span>📋</span> Support Tickets</a>
       <a href="admin-documents.html" class="nav-item d-link" data-page="admin-documents.html"><span>📂</span> Document Vault</a>
       <a href="admin-appointments.html" class="nav-item d-link" data-page="admin-appointments.html"><span>⏰</span> Session Allocations</a>
       <a href="admin-notifications.html" class="nav-item d-link" data-page="admin-notifications.html"><span>🔔</span> Notifications Log</a>
@@ -304,7 +304,7 @@ if (headerNode && headerNode.parentNode) {
     </button>
     <div class="accordion-panel m-panel" data-group="m-tools">
       <a href="admin-chat.html" class="nav-item m-link" data-page="admin-chat.html">Client Chat Workspace</a>
-      <a href="admin-tickets.html" class="nav-item m-link" data-page="admin-tickets.html">After-Hours Tickets</a>
+      <a href="admin-tickets.html" class="nav-item m-link" data-page="admin-tickets.html">Support Tickets</a>
       <a href="admin-documents.html" class="nav-item m-link" data-page="admin-documents.html">Document Vault</a>
       <a href="admin-appointments.html" class="nav-item m-link" data-page="admin-appointments.html">Session Allocations</a>
       <a href="admin-notifications.html" class="nav-item m-link" data-page="admin-notifications.html">Notifications Log</a>
