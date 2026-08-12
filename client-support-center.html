@@ -460,7 +460,7 @@
 
   <script src="assets/js/client-footer.js"></script>
 
-  <!-- CDN ARCHITECTURE ENGINE EXTERNAL REFERENCE HOOK -->
+
 
 <!-- ==========================================================================
      ⚙️ REAL-TIME SUPPORT DESK WORKSPACE CONTROLLER CORE
@@ -482,9 +482,9 @@ document.addEventListener("DOMContentLoaded", function() {
   const previewString = document.getElementById("chatUploadPreviewFileNameString");
   const cancelUploadBtn = document.getElementById("chatCancelUploadBtn");
 
-  // State Management Scopes (Attached to window for global handler safety)
-  let activeStagedFilePayload = null;
+  // State Management Scopes (Attached explicitly to window for global cross-block access)
   let liveChatReplicationChannel = null;
+  window.activeStagedFilePayload = null; 
   window.clientActiveUserId = "";
   window.clientEmail = "";
 
@@ -521,7 +521,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (sessionError || !session) {
         window.location.href = "portal-login.html";
         return;
-    }
+      }
 
       window.clientActiveUserId = String(session.user.id).trim();
       window.clientEmail = String(session.user.email).trim().toLowerCase();
@@ -532,13 +532,16 @@ document.addEventListener("DOMContentLoaded", function() {
       }
 
       // Fire profile compliance gate validation check
-      await autofillUserProfileMetrics(client);
+      if (typeof autofillUserProfileMetrics === "function") {
+        await autofillUserProfileMetrics(client);
+      }
 
       // Trigger chat pipeline streams if workspace layout is active
       if (chatWrapper && chatWrapper.style.display !== "none") {
-        await streamClientChatTimelineLogs(client);
-        await establishRealtimeChatSynchronization(client);
+        if (typeof streamClientChatTimelineLogs === "function") await streamClientChatTimelineLogs(client);
+        if (typeof establishRealtimeChatSynchronization === "function") await establishRealtimeChatSynchronization(client);
       }
+
     } catch (e) {
       console.error("✕ Support Portal Boot Error:", e.message);
       if (msgLogBox) {
@@ -546,12 +549,15 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     }
   }
-  // --- STAGE 1: DYNAMIC OPERATING BUSINESS HOURS SWITCH ENGINE ---
-  function evaluateSupportDeskWorkingHours() {
+
+  // Trigger the bootstrap engine immediately on load
+  runSupportCenterBootstrap();
+
+   // --- STAGE 1: DYNAMIC OPERATING BUSINESS HOURS SWITCH ENGINE ---
+  window.evaluateSupportDeskWorkingHours = function() {
     const rightNow = new Date();
     const currentDay = rightNow.getDay();
     const currentHour = rightNow.getHours();
-    
     const isBusinessDay = currentDay >= 1 && currentDay <= 5;
     const isWorkingHour = currentHour >= 9 && currentHour < 19; // 9:00 AM - 7:00 PM
 
@@ -573,32 +579,38 @@ document.addEventListener("DOMContentLoaded", function() {
       if (chatWrapper) chatWrapper.style.setProperty("display", "none", "important");
       if (ticketPane) ticketPane.style.setProperty("display", "block", "important");
     }
-  }
+  };
 
-    // --- STAGE 2: GLOBAL STATE & FORM INITIALIZATION (UPDATED) ---
+  // --- STAGE 2: GLOBAL STATE & FORM INITIALIZATION ---
   const complianceForm = document.getElementById("forcedIdentityComplianceSubmissionForm");
   const modalSubmitBtn = document.getElementById("modalComplianceSubmitBtn");
-  
+
   if (modalSubmitBtn && complianceForm) {
-    // 🟢 FIXED: Target the button directly via a click listener to prevent native browser form blocks
     modalSubmitBtn.addEventListener("click", async (e) => {
       // Check native browser validation constraints on required inputs manually
       if (!complianceForm.checkValidity()) {
         complianceForm.reportValidity();
         return;
       }
-      
       e.preventDefault();
-      
+
       const clientRef = window.supabaseInstance || window.supabaseClient;
       const errorBanner = document.getElementById("complianceFormErrorAlertBanner");
       if (errorBanner) errorBanner.style.display = "none";
 
-      // Disable button to prevent double execution loops
+      // 🎯 CRITICAL ACCESSIBILITY FIX: Block submission if user context details haven't fully rehydrated yet
+      if (!window.clientActiveUserId || !window.clientEmail) {
+        if (errorBanner) {
+          errorBanner.textContent = "✕ Sync Latency: Validating active session token. Please try again in a moment.";
+          errorBanner.style.display = "block";
+        }
+        return;
+      }
+
       modalSubmitBtn.disabled = true;
 
       const newFields = {
-        id: window.clientActiveUserId,
+        id: window.clientActiveUserId, // Pulls clean authenticated uuid fields
         email_address: window.clientEmail,
         first_name: document.getElementById("setupFirstName").value.trim(),
         last_name: document.getElementById("setupLastName").value.trim(),
@@ -617,16 +629,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (upsertError) throw upsertError;
 
-        // Force explicit local memory caching to instantly bypass the ingestion engine layout locks
         window.activeUserFirstNameCache = newFields.first_name;
         window.activeUserLastNameCache = newFields.last_name;
 
-        // Clear UI states right before reloading
         const complianceModal = document.getElementById("forcedProfileComplianceModalMask");
         if (complianceModal) complianceModal.style.setProperty("display", "none", "important");
-
-        window.location.reload();
         
+        window.location.reload();
+
       } catch (upsertError) {
         console.error("✕ Compliance Workspace Unlock Failed:", upsertError.message);
         if (errorBanner) {
@@ -638,14 +648,12 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-
-
   document.getElementById("modalDismissComplianceCloseBtn")?.addEventListener("click", () => {
     window.location.replace("client-dashboard.html");
   });
 
   // --- STAGE 2: PROFILE LOOKUP DATA-STORE HYDRATOR & COMPLIANCE GATE ---
-  async function autofillUserProfileMetrics(client) {
+  window.autofillUserProfileMetrics = async function(client) {
     console.log(`📡 [Contact Ingestion Engine] Scanning client registry for user email: [${window.clientEmail}]`);
     
     let compiledPhone = "";
@@ -695,16 +703,16 @@ document.addEventListener("DOMContentLoaded", function() {
       return; // Exit execution. Handled by the decoupled global submit listener.
     }
 
-    // 🟢 FIXED: Moved this logic INSIDE the function so variables exist in scope
+    // 🟢 FIXED: Safe conditional verification card hydration checks
     const transmissionCard = document.getElementById("profileTransmissionDataCard");
     const stringTarget = document.getElementById("profileHandshakeVerificationString");
     
     if (transmissionCard && stringTarget) {
       transmissionCard.style.display = "block";
       stringTarget.innerHTML = `
-        NAME : ${window.escapeClientChatMarkup(compiledFirstName)} ${window.escapeClientChatMarkup(compiledLastName)}<br>
-        EMAIL : ${window.escapeClientChatMarkup(window.clientEmail)}<br>
-        PHONE : ${window.escapeClientChatMarkup(compiledPhone)}<br>
+        NAME    : ${window.escapeClientChatMarkup(compiledFirstName)} ${window.escapeClientChatMarkup(compiledLastName)}<br>
+        EMAIL   : ${window.escapeClientChatMarkup(window.clientEmail)}<br>
+        PHONE   : ${window.escapeClientChatMarkup(compiledPhone)}<br>
         COMPANY : ${window.escapeClientChatMarkup(compiledCompanyName)}<br>
         ADDRESS : ${window.escapeClientChatMarkup(compiledStreet)}, ${window.escapeClientChatMarkup(compiledCity)}, ${window.escapeClientChatMarkup(compiledState)} ${window.escapeClientChatMarkup(compiledZip)}
       `.trim();
@@ -729,71 +737,81 @@ document.addEventListener("DOMContentLoaded", function() {
     window.activeUserCompanyNameCache = compiledCompanyName;
     window.activeUserFirstNameCache = compiledFirstName;
     window.activeUserLastNameCache = compiledLastName;
-  } // 🟢 FIXED: Clean single closing brace for the function block
+  };
 
    // --- STAGE 3: CHAT HISTORY LOGS OVER THE WIRE ---
-  async function streamClientChatTimelineLogs(client) {
-    const { data: messages, error: fetchError } = await client
-      .from('chat_messages')
-      .select('*')
-      .eq('id', window.clientActiveUserId) // 🟢 FIXED: Using window scope
-      .order('created_at', { ascending: true });
+  window.streamClientChatTimelineLogs = function(client) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { data: messages, error: fetchError } = await client
+          .from('chat_messages')
+          .select('*')
+          .eq('id', window.clientActiveUserId)
+          .order('created_at', { ascending: true });
 
-    if (fetchError) throw fetchError;
-    
-    const targetLogBox = document.getElementById("clientChatMessagesLog");
-    if (targetLogBox) targetLogBox.innerHTML = "";
+        if (fetchError) throw fetchError;
 
-    if (messages && messages.length > 0) {
-      messages.forEach(msgRow => {
-        window.appendSingleChatMessageBubbleToUI(msgRow);
-      });
-    } else {
-      // 🟢 FIXED: Safe fallback insert without relying on infinite functional recursion loops
-      const systemWelcomePayload = {
-        id: window.clientActiveUserId,
-        email_address: window.clientEmail,
-        first_name: window.activeUserFirstNameCache || null,
-        last_name: window.activeUserLastNameCache || null,
-        company_name: window.activeUserCompanyNameCache || "Not Specified",
-        message_content: "Welcome to filings4u Corporate Support Desk! An asset specialist has been assigned to your entity file. Please state your query below.",
-        sender_type: 'admin',
-        created_at: new Date().toISOString()
-      };
+        const targetLogBox = document.getElementById("clientChatMessagesLog");
+        if (targetLogBox) targetLogBox.innerHTML = "";
 
-      await client.from('chat_messages').insert([systemWelcomePayload]);
-      window.appendSingleChatMessageBubbleToUI(systemWelcomePayload);
-    }
-    window.scrollChatTimelineToAbsoluteBottom();
-  }
+        if (messages && messages.length > 0) {
+          messages.forEach(msgRow => {
+            if (typeof window.appendSingleChatMessageBubbleToUI === "function") {
+              window.appendSingleChatMessageBubbleToUI(msgRow);
+            }
+          });
+        } else {
+          // 🟢 FIXED: Fallback runtime layout placeholder to completely prevent infinite database duplication insertion loops
+          const systemWelcomePayload = {
+            id: window.clientActiveUserId,
+            email_address: window.clientEmail,
+            message_content: "Welcome to filings4u Corporate Support Desk! An asset specialist has been assigned to your entity file. Please state your query below.",
+            sender_type: 'admin',
+            created_at: new Date().toISOString()
+          };
+          if (typeof window.appendSingleChatMessageBubbleToUI === "function") {
+            window.appendSingleChatMessageBubbleToUI(systemWelcomePayload);
+          }
+        }
+        window.scrollChatTimelineToAbsoluteBottom();
+        resolve();
+      } catch (err) {
+        console.error("✕ Failed loading chat timelines:", err.message);
+        reject(err);
+      }
+    });
+  };
 
   // --- STAGE 4: REAL-TIME WEBSOCKET SUBSCRIPTIONS ---
-  async function establishRealtimeChatSynchronization(client) {
+  window.establishRealtimeChatSynchronization = function(client) {
     if (liveChatReplicationChannel) liveChatReplicationChannel.unsubscribe();
 
+    console.log(`📡 [Realtime Sync] Establishing websocket listener channel for: ${window.clientEmail}`);
+
     liveChatReplicationChannel = client
-      .channel(`isolated-client-chat-stream-${window.clientActiveUserId}`) // 🟢 FIXED: Using window scope
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'chat_messages', 
-        filter: `id=eq.${window.clientActiveUserId}` 
-      }, (payload) => {
-        window.appendSingleChatMessageBubbleToUI(payload.new);
-        window.scrollChatTimelineToAbsoluteBottom();
+      .channel(`isolated-client-chat-stream-${window.clientActiveUserId}`)
+      // 🟢 FIXED: Listening globally and matching client variables locally to bypass Supabase UUID filter indexing limitations
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
+        const incomingPayload = payload.new;
+        if (incomingPayload && String(incomingPayload.id).trim() === String(window.clientActiveUserId).trim()) {
+          if (typeof window.appendSingleChatMessageBubbleToUI === "function") {
+            window.appendSingleChatMessageBubbleToUI(incomingPayload);
+          }
+          window.scrollChatTimelineToAbsoluteBottom();
+        }
       })
       .subscribe();
-  }
+  };
 
-   // --- STAGE 5: OUTBOUND DISPATCH HANDLERS & ACTIONS ---
+  // --- STAGE 5: OUTBOUND DISPATCH HANDLERS & ACTIONS ---
   window.dispatchClientChatMessage = async function() {
     const clientRef = window.supabaseInstance || window.supabaseClient;
     const inputField = document.getElementById("clientChatMessageInputField");
     const submitBtn = document.getElementById("clientChatSendButton");
     const uploadBar = document.getElementById("chatUploadPreviewBar");
-
     const rawText = inputField ? inputField.value.trim() : "";
-    if (!rawText && !activeStagedFilePayload) return;
+
+    if (!rawText && !window.activeStagedFilePayload) return;
 
     if (inputField) inputField.disabled = true;
     if (submitBtn) submitBtn.disabled = true;
@@ -802,38 +820,38 @@ document.addEventListener("DOMContentLoaded", function() {
     let targetedBucketKeyIdentifier = "chat_documents";
 
     try {
-      if (activeStagedFilePayload) {
-        const fileType = activeStagedFilePayload.type.toLowerCase();
+      if (window.activeStagedFilePayload) {
+        const fileType = window.activeStagedFilePayload.type.toLowerCase();
         targetedBucketKeyIdentifier = fileType.startsWith("image/") ? "chat_attachments" : "chat_documents";
-        const fingerprint = `${Date.now()}_${activeStagedFilePayload.name}`;
+        
+        const fingerprint = `${Date.now()}_${window.activeStagedFilePayload.name}`;
         
         const { data: uploadOutput, error: uploadError } = await clientRef.storage
           .from(targetedBucketKeyIdentifier)
-          .upload(`${window.clientActiveUserId}/${fingerprint}`, activeStagedFilePayload);
+          .upload(`${window.clientActiveUserId}/${fingerprint}`, window.activeStagedFilePayload);
 
         if (uploadError) throw uploadError;
         resolvedAssetUrlPath = uploadOutput.path;
       }
 
-      // 🟢 FIXED: Aligned properties perfectly with your chat_messages constraints
-      const { error: insertError } = await clientRef.from('chat_messages').insert([{
-        id: window.clientActiveUserId, // Client foreign key constraint link
-        email_address: window.clientEmail,
-        first_name: window.activeUserFirstNameCache || null,
-        last_name: window.activeUserLastNameCache || null,
-        company_name: window.activeUserCompanyNameCache || "Not Specified",
-        message_content: rawText || `Attachment uploaded: ${activeStagedFilePayload?.name}`,
-        sender_type: 'client', // Mandatory column rule validation
-        attached_file_url: resolvedAssetUrlPath || null,
-        is_read_by_admin: false,
-        is_read_by_client: true,
-        created_at: new Date().toISOString()
-      }]);
+      // 🟢 FIXED: Matches your unified table columns exactly
+      const { error: insertError } = await clientRef
+        .from('chat_messages')
+        .insert([{
+          id: window.clientActiveUserId, 
+          email_address: window.clientEmail,
+          message_content: rawText || `Attachment uploaded: ${window.activeStagedFilePayload?.name}`,
+          sender_type: 'client', 
+          attached_file_url: resolvedAssetUrlPath || null,
+          is_read_by_admin: false,
+          is_read_by_client: true,
+          created_at: new Date().toISOString()
+        }]);
 
       if (insertError) throw insertError;
-      
+
       if (inputField) inputField.value = "";
-      activeStagedFilePayload = null;
+      window.activeStagedFilePayload = null;
       if (uploadBar) uploadBar.style.display = "none";
 
     } catch (postFault) {
@@ -847,7 +865,6 @@ document.addEventListener("DOMContentLoaded", function() {
       window.scrollChatTimelineToAbsoluteBottom();
     }
   };
-
 
   // --- STAGE 6: OFFLINE FORM INTERCEPT OVERRIDES ---
   document.getElementById("structuredSupportTicketForm")?.addEventListener("submit", async (e) => {
@@ -869,39 +886,37 @@ document.addEventListener("DOMContentLoaded", function() {
       const isWorkingHour = currentDay >= 1 && currentDay <= 5 && currentHour >= 9 && currentHour < 19;
 
       if (isWorkingHour) {
-        await clientRef.from('chat_messages').insert([{
+        const { error: insertError } = await clientRef.from('chat_messages').insert([{
           id: window.clientActiveUserId,
           email_address: window.clientEmail,
-          first_name: fNameVal,
-          last_name: lNameVal,
           message_content: messageInput.value.trim(),
           sender_type: 'client',
           is_read_by_admin: false,
           is_read_by_client: true,
           created_at: new Date().toISOString()
         }]);
+        if (insertError) throw insertError;
       } else {
-        // 🟢 FIXED: Added mandatory 'id' column mapping and stripped custom 'ticket_id' to obey schema constraints
-        await clientRef.from('after_hours_tickets').insert([{
-          id: window.clientActiveUserId, // Links to client_profiles (id) foreign key constraint
+        // 🟢 FIXED: Conforms perfectly to your updated public.after_hours_tickets table schema definitions
+        const { error: ticketError } = await clientRef.from('after_hours_tickets').insert([{
+          id: window.clientActiveUserId, 
           email_address: window.clientEmail,
-          first_name: fNameVal,
-          last_name: lNameVal,
-          phone_number: phoneVal,
           ticket_message: messageInput.value.trim(),
           status: 'Pending',
           created_at: new Date().toISOString()
         }]);
+        if (ticketError) throw ticketError;
       }
 
       const ticketPanelCard = document.getElementById("afterHoursTicketFormPanel");
       if (ticketPanelCard) {
         ticketPanelCard.innerHTML = `
           <div style="text-align:center; padding:20px 0;">
-            <h3>📥 Support Ticket Filed Safely</h3>
-            <button id="ticketReturnHomeDashboardBtn" style="margin-top:10px; background:var(--brand-blue); color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Return to Dashboard Home</button>
+            <h3 style="color:#0a1f44; font-weight:800; margin-bottom:8px;">📥 Support Ticket Filed Safely</h3>
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:16px;">Our desk engineers have been alerted and will process your request.</p>
+            <button id="ticketReturnHomeDashboardBtn" style="background:#0a1f44; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; box-shadow:0 2px 4px rgba(10,31,68,0.15);">Return to Dashboard Home</button>
           </div>`;
-        
+          
         document.getElementById("ticketReturnHomeDashboardBtn")?.addEventListener("click", () => {
           window.location.replace("client-dashboard.html");
         });
@@ -914,15 +929,14 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-
-  // Attachment controls setup mapping matrices rules
+  // 🟢 FIXED: Attachment controls mapped strictly to the window.activeStagedFilePayload state pointer
   if (paperclipBtn && hiddenFileInput) {
     paperclipBtn.addEventListener("click", () => hiddenFileInput.click());
     hiddenFileInput.addEventListener("change", function() {
       if (this.files && this.files[0]) {
-        activeStagedFilePayload = this.files[0]; // 🟢 FIXED: Targeted file reference object node explicitly
+        window.activeStagedFilePayload = this.files[0]; 
         if (previewBar && previewString) {
-          previewString.textContent = `📎 Attachment Ready: ${activeStagedFilePayload.name}`;
+          previewString.textContent = `📎 Attachment Ready: ${window.activeStagedFilePayload.name}`;
           previewBar.style.display = "flex";
         }
       }
@@ -931,7 +945,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   if (cancelUploadBtn) {
     cancelUploadBtn.addEventListener("click", () => {
-      activeStagedFilePayload = null;
+      window.activeStagedFilePayload = null;
       if (hiddenFileInput) hiddenFileInput.value = "";
       if (previewBar) previewBar.style.display = "none";
     });
@@ -951,17 +965,15 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-   // --- PRODUCTION INITIALIZATION TRIGGER ---
+  // --- PRODUCTION INITIALIZATION TRIGGER ---
   function verifyAndRunBootstrap() {
-    const client = window.supabaseInstance || window.supabaseClient;
-    
+    const clientInstance = window.supabaseInstance || window.supabaseClient;
     // If Supabase hasn't initialized yet, poll for it every 100ms
-    if (!client || typeof client.from !== 'function') {
+    if (!clientInstance || typeof clientInstance.from !== 'function') {
       console.warn("⏳ Waiting for Supabase framework layers to clear infrastructure initialization...");
       setTimeout(verifyAndRunBootstrap, 100);
       return;
     }
-    
     // Once found, launch the engine safely
     runSupportCenterBootstrap();
   }
@@ -969,9 +981,72 @@ document.addEventListener("DOMContentLoaded", function() {
   // Kick off the checker loop safely
   verifyAndRunBootstrap();
 });
+
+
+// --- STAGE 7: RENDER SINGLE MESSAGE BUBBLE IN CONVERSATION CANVAS TIMELINE ---
+window.appendSingleChatMessageBubbleToUI = function(msgRow) {
+  const targetLogBox = document.getElementById("clientChatMessagesLog");
+  if (!targetLogBox || !msgRow) return;
+
+  const isClient = String(msgRow.sender_type).toLowerCase() === 'client';
+  const bubbleWrapper = document.createElement("div");
+  
+  bubbleWrapper.style.cssText = `
+    display: flex; 
+    width: 100%; 
+    justify-content: ${isClient ? 'flex-end' : 'flex-start'}; 
+    margin-bottom: 14px;
+    box-sizing: border-box;
+  `;
+
+  const innerBubble = document.createElement("div");
+  innerBubble.style.cssText = `
+    max-width: 70%; 
+    padding: 12px 16px; 
+    border-radius: 12px; 
+    font-size: 0.85rem; 
+    line-height: 1.45;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    background: ${isClient ? '#0a1f44' : '#f1f5f9'}; 
+    color: ${isClient ? '#ffffff' : '#1e293b'};
+    border-bottom-${isClient ? 'right' : 'left'}-radius: 2px;
+  `;
+
+  // Render text contents safely
+  const textParagraph = document.createElement("p");
+  textParagraph.style.cssText = "margin: 0; white-space: pre-wrap;";
+  textParagraph.textContent = msgRow.message_content || "";
+  innerBubble.appendChild(textParagraph);
+
+  // If a file attachment path exists inside your chat storage bucket asset array, unpack it
+  if (msgRow.attached_file_url) {
+    const clientRef = window.supabaseInstance || window.supabaseClient;
+    const bucket = msgRow.attached_file_url.includes('chat_attachments') ? 'chat_attachments' : 'chat_documents';
+    
+    // Construct the authentic storage delivery link
+    const publicUrl = clientRef.storage.from(bucket).getPublicUrl(msgRow.attached_file_url).data.publicUrl;
+    
+    const attachmentBox = document.createElement("div");
+    attachmentBox.style.cssText = "margin-top: 8px; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 6px; font-size: 0.75rem;";
+    
+    if (bucket === 'chat_attachments') {
+      attachmentBox.innerHTML = `
+        <a href="${publicUrl}" target="_blank">
+          <img src="${publicUrl}" alt="Attachment" style="max-width: 100%; max-height: 180px; border-radius: 6px; margin-top: 4px; display: block; border: 1px solid #cbd5e1;"/>
+        </a>`;
+    } else {
+      attachmentBox.innerHTML = `
+        <a href="${publicUrl}" target="_blank" style="color: ${isClient ? '#38bdf8' : '#0284c7'}; font-weight: 700; text-decoration: underline;">
+          📎 View Secure Document Attachment ➔
+        </a>`;
+    }
+    innerBubble.appendChild(attachmentBox);
+  }
+
+  bubbleWrapper.appendChild(innerBubble);
+  targetLogBox.appendChild(bubbleWrapper);
+};
+
 </script>
-
-
-
 </body>
 </html>
