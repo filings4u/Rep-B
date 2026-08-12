@@ -387,7 +387,7 @@
     
     <div style="font-size: 2rem; margin-bottom: 12px; text-align: center;">👤</div>
     <h3 style="margin: 0 0 8px 0; font-size: 1.35rem; font-weight: 800; text-align: center; color: var(--text-dark);">Profile Configuration Required</h3>
-    <p style="margin: 0 0 24px 0; font-size: 0.85rem; text-align: center; color: var(--text-muted); line-height: 1.5; padding: 0 20px;">To initiate a secure real-time messaging pipeline, your profile must contain valid routing values. Please populate the profile fields below to proceed:</p>
+<p style="margin: 0 0 24px 0; font-size: 0.85rem; text-align: center; color: var(--text-muted); line-height: 1.5; padding: 0 20px;">To initiate a secure real-time messaging pipeline, your profile must contain valid routing values. Please populate the profile fields below to proceed:</p>
 
     <!-- 🟢 FIXED: Added the missing opening form tag here -->
     
@@ -581,76 +581,85 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   };
 
-  // --- STAGE 2: GLOBAL STATE & FORM INITIALIZATION ---
-  const complianceForm = document.getElementById("forcedIdentityComplianceSubmissionForm");
-  const modalSubmitBtn = document.getElementById("modalComplianceSubmitBtn");
+// --- STAGE 2: GLOBAL STATE & FORM INITIALIZATION (FIXED) ---
+const complianceForm = document.getElementById("forcedIdentityComplianceSubmissionForm");
+const modalSubmitBtn = document.getElementById("modalComplianceSubmitBtn");
 
-  if (modalSubmitBtn && complianceForm) {
-    modalSubmitBtn.addEventListener("click", async (e) => {
-      // Check native browser validation constraints on required inputs manually
-      if (!complianceForm.checkValidity()) {
-        complianceForm.reportValidity();
-        return;
+if (modalSubmitBtn && complianceForm) {
+  modalSubmitBtn.addEventListener("click", async (e) => {
+    // Execute native HTML constraint checking using our newly injected form node
+    if (!complianceForm.checkValidity()) {
+      complianceForm.reportValidity();
+      return;
+    }
+    e.preventDefault();
+
+    const clientRef = window.supabaseInstance || window.supabaseClient;
+    const errorBanner = document.getElementById("complianceFormErrorAlertBanner");
+    if (errorBanner) errorBanner.style.display = "none";
+
+    // Stop execution safely if initialization parameters are still loading from the session guard
+    if (!window.clientActiveUserId || !window.clientEmail) {
+      if (errorBanner) {
+        errorBanner.textContent = "✕ Sync Latency: Validating active session token. Please try again.";
+        errorBanner.style.display = "block";
       }
-      e.preventDefault();
+      return;
+    }
 
-      const clientRef = window.supabaseInstance || window.supabaseClient;
-      const errorBanner = document.getElementById("complianceFormErrorAlertBanner");
-      if (errorBanner) errorBanner.style.display = "none";
+    modalSubmitBtn.disabled = true;
+    modalSubmitBtn.textContent = "Processing Profile... ⚙️";
 
-      // 🎯 CRITICAL ACCESSIBILITY FIX: Block submission if user context details haven't fully rehydrated yet
-      if (!window.clientActiveUserId || !window.clientEmail) {
-        if (errorBanner) {
-          errorBanner.textContent = "✕ Sync Latency: Validating active session token. Please try again in a moment.";
-          errorBanner.style.display = "block";
-        }
-        return;
+    // 🟢 FIXED: Maps fields exactly to your HTML input IDs and your public.client_profiles constraints
+    const newFields = {
+      id: window.clientActiveUserId, 
+      email_address: window.clientEmail,
+      first_name: document.getElementById("setupFirstName").value.trim(),
+      last_name: document.getElementById("setupLastName").value.trim(),
+      phone_number: document.getElementById("setupPhoneNumber").value.trim(),
+      street_address: document.getElementById("setupStreetAddress").value.trim(),
+      city: document.getElementById("setupCity").value.trim(),
+      state: document.getElementById("setupState").value.trim(),
+      zip_code: document.getElementById("setupZipCode").value.trim(),
+      updated_at: new Date().toISOString()
+    };
+
+    try {
+      console.log("💾 [Compliance Gate] Upserting parameters matching database constraints...", newFields);
+      
+      const { error: upsertError } = await clientRef
+        .from('client_profiles')
+        .upsert([newFields], { onConflict: 'id' });
+
+      if (upsertError) throw upsertError;
+
+      // Sync local window identity cache strings
+      window.activeUserFirstNameCache = newFields.first_name;
+      window.activeUserLastNameCache = newFields.last_name;
+
+      const complianceModal = document.getElementById("forcedProfileComplianceModalMask");
+      if (complianceModal) complianceModal.style.setProperty("display", "none", "important");
+      
+      window.location.reload();
+
+    } catch (upsertError) {
+      console.error("✕ Compliance Workspace Unlock Failed:", upsertError.message);
+      
+      if (errorBanner) {
+        errorBanner.textContent = `✕ Database Error: ${upsertError.message}`;
+        errorBanner.style.display = "block";
       }
-
-      modalSubmitBtn.disabled = true;
-
-      const newFields = {
-        id: window.clientActiveUserId, // Pulls clean authenticated uuid fields
-        email_address: window.clientEmail,
-        first_name: document.getElementById("setupFirstName").value.trim(),
-        last_name: document.getElementById("setupLastName").value.trim(),
-        phone_number: document.getElementById("setupPhoneNumber").value.trim(),
-        street_address: document.getElementById("setupStreetAddress").value.trim(),
-        city: document.getElementById("setupCity").value.trim(),
-        state: document.getElementById("setupState").value.trim(),
-        zip_code: document.getElementById("setupZipCode").value.trim(),
-        updated_at: new Date().toISOString()
-      };
-
-      try {
-        const { error: upsertError } = await clientRef
-          .from('client_profiles')
-          .upsert([newFields], { onConflict: 'id' });
-
-        if (upsertError) throw upsertError;
-
-        window.activeUserFirstNameCache = newFields.first_name;
-        window.activeUserLastNameCache = newFields.last_name;
-
-        const complianceModal = document.getElementById("forcedProfileComplianceModalMask");
-        if (complianceModal) complianceModal.style.setProperty("display", "none", "important");
-        
-        window.location.reload();
-
-      } catch (upsertError) {
-        console.error("✕ Compliance Workspace Unlock Failed:", upsertError.message);
-        if (errorBanner) {
-          errorBanner.textContent = `✕ Error: ${upsertError.message}`;
-          errorBanner.style.display = "block";
-        }
-        modalSubmitBtn.disabled = false;
-      }
-    });
-  }
-
-  document.getElementById("modalDismissComplianceCloseBtn")?.addEventListener("click", () => {
-    window.location.replace("client-dashboard.html");
+      // Re-enable button state so user can fix and re-try
+      modalSubmitBtn.disabled = false;
+      modalSubmitBtn.textContent = "Save Profile & Unlock Chat";
+    }
   });
+}
+
+document.getElementById("modalDismissComplianceCloseBtn")?.addEventListener("click", () => {
+  window.location.replace("client-dashboard.html");
+});
+
 
   // --- STAGE 2: PROFILE LOOKUP DATA-STORE HYDRATOR & COMPLIANCE GATE ---
   window.autofillUserProfileMetrics = async function(client) {
@@ -929,11 +938,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // 🟢 FIXED: Attachment controls mapped strictly to the window.activeStagedFilePayload state pointer
+  // 🟢 FIXED: Target index [0] of the file selection array directly to prevent DOM compilation freeze crashes
   if (paperclipBtn && hiddenFileInput) {
     paperclipBtn.addEventListener("click", () => hiddenFileInput.click());
     hiddenFileInput.addEventListener("change", function() {
-      if (this.files && this.files[0]) {
+      if (this.files && this.files.length > 0) {
         window.activeStagedFilePayload = this.files[0]; 
         if (previewBar && previewString) {
           previewString.textContent = `📎 Attachment Ready: ${window.activeStagedFilePayload.name}`;
@@ -942,6 +951,7 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
   }
+
 
   if (cancelUploadBtn) {
     cancelUploadBtn.addEventListener("click", () => {
