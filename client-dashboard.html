@@ -485,46 +485,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-   // 🔄 3. REAL-TIME SYNC: Re-bind channels to subscribe to the correct newly assigned tables
-  async function bindLiveDashboardRealtimeSubscribers() {
-    if (liveDashboardChannel) liveDashboardChannel.unsubscribe();
+// 🔄 3. REAL-TIME SYNC: Re-bind channels to subscribe to the correct newly assigned tables 
+async function bindLiveDashboardRealtimeSubscribers() { 
+  if (liveDashboardChannel) liveDashboardChannel.unsubscribe(); 
 
-    liveDashboardChannel = client
-      .channel('client-dashboard-synchronized-master-stream-channel')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'client_entities' 
-      }, async () => {
-        console.log("⚡ Sync: client_entities modification detected. Updating overview counters...");
-        await hydrateDashboardTelemetryData();
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'client_vault' 
-      }, async () => {
-        console.log("⚡ Sync: client_vault modification detected. Updating document storage panels...");
-        await hydrateDashboardTelemetryData();
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'portal_notifications' 
-      }, async payload => {
-        // Enforce boundary filter checks to reject random memory block pushes completely
-        const isTarget = payload.new && (
-          String(payload.new.email_address).toLowerCase() === userEmail || 
-          String(payload.new.recipient_email).toLowerCase() === userEmail
-        );
-        
-        if (isTarget || payload.eventType === 'DELETE') {
-          console.log("⚡ Sync: portal_notifications modification captured. Re-rendering alerts...");
-          await hydrateDashboardTelemetryData();
-        }
-      })
-      .subscribe();
-  }
+  // Safely extract active runtime user context to bypass reference scoping errors
+  const currentSession = await client.auth.getSession();
+  const sessionUserEmail = currentSession?.data?.session?.user?.email 
+    ? String(currentSession.data.session.user.email).trim().toLowerCase() 
+    : '';
+
+  liveDashboardChannel = client 
+    .channel('client-dashboard-synchronized-master-stream-channel') 
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'client_entities' }, async () => { 
+      console.log("⚡ Sync: client_entities modification detected. Updating overview counters..."); 
+      await hydrateDashboardTelemetryData(); 
+    }) 
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'client_vault' }, async () => { 
+      console.log("⚡ Sync: client_vault modification detected. Updating document storage panels..."); 
+      await hydrateDashboardTelemetryData(); 
+    }) 
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications' }, async payload => { 
+      if (!sessionUserEmail) return;
+
+      // Enforce boundary filter checks to reject random memory block pushes completely 
+      const isTarget = payload.new && ( 
+        String(payload.new.email_address).toLowerCase() === sessionUserEmail || 
+        String(payload.new.recipient_email || '').toLowerCase() === sessionUserEmail 
+      ); 
+
+      if (isTarget || payload.eventType === 'DELETE') { 
+        console.log("⚡ Sync: portal_notifications modification captured. Re-rendering alerts..."); 
+        await hydrateDashboardTelemetryData(); 
+      } 
+    }) 
+    .subscribe(); 
+}
 
   // 🏁 INITIALIZATION MOUNT TRIGGERS ACTIVE RUNTIME LIFECYCLES
   await hydrateDashboardTelemetryData();

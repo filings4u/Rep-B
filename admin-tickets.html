@@ -866,68 +866,59 @@ async function fetchHistoricalChatRepliesStream() {
   } 
 }
 
-// --- 4. DISPATCH PROFESSIONAL REPLY BACK DOWN TO WORKSPACE PORTALS --- 
-if (responseForm) { 
-  responseForm.addEventListener("submit", async (e) => { 
-    e.preventDefault(); 
-    e.stopPropagation(); 
-    
-    if (!globallyActiveClientEmailKey) return; 
+// --- 4. CORRECTED DISPATCH HANDLER (Using client_profiles column signatures) ---
+if (responseForm) {
+  responseForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Verifies that the active client workspace keys are populated
+    if (!globallyActiveClientIdKey || !globallyActiveClientEmailKey) {
+      showWorkbenchBanner("✕ Active target client context tracking data missing.", true);
+      return;
+    }
 
     const replyInput = document.getElementById("adminWorkbenchReplyBody");
-    const replyContent = replyInput?.value.trim(); 
-    if (!replyContent) return; 
+    const replyContent = replyInput?.value.trim();
+    if (!replyContent) return;
 
-    if (submitBtn) { 
-      submitBtn.disabled = true; 
-      submitBtn.textContent = "Transmitting Reply Content... 📡"; 
-    } 
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Transmitting Reply Content... 📡";
+    }
 
-    try { 
-      console.log("🚀 [Ticket Engine] Dispatching operator answer straight into chat timelines table space..."); 
-
-      // 🟢 FIXED IDENTITY PIPELINE: Map 'id' strictly to the User UUID, not the Ticket UUID
-      const targetUserId = activeWorkbench?.dataset.clientId || window.clientActiveUserId;
-
-      const { error: replyInsertError } = await client 
-        .from('chat_messages') 
-        .insert([{ 
-          id: targetUserId, 
-          email_address: globallyActiveClientEmailKey, 
-          message_content: replyContent, 
-          sender_type: 'admin', 
-          attached_file_url: null, // Explicitly declared to preserve schema parity
-          is_read_by_admin: true, 
-          is_read_by_client: false, 
-          created_at: new Date().toISOString() 
-        }]); 
-
-      if (replyInsertError) throw replyInsertError; 
-
-      // Auto-advance ticket status out of 'Pending' into an updated active state locally 
-      const statusDropdown = document.getElementById("workbenchStatusSelect"); 
-      if (statusDropdown && statusDropdown.value === "Pending") { 
-        statusDropdown.value = "Open"; 
-        if (typeof window.updateActiveTicketStatusFromWorkbench === "function") {
-          await window.updateActiveTicketStatusFromWorkbench(); 
-        }
-      } 
-
-      showWorkbenchBanner("✓ Success! Feedback response pushed live to user chat workspace portal layout.", false); 
+    try {
+      console.log("🚀 [Ticket Engine] Dispatching operator answer matching structural schema rows...");
       
-      if (replyInput) replyInput.value = ""; 
-      await fetchHistoricalChatRepliesStream(); 
+      const { error: replyInsertError } = await client
+        .from('chat_messages')
+        .insert([{
+          id: globallyActiveClientIdKey,                 // Maps strictly to client_profiles.id
+          email_address: globallyActiveClientEmailKey,   // Maps strictly to client_profiles.email_address
+          message_content: replyContent,
+          sender_type: 'admin',
+          attached_file_url: null,
+          is_read_by_admin: true,
+          is_read_by_client: false,
+          created_at: new Date().toISOString()
+        }]);
 
-    } catch (fault) { 
-      console.error("✕ Output submission rejected:", fault.message); 
-      showWorkbenchBanner(`✕ Transmission Failure: ${fault.message}`, true); 
-    } finally { 
-      if (submitBtn) { 
-        submitBtn.disabled = false; 
-        submitBtn.textContent = "Dispatch Response & Sync Ledger ➔"; 
-      } 
-    } 
-  }); 
+      if (replyInsertError) throw replyInsertError;
+
+      showWorkbenchBanner("✓ Success! Feedback response pushed live to user chat workspace portal layout.", false);
+      if (replyInput) replyInput.value = "";
+      await fetchHistoricalChatRepliesStream();
+
+    } catch (fault) {
+      console.error("✕ Output submission rejected:", fault.message);
+      showWorkbenchBanner(`✕ Transmission Failure: ${fault.message}`, true);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Dispatch Response & Sync Ledger ➔";
+      }
+    }
+  });
 }
 
 
