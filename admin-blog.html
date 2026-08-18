@@ -1,3 +1,5 @@
+<!-- admin-blog -->
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -636,701 +638,93 @@
 
 <!-- CORE MODULE SCRIPTS - SECTION 3 -->
 <script>
-  let activeEditingPostId = null;
-  let currentPreservedImageUrl = '';
+"use strict";
+let activeEditingPostId = null;
+let currentPreservedImageUrl = "";
+let blogAdminClient = null;
+let blogPostsCache = [];
+let quillEditor = null;
 
-  // 🧼 AUTOMATED STORAGE COVERS CLEANUP ENGINE
-  async function purgeObsoleteCoverAsset(fullImageUrlString) {
-    if (!fullImageUrlString || fullImageUrlString.includes('blog-fallback.jpg')) return;
-    const client = window.supabaseClient;
-    if (!client) return;
+const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
 
-    try {
-      const searchMarker = 'vault_documents/';
-      const markerIndex = fullImageUrlString.indexOf(searchMarker);
-      if (markerIndex === -1) return;
-
-      const extractedStorageFilePath = fullImageUrlString.substring(markerIndex + searchMarker.length);
-      await client.storage.from('vault_documents').remove([extractedStorageFilePath]);
-    } catch (err) {
-      console.warn("Storage cleanup pass skipped:", err.message);
-    }
+function getClient(){
+  if(window.supabaseClient?.from) return window.supabaseClient;
+  if(window.supabaseInstance?.from) return window.supabaseInstance;
+  if(window.supabase?.from) return window.supabase;
+  if(window.supabase?.createClient){
+    const c=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    window.supabaseClient=c;
+    return c;
   }
+  return null;
+}
+function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
+function imageUrl(p){return p?.image_url||p?.cover_image_url||"";}
+function contentOf(p){return p?.content||"";}
+function feedback(msg,ok=false){const n=document.getElementById("publishFeedbackMsg");if(n){n.textContent=msg;n.style.color=ok?"var(--emerald)":"var(--staff-red)";}}
+function evaluateSummaryCharacterCount(el){const c=document.getElementById("blog-summary-current-count"),w=document.getElementById("blog-summary-warn-pill");if(!el||!c)return;c.textContent=el.value.length;if(w)w.style.color=el.value.length>=140?"var(--staff-red)":el.value.length>=100?"#d97706":"#64748b";}
 
-  // --- DYNAMIC DATA FETCH & RE-RENDER LOOPS ---
-  async function loadAdminBlogInventoryGrid() {
-    const targetBody = document.getElementById('live-blog-rows-target');
-    if (!targetBody || !window.supabaseClient) return;
-
-    try {
-      const { data: posts, error } = await window.supabaseClient
-        .from('blog_posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      if (!posts || posts.length === 0) {
-        targetBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">No published blog posts discovered. Create one above.</td></tr>`;
-        return;
-      }
-
-      targetBody.innerHTML = '';
-      posts.forEach(post => {
-        const tableRow = document.createElement('tr');
-        tableRow.innerHTML = `
-          <td style="padding:12px; border-bottom:1px solid var(--border-color); vertical-align: middle;"><span style="background:#edf2f7; color:var(--text-dark); padding:2px 6px; border-radius:4px; font-family:monospace; font-size:0.75rem;">${post.service_slug || 'global'}</span></td>
-          <td style="padding:12px; border-bottom:1px solid var(--border-color); color:var(--text-muted); font-weight:600; vertical-align: middle;">${post.category}</td>
-          <td style="padding:12px; border-bottom:1px solid var(--border-color); vertical-align: middle;">
-            <div class="row-headline-text" style="font-weight:700; color:var(--text-dark); margin-bottom:4px;"></div>
-            <div class="row-summary-text" style="color:var(--text-muted); font-size:0.8rem; line-height:1.4;"></div>
-          </td>
-          <td style="text-align:center; padding:12px; border-bottom:1px solid var(--border-color); white-space:nowrap; vertical-align:middle;">
-            <button class="btn-blog-row-edit" style="background:none; border:none; color:var(--emerald); font-weight:700; font-size:0.75rem; cursor:pointer; margin-right:10px; padding:0;">Edit</button>
-            <button class="btn-blog-row-delete" style="background:none; border:none; color:#ef4444; font-weight:700; font-size:0.75rem; cursor:pointer; padding:0;">Delete</button>
-          </td>
-        `;
-
-        tableRow.querySelector('.row-headline-text').textContent = post.title;
-        tableRow.querySelector('.row-summary-text').textContent = post.summary;
-
-        tableRow.querySelector('.btn-blog-row-edit').addEventListener('click', () => { openBlogEditingSession(post); });
-        tableRow.querySelector('.btn-blog-row-delete').addEventListener('click', () => { dropBlogPostRow(post.id); });
-        targetBody.appendChild(tableRow);
-      });
-    } catch (err) {
-      console.error("Grid compilation failure:", err);
-      targetBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">Failure syncing live data feeds.</td></tr>`;
-    }
-  }
-
-  // --- FORM MULTI-INTENT SUBMISSION DISPATCHER ---
-  document.getElementById('masterLongBlogForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const client = window.supabaseClient;
-    if (!client) return alert("Database Client Connection Error.");
-
-    const feedbackBox = document.getElementById('publishFeedbackMsg');
-    const submitBtn = document.getElementById('publishSubmitBtn');
-    const imageField = document.getElementById('blogImageFile');
-    const isEditingMode = (activeEditingPostId !== null);
-
-    submitBtn.disabled = true;
-    feedbackBox.style.color = "var(--text-dark)";
-    feedbackBox.innerText = "Processing media asset storage nodes...";
-
-    try {
-      let finalCoverAssetUrl = isEditingMode ? currentPreservedImageUrl : 'images/blog-fallback.jpg';
-
-      if (imageField.files && imageField.files.length > 0) {
-        const selectedFile = imageField.files[0];
-        const uniquePathString = `blog_covers/${Date.now()}_${selectedFile.name.replace(/\s+/g, '_')}`;
-        
-        const { error: uploadErr } = await client.storage
-          .from('vault_documents')
-          .upload(uniquePathString, selectedFile);
-
-        if (uploadErr) throw uploadErr;
-
-        const { data: resolvedUrlData } = client.storage.from('vault_documents').getPublicUrl(uniquePathString);
-        finalCoverAssetUrl = resolvedUrlData.publicUrl;
-      }
-
-      const titleText = document.getElementById('blogTitle').value.trim();
-      const categorySelection = document.getElementById('blogCategory').value;
-      const slugValue = document.getElementById('blogSlug').value;
-      const summaryText = document.getElementById('blogSummary').value.trim();
-      const contentBodyText = document.getElementById('blogContent').value.trim();
-      
-      const derivedUrlRoutingSlug = titleText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-\$)/g, '');
-
-      const payload = {
-        title: titleText,
-        summary: summaryText,
-        content: contentBodyText,
-        category: categorySelection,
-        service_slug: slugValue,
-        slug: derivedUrlRoutingSlug,
-        image_url: finalCoverAssetUrl
-      };
-
-      let queryResponseError = null;
-
-      if (isEditingMode) {
-        const { error } = await client.from('blog_posts').update(payload).eq('id', activeEditingPostId);
-        queryResponseError = error;
-        if (!error && imageField.files && imageField.files.length > 0) {
-          await purgeObsoleteCoverAsset(currentPreservedImageUrl);
-        }
-      } else {
-        const { error } = await client.from('blog_posts').insert([payload]);
-        queryResponseError = error;
-      }
-
-      if (queryResponseError) throw queryResponseError;
-
-      feedbackBox.style.color = "var(--emerald)";
-      feedbackBox.innerText = "Success: Changes updated live on system dashboard!";
-      
-      closeBlogEditingSession();
-      await loadAdminBlogInventoryGrid();
-    } catch (err) {
-      feedbackBox.style.color = "#e53e3e";
-      feedbackBox.innerText = `Operation execution crash: ${err.message}`;
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-</script>
-
-<!-- CORE MODULE SCRIPTS - SECTION 4 -->
-<script>
-  function evaluateSummaryCharacterCount(inputElement) {
-    const length = inputElement.value.length;
-    const countWrapper = document.getElementById('blog-summary-warn-pill');
-    const countDisplay = document.getElementById('blog-summary-current-count');
-
-    if (!countWrapper || !countDisplay) return;
-    countDisplay.textContent = length;
-
-    if (length >= 140) { countWrapper.style.color = 'var(--staff-red)'; } 
-    else if (length >= 100) { countWrapper.style.color = '#d97706'; } 
-    else { countWrapper.style.color = '#64748b'; }
-  }
-
- function openBlogEditingSession(postObject) { 
-  activeEditingPostId = postObject.id; 
-  currentPreservedImageUrl = postObject.image_url; 
-  
-  document.getElementById('blogTitle').value = postObject.title; 
-  document.getElementById('blogCategory').value = postObject.category; 
-  document.getElementById('blogSlug').value = postObject.service_slug || 'global'; 
-  document.getElementById('blogSummary').value = postObject.summary; 
-
-  // 🛠️ REMOVED THE OLD TEXTAREA ASSIGNMENT CRASH LINE
-  // 🚀 INJECTS SAVED DATA INTO THE RICH TEXT ENGINE SAFELY WITHOUT NULL CRASHES
-  if (quillEditor && postObject.content) {
-    quillEditor.setContents(quillEditor.clipboard.convert(postObject.content));
-  }
-
-  evaluateSummaryCharacterCount(document.getElementById('blogSummary')); 
-  document.getElementById('publisher-form-title').textContent = "Modify Article Record Column Elements"; 
-  
-  const submitBtn = document.getElementById('publishSubmitBtn'); 
-  submitBtn.textContent = "Save Changes Live 💾"; 
-  submitBtn.style.backgroundColor = "var(--emerald)"; 
-
-  if (!document.getElementById('btn-cancel-blog-edit')) { 
-    const resetBtn = document.createElement('button'); 
-    resetBtn.id = 'btn-cancel-blog-edit'; 
-    resetBtn.type = 'button'; 
-    resetBtn.textContent = 'Discard Modifications'; 
-    resetBtn.style.cssText = 'background:#64748b; color:white; border:none; padding:12px 24px; font-weight:700; font-size:0.85rem; border-radius:6px; cursor:pointer; margin-right:10px; transition:background 0.15s;'; 
-    resetBtn.onclick = closeBlogEditingSession; 
-    
-    const buttonWrapper = document.getElementById('form-action-buttons-wrapper') || submitBtn.parentNode; 
-    buttonWrapper.insertBefore(resetBtn, submitBtn); 
-  } 
-
-  document.getElementById('blogTitle').focus(); 
-} 
-
-
-function closeBlogEditingSession() { 
-  activeEditingPostId = null; 
-  currentPreservedImageUrl = ''; 
-  document.getElementById('masterLongBlogForm').reset(); 
-
-  // 🚀 CLEAR THE TEXT WRITER WORKSPACE WHEN DISCARDING CHANGES
-  if (quillEditor) {
-    quillEditor.setText('');
-  }
-
-  const counterLabel = document.getElementById('blog-summary-current-count'); 
-  if (counterLabel) counterLabel.textContent = '0'; 
-  document.getElementById('publisher-form-title').textContent = "Draft New Article"; 
-  
-  const submitBtn = document.getElementById('publishSubmitBtn'); 
-  submitBtn.textContent = "Publish Article Globally 🚀"; 
-  submitBtn.style.backgroundColor = "var(--staff-red)"; 
-  
-  const cancelBtn = document.getElementById('btn-cancel-blog-edit'); 
-  if (cancelBtn) cancelBtn.remove(); 
-} 
-
-
-async function dropBlogPostRow(id) { 
-  if (!confirm("Are you absolutely sure you want to drop this long-form article entry?")) return; 
-  if (!window.supabaseClient) return; 
-  
-  try { 
-    const { data: currentRecord } = await window.supabaseClient.from('blog_posts').select('image_url').eq('id', id).single(); 
-    const { error } = await window.supabaseClient.from('blog_posts').delete().eq('id', id); 
-    
-    if (error) throw error; 
-    
-    if (currentRecord && currentRecord.image_url) { 
-      await purgeObsoleteCoverAsset(currentRecord.image_url); 
-    } 
-    
-    closeBlogEditingSession(); 
-    await loadAdminBlogInventoryGrid(); 
-  } catch (err) { 
-    alert(`Deletion failure: ${err.message}`); 
-  } 
+async function verifyAdmin(){
+  if(!blogAdminClient?.auth) throw new Error("Supabase authentication client is unavailable.");
+  const {data,error}=await blogAdminClient.auth.getSession();
+  if(error) throw error;
+  const u=data?.session?.user;
+  if(!u){location.replace("admin-login.html");return false;}
+  const email=String(u.email||"").toLowerCase().trim();
+  const role=u.user_metadata?.role;
+  if(role!=="admin"&&!email.endsWith("@filings4u.com")&&email!=="test-admin@filings4u.com"){location.replace("client-dashboard.html");return false;}
+  return true;
 }
 
-
-  function executeLiveBlogSearchFilter(val) {
-    const cleanQuery = val.toLowerCase().trim();
-    const rows = document.querySelectorAll('#live-blog-rows-target tr');
-
-    rows.forEach(row => {
-      if (row.cells.length < 3) return;
-      const combinedText = row.textContent.toLowerCase();
-      row.style.display = (cleanQuery === "" || combinedText.includes(cleanQuery)) ? "" : "none";
-    });
-  }
-
-  function toggleSidebarAccordion(buttonElement) {
-    buttonElement.classList.toggle('active');
-    const panel = buttonElement.nextElementSibling;
-    if (panel) {
-      panel.style.maxHeight = (panel.style.maxHeight && panel.style.maxHeight !== "0px") ? "0px" : panel.scrollHeight + "px";
-    }
-  }
-
-  // 🛡️ RESPONSIVE MENU DRAWER SAFETY GATES: Allows navigation sidebar links to remain interactive
-  function toggleMobileSidebarMenuOverlay() {
-    const sidebar = document.querySelector(".portal-sidebar");
-    const icon = document.getElementById("mobileNavTriggerIcon");
-    if (!sidebar) return;
-
-    sidebar.classList.toggle("mobile-revealed");
-    if (icon) {
-      icon.textContent = sidebar.classList.contains("mobile-revealed") ? "✕" : "☰";
-    }
-  }
-
-  // Polling tracker boots layout tables following database clearance cycles
-  const startPollerLoop = setInterval(() => {
-    if (window.supabaseClient) {
-      clearInterval(startPollerLoop);
-      loadAdminBlogInventoryGrid();
-    }
-  }, 50);
-</script>
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMIN BLOG CORES (Part 1: Synchronization Initializer)
-========================================================================== --> 
-<script>
-  // --- 1. GLOBAL WORKSPACE STORAGE STATES ---
-  const blogAdminCoreClient = window.supabaseClient || window.supabase;
-  let masterBlogCacheArray = [];
-  let currentlyEditingArticleUuid = null;
-
-  // --- 2. ENGINE TIMING LIFE-CYCLE INITIALIZER ---
-  document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(async () => {
-          const client = window.supabaseClient || window.supabase || blogAdminCoreClient;
-          if (!client) return;
-
-          try {
-              const { data: { session } } = await client.auth.getSession();
-              if (!session) { window.location.href = 'admin-login.html'; return; }
-              
-              const staffEmail = session.user.email.toLowerCase().trim();
-              const isVerifiedStaff = staffEmail.endsWith('@filings4u.com') || staffEmail === 'test-admin@filings4u.com';
-              if (!isVerifiedStaff) { window.location.href = 'portal-login.html'; return; }
-
-              // Hot-reload active articles matrix grid logs
-              await synchronizeArticlesLedgerInventory(client);
-
-          } catch (err) {
-              console.error("Blog engine initialization failure:", err.message);
-          }
-      }, 50);
-  });
-
-  // --- 3. CHARACTER COUNT MATRIX SUMMARY INDICATOR ---
-  function evaluateSummaryCharacterCount(inputDomElement) {
-      const counterNode = document.getElementById("blog-summary-current-count");
-      if (counterNode) {
-          counterNode.textContent = inputDomElement.value.length;
-      }
-  }
-
-  // --- 4. SYNCHRONIZE INSIGHTS CATALOG FROM DATABASE ---
-  async function synchronizeArticlesLedgerInventory(client) {
-      const targetBox = document.getElementById("live-blog-rows-target");
-      if (!targetBox) return;
-
-      try {
-          const { data: posts, error } = await client
-              .from('blog_posts')
-              .select('*')
-              .order('created_at', { ascending: false });
-
-          if (error) throw error;
-
-          masterBlogCacheArray = posts || [];
-          renderArticlesCatalogRows(masterBlogCacheArray);
-
-      } catch (err) {
-          console.error("Database tracking inventory fetch failure:", err.message);
-          targetBox.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--staff-red); padding:20px;">静态 Core Target Missing.</td></tr>`;
-      }
-  }
-</script>
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMIN BLOG CORES (Part 2: UI Elements Table Render & Filters)
-========================================================================== --> 
-<script>
-  // --- 1. RENDER DATABASE CATALOG ROWS NATIVELY ---
-  function renderArticlesCatalogRows(datasetArray) {
-      const targetBox = document.getElementById("live-blog-rows-target");
-      if (!targetBox) return;
-
-      if (datasetArray.length === 0) {
-          targetBox.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">No matching articles.</td></tr>`;
-          return;
-      }
-
-      targetBox.innerHTML = datasetArray.map(row => `
-          <tr style="border-bottom:1px solid var(--border-color); font-size:0.85rem;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-              <td style="padding:12px; font-family:monospace; font-weight:700; color:#475569;">/${row.slug}</td>
-              <td style="padding:12px; font-weight:600; color:#0a1f44;">${row.category}</td>
-              <td style="padding:12px; max-width:400px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                  <strong style="color:var(--text-dark); display:block; margin-bottom:2px;">${row.title}</strong>
-                  <span style="color:var(--text-muted); font-size:0.78rem;">${row.summary}</span>
-              </td>
-              <td style="padding:12px; text-align:center; white-space:nowrap;">
-                  <button class="btn-sm" style="background:var(--text-dark); padding:4px 8px; margin-right:4px; cursor:pointer;" onclick="enableArticleEditFormMutation('${row.id}')">Edit</button>
-                  <button class="btn-sm" style="background:var(--staff-red); padding:4px 8px; cursor:pointer;" onclick="executeArticleDeletionMutation('${row.id}')">Delete</button>
-              </td>
-          </tr>
-      `).join('');
-  }
-
-  // --- 2. LIVE RADIAL CONTENT SEARCH FILTER ---
-  function executeLiveBlogSearchFilter(queryTokenText) {
-      const parsedToken = queryTokenText.toLowerCase().trim();
-      const filtered = masterBlogCacheArray.filter(post => 
-          post.title.toLowerCase().includes(parsedToken) ||
-          post.summary.toLowerCase().includes(parsedToken) ||
-          post.content.toLowerCase().includes(parsedToken)
-      );
-      renderArticlesCatalogRows(filtered);
-  }
-
-  // --- 3. LOAD VALUE METRICS INTO FORM INPUTS FOR MUTATION ---
-  function enableArticleEditFormMutation(postUuid) {
-      const match = masterBlogCacheArray.find(p => p.id === postUuid);
-      if (!match) return;
-
-      currentlyEditingArticleUuid = postUuid;
-
-      document.getElementById("publisher-form-title").textContent = `Edit Existing Article [ID: ${postUuid.slice(0,6).toUpperCase()}]`;
-      document.getElementById("publishSubmitBtn").textContent = "Save Over-The-Air Structural Updates 💾";
-
-      document.getElementById("blogTitle").value = match.title;
-      document.getElementById("blogCategory").value = match.category;
-      document.getElementById("blogSlug").value = match.slug;
-      document.getElementById("blogSummary").value = match.summary;
-      document.getElementById("blogContent").value = match.content;
-
-      document.getElementById("blog-summary-current-count").textContent = match.summary.length;
-      document.getElementById("publisher-form-title").scrollIntoView({ behavior: 'smooth' });
-  }
-</script>
-
-<!-- ========================================================================== 
-🏛️ FILINGS4U ADMIN BLOG CORES (Part 3: Form Processing & DB Mutators)
-========================================================================== --> 
-<script>
-  // --- 1. GLOBAL FORM TRANSACTION SUBMISSION FLOW CONTROL ---
-  document.getElementById("masterLongBlogForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const client = window.supabaseClient || window.supabase || blogAdminCoreClient;
-      const submitBtn = document.getElementById("publishSubmitBtn");
-      const feedback = document.getElementById("publishFeedbackMsg");
-
-      if (!client || !submitBtn || !feedback) return;
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Processing Content Encryption Packet...";
-      feedback.textContent = "";
-
- try { 
-  const title = document.getElementById("blogTitle").value.trim(); 
-  const category = document.getElementById("blogCategory").value; 
-  const slug = document.getElementById("blogSlug").value; 
-  const summary = document.getElementById("blogSummary").value.trim(); 
-  const seoTitle = document.getElementById("seoMetaTitle") ? document.getElementById("seoMetaTitle").value.trim() : "";
-  const seoDescription = document.getElementById("seoMetaDescription") ? document.getElementById("seoMetaDescription").value.trim() : "";
-
-  // 🛠️ REMOVED THE OLD TEXTAREA CRASH LINE
-  // 🚀 EXTRACTS ALL RICH TEXT TOOLBAR FORMATTING DIRECTLY FROM THE NEW VISUAL BOX
-  const content = quillEditor ? quillEditor.getSemanticHTML() : '';
-
-  const fileInput = document.getElementById("blogImageFile");
-
-          let uploadedMediaUrlString = null;
-
-          if (fileInput && fileInput.files.length > 0) {
-              const fileTarget = fileInput.files[0];
-              const fileExtension = fileTarget.name.split('.').pop();
-              const uniqueFileName = `${Date.now()}_cover.${fileExtension}`;
-
-              const { data: uploadData, error: uploadError } = await client.storage
-                  .from('blog-media-vault')
-                  .upload(uniqueFileName, fileTarget, { cacheControl: '3600', upsert: true });
-
-              if (uploadError) throw uploadError;
-
-              const { data: publicUrlData } = client.storage
-                  .from('blog-media-vault')
-                  .getPublicUrl(uniqueFileName);
-
-              uploadedMediaUrlString = publicUrlData.publicUrl;
-          }
-
-          const payloadDataBundle = { title, category, slug, summary, content };
-          if (uploadedMediaUrlString) payloadDataBundle.cover_image_url = uploadedMediaUrlString;
-
-          if (currentlyEditingArticleUuid) {
-              const { error } = await client
-                  .from('blog_posts')
-                  .update(payloadDataBundle)
-                  .eq('id', currentlyEditingArticleUuid);
-
-              if (error) throw error;
-              feedback.style.color = "var(--emerald)";
-              feedback.textContent = "🎉 Article updated over the air!";
-          } else {
-              const { error } = await client
-                  .from('blog_posts')
-                  .insert([payloadDataBundle]);
-
-              if (error) throw error;
-              feedback.style.color = "var(--emerald)";
-              feedback.textContent = "🚀 Brand new column published live!";
-          }
-
-          currentlyEditingArticleUuid = null;
-          document.getElementById("masterLongBlogForm").reset();
-          document.getElementById("publisher-form-title").textContent = "Draft New Article";
-          document.getElementById("publishSubmitBtn").textContent = "Publish Article Globally 🚀";
-          document.getElementById("blog-summary-current-count").textContent = "0";
-
-          await synchronizeArticlesLedgerInventory(client);
-
-      } catch (err) {
-          console.error("Blog transmission failure caught:", err.message);
-          feedback.style.color = "var(--staff-red)";
-          feedback.textContent = `Content processing error: ${err.message}`;
-      } finally {
-          submitBtn.disabled = false;
-      }
-  });
-
-  // --- 2. PURGE DATA ENTRY MUTATION ACTION ---
-  async function executeArticleDeletionMutation(postUuid) {
-      const client = window.supabaseClient || window.supabase || blogAdminCoreClient;
-      if (!client) return;
-
-      const deleteConfirmationCheck = confirm("⚠️ Permanently delete this article?");
-      if (!deleteConfirmationCheck) return;
-
-      try {
-          const { error } = await client
-              .from('blog_posts')
-              .delete()
-              .eq('id', postUuid);
-
-          if (error) throw error;
-
-          alert("Item voided successfully.");
-          await synchronizeArticlesLedgerInventory(client);
-
-      } catch (err) {
-          alert(`Deletion request aborted: ${err.message}`);
-      }
-  }
-</script>
-
-<script>
-// 1. Inject visual arrow symbols so Undo and Redo icons actually display on your screen
-const QuillIcons = Quill.import('ui/icons');
-QuillIcons['undo'] = '<svg viewbox="0 0 18 18"><polygon class="ql-fill ql-stroke" points="6 4.5 2 8.5 6 12.5 6 4.5"/><path class="ql-stroke" d="M2,8.5 C6.5,4.5 12.5,4.5 15,8.5 C17,11.5 16,14 16,14"/></svg>';
-QuillIcons['redo'] = '<svg viewbox="0 0 18 18"><polygon class="ql-fill ql-stroke" points="12 4.5 16 8.5 12 12.5 12 4.5"/><path class="ql-stroke" d="M16,8.5 C11.5,4.5 5.5,4.5 3,8.5 C1,11.5 2,14 2,14"/></svg>';
-
-// 2. Define your updated professional Font Whitelist (Added segoe-ui and plus-jakarta-sans)
-const FontAttributor = Quill.import('formats/font');
-FontAttributor.whitelist = ['sans-serif', 'serif', 'monospace', 'segoe-ui', 'plus-jakarta-sans', 'inter', 'roboto', 'open-sans', 'montserrat', 'georgia'];
-Quill.register(FontAttributor, true);
-
-// 3. Define your structural font sizing whitelist
-const SizeAttributor = Quill.import('formats/size');
-SizeAttributor.whitelist = ['small', 'normal', 'large', 'huge'];
-Quill.register(SizeAttributor, true);
-
-let quillEditor;
-
-document.addEventListener("DOMContentLoaded", () => {
-  quillEditor = new Quill('#editor-container', {
-    theme: 'snow',
-    modules: {
-      history: {
-        delay: 1000,
-        maxStack: 500,
-        userOnly: true
-      },
-      toolbar: [
-        ['undo', 'redo'],
-        // Updated toolbar array including Segoe UI and Plus Jakarta Sans options
-        [{ 'font': ['sans-serif', 'serif', 'monospace', 'segoe-ui', 'plus-jakarta-sans', 'inter', 'roboto', 'open-sans', 'montserrat', 'georgia'] }],
-        [{ 'size': ['small', 'normal', 'large', 'huge'] }],
-        // 🛠️ ADDED 'link' TO THIS BUTTON FORMATTING ARRAY GROUP
-        ['bold', 'italic', 'underline', 'strike', 'link'],
-        [{ 'color': [] }, { 'background': [] }],
-        [{ 'align': [] }],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        [{ 'indent': '-1' }, { 'indent': '+1' }],
-        ['clean']
-      ]
-    }
-  });
-
-  const toolbar = quillEditor.getModule('toolbar');
-  if (toolbar) {
-    toolbar.addHandler('undo', () => quillEditor.history.undo());
-    toolbar.addHandler('redo', () => quillEditor.history.redo());
-  }
-
-  // Inject Font families and drop-down menu title labels directly into the document head
-  const fontStyles = document.createElement("style");
-  fontStyles.textContent = `
-    @import url('https://googleapis.com');
-    /* Dropdown UI Labels Custom Formatting Rules */
-    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="segoe-ui"]::before, .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="segoe-ui"]::before { content: 'Segoe UI' !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="plus-jakarta-sans"]::before, .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="plus-jakarta-sans"]::before { content: 'Plus Jakarta' !important; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="inter"]::before, .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="inter"]::before { content: 'Inter' !important; font-family: 'Inter', sans-serif; }
-    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="roboto"]::before, .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="roboto"]::before { content: 'Roboto' !important; font-family: 'Roboto', sans-serif; }
-    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="open-sans"]::before, .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="open-sans"]::before { content: 'Open Sans' !important; font-family: 'Open Sans', sans-serif; }
-    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="montserrat"]::before, .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="montserrat"]::before { content: 'Montserrat' !important; font-family: 'Montserrat', sans-serif; }
-    /* Live Editor Workspace Execution Font Mappings */
-    .ql-font-segoe-ui { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .ql-font-plus-jakarta-sans { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .ql-font-inter { font-family: 'Inter', sans-serif; }
-    .ql-font-roboto { font-family: 'Roboto', sans-serif; }
-    .ql-font-open-sans { font-family: 'Open Sans', sans-serif; }
-    .ql-font-montserrat { font-family: 'Montserrat', sans-serif; }
-  `;
-  document.head.appendChild(fontStyles);
-});
-
-</script>
-
-<script>
-
-
-  // --- ENGAGEMENT METRICS RENDERING BLOCK ---
-async function loadAnalyticsLeaderboardGrid() {
-  const metricsTarget = document.getElementById('metrics-leaderboard-rows-target');
-  const activeClient = typeof client !== 'undefined' ? client : (typeof supabaseConnector !== 'undefined' ? supabaseConnector : window.supabaseClient);
-  
-  if (!metricsTarget || !activeClient) return;
-
-  try {
-    // Queries all posts sorted cleanly by your high-impact total_shares data variable column
-    const { data: popularPosts, error } = await activeClient
-      .from('blog_posts')
-      .select('title, category, total_shares')
-      .order('total_shares', { ascending: false });
-
-    if (error) throw error;
-
-    if (!popularPosts || popularPosts.length === 0) {
-      metricsTarget.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; color:#94a3b8;">No sharing telemetry tracked yet.</td></tr>`;
-      return;
-    }
-
-    metricsTarget.innerHTML = '';
-
-    popularPosts.forEach(postItem => {
-      const metricRow = document.createElement('tr');
-      metricRow.style.borderBottom = '1px solid var(--border-color)';
-      
-      metricRow.innerHTML = `
-        <td class="metric-title" style="padding: 12px; font-weight: 600; color: #0a1f44;"></td>
-        <td style="padding: 12px; color: #64748b;">${postItem.category || 'Compliance'}</td>
-        <td style="padding: 12px; text-align: center; font-weight: 700; color: #10b981;">
-          <span style="background: #e6fbf4; padding: 4px 8px; border-radius: 4px; font-family: monospace;">
-            🔥 ${postItem.total_shares}
-          </span>
-        </td>
-      `;
-      
-      // Prevents string markup text injection exploits
-      metricRow.querySelector('.metric-title').textContent = postItem.title;
-      metricsTarget.appendChild(metricRow);
-    });
-
-  } catch (err) {
-    console.error("Metrics layout update halt:", err);
-    metricsTarget.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#ef4444; padding:20px;">Telemetry grid tracking offline.</td></tr>`;
-  }
+async function loadAdminBlogInventoryGrid(){
+  const body=document.getElementById("live-blog-rows-target");if(!body||!blogAdminClient)return;
+  body.innerHTML='<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-muted);">Loading published article inventory...</td></tr>';
+  try{
+    const {data,error}=await blogAdminClient.from("blog_posts").select("*").order("created_at",{ascending:false});
+    if(error)throw error;
+    blogPostsCache=data||[];renderArticlesCatalogRows(blogPostsCache);renderMetrics(blogPostsCache);
+  }catch(e){console.error(e);body.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--staff-red);padding:25px;">Unable to load blog_posts: ${esc(e.message)}</td></tr>`;}
 }
+function renderMetrics(posts){
+  const body=document.getElementById("metrics-leaderboard-rows-target");if(!body)return;
+  if(!posts.length){body.innerHTML='<tr><td colspan="3" style="text-align:center;padding:24px;color:#94a3b8;">No article metrics available.</td></tr>';return;}
+  body.innerHTML=posts.map(p=>`<tr><td style="padding:12px;border-bottom:1px solid var(--border-color);">${esc(p.title||"Untitled")}</td><td style="padding:12px;border-bottom:1px solid var(--border-color);">${esc(p.category||"Uncategorized")}</td><td style="padding:12px;border-bottom:1px solid var(--border-color);text-align:center;">${esc(p.share_count??p.total_shares??0)}</td></tr>`).join("");
+}
+function renderArticlesCatalogRows(posts){
+  const body=document.getElementById("live-blog-rows-target");if(!body)return;
+  if(!posts.length){body.innerHTML='<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-muted);">No matching articles.</td></tr>';return;}
+  body.innerHTML="";
+  posts.forEach(p=>{
+    const tr=document.createElement("tr");tr.style.borderBottom="1px solid var(--border-color)";
+    tr.innerHTML=`<td style="padding:12px;"><span style="background:#edf2f7;color:var(--text-dark);padding:3px 7px;border-radius:4px;font-family:monospace;font-size:.72rem;">/${esc(p.slug||p.service_slug||"global")}</span></td><td style="padding:12px;color:var(--text-muted);font-weight:600;">${esc(p.category||"Uncategorized")}</td><td style="padding:12px;"><strong style="color:var(--text-dark);display:block;margin-bottom:4px;">${esc(p.title||"Untitled")}</strong><span style="color:var(--text-muted);font-size:.8rem;">${esc(p.summary||"")}</span></td><td style="padding:12px;text-align:center;white-space:nowrap;"><button type="button" class="btn-edit" style="background:none;border:none;color:var(--emerald);font-weight:700;cursor:pointer;margin-right:10px;">Edit</button><button type="button" class="btn-delete" style="background:none;border:none;color:#ef4444;font-weight:700;cursor:pointer;">Delete</button></td>`;
+    tr.querySelector(".btn-edit").onclick=()=>openBlogEditingSession(p);tr.querySelector(".btn-delete").onclick=()=>dropBlogPostRow(p.id);body.appendChild(tr);
+  });
+}
+function executeLiveBlogSearchFilter(v){const q=String(v||"").toLowerCase().trim();renderArticlesCatalogRows(q?blogPostsCache.filter(p=>[p.title,p.category,p.slug,p.service_slug,p.summary,p.content].filter(Boolean).join(" ").toLowerCase().includes(q)):blogPostsCache);}
+function buildSlug(v){return String(v||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
+async function uploadCover(file){if(!file)return null;if(!file.type.startsWith("image/"))throw new Error("Cover file must be an image.");if(file.size>25*1024*1024)throw new Error("Cover image exceeds 25MB.");const path=`blog_covers/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;const {error}=await blogAdminClient.storage.from("blog-media-vault").upload(path,file,{cacheControl:"3600",upsert:false});if(error)throw error;return blogAdminClient.storage.from("blog-media-vault").getPublicUrl(path).data.publicUrl;}
+async function purgeObsoleteCoverAsset(url){if(!url)return;try{const marker="/storage/v1/object/public/blog-media-vault/",i=url.indexOf(marker);if(i>=0)await blogAdminClient.storage.from("blog-media-vault").remove([url.slice(i+marker.length)]);}catch(e){console.warn("Cover cleanup skipped",e);}}
+function openBlogEditingSession(p){
+  activeEditingPostId=p.id;currentPreservedImageUrl=imageUrl(p);
+  document.getElementById("blogTitle").value=p.title||"";document.getElementById("blogCategory").value=p.category||"";document.getElementById("blogSlug").value=p.service_slug||"global";document.getElementById("blogSummary").value=p.summary||"";
+  if(quillEditor){quillEditor.setText("");if(contentOf(p))quillEditor.clipboard.dangerouslyPasteHTML(contentOf(p));}
+  document.getElementById("publisher-form-title").textContent="Modify Article Record";const b=document.getElementById("publishSubmitBtn");b.textContent="Save Changes Live 💾";b.style.backgroundColor="var(--emerald)";evaluateSummaryCharacterCount(document.getElementById("blogSummary"));
+  if(!document.getElementById("btn-cancel-blog-edit")){const c=document.createElement("button");c.id="btn-cancel-blog-edit";c.type="button";c.textContent="Discard Modifications";c.style.cssText="background:#64748b;color:#fff;border:0;padding:12px 24px;font-weight:700;border-radius:6px;cursor:pointer;margin-right:10px;";c.onclick=closeBlogEditingSession;document.getElementById("form-action-buttons-wrapper").insertBefore(c,b);}
+  document.getElementById("publisher-form-title").scrollIntoView({behavior:"smooth"});
+}
+function closeBlogEditingSession(){activeEditingPostId=null;currentPreservedImageUrl="";document.getElementById("masterLongBlogForm")?.reset();if(quillEditor)quillEditor.setText("");document.getElementById("blog-summary-current-count")?.replaceChildren(document.createTextNode("0"));document.getElementById("publisher-form-title").textContent="Draft New Article";const b=document.getElementById("publishSubmitBtn");b.textContent="Publish Article Globally 🚀";b.style.backgroundColor="var(--staff-red)";document.getElementById("btn-cancel-blog-edit")?.remove();}
 
+async function handleSubmit(e){e.preventDefault();if(!blogAdminClient)return feedback("Database Client Connection Error.");const btn=document.getElementById("publishSubmitBtn"),file=document.getElementById("blogImageFile");const title=document.getElementById("blogTitle").value.trim(),category=document.getElementById("blogCategory").value,service_slug=document.getElementById("blogSlug").value,summary=document.getElementById("blogSummary").value.trim(),content=quillEditor?quillEditor.root.innerHTML.trim():"";if(!title||!category||!service_slug||!summary||!content){feedback("Complete all required article fields before publishing.");return;}btn.disabled=true;btn.textContent=activeEditingPostId?"Saving Article...":"Publishing Article...";try{let img=currentPreservedImageUrl;if(file?.files?.length)img=await uploadCover(file.files[0]);const payload={title,category,service_slug,summary,content,slug:buildSlug(title)};if(img)payload.image_url=img;const seoTitle=document.getElementById("seoMetaTitle")?.value.trim();const seoDesc=document.getElementById("seoMetaDescription")?.value.trim();if(seoTitle)payload.seo_meta_title=seoTitle;if(seoDesc)payload.seo_meta_description=seoDesc;if(activeEditingPostId){const {error}=await blogAdminClient.from("blog_posts").update(payload).eq("id",activeEditingPostId);if(error)throw error;if(img&&img!==currentPreservedImageUrl)await purgeObsoleteCoverAsset(currentPreservedImageUrl);feedback("✓ Article updated successfully.",true);}else{const {error}=await blogAdminClient.from("blog_posts").insert([payload]);if(error)throw error;feedback("✓ Article published successfully.",true);}closeBlogEditingSession();await loadAdminBlogInventoryGrid();}catch(err){console.error(err);feedback(`Operation failed: ${err.message||"Database request failed."}`);}finally{btn.disabled=false;if(!activeEditingPostId)btn.textContent="Publish Article Globally 🚀";}}
+async function dropBlogPostRow(id){if(!confirm("Are you sure you want to permanently delete this article?"))return;try{const {data:p,error:r}=await blogAdminClient.from("blog_posts").select("image_url,cover_image_url").eq("id",id).maybeSingle();if(r)throw r;const {error}=await blogAdminClient.from("blog_posts").delete().eq("id",id);if(error)throw error;if(p)await purgeObsoleteCoverAsset(imageUrl(p));if(activeEditingPostId===id)closeBlogEditingSession();await loadAdminBlogInventoryGrid();feedback("✓ Article deleted successfully.",true);}catch(e){feedback(`Deletion failed: ${e.message}`);}}
+function toggleSidebarAccordion(b){b?.classList.toggle("active");const p=b?.nextElementSibling;if(p)p.style.maxHeight=p.style.maxHeight&&p.style.maxHeight!=="0px"?"0px":p.scrollHeight+"px";}
+function toggleMobileSidebarMenuOverlay(){const s=document.querySelector(".portal-sidebar"),i=document.getElementById("mobileNavTriggerIcon");if(!s)return;s.classList.toggle("mobile-revealed");if(i)i.textContent=s.classList.contains("mobile-revealed")?"✕":"☰";}
+function startClock(){const n=document.getElementById("portal-clock");if(!n)return;const tick=()=>{const d=new Date();n.textContent=d.toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})+" | "+d.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",second:"2-digit"});};tick();setInterval(tick,1000);}
+function initQuill(){if(typeof Quill==="undefined")return;const node=document.getElementById("editor-container");if(!node)return;quillEditor=new Quill(node,{theme:"snow",modules:{history:{delay:1000,maxStack:500,userOnly:true},toolbar:[["bold","italic","underline","strike","link"],[{header:[1,2,3,false]}],[{color:[]},{background:[]}],[{align:[]}],[{list:"ordered"},{list:"bullet"}],[{indent:"-1"},{indent:"+1"}],["clean"]]}});}
+
+document.addEventListener("DOMContentLoaded",async()=>{startClock();initQuill();document.getElementById("blogSummary")?.addEventListener("input",e=>evaluateSummaryCharacterCount(e.target));document.getElementById("adminGlobalSearchField")?.addEventListener("input",e=>executeLiveBlogSearchFilter(e.target.value));document.getElementById("masterLongBlogForm")?.addEventListener("submit",handleSubmit);blogAdminClient=getClient();if(!blogAdminClient){feedback("Database Client Connection Error.");return;}try{if(await verifyAdmin())await loadAdminBlogInventoryGrid();}catch(e){console.error(e);feedback(`Initialization failed: ${e.message}`);}});
+
+window.evaluateSummaryCharacterCount=evaluateSummaryCharacterCount;window.executeLiveBlogSearchFilter=executeLiveBlogSearchFilter;window.toggleSidebarAccordion=toggleSidebarAccordion;window.toggleMobileSidebarMenuOverlay=toggleMobileSidebarMenuOverlay;window.openBlogEditingSession=openBlogEditingSession;window.closeBlogEditingSession=closeBlogEditingSession;window.dropBlogPostRow=dropBlogPostRow;window.executeArticleDeletionMutation=dropBlogPostRow;window.enableArticleEditFormMutation=id=>{const p=blogPostsCache.find(x=>x.id===id);if(p)openBlogEditingSession(p);};
 </script>
-
-<script>
-  (function injectIsolatedTerminatorPipeline() {
-      "use strict";
-      
-      const triggerBtn = document.getElementById("sidebarFallbackLogoutBtn");
-      if (!triggerBtn) return;
-
-      triggerBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          triggerBtn.disabled = true;
-          triggerBtn.textContent = "Wiping Security Cache...";
-
-          const coreClient = window.supabaseClient || window.supabase;
-          console.log("Terminal logout initialized via self-contained trigger...");
-
-          try {
-              if (coreClient && coreClient.auth) {
-                  // Attempt over-the-air backend session tear-down
-                  await coreClient.auth.signOut();
-              }
-          } catch (authErr) {
-              console.warn("Server session clear deferred. Proceeding with hard client wipe.");
-          } finally {
-              // 1. HARD WIPE BROWSER CACHE REGISTRIES
-              if (typeof window.localStorage !== 'undefined') { window.localStorage.clear(); }
-              if (typeof window.sessionStorage !== 'undefined') { window.sessionStorage.clear(); }
-
-              // 2. SCRUB ALL BROWSER COOKIES IDENTIFIER FIELDS
-              document.cookie.split(";").forEach(cookieItem => {
-                  const eqPos = cookieItem.indexOf("=");
-                  const cookieName = eqPos > -1 ? cookieItem.substr(0, eqPos).trim() : cookieItem.trim();
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-              });
-
-              // 3. IMMEDIATE RE-ROUTING GATE
-              console.log("Purge complete. Transferring terminal to login gateway.");
-              window.location.replace('admin-login.html');
-          }
-      });
-  })();
-</script>
-
 </body>
 </html>

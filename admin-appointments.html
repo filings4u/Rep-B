@@ -1,3 +1,5 @@
+<!-- admin-appointments -->
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -391,32 +393,132 @@
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
-  // 1. Resolve Strict DOM Target Selectors
-  const bookingForm = document.getElementById("phoneBookingIntakeForm");
-  const recipientSelect = document.getElementById("bookingRecipientEmail");
-  const bookingTitleIn = document.getElementById("bookingTitle");
-  const bookingTimestampIn = document.getElementById("bookingTimestamp");
-  const bookingPrioritySel = document.getElementById("bookingPriority");
-  const formStatusDiv = document.getElementById("booking-form-status");
-  const submitButton = document.getElementById("bookingSubmitBtn");
-  const ledgerTableBody = document.getElementById("admin-appointments-ledger-target-box");
+  /*
+   * ================================================================
+   * FILINGS4U — ADMIN CONSULTATION BOOKING CENTER
+   * ================================================================
+   *
+   * This page keeps the supplied HTML/CSS/UI intact and wires the
+   * controls directly to the live Supabase client.
+   *
+   * Database sources:
+   *   client_profiles  -> customer selector
+   *   calendar_events  -> consultation reservations
+   *
+   * The previous version pulled the customer selector from orders.
+   * This version uses client_profiles, which is the canonical client
+   * registry used by the admin dashboard.
+   */
 
-  if (!bookingForm || !recipientSelect || !ledgerTableBody || !formStatusDiv || !submitButton) {
-    console.error("✕ Critical UI Error: Core layout structural elements are missing from the current DOM.");
+  const bookingForm =
+    document.getElementById("phoneBookingIntakeForm");
+
+  const recipientSelect =
+    document.getElementById("bookingRecipientEmail");
+
+  const bookingTitleIn =
+    document.getElementById("bookingTitle");
+
+  const bookingTimestampIn =
+    document.getElementById("bookingTimestamp");
+
+  const bookingPrioritySel =
+    document.getElementById("bookingPriority");
+
+  const formStatusDiv =
+    document.getElementById("booking-form-status");
+
+  const submitButton =
+    document.getElementById("bookingSubmitBtn");
+
+  const ledgerTableBody =
+    document.getElementById("admin-appointments-ledger-target-box");
+
+  const totalMetric =
+    document.getElementById("metric-total-slots");
+
+  const highPriorityMetric =
+    document.getElementById("metric-high-priority-slots");
+
+  /* ---------------------------------------------------------------
+   * SUPABASE CLIENT
+   *
+   * The page already loads assets/js/supabase-config.js and the
+   * Supabase library. Reuse the shared client instead of creating a
+   * second client with hard-coded credentials.
+   * --------------------------------------------------------------- */
+  const client =
+    window.supabaseInstance ||
+    window.supabaseClient ||
+    window.supabase;
+
+  if (
+    !client ||
+    typeof client.from !== "function"
+  ) {
+    showFatal(
+      "✕ System Error: Supabase connection could not be verified."
+    );
     return;
   }
 
-  // 2. Fetch Master Client Initialization Instances Cleanly
-  const client = window.supabaseInstance || window.supabaseClient;
-  if (!client || typeof client.from !== 'function') {
-    ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ System Error: Supabase connection could not be verified.</td></tr>`;
+  if (
+    !bookingForm ||
+    !recipientSelect ||
+    !bookingTitleIn ||
+    !bookingTimestampIn ||
+    !bookingPrioritySel ||
+    !formStatusDiv ||
+    !submitButton ||
+    !ledgerTableBody
+  ) {
+    console.error(
+      "✕ Critical UI Error: Required consultation booking elements are missing."
+    );
     return;
   }
 
-  // Helper utility to prevent Cross-Site Scripting (XSS)
-  function escapeApptHtml(str) {
-    if (!str) return "";
-    return String(str)
+  /* ---------------------------------------------------------------
+   * AUTHENTICATION
+   * --------------------------------------------------------------- */
+  try {
+    const { data: sessionData, error: sessionError } =
+      await client.auth.getSession();
+
+    if (
+      sessionError ||
+      !sessionData ||
+      !sessionData.session
+    ) {
+      showFatal(
+        "✕ Authentication session could not be verified. Please sign in again."
+      );
+      return;
+    }
+  } catch (authError) {
+    console.error(
+      "Consultation authentication check failed:",
+      authError
+    );
+
+    showFatal(
+      "✕ Authentication verification failed."
+    );
+    return;
+  }
+
+  /* ---------------------------------------------------------------
+   * HELPERS
+   * --------------------------------------------------------------- */
+  function escapeApptHtml(value) {
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return "";
+    }
+
+    return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -424,177 +526,772 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/'/g, "&#039;");
   }
 
-  // --- STAGE 1: DYNAMICALLY EXTRACT LIVE CUSTOMER LIST FROM ORDERS ---
-  async function synchronizeCustomerDropdown() {
-    try {
-      console.log("📡 [Appointments Engine] Syncing target email_address columns from public.orders...");
-      const { data: records, error: syncError } = await client
-        .from('orders')
-        .select('email_address')
-        .not('email_address', 'is', null);
-
-      if (syncError) throw syncError;
-
-      const distinctEmails = [...new Set(records.map(row => row.email_address).filter(Boolean))];
-      recipientSelect.innerHTML = `<option value="">-- Choose Customer Profile --</option>`;
-
-      if (distinctEmails.length === 0) {
-        recipientSelect.innerHTML = `<option value="">-- No Active Profiles Located --</option>`;
-        return;
-      }
-
-      distinctEmails.forEach(emailStr => {
-        const opt = document.createElement("option");
-        opt.value = emailStr.trim();
-        opt.textContent = emailStr.trim();
-        recipientSelect.appendChild(opt);
-      });
-    } catch (fault) {
-      console.error("✕ Customer Menu Sync Halted:", fault.message);
-      recipientSelect.innerHTML = `<option value="">✕ Failed to sync profile logs</option>`;
+  function showFatal(message) {
+    if (ledgerTableBody) {
+      ledgerTableBody.innerHTML = `
+        <tr>
+          <td
+            colspan="5"
+            style="padding:24px;text-align:center;color:#ef4444;font-weight:700;">
+            ${escapeApptHtml(message)}
+          </td>
+        </tr>
+      `;
     }
   }
 
-  // --- STAGE 2: FETCH AND STREAM ACTIVE APPOINTMENTS FROM CALENDAR_EVENTS ---
-  async function streamConsultationScheduleLedger() {
+  function setFormStatus(
+    message,
+    type = "info"
+  ) {
+    if (!formStatusDiv) return;
+
+    const styles = {
+      success: {
+        background: "#ecfdf5",
+        color: "#047857",
+        border: "1px solid #d1fae5"
+      },
+      error: {
+        background: "#fef2f2",
+        color: "#991b1b",
+        border: "1px solid #fee2e2"
+      },
+      info: {
+        background: "#f8fafc",
+        color: "#475569",
+        border: "1px solid #e2e8f0"
+      }
+    };
+
+    const style =
+      styles[type] || styles.info;
+
+    formStatusDiv.style.display = "block";
+    formStatusDiv.style.background = style.background;
+    formStatusDiv.style.color = style.color;
+    formStatusDiv.style.border = style.border;
+    formStatusDiv.textContent = message;
+  }
+
+  function clearFormStatus() {
+    formStatusDiv.style.display = "none";
+    formStatusDiv.textContent = "";
+  }
+
+  function formatAppointmentDate(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value);
+    }
+
+    return date.toLocaleString(
+      "en-US",
+      {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      }
+    );
+  }
+
+  function normalizePriority(value) {
+    const normalized =
+      String(value || "standard")
+        .trim()
+        .toLowerCase();
+
+    return normalized === "high"
+      ? "high"
+      : "standard";
+  }
+
+  function isPastAppointment(value) {
+    if (!value) return false;
+
+    const timestamp =
+      new Date(value).getTime();
+
+    return (
+      !Number.isNaN(timestamp) &&
+      timestamp < Date.now()
+    );
+  }
+
+  /* ---------------------------------------------------------------
+   * CUSTOMER PROFILE SELECTOR
+   *
+   * Canonical source:
+   *   client_profiles
+   *
+   * The value written to calendar_events remains email_address,
+   * matching the supplied calendar_events structure.
+   * --------------------------------------------------------------- */
+  async function synchronizeCustomerDropdown() {
+    recipientSelect.innerHTML =
+      `<option value="">-- Synchronizing Customer List... --</option>`;
+
     try {
-      console.log("📡 [Appointments Engine] Querying live entries from public.calendar_events...");
-      const { data: appts, error: fetchError } = await client
-        .from('calendar_events')
-        .select('id, email_address, title, appointment_date, priority_level')
-        .order('appointment_date', { ascending: true });
+      const {
+        data: profiles,
+        error
+      } = await client
+        .from("client_profiles")
+        .select(
+          "id,email_address,first_name,last_name,company_name,tracking_number"
+        )
+        .not(
+          "email_address",
+          "is",
+          null
+        )
+        .order(
+          "updated_at",
+          {
+            ascending: false
+          }
+        )
+        .limit(500);
 
-      if (fetchError) {
-        throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
+      if (error) {
+        throw error;
       }
 
-      // Update Top Dashboard Performance Metrics Counters
-      const totalCountTarget = document.getElementById("metric-total-slots");
-      const highPriorityTarget = document.getElementById("metric-high-priority-slots");
-      if (totalCountTarget) totalCountTarget.textContent = appts ? appts.length : 0;
-      if (highPriorityTarget) {
-        const highCount = appts ? appts.filter(a => String(a.priority_level).toUpperCase() === 'HIGH').length : 0;
-        highPriorityTarget.textContent = highCount;
+      const uniqueProfiles = [];
+      const seenEmails = new Set();
+
+      (profiles || []).forEach(profile => {
+        const email =
+          String(
+            profile.email_address || ""
+          )
+            .trim()
+            .toLowerCase();
+
+        if (
+          !email ||
+          seenEmails.has(email)
+        ) {
+          return;
+        }
+
+        seenEmails.add(email);
+        uniqueProfiles.push({
+          ...profile,
+          email_address: email
+        });
+      });
+
+      recipientSelect.innerHTML =
+        `<option value="">-- Choose Customer Profile --</option>`;
+
+      if (!uniqueProfiles.length) {
+        recipientSelect.innerHTML =
+          `<option value="">-- No Active Profiles Located --</option>`;
+        return;
       }
 
-      if (!appts || appts.length === 0) {
-        ledgerTableBody.innerHTML = `<tr><td colspan="5" class="table-initialization-loader">No active consultation records tracked in calendar assets.</td></tr>`;
+      uniqueProfiles.forEach(profile => {
+        const option =
+          document.createElement("option");
+
+        const name = [
+          profile.first_name,
+          profile.last_name
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+        const company =
+          String(
+            profile.company_name || ""
+          ).trim();
+
+        const tracking =
+          String(
+            profile.tracking_number || ""
+          ).trim();
+
+        let label =
+          name ||
+          company ||
+          profile.email_address;
+
+        if (
+          company &&
+          name
+        ) {
+          label += ` — ${company}`;
+        }
+
+        if (tracking) {
+          label += ` [${tracking}]`;
+        }
+
+        option.value =
+          profile.email_address;
+
+        option.textContent =
+          `${label} — ${profile.email_address}`;
+
+        recipientSelect.appendChild(
+          option
+        );
+      });
+    } catch (error) {
+      console.error(
+        "✕ Customer profile synchronization failed:",
+        error
+      );
+
+      recipientSelect.innerHTML =
+        `<option value="">✕ Failed to sync client profiles</option>`;
+
+      setFormStatus(
+        `Unable to load customer profiles: ${
+          error.message || "Database read failed."
+        }`,
+        "error"
+      );
+    }
+  }
+
+  /* ---------------------------------------------------------------
+   * APPOINTMENT LEDGER
+   *
+   * calendar_events is the authoritative source for reservations.
+   * --------------------------------------------------------------- */
+  async function streamConsultationScheduleLedger() {
+    ledgerTableBody.innerHTML = `
+      <tr>
+        <td
+          colspan="5"
+          class="table-initialization-loader"
+          style="padding:24px;text-align:center;">
+          Synchronizing consultation metrics...
+        </td>
+      </tr>
+    `;
+
+    try {
+      const {
+        data: appointments,
+        error
+      } = await client
+        .from("calendar_events")
+        .select(
+          "id,email_address,title,appointment_date,priority_level"
+        )
+        .order(
+          "appointment_date",
+          {
+            ascending: true
+          }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      const rows =
+        Array.isArray(appointments)
+          ? appointments
+          : [];
+
+      /* -------------------------
+       * METRICS
+       * ------------------------- */
+      if (totalMetric) {
+        totalMetric.textContent =
+          rows.length.toLocaleString();
+      }
+
+      if (highPriorityMetric) {
+        const highCount =
+          rows.filter(
+            appointment =>
+              normalizePriority(
+                appointment.priority_level
+              ) === "high"
+          ).length;
+
+        highPriorityMetric.textContent =
+          highCount.toLocaleString();
+      }
+
+      if (!rows.length) {
+        ledgerTableBody.innerHTML = `
+          <tr>
+            <td
+              colspan="5"
+              class="table-initialization-loader"
+              style="padding:30px;text-align:center;">
+              No consultation reservations are currently scheduled.
+            </td>
+          </tr>
+        `;
         return;
       }
 
       ledgerTableBody.innerHTML = "";
 
-      appts.forEach(apptItem => {
-        const trNode = document.createElement("tr");
-        trNode.className = "ledger-row-entry";
-        
-        const customerEmail = apptItem.email_address || "manual-entry@email.com";
-        const agendaTopic = apptItem.title || "Strategy Review Session";
-        const urgencyRank = String(apptItem.priority_level || 'standard').toUpperCase();
+      rows.forEach(appointment => {
+        const row =
+          document.createElement("tr");
 
-        const formattedDateTime = new Date(apptItem.appointment_date).toLocaleString('en-US', {
-          month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
-        });
+        row.className =
+          "ledger-row-entry";
 
-        let priorityBadgeClass = "badge-priority-standard";
-        if (urgencyRank === 'HIGH' || urgencyRank === 'HIGH PRIORITY') {
-          priorityBadgeClass = "badge-priority-high";
-        }
+        const email =
+          String(
+            appointment.email_address ||
+            "Manual Entry"
+          ).trim();
 
-        trNode.innerHTML = `
-          <td style="padding:16px 16px; font-weight:600; color:#0f172a;">${escapeApptHtml(customerEmail)}</td>
-          <td style="padding:16px 16px; color:#475569; font-weight:500;">${escapeApptHtml(agendaTopic)}</td>
-          <td style="padding:16px 16px; font-family:monospace; color:#334155; font-weight:600;">${formattedDateTime}</td>
-          <td style="padding:16px 16px;"><span class="badge-base ${priorityBadgeClass}">${escapeApptHtml(urgencyRank)}</span></td>
-          <td style="padding:16px 16px; text-align:right;">
-            <button class="booking-action-btn delete-trigger" data-id="${apptItem.id}">Cancel Slot</button>
+        const title =
+          String(
+            appointment.title ||
+            "Consultation"
+          ).trim();
+
+        const priority =
+          normalizePriority(
+            appointment.priority_level
+          );
+
+        const priorityLabel =
+          priority === "high"
+            ? "HIGH PRIORITY"
+            : "STANDARD";
+
+        const priorityClass =
+          priority === "high"
+            ? "badge-priority-high"
+            : "badge-priority-standard";
+
+        const appointmentDate =
+          formatAppointmentDate(
+            appointment.appointment_date
+          );
+
+        const past =
+          isPastAppointment(
+            appointment.appointment_date
+          );
+
+        row.innerHTML = `
+          <td
+            style="padding:16px;font-weight:600;color:#0f172a;">
+            ${escapeApptHtml(email)}
+          </td>
+
+          <td
+            style="padding:16px;color:#475569;font-weight:500;">
+            ${escapeApptHtml(title)}
+          </td>
+
+          <td
+            style="padding:16px;font-family:monospace;color:#334155;font-weight:600;">
+            ${escapeApptHtml(appointmentDate)}
+          </td>
+
+          <td style="padding:16px;">
+            <span
+              class="badge-base ${priorityClass}">
+              ${escapeApptHtml(priorityLabel)}
+            </span>
+          </td>
+
+          <td
+            style="padding:16px;text-align:right;">
+            <button
+              type="button"
+              class="booking-action-btn delete-trigger"
+              data-id="${escapeApptHtml(appointment.id)}"
+              ${past ? "" : ""}>
+              Cancel Slot
+            </button>
           </td>
         `;
 
-        // Bind delete action engine listeners dynamically
-        trNode.querySelector(".delete-trigger").addEventListener("click", async function() {
-          if (!confirm("Are you sure you want to cancel and delete this reserved consultation slot?")) return;
+        const deleteButton =
+          row.querySelector(
+            ".delete-trigger"
+          );
 
-          const targetApptId = this.getAttribute("data-id");
-          this.disabled = true;
-          this.textContent = "Canceling...";
+        if (deleteButton) {
+          deleteButton.addEventListener(
+            "click",
+            async () => {
+              await cancelConsultationSlot(
+                appointment,
+                deleteButton
+              );
+            }
+          );
+        }
 
-          try {
-            const { error: deleteError } = await client
-              .from('calendar_events')
-              .delete()
-              .eq('id', targetApptId);
-
-            if (deleteError) throw deleteError;
-            await streamConsultationScheduleLedger();
-          } catch (delFault) {
-            console.error("✕ Database row deletion request refused:", delFault.message);
-            alert(`✕ Cancellation Interrupted: ${delFault.message}`);
-            this.disabled = false;
-            this.textContent = "Cancel Slot";
-          }
-        });
-
-        ledgerTableBody.appendChild(trNode);
+        ledgerTableBody.appendChild(row);
       });
-    } catch (queryFault) {
-      console.error("✕ Appointments Ledger Synchronization Aborted:", queryFault.message);
-      ledgerTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ Synchronization Failure: Check system console logs.</td></tr>`;
+    } catch (error) {
+      console.error(
+        "✕ Consultation ledger synchronization failed:",
+        error
+      );
+
+      ledgerTableBody.innerHTML = `
+        <tr>
+          <td
+            colspan="5"
+            style="padding:24px;text-align:center;color:#ef4444;font-weight:700;">
+            ✕ Synchronization Failure: ${
+              escapeApptHtml(
+                error.message ||
+                "Unable to read calendar events."
+              )
+            }
+          </td>
+        </tr>
+      `;
     }
   }
 
-  // --- STAGE 3: WRITE REAL-TIME ENTRIES TO CALENDAR_EVENTS ---
-  bookingForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    formStatusDiv.style.display = "none";
-    formStatusDiv.textContent = "";
+  /* ---------------------------------------------------------------
+   * CANCEL APPOINTMENT
+   * --------------------------------------------------------------- */
+  async function cancelConsultationSlot(
+    appointment,
+    button
+  ) {
+    const id =
+      appointment?.id;
 
-    const customerEmail = recipientSelect.value;
-    const title = bookingTitleIn.value.trim();
-    const dateTimestamp = bookingTimestampIn.value;
-    const priorityLevel = bookingPrioritySel.value;
-
-    if (!customerEmail || !title || !dateTimestamp || !priorityLevel) {
-      formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border:1px solid #fee2e2;";
-      formStatusDiv.textContent = "✕ Validation Error: All reservation form fields are required.";
+    if (!id) {
+      alert(
+        "✕ Cancellation failed: Appointment identifier is missing."
+      );
       return;
     }
 
-    const originalBtnLabel = submitButton.textContent;
-    submitButton.disabled = true;
-    submitButton.textContent = "Reserving Calendar Space...";
+    const email =
+      appointment.email_address ||
+      "this client";
+
+    const confirmed =
+      window.confirm(
+        `Cancel the consultation scheduled for ${email}?\n\nThis removes the reservation from the active calendar ledger.`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const originalText =
+      button.textContent;
+
+    button.disabled = true;
+    button.textContent =
+      "Canceling...";
 
     try {
-      const { error: insertError } = await client
-        .from('calendar_events')
-        .insert([
-          {
-            email_address: customerEmail,
-            title: title,
-            appointment_date: new Date(dateTimestamp).toISOString(),
-            priority_level: priorityLevel
-          }
-        ]);
+      const {
+        error
+      } = await client
+        .from("calendar_events")
+        .delete()
+        .eq(
+          "id",
+          id
+        );
 
-      if (insertError) throw insertError;
+      if (error) {
+        throw error;
+      }
 
-      formStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857; border:1px solid #d1fae5;";
-      formStatusDiv.textContent = "✓ Consultation slot successfully reserved and logged completely!";
-      bookingForm.reset();
       await streamConsultationScheduleLedger();
-    } catch (postFault) {
-      console.error("✕ Appointment reservation loop disrupted:", postFault.message);
-      formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b; border:1px solid #fee2e2;";
-      formStatusDiv.textContent = `✕ Reservation Aborted: ${postFault.message}`;
-    } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = originalBtnLabel;
-    }
-  });
+    } catch (error) {
+      console.error(
+        "✕ Calendar event deletion failed:",
+        error
+      );
 
-  // Run initialization routines
-  await synchronizeCustomerDropdown();
-  await streamConsultationScheduleLedger();
+      alert(
+        `✕ Cancellation Interrupted: ${
+          error.message ||
+          "The calendar event could not be deleted."
+        }`
+      );
+
+      button.disabled = false;
+      button.textContent =
+        originalText;
+    }
+  }
+
+  /* ---------------------------------------------------------------
+   * CREATE CONSULTATION
+   *
+   * calendar_events write:
+   *   email_address
+   *   title
+   *   appointment_date
+   *   priority_level
+   *
+   * Duplicate/conflicting reservations are checked before insertion
+   * for the same customer + timestamp.
+   * --------------------------------------------------------------- */
+  bookingForm.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
+      clearFormStatus();
+
+      const customerEmail =
+        String(
+          recipientSelect.value || ""
+        )
+          .trim()
+          .toLowerCase();
+
+      const title =
+        String(
+          bookingTitleIn.value || ""
+        ).trim();
+
+      const dateTimestamp =
+        String(
+          bookingTimestampIn.value || ""
+        ).trim();
+
+      const priorityLevel =
+        normalizePriority(
+          bookingPrioritySel.value
+        );
+
+      if (
+        !customerEmail ||
+        !title ||
+        !dateTimestamp
+      ) {
+        setFormStatus(
+          "✕ Validation Error: All reservation form fields are required.",
+          "error"
+        );
+        return;
+      }
+
+      const localDate =
+        new Date(
+          dateTimestamp
+        );
+
+      if (
+        Number.isNaN(
+          localDate.getTime()
+        )
+      ) {
+        setFormStatus(
+          "✕ Validation Error: Please select a valid appointment date and time.",
+          "error"
+        );
+        return;
+      }
+
+      if (
+        localDate.getTime() <= Date.now()
+      ) {
+        setFormStatus(
+          "✕ Validation Error: Consultation appointments must be scheduled in the future.",
+          "error"
+        );
+        return;
+      }
+
+      const isoTimestamp =
+        localDate.toISOString();
+
+      const originalButtonText =
+        submitButton.textContent;
+
+      submitButton.disabled = true;
+      submitButton.textContent =
+        "Checking Calendar...";
+
+      try {
+        /*
+         * Check the requested exact timestamp first.
+         * This prevents accidental duplicate bookings for the same
+         * client and appointment time.
+         */
+        const {
+          data: conflicts,
+          error: conflictError
+        } = await client
+          .from("calendar_events")
+          .select(
+            "id,email_address,title,appointment_date"
+          )
+          .eq(
+            "email_address",
+            customerEmail
+          )
+          .eq(
+            "appointment_date",
+            isoTimestamp
+          )
+          .limit(1);
+
+        if (conflictError) {
+          throw conflictError;
+        }
+
+        if (
+          conflicts &&
+          conflicts.length
+        ) {
+          setFormStatus(
+            "✕ This customer already has a consultation reserved for that exact date and time.",
+            "error"
+          );
+          return;
+        }
+
+        submitButton.textContent =
+          "Reserving Calendar Space...";
+
+        const {
+          error: insertError
+        } = await client
+          .from("calendar_events")
+          .insert([
+            {
+              email_address:
+                customerEmail,
+              title:
+                title,
+              appointment_date:
+                isoTimestamp,
+              priority_level:
+                priorityLevel
+            }
+          ]);
+
+        if (insertError) {
+          throw insertError;
+        }
+
+        setFormStatus(
+          "✓ Consultation slot successfully reserved and logged.",
+          "success"
+        );
+
+        bookingForm.reset();
+
+        await streamConsultationScheduleLedger();
+      } catch (error) {
+        console.error(
+          "✕ Appointment reservation failed:",
+          error
+        );
+
+        setFormStatus(
+          `✕ Reservation Aborted: ${
+            error.message ||
+            "The calendar event could not be created."
+          }`,
+          "error"
+        );
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent =
+          originalButtonText;
+      }
+    }
+  );
+
+  /* ---------------------------------------------------------------
+   * REALTIME CALENDAR REFRESH
+   *
+   * If Supabase Realtime is enabled for calendar_events, the ledger
+   * updates automatically when another admin creates/deletes a slot.
+   * --------------------------------------------------------------- */
+  let calendarRealtimeChannel = null;
+
+  try {
+    calendarRealtimeChannel =
+      client
+        .channel(
+          "admin-consultation-calendar-live"
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "calendar_events"
+          },
+          async () => {
+            await streamConsultationScheduleLedger();
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "client_profiles"
+          },
+          async () => {
+            await synchronizeCustomerDropdown();
+          }
+        )
+        .subscribe(
+          status => {
+            console.log(
+              `[Consultation Calendar Realtime] ${status}`
+            );
+          }
+        );
+  } catch (realtimeError) {
+    console.warn(
+      "Consultation realtime channel could not be initialized:",
+      realtimeError
+    );
+  }
+
+  /* ---------------------------------------------------------------
+   * INITIALIZE PAGE
+   * --------------------------------------------------------------- */
+  await Promise.all([
+    synchronizeCustomerDropdown(),
+    streamConsultationScheduleLedger()
+  ]);
+
+  /* ---------------------------------------------------------------
+   * CLEANUP
+   * --------------------------------------------------------------- */
+  window.addEventListener(
+    "beforeunload",
+    () => {
+      if (
+        calendarRealtimeChannel &&
+        client &&
+        typeof client.removeChannel === "function"
+      ) {
+        client.removeChannel(
+          calendarRealtimeChannel
+        );
+      }
+    },
+    { once: true }
+  );
 });
 </script>
 

@@ -1,6 +1,9 @@
+<!-- admin-crm -->
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
 <script src="assets/js/supabase-config.js"></script>
 
   <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
@@ -67,7 +70,6 @@
   <meta name="theme-color" content="#c15254">
   <link rel="icon" type="image/png" href="images/fav.png">
   <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
   <style>
     :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
     body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
@@ -202,6 +204,7 @@
       --crm-rose: #ef4444;
     }
     .crm-body { margin: 0; padding: 0; background: var(--crm-bg); font-family: system-ui, -apple-system, sans-serif; color: var(--crm-text-dark); }
+    html.crm-modal-lock, body.crm-modal-lock { overflow: hidden !important; }
     .crm-layout { display: flex; flex-direction: column; width: 100%; min-height: 100vh; box-sizing: border-box; }
     .crm-header-strip { display: flex; justify-content: space-between; align-items: center; padding: 24px 40px; background: var(--crm-panel); border-bottom: 1px solid var(--crm-border); }
     .crm-workspace { display: flex; flex-direction: column; gap: 32px; padding: 32px 40px; box-sizing: border-box; flex: 1; }
@@ -226,14 +229,263 @@
     .crm-action-btn:hover { background: #e2e8f0; }
     .crm-action-btn.delete { background: #fff5f5; color: var(--crm-rose); border-color: #fca5a5; }
     .crm-action-btn.delete:hover { background: #fee2e2; }
-    .crm-drawer { position: fixed; top: 0; right: -420px; width: 420px; height: 100vh; background: var(--crm-panel); border-left: 1px solid var(--crm-border); box-shadow: -10px 0 30px rgba(0,0,0,0.05); z-index: 100; transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 24px; }
-    .crm-drawer.open { right: 0; }
-    .crm-drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.15); backdrop-filter: blur(2px); z-index: 99; display: none; }
-    .crm-drawer-overlay.open { display: block; }
-    .crm-input-group { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-    .crm-input-group label { font-weight: 700; font-size: 0.8rem; color: var(--crm-text-muted); }
-    .crm-field { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; height: 42px; box-sizing: border-box; outline: none; }
-    .crm-field:focus { border-color: var(--crm-primary); }
+    /* =========================================================
+       CENTERED NEW PROFILE MODAL
+       No internal form scrolling. The entire form is designed
+       to fit inside the viewport.
+       ========================================================= */
+    .crm-drawer-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: rgba(15,23,42,0.48) !important;
+      backdrop-filter: blur(7px) !important;
+      -webkit-backdrop-filter: blur(7px) !important;
+      z-index: 9998 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 16px !important;
+      box-sizing: border-box !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity .2s ease, visibility .2s ease !important;
+    }
+
+    .crm-drawer-overlay.open {
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+
+    .crm-drawer {
+      position: relative !important;
+      inset: auto !important;
+      width: min(720px, 94vw) !important;
+      max-width: 720px !important;
+      height: auto !important;
+      max-height: calc(100vh - 32px) !important;
+      background: #fff !important;
+      border: 1px solid var(--crm-border) !important;
+      border-radius: 18px !important;
+      box-shadow: 0 30px 80px rgba(0,0,0,.22) !important;
+      z-index: 9999 !important;
+      transform: translateY(12px) scale(.97) !important;
+      opacity: 0 !important;
+      transition: transform .22s cubic-bezier(.16,1,.3,1), opacity .2s ease !important;
+      box-sizing: border-box !important;
+      padding: 24px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 14px !important;
+      overflow: hidden !important;
+    }
+
+    .crm-drawer.open {
+      transform: translateY(0) scale(1) !important;
+      opacity: 1 !important;
+    }
+
+    .crm-drawer-header {
+      display:flex !important;
+      justify-content:space-between !important;
+      align-items:flex-start !important;
+      gap:16px !important;
+      border-bottom:1px solid var(--crm-border) !important;
+      padding-bottom:14px !important;
+      flex-shrink:0 !important;
+    }
+
+    .crm-drawer-header h3 {
+      margin:0 !important;
+      font-size:1.18rem !important;
+      font-weight:800 !important;
+    }
+
+    .crm-drawer-header p {
+      margin:4px 0 0 !important;
+      font-size:.76rem !important;
+      color:var(--crm-text-muted) !important;
+      line-height:1.4 !important;
+    }
+
+    .crm-drawer-close {
+      width:34px !important;
+      height:34px !important;
+      border:1px solid var(--crm-border) !important;
+      background:#f8fafc !important;
+      color:var(--crm-text-muted) !important;
+      border-radius:8px !important;
+      cursor:pointer !important;
+      font-size:1.3rem !important;
+      line-height:1 !important;
+      flex-shrink:0 !important;
+    }
+
+    .crm-drawer-close:hover {
+      background:#f1f5f9 !important;
+      color:var(--crm-text-dark) !important;
+    }
+
+    #crmQuickProvisionForm {
+      display:flex !important;
+      flex-direction:column !important;
+      gap:12px !important;
+      min-height:0 !important;
+      overflow:hidden !important;
+      position:relative !important;
+    }
+
+    /* Floating validation/result message.
+       It is removed from normal document flow so an error can NEVER
+       push the Create Profile button downward. */
+    #crmFormStatusText {
+      position:absolute !important;
+      left:24px !important;
+      right:24px !important;
+      bottom:78px !important;
+      z-index:20 !important;
+      margin:0 !important;
+      max-height:72px !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+      box-shadow:0 8px 24px rgba(15,23,42,.12) !important;
+    }
+
+    .crm-form-grid {
+      display:grid !important;
+      grid-template-columns:1fr 1fr !important;
+      gap:10px 12px !important;
+      min-width:0 !important;
+    }
+
+    .crm-form-grid .full-width {
+      grid-column:1 / -1 !important;
+    }
+
+    .crm-input-group {
+      display:flex !important;
+      flex-direction:column !important;
+      gap:4px !important;
+      width:100% !important;
+      min-width:0 !important;
+    }
+
+    .crm-input-group label {
+      font-weight:700 !important;
+      font-size:.72rem !important;
+      color:var(--crm-text-muted) !important;
+    }
+
+    .crm-field {
+      width:100% !important;
+      padding:8px 11px !important;
+      border:1px solid #cbd5e1 !important;
+      border-radius:7px !important;
+      font-size:.82rem !important;
+      height:38px !important;
+      box-sizing:border-box !important;
+      outline:none !important;
+      background:#fff !important;
+      min-width:0 !important;
+    }
+
+    .crm-field:focus {
+      border-color:var(--crm-primary) !important;
+      box-shadow:0 0 0 3px rgba(15,23,42,.06) !important;
+    }
+
+    .crm-invite-note {
+      background:#f8fafc !important;
+      border:1px solid var(--crm-border) !important;
+      border-radius:8px !important;
+      padding:9px 11px !important;
+      color:var(--crm-text-muted) !important;
+      font-size:.7rem !important;
+      line-height:1.4 !important;
+    }
+
+    .crm-submit-row {
+      padding-top:0 !important;
+      flex-shrink:0 !important;
+    }
+
+    #crmSubmitBtn {
+      height:44px !important;
+    }
+
+    @media (max-width: 600px) {
+      .crm-drawer-overlay {
+        padding:10px !important;
+      }
+
+      .crm-drawer {
+        width:100% !important;
+        max-width:none !important;
+        max-height:calc(100vh - 20px) !important;
+        padding:18px !important;
+        border-radius:14px !important;
+      }
+
+      #crmFormStatusText {
+        left:18px !important;
+        right:18px !important;
+        bottom:68px !important;
+        max-height:64px !important;
+      }
+
+      .crm-form-grid {
+        grid-template-columns:1fr 1fr !important;
+        gap:8px !important;
+      }
+
+      .crm-field {
+        height:36px !important;
+        padding:7px 9px !important;
+        font-size:.76rem !important;
+      }
+
+      .crm-input-group label {
+        font-size:.66rem !important;
+      }
+
+      .crm-drawer-header h3 {
+        font-size:1.05rem !important;
+      }
+
+      .crm-drawer-header p {
+        font-size:.68rem !important;
+      }
+    }
+
+    @media (max-height: 700px) {
+      .crm-drawer {
+        padding:16px 20px !important;
+        gap:9px !important;
+      }
+
+      #crmQuickProvisionForm {
+        gap:8px !important;
+      }
+
+      .crm-form-grid {
+        gap:7px 10px !important;
+      }
+
+      .crm-field {
+        height:34px !important;
+      }
+
+      .crm-invite-note {
+        padding:7px 9px !important;
+      }
+
+      #crmSubmitBtn {
+        height:40px !important;
+      }
+    }
   </style>
 </head>
 <body class="crm-body">
@@ -254,7 +506,7 @@
       <button type="button" onclick="openIntakeDrawer()" style="background: var(--crm-primary); color: #fff; border: none; padding: 10px 20px; font-weight: 700; font-size: 0.825rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(10,31,68,0.15);">+ Add New Profile</button>
     </header>
 
-    <main class="crm-workspace">
+    <section class="crm-workspace">
       <!-- 📦 THE SEAMLESS CRM VIEW LAYOUT CARDS -->
       <div class="crm-deck">
         <div class="crm-card">
@@ -302,51 +554,99 @@
           </tbody>
         </table>
       </div>
-    </main>
+    </section>
   </div>
 
 
-  <!-- 📥 CANVAS DRAWER: COMPOSE MANUAL INTAKE PROVISIONS -->
-  <div class="crm-drawer-overlay" id="drawerOverlay" onclick="closeIntakeDrawer()"></div>
-  <div class="crm-drawer" id="intakeDrawer">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--crm-border); padding-bottom: 16px;">
-      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800;">Manual Account Intake</h3>
-      <button type="button" onclick="closeIntakeDrawer()" style="background: transparent; border: none; font-size: 1.25rem; cursor: pointer; color: var(--crm-text-muted);">&times;</button>
-    </div>
-    
-    <form id="crmQuickProvisionForm" novalidate style="display: flex; flex-direction: column; gap: 16px;">
-      <div class="crm-input-group">
-        <label>First Name</label>
-        <input type="text" id="crmNewFirst" required class="crm-field" placeholder="John">
-      </div>
-      <div class="crm-input-group">
-        <label>Last Name</label>
-        <input type="text" id="crmNewLast" required class="crm-field" placeholder="Doe">
-      </div>
-      <div class="crm-input-group">
-        <label>Email Address</label>
-        <input type="email" id="crmNewEmail" required class="crm-field" placeholder="johndoe@example.com">
-      </div>
-         <div class="crm-input-group">
-        <label>Company Legal Name</label>
-        <input type="text" id="crmNewCompany" class="crm-field" placeholder="Global Logistics LLC">
-      </div>
-      <div class="crm-input-group">
-        <label>Filing Service Track / Description</label>
-        <input type="text" id="crmNewPlan" class="crm-field" placeholder="Corporate Formation Filing">
-      </div>
-      <div class="crm-input-group">
-        <label>Account Class Tier</label>
-        <select id="crmNewTier" class="crm-field" style="background: #fff;">
-          <option value="Standard" selected>Standard Member</option>
-          <option value="Premium">Premium Fleet Tier</option>
-        </select>
+  <!-- 📥 CENTERED NEW PROFILE MODAL -->
+  <div class="crm-drawer-overlay" id="drawerOverlay" aria-hidden="true">
+    <aside class="crm-drawer" id="intakeDrawer" role="dialog" aria-modal="true" aria-labelledby="crmIntakeTitle" aria-hidden="true">
+      <div class="crm-drawer-header">
+        <div>
+          <h3 id="crmIntakeTitle">Add New Customer Profile</h3>
+          <p>Create the customer record and send the secure Supabase invitation.</p>
+        </div>
+        <button type="button" class="crm-drawer-close" onclick="closeIntakeDrawer()" aria-label="Close new profile form">&times;</button>
       </div>
 
-      <div id="crmFormStatusText" style="display:none; font-size:0.75rem; font-weight:700; padding:8px; border-radius:4px; text-align:center; width:100%; box-sizing:border-box;"></div>
+      <form id="crmQuickProvisionForm" novalidate>
+        <div class="crm-form-grid">
 
-      <button type="submit" id="crmSubmitBtn" style="background: var(--crm-primary); color: #fff; border: none; padding: 14px; font-weight: 700; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-top: 12px; box-shadow: 0 4px 6px rgba(10,31,68,0.15); width:100%; display:block;">Enroll Profile & Send Invite ➔</button>
-    </form>
+          <div class="crm-input-group">
+            <label for="crmNewFirst">First Name *</label>
+            <input type="text" id="crmNewFirst" required class="crm-field" placeholder="John" autocomplete="given-name">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewLast">Last Name *</label>
+            <input type="text" id="crmNewLast" required class="crm-field" placeholder="Doe" autocomplete="family-name">
+          </div>
+
+          <div class="crm-input-group full-width">
+            <label for="crmNewEmail">Email Address *</label>
+            <input type="email" id="crmNewEmail" required class="crm-field" placeholder="johndoe@example.com" autocomplete="email">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewPhone">Phone Number</label>
+            <input type="tel" id="crmNewPhone" class="crm-field" placeholder="(555) 555-5555" autocomplete="tel">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewCompany">Company Legal Name</label>
+            <input type="text" id="crmNewCompany" class="crm-field" placeholder="Global Logistics LLC" autocomplete="organization">
+          </div>
+
+          <div class="crm-input-group full-width">
+            <label for="crmNewStreet">Street Address</label>
+            <input type="text" id="crmNewStreet" class="crm-field" placeholder="123 Main Street" autocomplete="street-address">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewCity">City</label>
+            <input type="text" id="crmNewCity" class="crm-field" placeholder="Dallas" autocomplete="address-level2">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewState">State</label>
+            <input type="text" id="crmNewState" class="crm-field" placeholder="TX" autocomplete="address-level1">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewZip">ZIP Code</label>
+            <input type="text" id="crmNewZip" class="crm-field" placeholder="75001" autocomplete="postal-code">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewTracking">Tracking Number</label>
+            <input type="text" id="crmNewTracking" class="crm-field" placeholder="Auto-generated if blank">
+          </div>
+
+          <div class="crm-input-group">
+            <label for="crmNewStatus">Account Status</label>
+            <select id="crmNewStatus" class="crm-field">
+              <option value="Active" selected>Active</option>
+              <option value="Suspended">Suspended</option>
+            </select>
+          </div>
+
+          <div class="crm-form-grid full-width" style="grid-template-columns:1fr !important; gap:8px !important;">
+            <div class="crm-invite-note">
+              <strong style="color:var(--crm-text-dark);">Secure invitation:</strong>
+              the authenticated admin session calls <code>welcome-email-update-password</code>.
+              The profile is not inserted until the Edge Function successfully returns the Auth user ID.
+            </div>
+            <div id="crmFormStatusText" role="status" aria-live="polite" style="display:none; font-size:0.72rem; font-weight:700; padding:9px; border-radius:7px; text-align:center; width:auto; box-sizing:border-box;"></div>
+          </div>
+        </div>
+
+        <div class="crm-submit-row">
+          <button type="submit" id="crmSubmitBtn" style="background:var(--crm-primary); color:#fff; border:none; padding:12px; font-weight:700; border-radius:8px; font-size:.82rem; cursor:pointer; box-shadow:0 4px 6px rgba(10,31,68,.15); width:100%; display:block;">
+            Create Profile &amp; Send Invite &rarr;
+          </button>
+        </div>
+      </form>
+    </aside>
   </div>
 
    </main>
@@ -354,10 +654,9 @@
 
 
  <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
-  <!-- 1. The Global Library Core MUST load absolute first -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <!-- Master administrative scripts -->
+  <!-- The Supabase library is already loaded in <head>. -->
+  <!-- The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-master-ledger.js"></script>
 
    <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
@@ -365,6 +664,8 @@
 
 <!-- JAVASCRIPT CRM INTERFACES ENGINE -->
   <script>
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInR5cCI6IkpXVCJ9";
   document.addEventListener("DOMContentLoaded", async () => {
     "use strict";
 
@@ -382,17 +683,55 @@
     let MasterCrmProfilesCacheList = [];
     let activeFilterTab = 'all';
 
-    // 🟢 SIDEBAR DRAWER INTERACTIVE CANVAS CONTROLS
+    // 🟢 CENTERED PROFILE MODAL CONTROLS
     window.openIntakeDrawer = function() {
-      document.getElementById("intakeDrawer").classList.add("open");
-      document.getElementById("drawerOverlay").classList.add("open");
+      const drawer = document.getElementById("intakeDrawer");
+      const overlay = document.getElementById("drawerOverlay");
+      if (!drawer || !overlay) return;
+
+      overlay.classList.add("open");
+      drawer.classList.add("open");
+      drawer.setAttribute("aria-hidden", "false");
+      overlay.setAttribute("aria-hidden", "false");
+
+      // Lock the page itself. The profile form has no internal scroll.
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+
+      const firstField = document.getElementById("crmNewFirst");
+      setTimeout(() => firstField?.focus(), 120);
     };
+
     window.closeIntakeDrawer = function() {
-      document.getElementById("intakeDrawer").classList.remove("open");
-      document.getElementById("drawerOverlay").classList.remove("open");
+      const drawer = document.getElementById("intakeDrawer");
+      const overlay = document.getElementById("drawerOverlay");
+      if (!drawer || !overlay) return;
+
+      drawer.classList.remove("open");
+      overlay.classList.remove("open");
+      drawer.setAttribute("aria-hidden", "true");
+      overlay.setAttribute("aria-hidden", "true");
+
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+
       if (quickForm) quickForm.reset();
       if (formStatus) formStatus.style.display = "none";
     };
+
+    // Clicking the blurred backdrop closes the modal.
+    document.getElementById("drawerOverlay")?.addEventListener("click", (event) => {
+      if (event.target === event.currentTarget) {
+        window.closeIntakeDrawer();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        const drawer = document.getElementById("intakeDrawer");
+        if (drawer?.classList.contains("open")) window.closeIntakeDrawer();
+      }
+    });
 
     // Establish Supabase Connection Handshake
     let client = window.supabaseInstance || window.supabaseClient;
@@ -500,7 +839,7 @@
               <img src="${profile.avatar_url || 'images/fav.png'}" style="width:32px; height:32px; border-radius:50%; background:#f1f5f9; object-fit:cover; border:1px solid var(--crm-border);">
               <div>
                 <div style="font-weight:700; color:var(--crm-text-dark);">${escapeCrmTextHtml(first)} ${escapeCrmTextHtml(last)}</div>
-                <div style="font-size:0.75rem; color:var(--crm-text-muted); font-family:monospace; margin-top:2px;">${profile.email_address}</div>
+                <div style="font-size:0.75rem; color:var(--crm-text-muted); font-family:monospace; margin-top:2px;">${escapeCrmTextHtml(profile.email_address)}</div>
               </div>
             </div>
           </td>
@@ -564,122 +903,527 @@
         modalOverlay.style.display = "none";
         activeDeletionUuidPointer = null;
         activeDeletionEmailPointer = null;
+        clearDeleteModalStatus();
+        if (modalConfirmBtn) {
+          modalConfirmBtn.disabled = false;
+          modalConfirmBtn.style.opacity = "1";
+          modalConfirmBtn.style.cursor = "pointer";
+          modalConfirmBtn.textContent = "Delete Permanently";
+        }
       }, 200);
     };
 
     const modalConfirmBtn = document.getElementById("crmModalConfirmDeleteBtn");
+    const deleteModalMessage = document.getElementById("crmDeleteModalMessage");
+
+    // Inline deletion status. No browser alert() dialogs are used.
+    let deleteStatusBox = document.getElementById("crmDeleteStatusBox");
+
+    if (!deleteStatusBox && deleteModalMessage) {
+      deleteStatusBox = document.createElement("div");
+      deleteStatusBox.id = "crmDeleteStatusBox";
+      deleteStatusBox.style.cssText = [
+        "display:none",
+        "width:100%",
+        "box-sizing:border-box",
+        "padding:11px 13px",
+        "border-radius:8px",
+        "font-size:.78rem",
+        "font-weight:700",
+        "line-height:1.45",
+        "margin-top:-6px"
+      ].join(";");
+
+      deleteModalMessage.insertAdjacentElement("afterend", deleteStatusBox);
+    }
+
+    function showDeleteModalStatus(message, isError = true) {
+      if (!deleteStatusBox) return;
+
+      deleteStatusBox.textContent = message;
+      deleteStatusBox.style.display = "block";
+      deleteStatusBox.style.background = isError ? "#fff1f2" : "#ecfdf5";
+      deleteStatusBox.style.color = isError ? "#be123c" : "#047857";
+      deleteStatusBox.style.border = isError
+        ? "1px solid #fecdd3"
+        : "1px solid #a7f3d0";
+    }
+
+    function clearDeleteModalStatus() {
+      if (!deleteStatusBox) return;
+      deleteStatusBox.textContent = "";
+      deleteStatusBox.style.display = "none";
+    }
+
     if (modalConfirmBtn) {
       modalConfirmBtn.addEventListener("click", async () => {
         if (!activeDeletionUuidPointer || !activeDeletionEmailPointer) return;
 
+        const profileUuid = activeDeletionUuidPointer;
+        const targetEmail = activeDeletionEmailPointer;
+
         modalConfirmBtn.disabled = true;
-        modalConfirmBtn.textContent = "Purging Profile Ledger...";
+        modalConfirmBtn.style.opacity = ".65";
+        modalConfirmBtn.style.cursor = "wait";
+        modalConfirmBtn.textContent = "Deleting Account...";
+        clearDeleteModalStatus();
 
         try {
-          const { error: dbError } = await client
-            .from('client_profiles')
-            .delete()
-            .eq('id', activeDeletionUuidPointer);
+          // ---------------------------------------------------------
+          // 1. VERIFY THE CURRENT ADMIN SESSION
+          // ---------------------------------------------------------
+          const { data: sessionResult, error: sessionError } =
+            await client.auth.getSession();
 
-          if (dbError) throw dbError;
+          let adminSession = sessionResult?.session || null;
 
-          closeCrmDeleteModal();
-          await reloadPlatformCrmProfilesLedger();
+          if (sessionError) {
+            console.error("[CRM Delete] Session lookup failed:", sessionError);
+          }
+
+          if (!adminSession?.access_token) {
+            const { data: refreshedSession, error: refreshError } =
+              await client.auth.refreshSession();
+
+            if (!refreshError) {
+              adminSession = refreshedSession?.session || null;
+            } else {
+              console.error("[CRM Delete] Session refresh failed:", refreshError);
+            }
+          }
+
+          if (!adminSession?.access_token) {
+            throw new Error(
+              "Your admin session has expired. Please sign in again before deleting a customer."
+            );
+          }
+
+          // ---------------------------------------------------------
+          // 2. INVOKE THE SECURE DELETE EDGE FUNCTION
+          //
+          // supabase.functions.invoke() is used instead of raw fetch()
+          // so Supabase handles the function request consistently.
+          // ---------------------------------------------------------
+          if (!client.functions?.invoke) {
+            throw new Error(
+              "The Supabase Functions client is unavailable on this page."
+            );
+          }
+
+          const { data: deleteResult, error: functionError } =
+            await client.functions.invoke(
+              "delete-client-profile",
+              {
+                body: {
+                  profile_id: profileUuid,
+                  email_address: targetEmail
+                },
+                headers: {
+                  Authorization: `Bearer ${adminSession.access_token}`
+                }
+              }
+            );
+
+          if (functionError) {
+            console.error(
+              "[CRM Delete] Edge Function invocation failed:",
+              functionError
+            );
+
+            let detailedMessage =
+              functionError.message ||
+              "The secure deletion service could not be reached.";
+
+            // Supabase FunctionsHttpError can expose the actual response.
+            try {
+              const contextResponse = functionError.context;
+
+              if (
+                contextResponse &&
+                typeof contextResponse.clone === "function"
+              ) {
+                const responseClone = contextResponse.clone();
+                const contentType =
+                  responseClone.headers?.get?.("content-type") || "";
+
+                if (contentType.includes("application/json")) {
+                  const payload = await responseClone.json();
+
+                  detailedMessage =
+                    payload?.error ||
+                    payload?.message ||
+                    payload?.detail ||
+                    detailedMessage;
+                } else {
+                  const responseText =
+                    (await responseClone.text()).trim();
+
+                  if (responseText) {
+                    detailedMessage = responseText;
+                  }
+                }
+              }
+            } catch (parseError) {
+              console.warn(
+                "[CRM Delete] Could not extract Edge Function error:",
+                parseError
+              );
+            }
+
+            throw new Error(
+              `Deletion service error: ${detailedMessage}`
+            );
+          }
+
+          if (!deleteResult?.success) {
+            throw new Error(
+              deleteResult?.message ||
+              "The deletion service did not confirm the account was removed."
+            );
+          }
+
+          console.log("✓ CRM account deletion confirmed:", {
+            profileId: profileUuid,
+            email: targetEmail,
+            authUserDeleted: deleteResult.auth_user_deleted,
+            profileDeleted: deleteResult.profile_deleted
+          });
+
+          showDeleteModalStatus(
+            "✓ Customer account deleted successfully.",
+            false
+          );
+
+          modalConfirmBtn.textContent = "Deleted";
+
+          // Give the administrator a moment to see the successful
+          // in-modal confirmation, then close and refresh the ledger.
+          setTimeout(async () => {
+            closeCrmDeleteModal();
+            await reloadPlatformCrmProfilesLedger();
+          }, 650);
 
         } catch (fault) {
-          console.error("✕ CRM Deletion execution error caught:", fault);
-          alert(`✕ Cloud Operations Aborted: ${fault.message || "Database validation constraints exception."}`);
-        } finally {
+          console.error("✕ CRM Deletion execution error:", fault);
+
+          // IMPORTANT:
+          // Never use alert() here. The error stays inside the
+          // branded confirmation modal.
+          showDeleteModalStatus(
+            `✕ ${fault?.message || "The customer account could not be deleted."}`,
+            true
+          );
+
           modalConfirmBtn.disabled = false;
-          modalConfirmBtn.textContent = "Delete Permanently";
+          modalConfirmBtn.style.opacity = "1";
+          modalConfirmBtn.style.cursor = "pointer";
+          modalConfirmBtn.textContent = "Try Again";
         }
       });
     }
 
-    // 📡 6. INTERCEPT INGESTION FORM FOR NEW CUSTOMER ACCOUNT CREATIONS
+    // 📡 6. CREATE AUTH USER THROUGH EDGE FUNCTION, THEN MAP CLIENT PROFILE
     if (quickForm) {
       quickForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
-        const fName = document.getElementById("crmNewFirst").value.trim();
-        const lName = document.getElementById("crmNewLast").value.trim();
-        const email = document.getElementById("crmNewEmail").value.trim().toLowerCase();
-        const company = document.getElementById("crmNewCompany").value.trim();
-        const phone = document.getElementById("crmNewPhone").value.trim();
-        const status = document.getElementById("crmNewStatus").value;
+
+        const fName = document.getElementById("crmNewFirst")?.value.trim() || "";
+        const lName = document.getElementById("crmNewLast")?.value.trim() || "";
+        const email = document.getElementById("crmNewEmail")?.value.trim().toLowerCase() || "";
+        const company = document.getElementById("crmNewCompany")?.value.trim() || "";
+        const phone = document.getElementById("crmNewPhone")?.value.trim() || "";
+        const street = document.getElementById("crmNewStreet")?.value.trim() || "";
+        const city = document.getElementById("crmNewCity")?.value.trim() || "";
+        const state = document.getElementById("crmNewState")?.value.trim() || "";
+        const zip = document.getElementById("crmNewZip")?.value.trim() || "";
+        const tracking = document.getElementById("crmNewTracking")?.value.trim() ||
+          ("F4U-" + Math.floor(100000 + Math.random() * 900000));
+        const status = document.getElementById("crmNewStatus")?.value || "Active";
 
         if (!fName || !lName || !email) {
-          showCrmBanner("✕ First Name, Last Name, and target Email addresses are required fields.", true);
+          showCrmBanner("✕ First Name, Last Name, and Email are required.", true);
           return;
         }
 
-        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Provisioning Record... 📡"; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showCrmBanner("✕ Please enter a valid customer email address.", true);
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.style.opacity = ".65";
+          submitBtn.style.cursor = "wait";
+          submitBtn.textContent = "Creating Secure Account...";
+        }
 
         try {
-          // Manual Account Intake Setup requires generating a valid primary identifier UUID
-          const resolvedUserUuid = gen_random_uuid_placeholder();
+          // ---------------------------------------------------------
+          // STEP 1: PREVENT UNIQUE EMAIL CONSTRAINT FAILURE
+          // ---------------------------------------------------------
+          const { data: existingProfile, error: existingLookupError } = await client
+            .from("client_profiles")
+            .select("id,email_address,first_name,last_name")
+            .eq("email_address", email)
+            .maybeSingle();
 
-          const { error: insertError } = await client
-            .from('client_profiles')
-            .insert([{
-              id: resolvedUserUuid,
-              email_address: email,
-              first_name: fName,
-              last_name: lName,
-              phone_number: phone || "Not Provided",
-              company_name: company || "Not Specified",
-              sync_encryption_status: status,
-              tracking_number: "F4U-" + Math.floor(100000 + Math.random() * 900000),
-              updated_at: new Date().toISOString()
-            }]);
+          if (existingLookupError) throw existingLookupError;
 
-          if (insertError) throw insertError;
+          if (existingProfile) {
+            throw new Error(
+              `A customer profile already exists for ${email}. Open the existing profile instead of creating a duplicate.`
+            );
+          }
 
-          // Dispatch email invitation hooks downstream to the notification triggers engine
-          await fetch("https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/welcome-email-update-password", {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": "Bearer " + client.supabaseKey
-            },
-            body: JSON.stringify({
-              action_trigger: "crm_manual_invite",
-              target_email: email,
-              customer_name: `${fName} ${lName}`
-            })
+          // ---------------------------------------------------------
+          // STEP 2: LET THE EDGE FUNCTION CREATE/LOCATE AUTH USER
+          // AND SEND THE INVITATION.
+          //
+          // IMPORTANT:
+          // client_profiles.id references auth.users.id, so the
+          // browser must NEVER generate a random UUID here.
+          // ---------------------------------------------------------
+          if (submitBtn) submitBtn.textContent = "Sending Secure Invitation...";
+
+          // The Edge Function requires the currently authenticated admin
+          // session. Explicitly obtain/refresh the session and pass the
+          // access token in the Authorization header. This prevents the
+          // function from receiving an anonymous request and returning
+          // "Auth session missing!".
+          let { data: sessionResult, error: sessionError } = await client.auth.getSession();
+          let adminSession = sessionResult?.session || null;
+
+          if (sessionError) {
+            console.error("[CRM] Could not read Supabase admin session:", sessionError);
+          }
+
+          // If the cached access token has expired, attempt one refresh.
+          if (!adminSession?.access_token) {
+            const { data: refreshedSession, error: refreshError } = await client.auth.refreshSession();
+            if (!refreshError) {
+              adminSession = refreshedSession?.session || null;
+            } else {
+              console.error("[CRM] Supabase session refresh failed:", refreshError);
+            }
+          }
+
+          if (!adminSession?.access_token) {
+            throw new Error(
+              "Your admin session is no longer available. Please sign in again, then retry creating the customer profile."
+            );
+          }
+
+          const edgeFunctionUrl =
+            "https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/welcome-email-update-password";
+
+          const edgePayload = {
+            action_trigger: "crm_manual_invite",
+            target_email: email,
+            customer_name: `${fName} ${lName}`.trim(),
+            first_name: fName,
+            last_name: lName,
+            company_name: company,
+            phone_number: phone,
+            street_address: street,
+            city,
+            state,
+            zip_code: zip,
+            tracking_number: tracking,
+            sync_encryption_status: status
+          };
+
+          const edgeResponse = await fetch(
+            edgeFunctionUrl,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${adminSession.access_token}`
+              },
+              body: JSON.stringify(edgePayload)
+            }
+          );
+
+          const edgeResponseText =
+            await edgeResponse.text();
+
+          let inviteResult = null;
+
+          try {
+            inviteResult =
+              edgeResponseText
+                ? JSON.parse(edgeResponseText)
+                : null;
+          } catch (_) {
+            inviteResult = {
+              raw_response: edgeResponseText
+            };
+          }
+
+          if (!edgeResponse.ok) {
+            const serverMessage =
+              inviteResult?.error ||
+              inviteResult?.message ||
+              inviteResult?.detail ||
+              inviteResult?.raw_response ||
+              `HTTP ${edgeResponse.status}`;
+
+            throw new Error(
+              `Invitation service error (${edgeResponse.status}): ${serverMessage}`
+            );
+          }
+
+          if (!inviteResult) {
+            throw new Error(
+              "Invitation service returned an empty response."
+            );
+          }
+
+          if (
+            inviteResult.error ||
+            /auth session missing/i.test(
+              String(inviteResult.message || "")
+            )
+          ) {
+            throw new Error(
+              `Invitation service error: ${
+                inviteResult.error ||
+                inviteResult.message
+              }`
+            );
+          }
+
+
+
+          // Accept the common response shapes used by Edge Functions.
+          const authUserId =
+            inviteResult?.user_id ||
+            inviteResult?.id ||
+            inviteResult?.user?.id ||
+            inviteResult?.data?.user_id ||
+            inviteResult?.data?.id ||
+            inviteResult?.data?.user?.id;
+
+          if (!authUserId) {
+            console.error("[CRM] Edge Function response did not include an Auth user ID:", inviteResult);
+            throw new Error(
+              "The invitation Edge Function succeeded but did not return the Auth user ID required to link client_profiles.id to auth.users.id."
+            );
+          }
+
+          // ---------------------------------------------------------
+          // STEP 3: EDGE FUNCTION IS THE SINGLE PROVISIONING OWNER
+          // ---------------------------------------------------------
+          // welcome-email-update-password creates:
+          //   1. auth.users
+          //   2. public.client_profiles
+          //   3. the secure activation link
+          //   4. the branded welcome email
+          //
+          // Do NOT insert client_profiles again here. The database schema
+          // requires client_profiles.id = auth.users.id, and the Edge
+          // Function already owns that transaction.
+          // ---------------------------------------------------------
+          const createdProfileId =
+            inviteResult?.profile_id ||
+            inviteResult?.profile?.id ||
+            authUserId;
+
+          console.log("[CRM] Auth user + client_profiles mapping complete:", {
+            authUserId,
+            profileId: createdProfileId,
+            email
           });
 
-          showCrmBanner("✓ Success! Profile established and authentication email invite routed.", false);
-          setTimeout(() => { closeIntakeDrawer(); }, 1500);
+          showCrmBanner(
+            "✓ Customer profile created and secure invitation sent.",
+            false
+          );
+
           await reloadPlatformCrmProfilesLedger();
 
+          setTimeout(() => {
+            closeIntakeDrawer();
+          }, 1000);
+
         } catch (fault) {
-          console.error(fault);
-          showCrmBanner(`✕ Ingest Failure: ${fault.message}`, true);
+          console.error("✕ CRM profile/invite provisioning failed:", fault);
+
+          showCrmBanner(
+            `✕ ${fault?.message || "The customer profile could not be created."}`,
+            true
+          );
         } finally {
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Enroll Profile & Send Invite ➔"; }
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = "1";
+            submitBtn.style.cursor = "pointer";
+            submitBtn.textContent = "Create Profile & Send Invite →";
+          }
         }
       });
+    }
+
+    // Supabase FunctionsHttpError often hides the useful response body.
+    // Read that body so the admin sees the actual Edge Function failure
+    // instead of only "non-2xx status code".
+    async function extractEdgeFunctionError(inviteError) {
+      let message = inviteError?.message || "Edge Function request failed.";
+
+      try {
+        const response = inviteError?.context;
+
+        if (response && typeof response.clone === "function") {
+          const cloned = response.clone();
+          const contentType = cloned.headers?.get?.("content-type") || "";
+
+          if (contentType.includes("application/json")) {
+            const payload = await cloned.json();
+
+            const serverMessage =
+              payload?.error ||
+              payload?.message ||
+              payload?.detail ||
+              payload?.msg ||
+              payload?.data?.error ||
+              payload?.data?.message;
+
+            if (serverMessage) {
+              message = String(serverMessage);
+            } else {
+              message = JSON.stringify(payload);
+            }
+          } else {
+            const text = (await cloned.text()).trim();
+            if (text) message = text;
+          }
+        }
+      } catch (parseError) {
+        console.warn("[CRM] Could not parse Edge Function error body:", parseError);
+      }
+
+      return `Invitation service error: ${message}`;
     }
 
     function showCrmBanner(text, isError) {
       if (!formStatus) return;
+
       formStatus.textContent = text;
       formStatus.style.background = isError ? "#fee2e2" : "#ecfdf5";
       formStatus.style.color = isError ? "#991b1b" : "#047857";
+      formStatus.style.border = isError
+        ? "1px solid #fecaca"
+        : "1px solid #a7f3d0";
       formStatus.style.display = "block";
+
+      // The status element is absolutely positioned by CSS, so displaying
+      // an error cannot change the form height or move the submit button.
     }
 
     function escapeCrmTextHtml(s) {
       if (!s) return "";
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-
-    function gen_random_uuid_placeholder() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
     }
 
     // 📡 7. OPEN DYNAMIC OVER-THE-AIR CHANNELS FOR CRM REPLICATION BROADCASTS

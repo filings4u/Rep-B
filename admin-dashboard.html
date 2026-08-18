@@ -840,178 +840,684 @@ body, html {
     document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
 
+      /*
+       * ================================================================
+       * FILINGS4U ADMIN DASHBOARD — ACTUAL SUPABASE SCHEMA WIRING
+       * ================================================================
+       *
+       * UI/layout remains unchanged.
+       *
+       * Actual database sources:
+       *   client_profiles
+       *   client_entities
+       *   orders
+       *   client_invoices
+       *   chat_messages
+       *   portal_notifications
+       *   after_hours_tickets
+       *
+       * The dashboard does NOT use the old placeholder admin_billing,
+       * admin_crm, or messages table wiring.
+       */
+
       const salesTargetBox = document.getElementById("admin-global-sales-target-box");
       const clientDropdown = document.getElementById("adminClientDropdown");
       const inboxStreamBox = document.getElementById("admin-inbox-live-stream-box");
       const alertForm = document.getElementById("adminAlertForm");
+      const statusLabel = document.getElementById("alertStatus");
+      const unpaidBadge = document.getElementById("adminDashboardUnpaidInvoiceCounterBadge");
+      const operatorLabel = document.getElementById("liveStaffEmailDisplayLog");
 
-      // Self-healing Supabase alignment hook
+      /* ------------------------- SUPABASE ------------------------- */
       let client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        const fallbackLib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-        if (fallbackLib && typeof fallbackLib.createClient === 'function') {
-          client = fallbackLib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-          window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+
+      if (!client || typeof client.from !== "function") {
+        const lib =
+          window.supabase && typeof window.supabase.createClient === "function"
+            ? window.supabase
+            : null;
+
+        if (lib) {
+          client = lib.createClient(
+            "https://lrbimrlbskjweynxlgas.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwiYW5vbiIsImlhdCI6MTc3ODUyNDQ1NiwiZXhwIjoyMDk0MTAwNDU2fQ.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU",
+            {
+              auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+              }
+            }
+          );
+          window.supabaseInstance = client;
+          window.supabaseClient = client;
         }
       }
 
-      if (!client || typeof client.from !== 'function') {
-        salesTargetBox.innerHTML = `<tr><td colspan='5' style='padding:20px; text-align:center; color:var(--staff-red); font-weight:700;'>✕ Database Connection Error.</td></tr>`;
+      if (!client || typeof client.from !== "function") {
+        if (salesTargetBox) {
+          salesTargetBox.innerHTML =
+            `<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--staff-red);font-weight:700;">✕ Database client could not be initialized.</td></tr>`;
+        }
         return;
       }
 
-      // Session verification layer
-      const { data: { session } } = await client.auth.getSession();
-      if (session && session.user) {
-        const logLabel = document.getElementById("liveStaffEmailDisplayLog");
-        if (logLabel) logLabel.textContent = `● Operator: ${session.user.email}`;
+      /* ------------------------- AUTH ------------------------- */
+      const { data: sessionData, error: sessionError } =
+        await client.auth.getSession();
+
+      if (sessionError || !sessionData?.session) {
+        console.error("Admin authentication session unavailable:", sessionError);
+        return;
       }
 
-      // 🟢 1. METRICS ENGINE: Loop over tables and aggregate overview counters
+      const operatorEmail =
+        String(sessionData.session.user?.email || "").trim().toLowerCase();
+
+      if (operatorLabel) {
+        operatorLabel.textContent =
+          `● Operator: ${operatorEmail || "Authenticated Administrator"}`;
+      }
+
+      /* ------------------------- HELPERS ------------------------- */
+      function escapeAdminHtml(value) {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function money(value) {
+        return `$${Number(value || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`;
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        });
+      }
+
+      function showStatus(message, type = "info") {
+        if (!statusLabel) return;
+        statusLabel.style.display = "block";
+        statusLabel.style.padding = "8px 12px";
+        statusLabel.style.borderRadius = "6px";
+
+        if (type === "success") {
+          statusLabel.style.background = "#ecfdf5";
+          statusLabel.style.color = "#047857";
+        } else if (type === "error") {
+          statusLabel.style.background = "#fff1f2";
+          statusLabel.style.color = "var(--staff-red)";
+        } else {
+          statusLabel.style.background = "#f8fafc";
+          statusLabel.style.color = "var(--text-muted)";
+        }
+
+        statusLabel.textContent = message;
+      }
+
+      /* ------------------------- METRICS -------------------------
+       * Revenue       = orders.total_paid_amount
+       * Active        = client_entities rows
+       * Tickets       = after_hours_tickets with status Pending
+       * Invoices      = client_invoices with payment_status Unpaid
+       */
       async function computePlatformMetricsMatrix() {
-        try {
-          const { data: revenueData } = await client.from("orders").select("total_paid_amount");
-          const grossRevenue = revenueData ? revenueData.reduce((acc, curr) => acc + (parseFloat(curr.total_paid_amount) || 0), 0) : 0;
-          document.getElementById("stat-total-revenue").textContent = `$${grossRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        const revenueEl = document.getElementById("stat-total-revenue");
+        const activeEl = document.getElementById("stat-active-users");
+        const pendingEl = document.getElementById("stat-pending-filings");
+        const healthEl = document.getElementById("stat-completed-filings");
 
-          const { count: companyCount } = await client.from("orders").select("company_name", { count: "exact", head: true });
-          document.getElementById("stat-active-users").textContent = companyCount || 0;
+        const [
+          ordersRes,
+          entitiesRes,
+          ticketsRes,
+          invoicesRes
+        ] = await Promise.all([
+          client.from("orders").select("total_paid_amount"),
+          client.from("client_entities").select("id", { count: "exact", head: true }),
+          client.from("after_hours_tickets")
+            .select("ticket_id", { count: "exact", head: true })
+            .eq("status", "Pending"),
+          client.from("client_invoices")
+            .select("invoice_id", { count: "exact", head: true })
+            .eq("payment_status", "Unpaid")
+        ]);
 
-          const { count: auditCount } = await client.from("orders").select("id", { count: "exact", head: true }).eq("account_created", false);
-          document.getElementById("stat-pending-filings").textContent = auditCount || 0;
-        } catch (err) {
-          console.warn("Analytics calculation bypass state triggered:", err);
+        const revenue = (ordersRes.data || []).reduce(
+          (sum, row) => sum + Number(row.total_paid_amount || 0),
+          0
+        );
+
+        if (revenueEl) revenueEl.textContent = money(revenue);
+        if (activeEl) activeEl.textContent =
+          Number(entitiesRes.count || 0).toLocaleString();
+        if (pendingEl) pendingEl.textContent =
+          Number(ticketsRes.count || 0).toLocaleString();
+
+        const healthy =
+          !ordersRes.error &&
+          !entitiesRes.error &&
+          !ticketsRes.error &&
+          !invoicesRes.error;
+
+        if (healthEl) {
+          healthEl.textContent = healthy ? "100%" : "CHECK";
+          healthEl.style.color =
+            healthy ? "var(--emerald)" : "var(--staff-red)";
         }
+
+        if (unpaidBadge) {
+          unpaidBadge.textContent =
+            `${Number(invoicesRes.count || 0).toLocaleString()} Outstanding`;
+        }
+
+        if (ordersRes.error) console.warn("orders:", ordersRes.error);
+        if (entitiesRes.error) console.warn("client_entities:", entitiesRes.error);
+        if (ticketsRes.error) console.warn("after_hours_tickets:", ticketsRes.error);
+        if (invoicesRes.error) console.warn("client_invoices:", invoicesRes.error);
       }
 
-      // 🟢 2. CRM DROPDOWN POPULATOR: Load unique customer email options into notification selector fields
+      /* ------------------------- CLIENT SELECTOR -------------------------
+       * client_profiles is the canonical authenticated client registry.
+       */
       async function hydrateClientNotificationSelector() {
-        try {
-          const { data: profiles } = await client.from("orders").select("email_address, first_name, last_name, company_name");
-          if (!profiles || profiles.length === 0) return;
-          clientDropdown.innerHTML = `<option value="">-- Choose Target Account Destination Vector --</option>`;
+        if (!clientDropdown) return;
 
-          const uniqueEmails = [...new Set(profiles.map(item => String(item.email_address).trim().toLowerCase()))];
-          uniqueEmails.forEach(email => {
-            const matchingProfile = profiles.find(p => String(p.email_address).toLowerCase() === email);
-            const labelName = matchingProfile ? `${matchingProfile.first_name} ${matchingProfile.last_name} (${matchingProfile.company_name})` : email;
-            const option = document.createElement("option");
-            option.value = email;
-            option.textContent = `${labelName} [${email}]`;
-            clientDropdown.appendChild(option);
-          });
-        } catch(e) {}
-      }
+        const { data, error } = await client
+          .from("client_profiles")
+          .select(
+            "id,email_address,first_name,last_name,company_name,tracking_number"
+          )
+          .order("updated_at", { ascending: false })
+          .limit(500);
 
-      // 🟢 3. PRICING LEDGER FEED: Hydrate full chronological data list
-      async function renderSalesLedgerMatrix() {
-        try {
-          const { data: sales, error } = await client
-            .from("orders")
-            .select("company_name, email_address, selected_plan, total_paid_amount, tracking_number")
-            .order("created_at", { ascending: false })
-            .limit(10);
-
-          if (error) throw error;
-          if (!sales || sales.length === 0) {
-            salesTargetBox.innerHTML = `<tr><td colspan='5' style='padding:20px; text-align:center;'>No transactional profiles recorded inside orders schema blocks.</td></tr>`;
-            return;
-          }
-
-          salesTargetBox.innerHTML = "";
-          sales.forEach(row => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
-            tr.innerHTML = `
-              <td style="padding:12px; font-weight:700;">${escapeAdminHtml(row.company_name || 'Standalone Asset')}</td>
-              <td style="padding:12px; font-family:monospace; color:var(--text-muted);">${escapeAdminHtml(row.email_address)}</td>
-              <td style="padding:12px;"><span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;">${escapeAdminHtml(row.selected_plan || 'Direct')}</span></td>
-              <td style="padding:12px; color:var(--emerald); font-weight:800;">$${parseFloat(row.total_paid_amount || 0).toFixed(2)}</td>
-              <td style="padding:12px; text-align:right;"><a href="admin-customer-profile.html?email=${encodeURIComponent(row.email_address)}" style="color:var(--staff-red); text-decoration:none; font-weight:700; font-size:12px;">Inspect Profile ➔</a></td>
-            `;
-            salesTargetBox.appendChild(tr);
-          });
-        } catch (err) {
-          salesTargetBox.innerHTML = `<tr><td colspan='5' style='padding:20px; text-align:center; color:var(--staff-red); font-weight:700;'>✕ Database Reconciliation Error.</td></tr>`;
+        if (error) {
+          console.error("client_profiles selector:", error);
+          clientDropdown.innerHTML =
+            `<option value="">Unable to load client accounts</option>`;
+          return;
         }
+
+        clientDropdown.innerHTML =
+          `<option value="">-- Choose Target Client Account --</option>`;
+
+        const seen = new Set();
+
+        (data || []).forEach(profile => {
+          const email = String(profile.email_address || "")
+            .trim()
+            .toLowerCase();
+
+          if (!email || seen.has(email)) return;
+          seen.add(email);
+
+          const name = [
+            profile.first_name,
+            profile.last_name
+          ].filter(Boolean).join(" ").trim();
+
+          const label = name || profile.company_name || email;
+          const option = document.createElement("option");
+
+          option.value = email;
+          option.textContent =
+            `${label} — ${email}` +
+            (profile.tracking_number
+              ? ` [${profile.tracking_number}]`
+              : "");
+
+          clientDropdown.appendChild(option);
+        });
       }
 
-      // 🟢 4. COMM-STREAM REALTIME TELEMETRY: Stream live messages out of chat_messages
+      /* ------------------------- SALES LEDGER ------------------------- */
+      async function renderSalesLedgerMatrix() {
+        if (!salesTargetBox) return;
+
+        const { data, error } = await client
+          .from("orders")
+          .select(
+            "company_name,email_address,selected_plan,total_paid_amount,tracking_number,created_at"
+          )
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (error) {
+          console.error("orders ledger:", error);
+          salesTargetBox.innerHTML =
+            `<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--staff-red);font-weight:700;">✕ Unable to reconcile orders ledger.</td></tr>`;
+          return;
+        }
+
+        if (!data || !data.length) {
+          salesTargetBox.innerHTML =
+            `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text-muted);">No orders have been recorded.</td></tr>`;
+          return;
+        }
+
+        salesTargetBox.innerHTML = "";
+
+        data.forEach(row => {
+          const email = String(row.email_address || "");
+          const tr = document.createElement("tr");
+
+          tr.style.cssText =
+            "border-bottom:1px solid var(--border-color);background:#ffffff;";
+
+          tr.innerHTML = `
+            <td style="padding:12px;font-weight:700;">
+              ${escapeAdminHtml(row.company_name || "Standalone Asset")}
+            </td>
+            <td style="padding:12px;font-family:monospace;color:var(--text-muted);">
+              ${escapeAdminHtml(email)}
+            </td>
+            <td style="padding:12px;">
+              <span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;">
+                ${escapeAdminHtml(row.selected_plan || "Direct")}
+              </span>
+            </td>
+            <td style="padding:12px;color:var(--emerald);font-weight:800;">
+              ${money(row.total_paid_amount)}
+            </td>
+            <td style="padding:12px;text-align:right;">
+              <a
+                href="admin-customer-profile.html?email=${encodeURIComponent(email)}"
+                style="color:var(--staff-red);text-decoration:none;font-weight:700;font-size:12px;">
+                Inspect Profile ➔
+              </a>
+            </td>
+          `;
+
+          salesTargetBox.appendChild(tr);
+        });
+      }
+
+      /* ------------------------- CHAT STREAM -------------------------
+       * Correct chat_messages columns:
+       *   email_address
+       *   first_name / last_name
+       *   sender_type
+       *   message_content
+       *   is_read_by_admin
+       *   created_at
+       */
       async function initializeLiveCommunicationStream() {
-        try {
-          const { data: messages } = await client.from("chat_messages").select("sender_email, message_body").order("created_at", { ascending: false }).limit(5);
-          if (messages && messages.length > 0) {
-            inboxStreamBox.innerHTML = "";
-            messages.forEach(msg => {
-              const div = document.createElement("div");
-              div.style.cssText = "padding:6px 0; border-bottom:1px dashed #e2e8f0; line-height:1.4;";
-              div.innerHTML = `<strong style="color:var(--text-dark); font-size:11px;">[${escapeAdminHtml(msg.sender_email)}]:</strong> ${escapeAdminHtml(msg.message_body)}`;
-              inboxStreamBox.appendChild(div);
-            });
-          }
-        } catch(e) {}
+        if (!inboxStreamBox) return;
+
+        const { data, error } = await client
+          .from("chat_messages")
+          .select(
+            "message_id,id,email_address,first_name,last_name,company_name,sender_type,message_content,is_read_by_admin,created_at"
+          )
+          .order("created_at", { ascending: false })
+          .limit(8);
+
+        if (error) {
+          console.error("chat_messages:", error);
+          inboxStreamBox.innerHTML =
+            `<div style="padding:20px;text-align:center;color:var(--staff-red);font-weight:700;">⚠ Unable to load chat stream.</div>`;
+          return;
+        }
+
+        if (!data || !data.length) {
+          inboxStreamBox.innerHTML =
+            `<div style="padding:20px;text-align:center;color:var(--text-muted);">No chat messages recorded.</div>`;
+          return;
+        }
+
+        inboxStreamBox.innerHTML = "";
+
+        data.forEach(msg => {
+          const div = document.createElement("div");
+          const name = [
+            msg.first_name,
+            msg.last_name
+          ].filter(Boolean).join(" ").trim();
+
+          const sender =
+            name || msg.email_address || "Client";
+
+          const type =
+            String(msg.sender_type || "").toLowerCase() === "admin"
+              ? "ADMIN"
+              : "CLIENT";
+
+          div.style.cssText =
+            "padding:8px 0;border-bottom:1px dashed #e2e8f0;line-height:1.4;";
+
+          div.innerHTML = `
+            <div style="display:flex;justify-content:space-between;gap:8px;">
+              <strong style="color:var(--text-dark);font-size:11px;">
+                ${escapeAdminHtml(sender)}
+              </strong>
+              <span style="font-size:10px;font-weight:800;color:var(--staff-red);">
+                ${escapeAdminHtml(type)}
+              </span>
+            </div>
+            <div style="font-size:10px;color:#94a3b8;">
+              ${escapeAdminHtml(msg.email_address || "")}
+            </div>
+            <div style="font-size:12px;color:var(--text-dark);margin-top:4px;">
+              ${escapeAdminHtml(
+                String(msg.message_content || "")
+                  .replace(/\s+/g, " ")
+                  .trim() || "(Attachment / empty message)"
+              )}
+            </div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:3px;">
+              ${escapeAdminHtml(formatDateTime(msg.created_at))}
+            </div>
+          `;
+
+          inboxStreamBox.appendChild(div);
+        });
       }
 
-      // 🟢 5. WRITE DISPATCH ROUTINES: Write notifications straight to portal_notifications table rows
+      /* ------------------------- PORTAL NOTIFICATIONS -------------------------
+       * Existing notification insert structure retained:
+       * user_email / title / message_body / is_unread
+       */
       if (alertForm) {
-        alertForm.addEventListener("submit", async (event) => {
+        alertForm.addEventListener("submit", async event => {
           event.preventDefault();
-          const statusLabel = document.getElementById("alertStatus");
-          const targetUser = clientDropdown.value;
-          const titleText = document.getElementById("alertTitle").value.trim();
-          const bodyText = document.getElementById("alertMessage").value.trim();
 
-          if (!targetUser || !titleText || !bodyText) {
-            alert("✕ Validation Constraint: Please ensure all field elements are populated.");
+          const targetUser =
+            String(clientDropdown?.value || "").trim().toLowerCase();
+
+          const title =
+            String(document.getElementById("alertTitle")?.value || "").trim();
+
+          const body =
+            String(document.getElementById("alertMessage")?.value || "").trim();
+
+          if (!targetUser || !title || !body) {
+            showStatus(
+              "Please complete the target account, notification title, and message.",
+              "error"
+            );
             return;
           }
 
-          statusLabel.innerHTML = `<span style="color:var(--text-muted); font-weight:700; font-size:12px;">Pushing real-time encryption packet...</span>`;
+          const button =
+            document.getElementById("adminPushAlertSubmitBtn");
+
+          if (button) {
+            button.disabled = true;
+            button.style.opacity = "0.65";
+          }
+
+          showStatus(
+            "Writing notification to client portal...",
+            "info"
+          );
 
           try {
-            const { error } = await client.from("portal_notifications").insert([{
-              user_email: targetUser,
-              title: titleText,
-              message_body: bodyText,
-              is_unread: true
-            }]);
+            const { error } = await client
+              .from("portal_notifications")
+              .insert([{
+                user_email: targetUser,
+                title: title,
+                message_body: body,
+                is_unread: true
+              }]);
 
             if (error) throw error;
-            statusLabel.innerHTML = `<span style="color:var(--emerald); font-weight:700; font-size:12px;">✅ Notification recorded completely. Client counter badge updated real-time.</span>`;
+
+            showStatus(
+              "✓ Notification recorded successfully.",
+              "success"
+            );
+
             alertForm.reset();
-          } catch (insertError) {
-            statusLabel.innerHTML = `<span style="color:var(--staff-red); font-weight:700; font-size:12px;">✕ Pipeline Error: ${insertError.message}</span>`;
+            await refreshDashboardBadges();
+          } catch (error) {
+            console.error("portal_notifications:", error);
+            showStatus(
+              `✕ Notification failed: ${error.message || "Database write error."}`,
+              "error"
+            );
+          } finally {
+            if (button) {
+              button.disabled = false;
+              button.style.opacity = "1";
+            }
           }
         });
       }
 
-      function escapeAdminHtml(str) {
-        if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      /* ------------------------- BADGES ------------------------- */
+      async function refreshDashboardBadges() {
+        const bell =
+          document.getElementById("globalNavUnreadCounterBadge");
+
+        const [ticketsRes, notificationsRes] = await Promise.all([
+          client
+            .from("after_hours_tickets")
+            .select("ticket_id", { count: "exact", head: true })
+            .eq("status", "Pending"),
+
+          client
+            .from("portal_notifications")
+            .select("id", { count: "exact", head: true })
+            .eq("is_unread", true)
+        ]);
+
+        if (!bell) return;
+
+        const tickets =
+          ticketsRes.error ? 0 : Number(ticketsRes.count || 0);
+
+        const notifications =
+          notificationsRes.error ? 0 : Number(notificationsRes.count || 0);
+
+        const total = tickets + notifications;
+
+        bell.textContent = String(total);
+        bell.style.display = total > 0 ? "block" : "none";
       }
 
-      await computePlatformMetricsMatrix();
-      await hydrateClientNotificationSelector();
-      await renderSalesLedgerMatrix();
-      await initializeLiveCommunicationStream();
+      /* ------------------------- GLOBAL SEARCH ------------------------- */
+      let clientSearchCache = [];
+
+      async function hydrateGlobalSearchCache() {
+        const { data, error } = await client
+          .from("client_profiles")
+          .select(
+            "id,email_address,first_name,last_name,company_name,tracking_number"
+          )
+          .limit(500);
+
+        if (!error) clientSearchCache = data || [];
+      }
+
+      const globalSearch =
+        document.getElementById("adminGlobalSearchField");
+
+      if (globalSearch) {
+        globalSearch.addEventListener("input", () => {
+          const q =
+            String(globalSearch.value || "").trim().toLowerCase();
+
+          if (!q) {
+            renderSalesLedgerMatrix();
+            return;
+          }
+
+          const matches = clientSearchCache.filter(profile => {
+            const haystack = [
+              profile.email_address,
+              profile.first_name,
+              profile.last_name,
+              profile.company_name,
+              profile.tracking_number
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+
+            return haystack.includes(q);
+          });
+
+          if (!salesTargetBox) return;
+
+          if (!matches.length) {
+            salesTargetBox.innerHTML =
+              `<tr><td colspan="5" style="padding:25px;text-align:center;color:var(--text-muted);">No matching client profiles found.</td></tr>`;
+            return;
+          }
+
+          salesTargetBox.innerHTML = "";
+
+          matches.slice(0, 10).forEach(profile => {
+            const email = String(profile.email_address || "");
+            const name = [
+              profile.first_name,
+              profile.last_name
+            ].filter(Boolean).join(" ").trim();
+
+            const tr = document.createElement("tr");
+            tr.style.cssText =
+              "border-bottom:1px solid var(--border-color);background:#ffffff;";
+
+            tr.innerHTML = `
+              <td style="padding:12px;font-weight:700;">
+                ${escapeAdminHtml(profile.company_name || name || "Client")}
+              </td>
+              <td style="padding:12px;font-family:monospace;color:var(--text-muted);">
+                ${escapeAdminHtml(email)}
+              </td>
+              <td style="padding:12px;">
+                <span style="background:#ecfdf5;color:#047857;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:800;">
+                  CLIENT PROFILE
+                </span>
+              </td>
+              <td style="padding:12px;color:var(--text-muted);">
+                ${escapeAdminHtml(profile.tracking_number || "No tracking number")}
+              </td>
+              <td style="padding:12px;text-align:right;">
+                <a
+                  href="admin-customer-profile.html?email=${encodeURIComponent(email)}"
+                  style="color:var(--staff-red);text-decoration:none;font-weight:700;font-size:12px;">
+                  Inspect Profile ➔
+                </a>
+              </td>
+            `;
+
+            salesTargetBox.appendChild(tr);
+          });
+        });
+      }
+
+      /* ------------------------- REALTIME ------------------------- */
+      let realtimeChannel = null;
+
+      function initializeAdminRealtime() {
+        if (realtimeChannel) {
+          client.removeChannel(realtimeChannel);
+        }
+
+        realtimeChannel = client
+          .channel("admin-dashboard-live")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "orders" },
+            async () => {
+              await computePlatformMetricsMatrix();
+              await renderSalesLedgerMatrix();
+              await hydrateGlobalSearchCache();
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "client_profiles" },
+            async () => {
+              await hydrateClientNotificationSelector();
+              await hydrateGlobalSearchCache();
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "client_entities" },
+            computePlatformMetricsMatrix
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "client_invoices" },
+            computePlatformMetricsMatrix
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "after_hours_tickets" },
+            async () => {
+              await computePlatformMetricsMatrix();
+              await refreshDashboardBadges();
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "portal_notifications" },
+            refreshDashboardBadges
+          )
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "chat_messages" },
+            initializeLiveCommunicationStream
+          )
+          .subscribe(status => {
+            console.log(`[Admin Dashboard Realtime] ${status}`);
+          });
+      }
+
+      /* ------------------------- INITIAL LOAD ------------------------- */
+      await Promise.all([
+        computePlatformMetricsMatrix(),
+        hydrateClientNotificationSelector(),
+        renderSalesLedgerMatrix(),
+        initializeLiveCommunicationStream(),
+        hydrateGlobalSearchCache(),
+        refreshDashboardBadges()
+      ]);
+
+      initializeAdminRealtime();
+
+      /* ------------------------- CLOCK ------------------------- */
+      const clock =
+        document.getElementById("portal-clock");
+
+      function updateClock() {
+        if (!clock) return;
+
+        const now = new Date();
+
+        clock.textContent =
+          `${now.toLocaleDateString([], {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric"
+          })} | ${now.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          })}`;
+      }
+
+      updateClock();
+      setInterval(updateClock, 1000);
     });
-
-    // Locate your existing Promise.all block inside admin-dashboard scripts and expand it:
-const [ordersResponse, ticketsCountResponse, invoicesCountResponse] = await Promise.all([
-  client.from('orders').select('id, company_name, email_address, selected_plan, total_paid_amount, account_created, tracking_number, created_at').order('created_at', { ascending: false }),
-  client.from('after_hours_tickets').select('ticket_id', { count: 'exact', head: true }).eq('status', 'Pending'),
-  // 🟢 NEW STATS HOOK: Query exactly how many records inside client_invoices are currently 'Unpaid'
-  client.from('client_invoices').select('invoice_id', { count: 'exact', head: true }).eq('payment_status', 'Unpaid')
-]);
-
-// Then, add this element assignment update line right below your pendingCard assignment loops:
-const unpaidInvoicesBadge = document.getElementById("adminDashboardUnpaidInvoiceCounterBadge");
-if (unpaidInvoicesBadge) {
-  unpaidInvoicesBadge.textContent = `${invoicesCountResponse.count || 0} Outstanding`;
-}
-
   </script>
 
 </body>

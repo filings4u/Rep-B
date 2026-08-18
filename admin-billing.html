@@ -578,41 +578,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const billingTableBody = document.getElementById("admin-billing-audit-rows-target");
   const searchInput = document.getElementById("billingLedgerFilterQuery");
+  const revenueWidget = document.getElementById("metric-total-revenue");
+  const checkoutWidget = document.getElementById("metric-total-checkouts");
+  const clock = document.getElementById("portal-clock");
+
   let masterBillingCache = [];
-
-  // 1. Live Header Clock Synchronization
-  function runBillingPortalClockTick() {
-    const clock = document.getElementById("portal-clock");
-    if (clock) clock.textContent = new Date().toLocaleString();
-  }
-  setInterval(runBillingPortalClockTick, 1000);
-  runBillingPortalClockTick();
-
-  // 2. Core Self-Healing Database Handshake Initialization
   let client = window.supabaseInstance || window.supabaseClient;
-  if (!client || typeof client.from !== 'function') {
-    const fallbackLib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-    if (fallbackLib && typeof fallbackLib.createClient === 'function') {
-      client = fallbackLib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-      });
-      window.supabaseInstance = client;
-      window.supabaseClient = client;
-      window.supabase = client;
-    }
-  }
 
-  if (!client || typeof client.from !== 'function') {
-    if (billingTableBody) {
-      billingTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ System Error: Connection drop. Could not establish Supabase configuration.</td></tr>`;
-    }
-    return;
-  }
-
-  // Helper utility to safely escape HTML inputs against dynamic injection
-  function escapeBillingHtml(str) {
-    if (!str) return "";
-    return String(str)
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -620,134 +595,197 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/'/g, "&#039;");
   }
 
-  // --- STAGE 1: READ PIPELINE (Queries public.orders extracting financial parameters) ---
-  async function streamSalesAuditLedger() {
-    try {
-      console.log("📡 [Billing Engine] Streaming dynamic metrics from public.orders matrix...");
-      const { data: orders, error } = await client
-        .from('orders')
-        .select('email_address, selected_service, tracking_number, total_paid_amount, stripe_payment_id, created_at')
-        .order('created_at', { ascending: false });
+  function renderError(message) {
+    if (!billingTableBody) return;
+    billingTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="padding:24px;text-align:center;color:#ef4444;font-weight:700;">
+          ${escapeHtml(message)}
+        </td>
+      </tr>`;
+  }
 
-      if (error) throw error;
-      masterBillingCache = orders || [];
-      
-      // Real-time Metrics Deck Calculations Pipeline
-      calculateFinancialAggregationMetrics(masterBillingCache);
-      renderBillingAuditRows(masterBillingCache);
-    } catch (fault) {
-      console.error("✕ Financial reconciliation layer exception: ", fault);
-      if (billingTableBody) {
-        billingTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:#ef4444; font-weight:700;">✕ Synchronization Failure: Check revenue logs.</td></tr>`;
-      }
+  function updateClock() {
+    if (clock) clock.textContent = new Date().toLocaleString();
+  }
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  if (!client || typeof client.from !== "function") {
+    const lib = window.supabase;
+    if (lib && typeof lib.createClient === "function") {
+      client = lib.createClient(
+        "https://lrbimrlbskjweynxlgas.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU",
+        { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+      );
+      window.supabaseInstance = client;
+      window.supabaseClient = client;
     }
   }
 
-  // --- STAGE 2: METRICS deck AGGREGATION HANDLER ---
-  function calculateFinancialAggregationMetrics(billingData) {
-    const revenueWidget = document.getElementById("metric-total-revenue");
-    const checkoutWidget = document.getElementById("metric-total-checkouts");
-
-    if (checkoutWidget) {
-      checkoutWidget.textContent = billingData.length;
-    }
-
-    if (revenueWidget) {
-      const grossRevenue = billingData.reduce((accumulatedSum, activeRow) => {
-        return accumulatedSum + parseFloat(activeRow.total_paid_amount || 0);
-      }, 0);
-      revenueWidget.textContent = `$${grossRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
+  if (!client || typeof client.from !== "function") {
+    renderError("✕ System Error: Supabase connection could not be established.");
+    return;
   }
 
-  // --- STAGE 3: DISPLAY ENGINE (Renders sanitized datasets into DOM targets) ---
-  function renderBillingAuditRows(billingArray) {
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  if (sessionError || !sessionData?.session) {
+    renderError("✕ Authentication session could not be verified.");
+    return;
+  }
+
+  function renderRows(rows) {
     if (!billingTableBody) return;
 
-    if (!billingArray || billingArray.length === 0) {
-      billingTableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:#64748b; font-size:0.875rem;">🔍 No accounting rows found matching that input parameter.</td></tr>`;
+    if (!rows.length) {
+      billingTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="padding:40px;text-align:center;color:#64748b;font-size:0.875rem;">
+            🔍 No accounting rows found matching that input parameter.
+          </td>
+        </tr>`;
       return;
     }
 
     billingTableBody.innerHTML = "";
 
-    billingArray.forEach((row) => {
-      const trNode = document.createElement("tr");
-      trNode.className = "ledger-row-entry";
-      trNode.style.cssText = "border-bottom:1px solid #e2e8f0; background:#ffffff; transition: background 0.15s;";
-      
-      trNode.onmouseenter = () => trNode.style.background = "#f8fafc";
-      trNode.onmouseleave = () => trNode.style.background = "#ffffff";
+    rows.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.className = "ledger-row-entry";
+      tr.style.cssText =
+        "border-bottom:1px solid #e2e8f0;background:#ffffff;transition:background .15s;";
 
-      const email = row.email_address || "Direct Walk-In Checkout";
-      const item = row.selected_service || "Corporate Asset Filing Package";
-      const orderToken = row.tracking_number || "F4U-REF-KEY";
-      const revenue = parseFloat(row.total_paid_amount || 0).toFixed(2);
-      const stripeToken = row.stripe_payment_id || "ch_manual_wire_clearance";
+      tr.addEventListener("mouseenter", () => {
+        tr.style.background = "#f8fafc";
+      });
 
-      trNode.innerHTML = `
-        <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:#0f172a;">${escapeBillingHtml(email)}</td>
-        <td style="padding:14px 12px; font-weight:600; color:#475569;">${escapeBillingHtml(item)}</td>
-        <td style="padding:14px 12px; font-family:monospace; color:#0f172a; font-weight:700;">${escapeBillingHtml(orderToken)}</td>
-        <td style="padding:14px 12px;"><span class="badge-paid" style="background:#ecfdf5; color:#047857; padding:4px 8px; border-radius:6px; font-weight:700; font-size:0.8rem;">$${revenue}</span></td>
-        <td style="padding:14px 12px; font-family:monospace; font-size:0.78rem; text-align:right; color:#64748b; font-weight:600;">${escapeBillingHtml(stripeToken)}</td>
-      `;
-      billingTableBody.appendChild(trNode);
+      tr.addEventListener("mouseleave", () => {
+        tr.style.background = "#ffffff";
+      });
+
+      const revenue = Number(row.total_paid_amount || 0).toFixed(2);
+
+      tr.innerHTML = `
+        <td style="padding:14px 12px;font-family:monospace;font-weight:600;color:#0f172a;">
+          ${escapeHtml(row.email_address || "Direct Walk-In Checkout")}
+        </td>
+        <td style="padding:14px 12px;font-weight:600;color:#475569;">
+          ${escapeHtml(row.selected_service || row.selected_plan || "Corporate Asset Filing Package")}
+        </td>
+        <td style="padding:14px 12px;font-family:monospace;color:#0f172a;font-weight:700;">
+          ${escapeHtml(row.tracking_number || "F4U-REF-KEY")}
+        </td>
+        <td style="padding:14px 12px;">
+          <span class="badge-paid">$${escapeHtml(revenue)}</span>
+        </td>
+        <td style="padding:14px 12px;font-family:monospace;font-size:.78rem;text-align:right;color:#64748b;font-weight:600;">
+          ${escapeHtml(row.stripe_payment_id || "No Stripe payment ID")}
+        </td>`;
+
+      billingTableBody.appendChild(tr);
     });
   }
 
-  // --- STAGE 4: LOCAL DEBUNCED TEXT SEARCH (Real-time tracking filters) ---
+  function updateMetrics(rows) {
+    if (checkoutWidget) {
+      checkoutWidget.textContent = rows.length.toLocaleString();
+    }
+
+    if (revenueWidget) {
+      const revenue = rows.reduce(
+        (sum, row) => sum + Number(row.total_paid_amount || 0),
+        0
+      );
+
+      revenueWidget.textContent =
+        `$${revenue.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`;
+    }
+  }
+
+  async function loadBillingLedger() {
+    try {
+      const { data, error } = await client
+        .from("orders")
+        .select(
+          "id,email_address,first_name,last_name,company_name,selected_service,selected_plan,tracking_number,total_paid_amount,stripe_payment_id,created_at"
+        )
+        .order("created_at", { ascending: false })
+        .limit(1000);
+
+      if (error) throw error;
+
+      masterBillingCache = Array.isArray(data) ? data : [];
+      updateMetrics(masterBillingCache);
+      renderRows(masterBillingCache);
+    } catch (error) {
+      console.error("Billing ledger synchronization failed:", error);
+      renderError(
+        `✕ Synchronization Failure: ${error.message || "Unable to read orders."}`
+      );
+    }
+  }
+
   if (searchInput) {
     searchInput.addEventListener("input", () => {
-      const stringQuery = searchInput.value.trim().toLowerCase();
+      const query = searchInput.value.trim().toLowerCase();
+
+      if (!query) {
+        renderRows(masterBillingCache);
+        return;
+      }
+
       const matches = masterBillingCache.filter(row => {
-        return (row.email_address || '').toLowerCase().includes(stringQuery) || 
-               (row.tracking_number || '').toLowerCase().includes(stringQuery) || 
-               (row.selected_service || '').toLowerCase().includes(stringQuery);
+        const values = [
+          row.email_address,
+          row.tracking_number,
+          row.selected_service,
+          row.selected_plan,
+          row.company_name
+        ];
+
+        return values.some(value =>
+          String(value || "").toLowerCase().includes(query)
+        );
       });
-      renderBillingAuditRows(matches);
+
+      renderRows(matches);
     });
   }
 
-  // Execute structural query flow
-  await streamSalesAuditLedger();
-});
+  let realtimeChannel = null;
 
-// Replace your old renderBillingAuditRows method with this layout variant cleanly
-function renderBillingAuditRows(billingArray) {
-  if (!billingTableBody) return;
-
-  if (!billingArray || billingArray.length === 0) {
-    billingTableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:#64748b; font-size:0.875rem;">🔍 No accounting rows found matching that input parameter.</td></tr>`;
-    return;
+  try {
+    realtimeChannel = client
+      .channel("admin-billing-audit-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        loadBillingLedger
+      )
+      .subscribe(status => {
+        console.log(`[Billing Audit Realtime] ${status}`);
+      });
+  } catch (error) {
+    console.warn("Billing realtime unavailable:", error);
   }
 
-  billingTableBody.innerHTML = "";
+  await loadBillingLedger();
 
-  billingArray.forEach((row) => {
-    const trNode = document.createElement("tr");
-    trNode.style.cssText = "border-bottom:1px solid #e2e8f0; background:#ffffff; transition: background 0.15s;";
-    
-    trNode.onmouseenter = () => trNode.style.background = "#f8fafc";
-    trNode.onmouseleave = () => trNode.style.background = "#ffffff";
-
-    const email = row.email_address || "Direct Walk-In Checkout";
-    const item = row.selected_service || "Corporate Asset Filing Package";
-    const orderToken = row.tracking_number || "F4U-REF-KEY";
-    const revenue = parseFloat(row.total_paid_amount || 0).toFixed(2);
-    const stripeToken = row.stripe_payment_id || "ch_manual_wire_clearance";
-
-    trNode.innerHTML = `
-      <td style="padding:14px 12px; font-family:monospace; font-weight:600; color:#0f172a;">${escapeBillingHtml(email)}</td>
-      <td style="padding:14px 12px; font-weight:600; color:#475569;">${escapeBillingHtml(item)}</td>
-      <td style="padding:14px 12px; font-family:monospace; color:#0f172a; font-weight:700;">${escapeBillingHtml(orderToken)}</td>
-      <td style="padding:14px 12px;"><span class="badge-paid">$${revenue}</span></td>
-      <td style="padding:14px 12px; font-family:monospace; font-size:0.78rem; text-align:right; color:#64748b; font-weight:600;">${escapeBillingHtml(stripeToken)}</td>
-    `;
-    billingTableBody.appendChild(trNode);
-  });
-}
-
+  window.addEventListener(
+    "beforeunload",
+    () => {
+      if (realtimeChannel && typeof client.removeChannel === "function") {
+        client.removeChannel(realtimeChannel);
+      }
+    },
+    { once: true }
+  );
+});
 </script>
 
 

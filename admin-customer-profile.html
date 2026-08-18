@@ -1,3 +1,5 @@
+<!-- admin-customer-profile -->
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -183,137 +185,578 @@
   document.addEventListener("DOMContentLoaded", async () => {
     "use strict";
 
-    const currentUrlParams = new URLSearchParams(window.location.search);
-    const targetEmailParam = currentUrlParams.get("email");
-    const saveBtn = document.getElementById("profSaveMasterChangesBtn");
-    const alertBanner = document.getElementById("profSaveBannerAlert");
+    /*
+     * ================================================================
+     * FILINGS4U — ADMIN CUSTOMER PROFILE
+     * ================================================================
+     *
+     * Canonical source:
+     *   public.client_profiles
+     *
+     * Actual client_profiles fields used here:
+     *   id
+     *   email_address
+     *   first_name
+     *   last_name
+     *   phone_number
+     *   street_address
+     *   city
+     *   state
+     *   zip_code
+     *   tracking_number
+     *   updated_at
+     *   company_name
+     *   sync_encryption_status
+     *   avatar_url
+     *   stripe_customer_id
+     *
+     * This page intentionally does not write to orders, invoices,
+     * mailroom, vault, tickets, or chat tables because this page's
+     * supplied UI is the client-profile editor.
+     */
 
-    let cachedRowIdPointer = null;
+    const params =
+      new URLSearchParams(window.location.search);
 
-    if (!targetEmailParam) {
+    const targetEmail =
+      String(params.get("email") || "")
+        .trim()
+        .toLowerCase();
+
+    const saveBtn =
+      document.getElementById(
+        "profSaveMasterChangesBtn"
+      );
+
+    const alertBanner =
+      document.getElementById(
+        "profSaveBannerAlert"
+      );
+
+    let cachedProfileId = null;
+
+    /* -------------------------------------------------------------
+     * REQUIRED QUERY PARAMETER
+     * ------------------------------------------------------------- */
+    if (!targetEmail) {
       document.body.innerHTML = `
-        <div style="padding: 60px; text-align: center; color: var(--prof-text-muted);">
-          <h3 style="color: var(--prof-text-dark); font-weight: 850; font-size:1.3rem; margin:0;">No Targeted Account Parameter</h3>
-          <p style="font-size: 0.85rem; margin: 8px 0 16px 0;">Return to the dashboard index tracking cockpit to select a valid client file.</p>
-          <a href="admin-crm.html" style="background:var(--prof-primary); color:#fff; text-decoration:none; padding:10px 20px; font-weight:700; border-radius:6px; font-size:0.8rem;">Open CRM Engine ➔</a>
-        </div>`;
+        <div style="padding:60px;text-align:center;color:var(--prof-text-muted);">
+          <h3 style="color:var(--prof-text-dark);font-weight:850;font-size:1.3rem;margin:0;">
+            No Targeted Account Parameter
+          </h3>
+          <p style="font-size:.85rem;margin:8px 0 16px;">
+            Return to the CRM engine and select a valid client profile.
+          </p>
+          <a
+            href="admin-crm.html"
+            style="background:var(--prof-primary);color:#fff;text-decoration:none;padding:10px 20px;font-weight:700;border-radius:6px;font-size:.8rem;">
+            Open CRM Engine ➔
+          </a>
+        </div>
+      `;
       return;
     }
 
-    // Establish Supabase Handshake
-    let client = window.supabaseInstance || window.supabaseClient;
-    if (!client && typeof supabase !== 'undefined') {
-      client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
-    }
-    if (!client) return;
+    /* -------------------------------------------------------------
+     * SUPABASE CLIENT
+     * Reuse the application's shared client first.
+     * ------------------------------------------------------------- */
+    let client =
+      window.supabaseInstance ||
+      window.supabaseClient;
 
-    // 📡 1. HYDRATE FIELD MAPS STRICTLY MATCHING RAW CLIENT_PROFILES SCHEMA
+    if (
+      !client &&
+      window.supabase &&
+      typeof window.supabase.createClient === "function"
+    ) {
+      client =
+        window.supabase.createClient(
+          "https://lrbimrlbskjweynxlgas.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU",
+          {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true
+            }
+          }
+        );
+
+      window.supabaseInstance = client;
+      window.supabaseClient = client;
+    }
+
+    if (
+      !client ||
+      typeof client.from !== "function"
+    ) {
+      renderFatalProfileError(
+        "✕ Database client could not be initialized."
+      );
+      return;
+    }
+
+    /* -------------------------------------------------------------
+     * ADMIN SESSION GUARD
+     * ------------------------------------------------------------- */
+    try {
+      const {
+        data: sessionData,
+        error: sessionError
+      } = await client.auth.getSession();
+
+      if (
+        sessionError ||
+        !sessionData ||
+        !sessionData.session
+      ) {
+        renderFatalProfileError(
+          "✕ Administrator authentication session could not be verified."
+        );
+        return;
+      }
+    } catch (error) {
+      console.error(
+        "Profile authentication check failed:",
+        error
+      );
+
+      renderFatalProfileError(
+        "✕ Authentication verification failed."
+      );
+      return;
+    }
+
+    /* -------------------------------------------------------------
+     * HELPERS
+     * ------------------------------------------------------------- */
+    function escapeHtml(value) {
+      if (
+        value === null ||
+        value === undefined
+      ) {
+        return "";
+      }
+
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function renderFatalProfileError(
+      message
+    ) {
+      document.body.innerHTML = `
+        <div style="padding:50px;text-align:center;color:#991b1b;font-weight:700;">
+          ${escapeHtml(message)}
+        </div>
+      `;
+    }
+
+    function setValue(
+      id,
+      value
+    ) {
+      const element =
+        document.getElementById(id);
+
+      if (!element) return;
+
+      element.value =
+        value === null ||
+        value === undefined
+          ? ""
+          : String(value);
+    }
+
+    function setText(
+      id,
+      value,
+      fallback = ""
+    ) {
+      const element =
+        document.getElementById(id);
+
+      if (!element) return;
+
+      element.textContent =
+        value === null ||
+        value === undefined ||
+        String(value).trim() === ""
+          ? fallback
+          : String(value);
+    }
+
+    function showSaveBanner(
+      text,
+      isError = false
+    ) {
+      if (!alertBanner) return;
+
+      alertBanner.textContent =
+        text;
+
+      alertBanner.style.background =
+        isError
+          ? "#fee2e2"
+          : "#ecfdf5";
+
+      alertBanner.style.color =
+        isError
+          ? "#991b1b"
+          : "#047857";
+
+      alertBanner.style.display =
+        "block";
+
+      window.clearTimeout(
+        showSaveBanner.timer
+      );
+
+      showSaveBanner.timer =
+        window.setTimeout(
+          () => {
+            if (alertBanner) {
+              alertBanner.style.display =
+                "none";
+            }
+          },
+          5000
+        );
+    }
+
+    /* -------------------------------------------------------------
+     * LOAD CANONICAL CLIENT PROFILE
+     * ------------------------------------------------------------- */
     async function loadTargetProfileMetadata() {
       try {
-        console.log(`📡 [Profiler Engine] Querying row matching email address: [${targetEmailParam}]`);
-        const { data: profile, error } = await client
-          .from('client_profiles')
-          .select('*')
-          .eq('email_address', targetEmailParam.toLowerCase().trim())
+        const {
+          data: profile,
+          error
+        } = await client
+          .from("client_profiles")
+          .select(
+            [
+              "id",
+              "email_address",
+              "first_name",
+              "last_name",
+              "phone_number",
+              "street_address",
+              "city",
+              "state",
+              "zip_code",
+              "tracking_number",
+              "updated_at",
+              "company_name",
+              "sync_encryption_status",
+              "avatar_url",
+              "stripe_customer_id"
+            ].join(",")
+          )
+          .eq(
+            "email_address",
+            targetEmail
+          )
           .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
         if (!profile) {
-          document.body.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--prof-rose); font-weight: 700;">✕ Record trace matching account descriptor [${targetEmailParam}] not found in database.</div>`;
-          return;
+          renderFatalProfileError(
+            `✕ Record matching ${targetEmail} was not found in client_profiles.`
+          );
+          return false;
         }
 
-        // Cache the true row primary key identity
-        cachedRowIdPointer = profile.id;
+        cachedProfileId =
+          profile.id;
 
-        // Left Panel Summaries Ingestion        // Left Panel Summaries Ingestion
-        document.getElementById("profAccountSummaryTitle").textContent = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "Valued Customer";
-        document.getElementById("profEmailLabelField").textContent = profile.email_address;
-        document.getElementById("profTrackingLabelField").textContent = profile.tracking_number || "Not Provisioned";
-        document.getElementById("profStripeLabelField").textContent = profile.stripe_customer_id || "No Connected Stripe Token";
-        
-        const statusEl = document.getElementById("profStatusLabelField");
-        const statusVal = profile.sync_encryption_status || "Active";
-        statusEl.textContent = statusVal;
-        statusEl.style.color = statusVal.toLowerCase() === 'active' ? 'var(--crm-emerald)' : 'var(--crm-rose)';
+        /* -------------------------
+         * SUMMARY PANEL
+         * ------------------------- */
+        const displayName =
+          [
+            profile.first_name,
+            profile.last_name
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
 
-        if (profile.avatar_url) {
-          document.getElementById("profAvatarDisplayNode").src = profile.avatar_url;
+        setText(
+          "profAccountSummaryTitle",
+          displayName,
+          "Valued Customer"
+        );
+
+        setText(
+          "profEmailLabelField",
+          profile.email_address,
+          "Not Available"
+        );
+
+        setText(
+          "profTrackingLabelField",
+          profile.tracking_number,
+          "Not Provisioned"
+        );
+
+        setText(
+          "profStripeLabelField",
+          profile.stripe_customer_id,
+          "No Connected Stripe Token"
+        );
+
+        /* -------------------------
+         * STATUS
+         * ------------------------- */
+        const statusElement =
+          document.getElementById(
+            "profStatusLabelField"
+          );
+
+        const statusValue =
+          String(
+            profile.sync_encryption_status ||
+            "Active"
+          ).trim();
+
+        if (statusElement) {
+          statusElement.textContent =
+            statusValue;
+
+          statusElement.style.color =
+            statusValue.toLowerCase() ===
+            "active"
+              ? "var(--crm-emerald)"
+              : "var(--crm-rose)";
         }
 
-        // Form Fields Input Ingestion
-        document.getElementById("profFirstNameField").value = profile.first_name || "";
-        document.getElementById("profLastNameField").value = profile.last_name || "";
-        document.getElementById("profCompanyField").value = profile.company_name || "";
-        document.getElementById("profPhoneField").value = profile.phone_number || "";
-        document.getElementById("profStreetField").value = profile.street_address || "";
-        document.getElementById("profCityField").value = profile.city || "";
-        document.getElementById("profStateField").value = profile.state || "";
-        document.getElementById("profZipField").value = profile.zip_code || "";
-        document.getElementById("profStatusField").value = statusVal;
+        /* -------------------------
+         * AVATAR
+         * ------------------------- */
+        const avatar =
+          document.getElementById(
+            "profAvatarDisplayNode"
+          );
 
-        console.log("✓ [Profiler Engine] Interface values successfully mapped to target record row.");
+        if (
+          avatar &&
+          profile.avatar_url
+        ) {
+          avatar.src =
+            profile.avatar_url;
 
-      } catch (fault) {
-        console.error("✕ Initialization loop collapsed:", fault);
+          avatar.onerror = () => {
+            avatar.src =
+              "images/fav.png";
+          };
+        }
+
+        /* -------------------------
+         * EDITABLE FIELDS
+         * ------------------------- */
+        setValue(
+          "profFirstNameField",
+          profile.first_name
+        );
+
+        setValue(
+          "profLastNameField",
+          profile.last_name
+        );
+
+        setValue(
+          "profCompanyField",
+          profile.company_name
+        );
+
+        setValue(
+          "profPhoneField",
+          profile.phone_number
+        );
+
+        setValue(
+          "profStreetField",
+          profile.street_address
+        );
+
+        setValue(
+          "profCityField",
+          profile.city
+        );
+
+        setValue(
+          "profStateField",
+          profile.state
+        );
+
+        setValue(
+          "profZipField",
+          profile.zip_code
+        );
+
+        setValue(
+          "profStatusField",
+          statusValue
+        );
+
+        return true;
+      } catch (error) {
+        console.error(
+          "✕ Client profile load failed:",
+          error
+        );
+
+        renderFatalProfileError(
+          `✕ Profile synchronization failed: ${
+            error.message ||
+            "Unable to load client profile."
+          }`
+        );
+
+        return false;
       }
     }
 
-    // 💾 2. MODIFICATION ENGINE: PUSH SAVED EDITS BACK TO ROW INDICES
+    /* -------------------------------------------------------------
+     * SAVE CLIENT PROFILE
+     *
+     * Only columns that actually exist in client_profiles are sent.
+     * Email, ID, tracking number, Stripe ID, avatar, and created-style
+     * identity fields are intentionally not modified here.
+     * ------------------------------------------------------------- */
     if (saveBtn) {
-      saveBtn.addEventListener("click", async () => {
-        if (!cachedRowIdPointer) return;
+      saveBtn.addEventListener(
+        "click",
+        async () => {
+          if (!cachedProfileId) {
+            showSaveBanner(
+              "✕ No client profile is currently loaded.",
+              true
+            );
+            return;
+          }
 
-        saveBtn.disabled = true;
-        saveBtn.textContent = "Updating Database Ledgers... 📡";
+          const updatePayload = {
+            first_name:
+              document.getElementById(
+                "profFirstNameField"
+              )?.value.trim() || null,
 
-        const updatePayload = {
-          first_name: document.getElementById("profFirstNameField").value.trim(),
-          last_name: document.getElementById("profLastNameField").value.trim(),
-          company_name: document.getElementById("profCompanyField").value.trim(),
-          phone_number: document.getElementById("profPhoneField").value.trim(),
-          street_address: document.getElementById("profStreetField").value.trim(),
-          city: document.getElementById("profCityField").value.trim(),
-          state: document.getElementById("profStateField").value.trim(),
-          zip_code: document.getElementById("profZipField").value.trim(),
-          sync_encryption_status: document.getElementById("profStatusField").value,
-          updated_at: new Date().toISOString()
-        };
+            last_name:
+              document.getElementById(
+                "profLastNameField"
+              )?.value.trim() || null,
 
-        try {
-          const { error: updateError } = await client
-            .from('client_profiles')
-            .update(updatePayload)
-            .eq('id', cachedRowIdPointer);
+            company_name:
+              document.getElementById(
+                "profCompanyField"
+              )?.value.trim() || null,
 
-          if (updateError) throw updateError;
+            phone_number:
+              document.getElementById(
+                "profPhoneField"
+              )?.value.trim() || null,
 
-          showSaveBanner("✓ Modifications locked in. Profile database successfully synchronized.", false);
-          await loadTargetProfileMetadata();
+            street_address:
+              document.getElementById(
+                "profStreetField"
+              )?.value.trim() || null,
 
-        } catch (fault) {
-          console.error(fault);
-          showSaveBanner(`✕ Modification Rejected: ${fault.message}`, true);
-        } finally {
-          saveBtn.disabled = false;
-          saveBtn.textContent = "Save Profile Modifications ➔";
+            city:
+              document.getElementById(
+                "profCityField"
+              )?.value.trim() || null,
+
+            state:
+              document.getElementById(
+                "profStateField"
+              )?.value.trim() || null,
+
+            zip_code:
+              document.getElementById(
+                "profZipField"
+              )?.value.trim() || null,
+
+            sync_encryption_status:
+              document.getElementById(
+                "profStatusField"
+              )?.value || "Active",
+
+            updated_at:
+              new Date().toISOString()
+          };
+
+          saveBtn.disabled =
+            true;
+
+          const originalText =
+            saveBtn.textContent;
+
+          saveBtn.textContent =
+            "Updating Database Ledgers...";
+
+          try {
+            const {
+              error
+            } = await client
+              .from("client_profiles")
+              .update(
+                updatePayload
+              )
+              .eq(
+                "id",
+                cachedProfileId
+              );
+
+            if (error) {
+              throw error;
+            }
+
+            showSaveBanner(
+              "✓ Profile modifications successfully synchronized.",
+              false
+            );
+
+            await loadTargetProfileMetadata();
+          } catch (error) {
+            console.error(
+              "✕ Client profile update failed:",
+              error
+            );
+
+            showSaveBanner(
+              `✕ Modification Rejected: ${
+                error.message ||
+                "Database update failed."
+              }`,
+              true
+            );
+          } finally {
+            saveBtn.disabled =
+              false;
+
+            saveBtn.textContent =
+              originalText ||
+              "Save Profile Modifications ➔";
+          }
         }
-      });
+      );
     }
 
-    function showSaveBanner(text, isError) {
-      if (!alertBanner) return;
-      alertBanner.textContent = text;
-      alertBanner.style.background = isError ? "#fee2e2" : "#ecfdf5";
-      alertBanner.style.color = isError ? "#991b1b" : "#047857";
-      alertBanner.style.display = "block";
-      setTimeout(() => { if (alertBanner) alertBanner.style.display = "none"; }, 5000);
-    }
-
-    // 🏁 BOOT LIFECYCLE
+    /* -------------------------------------------------------------
+     * INITIAL LOAD
+     * ------------------------------------------------------------- */
     await loadTargetProfileMetadata();
   });
-  </script>
+</script>
 </body>
 </html>
