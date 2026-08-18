@@ -45,7 +45,7 @@
 
     if (!isAuthenticated) {
       // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
+      console.warn("[Security] Authentication required. Redirecting to secure login.");
       window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
       
       // Inject CSS rule to hide everything in case browser delays routing
@@ -55,7 +55,7 @@
 
     // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
     if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
+      console.warn("[Security] Restricted administrative territory. Redirecting.");
       window.location.replace("client-dashboard.html");
       document.documentElement.style.display = "none";
       throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
@@ -102,24 +102,125 @@
     .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
     .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
     
-    /* FORM INPUT COMPONENT VARIABLE BOUNDS */
-    .form-group { text-align: left; margin-bottom: 15px; }
-    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
-    .form-group textarea { height: 120px; resize: vertical; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: var(--white); border-color: var(--staff-red); }
-    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
-    .action-btn:hover { background: #1e293b; }
-    
-    /* FAQ LAYOUT LISTINGS ROW */
-    .faq-item-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 12px; border-bottom: 1px solid var(--border-color); gap: 16px; }
-    .faq-item-row:last-child { border-bottom: none; }
-    .faq-info-meta { display: flex; flex-direction: column; gap: 4px; text-align: left; }
-    .faq-info-meta h4 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-dark); }
-    .faq-info-meta p { margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
-    .faq-info-meta .category-tag { font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; width: max-content; margin-top: 4px; }
-    .delete-row-btn { background: #fef2f2; color: var(--staff-red); border: 1px solid rgba(193,82,84,0.15); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
-    .delete-row-btn:hover { background: var(--staff-red); color: var(--white); }
+
+    /* FAQ CONSOLE MODULES — template shell/navigation preserved */
+    .faq-metrics {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 0;
+    }
+    .faq-metric {
+      background:#fff; border:1px solid var(--border-color); border-radius:9px;
+      padding:15px 16px; min-height:92px; box-sizing:border-box;
+      position:relative; overflow:hidden;
+    }
+    .faq-metric::after { content:""; position:absolute; top:0; right:0; bottom:0; width:3px; background:#d9e0e8; }
+    .faq-metric:nth-child(2)::after { background:var(--emerald); }
+    .faq-metric:nth-child(3)::after { background:var(--staff-red); }
+    .faq-metric:nth-child(4)::after { background:#64748b; }
+    .faq-metric-label { color:#7b8797; font-size:.60rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; }
+    .faq-metric-value { margin-top:8px; color:var(--text-dark); font-size:1.55rem; line-height:1; font-weight:900; letter-spacing:-.04em; }
+    .faq-metric-detail { margin-top:7px; color:#94a3b8; font-size:.60rem; }
+
+    .faq-console-grid {
+      grid-column:1 / -1;
+      display:grid;
+      grid-template-columns:minmax(360px,430px) minmax(0,1fr);
+      gap:22px;
+      align-items:start;
+      min-width:0;
+    }
+
+    .console-card {
+      background:var(--white)!important;
+      border:1px solid var(--border-color)!important;
+      border-radius:10px!important;
+      padding:0!important;
+      box-shadow:0 2px 4px rgba(0,0,0,.025)!important;
+      overflow:hidden;
+      min-width:0;
+      box-sizing:border-box;
+    }
+    .module-header { padding:20px 22px 17px; border-bottom:1px solid var(--border-color); }
+    .module-kicker {
+      display:inline-flex; align-items:center; gap:7px; color:var(--staff-red);
+      font-size:.62rem; font-weight:850; text-transform:uppercase; letter-spacing:.10em; margin-bottom:6px;
+    }
+    .module-kicker::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .module-header h2 { margin:0!important; color:var(--text-dark); font-size:1.02rem!important; font-weight:850!important; }
+    .module-header p { margin:5px 0 0; color:var(--text-muted); font-size:.72rem; line-height:1.5; }
+    .module-body { padding:20px 22px 22px; }
+
+    .form-group { text-align:left; margin-bottom:15px; }
+    .form-group label { display:block; font-size:.68rem; font-weight:750; text-transform:uppercase; letter-spacing:.045em; margin-bottom:6px; color:var(--text-dark); }
+    .form-group input,.form-group select,.form-group textarea {
+      width:100%; padding:11px 12px; border:1px solid var(--border-color); border-radius:8px;
+      font-size:.78rem; color:var(--text-dark); background:#f8fafc; outline:none; box-sizing:border-box;
+      font-family:inherit; transition:.15s ease;
+    }
+    .form-group textarea { min-height:150px; resize:vertical; line-height:1.55; }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus {
+      background:#fff; border-color:rgba(193,82,84,.55); box-shadow:0 0 0 3px rgba(193,82,84,.07);
+    }
+    .action-row { display:flex; gap:8px; }
+    .action-btn {
+      flex:1; background:var(--text-dark); color:#fff; border:none; padding:11px 14px;
+      border-radius:8px; font-weight:750; font-size:.75rem; cursor:pointer;
+    }
+    .action-btn:hover { background:#1e293b; }
+    .action-btn:disabled { opacity:.55; cursor:wait; }
+    .secondary-btn {
+      background:#f8fafc; color:var(--text-dark); border:1px solid var(--border-color);
+      border-radius:8px; padding:0 13px; font-weight:750; cursor:pointer;
+    }
+    .secondary-btn:hover { background:#f1f5f9; }
+    .status-panel { display:none; margin-bottom:15px; padding:10px 12px; border-radius:7px; font-size:.70rem; font-weight:700; line-height:1.45; }
+
+    .library-toolbar { display:flex; gap:8px; align-items:center; }
+    .library-search {
+      flex:1; min-width:0; height:38px; border:1px solid var(--border-color); border-radius:8px;
+      padding:0 11px; font-size:.70rem; outline:none; background:#f8fafc;
+    }
+    .library-search:focus { background:#fff; border-color:rgba(193,82,84,.55); box-shadow:0 0 0 3px rgba(193,82,84,.07); }
+
+    .faq-list { max-height:690px; overflow-y:auto; border-top:1px solid var(--border-color); }
+    .faq-item-row {
+      display:flex; justify-content:space-between; align-items:flex-start; padding:17px 22px;
+      border-bottom:1px solid #eef2f6; gap:16px;
+    }
+    .faq-item-row:hover { background:#fafbfd; }
+    .faq-info-meta { min-width:0; display:flex; flex-direction:column; gap:5px; }
+    .faq-info-meta h4 { margin:0; font-size:.84rem; font-weight:800; color:var(--text-dark); line-height:1.35; }
+    .faq-info-meta p { margin:0; font-size:.70rem; color:var(--text-muted); line-height:1.55; white-space:pre-wrap; }
+    .category-tag { font-size:.57rem; color:#64748b; font-weight:800; text-transform:uppercase; background:#eef2f6; padding:4px 7px; border-radius:5px; width:max-content; margin-top:3px; }
+    .faq-actions { display:flex; align-items:center; gap:7px; flex-shrink:0; }
+    .delete-row-btn {
+      background:#fef2f2; color:var(--staff-red); border:1px solid rgba(193,82,84,.15);
+      padding:7px 10px; border-radius:6px; font-size:.64rem; font-weight:750; cursor:pointer; white-space:nowrap;
+    }
+    .delete-row-btn:hover { background:var(--staff-red); color:#fff; }
+    .feedback-summary { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+    .feedback-pill { display:inline-flex; border-radius:999px; padding:4px 7px; font-size:.58rem; font-weight:800; }
+    .feedback-helpful { background:rgba(16,185,129,.09); color:#087a59; }
+    .feedback-unhelpful { background:rgba(193,82,84,.08); color:var(--staff-red); }
+    .empty-state { padding:48px 24px; text-align:center; color:var(--text-muted); font-size:.74rem; font-weight:600; }
+    .library-footer { padding:10px 22px; border-top:1px solid var(--border-color); background:#fafbfd; color:#94a3b8; font-size:.60rem; }
+
+    @media (max-width:1100px) {
+      .faq-console-grid { grid-template-columns:1fr; }
+      .faq-list { max-height:none; }
+    }
+    @media (max-width:800px) {
+      .faq-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width:520px) {
+      .faq-metrics { grid-template-columns:1fr; }
+      .faq-item-row { flex-direction:column; }
+      .faq-actions,.delete-row-btn { width:100%; }
+    }
+
   </style>
 </head>
 
@@ -135,40 +236,59 @@
       </header>
 
       <div class="content-container">
-        <!-- Composition Form Panel -->
-        <div class="console-card">
-          <h2>Compose Knowledge Base Entry</h2>
-          <form id="faqEntryForm">
-            <div class="form-group">
-              <label>FAQ Category Classification</label>
-              <select id="faqCategory" required>
-                <option value="General Information">General Information</option>
-                <option value="Pricing & Billing">Pricing & Billing</option>
-                <option value="Compliance & POA">Compliance & POA</option>
-                <option value="Fulfillment Processing">Fulfillment Processing</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Question Header Text</label>
-              <input type="text" id="faqQuestion" required placeholder="e.g., What is an EIN number?">
-            </div>
-            <div class="form-group">
-              <label>Answer Explanation Context</label>
-              <textarea id="faqAnswer" required placeholder="Type the detailed customer knowledge base clarification text here..."></textarea>
-            </div>
-            <div id="faq-form-status" style="display:none; font-size:0.8rem; font-weight:700; margin-bottom:15px; padding:10px; border-radius:6px;"></div>
-            <button type="submit" class="action-btn" id="faqSubmitBtn">Publish Live FAQ Entry ➔</button>
-          </form>
-        </div>
+        <section class="faq-metrics">
+          <div class="faq-metric"><div class="faq-metric-label">Published FAQs</div><div class="faq-metric-value" id="faqMetricTotal">—</div><div class="faq-metric-detail">Knowledge base entries</div></div>
+          <div class="faq-metric"><div class="faq-metric-label">Helpful Votes</div><div class="faq-metric-value" id="faqMetricHelpful">—</div><div class="faq-metric-detail">Positive customer feedback</div></div>
+          <div class="faq-metric"><div class="faq-metric-label">Needs Review</div><div class="faq-metric-value" id="faqMetricUnhelpful">—</div><div class="faq-metric-detail">Unhelpful responses</div></div>
+          <div class="faq-metric"><div class="faq-metric-label">Helpful Rate</div><div class="faq-metric-value" id="faqMetricRate">—</div><div class="faq-metric-detail">Across recorded feedback</div></div>
+        </section>
 
-        <!-- Inventory List Panel -->
-        <div class="console-card">
-          <h2>Active Platform Knowledge Base Archive</h2>
-          <div id="admin-faq-target-box">
-            <div style="padding:40px; text-align:center; color:var(--text-muted); font-weight:600;">Connecting to the knowledge base storage channels...</div>
-          </div>
+        <div class="faq-console-grid">
+          <section class="console-card">
+            <div class="module-header">
+              <div class="module-kicker">Content Administration</div>
+              <h2>Compose Knowledge Base Entry</h2>
+              <p>Create a customer-facing FAQ and publish it directly to the live knowledge base.</p>
+            </div>
+            <div class="module-body">
+              <form id="faqEntryForm">
+                <div class="form-group"><label for="faqCategory">FAQ Category Classification</label>
+                  <select id="faqCategory" required>
+                    <option value="General Information">General Information</option>
+                    <option value="Pricing & Billing">Pricing & Billing</option>
+                    <option value="Compliance & POA">Compliance & POA</option>
+                    <option value="Fulfillment Processing">Fulfillment Processing</option>
+                  </select>
+                </div>
+                <div class="form-group"><label for="faqQuestion">Question Header Text</label><input type="text" id="faqQuestion" required placeholder="e.g., What is an EIN number?"></div>
+                <div class="form-group"><label for="faqAnswer">Answer Explanation Context</label><textarea id="faqAnswer" required placeholder="Type the detailed customer knowledge base clarification text here..."></textarea></div>
+                <div id="faq-form-status" class="status-panel"></div>
+                <div class="action-row">
+                  <button type="button" class="secondary-btn" id="faqResetBtn">Clear</button>
+                  <button type="submit" class="action-btn" id="faqSubmitBtn">Publish Live FAQ Entry →</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="console-card">
+            <div class="module-header">
+              <div class="module-kicker">Live Knowledge Base</div>
+              <h2>Active Platform Knowledge Base</h2>
+              <p>Manage published FAQs and review customer helpfulness feedback tied to each entry.</p>
+            </div>
+            <div class="module-body">
+              <div class="library-toolbar">
+                <input id="faqLibrarySearch" class="library-search" type="search" placeholder="Search questions, answers, or categories..." autocomplete="off">
+                <button type="button" class="secondary-btn" id="faqRefreshBtn">Refresh</button>
+              </div>
+            </div>
+            <div id="admin-faq-target-box" class="faq-list"><div class="empty-state">Connecting to the knowledge base storage channels...</div></div>
+            <div class="library-footer" id="faqLibraryFooter">Loading FAQ registry...</div>
+          </section>
         </div>
       </div>
+
     </main>
   </div>
   
@@ -179,157 +299,647 @@
   <script src="assets/js/admin-navigation.js"></script>
 
     <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      "use strict";
+document.addEventListener("DOMContentLoaded", async () => {
+  "use strict";
 
-      // 1. Resolve Strict DOM Target Selectors
-      const faqForm        = document.getElementById("faqEntryForm");
-      const faqCategorySel = document.getElementById("faqCategory");
-      const faqQuestionIn  = document.getElementById("faqQuestion");
-      const faqAnswerIn    = document.getElementById("faqAnswer");
-      const formStatusDiv  = document.getElementById("faq-form-status");
-      const submitButton   = document.getElementById("faqSubmitBtn");
-      const faqTargetBox   = document.getElementById("admin-faq-target-box");
+  /*
+   * FAQ CONSOLE
+   * ------------------------------------------------------------
+   * Important:
+   * The feedback table references faq_items(id), but the previous
+   * console incorrectly assumed faq_items had a "category" column.
+   *
+   * This version reads faq_items with select("*") and normalizes the
+   * actual column names that exist. It therefore does NOT request
+   * category/question/answer columns that may not exist.
+   *
+   * It also keeps a fallback to the original "faqs" table so an
+   * existing FAQ archive is never hidden simply because the newer
+   * faq_items table has a different column layout.
+   */
 
-      if (!faqForm || !faqTargetBox || !formStatusDiv || !submitButton) {
-        throw new Error("✕ Critical UI Error: Missing core layout template faq forms or status nodes.");
+  const $ = id => document.getElementById(id);
+  const client = window.supabaseInstance || window.supabaseClient;
+
+  const form = $("faqEntryForm");
+  const categoryInput = $("faqCategory");
+  const questionInput = $("faqQuestion");
+  const answerInput = $("faqAnswer");
+  const statusBox = $("faq-form-status");
+  const submitButton = $("faqSubmitBtn");
+  const resetButton = $("faqResetBtn");
+  const refreshButton = $("faqRefreshBtn");
+  const searchInput = $("faqLibrarySearch");
+  const list = $("admin-faq-target-box");
+  const footer = $("faqLibraryFooter");
+
+  const metricTotal = $("faqMetricTotal");
+  const metricHelpful = $("faqMetricHelpful");
+  const metricUnhelpful = $("faqMetricUnhelpful");
+  const metricRate = $("faqMetricRate");
+
+  let faqs = [];
+  let feedback = new Map();
+  let faqSourceTable = "faq_items";
+
+  if (!client || typeof client.from !== "function") {
+    list.innerHTML = `<div class="empty-state" style="color:var(--staff-red);">Supabase database connection is unavailable.</div>`;
+    return;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function setStatus(message, type = "error") {
+    statusBox.style.display = "block";
+    statusBox.style.background = type === "success" ? "#ecfdf5" : "#fef2f2";
+    statusBox.style.color = type === "success" ? "#047857" : "#991b1b";
+    statusBox.textContent = message;
+  }
+
+  function clearStatus() {
+    statusBox.style.display = "none";
+    statusBox.textContent = "";
+  }
+
+  /*
+   * Convert whatever the database actually calls the fields into the
+   * internal FAQ shape used by the UI.
+   */
+  function normalizeFaq(row, sourceTable) {
+    const question =
+      row.question ??
+      row.question_text ??
+      row.question_header ??
+      row.title ??
+      row.faq_question ??
+      row.name ??
+      "";
+
+    const answer =
+      row.answer ??
+      row.answer_text ??
+      row.answer_content ??
+      row.description ??
+      row.faq_answer ??
+      row.content ??
+      "";
+
+    const category =
+      row.category ??
+      row.category_name ??
+      row.faq_category ??
+      row.classification ??
+      row.type ??
+      "General Information";
+
+    return {
+      id: row.id,
+      question: String(question),
+      answer: String(answer),
+      category: String(category),
+      created_at: row.created_at || row.updated_at || null,
+      source_table: sourceTable,
+      raw: row
+    };
+  }
+
+  /*
+   * Try faq_items first because faq_feedback_metrics.faq_id has a
+   * foreign key to faq_items(id).
+   *
+   * select("*") is intentional. It avoids the previous schema-cache
+   * error caused by explicitly asking for faq_items.category.
+   */
+  async function loadFaqItems() {
+    const result = await client
+      .from("faq_items")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (result.error) {
+      return {
+        ok: false,
+        error: result.error,
+        rows: []
+      };
+    }
+
+    return {
+      ok: true,
+      error: null,
+      rows: result.data || []
+    };
+  }
+
+  /*
+   * The original page used public.faqs. Keep it as a fallback so older
+   * FAQ records remain visible if faq_items is empty or unavailable.
+   */
+  async function loadLegacyFaqs() {
+    const result = await client
+      .from("faqs")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (result.error) {
+      return {
+        ok: false,
+        error: result.error,
+        rows: []
+      };
+    }
+
+    return {
+      ok: true,
+      error: null,
+      rows: result.data || []
+    };
+  }
+
+  async function loadFaqs() {
+    const modern = await loadFaqItems();
+
+    if (modern.ok && modern.rows.length > 0) {
+      faqSourceTable = "faq_items";
+      faqs = modern.rows.map(row => normalizeFaq(row, "faq_items"));
+      metricTotal.textContent = faqs.length;
+      return;
+    }
+
+    /*
+     * If faq_items exists but contains no rows, check the legacy table
+     * before showing an empty dashboard.
+     */
+    const legacy = await loadLegacyFaqs();
+
+    if (legacy.ok && legacy.rows.length > 0) {
+      faqSourceTable = "faqs";
+      faqs = legacy.rows.map(row => normalizeFaq(row, "faqs"));
+      metricTotal.textContent = faqs.length;
+      return;
+    }
+
+    if (!modern.ok && !legacy.ok) {
+      throw new Error(
+        `FAQ entries could not be loaded. faq_items: ${modern.error?.message || "unavailable"} | faqs: ${legacy.error?.message || "unavailable"}`
+      );
+    }
+
+    faqSourceTable = modern.ok ? "faq_items" : "faqs";
+    faqs = [];
+    metricTotal.textContent = "0";
+  }
+
+  async function loadFeedback() {
+    const result = await client
+      .from("faq_feedback_metrics")
+      .select("id,faq_id,is_helpful,page_url,recorded_at");
+
+    if (result.error) {
+      /*
+       * Feedback should never prevent the FAQ registry itself from
+       * loading. Show zero metrics and keep the FAQ list functional.
+       */
+      console.warn("[FAQ Feedback] Metrics unavailable:", result.error.message);
+      feedback = new Map();
+      metricHelpful.textContent = "0";
+      metricUnhelpful.textContent = "0";
+      metricRate.textContent = "—";
+      return;
+    }
+
+    feedback = new Map();
+
+    (result.data || []).forEach(row => {
+      if (!row.faq_id) return;
+
+      const item = feedback.get(row.faq_id) || {
+        helpful: 0,
+        unhelpful: 0
+      };
+
+      if (row.is_helpful) {
+        item.helpful++;
+      } else {
+        item.unhelpful++;
       }
 
-      // 2. Fetch Master Client Initialization Instances
-      const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        faqTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</div>`;
-        throw new Error("✕ Initialization Error: Database configuration reference unassigned.");
-      }
+      feedback.set(row.faq_id, item);
+    });
 
-      // --- STAGE 1: READ AND FETCH ALL ACTIVE PUBLIC FAQS ---
-      async function streamActiveFaqs() {
+    const helpful = [...feedback.values()]
+      .reduce((total, item) => total + item.helpful, 0);
+
+    const unhelpful = [...feedback.values()]
+      .reduce((total, item) => total + item.unhelpful, 0);
+
+    const totalVotes = helpful + unhelpful;
+
+    metricHelpful.textContent = helpful;
+    metricUnhelpful.textContent = unhelpful;
+    metricRate.textContent = totalVotes
+      ? `${Math.round((helpful / totalVotes) * 100)}%`
+      : "—";
+  }
+
+  function getFeedback(faqId) {
+    return feedback.get(faqId) || {
+      helpful: 0,
+      unhelpful: 0
+    };
+  }
+
+  function renderFaqs() {
+    const query = String(searchInput?.value || "")
+      .trim()
+      .toLowerCase();
+
+    const filtered = faqs.filter(item => {
+      if (!query) return true;
+
+      return [
+        item.question,
+        item.answer,
+        item.category
+      ].some(value =>
+        String(value || "").toLowerCase().includes(query)
+      );
+    });
+
+    if (!filtered.length) {
+      list.innerHTML = `
+        <div class="empty-state">
+          ${
+            faqs.length
+              ? "No FAQ entries match the current search."
+              : "No FAQ entries are currently published."
+          }
+        </div>
+      `;
+
+      footer.textContent = faqs.length
+        ? `0 of ${faqs.length} FAQ entries shown`
+        : "0 FAQ entries";
+
+      return;
+    }
+
+    list.innerHTML = "";
+
+    filtered.forEach(item => {
+      const stats = getFeedback(item.id);
+
+      const row = document.createElement("div");
+      row.className = "faq-item-row";
+
+      row.innerHTML = `
+        <div class="faq-info-meta">
+          <h4>${escapeHtml(item.question || "Untitled FAQ")}</h4>
+          <p>${escapeHtml(item.answer || "No answer text recorded.")}</p>
+          <span class="category-tag">
+            ${escapeHtml(item.category || "General Information")}
+          </span>
+
+          <div class="feedback-summary">
+            <span class="feedback-pill feedback-helpful">
+              Helpful ${stats.helpful}
+            </span>
+            <span class="feedback-pill feedback-unhelpful">
+              Needs Review ${stats.unhelpful}
+            </span>
+          </div>
+        </div>
+
+        <div class="faq-actions">
+          <button
+            type="button"
+            class="delete-row-btn"
+            data-id="${escapeHtml(item.id)}"
+          >
+            Delete
+          </button>
+        </div>
+      `;
+
+      const deleteButton = row.querySelector(".delete-row-btn");
+
+      deleteButton.addEventListener("click", async () => {
+        if (!item.id) return;
+
+        const confirmed = window.confirm(
+          `Delete this FAQ?\n\n${item.question || "Untitled FAQ"}`
+        );
+
+        if (!confirmed) return;
+
+        deleteButton.disabled = true;
+        deleteButton.textContent = "Removing...";
+
         try {
-          console.log("📡 [FAQs Engine] Querying live entries from public.faqs...");
-          
-          const { data: faqs, error: fetchError } = await client
-            .from('faqs')
-            .select('id, category, question, answer, created_at')
-            .order('created_at', { ascending: false });
+          /*
+           * Delete from the same source table from which this row was
+           * loaded. This prevents the UI from showing one table while
+           * attempting to delete from another.
+           */
+          const { error } = await client
+            .from(item.source_table)
+            .delete()
+            .eq("id", item.id);
 
-          if (fetchError) {
-            throw new Error(`Postgres Retrieval Failure [Code ${fetchError.code}]: ${fetchError.message}`);
+          if (error) {
+            throw new Error(error.message);
           }
 
-          if (!faqs || faqs.length === 0) {
-            faqTargetBox.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No active knowledge base rows discovered inside database archives.</div>`;
-            return;
-          }
+          await synchronize();
 
-          faqTargetBox.innerHTML = "";
+        } catch (error) {
+          console.error("[FAQ Delete]", error);
 
-          faqs.forEach(faqItem => {
-            const rowWrapper = document.createElement("div");
-            rowWrapper.className = "faq-item-row";
+          deleteButton.disabled = false;
+          deleteButton.textContent = "Delete";
 
-            rowWrapper.innerHTML = `
-              <div class="faq-info-meta">
-                <h4>${escapeFaqHtml(faqItem.question)}</h4>
-                <p>${escapeFaqHtml(faqItem.answer)}</p>
-                <span class="category-tag">${escapeFaqHtml(faqItem.category)}</span>
-              </div>
-              <button class="delete-row-btn" data-id="${faqItem.id}">Delete Entry</button>
-            `;
-
-            // Bind individual click listeners to the specific item delete button
-            const deleteBtn = rowWrapper.querySelector(".delete-row-btn");
-            deleteBtn.addEventListener("click", async function() {
-              const targetFaqId = this.getAttribute("data-id");
-              this.disabled = true;
-              this.textContent = "Removing...";
-              console.log(`📡 [FAQs Engine] Deleting entry row matching ID: [${targetFaqId}]`);
-
-              try {
-                const { error: deleteError } = await client
-                  .from('faqs')
-                  .delete()
-                  .eq('id', targetFaqId);
-
-                if (deleteError) throw deleteError;
-                console.log("✓ [FAQs Engine] FAQ deletion verified by backend database server.");
-                await streamActiveFaqs(); // Re-fetch rows instantly
-
-              } catch (delFault) {
-                console.error("✕ Database row deletion request refused:", delFault.message);
-                alert(`✕ Deletion Refused: ${delFault.message}`);
-                this.disabled = false;
-                this.textContent = "Delete Entry";
-              }
-            });
-
-            faqTargetBox.appendChild(rowWrapper);
-          });
-
-        } catch (queryFault) {
-          console.error("✕ FAQs Inventory Synchronization Aborted:", queryFault.message);
-          faqTargetBox.innerHTML = `<div style="padding:20px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</div>`;
-        }
-      }
-
-      // --- STAGE 2: HANDLE NEW FAQ ENTRY FORM COMPOSITION SUBMISSIONS ---
-      faqForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        formStatusDiv.style.display = "none";
-        formStatusDiv.textContent = "";
-
-        const category = faqCategorySel.value;
-        const question = faqQuestionIn.value.trim();
-        const answer   = faqAnswerIn.value.trim();
-
-        if (!category || !question || !answer) {
-          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          formStatusDiv.textContent = "✕ Validation Error: All form fields are required.";
-          return;
-        }
-
-        const originalBtnLabel = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.textContent = "Broadcasting to Table Context...";
-
-        try {
-          console.log("📡 [FAQs Engine] Pushing new entry payload row to public.faqs...");
-          
-          const { error: insertError } = await client
-            .from('faqs')
-            .insert([
-              { category, question, answer, created_at: new Date().toISOString() }
-            ]);
-
-          if (insertError) {
-            throw new Error(`Postgres Insertion Failure [Code ${insertError.code}]: ${insertError.message}`);
-          }
-
-          console.log("✅ [FAQs Engine] Content successfully added to table layers.");
-          formStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
-          formStatusDiv.textContent = "✓ FAQ entry successfully published live to production distribution pipelines!";
-          
-          faqForm.reset();
-          await streamActiveFaqs(); // Hydrate inventory instantly
-
-        } catch (postFault) {
-          console.error("✕ FAQ entry publication chain broke:", postFault.message);
-          formStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          formStatusDiv.textContent = `✕ Publishing Aborted: ${postFault.message}`;
-        } finally {
-          submitButton.disabled = false;
-          submitButton.textContent = originalBtnLabel;
+          setStatus(
+            `Deletion failed: ${error.message}`,
+            "error"
+          );
         }
       });
 
-      function escapeFaqHtml(str) {
-        if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      list.appendChild(row);
+    });
+
+    footer.textContent =
+      `${filtered.length} of ${faqs.length} FAQ entries shown • Source: ${faqSourceTable}`;
+  }
+
+  async function synchronize() {
+    list.innerHTML = `
+      <div class="empty-state">
+        Synchronizing FAQ registry...
+      </div>
+    `;
+
+    try {
+      /*
+       * Do these independently. A feedback-table problem must not
+       * prevent the FAQ registry from loading.
+       */
+      await loadFaqs();
+      await loadFeedback();
+      renderFaqs();
+    } catch (error) {
+      console.error("[FAQ Console]", error);
+
+      list.innerHTML = `
+        <div class="empty-state" style="color:var(--staff-red);">
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+
+      footer.textContent = "Registry synchronization failed";
+    }
+  }
+
+  /*
+   * Insert into the currently selected FAQ source.
+   *
+   * Because the supplied schema does not include the faq_items column
+   * definitions, build the payload from columns actually observed in
+   * the table. This prevents sending "category" to a table that does
+   * not have that column.
+   */
+  async function createFaq(payload) {
+    if (faqSourceTable === "faqs") {
+      const { error } = await client
+        .from("faqs")
+        .insert({
+          category: payload.category,
+          question: payload.question,
+          answer: payload.answer,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw new Error(error.message);
+      return;
+    }
+
+    /*
+     * Determine the actual field names from an existing faq_items row.
+     */
+    const sample = faqs.find(item => item.source_table === "faq_items");
+
+    if (!sample || !sample.raw) {
+      /*
+       * faq_items is empty. Try the most common question/answer shape
+       * without assuming category exists.
+       */
+      const attempts = [
+        {
+          question: payload.question,
+          answer: payload.answer
+        },
+        {
+          question_text: payload.question,
+          answer_text: payload.answer
+        },
+        {
+          faq_question: payload.question,
+          faq_answer: payload.answer
+        }
+      ];
+
+      let lastError = null;
+
+      for (const candidate of attempts) {
+        const result = await client
+          .from("faq_items")
+          .insert(candidate);
+
+        if (!result.error) {
+          return;
+        }
+
+        lastError = result.error;
+
+        /*
+         * Only continue when the failure appears to be a schema/column
+         * mismatch. Other failures should be surfaced immediately.
+         */
+        const message = String(result.error.message || "").toLowerCase();
+
+        if (
+          !message.includes("column") &&
+          !message.includes("schema cache") &&
+          !message.includes("could not find")
+        ) {
+          break;
+        }
       }
 
-      // Trigger structural execution cycle immediately on initial thread frame
-      await streamActiveFaqs();
-    });
-  </script>
+      throw new Error(
+        lastError?.message ||
+        "Could not determine the writable FAQ fields in faq_items."
+      );
+    }
+
+    const raw = sample.raw;
+
+    const questionKey =
+      ["question", "question_text", "question_header", "faq_question", "title"]
+        .find(key => Object.prototype.hasOwnProperty.call(raw, key));
+
+    const answerKey =
+      ["answer", "answer_text", "answer_content", "faq_answer", "content", "description"]
+        .find(key => Object.prototype.hasOwnProperty.call(raw, key));
+
+    const categoryKey =
+      ["category", "category_name", "faq_category", "classification", "type"]
+        .find(key => Object.prototype.hasOwnProperty.call(raw, key));
+
+    if (!questionKey || !answerKey) {
+      throw new Error(
+        "faq_items does not expose recognizable question and answer columns. The table schema needs to be provided before new FAQ entries can be created."
+      );
+    }
+
+    const insertPayload = {
+      [questionKey]: payload.question,
+      [answerKey]: payload.answer
+    };
+
+    if (categoryKey) {
+      insertPayload[categoryKey] = payload.category;
+    }
+
+    /*
+     * Only add created_at when that column actually exists.
+     */
+    if (Object.prototype.hasOwnProperty.call(raw, "created_at")) {
+      insertPayload.created_at = new Date().toISOString();
+    }
+
+    const { error } = await client
+      .from("faq_items")
+      .insert(insertPayload);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const payload = {
+      category: String(categoryInput.value || "").trim(),
+      question: String(questionInput.value || "").trim(),
+      answer: String(answerInput.value || "").trim()
+    };
+
+    if (!payload.category || !payload.question || !payload.answer) {
+      setStatus(
+        "Category, question, and answer are all required.",
+        "error"
+      );
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Publishing...";
+
+    try {
+      await createFaq(payload);
+
+      form.reset();
+
+      setStatus(
+        "FAQ entry published successfully.",
+        "success"
+      );
+
+      await synchronize();
+
+    } catch (error) {
+      console.error("[FAQ Create]", error);
+
+      setStatus(
+        `FAQ publication failed: ${error.message}`,
+        "error"
+      );
+
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Publish Live FAQ Entry →";
+    }
+  });
+
+  resetButton.addEventListener("click", () => {
+    form.reset();
+    clearStatus();
+  });
+
+  /*
+   * Refresh is deliberately independent from the initial load.
+   * The button always gets restored even if the database request fails.
+   */
+  refreshButton.addEventListener("click", async () => {
+    if (refreshButton.disabled) return;
+
+    refreshButton.disabled = true;
+    refreshButton.textContent = "Refreshing...";
+
+    try {
+      await synchronize();
+    } finally {
+      refreshButton.disabled = false;
+      refreshButton.textContent = "Refresh";
+    }
+  });
+
+  searchInput.addEventListener("input", renderFaqs);
+
+  /*
+   * Customer feedback updates in real time.
+   */
+  try {
+    client
+      .channel("faq-feedback-metrics-console")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "faq_feedback_metrics"
+        },
+        async () => {
+          try {
+            await loadFeedback();
+            renderFaqs();
+          } catch (error) {
+            console.warn(
+              "[FAQ Feedback Realtime]",
+              error
+            );
+          }
+        }
+      )
+      .subscribe();
+  } catch (error) {
+    console.warn(
+      "[FAQ Feedback] Realtime subscription unavailable.",
+      error
+    );
+  }
+
+  await synchronize();
+});
+</script>
 </body>
 </html>

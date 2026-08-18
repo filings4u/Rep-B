@@ -43,8 +43,7 @@
     const isAdminViewPage = pagePathString.includes('/admin-');
 
     if (!isAuthenticated) {
-      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
+      // Redirect without browser alert boxes.
       window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
       
       // Inject CSS rule to hide everything in case browser delays routing
@@ -54,7 +53,6 @@
 
     // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
     if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
       window.location.replace("client-dashboard.html");
       document.documentElement.style.display = "none";
       throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
@@ -446,628 +444,1552 @@
       .invoice-app-container { grid-template-columns: 1fr; margin: 20px auto; }
     }
   </style>
-  <!-- 📦 EXTERNAL JURISDICTIONAL DATA STORES AND PRICE MATRICES -->
+
+<style>
+  /* ============================================================
+     INVOICE STUDIO — MODULE STYLES
+     Keeps the existing dashboard/sidebar template intact.
+     ============================================================ */
+
+  .portal-main { min-width: 0; }
+
+  .invoice-app-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 32px 40px 50px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(330px, .75fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .studio-panel-card {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(15,23,42,.035);
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  .invoice-builder-panel { padding: 28px; }
+  .invoice-summary-panel {
+    padding: 24px;
+    position: sticky;
+    top: 96px;
+  }
+
+  .invoice-section-heading,
+  .invoice-summary-heading,
+  .line-items-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .invoice-section-heading h2,
+  .invoice-summary-heading h2,
+  .line-items-toolbar h3 {
+    margin: 4px 0 0;
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+
+  .invoice-section-heading p {
+    margin: 7px 0 0;
+    max-width: 700px;
+    color: var(--text-muted);
+    font-size: .82rem;
+    line-height: 1.5;
+  }
+
+  .eyebrow {
+    color: var(--staff-red);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .invoice-number-preview {
+    min-width: 205px;
+    padding: 11px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    background: #f8fafc;
+    text-align: right;
+    box-sizing: border-box;
+  }
+
+  .invoice-number-preview span {
+    display: block;
+    color: var(--text-muted);
+    font-size: .62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .invoice-number-preview strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--staff-red);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .82rem;
+  }
+
+  .invoice-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+
+  .form-group-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .form-label-text {
+    color: var(--text-muted);
+    font-size: .69rem;
+    font-weight: 800;
+    letter-spacing: .45px;
+    text-transform: uppercase;
+  }
+
+  .form-input-control {
+    width: 100%;
+    height: 40px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+    background: #f8fafc;
+    color: var(--text-dark);
+    font: inherit;
+    font-size: .84rem;
+    box-sizing: border-box;
+  }
+
+  .form-input-control:focus,
+  .invoice-table-ledger input:focus,
+  .invoice-textarea:focus {
+    border-color: var(--emerald);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.08);
+  }
+
+  .invoice-client-summary {
+    display: grid;
+    grid-template-columns: 1.2fr 1.4fr 1fr;
+    gap: 12px;
+    margin: 6px 0 26px;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    background: #f8fafc;
+  }
+
+  .invoice-client-summary span {
+    display: block;
+    color: var(--text-muted);
+    font-size: .61rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .invoice-client-summary strong {
+    display: block;
+    margin-top: 4px;
+    overflow: hidden;
+    color: var(--text-dark);
+    font-size: .82rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .line-items-toolbar {
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    margin-bottom: 10px;
+  }
+
+  .secondary-btn-slat,
+  .action-btn-slat {
+    min-height: 40px;
+    padding: 0 15px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 750;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  .secondary-btn-slat {
+    border: 1px solid var(--border-color);
+    background: #f1f5f9;
+    color: var(--text-dark);
+  }
+
+  .secondary-btn-slat:hover {
+    background: #e9eef5;
+  }
+
+  .action-btn-slat {
+    border: 0;
+    background: var(--text-dark);
+    color: #fff;
+  }
+
+  .action-btn-slat:hover { filter: brightness(1.06); }
+  .action-btn-slat:disabled,
+  .secondary-btn-slat:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+
+  .add-line-item-btn { width: auto; white-space: nowrap; }
+
+  .invoice-lines-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+  }
+
+  .invoice-table-ledger {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+    font-size: .82rem;
+  }
+
+  .invoice-table-ledger th {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border-color);
+    background: #f8fafc;
+    color: var(--text-muted);
+    font-size: .65rem;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .invoice-table-ledger td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+  }
+
+  .invoice-table-ledger tbody tr:last-child td { border-bottom: 0; }
+
+  .invoice-table-ledger input {
+    width: 100%;
+    height: 36px;
+    padding: 7px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    outline: none;
+    background: #fff;
+    color: var(--text-dark);
+    font: inherit;
+    box-sizing: border-box;
+  }
+
+  .line-description-input { min-width: 260px; }
+
+  .line-remove-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #fecaca;
+    border-radius: 7px;
+    background: #fff;
+    color: #b91c1c;
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  .line-remove-btn:hover { background: #fef2f2; }
+
+  .invoice-add-controls {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .invoice-notes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 22px;
+  }
+
+  .invoice-textarea {
+    width: 100%;
+    min-height: 92px;
+    resize: vertical;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+    background: #f8fafc;
+    color: var(--text-dark);
+    font: inherit;
+    font-size: .82rem;
+    line-height: 1.45;
+    box-sizing: border-box;
+  }
+
+  .invoice-status-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 9px;
+    border: 1px solid rgba(193,82,84,.18);
+    border-radius: 999px;
+    background: rgba(193,82,84,.07);
+    color: var(--staff-red);
+    font-size: .62rem;
+    font-weight: 850;
+    letter-spacing: .5px;
+  }
+
+  .financial-control-list {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    background: #f8fafc;
+  }
+
+  .financial-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    min-height: 42px;
+    border-bottom: 1px solid #e9eef4;
+    color: var(--text-muted);
+    font-size: .8rem;
+  }
+
+  .financial-row:last-child { border-bottom: 0; }
+  .financial-row strong { color: var(--text-dark); }
+  .muted-row { color: #64748b; }
+
+  .financial-input-pair {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-muted);
+  }
+
+  .financial-input-pair input {
+    width: 92px;
+    height: 34px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--text-dark);
+    text-align: right;
+    box-sizing: border-box;
+  }
+
+  .total-row {
+    margin-top: 4px;
+    padding-top: 9px;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 0;
+    color: var(--text-dark);
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .total-row strong {
+    color: var(--staff-red);
+    font-size: 1.2rem;
+  }
+
+  .invoice-payment-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 13px;
+    border: 1px solid #d1fae5;
+    border-radius: 9px;
+    background: #ecfdf5;
+  }
+
+  .payment-preview-icon {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    place-items: center;
+    border-radius: 50%;
+    background: #10b981;
+    color: #fff;
+    font-weight: 900;
+  }
+
+  .invoice-payment-preview strong,
+  .invoice-payment-preview span {
+    display: block;
+  }
+
+  .invoice-payment-preview strong {
+    color: #065f46;
+    font-size: .76rem;
+  }
+
+  .invoice-payment-preview span {
+    margin-top: 2px;
+    color: #047857;
+    font-size: .68rem;
+    line-height: 1.35;
+  }
+
+  .invoice-status-banner {
+    display: none;
+    margin-top: 14px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .invoice-status-banner.success {
+    display: block;
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .invoice-status-banner.error {
+    display: block;
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  .invoice-primary-action,
+  .invoice-payment-action {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .invoice-primary-action { min-height: 46px; }
+
+  .invoice-security-note {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 15px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .invoice-security-note strong {
+    color: var(--text-dark);
+    font-size: .7rem;
+  }
+
+  .invoice-security-note span {
+    color: var(--text-muted);
+    font-size: .67rem;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 1200px) {
+    .invoice-app-container {
+      grid-template-columns: 1fr;
+    }
+
+    .invoice-summary-panel {
+      position: static;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .invoice-form-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .invoice-client-summary { grid-template-columns: 1fr; }
+    .invoice-notes-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .invoice-app-container { padding: 20px 15px 35px; }
+    .invoice-builder-panel,
+    .invoice-summary-panel { padding: 18px; }
+    .invoice-section-heading { flex-direction: column; }
+    .invoice-number-preview { width: 100%; text-align: left; }
+    .invoice-form-grid { grid-template-columns: 1fr; }
+    .invoice-add-controls { grid-template-columns: 1fr; }
+    .line-items-toolbar { align-items: flex-start; }
+  }
+</style>
+
 <script src="assets/js/state-pricing.js"></script>
 <script src="assets/js/government-pricing.js"></script>
 
-</head>
 <body>
-  <div class="dashboard-wrapper">
 
- <!-- 🖥️ PRIMARY SCROLLABLE CONTENT AREA -->
-<main class="portal-main">
-  <header class="portal-header">
-    <div class="welcome-text">
-      <h1>Admin Dashboard</h1>
-      <p>System-wide performance overview infrastructure</p>
-    </div>
-    
-    <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX -->
-    <div class="header-actions-wrapper">
-      <!-- CENTRAL NOTIFICATIONS BELL -->
-      <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; margin-right: 5px !important; box-sizing: border-box !important;">
-        <a href="admin-tickets.html" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Central Notifications Channel" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important;">
-          <span class="nav-bell-icon" style="font-size: 1.3rem !important; cursor: pointer !important;">🔔</span>
-          <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.65rem !important; font-weight: 800 !important; padding: 2px 6px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-        </a>
-      </div>
-      
-      <!-- LIVE SYSTEM CLOCK COMPONENT -->
-      <div class="header-clock-pill">
-        <span>⏱️</span>
-        <span id="portal-clock">00/00/0000 | 00:00:00</span>
-      </div>
-      
-      <!-- DYNAMIC GLOBAL SEARCH FIELD -->
-      <div>
-        <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
-      </div>
-    </div>
-  </header>
-
-  
-  <div class="invoice-app-container" style="max-width: 1440px !important; grid-template-columns: 1fr 1fr !important; padding: 20px 40px;">
-  
-  <!-- LEFT FRAME: DYNAMIC BILLING SPECIFICATION CONTROLS DESK -->
-  <div class="studio-panel-card" style="display: flex; flex-direction: column; gap: 20px;">
-    <div>
-      <h2 style="margin:0; font-size:1.25rem; font-weight:850; color:var(--text-dark);">1. Billing Parameters Selector</h2>
-      <p style="margin:4px 0 0 0; font-size:0.8rem; color:var(--text-muted);">Configure item parameters, add modifiers, and compile them onto the invoice canvas with a click.</p>
-    </div>
-
-    <!-- Dropdown: Choose Service -->
-    <div class="form-group-item">
-      <label class="form-label-text">Select Corporate Service</label>
-      <select id="phoneServiceTitle" class="form-input-control" style="width:100%; font-weight:700; height:42px; background:#fff; border:1px solid #cbd5e1;"></select>
-    </div>
-
-    <!-- Plan Tiers Toggle Cards Grid -->
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-      <div class="studio-tier-card dynamic-tier-btn active" data-tier="starter" style="border: 2px solid var(--text-dark); border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; background: #fff;">
-        <strong style="font-size:0.8rem; display:block;">Starter</strong>
-        <span id="tier-preview-price-starter" style="font-size:0.9rem; color:var(--emerald); font-weight:700;">$0.00</span>
-      </div>
-      <div class="studio-tier-card dynamic-tier-btn" data-tier="compliance" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; background: #fff;">
-        <strong style="font-size:0.8rem; display:block;">Compliance</strong>
-        <span id="tier-preview-price-compliance" style="font-size:0.9rem; color:var(--emerald); font-weight:700;">$0.00</span>
-      </div>
-      <div class="studio-tier-card dynamic-tier-btn" data-tier="enterprise" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; background: #fff;">
-        <strong style="font-size:0.8rem; display:block;">Enterprise</strong>
-        <span id="tier-preview-price-enterprise" style="font-size:0.9rem; color:var(--emerald); font-weight:700;">$0.00</span>
-      </div>
-    </div>
-
-    <!-- Dropdown: Select State Surcharge -->
-    <div class="form-grid-layout" style="grid-template-columns: 1fr 1fr; margin:0; gap:16px;">
-      <div class="form-group-item">
-        <label class="form-label-text">Filing Jurisdiction State</label>
-        <select id="invoiceJurisdictionStateSelect" class="form-input-control" style="width:100%; background:#fff; height:42px; border:1px solid #cbd5e1;">
-          <option value="">-- No State Fees Applied --</option>
-        </select>
-      </div>
-      <div class="form-group-item">
-        <label class="form-label-text">Apply Surcharge Modifier</label>
-        <div id="stateFeesDisplayBadge" style="font-size:0.85rem; font-weight:700; height:42px; display:flex; align-items:center; background:#f1f5f9; padding:0 14px; border-radius:8px; border:1px solid var(--border-color); color:var(--text-muted);">+$0.00 Surcharge</div>
-      </div>
-    </div>
-
-    <!-- Checklist Layout for Optional Platform Upsell Add-ons -->
-    <div>
-      <label class="form-label-text" style="display:block; margin-bottom:8px;">Strategic Platform Upsell Add-ons</label>
-      <div id="invoiceUpsellsCheckboxGroupWrapper" style="display:flex; flex-direction:column; gap:10px; background:#f8fafc; padding:16px; border:1px solid var(--border-color); border-radius:10px; max-height:160px; overflow-y:auto;"></div>
-    </div>
-
-    <!-- Strategic Add Button -->
-    <button type="button" id="invoiceCompileItemsToLedgerActionBtn" style="background:var(--emerald) !important; color:white; border:none; border-radius:8px; height:44px; font-weight:700; cursor:pointer; font-size:0.9rem; width:100%;">⚡ Compile Selections Onto Invoice Ledger ➔</button>
-  </div>
-
-  <!-- RIGHT FRAME: LIVE ITEMIZED CANVAS LEDGER & DEPLOYMENT DESK -->
-  <div class="studio-panel-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 20px;">
-    <div>
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:1.25rem; font-weight:850; color:var(--text-dark);">2. Live Itemized Invoice Canvas</h2>
-        <span id="canvasInvoiceCodeLabel" style="font-family:monospace; font-size:0.8rem; font-weight:800; color:var(--staff-red);">INV-000000</span>
-      </div>
-
-      <!-- Itemized Table Viewport Layout -->
-      <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px;">
-        <table class="invoice-table-ledger" style="margin:0;">
-          <thead>
-            <tr style="position:sticky; top:0; z-index:10;">
-              <th style="padding:10px;">Item Description</th>
-              <th style="padding:10px; text-align:center; width:10%;">Qty</th>
-              <th style="padding:10px; text-align:right; width:20%;">Price</th>
-              <th style="padding:10px; text-align:right; width:15%;">Total</th>
-              <th style="padding:10px; text-align:center; width:10%;">Action</th>
-            </tr>
-          </thead>
-          <tbody id="invoiceCanvasItemsTableBodyLogs">
-            <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">No line items compiled yet. Configure parameters on the left to begin.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Live Price Registers and Dynamic Modifications Section -->
-      <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; align-items: start; background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          <div class="form-group-item" style="margin:0;"><label class="form-label-text">Select Recipient Account Profile</label><select id="invoiceTargetClientDropdownSelector" class="form-input-control" required style="width:100%; background:#fff; height:38px; border:1px solid #cbd5e1;"></select></div>
-          <div class="form-group-item" style="margin:0;"><label class="form-label-text">Grace Due Date</label><input type="date" id="invoicePaymentGraceLimitDate" class="form-input-control" required style="width:100%; background:#fff; height:38px; border:1px solid #cbd5e1;"></div>
+    <div class="dashboard-wrapper">
+    <main class="portal-main">
+      <header class="portal-header">
+        <div class="header-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> Document Operations</div>
+          <h1 class="page-title">Invoice Studio</h1>
+          <p class="page-subtitle">Enterprise billing, payment collection, and customer invoice dispatch.</p>
         </div>
-        <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85rem; text-align:right;">
-          <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted); font-weight:600;">Subtotal:</span><span id="registerInvoiceSubtotalString" style="font-weight:700;">$0.00</span></div>
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-weight:600;">Discount ($):</span><input type="number" id="invoiceManualDiscountInput" value="0.00" min="0" step="0.01" style="width:80px; height:26px; text-align:right; padding:2px;" class="form-input-control"></div>
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-weight:600;">Tax Adjust (%):</span><input type="number" id="invoiceTaxRegisterPercentageInput" value="0" min="0" max="100" style="width:80px; height:26px; text-align:right; padding:2px;" class="form-input-control"></div>
-          <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:8px; margin-top:4px; font-size:1.15rem;"><span style="font-weight:800; color:var(--text-dark);">Total Due:</span><strong id="registerInvoiceGrandTotalString" style="color:var(--staff-red); font-weight:850;">$0.00</strong></div>
+        <div class="header-clock">
+          <span class="clock-dot"></span>
+          <span id="portal-clock">--/--/----, --:--:-- --</span>
         </div>
+      </header>
+
+
+      <div class="invoice-app-container">
+        <section class="studio-panel-card invoice-builder-panel">
+
+          <div class="invoice-section-heading">
+            <div>
+              <span class="eyebrow">F4U BILLING OPERATIONS</span>
+              <h2>Create Enterprise Invoice</h2>
+              <p>Build an itemized customer invoice, connect it to the client and order records, and dispatch a secure payment link.</p>
+            </div>
+
+            <div class="invoice-number-preview">
+              <span>Invoice Number</span>
+              <strong id="canvasInvoiceCodeLabel">F4U-INV-00000000000</strong>
+            </div>
+          </div>
+
+          <div class="invoice-form-grid">
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoiceTargetClientDropdownSelector">Customer / Client Profile</label>
+              <select id="invoiceTargetClientDropdownSelector" class="form-input-control">
+                <option value="">Loading client profiles...</option>
+              </select>
+            </div>
+
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoicePaymentGraceLimitDate">Due Date</label>
+              <input type="date" id="invoicePaymentGraceLimitDate" class="form-input-control">
+            </div>
+
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoiceOrderSelector">Order</label>
+              <select id="invoiceOrderSelector" class="form-input-control">
+                <option value="">No order linked</option>
+              </select>
+            </div>
+
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoiceDashboardOrderSelector">Dashboard Order</label>
+              <select id="invoiceDashboardOrderSelector" class="form-input-control">
+                <option value="">No dashboard order linked</option>
+              </select>
+            </div>
+
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoiceStatusSelector">Document Status</label>
+              <select id="invoiceStatusSelector" class="form-input-control">
+                <option value="draft">Draft</option>
+                <option value="open" selected>Open</option>
+                <option value="sent">Sent</option>
+              </select>
+            </div>
+
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoiceCurrencySelector">Currency</label>
+              <select id="invoiceCurrencySelector" class="form-input-control">
+                <option value="USD" selected>USD — US Dollar</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="invoice-client-summary">
+            <div><span>Client</span><strong id="invoiceClientName">Select a client</strong></div>
+            <div><span>Email</span><strong id="invoiceClientEmail">—</strong></div>
+            <div><span>Tracking</span><strong id="invoiceClientTracking">—</strong></div>
+          </div>
+
+          <div class="line-items-toolbar">
+            <div>
+              <span class="eyebrow">ITEMIZED BILLING</span>
+              <h3>Invoice Line Items</h3>
+            </div>
+            <button type="button" class="secondary-btn-slat add-line-item-btn" id="addInvoiceLineItemBtn">＋ Add Item</button>
+          </div>
+
+          <div class="invoice-lines-wrap">
+            <table class="invoice-table-ledger">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th style="width:90px;">Qty</th>
+                  <th style="width:140px;">Unit Price</th>
+                  <th style="width:140px;text-align:right;">Amount</th>
+                  <th style="width:54px;"></th>
+                </tr>
+              </thead>
+              <tbody id="invoiceCanvasItemsTableBodyLogs"></tbody>
+            </table>
+          </div>
+
+          <div class="invoice-add-controls">
+            <select id="invoiceServiceQuickAdd" class="form-input-control">
+              <option value="">Select a service to add it to the invoice...</option>
+            </select>
+            <span style="font-size:.62rem;color:#94a3b8;line-height:1.4;">Selecting a service automatically adds a new invoice line item.</span>
+          </div>
+
+          <div class="invoice-notes-grid">
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoiceCustomerNotes">Customer Notes</label>
+              <textarea id="invoiceCustomerNotes" class="invoice-textarea" placeholder="Notes shown to the customer..."></textarea>
+            </div>
+
+            <div class="form-group-item">
+              <label class="form-label-text" for="invoicePaymentTerms">Payment Terms</label>
+              <textarea id="invoicePaymentTerms" class="invoice-textarea" placeholder="Payment terms, late-payment language, etc."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <aside class="studio-panel-card invoice-summary-panel">
+          <div class="invoice-summary-heading">
+            <div>
+              <span class="eyebrow">FINANCIAL CONTROL</span>
+              <h2>Invoice Summary</h2>
+            </div>
+            <span class="invoice-status-chip" id="invoiceDraftStatusChip">DRAFT</span>
+          </div>
+
+          <div class="financial-control-list">
+            <div class="financial-row">
+              <span>Subtotal</span>
+              <strong id="registerInvoiceSubtotalString">$0.00</strong>
+            </div>
+
+            <div class="financial-row">
+              <span>Discount</span>
+              <div class="financial-input-pair">
+                <span>$</span>
+                <input type="number" id="invoiceManualDiscountInput" value="0" min="0" step="0.01" aria-label="Discount amount">
+              </div>
+            </div>
+
+            <div class="financial-row">
+              <span>Tax Rate</span>
+              <div class="financial-input-pair">
+                <input type="number" id="invoiceTaxRegisterPercentageInput" value="0" min="0" max="100" step="0.01" aria-label="Tax rate">
+                <span>%</span>
+              </div>
+            </div>
+
+            <div class="financial-row">
+              <span>Shipping</span>
+              <div class="financial-input-pair">
+                <span>$</span>
+                <input type="number" id="invoiceShippingAmountInput" value="0" min="0" step="0.01" aria-label="Shipping amount">
+              </div>
+            </div>
+
+            <div class="financial-row muted-row">
+              <span>Tax Amount</span>
+              <strong id="invoiceTaxAmountString">$0.00</strong>
+            </div>
+
+            <div class="financial-row total-row">
+              <span>Total Due</span>
+              <strong id="registerInvoiceGrandTotalString">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="invoice-payment-preview">
+            <div class="payment-preview-icon">✓</div>
+            <div>
+              <strong>Secure online payment</strong>
+              <span>Customer receives a hosted payment page after dispatch.</span>
+            </div>
+          </div>
+
+          <div id="invoiceStatusAlertBanner" class="invoice-status-banner" role="status" aria-live="polite"></div>
+
+          <button type="button" id="invoiceSubmitDispatchActionBtn" class="action-btn-slat invoice-primary-action">
+            Create Invoice &amp; Send Payment Link
+          </button>
+
+          <button type="button" id="invoiceOpenPaymentBtn" class="secondary-btn-slat invoice-payment-action" disabled>
+            Open Customer Payment Page
+          </button>
+
+          <div class="invoice-security-note">
+            <strong>Protected billing operation</strong>
+            <span>Invoice creation, payment-session creation, and email delivery are handled server-side by a Supabase Edge Function.</span>
+          </div>
+        </aside>
       </div>
-    </div>
-
-    <!-- Dispatch Deployment Bottom Action Bar -->
-    <div style="margin-top: 12px; width: 100%;">
-      <div id="invoiceStatusAlertBanner" style="display:none; padding:10px; font-size:0.8rem; font-weight:700; border-radius:6px; margin-bottom:12px; text-align:center;"></div>
-      <button type="button" id="invoiceSubmitDispatchActionBtn" class="action-btn-slat" style="background:var(--text-dark) !important; color:white; height:44px; font-weight:700; cursor:pointer;">Emit Complete Invoice & Dispatch Email Notification ➔</button>
-    </div>
+    </main>
   </div>
 
-</div>
-
-
-  </div>
-</main>
-</div>
-
-  <!-- 1. The Global Library Core MUST load absolute first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-master-ledger.js"></script>
-
-   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
   <script src="assets/js/admin-navigation.js"></script>
 
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    "use strict";
 
-  // Left Section Element Reference Targets Hooks
-  const serviceSelect = document.getElementById("phoneServiceTitle");
-  const stateSelect = document.getElementById("invoiceJurisdictionStateSelect");
-  const stateSurchargeBadge = document.getElementById("stateFeesDisplayBadge");
-  const upsellsWrapper = document.getElementById("invoiceUpsellsCheckboxGroupWrapper");
-  const compileItemsBtn = document.getElementById("invoiceCompileItemsToLedgerActionBtn");
-  const tierCards = document.querySelectorAll(".dynamic-tier-btn");
+    const client = window.supabaseInstance || window.supabaseClient;
 
-  // Right Section Element Reference Targets Hooks
-  const canvasInvoiceCodeLabel = document.getElementById("canvasInvoiceCodeLabel");
-  const canvasTableBody = document.getElementById("invoiceCanvasItemsTableBodyLogs");
-  const clientDropdown = document.getElementById("invoiceTargetClientDropdownSelector");
-  const graceDateInput = document.getElementById("invoicePaymentGraceLimitDate");
-  const subtotalRegister = document.getElementById("registerInvoiceSubtotalString");
-  const grandTotalRegister = document.getElementById("registerInvoiceGrandTotalString");
-  const discountInput = document.getElementById("invoiceManualDiscountInput");
-  const taxInput = document.getElementById("invoiceTaxRegisterPercentageInput");
-  const submitInvoiceBtn = document.getElementById("invoiceSubmitDispatchActionBtn");
-  const statusBanner = document.getElementById("invoiceStatusAlertBanner");
+    if (!client || typeof client.from !== "function") {
+      console.error("[Invoice Studio] Supabase client is unavailable.");
+      return;
+    }
 
-  // Memory Datastore Collection Caches
-  let cachedServicesCatalog = [];
-  let cachedStateFeesCatalog = [];
-  let cachedUpsellsCatalog = [];
-  let activeCompiledInvoiceItemsArray = [];
-  let currentlySelectedTier = "starter";
+    const $ = id => document.getElementById(id);
+    const money = value => {
+      const number = Number(value);
+      return `$${(Number.isFinite(number) ? number : 0).toFixed(2)}`;
+    };
 
-  const client = window.supabaseInstance || window.supabaseClient;
-  if (!client) return;
+    const clientDropdown = $("invoiceTargetClientDropdownSelector");
+    const orderDropdown = $("invoiceOrderSelector");
+    const dashboardOrderDropdown = $("invoiceDashboardOrderSelector");
+    const dueDate = $("invoicePaymentGraceLimitDate");
+    const statusSelect = $("invoiceStatusSelector");
+    const currencySelect = $("invoiceCurrencySelector");
+    const clientName = $("invoiceClientName");
+    const clientEmail = $("invoiceClientEmail");
+    const clientTracking = $("invoiceClientTracking");
+    const linesBody = $("invoiceCanvasItemsTableBodyLogs");
+    const addLineBtn = $("addInvoiceLineItemBtn");
+    const quickService = $("invoiceServiceQuickAdd");
+    const quickAddBtn = $("quickAddServiceBtn");
+    const subtotalEl = $("registerInvoiceSubtotalString");
+    const taxAmountEl = $("invoiceTaxAmountString");
+    const totalEl = $("registerInvoiceGrandTotalString");
+    const discountInput = $("invoiceManualDiscountInput");
+    const taxInput = $("invoiceTaxRegisterPercentageInput");
+    const shippingInput = $("invoiceShippingAmountInput");
+    const notesInput = $("invoiceCustomerNotes");
+    const termsInput = $("invoicePaymentTerms");
+    const createBtn = $("invoiceSubmitDispatchActionBtn");
+    const payBtn = $("invoiceOpenPaymentBtn");
+    const banner = $("invoiceStatusAlertBanner");
+    const invoiceLabel = $("canvasInvoiceCodeLabel");
+    const statusChip = $("invoiceDraftStatusChip");
+    const logoutBtn = $("invoiceLogoutBtn");
+    const clock = $("adminInvoiceClock");
 
-  // Generate Unique Invoice Token Identifier Code 
-  const randomInvoiceCode = "INV-" + Math.floor(100000 + Math.random() * 900000);
-  if (canvasInvoiceCodeLabel) canvasInvoiceCodeLabel.textContent = randomInvoiceCode;
+    let profiles = [];
+    let orders = [];
+    let dashboardOrders = [];
+    let services = [];
+    let lines = [];
+    let createdInvoice = null;
 
-  // --- STAGE 1: PARALLEL DATABASE CATALOG SYNCHRONIZER ENGINE ---
-  async function downloadMasterBillingCatalogs() {
-    try {
-      console.log("📡 [Enterprise Biller] Hydrating dimensional master product tables...");
-      
-      const [servicesRes, statesRes, upsellsRes, profilesRes] = await Promise.all([
-        client.from('services').select('*').order('service_title'),
-        client.from('state_filing_fees').select('*').order('state_name'),
-        client.from('platform_upsells').select('*').order('upsell_name'),
-        client.from('client_profiles').select('id, email_address').order('email_address')
-      ]);
+    function localInvoiceNumber() {
+      const bytes = new Uint32Array(2);
+      if (window.crypto && crypto.getRandomValues) {
+        crypto.getRandomValues(bytes);
+        const value = ((BigInt(bytes[0]) << 32n) | BigInt(bytes[1])) % 100000000000n;
+        return `F4U-INV-${value.toString().padStart(11, "0")}`;
+      }
 
-      if (servicesRes.error) throw servicesRes.error;
-      if (statesRes.error) throw statesRes.error;
-      if (upsellsRes.error) throw upsellsRes.error;
-      if (profilesRes.error) throw profilesRes.error;
+      return `F4U-INV-${String(Date.now()).slice(-11).padStart(11, "0")}`;
+    }
 
-      cachedServicesCatalog = servicesRes.data || [];
-      cachedStateFeesCatalog = statesRes.data || [];
-      cachedUpsellsCatalog = upsellsRes.data || [];
+    let currentInvoiceNumber = localInvoiceNumber();
+    invoiceLabel.textContent = currentInvoiceNumber;
 
-       // Populate Services Dropdown Menu Groups Dynamically from Script Files
-      if (serviceSelect) {
-        // Core structure of your requested categories and option layouts
-        serviceSelect.innerHTML = `
-          <optgroup label="🏢 Entity Formation & Structuring">
-            <option value="llc-formation">LLC Formation</option>
-            <option value="corporations">Corporations (C/S-Corp)</option>
-            <option value="sole-proprietorship">Sole Proprietorship</option>
-            <option value="dba-registration">DBA Registration</option>
-            <option value="nonprofits">Nonprofit Organization</option>
-            <option value="series-llc">Series LLC</option>
-          </optgroup>
-          <optgroup label="📜 Corporate Maintenance & Compliance">
-            <option value="foreign-qualification">Foreign Qualification</option>
-            <option value="certificate-of-good-standing">Certificate of Good Standing</option>
-            <option value="llc-reinstatement">LLC Reinstatement Processing</option>
-            <option value="annual-reports">Annual Reports</option>
-            <option value="operating-agreement">Operating Agreement</option>
-            <option value="registered-agent">Registered Agent</option>
-            <option value="business-licenses">Business Licenses</option>
-            <option value="dissolution">Entity Dissolution</option>
-          </optgroup>
-            <optgroup label="🔑 Federal Tax & Corporate Identity">
-            <option value="employer-id-ein">Employer ID (EIN)</option>
-            <option value="cage-code">CAGE Code</option>
-            <option value="duns-number">DUNS Number Procurement</option>
-            <option value="minority-certificate">Minority Certificate</option>
-          </optgroup>
-          <optgroup label="🚛 Trucking Logistics & DOT Authority">
-            <option value="owner-operators">Owner Operators Trucker Authority</option>
-            <option value="broker-authority">Broker Authority</option>
-            <option value="ucr-registration">UCR Registration</option>
-            <option value="scac-code">SCAC Code Registration</option>
-            <option value="dot-consortium">DOT Consortium</option>
-            <option value="driver-file">Driver Qualification File</option>
-            <option value="process-agents-boc-3">Process Agent (BOC-3)</option>
-            <option value="ifta-registration">IFTA Registration</option>
-            <option value="hazmat-registration">HAZMAT Registration</option>
-            <option value="dot-permits">Licenses & Permits</option>
-          </optgroup>
-          <optgroup label="📊 Financial Services">
-            <option value="federal-tax">Federal Income Tax</option>
-            <option value="franchise-tax">Franchise Tax Filing</option>
-            <option value="sales-tax-registration">Sales Tax Registration</option>
-            <option value="apostille-services">Apostille Authentication Services</option>
-          </optgroup>
-          <optgroup label="🎨 Branding & Creative Services">
-            <option value="web-design">Web Design Package</option>
-            <option value="logo-design">Logo Design Package</option>
-          </optgroup>
+    function show(message, isError = false) {
+      banner.textContent = message || "";
+      banner.className = `invoice-status-banner ${isError ? "error" : "success"}`;
+    }
+
+    function clearStatus() {
+      banner.textContent = "";
+      banner.className = "invoice-status-banner";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function getRowLabel(row, fallback) {
+      return row?.tracking_number ||
+        row?.order_number ||
+        row?.invoice_number ||
+        row?.id ||
+        fallback;
+    }
+
+    function matchesClient(row, profile) {
+      if (!profile || !row) return true;
+
+      const ids = [
+        row.client_id,
+        row.client_profile_id,
+        row.profile_id,
+        row.customer_id,
+        row.user_id
+      ];
+
+      if (ids.some(value => value && String(value) === String(profile.id))) {
+        return true;
+      }
+
+      const email = String(profile.email_address || "").trim().toLowerCase();
+
+      const emails = [
+        row.client_email,
+        row.email_address,
+        row.email,
+        row.customer_email
+      ];
+
+      return emails.some(value =>
+        value &&
+        String(value).trim().toLowerCase() === email
+      );
+    }
+
+    function renderLines() {
+      if (!lines.length) {
+        linesBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center;padding:35px;color:var(--text-muted);font-style:italic;">
+              No line items yet. Add a billing item to begin.
+            </td>
+          </tr>
+        `;
+        recalc();
+        return;
+      }
+
+      linesBody.innerHTML = "";
+
+      lines.forEach((line, index) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>
+            <input
+              class="line-description-input"
+              data-field="description"
+              data-index="${index}"
+              value="${escapeHtml(line.description)}"
+              placeholder="Service or product"
+            >
+          </td>
+          <td>
+            <input
+              type="number"
+              data-field="quantity"
+              data-index="${index}"
+              value="${Number(line.quantity || 1)}"
+              min="0.01"
+              step="0.01"
+            >
+          </td>
+          <td>
+            <input
+              type="number"
+              data-field="unit_price"
+              data-index="${index}"
+              value="${Number(line.unit_price || 0).toFixed(2)}"
+              min="0"
+              step="0.01"
+            >
+          </td>
+          <td style="text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700;">
+            ${money(Number(line.quantity || 0) * Number(line.unit_price || 0))}
+          </td>
+          <td style="text-align:center;">
+            <button
+              class="line-remove-btn"
+              type="button"
+              data-remove="${index}"
+              aria-label="Remove invoice item"
+            >✕</button>
+          </td>
         `;
 
-        console.log("⚡ [Invoice Studio] Intercepting dropdown rows to inject fluid external script price tiers...");
-
-        // Resolve reference files handles safely
-        const govPricingSource = window.FILINGS4U_GOVERNMENT_PRICING || {};
-        const servicePlanSource = window.CENTRAL_SERVICE_PLAN_DB || {};
-
-        // Loop through every freshly injected option element to map data attributes
-        serviceSelect.querySelectorAll("option").forEach(opt => {
-          const slug = opt.value;
-          
-          // Match object paths inside either file registry
-          const match = servicePlanSource[slug] || govPricingSource[slug] || {};
-
-          // Extract values fallback to 0.00 if unmapped
-          const starterPrice = parseFloat(match.starter || match.base_price_starter || 0).toFixed(2);
-          const compliancePrice = parseFloat(match.compliance || match.base_price_compliance || 0).toFixed(2);
-          const enterprisePrice = parseFloat(match.enterprise || match.base_price_enterprise || 0).toFixed(2);
-
-          // 🟢 AUTOMATED INJECTION: Append data nodes onto option targets live
-          opt.setAttribute("data-starter", starterPrice);
-          opt.setAttribute("data-compliance", compliancePrice);
-          opt.setAttribute("data-enterprise", enterprisePrice);
-        });
-
-        // Set default row state selection cleanly on boot
-        serviceSelect.value = "llc-formation";
-      }
-
-
-      // Populate State Jurisdictions Menu
-      if (stateSelect) {
-        stateSelect.innerHTML = `<option value="">-- No State Fees Applied --</option>`;
-        cachedStateFeesCatalog.forEach(st => {
-          const opt = document.createElement("option");
-          opt.value = st.state_code;
-          opt.textContent = `${st.state_name} (${st.state_code})`;
-          stateSelect.appendChild(opt);
-        });
-      }
-
-      // Populate Upsells Checklist Block Layout
-      if (upsellsWrapper) {
-        upsellsWrapper.innerHTML = "";
-        cachedUpsellsCatalog.forEach(up => {
-          const div = document.createElement("div");
-          div.style.cssText = "display:flex; align-items:center; gap:8px; font-size:0.82rem; padding:2px 0;";
-          div.innerHTML = `
-            <input type="checkbox" class="invoice-upsell-checkbox" value="${up.upsell_slug}" id="up-${up.upsell_slug}" data-price="${up.price}" data-name="${up.upsell_name}">
-            <label href="#up-${up.upsell_slug}" style="cursor:pointer; color:var(--text-dark); font-weight:600;">${up.upsell_name} <span style="color:var(--emerald);">(+$${parseFloat(up.price).toFixed(2)})</span></label>
-          `;
-          upsellsWrapper.appendChild(div);
-        });
-      }
-
-      // Populate Recipient Profiles Dropdown
-      if (clientDropdown && profilesRes.data) {
-        clientDropdown.innerHTML = `<option value="">-- Choose Recipient Profile --</option>`;
-        profilesRes.data.forEach(user => {
-          const opt = document.createElement("option");
-          opt.value = user.email_address;
-          opt.dataset.uid = user.id;
-          opt.textContent = user.email_address;
-          clientDropdown.appendChild(opt);
-        });
-      }
-
-      updatePricingTiersPreviews();
-
-    } catch (fault) {
-      console.error("✕ Master table hydration failed:", fault.message);
-    }
-  }
-
-  // --- STAGE 2: PARALLEL DATABASE CATALOG SYNCHRONIZER ENGINE (FIXED MAPS) ---
-  async function initializeStudioDataLayers() {
-    try {
-      console.log("📡 [Invoice Studio] Hydrating client metrics and structural table spaces...");
-      
-      const [profilesRes, statesRes, upsellsRes] = await Promise.all([
-        client.from('client_profiles').select('id, email_address').order('email_address'),
-        client.from('state_filing_fees').select('*').order('state_name'),
-        client.from('platform_upsells').select('*').order('upsell_name')
-      ]);
-
-      if (profilesRes.error) throw profilesRes.error;
-      
-      if (!statesRes.error && statesRes.data) cachedStateFeesCatalog = statesRes.data;
-
-      // Populate Recipient Profiles Dropdown
-      if (clientDropdown && profilesRes.data) {
-        clientDropdown.innerHTML = `<option value="">-- Choose Recipient Profile --</option>`;
-        profilesRes.data.forEach(user => {
-          const opt = document.createElement("option");
-          opt.value = user.email_address;
-          opt.dataset.uid = user.id;
-          opt.textContent = user.email_address;
-          clientDropdown.appendChild(opt);
-        });
-      }
-
-      // Populate State Jurisdictions Menu
-      if (stateSelect && statesRes.data) {
-        stateSelect.innerHTML = `<option value="">-- No State Fees Applied --</option>`;
-        statesRes.data.forEach(st => {
-          const opt = document.createElement("option");
-          opt.value = st.state_code;
-          opt.textContent = `${st.state_name} (${st.state_code})`;
-          stateSelect.appendChild(opt);
-        });
-      }
-
-      // Populate Upsells Checklist Block Layout
-      if (upsellsWrapper && upsellsRes.data) {
-        upsellsWrapper.innerHTML = "";
-        upsellsRes.data.forEach(up => {
-          const div = document.createElement("div");
-          div.style.cssText = "display:flex; align-items:center; gap:8px; font-size:0.82rem; padding:2px 0;";
-          div.innerHTML = `
-            <input type="checkbox" class="invoice-upsell-checkbox" value="${up.upsell_slug}" id="up-${up.upsell_slug}" data-price="${up.price}" data-name="${up.upsell_name}">
-            <label for="up-${up.upsell_slug}" style="cursor:pointer; color:var(--text-dark); font-weight:600;">${up.upsell_name} <span style="color:var(--emerald);">(+$${parseFloat(up.price).toFixed(2)})</span></label>
-          `;
-          upsellsWrapper.appendChild(div);
-        });
-      }
-
-      // 🟢 RESOLVE SCRIPT REFERENCE POINTERS LIVE
-      const govPricingSource = window.FILINGS4U_GOVERNMENT_PRICING || {};
-      const servicePlanSource = window.CENTRAL_SERVICE_PLAN_DB || {};
-
-      console.log("⚡ [Invoice Studio] Injecting external file prices straight onto drop-down options...");
-
-      // Intercept options to parse custom configuration data files mapping attributes
-      if (serviceSelect) {
-        serviceSelect.querySelectorAll("option").forEach(opt => {
-          const slug = opt.value;
-          const match = servicePlanSource[slug] || govPricingSource[slug] || {};
-
-          // Fallback seamlessly to hardcoded variables defaults if lookup tables match empty
-          const sPrice = parseFloat(match.starter || match.base_price_starter || 0).toFixed(2);
-          const cPrice = parseFloat(match.compliance || match.base_price_compliance || 0).toFixed(2);
-          const ePrice = parseFloat(match.enterprise || match.base_price_enterprise || 0).toFixed(2);
-
-          opt.setAttribute("data-starter", sPrice);
-          opt.setAttribute("data-compliance", cPrice);
-          opt.setAttribute("data-enterprise", ePrice);
-        });
-      }
-
-      // 🟢 FORCE IMMEDIATE INTERFACE SYNC ON REBOOT
-      updatePricingTiersPreviews();
-
-    } catch (err) {
-      console.error("✕ Ingestion failure:", err.message);
-    }
-  }
-
-
-  // --- STAGE 3: COMPILE ITEMIZATIONS ONTO CANVAS LEDGER ---
-  compileItemsBtn?.addEventListener("click", () => {
-    const selectedSlug = serviceSelect.value;
-    const svcMatch = cachedServicesCatalog.find(s => s.slug === selectedSlug);
-    if (!svcMatch) return;
-
-    let basePrice = 0;
-    if (currentlySelectedTier === "starter") basePrice = parseFloat(svcMatch.base_price_starter || 0);
-    else if (currentlySelectedTier === "compliance") basePrice = parseFloat(svcMatch.base_price_compliance || 0);
-    else if (currentlySelectedTier === "enterprise") basePrice = parseFloat(svcMatch.base_price_enterprise || 0);
-
-    // 1. Add Main Core Base Service Line
-    activeCompiledInvoiceItemsArray.push({
-      item_id: "svc_" + Date.now(),
-      title: `${svcMatch.service_title} (${currentlySelectedTier.toUpperCase()})`,
-      qty: 1,
-      price: basePrice
-    });
-
-    // 2. Add State Surcharge Line if chosen
-    if (stateSelect.value) {
-      const stMatch = cachedStateFeesCatalog.find(s => s.state_code === stateSelect.value);
-      if (stMatch && parseFloat(stMatch.corporate_surcharge) > 0) {
-        activeCompiledInvoiceItemsArray.push({
-          item_id: "state_" + Date.now(),
-          title: `State Filing Surcharge: ${stMatch.state_name}`,
-          qty: 1,
-          price: parseFloat(stMatch.corporate_surcharge)
-        });
-      }
-    }
-
-    // 3. Add Selected Upsells Checklist Items
-    upsellsWrapper.querySelectorAll(".invoice-upsell-checkbox:checked").forEach(cb => {
-      activeCompiledInvoiceItemsArray.push({
-        item_id: "up_" + Math.random().toString(36).substr(2, 5),
-        title: `${cb.dataset.name}`,
-        qty: 1,
-        price: parseFloat(cb.dataset.price || 0)
+        linesBody.appendChild(tr);
       });
-      cb.checked = false; // Clear checkbox check mark state locally
-    });
 
-    stateSelect.value = "";
-    if (stateSurchargeBadge) stateSurchargeBadge.textContent = "+$0.00 Surcharge";
+      linesBody.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", () => {
+          const index = Number(input.dataset.index);
+          const field = input.dataset.field;
 
-    renderItemizedInvoiceCanvas();
-  });
+          if (!lines[index]) return;
 
-  function renderItemizedInvoiceCanvas() {
-    if (activeCompiledInvoiceItemsArray.length === 0) {
-      canvasTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">No line items compiled yet. Configure parameters on the left to begin.</td></tr>`;
-      recalculateCanvasInvoiceTotals();
-      return;
-    }
+          lines[index][field] =
+            field === "description"
+              ? input.value
+              : Number(input.value || 0);
 
-    canvasTableBody.innerHTML = "";
-    activeCompiledInvoiceItemsArray.forEach((item, index) => {
-      const tr = document.createElement("tr");
-      const itemTotal = item.qty * item.price;
-      
-      tr.innerHTML = `
-        <td style="padding:10px; font-weight:600; color:var(--text-dark);">${escapeHtml(item.title)}</td>
-        <td style="padding:10px; text-align:center;"><input type="number" class="form-input-control canvas-qty" value="${item.qty}" min="1" data-idx="${index}" style="width:100%; text-align:center; height:28px; padding:2px; background:#fff; border:1px solid #cbd5e1; border-radius:4px;"></td>
-        <td style="padding:10px; text-align:right; font-family:monospace; font-weight:500;">$${parseFloat(item.price).toFixed(2)}</td>
-        <td style="padding:10px; text-align:right; font-weight:700; color:var(--text-dark); font-family:monospace;">$${itemTotal.toFixed(2)}</td>
-        <td style="padding:10px; text-align:center;"><button type="button" class="remove-canvas-line-btn" data-idx="${index}" style="background:none; border:none; color:var(--staff-red); font-weight:800; cursor:pointer; font-size:1.1rem;">✕</button></td>
-      `;
-      canvasTableBody.appendChild(tr);
-    });
-
-    // Bind item modifications sub-listeners inside canvas columns rows layout
-    canvasTableBody.querySelectorAll(".canvas-qty").forEach(input => {
-      input.addEventListener("input", function() {
-        const idx = parseInt(this.dataset.idx);
-        const nextQty = parseInt(this.value) || 1;
-        activeCompiledInvoiceItemsArray[idx].qty = nextQty;
-        renderItemizedInvoiceCanvas();
+          recalc();
+          renderLineAmountsOnly();
+        });
       });
-    });
 
-    canvasTableBody.querySelectorAll(".remove-canvas-line-btn").forEach(btn => {
-      btn.addEventListener("click", function() {
-        const idx = parseInt(this.dataset.idx);
-        activeCompiledInvoiceItemsArray.splice(idx, 1);
-        renderItemizedInvoiceCanvas();
+      linesBody.querySelectorAll("[data-remove]").forEach(button => {
+        button.addEventListener("click", () => {
+          lines.splice(Number(button.dataset.remove), 1);
+          renderLines();
+        });
       });
-    });
 
-    recalculateCanvasInvoiceTotals();
-  }
-
-  function recalculateCanvasInvoiceTotals() {
-    let subtotalSum = 0;
-    activeCompiledInvoiceItemsArray.forEach(item => {
-      subtotalSum += (item.qty * item.price);
-    });
-
-    const manualDiscount = parseFloat(discountInput?.value || 0);
-    const taxRatePercent = parseFloat(taxInput?.value || 0) / 100;
-    
-    let runningBalance = subtotalSum - manualDiscount;
-    if (runningBalance < 0) runningBalance = 0;
-
-    const totalCalculatedTaxAmount = runningBalance * taxRatePercent;
-    const finalGrandTotalDue = runningBalance + totalCalculatedTaxAmount;
-
-    if (subtotalRegister) subtotalRegister.textContent = `$${subtotalSum.toFixed(2)}`;
-    if (grandTotalRegister) grandTotalRegister.textContent = `$${finalGrandTotalDue.toFixed(2)}`;
-  }
-
-  discountInput?.addEventListener("input", recalculateCanvasInvoiceTotals);
-  taxInput?.addEventListener("input", recalculateCanvasInvoiceTotals);
-
-  await downloadMasterBillingCatalogs();
-  // --- STAGE 4: EMIT COMPLETE ENTERPRISE INVOICE RECORD PACKAGE ---
-  submitInvoiceBtn?.addEventListener("click", async () => {
-    if (statusBanner) statusBanner.style.display = "none";
-    
-    const selectedOpt = clientDropdown.options[clientDropdown.selectedIndex];
-    const clientUid = selectedOpt?.dataset.uid;
-    const targetEmail = clientDropdown.value;
-    const invoiceCode = randomInvoiceCode;
-    const dueDateVal = graceDateInput?.value;
-    
-    const rawSubtotal = parseFloat(subtotalRegister.textContent.replace('$', '')) || 0;
-    const rawDiscount = parseFloat(discountInput?.value || 0);
-    const rawTaxPercent = parseFloat(taxInput?.value || 0);
-    const rawGrandTotal = parseFloat(grandTotalRegister.textContent.replace('$', '')) || 0;
-
-    if (activeCompiledInvoiceItemsArray.length === 0) {
-      showStudioStatusBanner("✕ Validation Failure: Cannot emit an empty invoice. Compile items on left first.", true);
-      return;
-    }
-    if (!clientUid || !targetEmail || !dueDateVal) {
-      showStudioStatusBanner("✕ Validation Failure: Please select a valid customer profile and choose a due date deadline.", true);
-      return;
+      recalc();
     }
 
-    submitInvoiceBtn.disabled = true;
-    submitInvoiceBtn.textContent = "Deploying Enterprise Ledger Row... 📡";
+    function renderLineAmountsOnly() {
+      linesBody.querySelectorAll("tr").forEach((row, index) => {
+        if (!lines[index]) return;
+        const amountCell = row.children[3];
+        if (amountCell) {
+          amountCell.textContent = money(
+            Number(lines[index].quantity || 0) *
+            Number(lines[index].unit_price || 0)
+          );
+        }
+      });
+    }
 
-    try {
-      console.log(`💾 [Invoice Studio] Compiling JSON lines array package data payload for code: [${invoiceCode}]`);
+    function recalc() {
+      const subtotal = lines.reduce(
+        (sum, line) =>
+          sum +
+          Number(line.quantity || 0) *
+          Number(line.unit_price || 0),
+        0
+      );
 
-      // Write transaction row details straight into public.client_invoices table space
-      const { error: insertError } = await client
-        .from('client_invoices')
-        .insert([{
-          invoice_code: invoiceCode,
-          client_id: clientUid,
-          email_address: targetEmail.toLowerCase().trim(),
-          subtotal: rawSubtotal,
-          tax_percentage: rawTaxPercent,
-          grand_total: rawGrandTotal,
-          payment_status: 'Unpaid',
-          due_date: dueDateVal,
-          // Saves the complete structural itemized nested dictionary blocks array natively
-          itemized_lines: activeCompiledInvoiceItemsArray,
-          created_at: new Date().toISOString()
-        }]);
+      const discount = Math.min(
+        Math.max(Number(discountInput.value || 0), 0),
+        subtotal
+      );
 
-      if (insertError) throw insertError;
+      const taxable = Math.max(subtotal - discount, 0);
 
-      showStudioStatusBanner("✓ Success! Complete invoice record saved to backend table and secure payment notification email fired.", false);
-      
-      // Clean form containers back to defaults baseline definitions
-      invoiceForm.reset();
-      if (discountInput) discountInput.value = "0.00";
-      if (taxInput) taxInput.value = "0";
-      activeCompiledInvoiceItemsArray = [];
-      
-      renderItemizedInvoiceCanvas();
-      
-      // Auto-cycle a fresh new invoice code token reference mapping string for the next operation
+      const taxRate = Math.min(
+        Math.max(Number(taxInput.value || 0), 0),
+        100
+      );
+
+      const tax = taxable * taxRate / 100;
+
+      const shipping = Math.max(
+        Number(shippingInput.value || 0),
+        0
+      );
+
+      const total = taxable + tax + shipping;
+
+      subtotalEl.textContent = money(subtotal);
+      taxAmountEl.textContent = money(tax);
+      totalEl.textContent = money(total);
+
+      return {
+        subtotal,
+        discount,
+        taxRate,
+        tax,
+        shipping,
+        total
+      };
+    }
+
+    [discountInput, taxInput, shippingInput].forEach(input => {
+      input.addEventListener("input", recalc);
+    });
+
+    function populateOrders() {
+      const profile = profiles.find(
+        item => String(item.id) === String(clientDropdown.value)
+      );
+
+      const filteredOrders =
+        orders.filter(order => matchesClient(order, profile));
+
+      const filteredDashboardOrders =
+        dashboardOrders.filter(order =>
+          matchesClient(order, profile)
+        );
+
+      orderDropdown.innerHTML =
+        `<option value="">No order linked</option>` +
+        filteredOrders.map(order => `
+          <option value="${escapeHtml(order.id)}">
+            ${escapeHtml(getRowLabel(order, "Order"))}
+          </option>
+        `).join("");
+
+      dashboardOrderDropdown.innerHTML =
+        `<option value="">No dashboard order linked</option>` +
+        filteredDashboardOrders.map(order => `
+          <option value="${escapeHtml(order.id)}">
+            ${escapeHtml(getRowLabel(order, "Dashboard Order"))}
+          </option>
+        `).join("");
+    }
+
+    clientDropdown.addEventListener("change", () => {
+      const profile = profiles.find(
+        item => String(item.id) === String(clientDropdown.value)
+      );
+
+      clientName.textContent = profile
+        ? (
+            [profile.first_name, profile.last_name]
+              .filter(Boolean)
+              .join(" ")
+            || profile.company_name
+            || "Client"
+          )
+        : "Select a client";
+
+      clientEmail.textContent =
+        profile?.email_address || "—";
+
+      clientTracking.textContent =
+        profile?.tracking_number || "—";
+
+      populateOrders();
+      clearStatus();
+    });
+
+    addLineBtn.addEventListener("click", () => {
+      lines.push({
+        description: "",
+        quantity: 1,
+        unit_price: 0
+      });
+
+      renderLines();
+
       setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+        const inputs =
+          linesBody.querySelectorAll(".line-description-input");
 
-    } catch (err) {
-      console.error("✕ Invoice emission rejected:", err.message);
-      showStudioStatusBanner(`✕ Emission Failure: ${err.message}`, true);
-      submitInvoiceBtn.disabled = false;
-      submitInvoiceBtn.textContent = "Emit Complete Invoice & Dispatch Email Notification ➔";
+        inputs[inputs.length - 1]?.focus();
+      }, 0);
+    });
+
+    function addSelectedServiceToInvoice() {
+      const option = quickService.options[quickService.selectedIndex];
+
+      if (!option?.value) return;
+
+      const description =
+        option.dataset.serviceName ||
+        option.textContent.replace(/\s+—\s+\$[\d,]+\.\d{2}$/, "").trim();
+
+      lines.push({
+        description,
+        quantity: 1,
+        unit_price: Number(option.dataset.price || 0)
+      });
+
+      quickService.value = "";
+      renderLines();
+
+      setTimeout(() => {
+        const inputs = linesBody.querySelectorAll(".line-description-input");
+        inputs[inputs.length - 1]?.focus();
+      }, 0);
     }
-  });
 
-  function showStudioStatusBanner(text, isError) {
-    if (!statusBanner) return;
-    statusBanner.textContent = text;
-    statusBanner.style.display = "block";
-    statusBanner.style.background = isError ? "#fef2f2" : "#ecfdf5";
-    statusBanner.style.color = isError ? "#b91c1c" : "#047857";
-  }
-});
-</script>
+    // Every service selection immediately creates a new invoice line.
+    quickService.addEventListener("change", addSelectedServiceToInvoice);
+
+    // Keep the button handler available for compatibility with older markup.
+    if (quickAddBtn) {
+      quickAddBtn.addEventListener("click", addSelectedServiceToInvoice);
+    }
+
+    statusSelect.addEventListener("change", () => {
+      statusChip.textContent =
+        statusSelect.value.toUpperCase();
+    });
+
+    async function load() {
+      clearStatus();
+
+      try {
+        const results = await Promise.all([
+          client
+            .from("client_profiles")
+            .select("*")
+            .order("email_address"),
+
+          client
+            .from("orders")
+            .select("*"),
+
+          client
+            .from("dashboard_orders")
+            .select("*"),
+
+          client
+            .from("services")
+            .select("*")
+        ]);
+
+        const [profileResult, orderResult, dashboardResult, serviceResult] = results;
+
+        if (profileResult.error) {
+          throw new Error(
+            `Client profiles could not be loaded: ${profileResult.error.message}`
+          );
+        }
+
+        profiles = profileResult.data || [];
+        orders = orderResult.error ? [] : (orderResult.data || []);
+        dashboardOrders =
+          dashboardResult.error
+            ? []
+            : (dashboardResult.data || []);
+
+        services =
+          serviceResult.error
+            ? []
+            : (serviceResult.data || []);
+
+        clientDropdown.innerHTML =
+          `<option value="">Choose a client...</option>` +
+          profiles.map(profile => {
+            const label =
+              [
+                profile.first_name,
+                profile.last_name
+              ]
+                .filter(Boolean)
+                .join(" ")
+              ||
+              profile.company_name
+              ||
+              profile.email_address
+              ||
+              "Client";
+
+            const tracking =
+              profile.tracking_number || "No tracking number";
+
+            return `
+              <option value="${escapeHtml(profile.id)}">
+                ${escapeHtml(label)} — ${escapeHtml(profile.email_address || "")} — ${escapeHtml(tracking)}
+              </option>
+            `;
+          }).join("");
+
+        const serviceCatalog = [
+          {
+            group: "🏢 Entity Formation & Structuring",
+            items: [
+              ["llc-formation", "LLC Formation"],
+              ["corporations", "Corporations (C/S-Corp)"],
+              ["sole-proprietorship", "Sole Proprietorship"],
+              ["dba-registration", "DBA Registration"],
+              ["nonprofits", "Nonprofit Organization"],
+              ["series-llc", "Series LLC"]
+            ]
+          },
+          {
+            group: "📜 Corporate Maintenance & Compliance",
+            items: [
+              ["foreign-qualification", "Foreign Qualification"],
+              ["certificate-of-good-standing", "Certificate of Good Standing"],
+              ["llc-reinstatement", "LLC Reinstatement Processing"],
+              ["annual-reports", "Annual Reports"],
+              ["operating-agreement", "Operating Agreement"],
+              ["registered-agent", "Registered Agent"],
+              ["business-licenses", "Business Licenses"],
+              ["dissolution", "Entity Dissolution"]
+            ]
+          },
+          {
+            group: "🔑 Federal Tax & Corporate Identity",
+            items: [
+              ["employer-id-ein", "Employer ID (EIN)"],
+              ["cage-code", "CAGE Code"],
+              ["duns-number", "DUNS Number Procurement"],
+              ["minority-certificate", "Minority Certificate"]
+            ]
+          },
+          {
+            group: "🚛 Trucking Logistics & DOT Authority",
+            items: [
+              ["owner-operators", "Owner Operators Trucker Authority"],
+              ["broker-authority", "Broker Authority"],
+              ["ucr-registration", "UCR Registration"],
+              ["scac-code", "SCAC Code Registration"],
+              ["dot-consortium", "DOT Consortium"],
+              ["driver-file", "Driver Qualification File"],
+              ["process-agents-boc-3", "Process Agent (BOC-3)"],
+              ["ifta-registration", "IFTA Registration"],
+              ["hazmat-registration", "HAZMAT Registration"],
+              ["dot-permits", "Licenses & Permits"]
+            ]
+          },
+          {
+            group: "📊 Financial Services",
+            items: [
+              ["federal-tax", "Federal Income Tax"],
+              ["franchise-tax", "Franchise Tax Filing"],
+              ["sales-tax-registration", "Sales Tax Registration"],
+              ["apostille-services", "Apostille Authentication Services"]
+            ]
+          },
+          {
+            group: "🎨 Branding & Creative Services",
+            items: [
+              ["web-design", "Web Design Package"],
+              ["logo-design", "Logo Design Package"]
+            ]
+          }
+        ];
+
+        function normalizeServiceKey(value) {
+          return String(value || "")
+            .toLowerCase()
+            .trim()
+            .replace(/&/g, "and")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+        }
+
+        function getServicePrice(service) {
+          return Number(
+            service?.base_price_starter ??
+            service?.base_price ??
+            service?.price ??
+            service?.amount ??
+            service?.unit_price ??
+            0
+          );
+        }
+
+        function findDatabaseService(key, title) {
+          const normalizedKey = normalizeServiceKey(key);
+          const normalizedTitle = normalizeServiceKey(title);
+
+          return services.find(service => {
+            const candidates = [
+              service.slug,
+              service.service_key,
+              service.service_code,
+              service.service_title,
+              service.name,
+              service.title,
+              service.description
+            ];
+
+            return candidates.some(candidate => {
+              const normalized = normalizeServiceKey(candidate);
+              return normalized && (
+                normalized === normalizedKey ||
+                normalized === normalizedTitle
+              );
+            });
+          }) || null;
+        }
+
+        quickService.innerHTML =
+          `<option value="">Select a service to add it to the invoice...</option>` +
+          serviceCatalog.map(group => `
+            <optgroup label="${escapeHtml(group.group)}">
+              ${group.items.map(([key, title]) => {
+                const dbService = findDatabaseService(key, title);
+                const price = dbService ? getServicePrice(dbService) : 0;
+                const serviceId = dbService?.id || key;
+
+                return `
+                  <option
+                    value="${escapeHtml(serviceId)}"
+                    data-service-key="${escapeHtml(key)}"
+                    data-service-name="${escapeHtml(title)}"
+                    data-price="${Number.isFinite(price) ? price : 0}"
+                  >
+                    ${escapeHtml(title)}${dbService ? ` — ${money(price)}` : ""}
+                  </option>
+                `;
+              }).join("")}
+            </optgroup>
+          `).join("");
+
+        const due =
+          new Date(Date.now() + 7 * 86400000);
+
+        dueDate.value =
+          due.toISOString().slice(0, 10);
+
+        lines = [
+          {
+            description: "",
+            quantity: 1,
+            unit_price: 0
+          }
+        ];
+
+        renderLines();
+
+      } catch (error) {
+        console.error(
+          "[Invoice Studio] Load failed:",
+          error
+        );
+
+        show(
+          error.message ||
+          "Invoice data could not be loaded.",
+          true
+        );
+      }
+    }
+
+    createBtn.addEventListener("click", async () => {
+      clearStatus();
+
+      const profile = profiles.find(
+        item => String(item.id) === String(clientDropdown.value)
+      );
+
+      const totals = recalc();
+
+      if (!profile) {
+        show(
+          "Select a client profile before creating the invoice.",
+          true
+        );
+        return;
+      }
+
+      if (!dueDate.value) {
+        show(
+          "Choose an invoice due date.",
+          true
+        );
+        return;
+      }
+
+      const validLines =
+        lines.filter(line =>
+          String(line.description || "").trim() &&
+          Number(line.quantity) > 0 &&
+          Number(line.unit_price) >= 0
+        );
+
+      if (!validLines.length) {
+        show(
+          "Add at least one valid invoice line item.",
+          true
+        );
+        return;
+      }
+
+      createBtn.disabled = true;
+      createBtn.textContent = "Creating invoice...";
+
+      try {
+        /*
+         * The Edge Function is authoritative for persistence,
+         * payment-session creation, and email delivery.
+         */
+        const response =
+          await client.functions.invoke(
+            "create-invoice",
+            {
+              body: {
+                invoice_number: currentInvoiceNumber,
+                client_profile_id: profile.id,
+                client_email: profile.email_address,
+                order_id:
+                  orderDropdown.value || null,
+                dashboard_order_id:
+                  dashboardOrderDropdown.value || null,
+                document_type: "invoice",
+                status: statusSelect.value,
+                currency: currencySelect.value,
+                due_date: dueDate.value,
+                line_items: validLines,
+                subtotal: Number(totals.subtotal.toFixed(2)),
+                discount_amount:
+                  Number(totals.discount.toFixed(2)),
+                tax_rate:
+                  Number(totals.taxRate.toFixed(4)),
+                tax_amount:
+                  Number(totals.tax.toFixed(2)),
+                shipping_amount:
+                  Number(totals.shipping.toFixed(2)),
+                total_amount:
+                  Number(totals.total.toFixed(2)),
+                customer_notes:
+                  notesInput.value.trim(),
+                payment_terms:
+                  termsInput.value.trim()
+              }
+            }
+          );
+
+        if (response.error) {
+          throw response.error;
+        }
+
+        const data = response.data;
+
+        if (!data?.invoice_id) {
+          throw new Error(
+            data?.error ||
+            "The invoice service did not return an invoice ID."
+          );
+        }
+
+        createdInvoice = data;
+
+        const authoritativeNumber =
+          data.invoice_number ||
+          currentInvoiceNumber;
+
+        currentInvoiceNumber =
+          authoritativeNumber;
+
+        invoiceLabel.textContent =
+          authoritativeNumber;
+
+        if (data.payment_url) {
+          payBtn.disabled = false;
+
+          payBtn.onclick = () => {
+            window.open(
+              data.payment_url,
+              "_blank",
+              "noopener,noreferrer"
+            );
+          };
+        }
+
+        statusChip.textContent = "SENT";
+
+        show(
+          `Invoice ${authoritativeNumber} was created successfully and the payment link was dispatched to ${profile.email_address}.`
+        );
+
+      } catch (error) {
+        console.error(
+          "[Invoice Studio] create-invoice failed:",
+          error
+        );
+
+        show(
+          error?.message ||
+          "Invoice creation failed.",
+          true
+        );
+
+      } finally {
+        createBtn.disabled = false;
+        createBtn.textContent =
+          "Create Invoice & Send Payment Link";
+      }
+    });
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          await client.auth.signOut();
+        } finally {
+          window.location.replace("admin-login.html");
+        }
+      });
+    }
+
+    function updateClock() {
+      if (!clock) return;
+
+      const now = new Date();
+
+      clock.textContent =
+        now.toLocaleString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true
+        });
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    document.querySelectorAll(".accordion-trigger").forEach(trigger => {
+      trigger.addEventListener("click", () => {
+        const panel = trigger.nextElementSibling;
+
+        if (!panel) return;
+
+        const isOpen =
+          trigger.classList.contains("active");
+
+        document
+          .querySelectorAll(".accordion-trigger")
+          .forEach(item => {
+            item.classList.remove("active");
+
+            const next = item.nextElementSibling;
+
+            if (next?.classList.contains("accordion-panel")) {
+              next.style.maxHeight = null;
+            }
+          });
+
+        if (!isOpen) {
+          trigger.classList.add("active");
+          panel.style.maxHeight =
+            panel.scrollHeight + "px";
+        }
+      });
+    });
+
+    const initialPanel =
+      document.querySelector(
+        ".accordion-trigger.active + .accordion-panel"
+      );
+
+    if (initialPanel) {
+      initialPanel.style.maxHeight =
+        initialPanel.scrollHeight + "px";
+    }
+
+    await load();
+  });
+  </script>
 </body>
 </html>

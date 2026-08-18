@@ -45,7 +45,7 @@
 
     if (!isAuthenticated) {
       // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
+      console.warn("[Security] Authentication required. Redirecting to secure login.");
       window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
       
       // Inject CSS rule to hide everything in case browser delays routing
@@ -55,7 +55,7 @@
 
     // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
     if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
+      console.warn("[Security] Restricted administrative territory. Redirecting.");
       window.location.replace("client-dashboard.html");
       document.documentElement.style.display = "none";
       throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
@@ -100,15 +100,56 @@
     .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
     .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
     
-    /* SETTINGS FIELD INPUT STYLES */
-    .form-group { text-align: left; margin-bottom: 20px; }
-    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
-    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; font-family: inherit; }
-    .form-group input:focus, .form-group select:focus { background: var(--white); border-color: var(--staff-red); }
-    
-    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
-    .action-btn:hover { background: #1e293b; }
-    .status-alert-box { display: none; font-size: 0.8rem; font-weight: 700; margin-bottom: 15px; padding: 10px; border-radius: 6px; text-align: left; }
+
+    /* GLOBAL MANAGEMENT HUB */
+    .settings-overview{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .settings-stat{background:#fff;border:1px solid var(--border-color);border-radius:9px;padding:16px 18px;min-height:92px;position:relative;overflow:hidden}
+    .settings-stat:after{content:"";position:absolute;right:0;top:0;bottom:0;width:3px;background:#cbd5e1}
+    .settings-stat:nth-child(2):after{background:var(--emerald)}.settings-stat:nth-child(3):after{background:var(--staff-red)}.settings-stat:nth-child(4):after{background:#64748b}
+    .settings-stat-label{font-size:.60rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#7b8797}
+    .settings-stat-value{margin-top:8px;font-size:1.45rem;line-height:1;font-weight:900;color:var(--text-dark);letter-spacing:-.04em}
+    .settings-stat-detail{margin-top:7px;color:#94a3b8;font-size:.61rem}
+    .settings-workspace{grid-column:1/-1;display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;min-width:0}
+    .settings-tabs{display:flex;flex-direction:column;gap:5px;background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:9px;height:max-content;position:sticky;top:96px}
+    .settings-tab{width:100%;text-align:left;border:1px solid transparent;background:transparent;color:var(--text-muted);padding:10px 11px;border-radius:7px;cursor:pointer;font-size:.70rem;font-weight:750}
+    .settings-tab:hover{background:#f8fafc;color:var(--text-dark)}
+    .settings-tab.active{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.12);color:#087a59}
+    .settings-tab small{display:block;margin-top:3px;color:#94a3b8;font-size:.57rem;font-weight:600;line-height:1.35}
+    .settings-panel{display:none;min-width:0}.settings-panel.active{display:grid;gap:18px}
+    .settings-card{background:#fff;border:1px solid var(--border-color);border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.02);overflow:hidden;min-width:0}
+    .settings-card-head{padding:18px 21px;border-bottom:1px solid var(--border-color)}
+    .settings-card-head .eyebrow{color:var(--staff-red);font-size:.59rem;font-weight:850;text-transform:uppercase;letter-spacing:.10em;margin-bottom:5px}
+    .settings-card-head h2{margin:0;font-size:.98rem;font-weight:850;color:var(--text-dark)}
+    .settings-card-head p{margin:5px 0 0;color:var(--text-muted);font-size:.70rem;line-height:1.5}
+    .settings-card-body{padding:20px 21px}
+    .settings-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+    .settings-form-grid .full{grid-column:1/-1}
+    .form-group{text-align:left;margin-bottom:16px}
+    .form-group label{display:block;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.045em;margin-bottom:6px;color:var(--text-dark)}
+    .field-description{display:block;margin-top:5px;color:#94a3b8;font-size:.60rem;line-height:1.4}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 11px;border:1px solid var(--border-color);border-radius:7px;font-size:.76rem;color:var(--text-dark);background:#f8fafc;outline:none;box-sizing:border-box;font-family:inherit}
+    .form-group textarea{min-height:92px;resize:vertical;line-height:1.5}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{background:#fff;border-color:rgba(193,82,84,.55);box-shadow:0 0 0 3px rgba(193,82,84,.07)}
+    .setting-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid #eef2f6}
+    .setting-row:last-child{border-bottom:0}
+    .setting-row-title{color:var(--text-dark);font-size:.74rem;font-weight:750}.setting-row-description{margin-top:3px;color:#94a3b8;font-size:.61rem;line-height:1.4}
+    .toggle{position:relative;width:42px;height:23px;flex-shrink:0}.toggle input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;inset:0;cursor:pointer;background:#cbd5e1;border-radius:999px;transition:.18s}
+    .toggle-slider:before{content:"";position:absolute;width:17px;height:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+    .toggle input:checked+.toggle-slider{background:var(--emerald)}.toggle input:checked+.toggle-slider:before{transform:translateX(19px)}
+    .price-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .price-tile{background:#f8fafc;border:1px solid var(--border-color);border-radius:8px;padding:14px}
+    .price-tile label{display:block;color:#64748b;font-size:.59rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+    .price-tile input{width:100%;box-sizing:border-box;border:0;background:transparent;color:var(--text-dark);font-size:1.1rem;font-weight:850;outline:none}
+    .status-alert-box{display:none;font-size:.69rem;font-weight:700;margin-bottom:14px;padding:9px 11px;border-radius:7px;text-align:left;line-height:1.45}
+    .save-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:5px;padding-top:15px;border-top:1px solid var(--border-color)}
+    .save-bar-note{color:#94a3b8;font-size:.61rem;line-height:1.4}.action-btn{background:var(--text-dark);color:#fff;border:0;padding:10px 15px;border-radius:7px;font-weight:750;font-size:.70rem;cursor:pointer;white-space:nowrap}.action-btn:hover{background:#1e293b}.action-btn:disabled{opacity:.55;cursor:wait}
+    .schema-note{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:7px;padding:11px 12px;color:#64748b;font-size:.63rem;line-height:1.5}
+    .db-status{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:.58rem;font-weight:800}
+    @media(max-width:1100px){.settings-workspace{grid-template-columns:1fr}.settings-tabs{position:static;flex-direction:row;overflow-x:auto}.settings-tab{min-width:150px}}
+    @media(max-width:800px){.settings-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-form-grid,.price-grid{grid-template-columns:1fr}.settings-form-grid .full{grid-column:auto}.save-bar{align-items:stretch;flex-direction:column}.action-btn{width:100%}}
+    @media(max-width:520px){.settings-overview{grid-template-columns:1fr}}
+
   </style>
 </head>
 <body>
@@ -123,51 +164,116 @@
       </header>
 
       <div class="content-container">
-        <!-- Environment Variables Form Panel -->
-        <div class="console-card">
-          <h2>Platform Gateways & Webhooks</h2>
-          <form id="globalEnvironmentSettingsForm">
-            <div class="form-group">
-              <label>Production Maintenance Interlock Mode</label>
-              <select id="settingMaintenanceMode" required>
-                <option value="false">Disabled (Application Operational)</option>
-                <option value="true">Enabled (Portal Lock Enforced)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Outgoing Stripe Webhook Verification URL</label>
-              <input type="url" id="settingStripeWebhookUrl" required placeholder="https://filings4u.com">
-            </div>
-            <div class="form-group">
-              <label>Transactional Mail Endpoint Gateway</label>
-              <input type="url" id="settingMailGatewayUrl" required placeholder="https://resend.com">
-            </div>
-            <div id="env-settings-status" class="status-alert-box"></div>
-            <button type="submit" class="action-btn" id="envSubmitBtn">Save Gateway Parameters ➔</button>
-          </form>
-        </div>
+        <section class="settings-overview">
+          <div class="settings-stat"><div class="settings-stat-label">Configuration</div><div class="settings-stat-value" id="configStatusValue">—</div><div class="settings-stat-detail" id="configStatusDetail">Checking global settings</div></div>
+          <div class="settings-stat"><div class="settings-stat-label">Website</div><div class="settings-stat-value">READY</div><div class="settings-stat-detail">Public website controls</div></div>
+          <div class="settings-stat"><div class="settings-stat-label">Client Portal</div><div class="settings-stat-value">READY</div><div class="settings-stat-detail">Customer dashboard controls</div></div>
+          <div class="settings-stat"><div class="settings-stat-label">Maintenance</div><div class="settings-stat-value" id="maintenanceStatusValue">OFF</div><div class="settings-stat-detail">Global access state</div></div>
+        </section>
 
-        <!-- Pricing Variables Form Panel -->
-        <div class="console-card">
-          <h2>Filing Package Matrix Fee Control</h2>
-          <form id="globalPricingSettingsForm">
-            <div class="form-group">
-              <label>Starter Base Processing Fee ($)</label>
-              <input type="number" step="0.01" id="feeStarterPlan" required placeholder="99.00">
-            </div>
-            <div class="form-group">
-              <label>Premium Suite Processing Fee ($)</label>
-              <input type="number" step="0.01" id="feePremiumPlan" required placeholder="299.00">
-            </div>
-            <div class="form-group">
-              <label>State Disbursement Baseline Contingency ($)</label>
-              <input type="number" step="0.01" id="feeDisbursementBaseline" required placeholder="50.00">
-            </div>
-            <div id="price-settings-status" class="status-alert-box"></div>
-            <button type="submit" class="action-btn" id="priceSubmitBtn">Update Package Price Matrix ➔</button>
-          </form>
+        <div class="settings-workspace">
+          <nav class="settings-tabs">
+            <button class="settings-tab active" type="button" data-panel="platform">Platform<small>Core environment controls</small></button>
+            <button class="settings-tab" type="button" data-panel="website">Website<small>Public website management</small></button>
+            <button class="settings-tab" type="button" data-panel="portal">Client Portal<small>Dashboard experience</small></button>
+            <button class="settings-tab" type="button" data-panel="commerce">Commerce<small>Prices and transactions</small></button>
+            <button class="settings-tab" type="button" data-panel="communications">Communications<small>Mail and webhooks</small></button>
+            <button class="settings-tab" type="button" data-panel="security">Security<small>Operational safeguards</small></button>
+          </nav>
+
+          <div>
+            <section class="settings-panel active" data-panel-content="platform">
+              <div class="settings-card">
+                <div class="settings-card-head"><div class="eyebrow">Global Control Plane</div><h2>Platform Environment</h2><p>Control the production state of the filings4u platform.</p></div>
+                <div class="settings-card-body">
+                  <form id="platformSettingsForm">
+                    <div class="settings-form-grid">
+                      <div class="form-group"><label for="settingMaintenanceMode">Maintenance Mode</label><select id="settingMaintenanceMode"><option value="false">Operational — Normal Access</option><option value="true">Maintenance — Lock Customer Access</option></select><span class="field-description">Uses the existing global maintenance interlock.</span></div>
+                      <div class="form-group"><label>Configuration Record</label><div class="schema-note">Backed by <strong>global_platform_settings</strong>. This console only writes fields that are part of the existing settings model.</div></div>
+                    </div>
+                    <div id="platformStatus" class="status-alert-box"></div>
+                    <div class="save-bar"><div class="save-bar-note">Changes apply to the global configuration record.</div><button class="action-btn" id="platformSaveBtn" type="submit">Save Platform Settings</button></div>
+                  </form>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-panel" data-panel-content="website">
+              <div class="settings-card">
+                <div class="settings-card-head"><div class="eyebrow">Public Experience</div><h2>Website Management</h2><p>Centralize public website operating controls without mixing them with customer settings.</p></div>
+                <div class="settings-card-body">
+                  <div class="settings-form-grid">
+                    <div class="form-group"><label for="websiteMaintenance">Public Website Availability</label><select id="websiteMaintenance"><option value="live">Live</option><option value="maintenance">Maintenance</option></select><span class="field-description">Linked directly to the current global maintenance flag.</span></div>
+                    <div class="form-group"><label for="websiteHomeMode">Website Operating Mode</label><select id="websiteHomeMode"><option value="production">Production</option><option value="preview">Preview / Controlled Release</option></select><span class="field-description">Interface preference; persistence requires a dedicated database field.</span></div>
+                    <div class="form-group full"><label for="websiteAnnouncement">Global Website Announcement</label><textarea id="websiteAnnouncement" placeholder="Optional public announcement..."></textarea><span class="field-description">Prepared for future database-backed website content controls.</span></div>
+                  </div>
+                  <div class="schema-note"><strong>Database-safe design:</strong> the current supplied table exposes maintenance, pricing, Stripe, and mail settings. Website content/SEO/branding fields are not written into unrelated columns.</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-panel" data-panel-content="portal">
+              <div class="settings-card">
+                <div class="settings-card-head"><div class="eyebrow">Customer Experience</div><h2>Client Dashboard Management</h2><p>Manage the operating state and planned presentation controls for the customer workspace.</p></div>
+                <div class="settings-card-body">
+                  <div class="setting-row"><div><div class="setting-row-title">Client Portal Availability</div><div class="setting-row-description">Inverse of the existing global maintenance interlock.</div></div><label class="toggle"><input type="checkbox" id="portalAvailabilityToggle"><span class="toggle-slider"></span></label></div>
+                  <div class="setting-row"><div><div class="setting-row-title">Show Customer Order Status</div><div class="setting-row-description">Client dashboard preference. Stored locally until a dedicated database field is provided.</div></div><label class="toggle"><input type="checkbox" id="portalOrdersToggle" checked><span class="toggle-slider"></span></label></div>
+                  <div class="setting-row"><div><div class="setting-row-title">Show Support Workspace</div><div class="setting-row-description">Client dashboard preference. Stored locally until a dedicated database field is provided.</div></div><label class="toggle"><input type="checkbox" id="portalSupportToggle" checked><span class="toggle-slider"></span></label></div>
+                  <div class="form-group" style="margin-top:16px"><label for="portalAnnouncement">Client Portal Announcement</label><textarea id="portalAnnouncement" placeholder="Optional customer dashboard announcement..."></textarea></div>
+                  <div class="schema-note"><strong>Important:</strong> portal-specific content controls are presented as a management layer, but are not falsely written to the existing global settings columns.</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-panel" data-panel-content="commerce">
+              <div class="settings-card">
+                <div class="settings-card-head"><div class="eyebrow">Revenue Controls</div><h2>Pricing & Commerce</h2><p>Manage the existing production pricing coefficients from one centralized matrix.</p></div>
+                <div class="settings-card-body">
+                  <form id="commerceSettingsForm">
+                    <div class="price-grid">
+                      <div class="price-tile"><label for="feeStarterPlan">Starter Processing</label><input type="number" min="0" step="0.01" id="feeStarterPlan" placeholder="99.00"></div>
+                      <div class="price-tile"><label for="feePremiumPlan">Premium Suite</label><input type="number" min="0" step="0.01" id="feePremiumPlan" placeholder="299.00"></div>
+                      <div class="price-tile"><label for="feeDisbursementBaseline">State Disbursement</label><input type="number" min="0" step="0.01" id="feeDisbursementBaseline" placeholder="50.00"></div>
+                    </div>
+                    <div id="commerceStatus" class="status-alert-box" style="margin-top:16px"></div>
+                    <div class="save-bar"><div class="save-bar-note">Pricing changes write to global_platform_settings.</div><button class="action-btn" id="commerceSaveBtn" type="submit">Publish Pricing Matrix</button></div>
+                  </form>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-panel" data-panel-content="communications">
+              <div class="settings-card">
+                <div class="settings-card-head"><div class="eyebrow">Message Infrastructure</div><h2>Communications & Webhooks</h2><p>Manage the existing external endpoint references used by the platform.</p></div>
+                <div class="settings-card-body">
+                  <form id="communicationSettingsForm">
+                    <div class="settings-form-grid">
+                      <div class="form-group full"><label for="settingStripeWebhookUrl">Stripe Webhook Verification URL</label><input type="url" id="settingStripeWebhookUrl" placeholder="https://..."></div>
+                      <div class="form-group full"><label for="settingMailGatewayUrl">Transactional Mail Endpoint</label><input type="url" id="settingMailGatewayUrl" placeholder="https://..."></div>
+                    </div>
+                    <div id="communicationStatus" class="status-alert-box"></div>
+                    <div class="save-bar"><div class="save-bar-note">These are the existing gateway fields in the global settings table.</div><button class="action-btn" id="communicationSaveBtn" type="submit">Save Communication Settings</button></div>
+                  </form>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-panel" data-panel-content="security">
+              <div class="settings-card">
+                <div class="settings-card-head"><div class="eyebrow">Administrative Protection</div><h2>Security & Operational Safeguards</h2><p>High-impact controls remain deliberate and visible to administrators.</p></div>
+                <div class="settings-card-body">
+                  <div class="setting-row"><div><div class="setting-row-title">Production Maintenance Interlock</div><div class="setting-row-description">Lock customer-facing access during administrative maintenance.</div></div><label class="toggle"><input type="checkbox" id="securityMaintenanceToggle"><span class="toggle-slider"></span></label></div>
+                  <div class="setting-row"><div><div class="setting-row-title">Administrator Session Protection</div><div class="setting-row-description">Administrative pages already enforce the existing authenticated administrator guard.</div></div><span class="db-status">ENFORCED</span></div>
+                  <div class="schema-note" style="margin-top:15px"><strong>Protected credentials:</strong> Supabase service-role keys, Stripe secrets, Resend API keys, and other server credentials are not exposed by this page.</div>
+                  <div id="securityStatus" class="status-alert-box" style="margin-top:15px"></div>
+                  <div class="save-bar"><div class="save-bar-note">Maintenance state is persisted through the existing platform setting.</div><button class="action-btn" id="securitySaveBtn" type="button">Apply Security State</button></div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
+
     </main>
   </div>
 
@@ -182,155 +288,815 @@
   <script src="assets/js/admin-navigation.js"></script>
 
 
-  <script>
+          <script>
     document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
 
-      // 1. Resolve Strict DOM Form and Input Element Targets
-      const envForm       = document.getElementById("globalEnvironmentSettingsForm");
-      const maintenanceIn = document.getElementById("settingMaintenanceMode");
-      const stripeUrlIn   = document.getElementById("settingStripeWebhookUrl");
-      const mailUrlIn     = document.getElementById("settingMailGatewayUrl");
-      const envStatusDiv  = document.getElementById("env-settings-status");
-      const envSubmitBtn  = document.getElementById("envSubmitBtn");
+      /*
+       * ============================================================
+       * GLOBAL MANAGEMENT SETTINGS
+       * ============================================================
+       * Single source of truth:
+       * public.global_platform_settings
+       *
+       * The table is intentionally a singleton:
+       * id = 1
+       *
+       * Every website, client portal, commerce, communication,
+       * platform, and security setting on this page is persisted
+       * to that record.
+       * ============================================================
+       */
 
-      const priceForm     = document.getElementById("globalPricingSettingsForm");
-      const feeStarterIn  = document.getElementById("feeStarterPlan");
-      const feePremiumIn  = document.getElementById("feePremiumPlan");
-      const feeDisburseIn = document.getElementById("feeDisbursementBaseline");
-      const priceStatusDiv = document.getElementById("price-settings-status");
-      const priceSubmitBtn = document.getElementById("priceSubmitBtn");
-
-      if (!envForm || !priceForm || !envStatusDiv || !priceStatusDiv || !envSubmitBtn || !priceSubmitBtn) {
-        throw new Error("✕ Critical UI Error: Form controls or operational status blocks are missing from document layout.");
-      }
-
-      // 2. Fetch Global Database Instance Connections
       const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        throw new Error("✕ Initialization Error: Supabase client infrastructure missing from global window context.");
+
+      const $ = id => document.getElementById(id);
+
+      if (!client || typeof client.from !== "function") {
+        console.error("[Global Settings] Supabase client unavailable.");
+        $("configStatusValue").textContent = "OFFLINE";
+        $("configStatusDetail").textContent = "Supabase connection unavailable";
+        return;
       }
 
-      // --- STAGE 1: HYDRATE INITIAL ENVIRONMENT FIELDS FROM THE SETTINGS MATRIX ---
-      async function populatePlatformConfigurations() {
+      /* ------------------------------------------------------------
+         DOM REFERENCES
+         ------------------------------------------------------------ */
+
+      const maintenance = $("settingMaintenanceMode");
+
+      const stripe = $("settingStripeWebhookUrl");
+      const mail = $("settingMailGatewayUrl");
+
+      const starter = $("feeStarterPlan");
+      const premium = $("feePremiumPlan");
+      const disbursement = $("feeDisbursementBaseline");
+
+      const websiteMaintenance = $("websiteMaintenance");
+      const websiteHomeMode = $("websiteHomeMode");
+      const websiteAnnouncement = $("websiteAnnouncement");
+
+      const portalAvailability = $("portalAvailabilityToggle");
+      const portalOrders = $("portalOrdersToggle");
+      const portalSupport = $("portalSupportToggle");
+      const portalAnnouncement = $("portalAnnouncement");
+
+      const securityMaintenance = $("securityMaintenanceToggle");
+
+      const platformForm = $("platformSettingsForm");
+      const commerceForm = $("commerceSettingsForm");
+      const communicationForm = $("communicationSettingsForm");
+
+      const platformStatus = $("platformStatus");
+      const commerceStatus = $("commerceStatus");
+      const communicationStatus = $("communicationStatus");
+      const securityStatus = $("securityStatus");
+
+      const platformSave = $("platformSaveBtn");
+      const commerceSave = $("commerceSaveBtn");
+      const communicationSave = $("communicationSaveBtn");
+      const securitySave = $("securitySaveBtn");
+
+      const configStatusValue = $("configStatusValue");
+      const configStatusDetail = $("configStatusDetail");
+      const maintenanceStatus = $("maintenanceStatusValue");
+
+      let config = null;
+
+      /* ------------------------------------------------------------
+         STATUS UI
+         ------------------------------------------------------------ */
+
+      function showStatus(element, message, success = false) {
+        if (!element) return;
+
+        element.style.display = "block";
+        element.style.background = success ? "#ecfdf5" : "#fef2f2";
+        element.style.color = success ? "#047857" : "#991b1b";
+        element.textContent = message;
+      }
+
+      function hideStatus(element) {
+        if (!element) return;
+        element.style.display = "none";
+        element.textContent = "";
+      }
+
+      function setConfigHeader(state, detail) {
+        configStatusValue.textContent = state;
+        configStatusDetail.textContent = detail;
+      }
+
+      /* ------------------------------------------------------------
+         NORMALIZE DATABASE VALUES
+         ------------------------------------------------------------ */
+
+      function money(value, fallback = 0) {
+        const number = Number(value);
+
+        return Number.isFinite(number)
+          ? number.toFixed(2)
+          : Number(fallback).toFixed(2);
+      }
+
+      function bool(value, fallback = false) {
+        if (typeof value === "boolean") return value;
+        if (value === "true" || value === "1") return true;
+        if (value === "false" || value === "0") return false;
+        return fallback;
+      }
+
+      /* ------------------------------------------------------------
+         APPLY CONFIGURATION TO ALL MODULES
+         ------------------------------------------------------------ */
+
+      function applyConfiguration(row) {
+        if (!row) return;
+
+        const maintenanceActive =
+          bool(row.maintenance_mode_interlock_active);
+
+        const websiteMode =
+          row.website_operating_mode || "production";
+
+        const portalEnabled =
+          bool(row.client_portal_enabled, true);
+
+        const showOrders =
+          bool(row.client_portal_show_orders, true);
+
+        const showSupport =
+          bool(row.client_portal_show_support, true);
+
+        /* Platform */
+        maintenance.value =
+          maintenanceActive ? "true" : "false";
+
+        /* Website */
+        websiteMaintenance.value =
+          maintenanceActive ? "maintenance" : "live";
+
+        websiteHomeMode.value =
+          websiteMode === "preview"
+            ? "preview"
+            : "production";
+
+        websiteAnnouncement.value =
+          row.website_announcement || "";
+
+        /* Client Portal */
+        portalAvailability.checked =
+          portalEnabled && !maintenanceActive;
+
+        portalOrders.checked =
+          showOrders;
+
+        portalSupport.checked =
+          showSupport;
+
+        portalAnnouncement.value =
+          row.client_portal_announcement || "";
+
+        /* Commerce */
+        starter.value =
+          money(row.starter_base_processing_fee, 99);
+
+        premium.value =
+          money(row.premium_suite_processing_fee, 299);
+
+        disbursement.value =
+          money(row.state_disbursement_baseline_fee, 50);
+
+        /* Communications */
+        stripe.value =
+          row.stripe_webhook_receiver_url || "";
+
+        mail.value =
+          row.transactional_email_endpoint_url || "";
+
+        /* Security */
+        securityMaintenance.checked =
+          maintenanceActive;
+
+        /* Overview */
+        maintenanceStatus.textContent =
+          maintenanceActive ? "ON" : "OFF";
+
+        maintenanceStatus.style.color =
+          maintenanceActive
+            ? "var(--staff-red)"
+            : "var(--text-dark)";
+      }
+
+      /* ------------------------------------------------------------
+         LOAD SINGLETON CONFIGURATION
+         ------------------------------------------------------------ */
+
+      async function loadSettings() {
+        setConfigHeader(
+          "SYNC",
+          "Loading global configuration..."
+        );
+
+        const { data, error } = await client
+          .from("global_platform_settings")
+          .select("*")
+          .eq("id", 1)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data) {
+          setConfigHeader(
+            "ERROR",
+            "Global configuration row is missing."
+          );
+
+          throw new Error(
+            "The global_platform_settings record with id 1 was not found."
+          );
+        }
+
+        config = data;
+
+        applyConfiguration(config);
+
+        setConfigHeader(
+          "ACTIVE",
+          `Global configuration synchronized • Updated ${formatTimestamp(config.updated_at)}`
+        );
+      }
+
+      function formatTimestamp(value) {
+        if (!value) return "time unavailable";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+          return "time unavailable";
+        }
+
+        return date.toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        });
+      }
+
+      /* ------------------------------------------------------------
+         SAVE SINGLETON CONFIGURATION
+         ------------------------------------------------------------ */
+
+      async function saveSettings(fields) {
+        /*
+         * Never silently create another configuration record.
+         * The table is explicitly a singleton at id = 1.
+         */
+        const payload = {
+          id: 1,
+          ...fields,
+          updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await client
+          .from("global_platform_settings")
+          .upsert(payload, {
+            onConflict: "id"
+          })
+          .select("*")
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        config = data;
+
+        applyConfiguration(config);
+
+        setConfigHeader(
+          "ACTIVE",
+          `Saved ${formatTimestamp(config.updated_at)}`
+        );
+
+        return data;
+      }
+
+      /* ------------------------------------------------------------
+         PLATFORM SAVE
+         ------------------------------------------------------------ */
+
+      platformForm.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        hideStatus(platformStatus);
+
+        const active =
+          maintenance.value === "true";
+
+        platformSave.disabled = true;
+        platformSave.textContent = "Saving...";
+
         try {
-          console.log("📡 [Settings Engine] Syncing existing configuration row keys from server tables...");
-          
-          // 🟢 DIRECT DB FETCH: Extract system configurations from a single configuration record cell
-          const { data: settingsArray, error: fetchError } = await client
-            .from('global_platform_settings')
-            .select('*')
-            .limit(1);
+          await saveSettings({
+            maintenance_mode_interlock_active: active
+          });
 
-          if (fetchError) throw fetchError;
+          showStatus(
+            platformStatus,
+            "Platform operating state saved successfully.",
+            true
+          );
 
-          if (settingsArray && settingsArray.length > 0) {
-            const config = settingsArray[0];
-            
-            // Populating environment configuration elements cleanly
-            maintenanceIn.value = String(config.maintenance_mode_interlock_active || 'false');
-            stripeUrlIn.value   = config.stripe_webhook_receiver_url || "";
-            mailUrlIn.value     = config.transactional_email_endpoint_url || "";
-            
-            // Populating price field index parameters safely
-            feeStarterIn.value  = parseFloat(config.starter_base_processing_fee || 99.00).toFixed(2);
-            feePremiumIn.value  = parseFloat(config.premium_suite_processing_fee || 299.00).toFixed(2);
-            feeDisburseIn.value = parseFloat(config.state_disbursement_baseline_fee || 50.00).toFixed(2);
-            
-            console.log("✓ [Settings Engine] Environment row properties mapped completely onto UI.");
+        } catch (error) {
+          console.error(
+            "[Global Settings] Platform save failed:",
+            error
+          );
+
+          showStatus(
+            platformStatus,
+            `Platform save failed: ${error.message}`
+          );
+
+        } finally {
+          platformSave.disabled = false;
+          platformSave.textContent =
+            "Save Platform Settings";
+        }
+      });
+
+      /* ------------------------------------------------------------
+         WEBSITE CONTROL EVENTS
+         ------------------------------------------------------------ */
+
+      websiteMaintenance.addEventListener("change", () => {
+        const active =
+          websiteMaintenance.value === "maintenance";
+
+        maintenance.value =
+          active ? "true" : "false";
+
+        maintenanceStatus.textContent =
+          active ? "ON" : "OFF";
+
+        maintenanceStatus.style.color =
+          active
+            ? "var(--staff-red)"
+            : "var(--text-dark)";
+
+        portalAvailability.checked =
+          !active;
+      });
+
+      /* ------------------------------------------------------------
+         CLIENT PORTAL SAVE
+         ------------------------------------------------------------ */
+
+      /*
+       * There is no separate portal save button in the original
+       * module markup. Add one directly to the existing module.
+       */
+      const portalPanel =
+        document.querySelector(
+          '[data-panel-content="portal"] .settings-card-body'
+        );
+
+      if (portalPanel) {
+        const portalSaveBar =
+          document.createElement("div");
+
+        portalSaveBar.className =
+          "save-bar";
+
+        portalSaveBar.innerHTML = `
+          <div class="save-bar-note">
+            Client dashboard settings are stored globally and apply to the portal.
+          </div>
+          <button class="action-btn" id="portalSaveBtn" type="button">
+            Save Client Portal Settings
+          </button>
+        `;
+
+        portalPanel.appendChild(portalSaveBar);
+      }
+
+      const portalSave =
+        $("portalSaveBtn");
+
+      if (portalSave) {
+        portalSave.addEventListener("click", async () => {
+          portalSave.disabled = true;
+          portalSave.textContent = "Saving...";
+
+          try {
+            const maintenanceActive =
+              maintenance.value === "true";
+
+            const portalEnabled =
+              portalAvailability.checked &&
+              !maintenanceActive;
+
+            await saveSettings({
+              maintenance_mode_interlock_active:
+                maintenanceActive,
+
+              client_portal_enabled:
+                portalEnabled,
+
+              client_portal_show_orders:
+                portalOrders.checked,
+
+              client_portal_show_support:
+                portalSupport.checked,
+
+              client_portal_announcement:
+                portalAnnouncement.value.trim()
+            });
+
+            showStatus(
+              platformStatus,
+              "Client portal settings saved successfully.",
+              true
+            );
+
+          } catch (error) {
+            console.error(
+              "[Global Settings] Portal save failed:",
+              error
+            );
+
+            showStatus(
+              platformStatus,
+              `Client portal save failed: ${error.message}`
+            );
+
+          } finally {
+            portalSave.disabled = false;
+            portalSave.textContent =
+              "Save Client Portal Settings";
           }
-        } catch (syncFault) {
-          console.warn("⚠ [Settings Engine] Initial configuration blank or unassigned: ", syncFault.message);
-        }
+        });
       }
 
-      // --- STAGE 2: PROCESS ENVIRONMENT VARIABLES FORM SAVES ---
-      envForm.addEventListener("submit", async (event) => {
+      /* ------------------------------------------------------------
+         WEBSITE SAVE
+         ------------------------------------------------------------ */
+
+      const websitePanel =
+        document.querySelector(
+          '[data-panel-content="website"] .settings-card-body'
+        );
+
+      if (websitePanel) {
+        const websiteSaveBar =
+          document.createElement("div");
+
+        websiteSaveBar.className =
+          "save-bar";
+
+        websiteSaveBar.innerHTML = `
+          <div class="save-bar-note">
+            Website operating mode and announcements are stored globally.
+          </div>
+          <button class="action-btn" id="websiteSaveBtn" type="button">
+            Save Website Settings
+          </button>
+        `;
+
+        websitePanel.appendChild(websiteSaveBar);
+      }
+
+      const websiteSave =
+        $("websiteSaveBtn");
+
+      if (websiteSave) {
+        websiteSave.addEventListener("click", async () => {
+          websiteSave.disabled = true;
+          websiteSave.textContent = "Saving...";
+
+          try {
+            const maintenanceActive =
+              websiteMaintenance.value === "maintenance";
+
+            await saveSettings({
+              maintenance_mode_interlock_active:
+                maintenanceActive,
+
+              website_operating_mode:
+                websiteHomeMode.value,
+
+              website_announcement:
+                websiteAnnouncement.value.trim()
+            });
+
+            showStatus(
+              platformStatus,
+              "Website settings saved successfully.",
+              true
+            );
+
+          } catch (error) {
+            console.error(
+              "[Global Settings] Website save failed:",
+              error
+            );
+
+            showStatus(
+              platformStatus,
+              `Website save failed: ${error.message}`
+            );
+
+          } finally {
+            websiteSave.disabled = false;
+            websiteSave.textContent =
+              "Save Website Settings";
+          }
+        });
+      }
+
+      /* ------------------------------------------------------------
+         COMMERCE SAVE
+         ------------------------------------------------------------ */
+
+      commerceForm.addEventListener("submit", async event => {
         event.preventDefault();
-        envStatusDiv.style.display = "none";
 
-        const maintenanceMode = maintenanceIn.value === "true";
-        const stripeWebhookUrl = stripeUrlIn.value.trim();
-        const emailGatewayUrl = mailUrlIn.value.trim();
+        hideStatus(commerceStatus);
 
-        if (!stripeWebhookUrl || !emailGatewayUrl) {
-          envStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          envStatusDiv.textContent = "✕ Validation Error: Environment gateway target inputs cannot evaluate to empty.";
+        const starterValue =
+          Number(starter.value);
+
+        const premiumValue =
+          Number(premium.value);
+
+        const disbursementValue =
+          Number(disbursement.value);
+
+        if (
+          !Number.isFinite(starterValue) ||
+          starterValue < 0 ||
+          !Number.isFinite(premiumValue) ||
+          premiumValue < 0 ||
+          !Number.isFinite(disbursementValue) ||
+          disbursementValue < 0
+        ) {
+          showStatus(
+            commerceStatus,
+            "All pricing values must be valid non-negative numbers."
+          );
+
           return;
         }
 
-        envSubmitBtn.disabled = true;
-        
+        commerceSave.disabled = true;
+        commerceSave.textContent = "Publishing...";
+
         try {
-          console.log("📡 [Settings Engine] Registering updated environment flags to server...");
-          const { error: upsertError } = await client
-            .from('global_platform_settings')
-            .upsert({
-              id: 1, // Enforces single target configuration cell row locking overrides
-              maintenance_mode_interlock_active: maintenanceMode,
-              stripe_webhook_receiver_url: stripeWebhookUrl,
-              transactional_email_endpoint_url: emailGatewayUrl,
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'id' });
+          await saveSettings({
+            starter_base_processing_fee:
+              starterValue,
 
-          if (upsertError) throw upsertError;
+            premium_suite_processing_fee:
+              premiumValue,
 
-          envStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
-          envStatusDiv.textContent = "✓ Environment variable parameters successfully locked into global configuration grids.";
-        } catch (fault) {
-          console.error("✕ Environment patch transaction declined: ", fault.message);
-          envStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          envStatusDiv.textContent = `✕ Server Transaction Error: ${fault.message}`;
+            state_disbursement_baseline_fee:
+              disbursementValue
+          });
+
+          showStatus(
+            commerceStatus,
+            "Pricing matrix published successfully.",
+            true
+          );
+
+        } catch (error) {
+          console.error(
+            "[Global Settings] Commerce save failed:",
+            error
+          );
+
+          showStatus(
+            commerceStatus,
+            `Pricing save failed: ${error.message}`
+          );
+
         } finally {
-          envSubmitBtn.disabled = false;
+          commerceSave.disabled = false;
+          commerceSave.textContent =
+            "Publish Pricing Matrix";
         }
       });
 
-      // --- STAGE 3: PROCESS PRICING COEFFICIENTS MATRIX UPDATES ---
-      priceForm.addEventListener("submit", async (event) => {
+      /* ------------------------------------------------------------
+         COMMUNICATIONS SAVE
+         ------------------------------------------------------------ */
+
+      communicationForm.addEventListener("submit", async event => {
         event.preventDefault();
-        priceStatusDiv.style.display = "none";
 
-        const starterFee = parseFloat(feeStarterIn.value);
-        const premiumFee = parseFloat(feePremiumIn.value);
-        const disburseFee = parseFloat(feeDisburseIn.value);
+        hideStatus(communicationStatus);
 
-        if (isNaN(starterFee) || isNaN(premiumFee) || isNaN(disburseFee)) {
-          priceStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          priceStatusDiv.textContent = "✕ Validation Error: Pricing coefficients must be valid numeric constraints.";
+        const stripeUrl =
+          stripe.value.trim();
+
+        const mailUrl =
+          mail.value.trim();
+
+        if (!stripeUrl || !mailUrl) {
+          showStatus(
+            communicationStatus,
+            "Both communication gateway fields are required."
+          );
+
           return;
         }
 
-        priceSubmitBtn.disabled = true;
+        communicationSave.disabled = true;
+        communicationSave.textContent =
+          "Saving...";
 
         try {
-          console.log("📡 [Settings Engine] Deploying updated pricing matrix matrices to server tables...");
-          const { error: upsertError } = await client
-            .from('global_platform_settings')
-            .upsert({
-              id: 1,
-              starter_base_processing_fee: starterFee,
-              premium_suite_processing_fee: premiumFee,
-              state_disbursement_baseline_fee: disburseFee,
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'id' });
+          await saveSettings({
+            stripe_webhook_receiver_url:
+              stripeUrl,
 
-          if (upsertError) throw upsertError;
+            transactional_email_endpoint_url:
+              mailUrl
+          });
 
-          priceStatusDiv.style.cssText = "display:block; background:#ecfdf5; color:#047857;";
-          priceStatusDiv.textContent = "✓ Success! Package processing matrix variables recompiled and pushed live.";
-        } catch (fault) {
-          console.error("✕ Pricing matrix save request refused: ", fault.message);
-          priceStatusDiv.style.cssText = "display:block; background:#fef2f2; color:#991b1b;";
-          priceStatusDiv.textContent = `✕ Server Transaction Error: ${fault.message}`;
+          showStatus(
+            communicationStatus,
+            "Communication gateway settings saved successfully.",
+            true
+          );
+
+        } catch (error) {
+          console.error(
+            "[Global Settings] Communication save failed:",
+            error
+          );
+
+          showStatus(
+            communicationStatus,
+            `Communication save failed: ${error.message}`
+          );
+
         } finally {
-          priceSubmitBtn.disabled = false;
+          communicationSave.disabled = false;
+          communicationSave.textContent =
+            "Save Communication Settings";
         }
       });
 
-      // Execute configuration data check cycles immediately on loading context threads
-      await populatePlatformConfigurations();
+      /* ------------------------------------------------------------
+         SECURITY SAVE
+         ------------------------------------------------------------ */
+
+      securitySave.addEventListener("click", async () => {
+        const active =
+          securityMaintenance.checked;
+
+        securitySave.disabled = true;
+        securitySave.textContent =
+          "Applying...";
+
+        try {
+          await saveSettings({
+            maintenance_mode_interlock_active:
+              active
+          });
+
+          showStatus(
+            securityStatus,
+            `Production maintenance interlock ${
+              active ? "enabled" : "disabled"
+            }.`,
+            true
+          );
+
+        } catch (error) {
+          console.error(
+            "[Global Settings] Security save failed:",
+            error
+          );
+
+          showStatus(
+            securityStatus,
+            `Security state could not be saved: ${error.message}`
+          );
+
+        } finally {
+          securitySave.disabled = false;
+          securitySave.textContent =
+            "Apply Security State";
+        }
+      });
+
+      securityMaintenance.addEventListener("change", () => {
+        const active =
+          securityMaintenance.checked;
+
+        maintenance.value =
+          active ? "true" : "false";
+
+        websiteMaintenance.value =
+          active ? "maintenance" : "live";
+
+        portalAvailability.checked =
+          !active;
+
+        maintenanceStatus.textContent =
+          active ? "ON" : "OFF";
+
+        maintenanceStatus.style.color =
+          active
+            ? "var(--staff-red)"
+            : "var(--text-dark)";
+      });
+
+      portalAvailability.addEventListener("change", () => {
+        /*
+         * Turning the portal off is represented by the same global
+         * maintenance interlock because that is the platform-wide
+         * access control already established by the system.
+         */
+        if (!portalAvailability.checked) {
+          maintenance.value = "true";
+        } else {
+          maintenance.value = "false";
+        }
+
+        maintenanceStatus.textContent =
+          maintenance.value === "true"
+            ? "ON"
+            : "OFF";
+
+        maintenanceStatus.style.color =
+          maintenance.value === "true"
+            ? "var(--staff-red)"
+            : "var(--text-dark)";
+      });
+
+      /* ------------------------------------------------------------
+         TAB NAVIGATION
+         ------------------------------------------------------------ */
+
+      document
+        .querySelectorAll(".settings-tab")
+        .forEach(tab => {
+          tab.addEventListener("click", () => {
+            const target =
+              tab.dataset.panel;
+
+            document
+              .querySelectorAll(".settings-tab")
+              .forEach(item => {
+                item.classList.toggle(
+                  "active",
+                  item === tab
+                );
+              });
+
+            document
+              .querySelectorAll(".settings-panel")
+              .forEach(panel => {
+                panel.classList.toggle(
+                  "active",
+                  panel.dataset.panelContent === target
+                );
+              });
+          });
+        });
+
+      /* ------------------------------------------------------------
+         INITIAL DATABASE SYNCHRONIZATION
+         ------------------------------------------------------------ */
+
+      try {
+        await loadSettings();
+
+      } catch (error) {
+        console.error(
+          "[Global Settings] Initial load failed:",
+          error
+        );
+
+        setConfigHeader(
+          "ERROR",
+          error.message
+        );
+
+        showStatus(
+          platformStatus,
+          `Global configuration could not be loaded: ${error.message}`
+        );
+      }
     });
-  </script>
+    </script>
 </body>
 </html>
