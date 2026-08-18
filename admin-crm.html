@@ -45,7 +45,6 @@
 
     if (!isAuthenticated) {
       // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
       window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
       
       // Inject CSS rule to hide everything in case browser delays routing
@@ -55,7 +54,6 @@
 
     // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
     if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
       window.location.replace("client-dashboard.html");
       document.documentElement.style.display = "none";
       throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
@@ -66,7 +64,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Customer CRM Matrix | filings4u Staff</title>
+  <title>Client CRM | filings4u</title>
   <meta name="theme-color" content="#c15254">
   <link rel="icon" type="image/png" href="images/fav.png">
   <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
@@ -215,6 +213,9 @@
     .crm-tabs { display: flex; gap: 8px; }
     .crm-tab-btn { background: transparent; border: none; padding: 8px 16px; font-weight: 700; font-size: 0.825rem; color: var(--crm-text-muted); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
     .crm-tab-btn.active { background: #f1f5f9; color: var(--crm-text-dark); }
+    .crm-tab-btn.deleted-tab { color: #be123c !important; }
+    .crm-tab-btn.deleted-tab.active { background: #fff1f2 !important; color: #be123c !important; }
+   
     .crm-search-input { width: 320px; padding: 10px 14px; border: 1px solid var(--crm-border); border-radius: 8px; font-size: 0.85rem; height: 40px; box-sizing: border-box; outline: none; transition: border 0.15s; }
     .crm-search-input:focus { border-color: var(--crm-primary); }
     .crm-grid-panel { background: var(--crm-panel); border: 1px solid var(--crm-border); border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); overflow: hidden; width: 100%; }
@@ -500,8 +501,8 @@
     <!-- 📢 HEADER MATRIX SUMMARY CONSOLE BANNER -->
     <header class="crm-header-strip">
       <div>
-        <h1 style="margin: 0; font-size: 1.4rem; font-weight: 850; letter-spacing: -0.02em;">CRM Operations Dashboard</h1>
-        <p style="margin: 4px 0 0 0; font-size: 0.825rem; color: var(--crm-text-muted);">Manage platform registrations, adjust accounting records, check anomalies, and provision profiles.</p>
+        <h1 style="margin: 0; font-size: 1.4rem; font-weight: 850; letter-spacing: -0.02em;">Client CRM</h1>
+        <p style="margin: 4px 0 0 0; font-size: 0.825rem; color: var(--crm-text-muted);">Customer profiles, active orders, and client account history.</p>
       </div>
       <button type="button" onclick="openIntakeDrawer()" style="background: var(--crm-primary); color: #fff; border: none; padding: 10px 20px; font-weight: 700; font-size: 0.825rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(10,31,68,0.15);">+ Add New Profile</button>
     </header>
@@ -510,30 +511,53 @@
       <!-- 📦 THE SEAMLESS CRM VIEW LAYOUT CARDS -->
       <div class="crm-deck">
         <div class="crm-card">
-          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-text-muted); letter-spacing: 0.05em;">Total Managed Profiles</span>
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-text-muted); letter-spacing: 0.05em;">Client Profiles</span>
           <h3 class="crm-card-num" id="metric-total-clients">--</h3>
         </div>
         <div class="crm-card">
-          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: #0369a1; letter-spacing: 0.05em;">Active Encryptions</span>
-          <h3 class="crm-card-num" id="metric-registered-accounts" style="color: #0369a1;">--</h3>
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: #0369a1; letter-spacing: 0.05em;">Clients With Active Orders</span>
+          <h3 class="crm-card-num" id="metric-active-orders" style="color: #0369a1;">--</h3>
         </div>
         <div class="crm-card">
-          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-rose); letter-spacing: 0.05em;">Suspended Records</span>
-          <h3 class="crm-card-num" id="metric-guest-leads" style="color: var(--crm-rose);">--</h3>
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-rose); letter-spacing: 0.05em;">Deleted Profiles</span>
+          <h3 class="crm-card-num" id="metric-deleted-profiles" style="color: var(--crm-rose);">--</h3>
         </div>
         <div class="crm-card">
-          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-emerald); letter-spacing: 0.05em;">CRM Core Status</span>
-          <h3 class="crm-card-num" style="color: var(--crm-emerald);">100%</h3>
+          <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--crm-emerald); letter-spacing: 0.05em;">Client Registry</span>
+          <h3 class="crm-card-num" style="color: var(--crm-emerald);">ONLINE</h3>
         </div>
       </div>
 
       <div class="crm-filter-bar">
-        <div class="crm-tabs">
-          <button type="button" class="crm-tab-btn active" id="tab-all" onclick="filterCrmByTab('all')">All Accounts</button>
-          <button type="button" class="crm-tab-btn" id="tab-active" onclick="filterCrmByTab('active')">Active Systems</button>
-          <button type="button" class="crm-tab-btn" id="tab-suspended" onclick="filterCrmByTab('suspended')">Suspended</button>
-        </div>
-        <input type="text" id="crmGlobalSearchField" class="crm-search-input" placeholder="Search by name, email, company...">
+       <div class="crm-tabs">
+  <button
+    type="button"
+    class="crm-tab-btn active"
+    id="tab-all"
+    onclick="filterCrmByTab('all')"
+  >
+    All Clients
+  </button>
+
+  <button
+    type="button"
+    class="crm-tab-btn"
+    id="tab-active"
+    onclick="filterCrmByTab('active')"
+  >
+    Active Clients
+  </button>
+
+  <button
+    type="button"
+    class="crm-tab-btn deleted-tab"
+    id="tab-deleted"
+    onclick="filterCrmByTab('deleted')"
+  >
+    Deleted Clients
+  </button>
+</div>
+        <input type="text" id="crmGlobalSearchField" class="crm-search-input" placeholder="Search client name, email, company...">
       </div>
 
       <div class="crm-grid-panel">
@@ -544,7 +568,7 @@
               <th>Company Entity</th>
               <th>Tracking Reference</th>
               <th>Location Bounds</th>
-              <th style="text-align: right;">Status Actions Core</th>
+              <th style="text-align: right;">Client Actions</th>
             </tr>
           </thead>
           <tbody id="admin-crm-target-box">
@@ -676,11 +700,13 @@
     const submitBtn = document.getElementById("crmSubmitBtn");
 
     const totalProfilesLabel = document.getElementById("metric-total-clients");
-    const activeAccountsLabel = document.getElementById("metric-registered-accounts");
-    const suspendedAccountsLabel = document.getElementById("metric-guest-leads");
+    const activeOrdersLabel = document.getElementById("metric-active-orders");
+    const deletedProfilesLabel = document.getElementById("metric-deleted-profiles");
 
     let liveCrmChannel = null;
     let MasterCrmProfilesCacheList = [];
+    let MasterDeletedProfilesCacheList = [];
+    let deletedArchiveAvailable = true;
     let activeFilterTab = 'all';
 
     // 🟢 CENTERED PROFILE MODAL CONTROLS
@@ -743,32 +769,223 @@
     // 📡 1. DATA ENVIRONMENT HYDRATION PIPELINE MATCHING VALIDATED SCHEMA FIELDS
     async function reloadPlatformCrmProfilesLedger() {
       try {
-        const { data: profiles, error } = await client
-          .from('client_profiles')
-          .select('*')
-          .order('updated_at', { ascending: false });
+        /*
+         * CURRENT CLIENT SOURCE OF TRUTH
+         * -------------------------------
+         * Only public.client_profiles is used for live client accounts.
+         * Staff/admin accounts are excluded by email domain.
+         */
+        const { data: profiles, error: profileError } = await client
+          .from("client_profiles")
+          .select("*")
+          .order("updated_at", { ascending: false });
 
-        if (error) throw error;
+        if (profileError) throw profileError;
 
-        MasterCrmProfilesCacheList = profiles || [];
-        
-        // Calculate Metrics Counters from validated sync status columns
+        MasterCrmProfilesCacheList = (profiles || []).filter(isCrmClientProfile);
+
+        /*
+         * DELETED CLIENT ARCHIVE
+         * ----------------------
+         * Deleted accounts are physically removed from client_profiles.
+         * The CRM therefore reads the retained customer snapshot from
+         * public.deleted_client_profiles.
+         *
+         * This table is intentionally separate from client_profiles so a
+         * deleted customer can remain visible in the CRM without being an
+         * active client account.
+         */
+        const deletedResult = await client
+          .from("deleted_client_profiles")
+          .select("*")
+          .order("deleted_at", { ascending: false });
+
+        if (deletedResult.error) {
+          deletedArchiveAvailable = false;
+          MasterDeletedProfilesCacheList = [];
+          console.warn(
+            "[CRM] deleted_client_profiles lookup unavailable. Create the archive table before using Deleted Clients:",
+            deletedResult.error
+          );
+        } else {
+          deletedArchiveAvailable = true;
+          MasterDeletedProfilesCacheList = deduplicateDeletedProfiles(
+            (deletedResult.data || [])
+              .map(normalizeDeletedProfile)
+              .filter(isCrmClientProfile)
+          );
+        }
+
+        /*
+         * ACTIVE ORDER COUNT
+         * ------------------
+         * A client is considered to have an active order when that client has
+         * at least one order row in either orders or dashboard_orders.
+         */
+        const [ordersResult, dashboardOrdersResult] = await Promise.all([
+          client.from("orders").select("email_address"),
+          client.from("dashboard_orders").select("email_address")
+        ]);
+
+        const activeOrderEmails = new Set();
+
+        if (!ordersResult.error) {
+          (ordersResult.data || []).forEach(row => {
+            const email = String(row.email_address || "").trim().toLowerCase();
+            if (email && isClientEmail(email)) activeOrderEmails.add(email);
+          });
+        } else {
+          console.warn("[CRM] orders lookup unavailable:", ordersResult.error);
+        }
+
+        if (!dashboardOrdersResult.error) {
+          (dashboardOrdersResult.data || []).forEach(row => {
+            const email = String(row.email_address || "").trim().toLowerCase();
+            if (email && isClientEmail(email)) activeOrderEmails.add(email);
+          });
+        } else {
+          console.warn("[CRM] dashboard_orders lookup unavailable:", dashboardOrdersResult.error);
+        }
+
         const totalCount = MasterCrmProfilesCacheList.length;
-        const activeCount = MasterCrmProfilesCacheList.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'active').length;
-        const suspendedCount = MasterCrmProfilesCacheList.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'suspended').length;
+        const deletedProfileCount = MasterDeletedProfilesCacheList.length;
+
+        const currentClientEmails = new Set(
+          MasterCrmProfilesCacheList
+            .map(profile => String(profile.email_address || "").trim().toLowerCase())
+            .filter(Boolean)
+        );
+
+        const activeOrderClientCount = Array.from(activeOrderEmails)
+          .filter(email => currentClientEmails.has(email))
+          .length;
 
         if (totalProfilesLabel) totalProfilesLabel.textContent = totalCount;
-        if (activeAccountsLabel) activeAccountsLabel.textContent = activeCount;
-        if (suspendedAccountsLabel) suspendedAccountsLabel.textContent = suspendedCount;
+        if (activeOrdersLabel) activeOrdersLabel.textContent = activeOrderClientCount;
+        if (deletedProfilesLabel) deletedProfilesLabel.textContent = deletedProfileCount;
 
         applyFuzzyFiltrationLookupGrid();
-
       } catch (fault) {
         console.error("✕ CRM Hydration crashed:", fault);
         if (tableBody) {
-          tableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:var(--crm-rose); font-weight:700;">✕ Connection Error: ${fault.message}</td></tr>`;
+          tableBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:var(--crm-rose); font-weight:700;">✕ Connection Error: ${escapeCrmTextHtml(fault.message)}</td></tr>`;
         }
       }
+    }
+
+    function deduplicateDeletedProfiles(profiles) {
+      /*
+       * A customer can have more than one historical archive row if the
+       * account was deleted more than once or an older archive routine
+       * created duplicate snapshots. The CRM should display one deleted
+       * customer, not one row per archive event. Keep the newest archive
+       * record for each normalized email address.
+       */
+      const byEmail = new Map();
+
+      (profiles || []).forEach(profile => {
+        const email = String(profile?.email_address || '').trim().toLowerCase();
+        if (!email) return;
+
+        const existing = byEmail.get(email);
+        if (!existing) {
+          byEmail.set(email, profile);
+          return;
+        }
+
+        const existingTime = Date.parse(existing.deleted_at || '') || 0;
+        const currentTime = Date.parse(profile.deleted_at || '') || 0;
+
+        if (currentTime >= existingTime) {
+          byEmail.set(email, profile);
+        }
+      });
+
+      return Array.from(byEmail.values()).sort((a, b) => {
+        const aTime = Date.parse(a?.deleted_at || '') || 0;
+        const bTime = Date.parse(b?.deleted_at || '') || 0;
+        return bTime - aTime;
+      });
+    }
+
+    function normalizeDeletedProfile(row) {
+      /* Supports both flat archive columns and a profile_snapshot JSON object. */
+      const snapshot = row?.profile_snapshot && typeof row.profile_snapshot === "object"
+        ? row.profile_snapshot
+        : {};
+
+      return {
+        ...snapshot,
+        ...row,
+        id: row?.original_profile_id || row?.profile_id || row?.id || snapshot?.id || "",
+        email_address: row?.email_address || snapshot?.email_address || "",
+        first_name: row?.first_name || snapshot?.first_name || "",
+        last_name: row?.last_name || snapshot?.last_name || "",
+        company_name: row?.company_name || snapshot?.company_name || "",
+        phone_number: row?.phone_number || snapshot?.phone_number || "",
+        street_address: row?.street_address || snapshot?.street_address || "",
+        city: row?.city || snapshot?.city || "",
+        state: row?.state || snapshot?.state || "",
+        zip_code: row?.zip_code || snapshot?.zip_code || "",
+        tracking_number: row?.tracking_number || snapshot?.tracking_number || "",
+        sync_encryption_status: row?.sync_encryption_status || snapshot?.sync_encryption_status || "Deleted",
+        avatar_url: row?.avatar_url || snapshot?.avatar_url || "",
+        deleted_at: row?.deleted_at || row?.created_at || "",
+        deleted_by: row?.deleted_by || row?.deleted_by_email || ""
+      };
+    }
+
+    function isClientEmail(email) {
+      const normalized = String(email || "").trim().toLowerCase();
+      if (!normalized) return false;
+
+      // Staff/admin identities are not CRM client records.
+      return !normalized.endsWith("@filings4u.com");
+    }
+
+    function isCrmClientProfile(profile) {
+      return isClientEmail(profile?.email_address);
+    }
+
+    function isDeletionAuditEvent(event) {
+      const action = String(event?.event_action || "").toLowerCase();
+      const category = String(event?.event_category || "").toLowerCase();
+      const description = String(event?.event_description || "").toLowerCase();
+
+      return (
+        action.includes("delet") ||
+        category.includes("delet") ||
+        description.includes("deleted client") ||
+        description.includes("deleted profile") ||
+        description.includes("client profile deleted") ||
+        description.includes("customer account deleted")
+      );
+    }
+
+    function getDeletionAuditKey(event) {
+      const metadata = event?.payload_metadata;
+
+      if (metadata && typeof metadata === "object") {
+        const possibleKeys = [
+          "profile_id",
+          "client_profile_id",
+          "user_id",
+          "auth_user_id",
+          "email_address",
+          "client_email",
+          "customer_email",
+          "target_email"
+        ];
+
+        for (const key of possibleKeys) {
+          const value = metadata[key];
+          if (value !== undefined && value !== null && String(value).trim()) {
+            return String(value).trim().toLowerCase();
+          }
+        }
+      }
+
+      return String(event?.event_description || event?.event_action || "").trim().toLowerCase();
     }
 
     // 📊 2. PROCESS COMBINED SEGMENTED TABS AND FUZZY FILTER lookups
@@ -782,64 +999,88 @@
 
     function applyFuzzyFiltrationLookupGrid() {
       const searchCriteria = searchField ? searchField.value.toLowerCase().trim() : '';
-      let dataset = MasterCrmProfilesCacheList;
+      let dataset;
 
-      // Slice dataset by tab category selectors
-      if (activeFilterTab === 'active') {
-        dataset = dataset.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'active');
-      } else if (activeFilterTab === 'suspended') {
-        dataset = dataset.filter(p => String(p.sync_encryption_status || '').toLowerCase() === 'suspended');
+      if (activeFilterTab === 'deleted') {
+        dataset = [...MasterDeletedProfilesCacheList];
+      } else {
+        dataset = MasterCrmProfilesCacheList.filter(isCrmClientProfile);
+
+        if (activeFilterTab === 'active') {
+          dataset = dataset.filter(p =>
+            String(p.sync_encryption_status || '').toLowerCase() === 'active'
+          );
+        }
       }
 
-      // Layer text matching configurations natively over category selections
       if (searchCriteria) {
         dataset = dataset.filter(p => {
-          const first = (p.first_name || '').toLowerCase();
-          const last = (p.last_name || '').toLowerCase();
+          const first = String(p.first_name || '').toLowerCase();
+          const last = String(p.last_name || '').toLowerCase();
           const fullName = `${first} ${last}`;
           return (
             fullName.includes(searchCriteria) ||
             String(p.email_address || '').toLowerCase().includes(searchCriteria) ||
-            String(p.company_name || '').toLowerCase().includes(searchCriteria)
+            String(p.company_name || '').toLowerCase().includes(searchCriteria) ||
+            String(p.tracking_number || '').toLowerCase().includes(searchCriteria)
           );
         });
       }
 
-      renderCrmTableLedgerGrid(dataset);
+      renderCrmTableLedgerGrid(dataset, activeFilterTab === 'deleted');
     }
 
     // 📊 3. DENSE REALTIME GRID GENERATOR ROW ASSEMBLER MATRIX
-    function renderCrmTableLedgerGrid(profilesList) {
+    function renderCrmTableLedgerGrid(profilesList, isDeletedView = false) {
       if (!tableBody) return;
 
+      if (isDeletedView && !deletedArchiveAvailable) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="padding:48px; text-align:center; color:#be123c; font-weight:700;">
+          Deleted client archive is not available yet. Create the <code>deleted_client_profiles</code> table and have the delete service archive the customer before removing the Auth account.
+        </td></tr>`;
+        return;
+      }
+
       if (!profilesList || profilesList.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="padding:48px; text-align:center; color:var(--crm-text-muted); font-style:italic;">No custom tracking profiles found matching active scope constraints.</td></tr>`;
+        const message = isDeletedView
+          ? "No deleted client profiles found."
+          : "No client profiles found matching the current filters.";
+        tableBody.innerHTML = `<tr><td colspan="5" style="padding:48px; text-align:center; color:var(--crm-text-muted); font-style:italic;">${message}</td></tr>`;
         return;
       }
 
       tableBody.innerHTML = "";
+
       profilesList.forEach(profile => {
         const tr = document.createElement("tr");
-
         const first = profile.first_name || '';
         const last = profile.last_name || '';
         const compName = profile.company_name || "Not Specified";
         const trackRef = profile.tracking_number || "No Ref Allocated";
-        const status = String(profile.sync_encryption_status || 'Active').trim();
-        const displayLocation = (profile.city && profile.state) ? `${profile.city}, ${profile.state}` : "Awaiting Input...";
+        const status = String(profile.sync_encryption_status || (isDeletedView ? 'Deleted' : 'Active')).trim();
+        const displayLocation = (profile.city && profile.state)
+          ? `${profile.city}, ${profile.state}`
+          : "Awaiting Input...";
 
-        let badgeMarkup = `<span class="crm-badge active">Active</span>`;
-        if (status.toLowerCase() === 'suspended') {
-          badgeMarkup = `<span class="crm-badge suspended">Suspended</span>`;
-        }
+        let badgeMarkup = isDeletedView
+          ? `<span class="crm-badge" style="background:#fff1f2;color:#be123c;">Deleted</span>`
+          : `<span class="crm-badge active">Active</span>`;
+
+        const deletedDate = profile.deleted_at
+          ? new Date(profile.deleted_at).toLocaleString()
+          : "Unknown";
+
+        const safeEmail = escapeCrmAttribute(profile.email_address);
+        const safeId = escapeCrmAttribute(profile.id);
 
         tr.innerHTML = `
           <td style="font-size:0.9rem;">
             <div style="display:flex; align-items:center; gap:10px;">
-              <img src="${profile.avatar_url || 'images/fav.png'}" style="width:32px; height:32px; border-radius:50%; background:#f1f5f9; object-fit:cover; border:1px solid var(--crm-border);">
+              <img src="${escapeCrmAttribute(profile.avatar_url || 'images/fav.png')}" style="width:32px; height:32px; border-radius:50%; background:#f1f5f9; object-fit:cover; border:1px solid var(--crm-border);" onerror="this.src='images/fav.png';">
               <div>
                 <div style="font-weight:700; color:var(--crm-text-dark);">${escapeCrmTextHtml(first)} ${escapeCrmTextHtml(last)}</div>
                 <div style="font-size:0.75rem; color:var(--crm-text-muted); font-family:monospace; margin-top:2px;">${escapeCrmTextHtml(profile.email_address)}</div>
+                ${isDeletedView ? `<div style="font-size:0.68rem; color:#be123c; margin-top:3px;">Deleted: ${escapeCrmTextHtml(deletedDate)}</div>` : ''}
               </div>
             </div>
           </td>
@@ -849,8 +1090,10 @@
           <td style="text-align:right; white-space:nowrap;">
             <div style="display:inline-flex; align-items:center; gap:8px;">
               ${badgeMarkup}
-              <button type="button" class="crm-action-btn" onclick="navigateToCustomerDetailedProfile('${profile.email_address}')">View</button>
-              <button type="button" class="crm-action-btn delete" onclick="triggerCustomerProfileTermination('${profile.id}', '${profile.email_address}')">Delete</button>
+              ${isDeletedView
+                ? `<button type="button" class="crm-action-btn" onclick="restoreDeletedCustomerProfile('${safeId}', '${safeEmail}')">Restore</button>`
+                : `<button type="button" class="crm-action-btn" onclick="navigateToCustomerDetailedProfile('${safeEmail}')">View</button>
+                   <button type="button" class="crm-action-btn delete" onclick="triggerCustomerProfileTermination('${safeId}', '${safeEmail}')">Delete</button>`}
             </div>
           </td>
         `;
@@ -916,7 +1159,7 @@
     const modalConfirmBtn = document.getElementById("crmModalConfirmDeleteBtn");
     const deleteModalMessage = document.getElementById("crmDeleteModalMessage");
 
-    // Inline deletion status. No browser alert() dialogs are used.
+    // Inline deletion status inside the confirmation modal.
     let deleteStatusBox = document.getElementById("crmDeleteStatusBox");
 
     if (!deleteStatusBox && deleteModalMessage) {
@@ -1107,8 +1350,7 @@
           console.error("✕ CRM Deletion execution error:", fault);
 
           // IMPORTANT:
-          // Never use alert() here. The error stays inside the
-          // branded confirmation modal.
+          // Keep deletion errors inside the branded confirmation modal.
           showDeleteModalStatus(
             `✕ ${fault?.message || "The customer account could not be deleted."}`,
             true
@@ -1121,6 +1363,194 @@
         }
       });
     }
+
+    // ♻️ RESTORE A DELETED CLIENT THROUGH THE SECURE EDGE FUNCTION
+    window.restoreDeletedCustomerProfile = async function(profileUuid, targetEmail) {
+      if (!profileUuid || !targetEmail) return;
+
+      openRestoreCustomerModal(profileUuid, targetEmail);
+
+    };
+
+    let activeRestoreUuidPointer = null;
+    let activeRestoreEmailPointer = null;
+
+    window.openRestoreCustomerModal = function(profileUuid, targetEmail) {
+      activeRestoreUuidPointer = profileUuid;
+      activeRestoreEmailPointer = targetEmail;
+
+      const overlay = document.getElementById("crmRestoreModalOverlay");
+      const target = document.getElementById("crmRestoreTargetEmail");
+      const status = document.getElementById("crmRestoreStatusBox");
+      const button = document.getElementById("crmModalConfirmRestoreBtn");
+
+      if (!overlay || !target || !button) return;
+
+      target.textContent = targetEmail;
+      if (status) {
+        status.textContent = "";
+        status.style.display = "none";
+      }
+
+      button.disabled = false;
+      button.style.opacity = "1";
+      button.style.cursor = "pointer";
+      button.textContent = "Restore Customer";
+
+      overlay.style.display = "flex";
+      requestAnimationFrame(() => {
+        overlay.style.opacity = "1";
+        overlay.firstElementChild.style.transform = "scale(1)";
+      });
+    };
+
+    window.closeCrmRestoreModal = function() {
+      const overlay = document.getElementById("crmRestoreModalOverlay");
+      if (!overlay) return;
+
+      overlay.style.opacity = "0";
+      overlay.firstElementChild.style.transform = "scale(0.95)";
+
+      setTimeout(() => {
+        overlay.style.display = "none";
+        activeRestoreUuidPointer = null;
+        activeRestoreEmailPointer = null;
+        const status = document.getElementById("crmRestoreStatusBox");
+        const button = document.getElementById("crmModalConfirmRestoreBtn");
+        if (status) {
+          status.textContent = "";
+          status.style.display = "none";
+        }
+        if (button) {
+          button.disabled = false;
+          button.style.opacity = "1";
+          button.style.cursor = "pointer";
+          button.textContent = "Restore Customer";
+        }
+      }, 200);
+    };
+
+    function showRestoreModalStatus(message, isError = true) {
+      const status = document.getElementById("crmRestoreStatusBox");
+      if (!status) return;
+      status.textContent = message;
+      status.style.display = "block";
+      status.style.background = isError ? "#fff1f2" : "#ecfdf5";
+      status.style.color = isError ? "#be123c" : "#047857";
+      status.style.border = isError ? "1px solid #fecdd3" : "1px solid #a7f3d0";
+    }
+
+    const restoreConfirmBtn = document.getElementById("crmModalConfirmRestoreBtn");
+
+    if (restoreConfirmBtn) {
+      restoreConfirmBtn.addEventListener("click", async () => {
+        if (!activeRestoreUuidPointer || !activeRestoreEmailPointer) return;
+
+        const profileUuid = activeRestoreUuidPointer;
+        const targetEmail = activeRestoreEmailPointer;
+
+        restoreConfirmBtn.disabled = true;
+        restoreConfirmBtn.style.opacity = ".65";
+        restoreConfirmBtn.style.cursor = "wait";
+        restoreConfirmBtn.textContent = "Restoring Customer...";
+        const restoreStatus = document.getElementById("crmRestoreStatusBox");
+        if (restoreStatus) restoreStatus.style.display = "none";
+
+        try {
+
+        const { data: sessionResult, error: sessionError } = await client.auth.getSession();
+        let adminSession = sessionResult?.session || null;
+
+        if (sessionError) console.warn("[CRM Restore] Session lookup failed:", sessionError);
+
+        if (!adminSession?.access_token) {
+          const { data: refreshedSession, error: refreshError } = await client.auth.refreshSession();
+          if (!refreshError) adminSession = refreshedSession?.session || null;
+        }
+
+        if (!adminSession?.access_token) {
+          throw new Error("Your admin session has expired. Please sign in again before restoring a customer.");
+        }
+
+        const { data: restoreResult, error: restoreError } = await client.functions.invoke(
+          "restore-client-profile",
+          {
+            body: {
+              profile_id: profileUuid,
+              email_address: targetEmail
+            },
+            headers: {
+              Authorization: `Bearer ${adminSession.access_token}`
+            }
+          }
+        );
+
+        if (restoreError) {
+          let message = restoreError.message || "The restore service could not be reached.";
+          try {
+            const response = restoreError.context;
+            if (response && typeof response.clone === "function") {
+              const cloned = response.clone();
+              const type = cloned.headers?.get?.("content-type") || "";
+              if (type.includes("application/json")) {
+                const payload = await cloned.json();
+                message = payload?.error || payload?.message || message;
+              } else {
+                const text = (await cloned.text()).trim();
+                if (text) message = text;
+              }
+            }
+          } catch (_) {}
+          throw new Error(`Restore service error: ${message}`);
+        }
+
+        if (!restoreResult?.success) {
+          throw new Error(
+            restoreResult?.message ||
+            "The restore service did not confirm the customer was restored."
+          );
+        }
+
+        /*
+         * The restore service has confirmed success. Close the modal first
+         * so the UI cannot remain visually stuck in the "Restoring Customer"
+         * state while the CRM ledger refreshes.
+         */
+        window.closeCrmRestoreModal();
+
+        await reloadPlatformCrmProfilesLedger();
+
+        /* Return the restored customer to the active client registry. */
+        filterCrmByTab('all');
+        } catch (fault) {
+          console.error("✕ CRM Restore failed:", fault);
+          showRestoreModalStatus(
+            `✕ ${fault?.message || "The customer could not be restored."}`,
+            true
+          );
+
+          restoreConfirmBtn.disabled = false;
+          restoreConfirmBtn.style.opacity = "1";
+          restoreConfirmBtn.style.cursor = "pointer";
+          restoreConfirmBtn.textContent = "Try Again";
+        }
+      });
+    }
+
+    document.getElementById("crmRestoreModalOverlay")?.addEventListener("click", (event) => {
+      if (event.target === event.currentTarget) {
+        window.closeCrmRestoreModal();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        const restoreOverlay = document.getElementById("crmRestoreModalOverlay");
+        if (restoreOverlay?.style.display === "flex") {
+          window.closeCrmRestoreModal();
+        }
+      }
+    });
 
     // 📡 6. CREATE AUTH USER THROUGH EDGE FUNCTION, THEN MAP CLIENT PROFILE
     if (quickForm) {
@@ -1426,6 +1856,12 @@
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    function escapeCrmAttribute(s) {
+      return escapeCrmTextHtml(s)
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
     // 📡 7. OPEN DYNAMIC OVER-THE-AIR CHANNELS FOR CRM REPLICATION BROADCASTS
     async function bindLiveCrmRealtimeFeed() {
       if (liveCrmChannel) liveCrmChannel.unsubscribe();
@@ -1434,6 +1870,10 @@
         .channel('admin-crm-profiles-live-sync-stream-channel')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'client_profiles' }, async () => {
           console.log("⚡ CRM Matrix Sync: client_profiles modification caught. Re-rendering datagrid...");
+          await reloadPlatformCrmProfilesLedger();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'deleted_client_profiles' }, async () => {
+          console.log("⚡ CRM Matrix Sync: deleted_client_profiles modification caught. Re-rendering deleted ledger...");
           await reloadPlatformCrmProfilesLedger();
         })
         .subscribe();
@@ -1445,6 +1885,33 @@
   });
   </script>
 
+
+
+  <!-- ♻️ CUSTOM RESTORE CONFIRMATION MODAL -->
+  <div id="crmRestoreModalOverlay" style="position:fixed; inset:0; width:100vw; height:100vh; background:rgba(15,23,42,.34); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:1000; display:none; align-items:center; justify-content:center; opacity:0; transition:opacity .2s ease;">
+    <div style="background:#fff; border:1px solid #e2e8f0; width:480px; max-width:calc(100% - 32px); border-radius:16px; padding:32px; box-shadow:0 24px 60px rgba(15,23,42,.18); display:flex; flex-direction:column; gap:18px; transform:scale(.95); transition:transform .2s cubic-bezier(.16,1,.3,1);">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="background:#ecfdf5; color:#047857; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.2rem;">↻</div>
+        <div>
+          <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:#0f172a;">Restore Customer</h3>
+          <div style="font-size:.72rem; color:#64748b; margin-top:3px;">Return this customer to the active CRM.</div>
+        </div>
+      </div>
+
+      <p style="margin:0; font-size:.875rem; color:#475569; line-height:1.55;">
+        Restore the customer account associated with
+        <strong id="crmRestoreTargetEmail" style="color:#0f172a; word-break:break-all;"></strong>?
+        The customer will be recreated as an active client profile.
+      </p>
+
+      <div id="crmRestoreStatusBox" style="display:none; width:100%; box-sizing:border-box; padding:11px 13px; border-radius:8px; font-size:.78rem; font-weight:700; line-height:1.45;"></div>
+
+      <div style="display:flex; gap:12px; justify-content:flex-end; width:100%; margin-top:4px;">
+        <button type="button" onclick="closeCrmRestoreModal()" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:10px 18px; font-weight:700; font-size:.85rem; border-radius:8px; cursor:pointer;">Cancel</button>
+        <button type="button" id="crmModalConfirmRestoreBtn" style="background:#047857; color:#fff; border:none; padding:10px 18px; font-weight:700; font-size:.85rem; border-radius:8px; cursor:pointer; box-shadow:0 4px 6px rgba(4,120,87,.18);">Restore Customer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 🟢 CUSTOM CONFIRMATION MODAL DIALOG CONTAINER -->
   <div id="crmDeleteModalOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.3); backdrop-filter: blur(4px); z-index: 999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease-in-out;">

@@ -1,10 +1,14 @@
-<!-- admin-documents -->
-
-
 <!DOCTYPE html>
 <html lang="en">
-    <script src="assets/js/supabase-config.js"></script>
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Document Vault | filings4u Staff</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <script src="assets/js/supabase-config.js"></script>
+
   <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
 <script>
   (function() {
@@ -62,761 +66,2034 @@
   })();
 </script>
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Document Vault Explorer | filings4u Staff</title>
-  <meta name="theme-color" content="#c15254">
-  <link rel="icon" type="image/png" href="images/fav.png">
-  
   <style>
-    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
-    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
-    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
-    
-    /* SIDEBAR SYSTEM MATRIX */
-    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
-    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
-    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
-    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
-    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
-    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
-    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
-    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
-    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
-    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
-    /* MAIN PLATFORM WORKSPACE CONTAINER */
-    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
-    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
-    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
-    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
-    
-    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
-    @media (min-width: 1200px) { .content-container { grid-template-columns: 420px 1fr; } }
-    
-    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; height: max-content; }
-    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
-    
-    /* UPLOAD COMPONENT FORM STYLES */
-    .form-group { text-align: left; margin-bottom: 15px; }
-    .form-group label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-dark); }
-    .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--text-dark); background: #f8fafc; outline: none; box-sizing: border-box; }
-    .form-group input[type="file"] { padding: 8px 12px; background: #ffffff; cursor: pointer; }
-    .form-group input:focus, .form-group select:focus { background: var(--white); border-color: var(--staff-red); }
-    .action-btn { width: 100%; background: var(--text-dark); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
-    
-    /* FILE LIST ACTIONS BUTTONS */
-    .document-action-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; margin-right: 4px; text-decoration: none; display: inline-block; }
-    .document-action-btn.delete-type { background: #fef2f2; color: var(--staff-red); border-color: rgba(193,82,84,0.15); }
-    .document-action-btn:hover { background: var(--text-dark); color: var(--white); }
-    .document-action-btn.delete-type:hover { background: var(--staff-red); color: var(--white); }
+    :root {
+      --bg: #f4f6f9;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #e2e8f0;
+      --line-soft: #edf2f7;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --muted-2: #94a3b8;
+      --red: #c15254;
+      --green: #059669;
+      --blue: #2563eb;
+      --amber: #d97706;
+      --sidebar-width: 260px;
+      --shadow: 0 10px 30px rgba(15,23,42,.045);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      min-height: 100vh !important;
+      background: var(--bg) !important;
+      color: var(--ink) !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      overflow-x: hidden !important;
+    }
+
+    .dashboard-wrapper {
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+    }
+
+    /* Navigation is intentionally left to the existing admin-navigation.js system. */
+    .portal-main {
+      min-height: 100vh;
+      margin-left: var(--sidebar-width) !important;
+      width: calc(100% - var(--sidebar-width)) !important;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .portal-header {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      width: 100%;
+      min-height: 84px;
+      padding: 18px 34px;
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .header-copy { min-width: 0; }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: var(--red);
+      font-size: .64rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .13em;
+    }
+    .eyebrow-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(5,150,105,.1);
+    }
+    .page-title {
+      margin: 0;
+      font-size: clamp(1.45rem, 2vw, 2rem);
+      line-height: 1.05;
+      letter-spacing: -.04em;
+      font-weight: 900;
+    }
+    .page-subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
+    .header-clock {
+      flex: 0 0 auto;
+      min-width: 205px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 10px 14px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: #334155;
+      font: 700 .76rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .clock-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
+
+    .vault-workspace {
+      width: 100%;
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 28px 34px 50px;
+    }
+
+    .vault-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 17px 18px;
+      box-shadow: var(--shadow);
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: .62rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .stat-value {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.65rem;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -.04em;
+    }
+    .stat-meta {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted-2);
+      font-size: .67rem;
+      font-weight: 650;
+    }
+    .stat-card.files .stat-value { color: var(--blue); }
+    .stat-card.storage .stat-value { color: var(--green); }
+    .stat-card.clients .stat-value { color: var(--amber); }
+    .stat-card.recent .stat-value { color: var(--red); }
+
+    .vault-layout {
+      display: grid;
+      grid-template-columns: minmax(330px, 390px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(to bottom, #fff, #fbfcfe);
+    }
+    .panel-title {
+      margin: 0;
+      font-size: .94rem;
+      font-weight: 900;
+      letter-spacing: -.015em;
+    }
+    .panel-description {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .68rem;
+      line-height: 1.45;
+    }
+    .panel-body { padding: 20px; }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .field-label-text {
+      display: block;
+      margin-bottom: 6px;
+      color: #475569;
+      font-size: .62rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .form-input-element {
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      background: #f8fafc;
+      color: var(--ink);
+      font-size: .78rem;
+      font-weight: 600;
+      outline: none;
+      transition: .15s ease;
+    }
+    .form-input-element:focus {
+      background: #fff;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.09);
+    }
+    input[type="file"].form-input-element {
+      padding: 7px 9px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .upload-dropzone {
+      border: 1px dashed #cbd5e1;
+      border-radius: 11px;
+      padding: 15px;
+      background: #f8fafc;
+      transition: .15s ease;
+    }
+    .upload-dropzone.dragover {
+      border-color: var(--blue);
+      background: #eff6ff;
+    }
+    .upload-file-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: #eff6ff;
+      color: var(--blue);
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .upload-help {
+      margin-top: 6px;
+      color: var(--muted-2);
+      font-size: .63rem;
+      line-height: 1.4;
+    }
+
+    .action-btn-primary {
+      width: 100%;
+      min-height: 44px;
+      border: 0;
+      border-radius: 9px;
+      background: var(--ink);
+      color: #fff;
+      padding: 11px 14px;
+      font-size: .78rem;
+      font-weight: 850;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .action-btn-primary:hover:not(:disabled) {
+      background: #1e293b;
+      transform: translateY(-1px);
+    }
+    .action-btn-primary:disabled { opacity: .55; cursor: wait; }
+
+    .status-msg-slat {
+      display: none;
+      margin: 0 0 14px;
+      padding: 11px 12px;
+      border-radius: 9px;
+      font-size: .7rem;
+      font-weight: 750;
+      line-height: 1.45;
+    }
+
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .toolbar-copy {
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 650;
+    }
+    .toolbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .vault-search {
+      width: 230px;
+      height: 36px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: none;
+      background: #f8fafc;
+      color: var(--ink);
+      font-size: .72rem;
+      font-weight: 600;
+    }
+    .vault-search:focus {
+      background: #fff;
+      border-color: #94a3b8;
+    }
+    .refresh-btn {
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font-size: .7rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .refresh-btn:hover { background: #f8fafc; }
+
+    .table-responsive-wrapper {
+      overflow-x: auto;
+      width: 100%;
+    }
+    .premium-data-table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: .75rem;
+    }
+    .premium-data-table th {
+      padding: 11px 13px;
+      color: #64748b;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--line);
+      font-size: .6rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+    .premium-data-table td {
+      padding: 13px;
+      border-bottom: 1px solid var(--line-soft);
+      vertical-align: middle;
+    }
+    .premium-data-table tbody tr:hover { background: #fbfdff; }
+    .owner-cell {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #475569;
+      font: 700 .68rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .file-name {
+      color: var(--ink);
+      font-size: .75rem;
+      font-weight: 850;
+    }
+    .file-meta {
+      margin-top: 3px;
+      color: var(--muted-2);
+      font-size: .61rem;
+      font-weight: 600;
+    }
+    .admin-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: .62rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .path-cell {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font: .62rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .document-action-btn {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 6px 9px;
+      background: #f8fafc;
+      color: #334155;
+      font-size: .62rem;
+      font-weight: 850;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .document-action-btn:hover { background: var(--ink); color: #fff; }
+
+    .empty-state {
+      padding: 45px 20px !important;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty-state-icon {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 9px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: #f1f5f9;
+      color: #64748b;
+      font-weight: 900;
+    }
+    .empty-state strong {
+      display: block;
+      color: var(--ink);
+      font-size: .8rem;
+      margin-bottom: 4px;
+    }
+    .empty-state span { font-size: .68rem; }
+
+    /* Centered document inspection modal */
+    .asset-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(15,23,42,.48);
+      backdrop-filter: blur(8px);
+    }
+    .asset-modal.open { display: flex; }
+    .asset-modal-card {
+      width: min(1080px, 96vw);
+      height: min(850px, 90vh);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 30px 90px rgba(15,23,42,.24);
+    }
+    .asset-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 15px 19px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .modal-kicker {
+      color: var(--red);
+      font-size: .58rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+    .modal-title {
+      margin: 3px 0 0;
+      color: var(--ink);
+      font-size: .9rem;
+      font-weight: 900;
+    }
+    .modal-owner {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: .65rem;
+    }
+    .modal-close {
+      width: 33px;
+      height: 33px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #64748b;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .modal-close:hover { background: #f1f5f9; color: var(--ink); }
+    .modal-preview {
+      flex: 1;
+      min-height: 0;
+      padding: 10px;
+      background: #eef2f7;
+    }
+    .modal-preview iframe {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .asset-modal-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 12px 19px;
+      border-top: 1px solid var(--line);
+      background: #f8fafc;
+    }
+    .modal-path {
+      min-width: 0;
+      max-width: 65%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font: .61rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .modal-download {
+      display: none;
+      text-decoration: none;
+      padding: 8px 11px;
+      border-radius: 7px;
+      background: var(--blue);
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 850;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 100000;
+      max-width: 420px;
+      padding: 13px 15px;
+      border-radius: 10px;
+      color: #fff;
+      background: var(--ink);
+      box-shadow: 0 20px 50px rgba(15,23,42,.2);
+      font-size: .72rem;
+      font-weight: 750;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #047857; }
+    .toast.error { background: #991b1b; }
+
+    @media (max-width: 1100px) {
+      .vault-layout { grid-template-columns: 1fr; }
+      .vault-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 900px) {
+      .portal-main { margin-left: 0 !important; width: 100% !important; }
+      .portal-header { padding: 18px 20px; }
+      .vault-workspace { padding: 20px 16px 35px; }
+    }
+    @media (max-width: 650px) {
+      .portal-header { align-items: flex-start; flex-direction: column; }
+      .header-clock { width: 100%; }
+      .vault-stats { grid-template-columns: 1fr 1fr; gap: 9px; }
+      .stat-card { padding: 14px; }
+      .stat-value { font-size: 1.35rem; }
+      .table-toolbar { align-items: stretch; flex-direction: column; }
+      .toolbar-controls { width: 100%; }
+      .vault-search { flex: 1; width: auto; }
+      .asset-modal { padding: 10px; }
+      .asset-modal-card { width: 100%; height: 94vh; }
+      .asset-modal-foot { align-items: flex-start; flex-direction: column; }
+      .modal-path { max-width: 100%; }
+    }
+
+            /* ==========================================================================
+           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --hub-bg: #f5f7fa;
+            --hub-panel: #ffffff;
+            --hub-dark: #0f172a;
+            --hub-text: #334155;
+            --hub-muted: #64748b;
+            --hub-border: #e2e8f0;
+            --hub-red: #c15254;
+            --hub-green: #059669;
+            --hub-blue: #2563eb;
+            --hub-purple: #7c3aed;
+            --hub-amber: #d97706;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important; /* Forces normal native scrolling rules */
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
+            margin-left: var(--sidebar-width) !important; 
+            width: calc(100% - var(--sidebar-width)) !important;
+            min-height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 20px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        /* ⏱️ Input-styled unified date/time pill element */
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            font-size: 0.82rem !important;
+            width: 220px !important;
+            outline: none !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            color: var(--text-dark) !important;
+        }
+
+        .search-input:focus {
+            background: var(--white) !important;
+            border-color: var(--emerald) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
+        }
+
+ 
+
   </style>
-  <style>
-.content-container {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.custom-full-stretch-card {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 12px !important;
-  padding: 24px !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.form-split-row {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 24px !important;
-  margin-bottom: 16px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-@media (max-width: 768px) {
-  .form-split-row { grid-template-columns: 1fr !important; gap: 16px !important; }
-}
-
-.form-group {
-  display: flex !important;
-  flex-direction: column !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.field-label-text {
-  font-size: 0.72rem !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  font-weight: 700 !important;
-  margin-bottom: 6px !important;
-  color: #475569 !important;
-}
-
-.form-input-element {
-  width: 100% !important;
-  padding: 11px 14px !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 8px !important;
-  font-size: 0.9rem !important;
-  color: #0f172a !important;
-  box-sizing: border-box !important;
-}
-.form-input-element:focus {
-  outline: none !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
-}
-
-.action-btn-primary {
-  width: 100% !important;
-  padding: 13px !important;
-  background-color: #0f172a !important;
-  color: #ffffff !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-weight: 700 !important;
-  font-size: 0.9rem !important;
-  cursor: pointer;
-}
-
-.table-responsive-wrapper { overflow-x: auto !important; width: 100% !important; }
-.premium-data-table { width: 100% !important; border-collapse: collapse !important; text-align: left !important; font-size: 0.85rem !important; }
-.premium-data-table th { padding: 12px 14px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; font-size: 0.72rem !important; letter-spacing: 0.05em !important; border-bottom: 2px solid #e2e8f0 !important; }
-.table-initialization-loader { padding: 30px !important; text-align: center !important; color: #64748b !important; }
-
-.status-msg-slat { padding: 12px !important; border-radius: 8px !important; font-size: 0.85rem !important; font-weight: 600 !important; margin-bottom: 16px !important; }
-</style>
-
-
-
-
-
 </head>
+
 <body>
   <div class="dashboard-wrapper">
-
     <main class="portal-main">
       <header class="portal-header">
-        <div class="welcome-text">
-          <h1>Document Vault & Storage Ledger</h1>
-          <p>Audit user asset uploads, delete dead files, and transmit finalized incorporation certificates securely</p>
+        <div class="header-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> Document Operations</div>
+          <h1 class="page-title">Document Vault</h1>
+          <p class="page-subtitle">Securely transmit, audit, inspect, and manage client document assets from one workspace.</p>
         </div>
-
-        <div style="display: flex !important; align-items: center !important; gap: 12px !important; background: #ffffff !important; border: 1px solid #e2e8f0 !important; padding: 10px 16px !important; border-radius: 8px !important; box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;">
-        <span style="width: 8px; height: 8px; background: #16a34a; border-radius: 50%; display: inline-block;"></span>
-        <span style="font-size: 0.82rem; font-weight: 700; color: #334155; font-family: monospace !important;" id="portal-clock">--/--/----, --:--:-- --</span>
-      </div>
+        <div class="header-clock">
+          <span class="clock-dot"></span>
+          <span id="portal-clock">--/--/----, --:--:-- --</span>
+        </div>
       </header>
 
-<main class="portal-main" style="width: 100% !important; max-width: 100% !important; padding: 24px !important; margin: 0 !important; box-sizing: border-box !important;">
-<div class="content-container" style="display: flex; flex-direction: column; gap: 32px; width: 100%; box-sizing: border-box;"> 
-  <!-- 📦 TOP LAYER: FULL-WIDTH TRANSMIT CARD PANEL --> 
-  <div class="console-card custom-full-stretch-card" style="width: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-sizing: border-box;"> 
-    <div class="card-header-wrapper" style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;"> 
-      <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Transmit Document to Client</h2> 
-    </div> 
-    <form id="vaultTransmissionForm" novalidate class="styled-clean-form" style="display: flex; flex-direction: column; gap: 16px; width: 100%;"> 
-      
-      <div class="form-group"> 
-        <label class="field-label-text">Target Customer Profile Recipient</label> 
-        <select id="transmitRecipientEmail" class="form-input-element" required> 
-          <option value="">-- Synchronizing Registered Client Profiles... --</option> 
-        </select> 
-      </div>
-      <div class="form-group"> 
-        <label class="field-label-text">Document Classification Label</label> 
-        <select id="formFulfillmentSlug" class="form-input-element" required> 
-          <option value="" disabled selected>-- Choose Target Service Matrix --</option> 
-          <optgroup label="1.0 Formations & Structural Changes"> 
-            <option value="llc-formation">LLC Formation</option> 
-            <option value="corporations">Corporation (C-Corp / S-Corp)</option> 
-            <option value="sole-proprietorship">Sole Proprietorship</option> 
-            <option value="dba-registration">DBA Registration</option> 
-            <option value="nonprofits">Nonprofit Organization</option> 
-            <option value="series-llc">Series LLC</option> 
-            <option value="foreign-qualification">Foreign Qualification</option> 
-            <option value="llc-reinstatement">LLC Reinstatement</option> 
-            <option value="dissolution">Entity Dissolution</option> 
-          </optgroup> 
-          <optgroup label="2.0 Entity Compliance & Governance"> 
-            <option value="annual-reports">Annual Reports Filing</option> 
-            <option value="operating-agreement">Operating Agreement</option> 
-            <option value="corporate-bylaws">Corporate Bylaws</option> 
-            <option value="registered-agent">Registered Agent Service</option> 
-            <option value="certificate-of-good-standing">Certificate of Good Standing</option> 
-            <option value="apostille-services">Apostille Services</option> 
-          </optgroup> 
-          <optgroup label="3.0 Tax Registrations & Filings"> 
-            <option value="employer-id-ein">Employer ID (EIN / Tax ID)</option> 
-            <option value="federal-tax">Federal Income Tax Registration</option> 
-            <option value="state-tax">State Income Tax Registration</option> 
-            <option value="franchise-tax">Franchise Tax Filing</option> 
-            <option value="sales-tax-registration">Sales Tax Registration</option> 
-            <option value="payroll-tax-940-941">Payroll Tax Configuration (940/941)</option> 
-            <option value="heavy-use-tax-2290">Heavy Vehicle Use Tax (2290)</option> 
-            <option value="clia-certificate">CLIA Laboratory Certificate</option> 
-            <option value="regulatory-consulting">Regulatory Tax Consulting</option> 
-          </optgroup> 
-          <optgroup label="4.0 Government Identifiers & Brand IP"> 
-            <option value="cage-code">CAGE Code Registration</option> 
-            <option value="duns-number">DUNS Number Indexing</option> 
-            <option value="minority-certificate">Minority Certificate Dossier</option> 
-            <option value="trademark-filing">Trademark Naming Rights Filing</option> 
-            <option value="servicemark-filing">Servicemark Design Filing</option> 
-          </optgroup> 
-          <optgroup label="5.0 DOT & Commercial Freight Logistics"> 
-            <option value="owner-operators">Owner Operator Setup</option> 
-            <option value="trucker-authority">Trucker Authority (MC/DOT)</option> 
-            <option value="broker-authority">Property Broker Authority License</option> 
-            <option value="dot-consortium">DOT Random Drug Consortium Pool</option> 
-            <option value="driver-file">Driver Qualification File Tracker</option> 
-            <option value="process-agents-boc-3">Process Agent Desk Filing (BOC-3)</option> 
-            <option value="boc-3-amendment">BOC-3 Process Agent Amendment</option> 
-            <option value="mcs-150-update">MCS-150 Biennial Carrier Update</option> 
-            <option value="new-entrant-audit">New Entrant Safety Audit Check</option> 
-            <option value="ucr-registration">Unified Carrier Registration (UCR)</option> 
-            <option value="scac-code">SCAC Code Allocation Grid</option> 
-            <option value="ifta-registration">IFTA Fuel Tax Registration Decals</option> 
-            <option value="ifta-quarterly-returns">IFTA Jurisdictional Quarterly Returns</option> 
-            <option value="hazmat-registration">HAZMAT Cargo Safety Permit</option> 
-            <option value="dot-permits">Specialized Overweight Licenses & Permits</option> 
-            <option value="trucker-insurance-quote">Trucker Liability Insurance Quote</option> 
-            <option value="broker-insurance-quote">Broker Contingent Insurance Quote</option> 
-          </optgroup> 
-        </select> 
-      </div> 
+      <section class="vault-workspace">
+        <div class="vault-stats">
+          <article class="stat-card files">
+            <span class="stat-label">Vault Files</span>
+            <span class="stat-value" id="stat-vault-files">—</span>
+            <span class="stat-meta">Indexed document assets</span>
+          </article>
+          <article class="stat-card storage">
+            <span class="stat-label">Storage Used</span>
+            <span class="stat-value" id="stat-vault-storage">—</span>
+            <span class="stat-meta">Across the current vault index</span>
+          </article>
+          <article class="stat-card clients">
+            <span class="stat-label">Client Owners</span>
+            <span class="stat-value" id="stat-vault-clients">—</span>
+            <span class="stat-meta">Unique recipient accounts</span>
+          </article>
+          <article class="stat-card recent">
+            <span class="stat-label">Latest Upload</span>
+            <span class="stat-value" id="stat-vault-recent">—</span>
+            <span class="stat-meta">Most recent vault activity</span>
+          </article>
+        </div>
 
-      <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;"> 
-        <label class="field-label-text" style="font-weight: 700; color: #475569; font-size: 0.8rem;">Target Vault Folder Segment</label> 
-        <select id="transmitVaultCategory" class="form-input-element" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff;"> 
-          <option value="" disabled selected>-- Choose Target Directory Folder --</option> 
-          <option value="formation">🏢 State Formations (Articles & Charters)</option> 
-          <option value="governance">📜 Internal Governance (Bylaws & Agreements)</option> 
-          <option value="tax">🔢 Tax & EIN IDs (IRS Confirmations)</option> 
-          <option value="logistics">🚛 Fleet & Logistics (Shipping & Assets)</option> 
-        </select> 
-      </div> 
+        <div class="vault-layout">
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Transmit Document</h2>
+              <p class="panel-description">Upload a finalized client asset, classify it, place it in the correct vault segment, and notify the recipient.</p>
+            </div>
+            <div class="panel-body">
+              <form id="vaultTransmissionForm" novalidate>
+                <div class="form-group">
+                  <label class="field-label-text" for="transmitRecipientEmail">Target Customer Profile</label>
+                  <select id="transmitRecipientEmail" class="form-input-element" required>
+                    <option value="">Synchronizing registered client profiles...</option>
+                  </select>
+                </div>
 
-      <div class="form-group"> 
-        <label class="field-label-text">Select Local File Asset</label> 
-        <input type="file" id="transmitFileField" class="form-input-element" required accept="application/pdf,image/*"> 
-      </div> 
-      <div id="vault-form-status" class="status-msg-slat" style="display:none;"></div> 
-      <button type="submit" class="action-btn-primary" id="vaultSubmitBtn" style="width: 100% !important; margin-top: 8px;">Upload & Transmit Asset ➔</button> 
-    </form> 
-  </div> 
+                <div class="form-group">
+                  <label class="field-label-text" for="formFulfillmentSlug">Document Classification</label>
+                  <select id="formFulfillmentSlug" class="form-input-element" required>
+                    <option value="" disabled selected>Choose document classification</option>
+                    <optgroup label="Formations & Structural Changes">
+                      <option value="llc-formation">LLC Formation</option>
+                      <option value="corporations">Corporation (C-Corp / S-Corp)</option>
+                      <option value="sole-proprietorship">Sole Proprietorship</option>
+                      <option value="dba-registration">DBA Registration</option>
+                      <option value="nonprofits">Nonprofit Organization</option>
+                      <option value="series-llc">Series LLC</option>
+                      <option value="foreign-qualification">Foreign Qualification</option>
+                      <option value="llc-reinstatement">LLC Reinstatement</option>
+                      <option value="dissolution">Entity Dissolution</option>
+                    </optgroup>
+                    <optgroup label="Entity Compliance & Governance">
+                      <option value="annual-reports">Annual Reports Filing</option>
+                      <option value="operating-agreement">Operating Agreement</option>
+                      <option value="corporate-bylaws">Corporate Bylaws</option>
+                      <option value="registered-agent">Registered Agent Service</option>
+                      <option value="certificate-of-good-standing">Certificate of Good Standing</option>
+                      <option value="apostille-services">Apostille Services</option>
+                    </optgroup>
+                    <optgroup label="Tax Registrations & Filings">
+                      <option value="employer-id-ein">Employer ID (EIN / Tax ID)</option>
+                      <option value="federal-tax">Federal Income Tax Registration</option>
+                      <option value="state-tax">State Income Tax Registration</option>
+                      <option value="franchise-tax">Franchise Tax Filing</option>
+                      <option value="sales-tax-registration">Sales Tax Registration</option>
+                      <option value="payroll-tax-940-941">Payroll Tax Configuration (940/941)</option>
+                      <option value="heavy-use-tax-2290">Heavy Vehicle Use Tax (2290)</option>
+                      <option value="clia-certificate">CLIA Laboratory Certificate</option>
+                      <option value="regulatory-consulting">Regulatory Tax Consulting</option>
+                    </optgroup>
+                    <optgroup label="Government Identifiers & Brand IP">
+                      <option value="cage-code">CAGE Code Registration</option>
+                      <option value="duns-number">DUNS Number Indexing</option>
+                      <option value="minority-certificate">Minority Certificate Dossier</option>
+                      <option value="trademark-filing">Trademark Naming Rights Filing</option>
+                      <option value="servicemark-filing">Servicemark Design Filing</option>
+                    </optgroup>
+                    <optgroup label="DOT & Commercial Freight Logistics">
+                      <option value="owner-operators">Owner Operator Setup</option>
+                      <option value="trucker-authority">Trucker Authority (MC/DOT)</option>
+                      <option value="broker-authority">Property Broker Authority License</option>
+                      <option value="dot-consortium">DOT Random Drug Consortium Pool</option>
+                      <option value="driver-file">Driver Qualification File Tracker</option>
+                      <option value="process-agents-boc-3">Process Agent Desk Filing (BOC-3)</option>
+                      <option value="boc-3-amendment">BOC-3 Process Agent Amendment</option>
+                      <option value="mcs-150-update">MCS-150 Biennial Carrier Update</option>
+                      <option value="new-entrant-audit">New Entrant Safety Audit Check</option>
+                      <option value="ucr-registration">Unified Carrier Registration (UCR)</option>
+                      <option value="scac-code">SCAC Code Allocation Grid</option>
+                      <option value="ifta-registration">IFTA Fuel Tax Registration Decals</option>
+                      <option value="ifta-quarterly-returns">IFTA Jurisdictional Quarterly Returns</option>
+                      <option value="hazmat-registration">HAZMAT Cargo Safety Permit</option>
+                      <option value="dot-permits">Specialized Overweight Licenses & Permits</option>
+                      <option value="trucker-insurance-quote">Trucker Liability Insurance Quote</option>
+                      <option value="broker-insurance-quote">Broker Contingent Insurance Quote</option>
+                    </optgroup>
+                  </select>
+                </div>
 
-  <!-- 📊 BOTTOM LAYER: STORAGE INDEX MATRIX EXPLORER TABLE --> 
-  <div class="console-card custom-full-stretch-card" style="width: 100%; display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-sizing: border-box;"> 
-    <div class="card-header-wrapper" style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;"> 
-      <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Global Upload Storage Index Matrix</h2> 
-    </div> 
-    <div class="table-responsive-wrapper" style="overflow-x: auto; width: 100%;"> 
-      <table class="premium-data-table" style="width: 100%; border-collapse: collapse; min-width: 900px;"> 
-        <thead> 
-          <tr style="text-align: left; border-bottom: 1px solid #e2e8f0;"> 
-            <th style="padding: 12px 8px; color: #475569; font-size: 0.813rem;">Account Owner</th> 
-            <th style="padding: 12px 8px; color: #475569; font-size: 0.813rem;">Document Description Label</th> 
-            <th style="padding: 12px 8px; color: #475569; font-size: 0.813rem;">Uploaded By (Admin)</th> 
-            <th style="padding: 12px 8px; color: #475569; font-size: 0.813rem;">Storage Path Target</th> 
-            <th style="text-align:right; padding: 12px 8px; color: #475569; font-size: 0.813rem;">Vault Operations Actions</th> 
-          </tr> 
-        </thead> 
-        <tbody id="admin-vault-explorer-target-box"> 
-          <tr> 
-            <td colspan="5" class="table-initialization-loader" style="padding: 24px; text-align: center; color: #64748b; font-size: 0.875rem;">Compiling master storage nodes index...</td> 
-          </tr> 
-        </tbody> 
-      </table> 
-    </div> 
-  </div> 
-</div>
+                <div class="form-group">
+                  <label class="field-label-text" for="transmitVaultCategory">Vault Folder</label>
+                  <select id="transmitVaultCategory" class="form-input-element" required>
+                    <option value="" disabled selected>Choose target directory</option>
+                    <option value="formation">🏢 State Formations</option>
+                    <option value="governance">📜 Internal Governance</option>
+                    <option value="tax">🔢 Tax & EIN IDs</option>
+                    <option value="logistics">🚛 Fleet & Logistics</option>
+                  </select>
+                </div>
 
+                <div class="form-group">
+                  <label class="field-label-text" for="transmitFileField">Document Asset</label>
+                  <div class="upload-dropzone" id="uploadDropzone">
+                    <div class="upload-file-icon">↑</div>
+                    <input type="file" id="transmitFileField" class="form-input-element" required accept="application/pdf,image/*">
+                    <div class="upload-help">PDF and image assets are supported. The file is placed in the secure client vault using a unique storage path.</div>
+                  </div>
+                </div>
 
-  <!-- 📦 ASSET VIEWER MODAL OVERLAY WITH NATIVE LIVE IFRAME PREVIEW -->
-  <div id="asset-preview-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center;">
-    <div style="background: #ffffff; border-radius: 12px; width: 92%; max-width: 850px; height: 85vh; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15); border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden;">
-      
-      <!-- Modal Header -->
-      <div style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                <div id="vault-form-status" class="status-msg-slat"></div>
+                <button type="submit" class="action-btn-primary" id="vaultSubmitBtn">Upload & Transmit Asset →</button>
+              </form>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Vault Storage Index</h2>
+              <p class="panel-description">Live inventory of files recorded in <strong>admin_vault</strong>, with secure preview links generated on demand.</p>
+            </div>
+
+            <div class="table-toolbar">
+              <div class="toolbar-copy" id="vault-result-count">Loading vault records...</div>
+              <div class="toolbar-controls">
+                <input id="vaultSearchInput" class="vault-search" type="search" placeholder="Search client, file, path...">
+                <button id="vaultRefreshBtn" class="refresh-btn" type="button">↻ Refresh</button>
+              </div>
+            </div>
+
+            <div class="table-responsive-wrapper">
+              <table class="premium-data-table">
+                <thead>
+                  <tr>
+                    <th>Account Owner</th>
+                    <th>Document</th>
+                    <th>Uploaded By</th>
+                    <th>Storage Path</th>
+                    <th style="text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-vault-explorer-target-box">
+                  <tr><td colspan="5" class="empty-state"><div class="empty-state-icon">…</div><strong>Loading vault index</strong><span>Compiling current storage nodes...</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="asset-preview-modal" class="asset-modal" aria-hidden="true">
+    <div class="asset-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalAssetName">
+      <div class="asset-modal-head">
         <div>
-          <h3 id="modalAssetName" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">File Vault Inspection</h3>
-          <p id="modal-field-owner" style="margin: 2px 0 0 0; font-size: 0.75rem; color: #64748b; font-weight: 500;"></p>
+          <div class="modal-kicker">Vault Inspection</div>
+          <h3 id="modalAssetName" class="modal-title">File Vault Inspection</h3>
+          <div id="modal-field-owner" class="modal-owner"></div>
         </div>
-        <button id="modal-close-top" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; line-height: 1; padding: 0;">&times;</button>
+        <button id="modal-close-top" class="modal-close" type="button" aria-label="Close preview">×</button>
       </div>
-
-         <!-- Live Native Document Preview Canvas Frame Segment -->
-      <div style="flex: 1; width: 100%; background: #f1f5f9; padding: 12px; box-sizing: border-box;">
-        <iframe id="modalIframeViewer" src="" style="width: 100%; height: 100%; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff;"></iframe>
+      <div class="modal-preview">
+        <iframe id="modalIframeViewer" title="Document preview" src=""></iframe>
       </div>
-
-      <!-- Action Footer Row -->
-      <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-        <span id="modal-field-path" style="font-family: monospace; color: #64748b; font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%;"></span>
-        <div style="display: flex; gap: 12px;">
-          <button id="modal-close-btn" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.813rem; cursor: pointer;">Close View</button>
+      <div class="asset-modal-foot">
+        <span id="modal-field-path" class="modal-path"></span>
+        <div style="display:flex;gap:8px;">
+          <a id="downloadAssetBtn" class="modal-download" href="#" target="_blank" rel="noopener">Open / Download</a>
+          <button id="modal-close-btn" class="document-action-btn" type="button">Close View</button>
         </div>
       </div>
-
     </div>
   </div>
-</main>
 
+  <div id="vault-toast" class="toast"></div>
 
-</div>
-
-
- <!-- 1. The Global Library Core MUST load absolute first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/admin-master-ledger.js"></script>
+<script src="assets/js/admin-navigation.js"></script>
 
-  
-  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/admin-master-ledger.js"></script>
+  <script>
+  (() => {
+    'use strict';
 
-   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/admin-navigation.js"></script>
+    /* =========================================================
+       DOCUMENT VAULT — LIVE SUPABASE CONTROLLER
+       ========================================================= */
 
-<script> 
-(function() { 
-  const DB_URL = 'https://lrbimrlbskjweynxlgas.supabase.co'; 
-  const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU'; 
-  let dbClient = null; 
+    const DB_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
+    const DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU';
+    const STORAGE_BUCKET = 'client_documents_vault';
+    const MAX_FILE_BYTES = 25 * 1024 * 1024;
+    const ALLOWED_TYPES = new Set([
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif'
+    ]);
 
-  async function initAdminVaultConsole() { 
-    const recipientMenu = document.getElementById('transmitRecipientEmail'); 
-    const explorerTable = document.getElementById('admin-vault-explorer-target-box'); 
-    const uploadForm = document.getElementById('vaultTransmissionForm'); 
+    let dbClient = null;
+    let allVaultRecords = [];
+    const signedUrlCache = new Map();
+    let isLoading = false;
 
-    try { 
-      if (typeof supabase === 'undefined') throw new Error("Supabase script driver missing from template head headers."); 
-      dbClient = supabase.createClient(DB_URL, DB_KEY); 
+    const $ = id => document.getElementById(id);
 
-      if (explorerTable) { 
-        explorerTable.innerHTML = '<tr><td colspan="5" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">Querying multiple transaction datasets...</td></tr>'; 
-      } 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
-      // 1. POPULATE CUSTOMERS AND ADMINISTRATIVE PROFILES IN PARALLEL 
-      const [ordersRes, dashOrdersRes, adminProfilesRes, currentAdminRes] = await Promise.all([ 
-        dbClient.from('orders').select('client_email, client_name, id'), 
-        dbClient.from('dashboard_orders').select('email_address, first_name, last_name, id'), 
-        dbClient.from('admin_profiles').select('id, first_name, last_name, email_address'), 
-        dbClient.auth.getUser() 
-      ]); 
+    function formatBytes(bytes) {
+      const n = Number(bytes) || 0;
+      if (n < 1024) return `${n} B`;
+      if (n < 1024 ** 2) return `${(n / 1024).toFixed(0)} KB`;
+      if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)} MB`;
+      return `${(n / 1024 ** 3).toFixed(2)} GB`;
+    }
 
-      const uniqueClientsMap = new Map(); 
-      const adminNamesMap = new Map(); 
-      const adminEmailsMap = new Map(); 
+    function formatDate(value, withTime = false) {
+      if (!value) return 'N/A';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return 'N/A';
 
-      if (adminProfilesRes.data) { 
-        adminProfilesRes.data.forEach(profile => { 
-          // 🟢 FORMATTING ENGINE: Pre-compiles the admin display name as "Lastname, F." inside the maps
-          const ln = (profile.last_name || '').trim();
-          const fn = (profile.first_name || '').trim();
-          let formattedName = "System Administrator";
-          
-          if (ln && fn) {
-            formattedName = `${ln}, ${fn.charAt(0).toUpperCase()}.`;
-          } else if (ln || fn) {
-            formattedName = ln || fn;
-          }
+      return d.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        ...(withTime ? {
+          hour: 'numeric',
+          minute: '2-digit'
+        } : {})
+      });
+    }
 
-          if (formattedName) { 
-            adminNamesMap.set(profile.id, formattedName); 
-            if (profile.email_address) { 
-              adminEmailsMap.set(String(profile.email_address).toLowerCase().trim(), formattedName); 
-            } 
-          } 
-        }); 
-      } 
+    function showToast(message, type = '') {
+      const toast = $('vault-toast');
+      if (!toast) return;
 
-      let activelyOperatingAdminName = "System Administrator"; 
-      let activeAdminAuthId = null; 
+      toast.textContent = message;
+      toast.className = `toast show ${type}`;
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4500);
+    }
 
-      if (currentAdminRes.data && currentAdminRes.data.user) { 
-        activeAdminAuthId = currentAdminRes.data.user.id; 
-        const currentAdminEmail = String(currentAdminRes.data.user.email).toLowerCase().trim(); 
+    function showFormNotification(text, isError = false) {
+      const elem = $('vault-form-status');
+      if (!elem) return;
 
-        if (adminNamesMap.has(activeAdminAuthId)) { 
-          activelyOperatingAdminName = adminNamesMap.get(activeAdminAuthId); 
-        } else if (adminEmailsMap.has(currentAdminEmail)) { 
-          activelyOperatingAdminName = adminEmailsMap.get(currentAdminEmail); 
-        } else { 
-          const { data: fallbackProfile } = await dbClient 
-            .from('admin_profiles') 
-            .select('first_name, last_name') 
-            .or(`id.eq.${activeAdminAuthId},email_address.eq.${currentAdminEmail}`) 
-            .maybeSingle(); 
+      elem.textContent = text;
+      elem.style.display = 'block';
+      elem.style.background = isError ? '#fef2f2' : '#ecfdf5';
+      elem.style.color = isError ? '#991b1b' : '#047857';
+      elem.style.border = `1px solid ${
+        isError ? 'rgba(239,68,68,.16)' : 'rgba(16,185,129,.16)'
+      }`;
+    }
 
-          if (fallbackProfile) { 
-            const ln = (fallbackProfile.last_name || '').trim();
-            const fn = (fallbackProfile.first_name || '').trim();
-            if (ln && fn) {
-              activelyOperatingAdminName = `${ln}, ${fn.charAt(0).toUpperCase()}.`;
-            } else {
-              activelyOperatingAdminName = ln || fn || "System Administrator";
-            }
-            adminNamesMap.set(activeAdminAuthId, activelyOperatingAdminName); 
-          } 
-        } 
-      } 
+    function clearFormNotification() {
+      const elem = $('vault-form-status');
+      if (elem) elem.style.display = 'none';
+    }
 
-      if (ordersRes.data) { 
-        ordersRes.data.forEach(item => { 
-          const email = (item.client_email || '').trim().toLowerCase(); 
-          if (email && email !== 'anonymous@unknown.com') { 
-            uniqueClientsMap.set(email, { authId: item.id, name: item.client_name || 'Valued Client' }); 
-          } 
-        }); 
-      } 
+    function updateClock() {
+      const el = $('portal-clock');
+      if (!el) return;
 
-      if (dashOrdersRes.data) { 
-        dashOrdersRes.data.forEach(item => { 
-          const email = (item.email_address || '').trim().toLowerCase(); 
-          if (email && email !== 'anonymous@unknown.com') { 
-            const fullName = `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Valued Client'; 
-            if (!uniqueClientsMap.has(email)) { 
-              uniqueClientsMap.set(email, { authId: item.id, name: fullName }); 
-            } 
-          } 
-        }); 
-      } 
+      el.textContent = new Date().toLocaleString([], {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
 
-      if (recipientMenu) { 
-        recipientMenu.innerHTML = '<option value="">-- Choose Target Customer Profile --</option>'; 
-        Array.from(uniqueClientsMap.keys()).sort().forEach(email => { 
-          const profile = uniqueClientsMap.get(email); 
-          const opt = document.createElement('option'); 
-          opt.value = profile.authId; 
-          opt.setAttribute('data-email', email); 
-          opt.textContent = `${email} (${profile.name})`; 
-          recipientMenu.appendChild(opt); 
-        }); 
-      }
-          // 2. QUERY MASTER VAULT STORAGE MATRIX RECORD LEDGERS 
-      const { data: vaultRecords, error: vaultQueryFault } = await dbClient 
-        .from('admin_vault') 
-        .select('id, file_name, storage_bucket_path, file_size_bytes, created_at, content_type, uploaded_by, first_name, last_name, target_client_email') 
-        .order('created_at', { ascending: false }); 
+    function setTableMessage(title, description, icon = '…') {
+      const target = $('admin-vault-explorer-target-box');
+      if (!target) return;
 
-      if (vaultQueryFault) throw vaultQueryFault; 
+      target.innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state">
+            <div class="empty-state-icon">${escapeHtml(icon)}</div>
+            <strong>${escapeHtml(title)}</strong>
+            <span>${escapeHtml(description)}</span>
+          </td>
+        </tr>
+      `;
+    }
 
-      if (explorerTable) { 
-        explorerTable.innerHTML = ''; 
-        if (!vaultRecords || vaultRecords.length === 0) { 
-          explorerTable.innerHTML = '<tr><td colspan="5" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">No files uploaded inside the client documents vault repository yet.</td></tr>'; 
-        } else { 
-          for (const item of vaultRecords) { 
-            const tr = document.createElement('tr'); 
-            tr.style.cssText = 'border-bottom:1px solid #e2e8f0; background:#ffffff;'; 
+    function updateStats(records) {
+      const files = records.length;
+      const storage = records.reduce(
+        (sum, record) => sum + (Number(record.file_size_bytes) || 0),
+        0
+      );
 
-            let calculatedSize = "0 KB"; 
-            if (item.file_size_bytes > 0) { 
-              const kb = item.file_size_bytes / 1024; 
-              calculatedSize = kb >= 1024 ? (kb / 1024).toFixed(1) + " MB" : kb.toFixed(0) + " KB"; 
-            } 
+      const clients = new Set(
+        records
+          .map(record => String(record.target_client_email || '').trim().toLowerCase())
+          .filter(Boolean)
+      );
 
-            const uploadDate = item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'; 
-            let directAssetUrl = "#"; 
+      $('stat-vault-files').textContent = files.toLocaleString();
+      $('stat-vault-storage').textContent = formatBytes(storage);
+      $('stat-vault-clients').textContent = clients.size.toLocaleString();
+      $('stat-vault-recent').textContent = files
+        ? formatDate(records[0].created_at)
+        : '—';
+    }
 
-            if (item.storage_bucket_path) { 
-              let cleanStorageKey = String(item.storage_bucket_path) 
-                .trim() 
-                .replace(/^client_documents_vault\//i, '') 
-                .replace(/^\//, ''); 
-              try { 
-                const { data, error } = await dbClient.storage 
-                  .from('client_documents_vault') 
-                  .createSignedUrl(cleanStorageKey, 900); 
-                if (error) throw error; 
-                if (data && data.signedUrl) directAssetUrl = data.signedUrl; 
-              } catch (urlError) { 
-                console.error("✕ Failed to sign secure download token:", urlError); 
-              } 
-            } 
+    function renderVaultTable(records) {
+      const target = $('admin-vault-explorer-target-box');
+      const count = $('vault-result-count');
 
-            const matchedOwnerEmail = item.target_client_email || 'System Isolated Profile'; 
+      if (!target) return;
 
-            // 🟢 FIXED: Compiles the dynamic on-screen render directly from standard table fields
-            const ln = (item.last_name || '').trim(); 
-            const fn = (item.first_name || '').trim(); 
-            let displayAdminAuthor = "System Administrator"; 
-
-            if (ln && fn) { 
-              displayAdminAuthor = `${ln}, ${fn.charAt(0).toUpperCase()}.`; 
-            } else if (ln || fn) { 
-              displayAdminAuthor = ln || fn; 
-            }
-            tr.innerHTML = ` 
-              <td style="padding:14px 12px; font-family:monospace; color:#475569; font-weight:600; font-size:0.8rem; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeAdminVaultHtml(matchedOwnerEmail)}</td> 
-              <td style="padding:14px 12px; font-weight:700; color:#0f172a;"> 
-                ${escapeAdminVaultHtml(item.file_name)} 
-                <div style="font-size:0.72rem; color:#94a3b8; font-weight:500; margin-top:2px;">Size: ${calculatedSize} | Filed: ${uploadDate}</div> 
-              </td> 
-              <td style="padding:14px 12px; color:#475569; font-weight:600;"><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:11px; white-space:nowrap;">👤 ${escapeAdminVaultHtml(displayAdminAuthor)}</span></td> 
-              <td style="padding:14px 12px; color:#64748b; font-family:monospace; font-size:0.75rem; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeAdminVaultHtml(item.storage_bucket_path)}</td> 
-              <td style="padding:14px 12px; text-align:right;"> 
-                <button data-url="${directAssetUrl}" data-filename="${item.file_name}" class="btn-view-asset view-asset-trigger" style="border:none; cursor:pointer; text-decoration:none; background:#2563eb; color:#ffffff; font-weight:700; padding:6px 12px; border-radius:4px; font-size:11px; display:inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space:nowrap;">👁️ View Asset ➔</button> 
-              </td> 
-            `; 
-            explorerTable.appendChild(tr); 
-          } 
-        } 
+      if (count) {
+        count.textContent =
+          `${records.length.toLocaleString()} record${records.length === 1 ? '' : 's'} shown`;
       }
 
-       // 3. VAULT FORM SUBMISSION TRACKING CONTROLLER HANDLER INTERCEPTOR 
-      if (uploadForm && !uploadForm.hasAttribute('data-live-listener')) { 
-        uploadForm.addEventListener('submit', async (e) => { 
-          e.preventDefault(); 
-          const statusSlat = document.getElementById('vault-form-status'); 
-          const submitBtn = document.getElementById('vaultSubmitBtn'); 
-          const fileField = document.getElementById('transmitFileField'); 
-          const categoryField = document.getElementById('transmitVaultCategory'); 
+      if (!records.length) {
+        setTableMessage(
+          'No matching vault records',
+          'Try another search term or upload a new client document.',
+          '⌕'
+        );
+        return;
+      }
 
-          // 🟢 FIXED: Selects your single combined document dropdown element target directly
-          const slugSelectField = document.getElementById('formFulfillmentSlug'); 
+      target.innerHTML = records.map(item => {
+        const owner = item.target_client_email || 'System Isolated Profile';
+        const admin = String(
+          item.admin_name || 'System Administrator'
+        ).trim();
 
-          if (statusSlat) statusSlat.style.display = 'none'; 
+        const fileName = item.file_name || 'Unnamed asset';
+        const path = item.storage_bucket_path || '';
+        const size = formatBytes(item.file_size_bytes);
+        const date = formatDate(item.created_at);
+        const type = item.content_type || 'unknown';
 
-          const targetProfileId = recipientMenu.value; 
-          const targetOption = recipientMenu.options[recipientMenu.selectedIndex]; 
-          const targetEmail = targetOption ? targetOption.getAttribute('data-email') : null;
-          // 🟢 FIXED: Grabs the clean option text (e.g. "LLC Formation") to use as the document label text description
-          const selectedOption = slugSelectField ? slugSelectField.options[slugSelectField.selectedIndex] : null;
-          const documentLabel = selectedOption && slugSelectField.value ? selectedOption.textContent.trim() : ''; 
-          const selectedVaultFolderTag = categoryField ? categoryField.value : ''; 
+        return `
+          <tr data-vault-id="${escapeHtml(item.id)}">
+            <td class="owner-cell" title="${escapeHtml(owner)}">
+              ${escapeHtml(owner)}
+            </td>
 
-          if (!targetProfileId || !targetEmail) { 
-            return showFormNotification(statusSlat, "✕ Selection Required: Please choose a valid target client profile recipient account.", true); 
-          } 
-          if (!documentLabel) { 
-            return showFormNotification(statusSlat, "✕ Selection Required: Please choose a valid Document Classification Label choice option.", true); 
-          } 
-          if (!selectedVaultFolderTag) { 
-            return showFormNotification(statusSlat, "✕ Selection Required: Please choose an explicit target vault folder directory segment.", true); 
-          } 
-          if (!fileField.files || fileField.files.length === 0) { 
-            return showFormNotification(statusSlat, "✕ File Missing: Please select a local compliance document layout asset.", true); 
-          } 
+            <td>
+              <div class="file-name">${escapeHtml(fileName)}</div>
+              <div class="file-meta">
+                ${escapeHtml(size)} · Filed ${escapeHtml(date)} · ${escapeHtml(type)}
+              </div>
+            </td>
 
-          const targetFile = fileField.files[0]; 
-          const originalBtnLabel = submitBtn.textContent; 
+            <td>
+              <span class="admin-chip">👤 ${escapeHtml(admin)}</span>
+            </td>
 
-          if (submitBtn) { 
-            submitBtn.disabled = true; 
-            submitBtn.textContent = 'Uploading & Transmitting Asset...'; 
+            <td
+              class="path-cell"
+              title="${escapeHtml(path)}"
+            >${escapeHtml(path || '—')}</td>
+
+            <td style="text-align:right;">
+              <button
+                type="button"
+                class="document-action-btn view-asset-trigger"
+                data-path="${escapeHtml(path)}"
+                data-filename="${escapeHtml(fileName)}"
+                data-owner="${escapeHtml(owner)}"
+              >View Asset →</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function applySearch() {
+      const q = String($('vaultSearchInput')?.value || '')
+        .trim()
+        .toLowerCase();
+
+      if (!q) {
+        renderVaultTable(allVaultRecords);
+        return;
+      }
+
+      const filtered = allVaultRecords.filter(item => [
+        item.target_client_email,
+        item.file_name,
+        item.storage_bucket_path,
+        item.first_name,
+        item.last_name,
+        item.email_address,
+        item.admin_name,
+        item.content_type
+      ].some(value =>
+        String(value || '').toLowerCase().includes(q)
+      ));
+
+      renderVaultTable(filtered);
+    }
+
+    async function getCurrentAdmin() {
+      const { data, error } = await dbClient.auth.getUser();
+
+      if (error) throw error;
+      if (!data?.user) {
+        throw new Error('Your secure staff session is no longer active.');
+      }
+
+      const user = data.user;
+      const metadata = user.user_metadata || {};
+      const email = String(user.email || '').trim().toLowerCase();
+
+      let firstName = String(metadata.first_name || 'System').trim();
+      let lastName = String(metadata.last_name || 'Administrator').trim();
+      let emailAddress = email;
+
+      const profileQuery = await dbClient
+        .from('admin_profiles')
+        .select('first_name, last_name, email_address')
+        .or(`id.eq.${user.id},email_address.eq.${email}`)
+        .maybeSingle();
+
+      if (profileQuery.error) {
+        console.warn('admin_profiles lookup:', profileQuery.error);
+      }
+
+      if (profileQuery.data) {
+        firstName = String(profileQuery.data.first_name || firstName).trim();
+        lastName = String(profileQuery.data.last_name || lastName).trim();
+        emailAddress = String(
+          profileQuery.data.email_address || emailAddress
+        ).trim().toLowerCase();
+      }
+
+      return {
+        uid: user.id,
+        email: emailAddress,
+        firstName,
+        lastName
+      };
+    }
+
+    async function loadClientRecipients() {
+      const recipientMenu = $('transmitRecipientEmail');
+      if (!recipientMenu) return;
+
+      recipientMenu.innerHTML =
+        '<option value="">Loading client profiles...</option>';
+      recipientMenu.disabled = true;
+
+      try {
+        /*
+         * The CRM recipient list is sourced exclusively from client_profiles.
+         * This table is the system of record for customer accounts.
+         */
+        const { data: profiles, error } = await dbClient
+          .from('client_profiles')
+          .select(`
+            id,
+            email_address,
+            first_name,
+            last_name,
+            company_name
+          `)
+          .order('email_address', { ascending: true });
+
+        if (error) throw error;
+
+        const clients = (profiles || [])
+          .filter(profile => {
+            const email = String(profile.email_address || '').trim().toLowerCase();
+            return Boolean(email);
+          })
+          .map(profile => {
+            const email = String(profile.email_address || '').trim().toLowerCase();
+            const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+            const company = String(profile.company_name || '').trim();
+
+            return {
+              id: profile.id,
+              email,
+              name: name || company || 'Client Profile',
+              company
+            };
+          });
+
+        recipientMenu.innerHTML =
+          '<option value="">Choose target customer profile</option>';
+
+        clients.forEach(client => {
+          const option = document.createElement('option');
+
+          option.value = client.id;
+          option.dataset.email = client.email;
+          option.dataset.firstName = client.name.includes(' ')
+            ? client.name.split(' ')[0]
+            : client.name;
+          option.dataset.lastName = client.name.includes(' ')
+            ? client.name.split(' ').slice(1).join(' ')
+            : '';
+          option.dataset.companyName = client.company;
+          option.textContent = client.company
+            ? `${client.name} — ${client.company} (${client.email})`
+            : `${client.name} (${client.email})`;
+
+          recipientMenu.appendChild(option);
+        });
+
+        if (!clients.length) {
+          recipientMenu.innerHTML =
+            '<option value="">No client profiles found</option>';
+        }
+
+        recipientMenu.disabled = !clients.length;
+
+      } catch (error) {
+        console.error('client_profiles lookup failed:', error);
+
+        recipientMenu.innerHTML =
+          '<option value="">Unable to load client profiles</option>';
+        recipientMenu.disabled = true;
+
+        showFormNotification(
+          `Client profile list could not be loaded: ${error.message || 'Unknown error.'}`,
+          true
+        );
+      }
+    }
+
+    async function loadVaultRecords() {
+      if (isLoading) return;
+
+      isLoading = true;
+      setTableMessage(
+        'Refreshing vault index',
+        'Querying the current document registry...',
+        '…'
+      );
+
+      try {
+        const { data, error } = await dbClient
+          .from('admin_vault')
+          .select(`
+            id,
+            file_name,
+            storage_bucket_path,
+            storage_path,
+            file_size_bytes,
+            created_at,
+            content_type,
+            uploaded_by,
+            first_name,
+            last_name,
+            email_address,
+            target_client_email,
+            asset_vault_category
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        allVaultRecords = data || [];
+        signedUrlCache.clear();
+        updateStats(allVaultRecords);
+        applySearch();
+
+      } catch (error) {
+        console.error('Vault registry load failed:', error);
+
+        allVaultRecords = [];
+        updateStats([]);
+
+        if ($('vault-result-count')) {
+          $('vault-result-count').textContent = 'Vault unavailable';
+        }
+
+        setTableMessage(
+          'Vault index unavailable',
+          error.message || 'Unable to retrieve vault records.',
+          '!'
+        );
+
+        showToast(
+          `Vault index failed: ${error.message || 'Unknown error'}`,
+          'error'
+        );
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    async function createSignedUrl(storagePath) {
+      if (!storagePath) {
+        throw new Error('This document does not have a storage path.');
+      }
+
+      if (signedUrlCache.has(storagePath)) {
+        return signedUrlCache.get(storagePath);
+      }
+
+      let cleanPath = String(storagePath).trim();
+
+      const bucketPrefix = `${STORAGE_BUCKET}/`;
+
+      if (cleanPath.toLowerCase().startsWith(bucketPrefix.toLowerCase())) {
+        cleanPath = cleanPath.slice(bucketPrefix.length);
+      }
+
+      cleanPath = cleanPath.replace(/^\/+/, '');
+
+      const { data, error } = await dbClient.storage
+        .from(STORAGE_BUCKET)
+        .createSignedUrl(cleanPath, 900);
+
+      if (error) throw error;
+
+      if (!data?.signedUrl) {
+        throw new Error('Supabase did not return a secure preview URL.');
+      }
+
+      signedUrlCache.set(storagePath, data.signedUrl);
+      return data.signedUrl;
+    }
+
+    async function openAsset(path, fileName, owner) {
+      const modal = $('asset-preview-modal');
+      const iframe = $('modalIframeViewer');
+      const download = $('downloadAssetBtn');
+
+      if (!path) {
+        showToast('This vault record has no storage path.', 'error');
+        return;
+      }
+
+      try {
+        $('modalAssetName').textContent =
+          `Inspecting: ${fileName || 'Document'}`;
+
+        $('modal-field-owner').textContent =
+          `Client Node: ${owner || 'Unknown'}`;
+
+        $('modal-field-path').textContent = path;
+
+        iframe.src = 'about:blank';
+        download.style.display = 'none';
+
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        const url = await createSignedUrl(path);
+
+        iframe.src = url;
+        download.href = url;
+        download.download = fileName || 'document';
+        download.style.display = 'inline-flex';
+
+      } catch (error) {
+        console.error('Secure preview failed:', error);
+        closeAsset();
+
+        showToast(
+          `Unable to preview asset: ${error.message || 'Unknown error'}`,
+          'error'
+        );
+      }
+    }
+
+    function closeAsset() {
+      const modal = $('asset-preview-modal');
+      const iframe = $('modalIframeViewer');
+      const download = $('downloadAssetBtn');
+
+      if (modal) {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+
+      if (iframe) iframe.src = 'about:blank';
+      if (download) {
+        download.href = '#';
+        download.style.display = 'none';
+      }
+    }
+
+    function validateSelectedFile(file) {
+      if (!file) {
+        throw new Error('Please choose a document before uploading.');
+      }
+
+      if (file.size <= 0) {
+        throw new Error('The selected file is empty.');
+      }
+
+      if (file.size > MAX_FILE_BYTES) {
+        throw new Error(
+          `The selected file is ${formatBytes(file.size)}. Maximum allowed size is ${formatBytes(MAX_FILE_BYTES)}.`
+        );
+      }
+
+      const extension = String(file.name || '')
+        .split('.')
+        .pop()
+        .toLowerCase();
+
+      const allowedExtension =
+        ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extension);
+
+      if (!ALLOWED_TYPES.has(file.type) && !allowedExtension) {
+        throw new Error(
+          'Unsupported document type. Upload a PDF or image file.'
+        );
+      }
+    }
+
+    function makeSafeStorageName(fileName) {
+      const original = String(fileName || 'document');
+      const extensionMatch = original.match(/\.([a-z0-9]+)$/i);
+      const extension = extensionMatch ? `.${extensionMatch[1].toLowerCase()}` : '';
+      const base = original
+        .replace(/\.[^/.]+$/, '')
+        .normalize('NFKD')
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase()
+        .slice(0, 80);
+
+      return `${base || 'document'}${extension}`;
+    }
+
+    async function removeUploadedFile(path) {
+      if (!path) return;
+
+      try {
+        const { error } = await dbClient.storage
+          .from(STORAGE_BUCKET)
+          .remove([path]);
+
+        if (error) {
+          console.warn('Storage cleanup failed:', error);
+        }
+      } catch (error) {
+        console.warn('Storage cleanup exception:', error);
+      }
+    }
+
+    async function dispatchDocumentNotification(ownerId, documentLabel, targetEmail) {
+      /*
+       * Notifications are deliberately best-effort. The vault upload is the
+       * source-of-truth operation; a notification outage must not destroy it.
+       */
+      const endpoint = `${DB_URL}/functions/v1/document-notification`;
+
+      try {
+        const { data: sessionData } = await dbClient.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+
+        if (!accessToken) {
+          console.warn('No active access token available for notification.');
+          return false;
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'apikey': DB_KEY
+          },
+          body: JSON.stringify({
+            account_owner_id: ownerId,
+            target_client_email: targetEmail,
+            document_classification_label: documentLabel,
+            dispatched_at_timestamp: new Date().toISOString()
+          })
+        });
+
+        if (!response.ok) {
+          console.warn(
+            'Document notification returned HTTP',
+            response.status
+          );
+          return false;
+        }
+
+        return true;
+
+      } catch (error) {
+        console.warn('Document notification dispatch failed:', error);
+        return false;
+      }
+    }
+
+    async function handleUpload(event) {
+      event.preventDefault();
+
+      const form = $('vaultTransmissionForm');
+      const status = $('vault-form-status');
+      const submitBtn = $('vaultSubmitBtn');
+      const recipient = $('transmitRecipientEmail');
+      const classification = $('formFulfillmentSlug');
+      const category = $('transmitVaultCategory');
+      const fileField = $('transmitFileField');
+
+      clearFormNotification();
+
+      const targetProfileId = recipient?.value || '';
+      const selectedRecipient =
+        recipient?.options?.[recipient.selectedIndex];
+
+      const targetEmail =
+        selectedRecipient?.dataset?.email || '';
+
+      const selectedClassification =
+        classification?.options?.[classification.selectedIndex];
+
+      const documentLabel =
+        classification?.value
+          ? selectedClassification?.textContent?.trim()
+          : '';
+
+      const folder = category?.value || '';
+      const file = fileField?.files?.[0];
+
+      if (!targetProfileId || !targetEmail) {
+        showFormNotification(
+          'Select the customer profile that should receive this document.',
+          true
+        );
+        return;
+      }
+
+      if (!documentLabel) {
+        showFormNotification(
+          'Select the document classification.',
+          true
+        );
+        return;
+      }
+
+      if (!folder) {
+        showFormNotification(
+          'Select the destination vault folder.',
+          true
+        );
+        return;
+      }
+
+      try {
+        validateSelectedFile(file);
+      } catch (error) {
+        showFormNotification(error.message, true);
+        return;
+      }
+
+      const originalButtonText = submitBtn.textContent;
+      let uploadedStoragePath = null;
+      let adminVaultInserted = false;
+      let clientVaultInserted = false;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Uploading document...';
+
+      try {
+        const admin = await getCurrentAdmin();
+
+        const safeEmail = targetEmail
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9@._-]/g, '');
+
+        const safeFileName = makeSafeStorageName(file.name);
+
+        const storagePath =
+          `compliance_audits/${safeEmail}/${Date.now()}_${crypto.randomUUID()}_${safeFileName}`;
+
+        uploadedStoragePath = storagePath;
+
+        const { error: storageError } = await dbClient.storage
+          .from(STORAGE_BUCKET)
+          .upload(storagePath, file, {
+            cacheControl: '3600',
+            contentType: file.type || 'application/octet-stream',
+            upsert: false
+          });
+
+        if (storageError) throw storageError;
+
+        submitBtn.textContent = 'Indexing document...';
+
+        const sharedPayload = {
+          uploaded_by: admin.uid,
+          admin_name: `${admin.firstName} ${admin.lastName}`.trim() || admin.email,
+          target_client_email: safeEmail,
+          file_name: file.name,
+          storage_bucket_path: storagePath,
+          storage_path: `${STORAGE_BUCKET}/${storagePath}`,
+          file_size_bytes: Number(file.size),
+          content_type: file.type || 'application/octet-stream',
+          bucket_id: STORAGE_BUCKET,
+          asset_vault_category: folder,
+
+          /*
+           * These fields intentionally identify the client recipient.
+           * The admin identity is stored separately in admin_name/uploaded_by.
+           */
+          first_name: selectedRecipient?.dataset?.firstName || null,
+          last_name: selectedRecipient?.dataset?.lastName || null,
+          email_address: safeEmail
+        };
+
+        const { error: adminInsertError } =
+          await dbClient.from('admin_vault').insert([sharedPayload]);
+
+        if (adminInsertError) throw adminInsertError;
+
+        adminVaultInserted = true;
+
+        submitBtn.textContent = 'Publishing client record...';
+
+        const { error: clientInsertError } =
+          await dbClient.from('client_vault').insert([sharedPayload]);
+
+        if (clientInsertError) throw clientInsertError;
+
+        clientVaultInserted = true;
+
+        submitBtn.textContent = 'Dispatching notification...';
+
+        const notified = await dispatchDocumentNotification(
+          targetProfileId,
+          documentLabel,
+          safeEmail
+        );
+
+        form.reset();
+
+        const notificationText = notified
+          ? '✓ Document uploaded, indexed, published to the client vault, and notification dispatched.'
+          : '✓ Document uploaded, indexed, and published to the client vault. Notification service did not confirm delivery.';
+
+        showFormNotification(notificationText, false);
+        showToast(
+          notified
+            ? 'Document transmitted successfully.'
+            : 'Document saved; notification needs attention.',
+          notified ? 'success' : ''
+        );
+
+        await loadVaultRecords();
+
+      } catch (error) {
+        console.error('Document transmission failed:', error);
+
+        /*
+         * If anything fails after storage upload, remove the orphaned object.
+         * Database cleanup is intentionally attempted only when we know the
+         * corresponding insert succeeded.
+         */
+        if (clientVaultInserted) {
+          console.warn('Client vault row was created before failure.');
+        }
+
+        if (adminVaultInserted) {
+          console.warn('Admin vault row was created before failure.');
+        }
+
+        if (uploadedStoragePath && !clientVaultInserted) {
+          await removeUploadedFile(uploadedStoragePath);
+        }
+
+        showFormNotification(
+          `✕ Upload blocked: ${error.message || 'Cloud processing exception.'}`,
+          true
+        );
+
+        showToast(
+          'Document transmission failed.',
+          'error'
+        );
+
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalButtonText;
+      }
+    }
+
+    async function initializeVault() {
+      try {
+        if (typeof window.supabase === 'undefined') {
+          throw new Error(
+            'Supabase library did not load. Check the Supabase script include.'
+          );
+        }
+
+        dbClient = window.supabase.createClient(DB_URL, DB_KEY);
+
+        const { data: sessionData } =
+          await dbClient.auth.getSession();
+
+        if (!sessionData?.session) {
+          throw new Error(
+            'No active staff session was found. Please sign in again.'
+          );
+        }
+
+        await Promise.all([
+          loadClientRecipients(),
+          loadVaultRecords()
+        ]);
+
+      } catch (error) {
+        console.error('Document Vault initialization failed:', error);
+
+        showToast(
+          `Vault initialization failed: ${error.message || 'Unknown error'}`,
+          'error'
+        );
+
+        setTableMessage(
+          'Vault initialization failed',
+          error.message || 'Unable to initialize the secure document workspace.',
+          '!'
+        );
+      }
+    }
+
+    function setupDropzone() {
+      const dropzone = $('uploadDropzone');
+      const fileField = $('transmitFileField');
+
+      if (!dropzone || !fileField) return;
+
+      ['dragenter', 'dragover'].forEach(type => {
+        dropzone.addEventListener(type, event => {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(type => {
+        dropzone.addEventListener(type, event => {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.remove('dragover');
+        });
+      });
+
+      dropzone.addEventListener('drop', event => {
+        const files = event.dataTransfer?.files;
+
+        if (!files?.length) return;
+
+        try {
+          fileField.files = files;
+          showToast(
+            `${files[0].name} selected for upload.`,
+            'success'
+          );
+        } catch (error) {
+          console.warn('Could not assign dropped file:', error);
+        }
+      });
+
+      fileField.addEventListener('change', () => {
+        const file = fileField.files?.[0];
+        if (!file) return;
+
+        try {
+          validateSelectedFile(file);
+          showToast(
+            `${file.name} ready for transmission.`,
+            'success'
+          );
+        } catch (error) {
+          fileField.value = '';
+          showFormNotification(error.message, true);
+        }
+      });
+    }
+
+    function setupEvents() {
+      $('vaultTransmissionForm')
+        ?.addEventListener('submit', handleUpload);
+
+      $('vaultSearchInput')
+        ?.addEventListener('input', applySearch);
+
+      $('vaultRefreshBtn')
+        ?.addEventListener('click', async () => {
+          await Promise.all([
+            loadClientRecipients(),
+            loadVaultRecords()
+          ]);
+          showToast('Vault data refreshed.', 'success');
+        });
+
+      $('admin-vault-explorer-target-box')
+        ?.addEventListener('click', event => {
+          const button =
+            event.target.closest('.view-asset-trigger');
+
+          if (!button) return;
+
+          openAsset(
+            button.dataset.path,
+            button.dataset.filename,
+            button.dataset.owner
+          );
+        });
+
+      $('modal-close-top')
+        ?.addEventListener('click', closeAsset);
+
+      $('modal-close-btn')
+        ?.addEventListener('click', closeAsset);
+
+      $('asset-preview-modal')
+        ?.addEventListener('click', event => {
+          if (event.target === event.currentTarget) {
+            closeAsset();
           }
-                    try { 
-            // 1. RESOLVE EXECUTING ADMINISTRATOR DATA AND FORMAT TO: Lastname, F.
-            let submitFirstName = "System"; 
-            let submitLastName = "Administrator"; 
-            let submitEmailAddress = ""; 
-            let resolvedAdminUid = null; 
+        });
 
-            const activeUserSession = await dbClient.auth.getUser(); 
-            if (activeUserSession.data && activeUserSession.data.user) { 
-              resolvedAdminUid = activeUserSession.data.user.id; 
-              submitEmailAddress = String(activeUserSession.data.user.email).toLowerCase().trim(); 
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          closeAsset();
+        }
+      });
 
-              // 🟢 THE FIX: Query lookups check BOTH the ID string and the lowercase email index parameter
-              const { data: profileNode } = await dbClient 
-                .from('admin_profiles') 
-                .select('first_name, last_name, email_address') 
-                .or(`id.eq.${resolvedAdminUid},email_address.eq.${submitEmailAddress}`) 
-                .maybeSingle(); 
+      setupDropzone();
+    }
 
-              if (profileNode) { 
-                submitFirstName = (profileNode.first_name || "System").trim(); 
-                submitLastName = (profileNode.last_name || "Administrator").trim(); 
-                if (profileNode.email_address) { 
-                  submitEmailAddress = String(profileNode.email_address).toLowerCase().trim(); 
-                } 
-              } else {
-                // Secondary recovery rule: Parse user metadata if database table sync hasn't populated yet
-                const meta = activeUserSession.data.user.user_metadata || {};
-                if (meta.first_name || meta.last_name) {
-                  submitFirstName = (meta.first_name || "System").trim();
-                  submitLastName = (meta.last_name || "Administrator").trim();
-                }
-              }
-            }
+    updateClock();
+    setInterval(updateClock, 1000);
 
+    document.addEventListener('DOMContentLoaded', () => {
+      setupEvents();
+      initializeVault();
+    });
 
-            // 2. DISPATCH PHYSICAL FILE TO STORAGE ASSETS DISK
-            const folderEmailKey = String(targetEmail).trim().toLowerCase(); 
-            const cleanFileName = String(targetFile.name).replace(/[^a-z0-9.]/gi, '_').toLowerCase(); 
-            const uniquePathToken = Date.now() + "_" + cleanFileName; 
-            const fullStorageBucketPath = `compliance_audits/${folderEmailKey}/${uniquePathToken}`; 
-
-            const { error: storageError } = await dbClient 
-              .storage 
-              .from('client_documents_vault') 
-              .upload(fullStorageBucketPath, targetFile, { cacheControl: '3600', upsert: false }); 
-
-            if (storageError) throw storageError; 
-
-            const finalLabelName = documentLabel || targetFile.name;
-
-            // 3. COMPILE METADATA LOG PAYLOAD AND WRITE TO BOTH DIRECT RELATIONAL TABLES
-            const sharedBasePayload = { 
-              uploaded_by: resolvedAdminUid, 
-              target_client_email: folderEmailKey, 
-              file_name: finalLabelName, 
-              storage_bucket_path: fullStorageBucketPath, 
-              storage_path: `client_documents_vault/${fullStorageBucketPath}`, 
-              file_size_bytes: parseInt(targetFile.size, 10), 
-              content_type: targetFile.type || 'application/pdf', 
-              bucket_id: 'client_documents_vault', 
-              asset_vault_category: selectedVaultFolderTag, 
-              // 🟢 FIXED: Binds the standard database column layout parameters cleanly
-              first_name: submitFirstName,
-              last_name: submitLastName,
-              email_address: submitEmailAddress
-            }; 
-
-            const { error: adminInsertError } = await dbClient 
-              .from('admin_vault') 
-              .insert([sharedBasePayload]); 
-            if (adminInsertError) throw adminInsertError; 
-
-            const { error: clientInsertError } = await dbClient 
-              .from('client_vault') 
-              .insert([sharedBasePayload]); 
-            if (clientInsertError) throw clientInsertError; 
-
-            const dynamicEdgePath = "https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification"; 
-            await dispatchDocumentNotification(targetProfileId, finalLabelName, dynamicEdgePath); 
-
-            showFormNotification(statusSlat, "✓ Success! Vault document asset successfully logged in admin history, distributed to client dashboard, and client notified.", false); 
-            uploadForm.reset(); 
-            initAdminVaultConsole();
-
-          } catch (fault) { 
-            console.error("✕ Document transmission stream failed:", fault); 
-            showFormNotification(statusSlat, `✕ Execution Blocked: ${fault.message || "Cloud processing exception caught."}`, true); 
-          } finally { 
-            if (submitBtn) { 
-              submitBtn.disabled = false; 
-              submitBtn.textContent = originalBtnLabel; 
-            } 
-          } 
-        }); 
-        uploadForm.setAttribute('data-live-listener', 'true'); 
-      } 
-
-    } catch (err) { 
-      console.error('System Vault Explorer Initialization Crash:', err); 
-    } 
-  }
-
-
-
-  function showFormNotification(elem, text, isError) { 
-    if (!elem) return; 
-    elem.textContent = text; 
-    elem.style.cssText = `display:block; margin-bottom:20px; padding:12px; border-radius:8px; font-size:0.85rem; font-weight:700; text-align:left; background: ${isError ? "#fee2e2" : "#ecfdf5"}; color: ${isError ? "#991b1b" : "#047857"}; border: 1px solid ${isError ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)"};`; 
-  } 
-
-  function escapeAdminVaultHtml(s) { 
-    if (!s) return ""; 
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "'"); 
-  } 
-
-  async function dispatchDocumentNotification(ownerId, documentLabel, relativePath) { 
-    try { 
-      console.log("📡 [Network Relay] Transmitting secure metrics payload to background edge system..."); 
-      const edgeRouteEndpoint = "https://lrbimrlbskjweynxlgas.supabase.co"; 
-      const projectBearerToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"; 
-      
-      const response = await fetch(edgeRouteEndpoint, { 
-        method: "POST", 
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": projectBearerToken 
-        }, 
-        body: JSON.stringify({ 
-          account_owner_id: ownerId, 
-          document_classification_label: documentLabel, 
-          storage_path_uri: relativePath, 
-          dispatched_at_timestamp: new Date().toISOString() 
-        }) 
-      }); 
-      if (!response.ok) throw new Error(`Edge channel submission rejected with status error: ${response.status}`); 
-      console.log("✓ [Notification Engine] Live transmission payload confirmed and distributed."); 
-    } catch (error) { 
-      console.error("✕ Document upload edge signal connection failure caught:", error); 
-    } 
-  } 
-
-  if (document.readyState === 'loading') { 
-    document.addEventListener('DOMContentLoaded', initAdminVaultConsole); 
-  } else { 
-    initAdminVaultConsole(); 
-  } 
-})(); 
-
-// IFRAME PREVIEW MODAL UTILITY MODULE HANDLER 
-(() => { 
-  document.addEventListener('DOMContentLoaded', () => { 
-    const modal = document.getElementById("assetPopupModal") || document.getElementById("asset-preview-modal"); 
-    const closeCross = document.getElementById("closeModalCross") || document.getElementById("modal-close-top"); 
-    const closeBtn = document.getElementById("closeModalBtn") || document.getElementById("modal-close-btn"); 
-    const downloadBtn = document.getElementById("downloadAssetBtn") || document.getElementById("modal-download-btn"); 
-    const iframeViewer = document.getElementById("modalIframeViewer"); 
-    const modalName = document.getElementById("modalAssetName"); 
-    const fieldOwner = document.getElementById('modal-field-owner'); 
-    const fieldPath = document.getElementById('modal-field-path'); 
-    const explorerTarget = document.getElementById('admin-vault-explorer-target-box'); 
-
-    if (!explorerTarget || !modal) return; 
-
-    explorerTarget.addEventListener("click", (e) => { 
-      const triggerBtn = e.target.closest(".view-asset-trigger"); 
-      if (!triggerBtn) return; 
-      e.preventDefault(); 
-
-      const fileUrl = triggerBtn.getAttribute("data-url"); 
-      const fileName = triggerBtn.getAttribute("data-filename"); 
-      const dynamicRow = triggerBtn.closest('tr'); 
-      const accountOwnerData = dynamicRow?.cells[0]?.textContent?.trim() || 'Unknown'; 
-      const storagePathData = dynamicRow?.cells[3]?.textContent?.trim() || '#'; 
-
-      if (modalName) modalName.textContent = `Inspecting: ${fileName}`; 
-      if (fieldOwner) fieldOwner.textContent = `Client Node: ${accountOwnerData}`; 
-      if (fieldPath) fieldPath.textContent = storagePathData; 
-      if (iframeViewer) iframeViewer.setAttribute("src", fileUrl); 
-
-      if (downloadBtn) { 
-        downloadBtn.setAttribute("href", fileUrl); 
-        downloadBtn.setAttribute("download", fileName || 'download'); 
-      } 
-      if (modal.style.display !== undefined) { 
-        modal.style.display = 'flex'; 
-      } 
-      modal.classList.add("active"); 
-    }); 
-
-    const deactivateModalView = () => { 
-      modal.classList.remove("active"); 
-      if (modal.style.display) modal.style.display = 'none'; 
-      if (iframeViewer) iframeViewer.setAttribute("src", ""); 
-    }; 
-
-    if (closeCross) closeCross.addEventListener("click", deactivateModalView); 
-    if (closeBtn) closeBtn.addEventListener("click", deactivateModalView); 
-    
-    modal.addEventListener("click", (e) => { 
-      if (e.target === modal) deactivateModalView(); 
-    }); 
-  }); 
-})(); 
-</script> 
-</body> 
+  })();
+  </script>
+</body>
 </html>

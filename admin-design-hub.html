@@ -1,283 +1,1937 @@
 <!-- admin-design-hub -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="assets/js/supabase-config.js"></script>
+  <script src="assets/js/supabase-config.js"></script>
 
-  <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
-<script>
-  (function() {
-    "use strict";
-    // Define the exact project storage lookup path signature
-    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
-    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
-    
-    // Synchronously check local storage cache arrays before browser can paint any HTML elements
-    const rawSessionJson = localStorage.getItem(sessionTokenKey);
-    let isAuthenticated = false;
-    let userRole = null;
+  <!-- SECURITY ENFORCEMENT -->
+  <script>
+    (function () {
+      "use strict";
 
-    if (rawSessionJson) {
-      try {
-        const sessionData = JSON.parse(rawSessionJson);
-        if (sessionData && sessionData.access_token) {
-          isAuthenticated = true;
-          // Extract nested metadata flags out of JWT payload context securely
-          if (sessionData.user && sessionData.user.user_metadata) {
-            userRole = sessionData.user.user_metadata.role;
-          }
-          if (sessionData.user && !userRole && sessionData.user.email) {
-            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
-              userRole = 'admin';
+      const projectUrlHash = "lrbimrlbskjweynxlgas";
+      const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
+      const rawSessionJson = localStorage.getItem(sessionTokenKey);
+
+      let isAuthenticated = false;
+      let userRole = null;
+
+      if (rawSessionJson) {
+        try {
+          const sessionData = JSON.parse(rawSessionJson);
+
+          if (sessionData && sessionData.access_token) {
+            isAuthenticated = true;
+
+            if (sessionData.user && sessionData.user.user_metadata) {
+              userRole = sessionData.user.user_metadata.role;
+            }
+
+            if (!userRole && sessionData.user && sessionData.user.email) {
+              if (sessionData.user.email.toLowerCase().endsWith("@filings4u.com")) {
+                userRole = "admin";
+              }
             }
           }
+        } catch (error) {
+          console.error("Security parsing failure:", error);
         }
-      } catch (e) {
-        console.error("Security parsing failure:", e);
+      }
+
+      const pagePathString = window.location.pathname.toLowerCase();
+      const isAdminViewPage = pagePathString.includes("/admin-");
+
+      if (!isAuthenticated) {
+        window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
+        document.documentElement.style.display = "none";
+        throw new Error("Unauthorized navigation attempt terminated.");
+      }
+
+      if (isAdminViewPage && userRole !== "admin") {
+        window.location.replace("client-dashboard.html");
+        document.documentElement.style.display = "none";
+        throw new Error("Insufficient role permissions.");
+      }
+    })();
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Design Hub | filings4u Staff</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/png" href="images/fav.png">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+
+  <style>
+        /* ==========================================================================
+           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
+           ========================================================================== */
+        :root {
+            --bg-light: #f4f6f9;
+            --hub-bg: #f5f7fa;
+            --hub-panel: #ffffff;
+            --hub-dark: #0f172a;
+            --hub-text: #334155;
+            --hub-muted: #64748b;
+            --hub-border: #e2e8f0;
+            --hub-red: #c15254;
+            --hub-green: #059669;
+            --hub-blue: #2563eb;
+            --hub-purple: #7c3aed;
+            --hub-amber: #d97706;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --emerald: #10b981;
+            --staff-red: #c15254;
+            --sidebar-width: 260px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+        }
+
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            background-color: var(--bg-light) !important;
+            color: var(--text-dark) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important; /* Forces normal native scrolling rules */
+        }
+
+        .dashboard-wrapper {
+            display: flex !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            position: relative !important;
+        }
+
+        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+        .portal-sidebar {
+            width: var(--sidebar-width) !important;
+            background: var(--white) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            box-sizing: border-box !important;
+        }
+
+        .sidebar-brand-block {
+            padding: 24px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .admin-badge {
+            display: inline-block !important;
+            background: rgba(193, 82, 84, 0.08) !important;
+            color: var(--staff-red) !important;
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            padding: 4px 10px !important;
+            border-radius: 12px !important;
+            margin-top: 6px !important;
+            border: 1px solid rgba(193, 82, 84, 0.15) !important;
+        }
+
+        .sidebar-accordion-menu {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            padding: 15px 12px !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger {
+            width: 100% !important;
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 14px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-top: 10px !important;
+            outline: none !important;
+            transition: all 0.2s !important;
+            box-sizing: border-box !important;
+        }
+
+        .accordion-trigger:hover, .accordion-trigger.active {
+            background: #edf2f7 !important;
+            color: var(--text-dark) !important;
+        }
+
+        .accordion-trigger .chevron {
+            font-size: 0.6rem !important;
+            transition: transform 0.2s !important;
+        }
+
+        .accordion-trigger.active .chevron {
+            transform: rotate(180deg) !important;
+        }
+
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden !important;
+            transition: max-height 0.25s ease-out !important;
+            padding-left: 4px !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            color: var(--text-muted) !important;
+            text-decoration: none !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            margin-top: 2px !important;
+            white-space: nowrap !important;
+            transition: all 0.15s !important;
+            box-sizing: border-box !important;
+        }
+
+        .nav-item:hover {
+            background: rgba(10, 31, 68, 0.02) !important;
+            color: var(--emerald) !important;
+            padding-left: 14px !important;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08) !important;
+            color: var(--emerald) !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-footer-lock {
+            padding: 16px !important;
+            border-top: 1px solid var(--border-color) !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+        }
+
+        .logout-btn {
+            width: 100% !important;
+            background: var(--text-dark) !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            cursor: pointer !important;
+        }
+
+        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
+        .portal-main {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
+            margin-left: var(--sidebar-width) !important; 
+            width: calc(100% - var(--sidebar-width)) !important;
+            min-height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        .portal-header {
+            background: var(--white) !important;
+            padding: 20px 40px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 90 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
+        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
+
+        .header-actions-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+        }
+
+        /* ⏱️ Input-styled unified date/time pill element */
+        .header-clock-pill {
+            background: #f8fafc !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            font-family: monospace !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            color: var(--text-dark) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            white-space: nowrap !important;
+        }
+
+        .search-input {
+            padding: 10px 16px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px !important;
+            font-size: 0.82rem !important;
+            width: 220px !important;
+            outline: none !important;
+            background: #f8fafc !important;
+            box-sizing: border-box !important;
+            height: 40px !important;
+            color: var(--text-dark) !important;
+        }
+
+        .search-input:focus {
+            background: var(--white) !important;
+            border-color: var(--emerald) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
+        }
+
+ 
+
+    /* =========================================================
+       DESIGN HUB HEADER
+       ========================================================= */
+
+    .design-hub-header {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--hub-border);
+      padding: 24px 40px 22px;
+    }
+
+    .hub-header-inner {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      max-width: 1700px;
+      margin: 0 auto;
+    }
+
+    .hub-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+      color: var(--hub-red);
+      font-size: .68rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .13em;
+    }
+
+    .hub-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--hub-green);
+      box-shadow: 0 0 0 4px rgba(5,150,105,.10);
+    }
+
+    .hub-header-title {
+      margin: 0;
+      font-size: clamp(1.7rem, 2.3vw, 2.35rem);
+      line-height: 1.05;
+      letter-spacing: -.045em;
+      font-weight: 900;
+      color: var(--hub-dark);
+    }
+
+    .hub-header-subtitle {
+      margin: 8px 0 0;
+      color: var(--hub-muted);
+      font-size: .84rem;
+      line-height: 1.55;
+      max-width: 720px;
+    }
+
+    .hub-refresh-btn {
+      border: 1px solid var(--hub-border);
+      background: #fff;
+      color: var(--hub-dark);
+      border-radius: 9px;
+      padding: 10px 15px;
+      font-size: .76rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: .15s ease;
+    }
+
+    .hub-refresh-btn:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    /* =========================================================
+       WORKSPACE
+       ========================================================= */
+
+    .design-hub-workspace {
+      width: 100%;
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 28px 40px 50px;
+    }
+
+    .hub-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .hub-stat {
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--hub-border);
+      border-radius: 14px;
+      padding: 19px 20px;
+      box-shadow: 0 2px 8px rgba(15,23,42,.025);
+    }
+
+    .hub-stat::after {
+      content: "";
+      position: absolute;
+      right: -25px;
+      bottom: -38px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(15,23,42,.025);
+    }
+
+    .hub-stat-label {
+      display: block;
+      color: var(--hub-muted);
+      font-size: .67rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .hub-stat-value {
+      display: block;
+      margin-top: 7px;
+      color: var(--hub-dark);
+      font-size: 1.85rem;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -.04em;
+    }
+
+    .hub-stat-meta {
+      display: block;
+      margin-top: 7px;
+      color: #94a3b8;
+      font-size: .7rem;
+      font-weight: 650;
+    }
+
+    .hub-stat.web .hub-stat-value { color: var(--hub-blue); }
+    .hub-stat.logo .hub-stat-value { color: var(--hub-purple); }
+    .hub-stat.recent .hub-stat-value { color: var(--hub-green); }
+
+    /* =========================================================
+       TOOLBAR
+       ========================================================= */
+
+    .hub-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px;
+      margin-bottom: 18px;
+      background: #fff;
+      border: 1px solid var(--hub-border);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(15,23,42,.025);
+    }
+
+    .hub-tabs {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hub-tab {
+      border: 0;
+      background: transparent;
+      color: var(--hub-muted);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: .75rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .hub-tab:hover {
+      background: #f8fafc;
+      color: var(--hub-dark);
+    }
+
+    .hub-tab.active {
+      background: var(--hub-dark);
+      color: #fff;
+    }
+
+    .hub-search {
+      width: 320px;
+      max-width: 100%;
+      height: 38px;
+      padding: 0 13px;
+      border: 1px solid var(--hub-border);
+      border-radius: 8px;
+      outline: none;
+      color: var(--hub-dark);
+      background: #f8fafc;
+      font-size: .76rem;
+      font-weight: 600;
+    }
+
+    .hub-search:focus {
+      background: #fff;
+      border-color: #94a3b8;
+    }
+
+    /* =========================================================
+       ORDER BOARD
+       ========================================================= */
+
+    .orders-board {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .order-section {
+      min-width: 0;
+      background: #fff;
+      border: 1px solid var(--hub-border);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(15,23,42,.025);
+    }
+
+    .order-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--hub-border);
+      background: linear-gradient(to bottom, #fff, #fbfcfe);
+    }
+
+    .order-section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .order-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      font-size: .95rem;
+      font-weight: 900;
+    }
+
+    .order-icon.web {
+      background: #eff6ff;
+      color: var(--hub-blue);
+    }
+
+    .order-icon.logo {
+      background: #f5f3ff;
+      color: var(--hub-purple);
+    }
+
+    .order-section-title {
+      margin: 0;
+      color: var(--hub-dark);
+      font-size: .94rem;
+      font-weight: 900;
+      letter-spacing: -.015em;
+    }
+
+    .order-section-subtitle {
+      margin: 3px 0 0;
+      color: var(--hub-muted);
+      font-size: .68rem;
+      font-weight: 600;
+    }
+
+    .order-count {
+      min-width: 28px;
+      height: 28px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: #f1f5f9;
+      color: var(--hub-dark);
+      font-size: .7rem;
+      font-weight: 850;
+    }
+
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .order-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 15px;
+      padding: 18px 20px;
+      border-bottom: 1px solid #eef2f7;
+      transition: background .15s ease;
+      cursor: pointer;
+    }
+
+    .order-card:last-child {
+      border-bottom: 0;
+    }
+
+    .order-card:hover {
+      background: #f8fafc;
+    }
+
+    .order-main {
+      min-width: 0;
+    }
+
+    .order-topline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 7px;
+    }
+
+    .order-business {
+      color: var(--hub-dark);
+      font-size: .86rem;
+      font-weight: 850;
+    }
+
+    .order-client {
+      color: var(--hub-muted);
+      font-size: .7rem;
+      font-weight: 650;
+    }
+
+    .order-tracking {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 7px;
+      border-radius: 5px;
+      background: #f1f5f9;
+      color: #475569;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .61rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .order-details {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      color: var(--hub-muted);
+      font-size: .69rem;
+      font-weight: 650;
+    }
+
+    .order-detail {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .order-detail strong {
+      color: var(--hub-text);
+      font-weight: 800;
+    }
+
+    .order-right {
+      min-width: 110px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 150px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: .6rem;
+      line-height: 1.2;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+      text-align: center;
+    }
+
+    .status-pill.green {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .status-pill.blue {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .status-pill.amber {
+      background: #fffbeb;
+      color: #b45309;
+    }
+
+    .status-pill.purple {
+      background: #f5f3ff;
+      color: #6d28d9;
+    }
+
+    .status-pill.neutral {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .order-date {
+      color: #94a3b8;
+      font-size: .63rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .order-empty {
+      padding: 42px 22px;
+      text-align: center;
+      color: var(--hub-muted);
+      font-size: .74rem;
+      font-weight: 650;
+    }
+
+    .order-empty strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--hub-dark);
+      font-size: .82rem;
+    }
+
+    /* =========================================================
+       DETAIL MODAL
+       ========================================================= */
+
+    .design-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15,23,42,.46);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity .18s ease;
+    }
+
+    .design-modal-overlay.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .design-modal {
+      width: min(980px, 96vw);
+      max-height: calc(100vh - 36px);
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--hub-border);
+      border-radius: 18px;
+      box-shadow: 0 30px 90px rgba(15,23,42,.24);
+      transform: translateY(10px) scale(.985);
+      transition: transform .2s cubic-bezier(.16,1,.3,1);
+    }
+
+    .design-modal-overlay.open .design-modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .design-modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--hub-border);
+      background: #fff;
+    }
+
+    .design-modal-kicker {
+      color: var(--hub-red);
+      font-size: .62rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .design-modal-title {
+      margin: 4px 0 0;
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: -.025em;
+    }
+
+    .design-modal-subtitle {
+      margin: 4px 0 0;
+      color: var(--hub-muted);
+      font-size: .72rem;
+    }
+
+    .design-modal-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--hub-border);
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #64748b;
+      font-size: 1.15rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .design-modal-close:hover {
+      background: #f1f5f9;
+      color: var(--hub-dark);
+    }
+
+    .design-modal-body {
+      max-height: calc(100vh - 150px);
+      overflow-y: auto;
+      padding: 22px 24px 28px;
+    }
+
+    .detail-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .detail-summary-card {
+      padding: 12px 13px;
+      background: #f8fafc;
+      border: 1px solid #eef2f7;
+      border-radius: 9px;
+    }
+
+    .detail-summary-label {
+      display: block;
+      color: #94a3b8;
+      font-size: .59rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .detail-summary-value {
+      display: block;
+      margin-top: 4px;
+      color: var(--hub-dark);
+      font-size: .75rem;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .detail-section {
+      margin-top: 18px;
+    }
+
+    .detail-section-title {
+      margin: 0 0 9px;
+      color: var(--hub-dark);
+      font-size: .72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 9px;
+    }
+
+    .detail-field {
+      min-width: 0;
+      padding: 11px 12px;
+      background: #fff;
+      border: 1px solid var(--hub-border);
+      border-radius: 9px;
+    }
+
+    .detail-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-label {
+      display: block;
+      margin-bottom: 4px;
+      color: #94a3b8;
+      font-size: .6rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .detail-value {
+      color: var(--hub-text);
+      font-size: .73rem;
+      font-weight: 650;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-link {
+      color: var(--hub-blue);
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .detail-link:hover {
+      text-decoration: underline;
+    }
+
+    .array-chip-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .array-chip {
+      padding: 4px 7px;
+      border-radius: 5px;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: .61rem;
+      font-weight: 800;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media (max-width: 1200px) {
+      .hub-stats {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+      }
+
+      .orders-board {
+        grid-template-columns: 1fr;
       }
     }
 
-    // Determine current view file track rules path parameters
-    const pagePathString = window.location.pathname.toLowerCase();
-    const isAdminViewPage = pagePathString.includes('/admin-');
+    @media (max-width: 900px) {
+      .portal-main {
+        margin-left: 0;
+        width: 100%;
+      }
 
-    if (!isAuthenticated) {
-      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
-      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
-      
-      // Inject CSS rule to hide everything in case browser delays routing
-      document.documentElement.style.display = "none";
-      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
+      .design-hub-header {
+        padding: 20px;
+      }
+
+      .design-hub-workspace {
+        padding: 20px 16px 35px;
+      }
+
+      .hub-header-inner {
+        flex-direction: column;
+      }
+
+      .hub-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .hub-tabs {
+        overflow-x: auto;
+      }
+
+      .hub-search {
+        width: 100%;
+      }
     }
 
-    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
-    if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
-      window.location.replace("client-dashboard.html");
-      document.documentElement.style.display = "none";
-      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
-    }
-  })();
-</script>
+    @media (max-width: 600px) {
+      .hub-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Design Operations Board | filings4u Staff</title>
-  <meta name="theme-color" content="#c15254">
-  <link rel="icon" type="image/png" href="images/fav.png">
-  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-  <style>
-    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
-    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
-    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
-    
-    /* SIDEBAR SYSTEM MATRIX */
-    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
-    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
-    .admin-badge { display: inline-block !important; background: rgba(193, 82, 84, 0.08) !important; color: var(--staff-red) !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(193, 82, 84, 0.15) !important; }
-    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
-    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; box-sizing: border-box !important; }
-    .accordion-panel { max-height: 0; overflow: hidden !important; transition: max-height 0.25s ease-out !important; padding-left: 4px !important; box-sizing: border-box !important; }
-    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; box-sizing: border-box !important; }
-    .nav-item.active { background: rgba(16, 185, 129, 0.08) !important; color: var(--emerald) !important; font-weight: 700 !important; }
-    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
-    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
-    /* MAIN PLATFORM WORKSPACE CONTAINER */
-    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
-    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
-    .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
-    .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
-    .content-container { padding: 40px !important; box-sizing: border-box !important; width: 100% !important; display: grid; grid-template-columns: 1fr; gap: 30px; }
-    
-    .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; width: 100% !important; }
-    .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
-    
-    .text-truncate-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .hub-stat {
+        padding: 15px;
+      }
+
+      .hub-stat-value {
+        font-size: 1.5rem;
+      }
+
+      .order-card {
+        grid-template-columns: 1fr;
+      }
+
+      .order-right {
+        min-width: 0;
+        align-items: flex-start;
+        flex-direction: row;
+      }
+
+      .detail-summary,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-field.full {
+        grid-column: auto;
+      }
+
+      .design-modal-body {
+        padding: 18px;
+      }
+    }
   </style>
+
 </head>
+
 <body>
   <div class="dashboard-wrapper">
-
     <main class="portal-main">
-      <header class="portal-header">
-        <div class="welcome-text">
-          <h1>Design Operations Board</h1>
-          <p>Central engineering panel monitoring active client website frameworks and custom logo design specification intakes</p>
+
+      <!-- =====================================================
+           DESIGN HUB HEADER
+           ===================================================== -->
+      <header class="design-hub-header">
+        <div class="hub-header-inner">
+          <div>
+            <div class="hub-eyebrow">
+              <span class="hub-live-dot"></span>
+              Design Operations
+            </div>
+
+            <h1 class="hub-header-title">Design Hub</h1>
+
+            <p class="hub-header-subtitle">
+              The creative command center for website builds, logo development,
+              branding direction, client requirements, and active design orders.
+            </p>
+          </div>
+
+          <button type="button" class="hub-refresh-btn" id="hubRefreshBtn">
+            ↻ Refresh Orders
+          </button>
         </div>
       </header>
 
-      <div class="content-container">
-        <!-- Section A: Web Intakes Registry -->
-        <div class="console-card">
-          <h2>Website Project Specification Intakes</h2>
-          <div style="overflow-x:auto !important;">
-            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-              <thead>
-                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
-                  <th style="padding:12px !important;">Tracking Code</th>
-                  <th style="padding:12px !important;">Target Domain</th>
-                  <th style="padding:12px !important;">Aesthetic Style Preference</th>
-                  <th style="padding:12px !important;">Required Features Matrix</th>
-                  <th style="padding:12px !important; text-align:right !important;">Architectural Blueprint Notes</th>
-                </tr>
-              </thead>
-              <tbody id="admin-web-intakes-target-box">
-                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing web layout data rows...</td></tr>
-              </tbody>
-            </table>
+      <section class="design-hub-workspace">
+
+        <!-- ===================================================
+             SUMMARY METRICS
+             =================================================== -->
+        <div class="hub-stats">
+          <div class="hub-stat">
+            <span class="hub-stat-label">Active Design Orders</span>
+            <span class="hub-stat-value" id="hubMetricTotal">0</span>
+            <span class="hub-stat-meta">Web + logo projects</span>
+          </div>
+
+          <div class="hub-stat web">
+            <span class="hub-stat-label">Website Projects</span>
+            <span class="hub-stat-value" id="hubMetricWeb">0</span>
+            <span class="hub-stat-meta">Website design intakes</span>
+          </div>
+
+          <div class="hub-stat logo">
+            <span class="hub-stat-label">Logo Projects</span>
+            <span class="hub-stat-value" id="hubMetricLogo">0</span>
+            <span class="hub-stat-meta">Brand identity intakes</span>
+          </div>
+
+          <div class="hub-stat recent">
+            <span class="hub-stat-label">New This Week</span>
+            <span class="hub-stat-value" id="hubMetricRecent">0</span>
+            <span class="hub-stat-meta">Recently submitted projects</span>
           </div>
         </div>
 
-        <!-- Section B: Logo Intakes Registry -->
-        <div class="console-card">
-          <h2>Logo & Branding Concept Intakes</h2>
-          <div style="overflow-x:auto !important;">
-            <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
-              <thead>
-                <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
-                  <th style="padding:12px !important;">Tracking Code</th>
-                  <th style="padding:12px !important;">Branding Text Display</th>
-                  <th style="padding:12px !important;">Tagline / Slogan</th>
-                  <th style="padding:12px !important;">Aesthetic Dimensions Preference</th>
-                  <th style="padding:12px !important; text-align:right !important;">Visual Icon Guidelines</th>
-                </tr>
-              </thead>
-              <tbody id="admin-logo-intakes-target-box">
-                <tr><td colspan="5" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing branding concept data rows...</td></tr>
-              </tbody>
-            </table>
+        <!-- ===================================================
+             FILTER / SEARCH TOOLBAR
+             =================================================== -->
+        <div class="hub-toolbar">
+          <div class="hub-tabs">
+            <button type="button" class="hub-tab active" data-filter="all">All Orders</button>
+            <button type="button" class="hub-tab" data-filter="web">Web Design</button>
+            <button type="button" class="hub-tab" data-filter="logo">Logo &amp; Branding</button>
           </div>
+
+          <input
+            type="search"
+            id="hubSearchField"
+            class="hub-search"
+            placeholder="Search client, business, email, or tracking..."
+            autocomplete="off"
+          >
         </div>
-      </div>
+
+        <!-- ===================================================
+             ORDER BOARD
+             =================================================== -->
+        <div class="orders-board">
+
+          <section class="order-section" id="webOrderSection">
+            <div class="order-section-header">
+              <div class="order-section-title-wrap">
+                <div class="order-icon web">⌘</div>
+                <div>
+                  <h2 class="order-section-title">Website Design Orders</h2>
+                  <p class="order-section-subtitle">Active website strategy &amp; build specifications</p>
+                </div>
+              </div>
+              <span class="order-count" id="webOrderCount">0</span>
+            </div>
+
+            <div class="orders-list" id="webOrdersList">
+              <div class="order-empty">
+                <strong>Loading website projects...</strong>
+                Connecting to the design intake registry.
+              </div>
+            </div>
+          </section>
+
+          <section class="order-section" id="logoOrderSection">
+            <div class="order-section-header">
+              <div class="order-section-title-wrap">
+                <div class="order-icon logo">✦</div>
+                <div>
+                  <h2 class="order-section-title">Logo &amp; Branding Orders</h2>
+                  <p class="order-section-subtitle">Active identity, mark &amp; visual direction specifications</p>
+                </div>
+              </div>
+              <span class="order-count" id="logoOrderCount">0</span>
+            </div>
+
+            <div class="orders-list" id="logoOrdersList">
+              <div class="order-empty">
+                <strong>Loading logo projects...</strong>
+                Connecting to the branding intake registry.
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </section>
     </main>
   </div>
-  
-  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/admin-master-ledger.js"></script>
 
-   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+  <!-- =========================================================
+       PROJECT DETAIL MODAL
+       ========================================================= -->
+  <div class="design-modal-overlay" id="designDetailOverlay" aria-hidden="true">
+    <div class="design-modal" role="dialog" aria-modal="true" aria-labelledby="designDetailTitle">
+
+      <div class="design-modal-head">
+        <div>
+          <div class="design-modal-kicker" id="designDetailKicker">Design Project</div>
+          <h2 class="design-modal-title" id="designDetailTitle">Project Details</h2>
+          <p class="design-modal-subtitle" id="designDetailSubtitle"></p>
+        </div>
+
+        <button type="button" class="design-modal-close" id="designDetailClose" aria-label="Close project details">
+          &times;
+        </button>
+      </div>
+
+      <div class="design-modal-body" id="designDetailBody"></div>
+    </div>
+  </div>
+
+  <script src="assets/js/admin-master-ledger.js"></script>
   <script src="assets/js/admin-navigation.js"></script>
 
-    <script>
+  <script>
     document.addEventListener("DOMContentLoaded", async () => {
       "use strict";
 
-      // 1. Resolve Document Spreadsheet Target Containers
-      const webTableBody = document.getElementById("admin-web-intakes-target-box");
-      const logoTableBody = document.getElementById("admin-logo-intakes-target-box");
-
-      if (!webTableBody || !logoTableBody) {
-        throw new Error("✕ Critical UI Error: Multi-intake dashboard target spreadsheet tables are absent from document layouts.");
-      }
-
-      // 2. Fetch Global Database Instance Connections
       const client = window.supabaseInstance || window.supabaseClient;
-      if (!client || typeof client.from !== 'function') {
-        webTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</td></tr>`;
-        logoTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Supabase client infrastructure missing.</td></tr>`;
-        throw new Error("✕ Initialization Error: Active connection layers are unassigned.");
+
+      if (!client || typeof client.from !== "function") {
+        renderSystemFailure("Supabase client infrastructure is unavailable.");
+        return;
       }
 
-      // --- STAGE 1: READ AND STREAM LIVE WEBSITE INTAKE PAYLOADS ---
-      async function populateWebIntakesTable() {
-        try {
-          console.log("📡 [Design Hub] Loading rows from public.web_intakes...");
-          const { data: webData, error: fetchError } = await client
-            .from('web_intakes')
-            .select('*')
-            .order('created_at', { ascending: false });
+      const webOrdersList = document.getElementById("webOrdersList");
+      const logoOrdersList = document.getElementById("logoOrdersList");
+      const webOrderCount = document.getElementById("webOrderCount");
+      const logoOrderCount = document.getElementById("logoOrderCount");
 
-          if (fetchError) throw fetchError;
+      const metricTotal = document.getElementById("hubMetricTotal");
+      const metricWeb = document.getElementById("hubMetricWeb");
+      const metricLogo = document.getElementById("hubMetricLogo");
+      const metricRecent = document.getElementById("hubMetricRecent");
 
-          if (!webData || webData.length === 0) {
-            webTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No customer website specification entries logged inside the ledger.</td></tr>`;
-            return;
-          }
+      const searchField = document.getElementById("hubSearchField");
+      const refreshBtn = document.getElementById("hubRefreshBtn");
 
-          webTableBody.innerHTML = "";
+      const webSection = document.getElementById("webOrderSection");
+      const logoSection = document.getElementById("logoOrderSection");
 
-          webData.forEach(row => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+      const detailOverlay = document.getElementById("designDetailOverlay");
+      const detailClose = document.getElementById("designDetailClose");
+      const detailBody = document.getElementById("designDetailBody");
+      const detailTitle = document.getElementById("designDetailTitle");
+      const detailSubtitle = document.getElementById("designDetailSubtitle");
+      const detailKicker = document.getElementById("designDetailKicker");
 
-            const trackingKey = row.tracking_number || "GUEST-REF";
-            const domain      = row.desired_domain || "N/A";
-            const tone        = row.aesthetic_tone || "Not Specified";
-            const features    = row.required_features || "Portfolio";
-            const notes       = row.architectural_notes || "No extra specs noted.";
+      let webOrders = [];
+      let logoOrders = [];
+      let activeFilter = "all";
+      let realtimeChannel = null;
 
-            tr.innerHTML = `
-              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:700;">${escapeDesignHub(trackingKey)}</td>
-              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeDesignHub(domain)}</td>
-              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeDesignHub(tone)}</td>
-              <td style="padding:14px 12px;"><span style="font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; background:#f1f5f9; color:#475569; letter-spacing:0.5px;">${escapeDesignHub(features)}</span></td>
-              <td style="padding:14px 12px; text-align:right; color:var(--text-muted);" class="text-truncate-cell" title="${escapeDesignHub(notes)}">${escapeDesignHub(notes)}</td>
-            `;
-            webTableBody.appendChild(tr);
-          });
-        } catch (err) {
-          console.error("✕ Web Intakes Hydration Exception:", err.message);
-          webTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Check browser developer logs.</td></tr>`;
+      /* =======================================================
+         HELPERS
+         ======================================================= */
+
+      function escapeHtml(value) {
+        if (value === null || value === undefined) return "";
+
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function textValue(value, fallback = "Not provided") {
+        if (value === null || value === undefined) return fallback;
+
+        if (Array.isArray(value)) {
+          if (!value.length) return fallback;
+          return value.join(", ");
+        }
+
+        const stringValue = String(value).trim();
+        return stringValue || fallback;
+      }
+
+      function formatDate(value) {
+        if (!value) return "Date unavailable";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+          return "Date unavailable";
+        }
+
+        return date.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        });
+      }
+
+      function isWithinLastSevenDays(value) {
+        if (!value) return false;
+
+        const timestamp = new Date(value).getTime();
+
+        if (Number.isNaN(timestamp)) return false;
+
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+        return timestamp >= sevenDaysAgo;
+      }
+
+      function getStatusInfo(status, serviceType) {
+        const normalized = String(status || "").trim().toLowerCase();
+
+        if (
+          normalized.includes("complete") ||
+          normalized.includes("approved") ||
+          normalized.includes("ready") ||
+          normalized.includes("final")
+        ) {
+          return {
+            label: status || "Ready",
+            className: "green"
+          };
+        }
+
+        if (
+          normalized.includes("progress") ||
+          normalized.includes("review") ||
+          normalized.includes("design") ||
+          normalized.includes("build")
+        ) {
+          return {
+            label: status || "In Progress",
+            className: serviceType === "logo" ? "purple" : "blue"
+          };
+        }
+
+        if (
+          normalized.includes("pending") ||
+          normalized.includes("await") ||
+          normalized.includes("new") ||
+          normalized.includes("submitted")
+        ) {
+          return {
+            label: status || "New Order",
+            className: "amber"
+          };
+        }
+
+        return {
+          label: status || "Active",
+          className: "neutral"
+        };
+      }
+
+      function getWebsiteStatus(row) {
+        return (
+          row.branding_status ||
+          row.asset_copy_status ||
+          "New Order"
+        );
+      }
+
+      function getLogoStatus(row) {
+        return row.logo_status || "New Order";
+      }
+
+      function getWebsiteAudience(row) {
+        return textValue(row.target_audience, "Audience not specified");
+      }
+
+      function getWebsiteStyle(row) {
+        return textValue(
+          row.style_preference_other || row.style_preference || row.aesthetic_tone,
+          "Style not specified"
+        );
+      }
+
+      function getLogoStyle(row) {
+        return textValue(row.logo_style, "Style not specified");
+      }
+
+      function getLogoMood(row) {
+        return textValue(row.brand_mood, "Mood not specified");
+      }
+
+      function getWebsiteProjectName(row) {
+        return textValue(row.business_name, "Website Project");
+      }
+
+      function getLogoProjectName(row) {
+        return textValue(row.business_name, "Logo Project");
+      }
+
+      function getClientDisplay(row) {
+        return textValue(row.client_name, "Client");
+      }
+
+      function matchesSearch(row, type) {
+        const query = String(searchField?.value || "").trim().toLowerCase();
+
+        if (!query) return true;
+
+        const searchable = [
+          row.business_name,
+          row.client_name,
+          row.email_address,
+          row.phone_number,
+          row.tracking_number,
+          type === "web" ? row.current_url : "",
+          type === "web" ? row.website_type : "",
+          type === "web" ? row.style_preference : "",
+          type === "web" ? row.aesthetic_tone : "",
+          type === "logo" ? row.logo_text : "",
+          type === "logo" ? row.logo_style : "",
+          type === "logo" ? row.brand_mood : ""
+        ]
+          .map(value => String(value || "").toLowerCase())
+          .join(" ");
+
+        return searchable.includes(query);
+      }
+
+      function createStatusPill(status, serviceType) {
+        const info = getStatusInfo(status, serviceType);
+
+        return `
+          <span class="status-pill ${info.className}">
+            ${escapeHtml(info.label)}
+          </span>
+        `;
+      }
+
+      /* =======================================================
+         ORDER CARD RENDERERS
+         ======================================================= */
+
+      function createWebsiteCard(row) {
+        const status = getWebsiteStatus(row);
+
+        const features = Array.isArray(row.required_features)
+          ? row.required_features.length
+          : textValue(row.required_features, "").split(",").filter(Boolean).length;
+
+        const pageCount = textValue(row.estimated_page_count, "Pages TBD");
+
+        const card = document.createElement("article");
+        card.className = "order-card";
+
+        card.innerHTML = `
+          <div class="order-main">
+            <div class="order-topline">
+              <span class="order-business">${escapeHtml(getWebsiteProjectName(row))}</span>
+              <span class="order-tracking">${escapeHtml(textValue(row.tracking_number, "GUEST-REF"))}</span>
+            </div>
+
+            <div class="order-client">
+              ${escapeHtml(getClientDisplay(row))}
+              &nbsp;·&nbsp;
+              ${escapeHtml(textValue(row.email_address, "No email"))}
+            </div>
+
+            <div class="order-details" style="margin-top:10px;">
+              <span class="order-detail">
+                Type:
+                <strong>${escapeHtml(textValue(row.website_type, "Website"))}</strong>
+              </span>
+
+              <span class="order-detail">
+                Pages:
+                <strong>${escapeHtml(pageCount)}</strong>
+              </span>
+
+              <span class="order-detail">
+                Features:
+                <strong>${escapeHtml(String(features || 0))}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="order-right">
+            ${createStatusPill(status, "web")}
+            <span class="order-date">${escapeHtml(formatDate(row.created_at))}</span>
+          </div>
+        `;
+
+        card.addEventListener("click", () => openProjectDetails(row, "web"));
+
+        return card;
+      }
+
+      function createLogoCard(row) {
+        const status = getLogoStatus(row);
+
+        const card = document.createElement("article");
+        card.className = "order-card";
+
+        card.innerHTML = `
+          <div class="order-main">
+            <div class="order-topline">
+              <span class="order-business">${escapeHtml(getLogoProjectName(row))}</span>
+              <span class="order-tracking">${escapeHtml(textValue(row.tracking_number, "GUEST-REF"))}</span>
+            </div>
+
+            <div class="order-client">
+              ${escapeHtml(getClientDisplay(row))}
+              &nbsp;·&nbsp;
+              ${escapeHtml(textValue(row.email_address, "No email"))}
+            </div>
+
+            <div class="order-details" style="margin-top:10px;">
+              <span class="order-detail">
+                Mark:
+                <strong>${escapeHtml(textValue(row.logo_text, "Logo"))}</strong>
+              </span>
+
+              <span class="order-detail">
+                Style:
+                <strong>${escapeHtml(getLogoStyle(row))}</strong>
+              </span>
+
+              <span class="order-detail">
+                Mood:
+                <strong>${escapeHtml(getLogoMood(row))}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="order-right">
+            ${createStatusPill(status, "logo")}
+            <span class="order-date">${escapeHtml(formatDate(row.created_at))}</span>
+          </div>
+        `;
+
+        card.addEventListener("click", () => openProjectDetails(row, "logo"));
+
+        return card;
+      }
+
+      function renderOrders() {
+        const filteredWeb =
+          activeFilter === "logo"
+            ? []
+            : webOrders.filter(row => matchesSearch(row, "web"));
+
+        const filteredLogo =
+          activeFilter === "web"
+            ? []
+            : logoOrders.filter(row => matchesSearch(row, "logo"));
+
+        webOrderCount.textContent = filteredWeb.length;
+        logoOrderCount.textContent = filteredLogo.length;
+
+        webSection.style.display = activeFilter === "logo" ? "none" : "";
+        logoSection.style.display = activeFilter === "web" ? "none" : "";
+
+        webOrdersList.innerHTML = "";
+        logoOrdersList.innerHTML = "";
+
+        if (!filteredWeb.length) {
+          webOrdersList.innerHTML = `
+            <div class="order-empty">
+              <strong>${searchField.value ? "No website orders match your search." : "No website orders yet."}</strong>
+              Website intake submissions will appear here automatically.
+            </div>
+          `;
+        } else {
+          filteredWeb.forEach(row => webOrdersList.appendChild(createWebsiteCard(row)));
+        }
+
+        if (!filteredLogo.length) {
+          logoOrdersList.innerHTML = `
+            <div class="order-empty">
+              <strong>${searchField.value ? "No logo orders match your search." : "No logo orders yet."}</strong>
+              Logo intake submissions will appear here automatically.
+            </div>
+          `;
+        } else {
+          filteredLogo.forEach(row => logoOrdersList.appendChild(createLogoCard(row)));
         }
       }
 
-      // --- STAGE 2: READ AND STREAM LIVE LOGO INTAKE PAYLOADS ---
-      async function populateLogoIntakesTable() {
+      /* =======================================================
+         METRICS
+         ======================================================= */
+
+      function updateMetrics() {
+        const total = webOrders.length + logoOrders.length;
+
+        const recent =
+          webOrders.filter(row => isWithinLastSevenDays(row.created_at)).length +
+          logoOrders.filter(row => isWithinLastSevenDays(row.created_at)).length;
+
+        metricTotal.textContent = total;
+        metricWeb.textContent = webOrders.length;
+        metricLogo.textContent = logoOrders.length;
+        metricRecent.textContent = recent;
+      }
+
+      /* =======================================================
+         DETAIL MODAL
+         ======================================================= */
+
+      function detailField(label, value, options = {}) {
+        const full = options.full ? " full" : "";
+
+        let renderedValue = escapeHtml(textValue(value));
+
+        if (options.url && value) {
+          const safeUrl = escapeHtml(String(value));
+
+          renderedValue = `
+            <a
+              class="detail-link"
+              href="${safeUrl}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >${safeUrl}</a>
+          `;
+        }
+
+        return `
+          <div class="detail-field${full}">
+            <span class="detail-label">${escapeHtml(label)}</span>
+            <div class="detail-value">${renderedValue}</div>
+          </div>
+        `;
+      }
+
+      function detailArrayField(label, values, full = true) {
+        const list = Array.isArray(values)
+          ? values.filter(Boolean)
+          : String(values || "")
+              .split(",")
+              .map(item => item.trim())
+              .filter(Boolean);
+
+        const markup = list.length
+          ? `
+            <div class="array-chip-wrap">
+              ${list.map(item => `<span class="array-chip">${escapeHtml(item)}</span>`).join("")}
+            </div>
+          `
+          : `<div class="detail-value">Not provided</div>`;
+
+        return `
+          <div class="detail-field${full ? " full" : ""}">
+            <span class="detail-label">${escapeHtml(label)}</span>
+            ${markup}
+          </div>
+        `;
+      }
+
+      function openProjectDetails(row, type) {
+        if (!detailOverlay || !detailBody) return;
+
+        const isWeb = type === "web";
+
+        detailKicker.textContent = isWeb
+          ? "Website Design Order"
+          : "Logo & Branding Order";
+
+        detailTitle.textContent = textValue(row.business_name, "Design Project");
+
+        detailSubtitle.textContent =
+          `${textValue(row.client_name, "Client")} · ${textValue(row.tracking_number, "No tracking number")}`;
+
+        const status = isWeb ? getWebsiteStatus(row) : getLogoStatus(row);
+
+        const summary = `
+          <div class="detail-summary">
+            <div class="detail-summary-card">
+              <span class="detail-summary-label">Tracking</span>
+              <span class="detail-summary-value">${escapeHtml(textValue(row.tracking_number))}</span>
+            </div>
+
+            <div class="detail-summary-card">
+              <span class="detail-summary-label">Client</span>
+              <span class="detail-summary-value">${escapeHtml(textValue(row.client_name))}</span>
+            </div>
+
+            <div class="detail-summary-card">
+              <span class="detail-summary-label">Submitted</span>
+              <span class="detail-summary-value">${escapeHtml(formatDate(row.created_at))}</span>
+            </div>
+
+            <div class="detail-summary-card">
+              <span class="detail-summary-label">Status</span>
+              <span class="detail-summary-value">${createStatusPill(status, type)}</span>
+            </div>
+          </div>
+        `;
+
+        if (isWeb) {
+          detailBody.innerHTML = `
+            ${summary}
+
+            <section class="detail-section">
+              <h3 class="detail-section-title">Client &amp; Project</h3>
+              <div class="detail-grid">
+                ${detailField("Business Name", row.business_name)}
+                ${detailField("Client Name", row.client_name)}
+                ${detailField("Email Address", row.email_address)}
+                ${detailField("Phone Number", row.phone_number)}
+                ${detailField("Current Website", row.current_url, { url: true })}
+                ${detailField("Website Type", row.website_type)}
+                ${detailField("Other Website Type", row.website_type_other)}
+              </div>
+            </section>
+
+            <section class="detail-section">
+              <h3 class="detail-section-title">Creative Direction</h3>
+              <div class="detail-grid">
+                ${detailField("Main Goal", row.main_goal, { full: true })}
+                ${detailField("Target Audience", row.target_audience, { full: true })}
+                ${detailField("Branding Status", row.branding_status)}
+                ${detailField("Style Preference", row.style_preference)}
+                ${detailField("Style Preference — Other", row.style_preference_other)}
+                ${detailField("Aesthetic Tone", row.aesthetic_tone)}
+                ${detailField("Brand Assets / Links", row.brand_assets_links, { full: true })}
+                ${detailField("Design Inspiration", row.design_inspiration_links, { full: true })}
+              </div>
+            </section>
+
+            <section class="detail-section">
+              <h3 class="detail-section-title">Build Requirements</h3>
+              <div class="detail-grid">
+                ${detailArrayField("Required Features", row.required_features)}
+                ${detailField("Other Required Features", row.required_features_other, { full: true })}
+                ${detailField("Estimated Page Count", row.estimated_page_count)}
+                ${detailField("Asset / Copy Status", row.asset_copy_status)}
+                ${detailField("Logo Status", row.logo_status)}
+                ${detailField("Logo Asset URL", row.logo_asset_url, { url: true, full: true })}
+                ${detailField("Architectural Notes", row.architectural_notes, { full: true })}
+              </div>
+            </section>
+          `;
+        } else {
+          detailBody.innerHTML = `
+            ${summary}
+
+            <section class="detail-section">
+              <h3 class="detail-section-title">Client &amp; Brand</h3>
+              <div class="detail-grid">
+                ${detailField("Business Name", row.business_name)}
+                ${detailField("Client Name", row.client_name)}
+                ${detailField("Email Address", row.email_address)}
+                ${detailField("Phone Number", row.phone_number)}
+                ${detailField("Logo Text", row.logo_text)}
+                ${detailField("Tagline / Slogan", row.logo_tagline)}
+              </div>
+            </section>
+
+            <section class="detail-section">
+              <h3 class="detail-section-title">Creative Direction</h3>
+              <div class="detail-grid">
+                ${detailField("Logo Style", row.logo_style)}
+                ${detailField("Brand Mood", row.brand_mood)}
+                ${detailField("Brand Colors", row.brand_colors, { full: true })}
+                ${detailField("Logo Description", row.logo_description, { full: true })}
+                ${detailField("Competitor Inspiration", row.competitor_inspiration_links, { full: true })}
+                ${detailField("Reference Asset", row.reference_asset_url, { url: true, full: true })}
+              </div>
+            </section>
+
+            <section class="detail-section">
+              <h3 class="detail-section-title">Order Record</h3>
+              <div class="detail-grid">
+                ${detailField("Tracking Number", row.tracking_number)}
+                ${detailField("Submitted", formatDate(row.created_at))}
+                ${detailField("Logo Status", row.logo_status, { full: true })}
+              </div>
+            </section>
+          `;
+        }
+
+        document.body.classList.add("design-hub-lock");
+        detailOverlay.classList.add("open");
+        detailOverlay.setAttribute("aria-hidden", "false");
+      }
+
+      function closeProjectDetails() {
+        if (!detailOverlay) return;
+
+        detailOverlay.classList.remove("open");
+        detailOverlay.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("design-hub-lock");
+      }
+
+      detailClose?.addEventListener("click", closeProjectDetails);
+
+      detailOverlay?.addEventListener("click", event => {
+        if (event.target === detailOverlay) {
+          closeProjectDetails();
+        }
+      });
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          closeProjectDetails();
+        }
+      });
+
+      /* =======================================================
+         DATABASE LOAD
+         ======================================================= */
+
+      async function loadDesignOrders() {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = "↻ Loading...";
+
         try {
-          console.log("📡 [Design Hub] Loading rows from public.logo_intakes...");
-          const { data: logoData, error: fetchError } = await client
-            .from('logo_intakes')
-            .select('*')
-            .order('created_at', { ascending: false });
+          const [webResult, logoResult] = await Promise.all([
+            client
+              .from("web_intakes")
+              .select("*")
+              .order("created_at", { ascending: false }),
 
-          if (fetchError) throw fetchError;
+            client
+              .from("logo_intakes")
+              .select("*")
+              .order("created_at", { ascending: false })
+          ]);
 
-          if (!logoData || logoData.length === 0) {
-            logoTableBody.innerHTML = `<tr><td colspan="5" style="padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">No customer branding specification entries logged inside the ledger.</td></tr>`;
-            return;
-          }
+          if (webResult.error) throw webResult.error;
+          if (logoResult.error) throw logoResult.error;
 
-          logoTableBody.innerHTML = "";
+          webOrders = webResult.data || [];
+          logoOrders = logoResult.data || [];
 
-          logoData.forEach(row => {
-            const tr = document.createElement("tr");
-            tr.style.cssText = "border-bottom:1px solid var(--border-color); font-size:0.85rem; background:#ffffff; color:var(--text-dark);";
+          updateMetrics();
+          renderOrders();
 
-            const trackingKey = row.tracking_number || "GUEST-REF";
-            const textDisplay = row.logo_text || "N/A";
-            const tagline     = row.tagline || "N/A";
-            const preference  = row.style_preference || "Minimalist";
-            const guidelines  = row.concept_description || "No concept notes provided.";
+          console.log(
+            `[Design Hub] Loaded ${webOrders.length} website orders and ${logoOrders.length} logo orders.`
+          );
+        } catch (error) {
+          console.error("[Design Hub] Order hydration failed:", error);
 
-            tr.innerHTML = `
-              <td style="padding:14px 12px; font-family:monospace; color:var(--text-muted); font-weight:700;">${escapeDesignHub(trackingKey)}</td>
-              <td style="padding:14px 12px; font-weight:700; color:#0f172a;">${escapeDesignHub(textDisplay)}</td>
-              <td style="padding:14px 12px; color:var(--text-muted); font-weight:600; font-style:italic;">"${escapeDesignHub(tagline)}"</td>
-              <td style="padding:14px 12px;"><span style="font-size:10px; padding:3px 6px; border-radius:4px; font-weight:700; background:#f1f5f9; color:#334155; letter-spacing:0.5px;">${escapeDesignHub(preference)}</span></td>
-              <td style="padding:14px 12px; text-align:right; color:var(--text-muted);" class="text-truncate-cell" title="${escapeDesignHub(guidelines)}">${escapeDesignHub(guidelines)}</td>
-            `;
-            logoTableBody.appendChild(tr);
-          });
-        } catch (err) {
-          console.error("✕ Logo Intakes Hydration Exception:", err.message);
-          logoTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Alignment Interrupted: Failed to extract branding parameters.</td></tr>`;
+          webOrders = [];
+          logoOrders = [];
+
+          webOrdersList.innerHTML = `
+            <div class="order-empty" style="color:#be123c;">
+              <strong>Website order connection failed.</strong>
+              ${escapeHtml(error?.message || "Unable to load website design orders.")}
+            </div>
+          `;
+
+          logoOrdersList.innerHTML = `
+            <div class="order-empty" style="color:#be123c;">
+              <strong>Logo order connection failed.</strong>
+              ${escapeHtml(error?.message || "Unable to load logo design orders.")}
+            </div>
+          `;
+
+          updateMetrics();
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = "↻ Refresh Orders";
         }
       }
 
-      function escapeDesignHub(str) {
-        if (!str) return "";
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      function renderSystemFailure(message) {
+        const content = `
+          <div style="max-width:700px;margin:60px auto;padding:30px;background:#fff;border:1px solid #fecaca;border-radius:14px;text-align:center;color:#991b1b;">
+            <strong style="display:block;font-size:1rem;margin-bottom:7px;">Design Hub Connection Error</strong>
+            <span style="font-size:.78rem;">${escapeHtml(message)}</span>
+          </div>
+        `;
+
+        document.querySelector(".design-hub-workspace")?.insertAdjacentHTML("afterbegin", content);
       }
 
-      // Execute both monitoring data pipelines concurrently across thread pools
-      await Promise.all([
-        populateWebIntakesTable(),
-        populateLogoIntakesTable()
-      ]);
+      /* =======================================================
+         FILTERS
+         ======================================================= */
+
+      document.querySelectorAll(".hub-tab").forEach(button => {
+        button.addEventListener("click", () => {
+          activeFilter = button.dataset.filter || "all";
+
+          document.querySelectorAll(".hub-tab").forEach(tab => {
+            tab.classList.toggle("active", tab === button);
+          });
+
+          renderOrders();
+        });
+      });
+
+      searchField?.addEventListener("input", renderOrders);
+      refreshBtn?.addEventListener("click", loadDesignOrders);
+
+      /* =======================================================
+         REALTIME
+         ======================================================= */
+
+      async function bindRealtime() {
+        if (realtimeChannel) {
+          await client.removeChannel(realtimeChannel);
+        }
+
+        realtimeChannel = client
+          .channel("design-hub-live-orders")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "web_intakes"
+            },
+            async payload => {
+              console.log("[Design Hub] Website intake change:", payload.eventType);
+              await loadDesignOrders();
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "logo_intakes"
+            },
+            async payload => {
+              console.log("[Design Hub] Logo intake change:", payload.eventType);
+              await loadDesignOrders();
+            }
+          )
+          .subscribe(status => {
+            console.log("[Design Hub] Realtime status:", status);
+          });
+      }
+
+      await loadDesignOrders();
+      await bindRealtime();
     });
   </script>
 </body>
