@@ -121,82 +121,6 @@
     .team-field { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; box-sizing: border-box; }
     .team-btn { background: var(--text-dark); color: white; border: none; padding: 10px 20px; font-weight: 700; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
     .team-btn:hover { background: var(--emerald); }
-
-    .logo-preview-stage {
-      position: relative !important;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-    .logo-preview-watermark {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      z-index: 3;
-      overflow: hidden;
-    }
-    .logo-preview-watermark span {
-      transform: rotate(-28deg);
-      font-size: clamp(2rem, 7vw, 5.5rem);
-      font-weight: 900;
-      letter-spacing: 0.18em;
-      color: rgba(10,31,68,0.14);
-      white-space: nowrap;
-      user-select: none;
-    }
-    .logo-approval-card {
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: #ffffff;
-      padding: 16px;
-      margin-top: 16px;
-    }
-    .logo-approval-title {
-      margin: 0 0 6px;
-      font-size: .9rem;
-      font-weight: 800;
-      color: var(--text-dark);
-    }
-    .logo-approval-copy {
-      margin: 0 0 14px;
-      font-size: .75rem;
-      line-height: 1.5;
-      color: var(--text-muted);
-    }
-    .logo-approval-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .logo-approve-btn,
-    .logo-revision-btn {
-      border: 0;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: .76rem;
-      font-weight: 800;
-      cursor: pointer;
-    }
-    .logo-approve-btn {
-      background: var(--emerald);
-      color: #fff;
-    }
-    .logo-revision-btn {
-      background: #f1f5f9;
-      color: var(--text-dark);
-      border: 1px solid var(--border-color);
-    }
-    .logo-approve-btn:disabled,
-    .logo-revision-btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-    }
   </style>
 </head>
 <body>
@@ -232,12 +156,7 @@
 
           <!-- Pure White Canvas Background Grid Frame For PNG Layers -->
       <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #ffffff !important; border-radius: 8px; padding: 16px; overflow: hidden; border: 1px solid var(--border-color); min-height: 360px !important; height: 360px !important; box-sizing: border-box; width: 100%; position: relative;">
-        <div class="logo-preview-stage">
-          <img id="logoStagingViewCanvasTarget" src="images/fav.png" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; display: block; background: #ffffff !important; margin: 0 auto; height: auto; width: auto;">
-          <div class="logo-preview-watermark" aria-hidden="true">
-            <span>FILINGS4U • REVIEW</span>
-          </div>
-        </div>
+        <img id="logoStagingViewCanvasTarget" src="images/fav.png" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; display: block; background: #ffffff !important; margin: 0 auto; height: auto; width: auto;">
       </div>
 
 
@@ -259,17 +178,6 @@
         <div id="logoActionRequiredAlertBox" style="margin-bottom: 16px; padding: 12px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 8px; display: none; box-sizing: border-box;">
           <h5 style="margin: 0 0 4px 0; font-size: 0.8rem; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 4px;"><span>📋</span> Action Required</h5>
           <p id="logoActionRequiredTextDisplay" style="margin: 0; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;"></p>
-        </div>
-
-        <div id="logoApprovalCard" class="logo-approval-card">
-          <h4 class="logo-approval-title">Final Logo Approval</h4>
-          <p id="logoApprovalCopy" class="logo-approval-copy">
-            Review each concept above. If the design is ready to move into final production, approve the project below.
-          </p>
-          <div class="logo-approval-actions">
-            <button type="button" id="logoApproveProjectBtn" class="logo-approve-btn">✓ Approve Logo Project</button>
-            <button type="button" id="logoRequestRevisionBtn" class="logo-revision-btn">Request Revision</button>
-          </div>
         </div>
 
         <div style="border-top: 1px solid var(--border-color); padding-top: 16px; box-sizing: border-box; width: 100%;">
@@ -335,13 +243,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const trackingRef = document.getElementById("logoTrackingRefLabel");
   const actionAlertBox = document.getElementById("logoActionRequiredAlertBox");
   const actionTextDisplay = document.getElementById("logoActionRequiredTextDisplay");
-  const approvalCard = document.getElementById("logoApprovalCard");
-  const approvalCopy = document.getElementById("logoApprovalCopy");
-  const approveProjectBtn = document.getElementById("logoApproveProjectBtn");
-  const requestRevisionBtn = document.getElementById("logoRequestRevisionBtn");
 
   let activeConceptUrls = { 1: "images/fav.png", 2: "images/fav.png", 3: "images/fav.png" };
-  let activeProject = null;
   let liveLogoChatChannel = null;
 
   // Establish Supabase Connection Engine
@@ -373,8 +276,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (fetchError) throw fetchError;
 
       if (project) {
-        activeProject = project;
-
         if (headerTitle) headerTitle.textContent = project.project_title;
         if (statusPill) {
           statusPill.textContent = project.status_label;
@@ -395,33 +296,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Render current active concept item cleanly on initialization mount threads
         setLogoConceptViewLayer(1);
 
-
-        const normalizedStatus = String(project.status_label || "").toLowerCase();
-        const isApproved = normalizedStatus.includes("approved");
-        const isAwaiting = normalizedStatus.includes("awaiting") ||
-          normalizedStatus.includes("review") ||
-          normalizedStatus.includes("feedback");
-
-        if (approvalCard) {
-          approvalCard.style.display = "block";
-        }
-
-        if (approvalCopy) {
-          approvalCopy.textContent = isApproved
-            ? "This logo project has been approved. Final production processing can now proceed."
-            : "Review each concept above. If the design is ready to move into final production, approve the project below.";
-        }
-
-        if (approveProjectBtn) {
-          approveProjectBtn.disabled = isApproved || !isAwaiting;
-          approveProjectBtn.textContent = isApproved
-            ? "✓ Logo Project Approved"
-            : "✓ Approve Logo Project";
-        }
-
-        if (requestRevisionBtn) {
-          requestRevisionBtn.disabled = isApproved;
-        }
 
         if (project.action_required_text) {
           if (actionAlertBox) actionAlertBox.style.display = "block";
@@ -565,118 +439,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // 6. LOGO APPROVAL / REVISION WORKFLOW
-  async function submitLogoProjectApproval() {
-    if (!activeProject?.id) {
-      console.error("[Logo Studio] No active logo project is loaded.");
-      return;
-    }
-
-    if (!approveProjectBtn) return;
-
-    approveProjectBtn.disabled = true;
-    if (approvalCopy) {
-      approvalCopy.textContent = "Submitting your approval securely...";
-    }
-
-    try {
-      const {
-        data: { session },
-        error: sessionError
-      } = await client.auth.getSession();
-
-      if (sessionError) throw sessionError;
-      if (!session?.access_token) {
-        throw new Error("Your client session has expired. Please sign in again.");
-      }
-
-      const { data: result, error: functionError } =
-        await client.functions.invoke("approve_logo_project", {
-          body: {
-            project_id: activeProject.id,
-            client_email: userEmail
-          },
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
-
-      if (functionError) {
-        throw functionError;
-      }
-
-      if (!result?.success) {
-        throw new Error(
-          result?.error || "The logo approval could not be completed."
-        );
-      }
-
-      activeProject.status_label = "Approved";
-      if (statusPill) {
-        statusPill.textContent = "Approved";
-        statusPill.style.background = "#10b981";
-        statusPill.style.color = "#ffffff";
-      }
-
-      if (approvalCopy) {
-        approvalCopy.textContent =
-          "Thank you. Your logo project has been approved and submitted for final production processing.";
-      }
-
-      approveProjectBtn.textContent = "✓ Logo Project Approved";
-      approveProjectBtn.disabled = true;
-
-      if (requestRevisionBtn) {
-        requestRevisionBtn.disabled = true;
-      }
-
-      await loadLogoSprintChatHistory();
-
-    } catch (error) {
-      console.error("[Logo Studio] Logo approval failed:", error);
-
-      if (approvalCopy) {
-        approvalCopy.textContent =
-          error?.message ||
-          "We could not complete the approval. Please try again.";
-      }
-
-      approveProjectBtn.disabled = false;
-    }
-  }
-
-  async function requestLogoRevision() {
-    if (!activeProject?.id || !commentForm) return;
-
-    const inputField = document.getElementById("logoCommentInputField");
-
-    if (inputField) {
-      inputField.focus();
-      inputField.placeholder = "Describe the revision you would like...";
-    }
-
-    if (approvalCopy) {
-      approvalCopy.textContent =
-        "Tell the Creative Desk what you would like changed, then press Post.";
-    }
-
-    if (requestRevisionBtn) {
-      requestRevisionBtn.disabled = true;
-      setTimeout(() => {
-        requestRevisionBtn.disabled = false;
-      }, 1500);
-    }
-  }
-
-  if (approveProjectBtn) {
-    approveProjectBtn.addEventListener("click", submitLogoProjectApproval);
-  }
-
-  if (requestRevisionBtn) {
-    requestRevisionBtn.addEventListener("click", requestLogoRevision);
-  }
-
-  // 7. PORTAL CLOCK SYSTEM MOUNT MOTOR LOOP ENGINE
+  // 6. PORTAL CLOCK SYSTEM MOUNT MOTOR LOOP ENGINE
   function initializeLiveLogoClock() {
     const clockElement = document.getElementById("portal-clock");
     if (!clockElement) return;
