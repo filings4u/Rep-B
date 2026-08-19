@@ -178,7 +178,8 @@ desktopSidebarNode.innerHTML = `
       Financials & Health <span class="chevron">▼</span>
     </button>
     <div class="accordion-panel d-panel" data-group="finance">
-      <a href="admin-invoice.html" class="nav-item d-link" data-page="admin-invoice.html"><span>💳</span> Invoice Deployment Studio</a>
+      <a href="admin-invoice.html" class="nav-item d-link" data-page="admin-invoice.html"><span>💳</span> Invoice Deployment</a>
+      <a href="admin-invoice-view.html" class="nav-item d-link" data-page="admin-invoice-view.html"><span>💰</span> Sent Invoices</a>
       <a href="admin-system-logs.html" class="nav-item d-link" data-page="admin-system-logs.html"><span>📋</span> System Event Logs</a>
     </div>
   </div>
@@ -222,8 +223,6 @@ desktopSidebarNode.innerHTML = `
     </div>
   </div>
 </nav>
-
-
 
 
 <div class="sidebar-footer-lock" style="padding-top:10px !important; text-align: center; width: 100%; box-sizing: border-box;">
