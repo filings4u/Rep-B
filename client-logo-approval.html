@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase-config.js"></script>
+
+  <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
+<script>
+  (function() {
+    "use strict";
+    // Define the exact project storage lookup path signature
+    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
+    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
+    
+    // Synchronously check local storage cache arrays before browser can paint any HTML elements
+    const rawSessionJson = localStorage.getItem(sessionTokenKey);
+    let isAuthenticated = false;
+    let userRole = null;
+
+    if (rawSessionJson) {
+      try {
+        const sessionData = JSON.parse(rawSessionJson);
+        if (sessionData && sessionData.access_token) {
+          isAuthenticated = true;
+          // Extract nested metadata flags out of JWT payload context securely
+          if (sessionData.user && sessionData.user.user_metadata) {
+            userRole = sessionData.user.user_metadata.role;
+          }
+          if (sessionData.user && !userRole && sessionData.user.email) {
+            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
+              userRole = 'admin';
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Security parsing failure:", e);
+      }
+    }
+
+    // Determine current view file track rules path parameters
+    const pagePathString = window.location.pathname.toLowerCase();
+    const isAdminViewPage = pagePathString.includes('/admin-');
+
+    if (!isAuthenticated) {
+      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
+      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
+      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
+      
+      // Inject CSS rule to hide everything in case browser delays routing
+      document.documentElement.style.display = "none";
+      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
+    }
+
+    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
+    if (isAdminViewPage && userRole !== 'admin') {
+      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
+      window.location.replace("client-dashboard.html");
+      document.documentElement.style.display = "none";
+      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
+    }
+  })();
+</script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Final Logo Delivery | filings4u</title>
+ <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
+  <meta name="msapplication-navbutton-color" content="#10b981">
+  <link rel="icon" type="image/png" href="images/fav.png">
+
+  <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
+    
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
+    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
+    /* 🖥️ PRIMARY CONTENT AREA STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 16px !important; }
+    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
+    .search-input { padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; }
+    
+    .nav-bell-wrapper { position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important; }
+    .document-vault-download-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+    .document-vault-download-btn:hover { background: var(--text-dark); color: white; }
+    
+    .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
+    .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
+  
+    /* ========================================================================== 
+       FILINGS4U FINAL LOGO DELIVERY WORKSPACE
+       ========================================================================== */
+    .logo-delivery-shell {
+      width: calc(100% - 48px);
+      max-width: 1320px;
+      margin: 28px auto 60px;
+      box-sizing: border-box;
+    }
+    .logo-delivery-hero {
+      background: linear-gradient(135deg, #071a3a 0%, #0a1f44 68%, #12325f 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      box-shadow: 0 12px 28px rgba(10,31,68,.12);
+    }
+    .eyebrow {
+      font-size: .68rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #10b981;
+      margin-bottom: 7px;
+    }
+    .logo-delivery-hero h2 {
+      margin: 0 0 7px;
+      font-size: 1.65rem;
+      letter-spacing: -.04em;
+      color: #fff;
+    }
+    .logo-delivery-hero p {
+      margin: 0;
+      color: #d8e2f1;
+      font-size: .9rem;
+      line-height: 1.55;
+      max-width: 760px;
+    }
+    .delivery-status-pill {
+      flex: 0 0 auto;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .delivery-state {
+      margin-top: 18px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      min-height: 210px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 9px;
+      color: #475569;
+      text-align: center;
+      box-sizing: border-box;
+      padding: 30px;
+    }
+    .delivery-state strong { color: #0a1f44; font-size: 1rem; }
+    .delivery-state span { font-size: .82rem; }
+    .delivery-state.is-hidden, .is-hidden { display: none !important; }
+    .delivery-spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #dbeafe;
+      border-top-color: #10b981;
+      border-radius: 50%;
+      animation: logoDeliverySpin .8s linear infinite;
+    }
+    @keyframes logoDeliverySpin { to { transform: rotate(360deg); } }
+    .empty-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #0a1f44;
+      font-size: 1.3rem;
+    }
+    .delivery-summary-card {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .delivery-summary-card > div {
+      padding: 18px 20px;
+      border-right: 1px solid #e2e8f0;
+      min-width: 0;
+    }
+    .delivery-summary-card > div:last-child { border-right: 0; }
+    .field-label {
+      display: block;
+      color: #64748b;
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .09em;
+      margin-bottom: 7px;
+    }
+    .delivery-summary-card strong {
+      color: #0a1f44;
+      font-size: .86rem;
+      word-break: break-word;
+    }
+    .final-files-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .final-file-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px;
+      box-sizing: border-box;
+      box-shadow: 0 3px 10px rgba(15,23,42,.03);
+    }
+    .file-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .file-type-icon {
+      width: 44px;
+      height: 38px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: .67rem;
+      letter-spacing: .04em;
+    }
+    .png-icon { background: #0a1f44; }
+    .jpg-icon { background: #2563eb; }
+    .ico-icon { background: #10b981; }
+    .file-badge {
+      font-size: .62rem;
+      font-weight: 800;
+      color: #047857;
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
+      padding: 5px 8px;
+      border-radius: 999px;
+    }
+    .final-file-card h3 {
+      margin: 14px 0 6px;
+      font-size: 1rem;
+      color: #0a1f44;
+    }
+    .final-file-card > p {
+      min-height: 42px;
+      margin: 0;
+      color: #64748b;
+      font-size: .76rem;
+      line-height: 1.5;
+    }
+    .file-preview-wrap, .favicon-preview-wrap {
+      height: 190px;
+      margin-top: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      background-color: #f8fafc;
+      background-image:
+        linear-gradient(45deg, #eef2f7 25%, transparent 25%),
+        linear-gradient(-45deg, #eef2f7 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #eef2f7 75%),
+        linear-gradient(-45deg, transparent 75%, #eef2f7 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .light-preview { background: #f8fafc; }
+    .file-preview-wrap img {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+      display: block;
+    }
+    .favicon-preview-wrap {
+      background: #f8fafc;
+      background-image: none;
+    }
+    .favicon-preview-wrap img {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      image-rendering: auto;
+    }
+    .preview-fallback {
+      display: none;
+      color: #94a3b8;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .download-file-btn {
+      width: 100%;
+      margin-top: 13px;
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #0a1f44;
+      color: #fff;
+      font-weight: 800;
+      font-size: .78rem;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease, background .15s ease;
+    }
+    .download-file-btn:hover:not(:disabled) { transform: translateY(-1px); background: #12325f; }
+    .download-file-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .delivery-approval-card {
+      margin-top: 18px;
+      background: #fff;
+      border: 1px solid #c7eadc;
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      box-sizing: border-box;
+    }
+    .delivery-approval-card h3 {
+      margin: 0 0 7px;
+      color: #0a1f44;
+      font-size: 1.05rem;
+    }
+    .delivery-approval-card p {
+      margin: 0;
+      color: #64748b;
+      font-size: .78rem;
+      line-height: 1.55;
+      max-width: 760px;
+    }
+    .approval-action-area { flex: 0 0 auto; }
+    .approve-delivery-btn {
+      border: 0;
+      background: #059669;
+      color: #fff;
+      padding: 13px 20px;
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: .78rem;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 5px 12px rgba(5,150,105,.16);
+    }
+    .approve-delivery-btn:hover { background: #047857; }
+    .already-approved {
+      color: #047857;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      padding: 12px 15px;
+      font-size: .76rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .delivery-note {
+      margin-top: 12px;
+      padding: 13px 15px;
+      border: 1px solid #dbeafe;
+      background: #eff6ff;
+      border-radius: 9px;
+      color: #36506f;
+      font-size: .7rem;
+      line-height: 1.55;
+    }
+    .logo-approval-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: grid;
+      place-items: center;
+    }
+    .logo-approval-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(2,6,23,.58);
+      backdrop-filter: blur(3px);
+    }
+    .logo-approval-dialog {
+      position: relative;
+      width: min(440px, calc(100vw - 34px));
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      box-sizing: border-box;
+      box-shadow: 0 25px 70px rgba(2,6,23,.28);
+      text-align: center;
+    }
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 14px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #ecfdf5;
+      color: #059669;
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+    .logo-approval-dialog h3 { margin: 0 0 9px; color: #0a1f44; }
+    .logo-approval-dialog p {
+      margin: 0;
+      color: #64748b;
+      font-size: .8rem;
+      line-height: 1.6;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 22px;
+    }
+    .modal-cancel-btn, .modal-confirm-btn {
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-weight: 800;
+      font-size: .75rem;
+      cursor: pointer;
+    }
+    .modal-cancel-btn {
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      color: #334155;
+    }
+    .modal-confirm-btn {
+      border: 0;
+      background: #059669;
+      color: #fff;
+    }
+    @media (max-width: 1050px) {
+      .final-files-grid { grid-template-columns: 1fr; }
+      .delivery-summary-card { grid-template-columns: repeat(2, 1fr); }
+      .delivery-summary-card > div:nth-child(2) { border-right: 0; }
+      .delivery-summary-card > div:nth-child(-n+2) { border-bottom: 1px solid #e2e8f0; }
+    }
+    @media (max-width: 760px) {
+      .logo-delivery-shell { width: calc(100% - 24px); margin-top: 16px; }
+      .logo-delivery-hero { padding: 22px; flex-direction: column; align-items: flex-start; }
+      .delivery-summary-card { grid-template-columns: 1fr; }
+      .delivery-summary-card > div { border-right: 0; border-bottom: 1px solid #e2e8f0; }
+      .delivery-summary-card > div:last-child { border-bottom: 0; }
+      .delivery-approval-card { flex-direction: column; align-items: flex-start; }
+      .approval-action-area, .approve-delivery-btn { width: 100%; }
+      .already-approved { display: block; text-align: center; }
+      .portal-header { padding-left: 18px !important; padding-right: 18px !important; }
+      .search-input { display: none !important; }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-wrapper">
+    <!-- 🖥️ PRIMARY CONTENT AREA -->
+    <main class="portal-main">
+           <!-- UPGRADED COMPACT TOP NAVIGATION BAR ELEMENT -->
+      <header class="portal-header" style="background: #ffffff !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; min-height: 60px !important;">
+        <div class="welcome-text" style="display: flex !important; align-items: center !important;">
+          <h1 style="margin: 0 !important; font-size: 1.25rem !important; font-weight: 800 !important; color: var(--text-dark) !important; letter-spacing: -0.5px !important;">Welcome Back, <span id="clientNameField" style="color: #10b981 !important;"></span></h1>
+        </div>
+        
+        <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 16px !important;">
+          <!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
+          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
+            <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
+              <span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
+              <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
+            </a>
+          </div>
+          
+          <!-- PORTAL CLOCK SYSTEM CONTAINER -->
+          <div class="header-clock-pill" style="background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 6px 12px !important; border-radius: 6px !important; font-family: monospace !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; height: 32px !important; white-space: nowrap !important;">
+            <span>⏱️</span>
+            <span id="portal-clock">Syncing...</span>
+          </div>
+          
+          <div>
+            <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 6px 12px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; font-size: 0.8rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; height: 32px !important;">
+          </div>
+        </div>
+      </header>
+    
+      <section class="logo-delivery-shell" aria-labelledby="logoDeliveryTitle">
+        <div class="logo-delivery-hero">
+          <div>
+            <div class="eyebrow">FINAL BRAND DELIVERY</div>
+            <h2 id="logoDeliveryTitle">Your Approved Logo Files</h2>
+            <p>Download the finalized logo package approved for your business. These files are delivered from our private client vault.</p>
+          </div>
+          <div class="delivery-status-pill" id="deliveryStatusPill">Checking delivery...</div>
+        </div>
+
+        <div id="deliveryLoading" class="delivery-state">
+          <div class="delivery-spinner"></div>
+          <strong>Loading your final logo package...</strong>
+          <span>Securely checking your private delivery vault.</span>
+        </div>
+
+        <div id="deliveryEmpty" class="delivery-state is-hidden">
+          <div class="empty-icon">◈</div>
+          <strong>Your final logo package is not available yet.</strong>
+          <span>Once your approved files are published, they will appear here automatically.</span>
+        </div>
+
+        <div id="deliveryContent" class="is-hidden">
+          <div class="delivery-summary-card">
+            <div>
+              <span class="field-label">PROJECT</span>
+              <strong id="projectTitleField">—</strong>
+            </div>
+            <div>
+              <span class="field-label">TRACKING</span>
+              <strong id="trackingRefField">—</strong>
+            </div>
+            <div>
+              <span class="field-label">PUBLISHED</span>
+              <strong id="publishedDateField">—</strong>
+            </div>
+            <div>
+              <span class="field-label">DELIVERY STATUS</span>
+              <strong id="deliveryStatusField">—</strong>
+            </div>
+          </div>
+
+          <div class="final-files-grid">
+            <article class="final-file-card">
+              <div class="file-card-top">
+                <div class="file-type-icon png-icon">PNG</div>
+                <span class="file-badge">Transparent</span>
+              </div>
+              <h3>Logo — PNG</h3>
+              <p>High-quality transparent PNG for websites, documents, presentations, and digital use.</p>
+              <div class="file-preview-wrap">
+                <img id="pngPreview" alt="Final PNG logo preview" draggable="false">
+                <div id="pngPreviewFallback" class="preview-fallback">Preview unavailable</div>
+              </div>
+              <button type="button" class="download-file-btn" id="downloadPngBtn" disabled>
+                ↓ Download PNG
+              </button>
+            </article>
+
+            <article class="final-file-card">
+              <div class="file-card-top">
+                <div class="file-type-icon jpg-icon">JPG</div>
+                <span class="file-badge">Print / Web</span>
+              </div>
+              <h3>Logo — JPG</h3>
+              <p>JPG version for general-purpose web, print, email, and document applications.</p>
+              <div class="file-preview-wrap light-preview">
+                <img id="jpgPreview" alt="Final JPG logo preview" draggable="false">
+                <div id="jpgPreviewFallback" class="preview-fallback">Preview unavailable</div>
+              </div>
+              <button type="button" class="download-file-btn" id="downloadJpgBtn" disabled>
+                ↓ Download JPG
+              </button>
+            </article>
+
+            <article class="final-file-card">
+              <div class="file-card-top">
+                <div class="file-type-icon ico-icon">ICO</div>
+                <span class="file-badge">Favicon</span>
+              </div>
+              <h3>Favicon</h3>
+              <p>Browser favicon asset for your website and digital brand identity.</p>
+              <div class="favicon-preview-wrap">
+                <img id="faviconPreview" alt="Final favicon preview" draggable="false">
+                <div id="faviconPreviewFallback" class="preview-fallback">Preview unavailable</div>
+              </div>
+              <button type="button" class="download-file-btn" id="downloadFaviconBtn" disabled>
+                ↓ Download Favicon
+              </button>
+            </article>
+          </div>
+
+          <div class="delivery-approval-card">
+            <div>
+              <div class="eyebrow">FINAL DELIVERY CONFIRMATION</div>
+              <h3 id="approvalHeading">Review your final logo package</h3>
+              <p id="approvalDescription">Confirm that you have received the finalized files. Your confirmation will be recorded in your secure client project.</p>
+            </div>
+            <div class="approval-action-area">
+              <div id="alreadyApprovedNotice" class="already-approved is-hidden">
+                ✓ Final logo package acknowledged
+              </div>
+              <button type="button" id="approveDeliveryBtn" class="approve-delivery-btn">
+                ✓ Approve Final Logo Package
+              </button>
+            </div>
+          </div>
+
+          <div class="delivery-note">
+            <strong>Secure delivery:</strong> These files are stored in the private client documents vault. Download links are temporary and are generated only for your authenticated client account.
+          </div>
+        </div>
+      </section>
+
+      <div id="logoApprovalModal" class="logo-approval-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="logoApprovalModalTitle">
+        <div class="logo-approval-backdrop" data-close-approval-modal></div>
+        <div class="logo-approval-dialog">
+          <div class="modal-icon">✓</div>
+          <h3 id="logoApprovalModalTitle">Approve Final Logo Package?</h3>
+          <p>Are you sure you want to approve the final logo package? This confirms that you received the PNG, JPG, and favicon files.</p>
+          <div class="modal-actions">
+            <button type="button" class="modal-cancel-btn" data-close-approval-modal>Cancel</button>
+            <button type="button" class="modal-confirm-btn" id="confirmLogoApprovalBtn">Yes, Approve Files</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  
+  <script src="assets/js/client-master-ledger.js"></script>
+
+  <script src="assets/js/client-navigation.js"></script>
+
+  <script src="assets/js/client-footer.js"></script>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  "use strict";
+
+  const SUPABASE_BUCKET = "client_documents_vault";
+  const APPROVAL_FUNCTION = "approve_logo_delivery";
+  const client = window.supabaseInstance;
+
+  let currentUser = null;
+  let currentApproval = null;
+  let signedFiles = {
+    png: null,
+    jpg: null,
+    favicon: null
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function setVisible(id, visible) {
+    const el = $(id);
+    if (el) el.classList.toggle("is-hidden", !visible);
+  }
+
+  function sanitizeEmail(email) {
+    return String(email || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function formatDate(value) {
+    if (!value) return "—";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+      ? "—"
+      : d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  }
+
+  function normalizeStoragePath(value) {
+    if (!value) return null;
+    const raw = String(value).trim();
+    if (!raw) return null;
+
+    if (!/^https?:\/\//i.test(raw)) {
+      return raw.replace(/^\/+/, "");
+    }
+
+    try {
+      const url = new URL(raw);
+      const marker = `/storage/v1/object/`;
+      const idx = url.pathname.indexOf(marker);
+      if (idx === -1) return null;
+
+      let remainder = url.pathname.slice(idx + marker.length);
+      remainder = remainder.replace(/^\/+/, "");
+      remainder = remainder.replace(/^(sign|public|authenticated)\//, "");
+      const bucketPrefix = `${SUPABASE_BUCKET}/`;
+
+      if (remainder.startsWith(bucketPrefix)) {
+        return decodeURIComponent(remainder.slice(bucketPrefix.length));
+      }
+    } catch (e) {
+      console.warn("[Logo Delivery] Could not parse stored asset URL.", e);
+    }
+
+    return null;
+  }
+
+  async function createSignedUrl(path) {
+    if (!path || !client) return null;
+
+    const normalized = normalizeStoragePath(path);
+    if (!normalized) return null;
+
+    const { data, error } = await client.storage
+      .from(SUPABASE_BUCKET)
+      .createSignedUrl(normalized, 60 * 30);
+
+    if (error) {
+      console.error("[Logo Delivery] Signed URL failed:", normalized, error);
+      return null;
+    }
+
+    return data?.signedUrl || null;
+  }
+
+  async function getCurrentUser() {
+    if (!client) throw new Error("Supabase client is not available.");
+
+    const { data, error } = await client.auth.getUser();
+    if (error) throw error;
+    if (!data?.user) throw new Error("Your secure session could not be verified.");
+
+    return data.user;
+  }
+
+  async function loadApproval() {
+    const email = String(currentUser.email || "").trim().toLowerCase();
+
+    const { data, error } = await client
+      .from("logo_approvals")
+      .select(`
+        id,
+        client_email,
+        client_profile_id,
+        logo_project_id,
+        project_title,
+        tracking_ref,
+        status,
+        png_path,
+        jpg_path,
+        favicon_path,
+        published_at,
+        approved_at,
+        approved_by,
+        created_at,
+        updated_at
+      `)
+      .eq("client_email", email)
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    currentApproval = data || null;
+    return currentApproval;
+  }
+
+  function setImagePreview(imageId, fallbackId, url) {
+    const image = $(imageId);
+    const fallback = $(fallbackId);
+    if (!image || !fallback) return;
+
+    if (!url) {
+      image.style.display = "none";
+      fallback.style.display = "block";
+      return;
+    }
+
+    image.src = url;
+    image.style.display = "block";
+    fallback.style.display = "none";
+
+    image.onerror = () => {
+      image.style.display = "none";
+      fallback.style.display = "block";
+    };
+  }
+
+  function setDownloadButton(buttonId, url, filename) {
+    const button = $(buttonId);
+    if (!button) return;
+
+    button.disabled = !url;
+    button.onclick = url ? () => downloadSecureFile(url, filename) : null;
+  }
+
+  async function downloadSecureFile(url, filename) {
+    try {
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      console.error("[Logo Delivery] Download failed:", error);
+      alert("The secure download could not be started. Please refresh the page and try again.");
+    }
+  }
+
+  async function hydrateFiles() {
+    signedFiles = {
+      png: await createSignedUrl(currentApproval?.png_path),
+      jpg: await createSignedUrl(currentApproval?.jpg_path),
+      favicon: await createSignedUrl(currentApproval?.favicon_path)
+    };
+
+    setImagePreview("pngPreview", "pngPreviewFallback", signedFiles.png);
+    setImagePreview("jpgPreview", "jpgPreviewFallback", signedFiles.jpg);
+    setImagePreview("faviconPreview", "faviconPreviewFallback", signedFiles.favicon);
+
+    const base = sanitizeEmail(currentUser.email);
+    setDownloadButton("downloadPngBtn", signedFiles.png, `${base}_final_logo.png`);
+    setDownloadButton("downloadJpgBtn", signedFiles.jpg, `${base}_final_logo.jpg`);
+    setDownloadButton("downloadFaviconBtn", signedFiles.favicon, `${base}_favicon.ico`);
+  }
+
+  function renderApprovalState() {
+    const approved = String(currentApproval?.status || "").toLowerCase() === "approved";
+    const status = String(currentApproval?.status || "published");
+
+    $("deliveryStatusPill").textContent =
+      approved ? "✓ Final Package Approved" : "Final Files Ready";
+
+    $("deliveryStatusField").textContent =
+      approved ? "Approved" : status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+    if (approved) {
+      setVisible("approveDeliveryBtn", false);
+      setVisible("alreadyApprovedNotice", true);
+      $("approvalHeading").textContent = "Final logo package approved";
+      $("approvalDescription").textContent =
+        `Your final logo package was acknowledged on ${formatDate(currentApproval.approved_at)}.`;
+    } else {
+      setVisible("approveDeliveryBtn", true);
+      setVisible("alreadyApprovedNotice", false);
+    }
+  }
+
+  async function renderPage() {
+    setVisible("deliveryLoading", false);
+
+    if (!currentApproval) {
+      setVisible("deliveryEmpty", true);
+      setVisible("deliveryContent", false);
+      $("deliveryStatusPill").textContent = "Awaiting Final Files";
+      return;
+    }
+
+    setVisible("deliveryEmpty", false);
+    setVisible("deliveryContent", true);
+
+    $("projectTitleField").textContent = currentApproval.project_title || "Final Logo Package";
+    $("trackingRefField").textContent = currentApproval.tracking_ref || "—";
+    $("publishedDateField").textContent = formatDate(currentApproval.published_at);
+
+    await hydrateFiles();
+    renderApprovalState();
+  }
+
+  function openApprovalModal() {
+    $("logoApprovalModal")?.classList.remove("is-hidden");
+  }
+
+  function closeApprovalModal() {
+    $("logoApprovalModal")?.classList.add("is-hidden");
+  }
+
+  async function approveFinalPackage() {
+    if (!currentApproval?.id) return;
+
+    const button = $("confirmLogoApprovalBtn");
+    button.disabled = true;
+    button.textContent = "Saving...";
+
+    try {
+      const { data, error } = await client.functions.invoke(APPROVAL_FUNCTION, {
+        body: {
+          approval_id: currentApproval.id,
+          action: "approve"
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      currentApproval.status = "approved";
+      currentApproval.approved_at = data?.approved_at || new Date().toISOString();
+      currentApproval.approved_by = currentUser.id;
+
+      closeApprovalModal();
+      renderApprovalState();
+      alert("Your final logo package has been approved successfully.");
+    } catch (error) {
+      console.error("[Logo Delivery] Approval failed:", error);
+      alert(`Approval could not be completed: ${error.message || "Unknown error"}`);
+    } finally {
+      button.disabled = false;
+      button.textContent = "Yes, Approve Files";
+    }
+  }
+
+  function bindEvents() {
+    $("approveDeliveryBtn")?.addEventListener("click", openApprovalModal);
+    $("confirmLogoApprovalBtn")?.addEventListener("click", approveFinalPackage);
+
+    document.querySelectorAll("[data-close-approval-modal]").forEach((element) => {
+      element.addEventListener("click", closeApprovalModal);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeApprovalModal();
+    });
+
+    ["pngPreview", "jpgPreview", "faviconPreview"].forEach((id) => {
+      $(id)?.addEventListener("contextmenu", (event) => event.preventDefault());
+      $(id)?.addEventListener("dragstart", (event) => event.preventDefault());
+    });
+  }
+
+  async function initializeLogoDelivery() {
+    try {
+      bindEvents();
+      currentUser = await getCurrentUser();
+      await loadApproval();
+      await renderPage();
+    } catch (error) {
+      console.error("[Logo Delivery] Initialization failed:", error);
+      setVisible("deliveryLoading", false);
+      setVisible("deliveryEmpty", true);
+      $("deliveryEmpty").querySelector("strong").textContent = "Unable to load your final logo package.";
+      $("deliveryEmpty").querySelector("span").textContent =
+        error.message || "Please refresh the page or contact support.";
+    }
+  }
+
+  initializeLogoDelivery();
+});
+</script>
+
+</body>
+</html>
