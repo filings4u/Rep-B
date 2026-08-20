@@ -43,7 +43,6 @@
 
     if (!isAuthenticated) {
       // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
       window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
       
       // Inject CSS rule to hide everything in case browser delays routing
@@ -655,7 +654,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentUser = null;
   let currentApproval = null;
-  let signedFiles = {
+
+  const downloadedFiles = {
     png: null,
     jpg: null,
     favicon: null
@@ -668,89 +668,139 @@ document.addEventListener("DOMContentLoaded", () => {
     if (el) el.classList.toggle("is-hidden", !visible);
   }
 
-  function sanitizeEmail(email) {
-    return String(email || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+  function setDeliveryStatus(message, type = "info") {
+    const pill = $("deliveryStatusPill");
+    if (!pill) return;
+
+    pill.textContent = message;
+
+    if (type === "success") {
+      pill.style.background = "rgba(16,185,129,.16)";
+      pill.style.borderColor = "rgba(16,185,129,.34)";
+    } else if (type === "error") {
+      pill.style.background = "rgba(239,68,68,.16)";
+      pill.style.borderColor = "rgba(239,68,68,.34)";
+    } else {
+      pill.style.background = "rgba(255,255,255,.08)";
+      pill.style.borderColor = "rgba(255,255,255,.2)";
+    }
   }
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  function setDownloadState(buttonId, enabled, text) {
+    const button = $(buttonId);
+    if (!button) return;
+
+    button.disabled = !enabled;
+    button.textContent = text;
+  }
+
+  function sanitizeEmail(email) {
+    return String(email || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "_");
   }
 
   function formatDate(value) {
     if (!value) return "—";
+
     const d = new Date(value);
+
     return Number.isNaN(d.getTime())
       ? "—"
-      : d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+      : d.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        });
   }
 
   function normalizeStoragePath(value) {
     if (!value) return null;
+
     const raw = String(value).trim();
     if (!raw) return null;
 
+    /*
+      logo_approvals should contain a storage path such as:
+
+      logo_approval/customer_email/final/final_logo.png
+
+      This also safely handles an older record that contains a
+      Supabase Storage URL.
+    */
     if (!/^https?:\/\//i.test(raw)) {
-      return raw.replace(/^\/+/, "");
+      let path = raw.replace(/^\/+/, "");
+
+      const bucketPrefix = `${SUPABASE_BUCKET}/`;
+      if (path.startsWith(bucketPrefix)) {
+        path = path.slice(bucketPrefix.length);
+      }
+
+      return path;
     }
 
     try {
       const url = new URL(raw);
-      const marker = `/storage/v1/object/`;
-      const idx = url.pathname.indexOf(marker);
-      if (idx === -1) return null;
+      const marker = "/storage/v1/object/";
+      const index = url.pathname.indexOf(marker);
 
-      let remainder = url.pathname.slice(idx + marker.length);
+      if (index === -1) return null;
+
+      let remainder = url.pathname.slice(index + marker.length);
       remainder = remainder.replace(/^\/+/, "");
-      remainder = remainder.replace(/^(sign|public|authenticated)\//, "");
+      remainder = remainder.replace(
+        /^(sign|public|authenticated)\//,
+        ""
+      );
+
       const bucketPrefix = `${SUPABASE_BUCKET}/`;
 
       if (remainder.startsWith(bucketPrefix)) {
-        return decodeURIComponent(remainder.slice(bucketPrefix.length));
+        return decodeURIComponent(
+          remainder.slice(bucketPrefix.length)
+        );
       }
-    } catch (e) {
-      console.warn("[Logo Delivery] Could not parse stored asset URL.", e);
+    } catch (error) {
+      console.error(
+        "[Logo Delivery] Storage path parsing failed:",
+        error
+      );
     }
 
     return null;
   }
 
-  async function createSignedUrl(path) {
-    if (!path || !client) return null;
-
-    const normalized = normalizeStoragePath(path);
-    if (!normalized) return null;
-
-    const { data, error } = await client.storage
-      .from(SUPABASE_BUCKET)
-      .createSignedUrl(normalized, 60 * 30);
-
-    if (error) {
-      console.error("[Logo Delivery] Signed URL failed:", normalized, error);
-      return null;
+  async function getCurrentUser() {
+    if (!client) {
+      throw new Error("Supabase client is not available.");
     }
 
-    return data?.signedUrl || null;
-  }
+    const {
+      data,
+      error
+    } = await client.auth.getUser();
 
-  async function getCurrentUser() {
-    if (!client) throw new Error("Supabase client is not available.");
-
-    const { data, error } = await client.auth.getUser();
     if (error) throw error;
-    if (!data?.user) throw new Error("Your secure session could not be verified.");
+
+    if (!data?.user) {
+      throw new Error(
+        "Your secure session could not be verified."
+      );
+    }
 
     return data.user;
   }
 
   async function loadApproval() {
-    const email = String(currentUser.email || "").trim().toLowerCase();
+    const email = String(currentUser.email || "")
+      .trim()
+      .toLowerCase();
 
-    const { data, error } = await client
+    const {
+      data,
+      error
+    } = await client
       .from("logo_approvals")
       .select(`
         id,
@@ -770,7 +820,9 @@ document.addEventListener("DOMContentLoaded", () => {
         updated_at
       `)
       .eq("client_email", email)
-      .order("published_at", { ascending: false })
+      .order("published_at", {
+        ascending: false
+      })
       .limit(1)
       .maybeSingle();
 
@@ -780,18 +832,91 @@ document.addEventListener("DOMContentLoaded", () => {
     return currentApproval;
   }
 
-  function setImagePreview(imageId, fallbackId, url) {
+  /*
+    Private Storage access.
+
+    We intentionally do NOT use fetch(signedUrl, {credentials:"include"}).
+    That was causing the secure download failure.
+
+    Instead, Supabase's authenticated Storage client retrieves the private
+    object directly. RLS remains responsible for deciding whether this
+    authenticated client can access the object.
+  */
+  async function downloadPrivateFile(path) {
+    const normalized = normalizeStoragePath(path);
+
+    if (!normalized) {
+      throw new Error("The secure file path is missing.");
+    }
+
+    const {
+      data,
+      error
+    } = await client.storage
+      .from(SUPABASE_BUCKET)
+      .download(normalized);
+
+    if (error) {
+      console.error(
+        "[Logo Delivery] Private Storage download failed:",
+        normalized,
+        error
+      );
+
+      throw new Error(
+        error.message ||
+        "The private file could not be retrieved."
+      );
+    }
+
+    if (!data) {
+      throw new Error(
+        "The private file was not returned by Storage."
+      );
+    }
+
+    return data;
+  }
+
+  function createPreviewUrl(blob) {
+    return URL.createObjectURL(blob);
+  }
+
+  function clearPreview(imageId, fallbackId) {
     const image = $(imageId);
     const fallback = $(fallbackId);
+
     if (!image || !fallback) return;
 
-    if (!url) {
-      image.style.display = "none";
-      fallback.style.display = "block";
+    if (image.dataset.objectUrl) {
+      URL.revokeObjectURL(image.dataset.objectUrl);
+      delete image.dataset.objectUrl;
+    }
+
+    image.removeAttribute("src");
+    image.style.display = "none";
+    fallback.style.display = "block";
+  }
+
+  function setImagePreview(imageId, fallbackId, blob) {
+    const image = $(imageId);
+    const fallback = $(fallbackId);
+
+    if (!image || !fallback) return;
+
+    if (!blob) {
+      clearPreview(imageId, fallbackId);
       return;
     }
 
-    image.src = url;
+    if (image.dataset.objectUrl) {
+      URL.revokeObjectURL(image.dataset.objectUrl);
+    }
+
+    const objectUrl = createPreviewUrl(blob);
+
+    image.dataset.objectUrl = objectUrl;
+    image.src = objectUrl;
     image.style.display = "block";
     fallback.style.display = "none";
 
@@ -801,70 +926,308 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  function setDownloadButton(buttonId, url, filename) {
-    const button = $(buttonId);
-    if (!button) return;
+  async function hydrateFile(type, path, imageId, fallbackId, buttonId, filename) {
+    if (!path) {
+      setDownloadState(
+        buttonId,
+        false,
+        `↓ Download ${type === "favicon" ? "Favicon" : type.toUpperCase()}`
+      );
+      clearPreview(imageId, fallbackId);
+      return;
+    }
 
-    button.disabled = !url;
-    button.onclick = url ? () => downloadSecureFile(url, filename) : null;
+    try {
+      const blob = await downloadPrivateFile(path);
+
+      downloadedFiles[type] = {
+        blob,
+        filename
+      };
+
+      /*
+        PNG/JPG are displayed normally.
+
+        ICO is binary and browsers do not consistently render .ico files
+        from a Blob URL. We still retrieve it securely and keep its download
+        button active. The favicon card will show its file-ready state.
+      */
+      if (type === "favicon") {
+        const fallback = $(fallbackId);
+
+        if (fallback) {
+          fallback.innerHTML =
+            "<strong style=\"display:block;color:#0a1f44;margin-bottom:5px;\">Favicon Ready</strong>" +
+            "<span>favicon.ico is securely available for download.</span>";
+          fallback.style.display = "block";
+        }
+
+        const image = $(imageId);
+        if (image) image.style.display = "none";
+      } else {
+        setImagePreview(
+          imageId,
+          fallbackId,
+          blob
+        );
+      }
+
+      setDownloadState(
+        buttonId,
+        true,
+        `↓ Download ${type === "favicon" ? "Favicon" : type.toUpperCase()}`
+      );
+    } catch (error) {
+      console.error(
+        `[Logo Delivery] ${type} file unavailable:`,
+        error
+      );
+
+      downloadedFiles[type] = null;
+
+      setDownloadState(
+        buttonId,
+        false,
+        `↓ Download ${type === "favicon" ? "Favicon" : type.toUpperCase()}`
+      );
+
+      const fallback = $(fallbackId);
+
+      if (fallback) {
+        fallback.innerHTML =
+          "<strong style=\"display:block;color:#0a1f44;margin-bottom:5px;\">File temporarily unavailable</strong>" +
+          "<span>Please refresh the page and try again.</span>";
+        fallback.style.display = "block";
+      }
+
+      const image = $(imageId);
+      if (image) image.style.display = "none";
+    }
   }
 
-  async function downloadSecureFile(url, filename) {
-    try {
-      const response = await fetch(url, { credentials: "include" });
-      if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+  async function downloadFile(type, buttonId) {
+    const button = $(buttonId);
+    const file = downloadedFiles[type];
 
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
+    if (!file?.blob) {
+      setDeliveryStatus(
+        "File unavailable",
+        "error"
+      );
+
+      /*
+        Re-fetch once instead of using an old signed URL.
+        This also handles a package that was published shortly before
+        the client opened the page.
+      */
+      try {
+        const path =
+          type === "png"
+            ? currentApproval?.png_path
+            : type === "jpg"
+              ? currentApproval?.jpg_path
+              : currentApproval?.favicon_path;
+
+        if (!path) {
+          throw new Error("The requested file is not registered.");
+        }
+
+        const blob = await downloadPrivateFile(path);
+
+        downloadedFiles[type] = {
+          blob,
+          filename: file?.filename || (
+            type === "png"
+              ? `${sanitizeEmail(currentUser.email)}_final_logo.png`
+              : type === "jpg"
+                ? `${sanitizeEmail(currentUser.email)}_final_logo.jpg`
+                : `${sanitizeEmail(currentUser.email)}_favicon.ico`
+          )
+        };
+
+        return downloadFile(type, buttonId);
+      } catch (error) {
+        console.error(
+          "[Logo Delivery] Download retry failed:",
+          error
+        );
+
+        setDeliveryStatus(
+          "Secure download unavailable",
+          "error"
+        );
+
+        return;
+      }
+    }
+
+    try {
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Preparing download...";
+      }
+
+      const objectUrl = URL.createObjectURL(file.blob);
       const anchor = document.createElement("a");
+
       anchor.href = objectUrl;
-      anchor.download = filename;
+      anchor.download = file.filename;
+      anchor.rel = "noopener";
+      anchor.style.display = "none";
+
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+      }, 1500);
+
+      setDeliveryStatus(
+        "Download ready",
+        "success"
+      );
     } catch (error) {
-      console.error("[Logo Delivery] Download failed:", error);
-      alert("The secure download could not be started. Please refresh the page and try again.");
+      console.error(
+        "[Logo Delivery] Browser download failed:",
+        error
+      );
+
+      setDeliveryStatus(
+        "Download unavailable",
+        "error"
+      );
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent =
+          type === "favicon"
+            ? "↓ Download Favicon"
+            : `↓ Download ${type.toUpperCase()}`;
+      }
     }
   }
 
   async function hydrateFiles() {
-    signedFiles = {
-      png: await createSignedUrl(currentApproval?.png_path),
-      jpg: await createSignedUrl(currentApproval?.jpg_path),
-      favicon: await createSignedUrl(currentApproval?.favicon_path)
-    };
+    downloadedFiles.png = null;
+    downloadedFiles.jpg = null;
+    downloadedFiles.favicon = null;
 
-    setImagePreview("pngPreview", "pngPreviewFallback", signedFiles.png);
-    setImagePreview("jpgPreview", "jpgPreviewFallback", signedFiles.jpg);
-    setImagePreview("faviconPreview", "faviconPreviewFallback", signedFiles.favicon);
+    clearPreview(
+      "pngPreview",
+      "pngPreviewFallback"
+    );
+
+    clearPreview(
+      "jpgPreview",
+      "jpgPreviewFallback"
+    );
+
+    clearPreview(
+      "faviconPreview",
+      "faviconPreviewFallback"
+    );
 
     const base = sanitizeEmail(currentUser.email);
-    setDownloadButton("downloadPngBtn", signedFiles.png, `${base}_final_logo.png`);
-    setDownloadButton("downloadJpgBtn", signedFiles.jpg, `${base}_final_logo.jpg`);
-    setDownloadButton("downloadFaviconBtn", signedFiles.favicon, `${base}_favicon.ico`);
+
+    /*
+      Fetch all three through the private authenticated Storage API.
+      No public URLs and no signed URLs are exposed to the page.
+    */
+    await Promise.all([
+      hydrateFile(
+        "png",
+        currentApproval?.png_path,
+        "pngPreview",
+        "pngPreviewFallback",
+        "downloadPngBtn",
+        `${base}_final_logo.png`
+      ),
+
+      hydrateFile(
+        "jpg",
+        currentApproval?.jpg_path,
+        "jpgPreview",
+        "jpgPreviewFallback",
+        "downloadJpgBtn",
+        `${base}_final_logo.jpg`
+      ),
+
+      hydrateFile(
+        "favicon",
+        currentApproval?.favicon_path,
+        "faviconPreview",
+        "faviconPreviewFallback",
+        "downloadFaviconBtn",
+        `${base}_favicon.ico`
+      )
+    ]);
+
+    if (
+      downloadedFiles.png ||
+      downloadedFiles.jpg ||
+      downloadedFiles.favicon
+    ) {
+      setDeliveryStatus(
+        "Final Files Ready",
+        "success"
+      );
+    } else {
+      setDeliveryStatus(
+        "Files Unavailable",
+        "error"
+      );
+    }
   }
 
   function renderApprovalState() {
-    const approved = String(currentApproval?.status || "").toLowerCase() === "approved";
-    const status = String(currentApproval?.status || "published");
+    const approved =
+      String(currentApproval?.status || "")
+        .toLowerCase() === "approved";
+
+    const status =
+      String(currentApproval?.status || "published");
 
     $("deliveryStatusPill").textContent =
-      approved ? "✓ Final Package Approved" : "Final Files Ready";
+      approved
+        ? "✓ Final Package Approved"
+        : "Final Files Ready";
 
     $("deliveryStatusField").textContent =
-      approved ? "Approved" : status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      approved
+        ? "Approved"
+        : status
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
 
     if (approved) {
-      setVisible("approveDeliveryBtn", false);
-      setVisible("alreadyApprovedNotice", true);
-      $("approvalHeading").textContent = "Final logo package approved";
+      setVisible(
+        "approveDeliveryBtn",
+        false
+      );
+
+      setVisible(
+        "alreadyApprovedNotice",
+        true
+      );
+
+      $("approvalHeading").textContent =
+        "Final logo package approved";
+
       $("approvalDescription").textContent =
-        `Your final logo package was acknowledged on ${formatDate(currentApproval.approved_at)}.`;
+        `Your final logo package was acknowledged on ${formatDate(
+          currentApproval.approved_at
+        )}.`;
     } else {
-      setVisible("approveDeliveryBtn", true);
-      setVisible("alreadyApprovedNotice", false);
+      setVisible(
+        "approveDeliveryBtn",
+        true
+      );
+
+      setVisible(
+        "alreadyApprovedNotice",
+        false
+      );
     }
   }
 
@@ -874,94 +1237,241 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!currentApproval) {
       setVisible("deliveryEmpty", true);
       setVisible("deliveryContent", false);
-      $("deliveryStatusPill").textContent = "Awaiting Final Files";
+
+      setDeliveryStatus(
+        "Awaiting Final Files"
+      );
+
       return;
     }
 
     setVisible("deliveryEmpty", false);
     setVisible("deliveryContent", true);
 
-    $("projectTitleField").textContent = currentApproval.project_title || "Final Logo Package";
-    $("trackingRefField").textContent = currentApproval.tracking_ref || "—";
-    $("publishedDateField").textContent = formatDate(currentApproval.published_at);
+    $("projectTitleField").textContent =
+      currentApproval.project_title ||
+      "Final Logo Package";
+
+    $("trackingRefField").textContent =
+      currentApproval.tracking_ref || "—";
+
+    $("publishedDateField").textContent =
+      formatDate(currentApproval.published_at);
 
     await hydrateFiles();
+
     renderApprovalState();
   }
 
   function openApprovalModal() {
-    $("logoApprovalModal")?.classList.remove("is-hidden");
+    $("logoApprovalModal")?.classList.remove(
+      "is-hidden"
+    );
   }
 
   function closeApprovalModal() {
-    $("logoApprovalModal")?.classList.add("is-hidden");
+    $("logoApprovalModal")?.classList.add(
+      "is-hidden"
+    );
   }
 
   async function approveFinalPackage() {
     if (!currentApproval?.id) return;
 
-    const button = $("confirmLogoApprovalBtn");
+    const button =
+      $("confirmLogoApprovalBtn");
+
     button.disabled = true;
     button.textContent = "Saving...";
 
     try {
-      const { data, error } = await client.functions.invoke(APPROVAL_FUNCTION, {
-        body: {
-          approval_id: currentApproval.id,
-          action: "approve"
+      const {
+        data,
+        error
+      } = await client.functions.invoke(
+        APPROVAL_FUNCTION,
+        {
+          body: {
+            approval_id: currentApproval.id,
+            action: "approve"
+          }
         }
-      });
+      );
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       currentApproval.status = "approved";
-      currentApproval.approved_at = data?.approved_at || new Date().toISOString();
-      currentApproval.approved_by = currentUser.id;
+      currentApproval.approved_at =
+        data?.approved_at ||
+        new Date().toISOString();
+
+      currentApproval.approved_by =
+        currentUser.id;
 
       closeApprovalModal();
       renderApprovalState();
-      alert("Your final logo package has been approved successfully.");
+
+      setDeliveryStatus(
+        "✓ Final Package Approved",
+        "success"
+      );
     } catch (error) {
-      console.error("[Logo Delivery] Approval failed:", error);
-      alert(`Approval could not be completed: ${error.message || "Unknown error"}`);
+      console.error(
+        "[Logo Delivery] Approval failed:",
+        error
+      );
+
+      closeApprovalModal();
+
+      setDeliveryStatus(
+        "Approval could not be completed",
+        "error"
+      );
     } finally {
       button.disabled = false;
-      button.textContent = "Yes, Approve Files";
+      button.textContent =
+        "Yes, Approve Files";
     }
   }
 
   function bindEvents() {
-    $("approveDeliveryBtn")?.addEventListener("click", openApprovalModal);
-    $("confirmLogoApprovalBtn")?.addEventListener("click", approveFinalPackage);
+    $("approveDeliveryBtn")
+      ?.addEventListener(
+        "click",
+        openApprovalModal
+      );
 
-    document.querySelectorAll("[data-close-approval-modal]").forEach((element) => {
-      element.addEventListener("click", closeApprovalModal);
-    });
+    $("confirmLogoApprovalBtn")
+      ?.addEventListener(
+        "click",
+        approveFinalPackage
+      );
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeApprovalModal();
-    });
+    $("downloadPngBtn")
+      ?.addEventListener(
+        "click",
+        () => downloadFile(
+          "png",
+          "downloadPngBtn"
+        )
+      );
 
-    ["pngPreview", "jpgPreview", "faviconPreview"].forEach((id) => {
-      $(id)?.addEventListener("contextmenu", (event) => event.preventDefault());
-      $(id)?.addEventListener("dragstart", (event) => event.preventDefault());
+    $("downloadJpgBtn")
+      ?.addEventListener(
+        "click",
+        () => downloadFile(
+          "jpg",
+          "downloadJpgBtn"
+        )
+      );
+
+    $("downloadFaviconBtn")
+      ?.addEventListener(
+        "click",
+        () => downloadFile(
+          "favicon",
+          "downloadFaviconBtn"
+        )
+      );
+
+    document
+      .querySelectorAll(
+        "[data-close-approval-modal]"
+      )
+      .forEach(element => {
+        element.addEventListener(
+          "click",
+          closeApprovalModal
+        );
+      });
+
+    document.addEventListener(
+      "keydown",
+      event => {
+        if (event.key === "Escape") {
+          closeApprovalModal();
+        }
+      }
+    );
+
+    /*
+      Prevent casual image saving/dragging.
+      This is only a deterrent; the real protection is the private bucket
+      and authenticated Storage access.
+    */
+    [
+      "pngPreview",
+      "jpgPreview",
+      "faviconPreview"
+    ].forEach(id => {
+      $(id)?.addEventListener(
+        "contextmenu",
+        event => event.preventDefault()
+      );
+
+      $(id)?.addEventListener(
+        "dragstart",
+        event => event.preventDefault()
+      );
     });
   }
 
   async function initializeLogoDelivery() {
     try {
       bindEvents();
-      currentUser = await getCurrentUser();
+
+      currentUser =
+        await getCurrentUser();
+
       await loadApproval();
+
       await renderPage();
     } catch (error) {
-      console.error("[Logo Delivery] Initialization failed:", error);
-      setVisible("deliveryLoading", false);
-      setVisible("deliveryEmpty", true);
-      $("deliveryEmpty").querySelector("strong").textContent = "Unable to load your final logo package.";
-      $("deliveryEmpty").querySelector("span").textContent =
-        error.message || "Please refresh the page or contact support.";
+      console.error(
+        "[Logo Delivery] Initialization failed:",
+        error
+      );
+
+      setVisible(
+        "deliveryLoading",
+        false
+      );
+
+      setVisible(
+        "deliveryEmpty",
+        true
+      );
+
+      setDeliveryStatus(
+        "Delivery unavailable",
+        "error"
+      );
+
+      const empty =
+        $("deliveryEmpty");
+
+      if (empty) {
+        const heading =
+          empty.querySelector("strong");
+
+        const message =
+          empty.querySelector("span");
+
+        if (heading) {
+          heading.textContent =
+            "Unable to load your final logo package.";
+        }
+
+        if (message) {
+          message.textContent =
+            error.message ||
+            "Please refresh the page or contact support.";
+        }
+      }
     }
   }
 
