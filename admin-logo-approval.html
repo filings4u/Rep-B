@@ -1109,8 +1109,8 @@ body, html {
 <main class="portal-main">
   <header class="portal-header">
     <div class="welcome-text">
-      <h1>Admin Dashboard</h1>
-      <p>System-wide performance overview infrastructure</p>
+      <h1>Logo Approval Center</h1>
+      <p>Send approved logos to the client.</p>
     </div>
     
     <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX -->
@@ -2585,29 +2585,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       await uploadFile(paths.jpg, jpg, "image/jpeg");
     }
 
-  if (favicon) {
-  validateFile("favicon", favicon);
-
-  paths.favicon = `${basePath}/favicon.ico`;
-
-  // Browsers commonly report .ICO files as image/x-icon.
-  // Supabase Storage may reject that MIME type, so explicitly
-  // create an upload copy using application/octet-stream.
-  const faviconUpload = new File(
-    [favicon],
-    "favicon.ico",
-    {
-      type: "application/octet-stream",
-      lastModified: favicon.lastModified
+    if (favicon) {
+      validateFile("favicon", favicon);
+      paths.favicon = `${basePath}/favicon.ico`;
+      await uploadFile(paths.favicon, favicon, "image/x-icon");
     }
-  );
-
-  await uploadFile(
-    paths.favicon,
-    faviconUpload,
-    "application/octet-stream"
-  );
-}
 
     return paths;
   }
@@ -2712,7 +2694,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       setStatus("Files uploaded. Publishing the client delivery record...", "info");
 
-      await upsertApprovalRecord(paths);
+      /*
+        The database/storage publish is complete first.
+        upsertApprovalRecord() returns the actual logo_approvals row.
+        We then explicitly invoke the CLIENT notification Edge Function.
+
+        This was the missing connection in the previous version:
+        uploading the files and updating logo_approvals does NOT automatically
+        execute send-logo-delivery-email.
+      */
+      const publishedApproval = await upsertApprovalRecord(paths);
 
       await loadExistingPreviews();
       updatePackageState();
@@ -2722,9 +2713,71 @@ document.addEventListener("DOMContentLoaded", async () => {
       $("publishLogoPackageBtn").textContent = "Package Published";
 
       setStatus(
-        "✓ Final logo package published successfully. The client can now access the PNG, JPG, and favicon from their secure portal.",
-        "success"
+        "Final logo package published. Sending the client delivery notification...",
+        "info"
       );
+
+      const {
+        data: notificationResult,
+        error: notificationError
+      } = await client.functions.invoke(
+        "send-logo-delivery-email",
+        {
+          body: {
+            approval_id: publishedApproval?.id || existingApproval?.id,
+            logo_project_id:
+              publishedApproval?.logo_project_id ||
+              existingApproval?.logo_project_id ||
+              null,
+            client_email:
+              publishedApproval?.client_email ||
+              email,
+            project_title:
+              publishedApproval?.project_title ||
+              String($("logoProjectTitle").value || "Final Logo Package").trim(),
+            tracking_ref:
+              publishedApproval?.tracking_ref ||
+              String($("logoTrackingRef").value || "").trim() ||
+              null
+          }
+        }
+      );
+
+      if (notificationError) {
+        console.error(
+          "[Logo Approval Admin] Client delivery notification failed:",
+          notificationError
+        );
+
+        /*
+          The package itself was already published successfully.
+          Do not falsely report that the upload/database publish failed.
+        */
+        setStatus(
+          "Final logo package published, but the client notification could not be sent. Check the send-logo-delivery-email Edge Function logs.",
+          "error"
+        );
+      } else if (notificationResult?.success === false) {
+        console.error(
+          "[Logo Approval Admin] Client delivery notification returned failure:",
+          notificationResult
+        );
+
+        setStatus(
+          "Final logo package published, but the client notification could not be sent.",
+          "error"
+        );
+      } else {
+        console.log(
+          "[Logo Approval Admin] Client delivery notification sent:",
+          notificationResult
+        );
+
+        setStatus(
+          "Final logo package published and the client delivery notification was sent.",
+          "success"
+        );
+      }
     } catch (error) {
       console.error("[Logo Approval Admin] Publish failed:", error);
       setStatus(
