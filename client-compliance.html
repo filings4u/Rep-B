@@ -201,262 +201,325 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!toastBox || !toastMsg) return;
 
-  // 1. Establish Database Connection Handshake
-  const client = window.supabaseInstance || window.supabaseClient;
-  if (!client || typeof client.channel !== 'function') {
-    console.warn("⚠️ Telemetry Error: Real-time notification socket mapping skipped due to client absence.");
+  const client =
+    window.supabaseInstance ||
+    window.supabaseClient ||
+    window.supabase;
+
+  if (!client || typeof client.channel !== "function") {
+    console.warn("⚠️ Compliance realtime socket unavailable.");
     return;
   }
 
-  // 2. Identify Active Session User Context securely
+  function escapeToastText(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   client.auth.getSession().then(({ data: { session } }) => {
-    const userEmail = session?.user?.email;
-    if (!userEmail) return;
+    const email = session?.user?.email;
+    if (!email) return;
 
-    const standardizedEmail = String(userEmail).trim().toLowerCase();
+    const standardizedEmail = String(email).trim().toLowerCase();
 
-    console.log(`📡 [Real-Time Socket] Subscribing to dashboard compliance mutations for: [${standardizedEmail}]`);
-
-    // 3. Initialize Live Listening Channel Portals Targeting Client-Side Insert/Delete Operations
     client
-      .channel('live-compliance-dashboard-channel-sync')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'client_compliance', 
-        filter: `user_email=eq.${standardizedEmail}` 
-      }, (payload) => {
-        
-        // Handle INSERT / UPDATE Events Pushed by Admin Audit Desks
+      .channel(`client-admin-compliance-${standardizedEmail}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "admin_compliance_audit",
+        filter: `email_address=eq.${standardizedEmail}`
+      }, async payload => {
+        const row = payload.new || payload.old || {};
+        const entity = row.entity_name || "Your Company";
+        const filing = row.filing_type || "Compliance Filing";
+
         if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
-          const entity = payload.new.entity_name || "Your Company";
-          const filing = payload.new.filing_type || "Compliance Report";
-          
-          toastMsg.innerHTML = `An administrative auditor has modified record parameters for <strong>${escapeToastText(entity)}</strong>. Action item: <em>${escapeToastText(filing)}</em>.`;
-          toastBox.style.cssText = "position: fixed !important; bottom: 24px !important; right: 24px !important; z-index: 9999 !important; display: block !important; border-left: 4px solid var(--emerald) !important;";
+          toastMsg.innerHTML =
+            `Your compliance ledger was updated for <strong>${escapeToastText(entity)}</strong>. ` +
+            `Action item: <em>${escapeToastText(filing)}</em>.`;
+
+          toastBox.style.display = "block";
+
+          if (typeof window.streamComplianceMonitorGrid === "function") {
+            await window.streamComplianceMonitorGrid();
+          }
         }
-        
-        // Handle DELETE Events Caused by Admin Marking Status as 'Resolved'
+
         if (payload.eventType === "DELETE") {
-          toastMsg.innerHTML = `Excellent! An outstanding audit filing tracker task has been verified and marked as <strong>Resolved</strong> by our staff.`;
-          toastBox.style.cssText = "position: fixed !important; bottom: 24px !important; right: 24px !important; z-index: 9999 !important; display: block !important; border-left: 4px solid var(--emerald) !important;";
+          toastMsg.innerHTML =
+            `The compliance record for <strong>${escapeToastText(entity)}</strong> was removed from the administrative ledger.`;
+
+          toastBox.style.display = "block";
+
+          if (typeof window.streamComplianceMonitorGrid === "function") {
+            await window.streamComplianceMonitorGrid();
+          }
         }
       })
-      .subscribe();
+      .subscribe(status => {
+        console.log("[Compliance Realtime] Subscription:", status);
+      });
   });
 
-  // 4. Utility Click Action Handlers
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => { toastBox.style.display = "none"; });
-  }
+  closeBtn?.addEventListener("click", () => {
+    toastBox.style.display = "none";
+  });
 
-  if (refreshBtn) {
-    refreshBtn.addEventListener("click", () => {
-      // Safely check if a local data refresh layout engine function exists on the parent window page before invoking
-      if (typeof window.streamComplianceMonitorGrid === "function") {
-        window.streamComplianceMonitorGrid();
-        toastBox.style.display = "none";
-      } else {
-        window.location.reload();
-      }
-    });
-  }
-
-  function escapeToastText(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  }
+  refreshBtn?.addEventListener("click", async () => {
+    if (typeof window.streamComplianceMonitorGrid === "function") {
+      await window.streamComplianceMonitorGrid();
+      toastBox.style.display = "none";
+    } else {
+      window.location.reload();
+    }
+  });
 });
 </script>
 
-  <script>
+<style>
+@keyframes toastSlideIn {
+  from { transform: translateY(40px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+</style>
+
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
-  const complianceTableBody = document.getElementById("client-compliance-grid-target");
+  const complianceTableBody =
+    document.getElementById("client-compliance-grid-target");
 
   function runPortalClock() {
     const el = document.getElementById("portal-clock");
     if (el) el.textContent = new Date().toLocaleTimeString();
   }
+
   setInterval(runPortalClock, 1000);
   runPortalClock();
 
-  // Core Self-Healing Database Handshake
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client || typeof client.from !== 'function') {
-    const lib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-    if (lib && typeof lib.createClient === 'function') {
-      client = lib.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU", { 
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } 
-      });
-      window.supabaseInstance = client; window.supabaseClient = client; window.supabase = client;
+  let client =
+    window.supabaseInstance ||
+    window.supabaseClient ||
+    window.supabase;
+
+  if (!client || typeof client.from !== "function") {
+    const lib =
+      window.supabase ||
+      (typeof supabase !== "undefined" ? supabase : null);
+
+    if (lib && typeof lib.createClient === "function") {
+      client = lib.createClient(
+        "https://lrbimrlbskjweynxlgas.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU",
+        { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+      );
+
+      window.supabaseInstance = client;
+      window.supabaseClient = client;
+      window.supabase = client;
     }
   }
 
-  if (!client || typeof client.from !== 'function') {
-    complianceTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ System Error: Connection dropped.</td></tr>`;
+  if (!client || typeof client.from !== "function") {
+    complianceTableBody.innerHTML =
+      '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--staff-red);font-weight:700;">✕ System Error: Connection dropped.</td></tr>';
     return;
   }
 
   let sessionObj = null;
+
   try {
     const { data: { session } } = await client.auth.getSession();
     if (session) sessionObj = session;
-  } catch (e) {}
-
-  if (!sessionObj) {
-    const token = localStorage.getItem("filings4u_secure_session_token") || localStorage.getItem("supabase.auth.token");
-    if (token) {
-      try {
-        const p = JSON.parse(token);
-        sessionObj = p.currentSession || p;
-      } catch(err) {}
-    }
+  } catch (error) {
+    console.error("Session lookup failed:", error);
   }
 
-  if (!sessionObj || !sessionObj.user) {
+  if (!sessionObj?.user) {
     window.location.href = "portal-login.html";
     return;
   }
 
-  const clientSessionEmail = String(sessionObj.user.email).trim().toLowerCase();
+  const clientSessionEmail =
+    String(sessionObj.user.email).trim().toLowerCase();
 
-  // 🟢 READ PIPELINE: Extracts deadlines or generates default annual reports if explicit rows are empty
+  function escapeComplianceHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function daysRemaining(dateString) {
+    const target = new Date(`${dateString}T00:00:00`);
+    const today = new Date();
+
+    target.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    return Math.ceil(
+      (target.getTime() - today.getTime()) /
+      (1000 * 60 * 60 * 24)
+    );
+  }
+
+  function urgencyBadge(days) {
+    if (days <= 0) {
+      return `<span class="compliance-badge-urgent">DELINQUENT (${Math.abs(days)} Days Overdue)</span>`;
+    }
+    if (days <= 30) {
+      return `<span class="compliance-badge-urgent">Urgent (${days} Days)</span>`;
+    }
+    if (days <= 60) {
+      return `<span class="compliance-badge-normal">Expiring (${days} Days)</span>`;
+    }
+    return `<span class="compliance-badge-clear">Active / Compliant</span>`;
+  }
+
+  function formatDate(dateString) {
+    const d = new Date(`${dateString}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? "N/A" : d.toLocaleDateString();
+  }
+
   async function streamComplianceMonitorGrid() {
+    if (!complianceTableBody) return;
+
     try {
-      console.log(`📡 [Compliance Tracker] Syncing regulatory streams for: [${clientSessionEmail}]`);
-      
-      // STAGE 1: Attempt to pull explicit tracking entries from our new dedicated schema layout
-      const { data: explicitDeadlines, error: dbError } = await client
-        .from('client_compliance')
-        .select('entity_name, filing_type, renewal_date, state_jurisdiction, fulfillment_slug')
-        .eq('user_email', clientSessionEmail)
-        .order('renewal_date', { ascending: true });
+      complianceTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="padding:40px;text-align:center;color:var(--text-muted);font-style:italic;">
+            Syncing your compliance ledger...
+          </td>
+        </tr>
+      `;
 
-      if (dbError) throw dbError;
+      const { data, error } = await client
+        .from("admin_compliance_audit")
+        .select("admin_audit_id,email_address,entity_name,filing_type,renewal_date,state_jurisdiction,fulfillment_slug,audit_status,created_at")
+        .eq("email_address", clientSessionEmail)
+        .order("renewal_date", { ascending: true })
+        .order("created_at", { ascending: false });
 
-      // Reset presentation canvas container space natively
-      complianceTableBody.innerHTML = "";
+      if (error) throw error;
 
-      // STAGE 2: PROCESS EXPLICIT REGISTRY ENTRIES IF DISPATCHED
-      if (explicitDeadlines && explicitDeadlines.length > 0) {
-        explicitDeadlines.forEach((item) => {
-          const company = item.entity_name || "Active Enterprise Asset";
-          const requirement = item.filing_type || "Corporate Compliance Filing";
-          const stateLabel = item.state_jurisdiction ? ` [${item.state_jurisdiction}]` : "";
-          
-          // Compute remaining calendar tracking timeline windows securely against current system year clock
-          const targetDueDate = new Date(item.renewal_date);
-          const timeDiff = targetDueDate.getTime() - new Date().getTime();
-          const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-          let badgeHtml = "";
-          if (daysLeft <= 0) {
-            badgeHtml = `<span class="compliance-badge-urgent">DELINQUENT (${Math.abs(daysLeft)} Days Overdue)</span>`;
-          } else if (daysLeft <= 30) {
-            badgeHtml = `<span class="compliance-badge-urgent">Urgent (${daysLeft} Days)</span>`;
-          } else if (daysLeft <= 60) {
-            badgeHtml = `<span class="compliance-badge-normal">Expiring (${daysLeft} Days)</span>`;
-          } else {
-            badgeHtml = `<span class="compliance-badge-clear">Active / Compliant</span>`;
-          }
-
-          // Maps direct link routing dynamically using database fulfillment tokens
-          const targetSlug = item.fulfillment_slug || "annual-reports";
-
-          appendComplianceRowMarkup(company + stateLabel, requirement, targetDueDate.toLocaleDateString(), badgeHtml, targetSlug);
-        });
-        return;
-      }
-      // STAGE 3: SELF-HEALING AUTOMATED FALLBACK TRACKING ENGINE
-      // Fired instantly if their dedicated compliance tracking schema returns empty data blocks
-      console.log("ℹ️ [Compliance Tracker] Primary records blank. Deploying live order anniversary lookups...");
-      
-      const { data: orders, error: ordersError } = await client
-        .from('orders')
-        .select('company_name, selected_service, created_at')
-        .eq('email_address', clientSessionEmail);
-
-      if (ordersError) throw ordersError;
-
-      // Filter out raw unassigned data templates safely
-      const entities = orders ? orders.filter(item => item.company_name && item.company_name !== 'Not Specified') : [];
-
-      if (entities.length === 0) {
-        complianceTableBody.innerHTML = `
-          <tr>
-            <td colspan="5" style="padding:40px; text-align:center; color:var(--text-muted); font-size:0.88rem;">
-              <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">🔄</span>
-              <strong>Compliance Accounts Optimized</strong>
-              <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: #94a3b8;">Active company formations automatically populate calendar report monitors here.</p>
-            </td>
-          </tr>`;
-        return;
-      }
-
-      entities.forEach((entityItem) => {
-        const company = entityItem.company_name;
-        const filingRequirement = "Statutory Corporate Annual Report";
-        
-        // Calculate an anniversary deadline calendar marker exactly 1 year from original formation date
-        const formationDate = new Date(entityItem.created_at);
-        const calculatedDueDate = new Date(formationDate.setFullYear(formationDate.getFullYear() + 1));
-        
-        // Calculate remaining calendar tracking window parameter offsets
-        const timeDifference = calculatedDueDate.getTime() - new Date().getTime();
-        const daysRemaining = Math.ceil(timeDifference / (1000 * 3600 * 24));
-
-        let badgeHtml = "";
-        if (daysRemaining <= 0) {
-          badgeHtml = `<span class="compliance-badge-urgent">DELINQUENT (${Math.abs(daysRemaining)} Days Overdue)</span>`;
-        } else if (daysRemaining <= 30) {
-          badgeHtml = `<span class="compliance-badge-urgent">Urgent (${daysRemaining} Days)</span>`;
-        } else if (daysRemaining <= 60) {
-          badgeHtml = `<span class="compliance-badge-normal">Expiring Soon</span>`;
-        } else {
-          badgeHtml = `<span class="compliance-badge-clear">Active / Compliant</span>`;
-        }
-
-        appendComplianceRowMarkup(company, filingRequirement, calculatedDueDate.toLocaleDateString(), badgeHtml, "annual-reports");
+      const activeRows = (data || []).filter(row => {
+        const status = String(row.audit_status || "Active").trim().toLowerCase();
+        return !["resolved","completed","closed","cancelled","canceled"].includes(status);
       });
 
-    } catch (fault) {
-      console.error("✕ Compliance data pipeline failed to sync:", fault);
-      complianceTableBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--staff-red); font-weight:700;">✕ Synchronization Failure: Compliance array corrupted.</td></tr>`;
+      complianceTableBody.innerHTML = "";
+
+      if (!activeRows.length) {
+        complianceTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="padding:40px;text-align:center;color:var(--text-muted);font-size:.88rem;">
+              <span style="font-size:1.5rem;display:block;margin-bottom:8px;">✓</span>
+              <strong>No active compliance deadlines</strong>
+              <p style="margin:4px 0 0;font-size:.78rem;color:#94a3b8;">
+                New deadlines published by filings4u staff will appear here automatically.
+              </p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      activeRows.forEach(row => {
+        const company =
+          row.entity_name || "Active Enterprise Asset";
+
+        const requirement =
+          row.filing_type || "Corporate Compliance Filing";
+
+        const jurisdiction =
+          row.state_jurisdiction
+            ? ` [${row.state_jurisdiction}]`
+            : "";
+
+        const days = daysRemaining(row.renewal_date);
+        const route =
+          row.fulfillment_slug || "annual-reports";
+
+        appendComplianceRowMarkup(
+          company + jurisdiction,
+          requirement,
+          formatDate(row.renewal_date),
+          urgencyBadge(days),
+          route
+        );
+      });
+    } catch (error) {
+      console.error("Compliance data pipeline failed:", error);
+
+      complianceTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="padding:24px;text-align:center;color:var(--staff-red);font-weight:700;">
+            ✕ Synchronization Failure: ${escapeComplianceHtml(error.message || "Unable to read compliance ledger.")}
+          </td>
+        </tr>
+      `;
     }
   }
-  // --- STAGE 4: CORE GRID DATA ROW PAINTER ---
-  function appendComplianceRowMarkup(entityName, requirement, dueDateStr, badgeHtml, routeSlug) {
+
+  window.streamComplianceMonitorGrid = streamComplianceMonitorGrid;
+
+  function appendComplianceRowMarkup(
+    entityName,
+    requirement,
+    dueDate,
+    badgeHtml,
+    routeSlug
+  ) {
     const tr = document.createElement("tr");
-    tr.style.cssText = "border-bottom:1px solid var(--border-color); background:#ffffff;";
+
+    tr.style.cssText =
+      "border-bottom:1px solid var(--border-color);background:#ffffff;";
 
     tr.innerHTML = `
-      <td style="padding:14px 12px; font-weight:700; color:var(--text-dark);">${escapeComplianceHtml(entityName)}</td>
-      <td style="padding:14px 12px; color:var(--text-muted); font-weight:600;">${escapeComplianceHtml(requirement)}</td>
-      <td style="padding:14px 12px; font-family:monospace; font-weight:700; color:var(--text-dark);">${escapeComplianceHtml(dueDateStr)}</td>
-      <td style="padding:14px 12px;">${badgeHtml}</td>
-      <td style="padding:14px 12px; text-align:right;">
-        <!-- 🟢 DYNAMIC MARKETPLACE REDIRECT: Routes directly to the public website product view -->
-        <a href="https://filings4u.com/${encodeURIComponent(routeSlug)}.html" class="action-resolve-btn" target="_blank">File Renewal ➔</a>
+      <td style="padding:14px 12px;font-weight:700;color:var(--text-dark);">
+        ${escapeComplianceHtml(entityName)}
+      </td>
+      <td style="padding:14px 12px;color:var(--text-muted);font-weight:600;">
+        ${escapeComplianceHtml(requirement)}
+      </td>
+      <td style="padding:14px 12px;font-family:monospace;font-weight:700;color:var(--text-dark);">
+        ${escapeComplianceHtml(dueDate)}
+      </td>
+      <td style="padding:14px 12px;">
+        ${badgeHtml}
+      </td>
+      <td style="padding:14px 12px;text-align:right;">
+        <a
+          href="https://filings4u.com/${encodeURIComponent(routeSlug)}.html"
+          class="action-resolve-btn"
+          target="_blank"
+          rel="noopener noreferrer">
+          File Renewal ➔
+        </a>
       </td>
     `;
-    complianceTableBody.appendChild(tr);
-  }
 
-  function escapeComplianceHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    complianceTableBody.appendChild(tr);
   }
 
   window.toggleSidebarAccordion = function(btn) {
     if (!btn) return;
     const panel = btn.nextElementSibling;
-    if (panel) panel.style.display = (panel.style.display === "none" || !panel.style.display) ? "block" : "none";
+    if (panel) {
+      panel.style.display =
+        panel.style.display === "none" || !panel.style.display
+          ? "block"
+          : "none";
+    }
   };
 
   document.getElementById("portalLogoutBtn")?.addEventListener("click", () => {
     if (!client) return;
+
     client.auth.signOut().then(() => {
       window.localStorage.clear();
       window.sessionStorage.clear();
@@ -464,7 +527,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Execute processing streams on frame startup entry frames
   await streamComplianceMonitorGrid();
 });
 </script>

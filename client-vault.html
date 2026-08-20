@@ -236,7 +236,9 @@
 document.addEventListener("DOMContentLoaded", async () => { 
   "use strict"; 
   const vaultTableBody = document.getElementById("client-vault-table-body-target"); 
-  let masterDocumentsCache = []; 
+  let masterDocumentsCache = [];
+  let vaultRealtimeChannel = null;
+  let refreshTimer = null; 
 
   // Core Self-Healing Database Handshake Link 
   let client = window.supabaseInstance || window.supabaseClient; 
@@ -288,8 +290,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Pull raw first_name and last_name columns from public.client_vault
       const { data: vaultDocs, error: vaultError } = await client 
         .from('client_vault') 
-        .select('id, file_name, storage_bucket_path, asset_vault_category, first_name, last_name') 
-        .ilike('target_client_email', clientSessionEmail); 
+        .select('id, file_name, storage_bucket_path, storage_path, asset_vault_category, first_name, last_name, target_client_email, content_type, created_at') 
+        .ilike('target_client_email', clientSessionEmail) 
+        .order('created_at', { ascending: false }); 
 
       if (vaultError) throw vaultError; 
 
@@ -309,7 +312,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           id: doc.id, 
           name: doc.file_name, 
           type: doc.asset_vault_category || "formation", 
-          storagePath: doc.storage_bucket_path, 
+          storagePath: doc.storage_bucket_path || doc.storage_path, 
           adminAuthor: displayAuthor 
         }; 
       }); 
@@ -391,7 +394,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (categoryKey === 'formation') searchId = 'filter-formations'; 
     else if (categoryKey === 'governance') searchId = 'filter-governance'; 
     else if (categoryKey === 'tax') searchId = 'filter-tax'; 
-    else if (categoryKey === 'logistics') searchId = 'filter-logistics'; 
+    else if (categoryKey === 'logistics') searchId = 'filter-logistics';
+    else if (categoryKey === 'compliance') searchId = 'filter-compliance'; 
 
     const targetCard = document.getElementById(searchId); 
     if (targetCard) targetCard.classList.add('active'); 
@@ -457,8 +461,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     }); 
   })(); 
 
+  // Live client-vault synchronization. The client page refreshes automatically
+  // whenever an administrator publishes, updates, or removes a client document.
+  function subscribeToClientVault() {
+    if (vaultRealtimeChannel || !client?.channel) return;
+
+    vaultRealtimeChannel = client
+      .channel(`client-vault-${clientSessionEmail}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'client_vault' },
+        (payload) => {
+          const row = payload.new || payload.old || {};
+          const rowEmail = String(row.target_client_email || row.email_address || '').trim().toLowerCase();
+          if (!rowEmail || rowEmail === clientSessionEmail) {
+            clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(() => initializeVaultReconciliation(), 150);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`[Client Vault] Realtime status: ${status}`);
+      });
+  }
+
   // Run initialization routines on load frames 
-  await initializeVaultReconciliation(); 
+  await initializeVaultReconciliation();
+  subscribeToClientVault(); 
 
     function runPortalClock() {
     const el = document.getElementById("portal-clock");

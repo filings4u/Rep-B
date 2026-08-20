@@ -458,9 +458,9 @@
     <!-- ADMIN SUBMISSION FORM MAPPED 1:1 TO NEW DB CORES -->
     <form id="complianceUploadForm" style="display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 24px; row-gap: 24px; margin-bottom: 36px;">
       
-      <!-- Row 1, Column 1: Client Selector (Pipes user_email) -->
+      <!-- Row 1, Column 1: Client Selector (Pipes email_address) -->
       <div style="display: flex; flex-direction: column;">
-        <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:6px; color:#475569;">Target Client Account (user_email)</label>
+        <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:6px; color:#475569;">Target Client Account (email_address)</label>
         <select id="uploadTargetClientSelector" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; color:#0f172a; background-color:#fff; height: 42px; box-sizing: border-box;" required>
           <option value="">-- Choose a target client email --</option>
         </select>
@@ -489,13 +489,56 @@
         <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:6px; color:#475569;">State Jurisdiction (state_jurisdiction)</label>
         <select id="formStateJurisdiction" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; color:#0f172a; background-color:#fff; height: 42px; box-sizing: border-box;" required>
           <option value="" disabled selected>Select Jurisdiction...</option>
-          <option value="DE">Delaware [DE]</option>
-          <option value="WY">Wyoming [WY]</option>
-          <option value="NV">Nevada [NV]</option>
-          <option value="TX">Texas [TX]</option>
-          <option value="FL">Florida [FL]</option>
+          <option value="AL">Alabama [AL]</option>
+          <option value="AK">Alaska [AK]</option>
+          <option value="AZ">Arizona [AZ]</option>
+          <option value="AR">Arkansas [AR]</option>
           <option value="CA">California [CA]</option>
-          <option value="US">Federal / United States [US]</option>
+          <option value="CO">Colorado [CO]</option>
+          <option value="CT">Connecticut [CT]</option>
+          <option value="DE">Delaware [DE]</option>
+          <option value="FL">Florida [FL]</option>
+          <option value="GA">Georgia [GA]</option>
+          <option value="HI">Hawaii [HI]</option>
+          <option value="ID">Idaho [ID]</option>
+          <option value="IL">Illinois [IL]</option>
+          <option value="IN">Indiana [IN]</option>
+          <option value="IA">Iowa [IA]</option>
+          <option value="KS">Kansas [KS]</option>
+          <option value="KY">Kentucky [KY]</option>
+          <option value="LA">Louisiana [LA]</option>
+          <option value="ME">Maine [ME]</option>
+          <option value="MD">Maryland [MD]</option>
+          <option value="MA">Massachusetts [MA]</option>
+          <option value="MI">Michigan [MI]</option>
+          <option value="MN">Minnesota [MN]</option>
+          <option value="MS">Mississippi [MS]</option>
+          <option value="MO">Missouri [MO]</option>
+          <option value="MT">Montana [MT]</option>
+          <option value="NE">Nebraska [NE]</option>
+          <option value="NV">Nevada [NV]</option>
+          <option value="NH">New Hampshire [NH]</option>
+          <option value="NJ">New Jersey [NJ]</option>
+          <option value="NM">New Mexico [NM]</option>
+          <option value="NY">New York [NY]</option>
+          <option value="NC">North Carolina [NC]</option>
+          <option value="ND">North Dakota [ND]</option>
+          <option value="OH">Ohio [OH]</option>
+          <option value="OK">Oklahoma [OK]</option>
+          <option value="OR">Oregon [OR]</option>
+          <option value="PA">Pennsylvania [PA]</option>
+          <option value="RI">Rhode Island [RI]</option>
+          <option value="SC">South Carolina [SC]</option>
+          <option value="SD">South Dakota [SD]</option>
+          <option value="TN">Tennessee [TN]</option>
+          <option value="TX">Texas [TX]</option>
+          <option value="UT">Utah [UT]</option>
+          <option value="VT">Vermont [VT]</option>
+          <option value="VA">Virginia [VA]</option>
+          <option value="WA">Washington [WA]</option>
+          <option value="WV">West Virginia [WV]</option>
+          <option value="WI">Wisconsin [WI]</option>
+          <option value="WY">Wyoming [WY]</option>
         </select>
       </div>
 
@@ -547,10 +590,11 @@
         <th style="padding:14px 12px;">Jurisdiction</th>
         <th style="padding:14px 12px;">Renewal Date</th>
         <th style="padding:14px 12px; text-align:right;">Status</th>
+        <th style="padding:14px 12px; text-align:right;">Actions</th>
       </tr>
     </thead>
     <tbody id="admin-compliance-target-box">
-      <tr><td colspan="6" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">Syncing regulatory compliance audits...</td></tr>
+      <tr><td colspan="7" style="padding:30px; text-align:center; color:#64748b; font-style:italic;">Syncing regulatory compliance audits...</td></tr>
     </tbody>
   </table>
 </div>
@@ -583,39 +627,24 @@
 (function () {
   "use strict";
 
-  /*
-   * COMPLIANCE AUDIT DESK — WIRED TO THE SUPPLIED SCHEMA
-   *
-   * Tables:
-   *   client_profiles
-   *   client_entities
-   *   compliance_deadlines
-   *   client_vault
-   *
-   * Storage:
-   *   client_documents_vault
-   */
-
   const DB_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
   const DB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-  const STORAGE_BUCKET = "client_documents_vault";
 
   let dbClient = null;
   let clientProfileCache = new Map();
+  let editingAuditId = null;
+  let realtimeChannel = null;
 
   function resolveSupabaseClient() {
     if (window.supabaseInstance) return window.supabaseInstance;
     if (window.supabaseClient) return window.supabaseClient;
     if (window.chatAdminCoreClient) return window.chatAdminCoreClient;
-
     if (window.supabase && typeof window.supabase.createClient === "function") {
       return window.supabase.createClient(DB_URL, DB_KEY);
     }
-
     if (typeof supabase !== "undefined" && typeof supabase.createClient === "function") {
       return supabase.createClient(DB_URL, DB_KEY);
     }
-
     return null;
   }
 
@@ -625,10 +654,8 @@
 
   function escapeDataString(value) {
     return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
       .replace(/'/g, "&#x27;");
   }
 
@@ -639,22 +666,43 @@
   }
 
   function getStatusStyle(status) {
-    const normalized = String(status || "").toLowerCase();
-
-    if (normalized.includes("overdue") || normalized.includes("expired")) {
+    const s = String(status || "").toLowerCase();
+    if (s.includes("resolved") || s.includes("completed") ||
+        s.includes("expired") || s.includes("overdue")) {
       return "background:#fee2e2;color:#991b1b;";
     }
-
-    if (normalized.includes("resolved") || normalized.includes("completed") || normalized.includes("active")) {
-      return "background:#dcfce7;color:#166534;";
-    }
-
+    if (s.includes("active")) return "background:#dcfce7;color:#166534;";
     return "background:#fef3c7;color:#b45309;";
   }
 
+  function val(id) {
+    return document.getElementById(id)?.value?.trim() || "";
+  }
+
+  function setVal(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? "";
+  }
+
+  function resetComplianceForm() {
+    editingAuditId = null;
+    const form = document.getElementById("complianceUploadForm");
+    if (form) form.reset();
+    setVal("formAuditStatus", "Active");
+    const button = form?.querySelector('button[type="submit"]');
+    if (button) button.innerText = "Commit Compliance Audit";
+    const heading = form?.previousElementSibling;
+    if (heading) heading.innerHTML = "Upload New Compliance Asset";
+    const fileInput = document.getElementById("uploadFileReference");
+    if (fileInput) {
+      fileInput.value = "";
+      fileInput.required = false;
+    }
+  }
+
   async function loadClientProfiles() {
-    const clientMenu = document.getElementById("uploadTargetClientSelector");
-    if (!clientMenu) return;
+    const menu = document.getElementById("uploadTargetClientSelector");
+    if (!menu) return;
 
     const { data, error } = await dbClient
       .from("client_profiles")
@@ -664,143 +712,73 @@
     if (error) throw error;
 
     clientProfileCache = new Map();
+    menu.innerHTML = '<option value="">-- Choose Target Client Account --</option>';
 
-    clientMenu.innerHTML =
-      '<option value="">-- Choose Target Account Profile Email --</option>';
-
-    (data || []).forEach((profile) => {
+    (data || []).forEach(profile => {
       const email = normalizeEmail(profile.email_address);
       if (!email) return;
-
       clientProfileCache.set(email, profile);
 
       const name = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
-      const label = name
-        ? `${email} (${name})`
-        : `${email} (${profile.company_name || "Client"})`;
+      const label = name ? `${email} (${name})` : `${email} (${profile.company_name || "Client"})`;
 
       const option = document.createElement("option");
       option.value = email;
       option.textContent = label;
-      clientMenu.appendChild(option);
+      menu.appendChild(option);
     });
   }
 
   function hydrateClientFormFields() {
-    const clientMenu = document.getElementById("uploadTargetClientSelector");
-    const profile = clientProfileCache.get(normalizeEmail(clientMenu?.value));
-
-    const entityInput = document.getElementById("formEntityName");
-    const filingInput = document.getElementById("formFilingType");
-
-    if (!profile) {
-      if (entityInput) entityInput.value = "";
-      if (filingInput) filingInput.value = "";
-      return;
-    }
-
-    if (entityInput) entityInput.value = profile.company_name || "";
-    if (filingInput) filingInput.value = "";
+    const menu = document.getElementById("uploadTargetClientSelector");
+    const profile = clientProfileCache.get(normalizeEmail(menu?.value));
+    setVal("formEntityName", profile?.company_name || "");
   }
 
   async function loadComplianceLedger() {
-    const tableElement = document.getElementById("admin-compliance-target-box");
-    if (!tableElement) return;
+    const target = document.getElementById("admin-compliance-target-box");
+    if (!target) return;
 
-    tableElement.innerHTML =
-      '<tr><td colspan="6" style="padding:30px;text-align:center;color:#64748b;font-style:italic;">Syncing regulatory compliance audits...</td></tr>';
+    target.innerHTML =
+      '<tr><td colspan="7" style="padding:30px;text-align:center;color:#64748b;font-style:italic;">Syncing administrative compliance ledger...</td></tr>';
 
-    const [entitiesRes, deadlinesRes, vaultRes] = await Promise.all([
-      dbClient
-        .from("client_entities")
-        .select("id,entity_name,filing_description,client_email,state_of_formation,formation_date,registry_document_url,created_at")
-        .order("created_at", { ascending: false }),
+    const { data, error } = await dbClient
+      .from("admin_compliance_audit")
+      .select("admin_audit_id,email_address,entity_name,filing_type,renewal_date,state_jurisdiction,fulfillment_slug,audit_status,created_at,asset_vault_category,framework_scope")
+      .order("renewal_date", { ascending: true })
+      .order("created_at", { ascending: false });
 
-      dbClient
-        .from("compliance_deadlines")
-        .select("id,client_email,client_name,filing_name,company_name,expiration_date,status,created_at")
-        .order("created_at", { ascending: false }),
+    if (error) throw error;
 
-      dbClient
-        .from("client_vault")
-        .select("id,target_client_email,email_address,file_name,storage_bucket_path,asset_vault_category,created_at")
-        .order("created_at", { ascending: false })
-    ]);
-
-    if (entitiesRes.error) throw entitiesRes.error;
-    if (deadlinesRes.error) throw deadlinesRes.error;
-    if (vaultRes.error) throw vaultRes.error;
-
-    const deadlinesByEmail = new Map();
-    (deadlinesRes.data || []).forEach((row) => {
-      const email = normalizeEmail(row.client_email);
-      if (email && !deadlinesByEmail.has(email)) deadlinesByEmail.set(email, row);
-    });
-
-    const vaultByEmail = new Map();
-    (vaultRes.data || []).forEach((row) => {
-      const email = normalizeEmail(row.target_client_email || row.email_address);
-      if (email && !vaultByEmail.has(email)) vaultByEmail.set(email, row);
-    });
-
-    const entities = entitiesRes.data || [];
-
-    if (!entities.length) {
-      tableElement.innerHTML =
-        '<tr><td colspan="6" style="padding:30px;text-align:center;color:#64748b;font-style:italic;">No compliance entity records found.</td></tr>';
+    if (!data?.length) {
+      target.innerHTML =
+        '<tr><td colspan="7" style="padding:30px;text-align:center;color:#64748b;font-style:italic;">No compliance audit records found.</td></tr>';
       return;
     }
 
-    tableElement.innerHTML = entities.map((entity) => {
-      const email = normalizeEmail(entity.client_email);
-      const deadline = deadlinesByEmail.get(email);
-      const vault = vaultByEmail.get(email);
-
-      const filingType = deadline?.filing_name || entity.filing_description || "Compliance Record";
-      const renewalDate = deadline?.expiration_date || entity.formation_date || null;
-      const status = deadline?.status || entity.standing_status || "ACTIVE";
-
-      const documentIndicator = vault
-        ? `<div style="font-size:.68rem;color:#64748b;margin-top:3px;">📎 ${escapeDataString(vault.file_name)}</div>`
-        : "";
-
-      return `
-        <tr style="border-bottom:1px solid #e2e8f0;background:#fff;">
-          <td style="padding:14px 12px;color:#475569;font-family:monospace;">${escapeDataString(email)}</td>
-          <td style="padding:14px 12px;color:#1e293b;font-weight:600;">
-            ${escapeDataString(entity.entity_name)}
-            ${documentIndicator}
-          </td>
-          <td style="padding:14px 12px;color:#1e293b;">${escapeDataString(filingType)}</td>
-          <td style="padding:14px 12px;color:#475569;font-weight:700;text-transform:uppercase;">${escapeDataString(entity.state_of_formation || "N/A")}</td>
-          <td style="padding:14px 12px;color:#475569;font-family:monospace;">${formatDate(renewalDate)}</td>
-          <td style="padding:14px 12px;text-align:right;">
-            <span style="display:inline-block;padding:4px 8px;border-radius:4px;font-size:.75rem;font-weight:700;${getStatusStyle(status)}">
-              ${escapeDataString(status)}
-            </span>
-          </td>
-        </tr>
-      `;
-    }).join("");
+    target.innerHTML = data.map(row => `
+      <tr style="border-bottom:1px solid #e2e8f0;background:#fff;">
+        <td style="padding:12px;color:#475569;font-family:monospace;font-size:.78rem;">${escapeDataString(row.email_address)}</td>
+        <td style="padding:12px;color:#1e293b;font-weight:700;">${escapeDataString(row.entity_name)}</td>
+        <td style="padding:12px;color:#1e293b;">${escapeDataString(row.filing_type)}</td>
+        <td style="padding:12px;color:#475569;font-weight:700;">${escapeDataString(row.state_jurisdiction)}</td>
+        <td style="padding:12px;color:#475569;font-family:monospace;">${formatDate(row.renewal_date)}</td>
+        <td style="padding:12px;text-align:right;">
+          <span style="display:inline-block;padding:4px 8px;border-radius:4px;font-size:.72rem;font-weight:700;${getStatusStyle(row.audit_status)}">${escapeDataString(row.audit_status)}</span>
+        </td>
+        <td style="padding:12px;text-align:right;white-space:nowrap;">
+          <button type="button" onclick="editComplianceAudit('${escapeDataString(row.admin_audit_id)}')" style="padding:6px 10px;background:#0f172a;color:#fff;border:0;border-radius:5px;font-size:.72rem;font-weight:700;cursor:pointer;margin-right:5px;">Edit</button>
+          <button type="button" onclick="deleteComplianceAudit('${escapeDataString(row.admin_audit_id)}')" style="padding:6px 10px;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:5px;font-size:.72rem;font-weight:700;cursor:pointer;">Delete</button>
+        </td>
+      </tr>
+    `).join("");
   }
 
   function computeVaultCategory(slug) {
-    const value = String(slug || "").toLowerCase().trim();
-
-    if ([
-      "llc-formation","corporations","sole-proprietorship","dba-registration",
-      "nonprofits","series-llc","llc-reinstatement","foreign-qualification","dissolution"
-    ].includes(value)) return "formation";
-
-    if ([
-      "operating-agreement","corporate-bylaws","certificate-of-good-standing","apostille-services"
-    ].includes(value)) return "governance";
-
-    if ([
-      "federal-tax","state-tax","franchise-tax","payroll-tax-940-941",
-      "sales-tax-registration","heavy-use-tax-2290","employer-id-ein"
-    ].includes(value)) return "tax";
-
+    const s = String(slug || "").toLowerCase().trim();
+    if (["llc-formation","corporations","sole-proprietorship","dba-registration","nonprofits","series-llc","llc-reinstatement","foreign-qualification","dissolution"].includes(s)) return "formation";
+    if (["operating-agreement","corporate-bylaws","certificate-of-good-standing","apostille-services"].includes(s)) return "governance";
+    if (["federal-tax","state-tax","franchise-tax","payroll-tax-940-941","sales-tax-registration","heavy-use-tax-2290","employer-id-ein"].includes(s)) return "tax";
     return "logistics";
   }
 
@@ -811,290 +789,217 @@
     return data.user;
   }
 
-  async function notifyDocumentUpload(record) {
-    try {
-      const response = await fetch(
-        "https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/document-notification",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ record })
-        }
-      );
-
-      if (!response.ok) {
-        console.warn("Document notification returned HTTP", response.status);
-      }
-    } catch (error) {
-      console.warn("Optional document notification failed:", error);
-    }
-  }
-
   async function handleComplianceUpload(event) {
     event.preventDefault();
 
-    const uploadForm = document.getElementById("complianceUploadForm");
-    const clientMenu = document.getElementById("uploadTargetClientSelector");
+    const form = document.getElementById("complianceUploadForm");
+    const menu = document.getElementById("uploadTargetClientSelector");
+    const button = form?.querySelector('button[type="submit"]');
+    if (!form || !menu || !dbClient) return;
+
+    const email = normalizeEmail(menu.value);
+    const profile = clientProfileCache.get(email);
+
+    if (!email || !profile) {
+      return showCustomBlurModal("⚠️", "Client Required", "Select a valid client account before saving the audit.");
+    }
+
+    const entityName = val("formEntityName");
+    const filingType = val("formFilingType");
+    const renewalDate = val("formRenewalDate");
+    const stateJurisdiction = val("formStateJurisdiction");
+    const fulfillmentSlug = val("formFulfillmentSlug");
+    const auditStatus = val("formAuditStatus") || "Active";
+
+    if (!entityName || !filingType || !renewalDate || !stateJurisdiction || !fulfillmentSlug) {
+      return showCustomBlurModal("⚠️", "Required Fields", "Complete the client, entity, filing type, due date, jurisdiction, and fulfillment route.");
+    }
+
     const fileInput = document.getElementById("uploadFileReference");
-    const submitBtn = uploadForm?.querySelector('button[type="submit"]');
-
-    if (!dbClient || !uploadForm || !clientMenu || !fileInput) return;
-
-    const targetEmail = normalizeEmail(clientMenu.value);
-    const entityName = document.getElementById("formEntityName")?.value.trim();
-    const filingType = document.getElementById("formFilingType")?.value.trim();
-    const renewalDate = document.getElementById("formRenewalDate")?.value;
-    const stateJurisdiction = document.getElementById("formStateJurisdiction")?.value;
-    const fulfillmentSlug = document.getElementById("formFulfillmentSlug")?.value;
-    const auditStatus = document.getElementById("formAuditStatus")?.value;
-
-    if (!targetEmail) {
-      return showCustomBlurModal("⚠️", "Client Required", "Select a client profile before committing a compliance asset.");
+    if (fileInput?.files?.length) {
+      const file = fileInput.files[0];
+      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        return showCustomBlurModal("❌", "Invalid File Type", "Only PDF documents can be committed to the compliance vault.");
+      }
     }
 
-    if (!entityName || !filingType || !renewalDate || !stateJurisdiction) {
-      return showCustomBlurModal("⚠️", "Required Fields", "Complete the client, entity, filing type, due date, and jurisdiction fields.");
-    }
-
-    if (!fileInput.files?.length) {
-      return showCustomBlurModal("⚠️", "File Missing", "Attach the compliance verification PDF before continuing.");
-    }
-
-    const targetFile = fileInput.files[0];
-
-    if (
-      targetFile.type !== "application/pdf" &&
-      !targetFile.name.toLowerCase().endsWith(".pdf")
-    ) {
-      return showCustomBlurModal("❌", "Invalid File Type", "Only PDF documents can be committed to the compliance vault.");
-    }
-
-    const profile = clientProfileCache.get(targetEmail);
-    if (!profile) {
-      return showCustomBlurModal("❌", "Client Profile Not Found", "The selected email no longer maps to a client profile.");
-    }
-
-    const operator = await getCurrentOperator();
-    const category = computeVaultCategory(fulfillmentSlug);
-    const entityId = crypto.randomUUID();
-    const fileId = crypto.randomUUID();
-    const deadlineId = crypto.randomUUID();
-    const cleanFileName = targetFile.name.replace(/[^a-z0-9._-]/gi, "_").toLowerCase();
-    const secureStoragePath = `compliance_audits/${targetEmail}/${entityId}_${cleanFileName}`;
-
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerText = "Syncing Vault Asset...";
-    }
-
-    let entityCreated = false;
-    let vaultCreated = false;
-    let deadlineCreated = false;
-    let storageUploaded = false;
+    const payload = {
+      email_address: email,
+      entity_name: entityName,
+      filing_type: filingType,
+      renewal_date: renewalDate,
+      state_jurisdiction: stateJurisdiction,
+      fulfillment_slug: fulfillmentSlug,
+      audit_status: auditStatus,
+      asset_vault_category: computeVaultCategory(fulfillmentSlug),
+      framework_scope: profile.company_name
+        ? `Standard Company Formation — ${profile.company_name}`
+        : "Standard Company Formation"
+    };
 
     try {
-      const { error: entityError } = await dbClient
-        .from("client_entities")
-        .insert([{
-          id: entityId,
-          entity_name: entityName,
-          filing_description: filingType,
-          standing_status: auditStatus === "Resolved" ? "RESOLVED" : "ACTIVE",
-          state_of_formation: stateJurisdiction,
-          client_email: targetEmail,
-          registry_document_url: null
-        }]);
-
-      if (entityError) throw entityError;
-      entityCreated = true;
-
-      const { error: storageError } = await dbClient.storage
-        .from(STORAGE_BUCKET)
-        .upload(secureStoragePath, targetFile, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: "application/pdf"
-        });
-
-      if (storageError) throw storageError;
-      storageUploaded = true;
-
-      const { error: vaultError } = await dbClient
-        .from("client_vault")
-        .insert([{
-          id: fileId,
-          uploaded_by: operator.id,
-          file_name: targetFile.name,
-          storage_bucket_path: secureStoragePath,
-          file_size_bytes: targetFile.size,
-          bucket_id: STORAGE_BUCKET,
-          storage_path: secureStoragePath,
-          content_type: "application/pdf",
-          admin_name: operator.user_metadata?.full_name || operator.email || "System Administrator",
-          asset_vault_category: category,
-          target_client_email: targetEmail,
-          email_address: targetEmail,
-          first_name: profile.first_name || null,
-          last_name: profile.last_name || null
-        }]);
-
-      if (vaultError) throw vaultError;
-      vaultCreated = true;
-
-      const clientName =
-        `${profile.first_name || ""} ${profile.last_name || ""}`.trim() ||
-        profile.company_name ||
-        "Valued Client";
-
-      const { error: deadlineError } = await dbClient
-        .from("compliance_deadlines")
-        .insert([{
-          id: deadlineId,
-          client_email: targetEmail,
-          client_name: clientName,
-          filing_name: filingType,
-          company_name: profile.company_name || entityName,
-          expiration_date: renewalDate,
-          status: auditStatus === "Resolved" ? "Resolved" : "Active"
-        }]);
-
-      if (deadlineError) throw deadlineError;
-      deadlineCreated = true;
-
-      const { error: entityPointerError } = await dbClient
-        .from("client_entities")
-        .update({ registry_document_url: secureStoragePath })
-        .eq("id", entityId);
-
-      if (entityPointerError) {
-        console.warn("Document pointer update failed:", entityPointerError);
+      if (button) {
+        button.disabled = true;
+        button.innerText = editingAuditId ? "Updating Compliance Audit..." : "Publishing Compliance Audit...";
       }
 
-      await notifyDocumentUpload({
-        user_email: targetEmail,
-        entity_name: entityName,
-        filing_type: filingType,
-        renewal_date: renewalDate,
-        state_jurisdiction: stateJurisdiction,
-        asset_vault_category: category,
-        audit_status: auditStatus,
-        storage_bucket: STORAGE_BUCKET,
-        storage_path: secureStoragePath
-      });
+      let error;
+      if (editingAuditId) {
+        ({ error } = await dbClient
+          .from("admin_compliance_audit")
+          .update(payload)
+          .eq("admin_audit_id", editingAuditId));
+      } else {
+        ({ error } = await dbClient
+          .from("admin_compliance_audit")
+          .insert([payload]));
+      }
+
+      if (error) throw error;
+
+      const wasEdit = Boolean(editingAuditId);
+      resetComplianceForm();
+      await loadComplianceLedger();
 
       showCustomBlurModal(
         "✅",
-        "Asset Synchronized",
-        "The compliance entity, deadline, PDF vault record, and document pointer were successfully synchronized."
+        wasEdit ? "Compliance Audit Updated" : "Compliance Audit Published",
+        "The admin_compliance_audit record was saved. Your database trigger will synchronize the client dashboard."
       );
-
-      uploadForm.reset();
-      await loadClientProfiles();
-      await loadComplianceLedger();
     } catch (error) {
-      console.error("Compliance transaction failed:", error);
-
-      if (deadlineCreated) {
-        await dbClient.from("compliance_deadlines").delete().eq("id", deadlineId);
-      }
-
-      if (vaultCreated) {
-        await dbClient.from("client_vault").delete().eq("id", fileId);
-      }
-
-      if (entityCreated) {
-        await dbClient.from("client_entities").delete().eq("id", entityId);
-      }
-
-      if (storageUploaded) {
-        await dbClient.storage.from(STORAGE_BUCKET).remove([secureStoragePath]);
-      }
-
-      showCustomBlurModal(
-        "❌",
-        "Execution Interrupted",
-        `The compliance transaction could not be completed: ${error.message || error}`
-      );
-
-      await loadComplianceLedger().catch(() => {});
+      console.error("Compliance audit write failed:", error);
+      showCustomBlurModal("❌", "Save Failed", error.message || String(error));
     } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Commit Vault Asset";
+      if (button) {
+        button.disabled = false;
+        button.innerText = editingAuditId ? "Update Compliance Audit" : "Commit Compliance Audit";
       }
     }
+  }
+
+  window.editComplianceAudit = async function(auditId) {
+    try {
+      const { data, error } = await dbClient
+        .from("admin_compliance_audit")
+        .select("admin_audit_id,email_address,entity_name,filing_type,renewal_date,state_jurisdiction,fulfillment_slug,audit_status")
+        .eq("admin_audit_id", auditId)
+        .single();
+
+      if (error) throw error;
+
+      editingAuditId = data.admin_audit_id;
+      setVal("uploadTargetClientSelector", normalizeEmail(data.email_address));
+      setVal("formEntityName", data.entity_name);
+      setVal("formFilingType", data.filing_type);
+      setVal("formRenewalDate", data.renewal_date);
+      setVal("formStateJurisdiction", data.state_jurisdiction);
+      setVal("formFulfillmentSlug", data.fulfillment_slug);
+      setVal("formAuditStatus", data.audit_status);
+
+      const form = document.getElementById("complianceUploadForm");
+      const button = form?.querySelector('button[type="submit"]');
+      if (button) button.innerText = "Update Compliance Audit";
+
+      const heading = form?.previousElementSibling;
+      if (heading) heading.innerHTML = "Update Existing Compliance Audit";
+
+      const fileInput = document.getElementById("uploadFileReference");
+      if (fileInput) {
+        fileInput.value = "";
+        fileInput.required = false;
+      }
+
+      form?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      showCustomBlurModal("❌", "Edit Failed", error.message || String(error));
+    }
+  };
+
+  window.deleteComplianceAudit = async function(auditId) {
+    if (!window.confirm("Delete this compliance audit record?")) return;
+
+    try {
+      const { error } = await dbClient
+        .from("admin_compliance_audit")
+        .delete()
+        .eq("admin_audit_id", auditId);
+
+      if (error) throw error;
+
+      if (editingAuditId === auditId) resetComplianceForm();
+      await loadComplianceLedger();
+
+      showCustomBlurModal("✅", "Audit Deleted", "The administrative compliance record was deleted.");
+    } catch (error) {
+      showCustomBlurModal("❌", "Delete Failed", error.message || String(error));
+    }
+  };
+
+  function initializeComplianceRealtime() {
+    if (!dbClient || typeof dbClient.channel !== "function") return;
+
+    realtimeChannel = dbClient
+      .channel("admin-compliance-audit-ledger-live")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "admin_compliance_audit"
+      }, async payload => {
+        console.log("[Admin Compliance Audit] Live mutation:", payload.eventType);
+        try {
+          await loadComplianceLedger();
+        } catch (error) {
+          console.error("[Admin Compliance Audit] Refresh failed:", error);
+        }
+      })
+      .subscribe(status => {
+        console.log("[Admin Compliance Audit] Realtime:", status);
+      });
   }
 
   async function initAdminConsole() {
     try {
       dbClient = resolveSupabaseClient();
-
-      if (!dbClient) {
-        throw new Error("Supabase could not be initialized. Check supabase-config.js and the Supabase library.");
-      }
+      if (!dbClient) throw new Error("Supabase could not be initialized.");
 
       await loadClientProfiles();
       await loadComplianceLedger();
+      initializeComplianceRealtime();
 
-      const clientMenu = document.getElementById("uploadTargetClientSelector");
-      const uploadForm = document.getElementById("complianceUploadForm");
+      const menu = document.getElementById("uploadTargetClientSelector");
+      const form = document.getElementById("complianceUploadForm");
 
-      if (clientMenu && !clientMenu.hasAttribute("data-client-listener")) {
-        clientMenu.addEventListener("change", hydrateClientFormFields);
-        clientMenu.setAttribute("data-client-listener", "true");
-      }
+      if (menu) menu.addEventListener("change", hydrateClientFormFields);
+      if (form) form.addEventListener("submit", handleComplianceUpload);
 
-      if (uploadForm && !uploadForm.hasAttribute("data-live-listener")) {
-        uploadForm.addEventListener("submit", handleComplianceUpload);
-        uploadForm.setAttribute("data-live-listener", "true");
-      }
-
-      console.log("✓ Compliance Audit Desk connected to supplied database schema.");
+      console.log("✓ Admin Compliance Audit Desk connected to public.admin_compliance_audit.");
     } catch (error) {
       console.error("Compliance Engine Setup Failure:", error);
-
-      const tableElement = document.getElementById("admin-compliance-target-box");
-      if (tableElement) {
-        tableElement.innerHTML = `
-          <tr>
-            <td colspan="6" style="padding:30px;text-align:center;color:#ef4444;font-weight:700;background:#fef2f2;">
-              ✕ Database synchronization failed: ${escapeDataString(error.message)}
-            </td>
-          </tr>
-        `;
+      const target = document.getElementById("admin-compliance-target-box");
+      if (target) {
+        target.innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:#ef4444;font-weight:700;background:#fef2f2;">✕ Database synchronization failed: ${escapeDataString(error.message)}</td></tr>`;
       }
     }
   }
 
-  window.showCustomBlurModal = function (icon, title, message) {
+  window.showCustomBlurModal = function(icon, title, message) {
     const overlay = document.getElementById("complianceCustomModalOverlay");
     if (!overlay) return;
 
-    const iconBox = document.getElementById("modalIconBox");
-    const titleBox = document.getElementById("modalHeaderTitle");
-    const messageBox = document.getElementById("modalMessageContent");
-
-    if (iconBox) iconBox.textContent = icon;
-    if (titleBox) titleBox.textContent = title;
-    if (messageBox) messageBox.textContent = message;
-
+    document.getElementById("modalIconBox").textContent = icon;
+    document.getElementById("modalHeaderTitle").textContent = title;
+    document.getElementById("modalMessageContent").textContent = message;
     overlay.style.display = "flex";
 
     setTimeout(() => {
-      if (overlay.children[0]) {
-        overlay.children[0].style.transform = "scale(1)";
-      }
+      if (overlay.children[0]) overlay.children[0].style.transform = "scale(1)";
     }, 10);
   };
 
-  window.closeComplianceModal = function () {
+  window.closeComplianceModal = function() {
     const overlay = document.getElementById("complianceCustomModalOverlay");
     if (!overlay) return;
-
-    if (overlay.children[0]) {
-      overlay.children[0].style.transform = "scale(0.95)";
-    }
-
+    if (overlay.children[0]) overlay.children[0].style.transform = "scale(0.95)";
     overlay.style.display = "none";
   };
 

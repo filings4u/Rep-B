@@ -1,465 +1,978 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Website Review | filings4u</title>
+<link rel="icon" href="images/fav.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js"></script>
+<style>
+:root{--nav:#0a1f44;--green:#10b981;--bg:#f4f6f9;--border:#e2e8f0;--muted:#64748b}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--nav)}main{max-width:1450px;margin:auto;padding:22px}.head,.card{background:#fff;border:1px solid var(--border);border-radius:12px}.head{padding:18px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.head img{width:105px}.head h1{font-size:1.2rem;margin:7px 0 0}.head p{font-size:.76rem;color:var(--muted);margin:3px 0}.clock{font:700 12px monospace;background:#f8fafc;padding:9px;border:1px solid var(--border);border-radius:7px}.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}.card{padding:20px}.preview{height:560px;border:1px solid var(--border);border-radius:8px;background:#cbd5e1;padding:10px}.preview iframe{width:100%;height:100%;border:0;background:#fff}.topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.topline h2{margin:0;font-size:1rem}.pill{background:#ecfdf5;color:#047857;border-radius:999px;padding:5px 9px;font-size:9px;font-weight:800}.meta{font-size:.74rem;color:var(--muted)}.actions{display:flex;gap:9px;margin-top:12px}.approve,.changes{flex:1;padding:12px;border-radius:7px;font-weight:800;cursor:pointer}.approve{border:0;background:#047857;color:#fff}.changes{background:#fff;border:1px solid #cbd5e1;color:var(--nav)}.chat{height:430px;overflow:auto;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px}.msg{max-width:86%;padding:10px;border-radius:8px;margin-bottom:8px;font-size:.78rem;line-height:1.4}.mine{margin-left:auto;background:#e6f4ea;color:#137333}.team{background:#fff;border:1px solid var(--border)}.form{display:flex;gap:7px;margin-top:9px}.form input{flex:1;padding:10px;border:1px solid #cbd5e1;border-radius:7px}.form button{background:var(--nav);color:#fff;border:0;border-radius:7px;padding:0 15px;font-weight:800}.status{display:none;padding:10px;border-radius:7px;margin-top:10px;font-size:.78rem;font-weight:700}.ok{display:block;background:#ecfdf5;color:#047857}.err{display:block;background:#fff1f2;color:#be123c}@media(max-width:900px){main{padding:12px}.grid{grid-template-columns:1fr}.head{flex-direction:column;align-items:flex-start;gap:10px}.preview{height:430px}}
 
-  <script src="assets/js/supabase-config.js"></script>
+/* WEB PROJECT REVIEW WORKSPACE — LAYOUT OVERRIDES */
+.web-project-content{
+  padding:32px 40px 48px !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 auto !important;
+}
+.web-project-grid{
+  display:grid !important;
+  grid-template-columns:minmax(0,1.55fr) minmax(360px,.75fr) !important;
+  gap:32px !important;
+  align-items:start !important;
+}
+.web-project-card{
+  background:#fff !important;
+  border:1px solid var(--border-color) !important;
+  border-radius:14px !important;
+  padding:26px !important;
+  box-shadow:0 2px 8px rgba(15,23,42,.035) !important;
+}
+.web-project-card + .web-project-card{margin-top:0 !important}
+.web-project-preview-card{min-width:0 !important}
+.web-project-conversation-card{min-width:0 !important}
+.web-project-preview-toolbar{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  gap:16px !important;
+  margin-bottom:18px !important;
+}
+.web-project-title{margin:0 !important;font-size:1.08rem !important;font-weight:800 !important;color:var(--text-dark) !important}
+.web-project-meta{margin:5px 0 0 !important;font-size:.75rem !important;color:var(--text-muted) !important}
+.web-project-device-switcher{
+  display:flex !important;
+  align-items:center !important;
+  gap:4px !important;
+  background:#f1f5f9 !important;
+  border:1px solid var(--border-color) !important;
+  border-radius:9px !important;
+  padding:4px !important;
+}
+.web-project-device-btn{
+  border:0 !important;
+  background:transparent !important;
+  color:#64748b !important;
+  border-radius:6px !important;
+  padding:8px 12px !important;
+  font-size:.72rem !important;
+  font-weight:800 !important;
+  cursor:pointer !important;
+}
+.web-project-device-btn.active{
+  background:#fff !important;
+  color:var(--text-dark) !important;
+  box-shadow:0 1px 3px rgba(0,0,0,.08) !important;
+}
+.web-project-canvas{
+  min-height:650px !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:11px !important;
+  background:#e2e8f0 !important;
+  padding:18px !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  overflow:auto !important;
+}
+.web-project-canvas iframe{
+  display:block !important;
+  width:100% !important;
+  height:610px !important;
+  border:0 !important;
+  border-radius:6px !important;
+  background:#fff !important;
+  box-shadow:0 3px 12px rgba(15,23,42,.12) !important;
+  transition:width .2s ease !important;
+}
+.web-project-canvas.mobile iframe{
+  width:375px !important;
+  min-width:375px !important;
+}
+.web-project-canvas.desktop iframe{
+  width:100% !important;
+}
+.web-project-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.web-project-approve,.web-project-changes{
+  min-height:46px !important;
+  border-radius:8px !important;
+  font-weight:800 !important;
+  cursor:pointer !important;
+}
+.web-project-approve{background:#047857 !important;color:#fff !important;border:0 !important}
+.web-project-changes{background:#fff !important;color:var(--text-dark) !important;border:1px solid #cbd5e1 !important}
+.web-project-info-strip{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.web-project-info-box{
+  background:#f8fafc !important;
+  border:1px solid var(--border-color) !important;
+  border-radius:8px !important;
+  padding:12px !important;
+}
+.web-project-info-box small{
+  display:block !important;
+  color:var(--text-muted) !important;
+  font-size:.62rem !important;
+  font-weight:800 !important;
+  text-transform:uppercase !important;
+  letter-spacing:.4px !important;
+}
+.web-project-info-box strong{display:block !important;margin-top:4px !important;font-size:.82rem !important}
+.web-project-chat{
+  height:590px !important;
+  overflow:auto !important;
+  background:#f8fafc !important;
+  border:1px solid var(--border-color) !important;
+  border-radius:9px !important;
+  padding:14px !important;
+}
+.web-project-chat-form{
+  display:flex !important;
+  gap:8px !important;
+  margin-top:12px !important;
+}
+.web-project-chat-form input{
+  flex:1 !important;
+  min-width:0 !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:8px !important;
+  padding:11px 12px !important;
+}
+.web-project-chat-form button{
+  border:0 !important;
+  background:var(--text-dark) !important;
+  color:#fff !important;
+  border-radius:8px !important;
+  padding:0 18px !important;
+  font-weight:800 !important;
+}
+.web-project-status-pill{
+  background:#ecfdf5 !important;
+  color:#047857 !important;
+  border-radius:999px !important;
+  padding:6px 10px !important;
+  font-size:.62rem !important;
+  font-weight:800 !important;
+  white-space:nowrap !important;
+}
+@media(max-width:1150px){
+  .web-project-grid{grid-template-columns:1fr !important}
+  .web-project-chat{height:420px !important}
+}
+@media(max-width:991px){
+  .web-project-content{padding:24px 20px 40px !important}
+}
+@media(max-width:600px){
+  .web-project-content{padding:16px 12px 30px !important}
+  .web-project-card{padding:18px !important}
+  .web-project-preview-toolbar{align-items:flex-start !important;flex-direction:column !important}
+  .web-project-canvas{min-height:520px !important;padding:10px !important}
+  .web-project-canvas iframe{height:500px !important}
+  .web-project-actions,.web-project-info-strip{grid-template-columns:1fr !important}
+}
 
-  <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
-<script>
-  (function() {
-    "use strict";
-    // Define the exact project storage lookup path signature
-    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
-    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
+
+/* FINAL FULL-WIDTH WEB REVIEW LAYOUT */
+.web-project-content{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:32px 40px 60px !important;
+}
+.web-project-grid{
+  display:block !important;
+  width:100% !important;
+}
+.web-project-card{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 0 32px 0 !important;
+  padding:28px !important;
+}
+.web-project-preview-card{width:100% !important}
+.web-project-conversation-card{width:100% !important}
+.web-project-canvas{
+  width:100% !important;
+  height:calc(100vh - 230px) !important;
+  min-height:720px !important;
+  max-height:none !important;
+  padding:14px !important;
+  overflow:auto !important;
+}
+.web-project-canvas iframe{
+  width:100% !important;
+  min-width:0 !important;
+  height:100% !important;
+  min-height:690px !important;
+}
+.web-project-canvas.mobile iframe{
+  width:375px !important;
+  min-width:375px !important;
+  margin:0 auto !important;
+}
+.web-project-canvas.desktop iframe{
+  width:100% !important;
+  min-width:0 !important;
+}
+.web-project-chat{
+  width:100% !important;
+  height:420px !important;
+}
+@media(max-width:991px){
+  .web-project-content{padding:24px 20px 50px !important}
+  .web-project-canvas{height:calc(100vh - 250px) !important;min-height:560px !important}
+  .web-project-canvas iframe{min-height:530px !important}
+}
+@media(max-width:600px){
+  .web-project-content{padding:16px 12px 35px !important}
+  .web-project-card{padding:18px !important}
+  .web-project-canvas{height:620px !important;min-height:620px !important;padding:8px !important}
+  .web-project-canvas iframe{height:600px !important;min-height:600px !important}
+}
+
+</style>
+
+ <style>
+    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
+    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
+    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
+    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
     
-    // Synchronously check local storage cache arrays before browser can paint any HTML elements
-    const rawSessionJson = localStorage.getItem(sessionTokenKey);
-    let isAuthenticated = false;
-    let userRole = null;
-
-    if (rawSessionJson) {
-      try {
-        const sessionData = JSON.parse(rawSessionJson);
-        if (sessionData && sessionData.access_token) {
-          isAuthenticated = true;
-          // Extract nested metadata flags out of JWT payload context securely
-          if (sessionData.user && sessionData.user.user_metadata) {
-            userRole = sessionData.user.user_metadata.role;
-          }
-          if (sessionData.user && !userRole && sessionData.user.email) {
-            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
-              userRole = 'admin';
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Security parsing failure:", e);
-      }
-    }
-
-    // Determine current view file track rules path parameters
-    const pagePathString = window.location.pathname.toLowerCase();
-    const isAdminViewPage = pagePathString.includes('/admin-');
-
-    if (!isAuthenticated) {
-      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
-      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
-      
-      // Inject CSS rule to hide everything in case browser delays routing
-      document.documentElement.style.display = "none";
-      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
-    }
-
-    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
-    if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
-      window.location.replace("client-dashboard.html");
-      document.documentElement.style.display = "none";
-      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
-    }
-  })();
-</script>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Web Design Production Workspace | filings4u</title>
-   <link rel="icon" type="image/png" href="images/fav.png">
-  <meta name="theme-color" content="#10b981">
-  <meta name="apple-mobile-web-app-status-bar-style" content="#10b981">
-  <meta name="msapplication-navbutton-color" content="#10b981">
-  <style>
-    :root {
-      --bg-light: #f4f6f9;
-      --white: #ffffff;
-      --border-color: #e2e8f0;
-      --text-dark: #0a1f44;
-      --text-muted: #475569;
-      --emerald: #10b981;
-      --staff-red: #c15254;
-      --sidebar-width: 260px;
-    }
-    body, html {
-      margin: 0 !important; padding: 0 !important;
-      min-height: 100vh !important;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-      background-color: var(--bg-light) !important;
-      color: var(--text-dark) !important;
-    }
-    .dashboard-wrapper { display: flex !important; width: 100% !important; }
-    .portal-sidebar {
-      width: var(--sidebar-width) !important; background: var(--white) !important;
-      border-right: 1px solid var(--border-color) !important;
-      display: flex !important; flex-direction: column !important;
-      position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important;
-    }
-    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; }
-    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase; padding: 4px 10px !important; border-radius: 12px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
-    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; }
-    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; }
-    .accordion-panel { max-height: 500px; overflow: hidden !important; }
-    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; }
-    .nav-item:hover, .nav-item.active { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
-    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; }
+    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
+    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
+    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
+    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
+    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
+    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
+    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
+    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
+    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
+    
+    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
     .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
-    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; }
-    .portal-header { background: var(--white) !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; min-height: 60px !important; }
-    .content-container { padding: 32px 40px !important; box-sizing: border-box !important; }
-    .console-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); margin-bottom: 24px; }
+    /* 🖥️ PRIMARY CONTENT AREA STRETCH */
+    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
+    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
+    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 16px !important; }
+    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
+    .search-input { padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; }
     
-    /* 🌐 COOPERATIVE PRODUCTION LAYOUT GRAPHICS */
-    .project-split-matrix { display: flex; gap: 24px; flex-wrap: wrap; width: 100%; }
-    .project-left-col { flex: 1.5; min-width: 400px; }
-    .project-right-col { flex: 1; min-width: 320px; }
-    .progress-bar-container { background: #e2e8f0; border-radius: 9999px; height: 10px; width: 100%; margin: 8px 0 16px 0; overflow: hidden; }
-    .progress-bar-fill { background: var(--emerald); height: 100%; border-radius: 9999px; transition: width 0.4s; }
-    .comment-stream-box { height: 280px; overflow-y: auto; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 12px; }
-    .comment-bubble { padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; line-height: 1.4; max-width: 85%; }
-    .comment-staff { background: #f1f5f9; color: var(--text-dark); align-self: flex-start; border-left: 3px solid var(--text-dark); }
-    .comment-client { background: #e6f4ea; color: #137333; align-self: flex-end; border-right: 3px solid var(--emerald); }
-  </style>
-</head>
-<body>
-  <div class="dashboard-wrapper">
+    .nav-bell-wrapper { position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important; }
+    .document-vault-download-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+    .document-vault-download-btn:hover { background: var(--text-dark); color: white; }
+    
+    .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
+    .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
 
+/* =========================================================
+   WEBSITE REVIEW WORKSPACE — HEADER ONLY
+   ========================================================= */
+
+.web-project-page-header{
+  width:100% !important;
+  min-height:92px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:32px !important;
+  padding:18px 40px !important;
+  background:#ffffff !important;
+  border-bottom:1px solid var(--border-color) !important;
+  box-sizing:border-box !important;
+  position:sticky !important;
+  top:0 !important;
+  z-index:90 !important;
+  box-shadow:0 1px 3px rgba(15,23,42,.03) !important;
+}
+
+.web-project-header-copy{
+  min-width:0 !important;
+  flex:1 !important;
+}
+
+.web-project-header-eyebrow{
+  margin:0 0 5px 0 !important;
+  color:#10b981 !important;
+  font-size:.64rem !important;
+  line-height:1 !important;
+  font-weight:800 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+}
+
+.web-project-header-copy h1{
+  margin:0 !important;
+  color:var(--text-dark) !important;
+  font-size:1.35rem !important;
+  line-height:1.25 !important;
+  font-weight:800 !important;
+  letter-spacing:-.02em !important;
+}
+
+.web-project-header-copy p{
+  margin:5px 0 0 0 !important;
+  color:var(--text-muted) !important;
+  font-size:.78rem !important;
+  line-height:1.5 !important;
+}
+
+.web-project-header-actions{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:12px !important;
+  flex-shrink:0 !important;
+}
+
+.web-project-header-bell{
+  position:relative !important;
+  width:36px !important;
+  height:36px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#ffffff !important;
+  border:1px solid var(--border-color) !important;
+  border-radius:8px !important;
+  color:var(--text-dark) !important;
+  text-decoration:none !important;
+  box-sizing:border-box !important;
+}
+
+.web-project-header-bell:hover{
+  background:#f8fafc !important;
+  border-color:#cbd5e1 !important;
+}
+
+.web-project-bell-icon{
+  font-size:1rem !important;
+  line-height:1 !important;
+}
+
+.web-project-unread-badge{
+  position:absolute !important;
+  top:-5px !important;
+  right:-5px !important;
+  min-width:16px !important;
+  height:16px !important;
+  display:none;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:0 4px !important;
+  background:#ef4444 !important;
+  color:#ffffff !important;
+  border:2px solid #ffffff !important;
+  border-radius:999px !important;
+  font-size:.56rem !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+  box-sizing:border-box !important;
+}
+
+.web-project-clock{
+  height:36px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  padding:0 11px !important;
+  background:#f8fafc !important;
+  border:1px solid var(--border-color) !important;
+  border-radius:8px !important;
+  color:var(--text-dark) !important;
+  font-family:monospace !important;
+  font-size:.72rem !important;
+  font-weight:700 !important;
+  white-space:nowrap !important;
+  box-sizing:border-box !important;
+}
+
+.web-project-clock-icon{
+  font-family:initial !important;
+  font-size:.82rem !important;
+}
+
+.web-project-search-wrap{
+  width:230px !important;
+  flex-shrink:0 !important;
+}
+
+.web-project-search{
+  width:100% !important;
+  height:36px !important;
+  padding:0 12px !important;
+  box-sizing:border-box !important;
+  background:#ffffff !important;
+  border:1px solid var(--border-color) !important;
+  border-radius:8px !important;
+  color:var(--text-dark) !important;
+  font-size:.74rem !important;
+  outline:none !important;
+}
+
+.web-project-search::placeholder{
+  color:#94a3b8 !important;
+}
+
+.web-project-search:focus{
+  border-color:#94a3b8 !important;
+  box-shadow:0 0 0 3px rgba(100,116,139,.08) !important;
+}
+
+@media(max-width:1100px){
+  .web-project-page-header{
+    padding:16px 24px !important;
+    gap:20px !important;
+  }
+
+  .web-project-search-wrap{
+    width:190px !important;
+  }
+}
+
+@media(max-width:800px){
+  .web-project-page-header{
+    min-height:auto !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    padding:18px 20px !important;
+    gap:16px !important;
+  }
+
+  .web-project-header-actions{
+    width:100% !important;
+    justify-content:flex-start !important;
+    flex-wrap:wrap !important;
+  }
+
+  .web-project-search-wrap{
+    flex:1 !important;
+    width:auto !important;
+    min-width:180px !important;
+  }
+}
+
+@media(max-width:520px){
+  .web-project-page-header{
+    padding:16px !important;
+  }
+
+  .web-project-header-copy h1{
+    font-size:1.15rem !important;
+  }
+
+  .web-project-header-copy p{
+    font-size:.72rem !important;
+  }
+
+  .web-project-header-actions{
+    display:grid !important;
+    grid-template-columns:auto auto 1fr !important;
+    width:100% !important;
+  }
+
+  .web-project-search-wrap{
+    min-width:0 !important;
+  }
+}
+
+  
+/* =========================================================
+   WEB PROJECT CHAT — COMPACT BUBBLES + FULL-WIDTH WORKSPACE
+   ========================================================= */
+.web-project-content{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:32px 40px 60px !important;
+}
+.web-project-grid{display:block !important;width:100% !important}
+.web-project-card{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 0 32px 0 !important;
+}
+.web-project-canvas{
+  width:100% !important;
+  height:calc(100vh - 260px) !important;
+  min-height:700px !important;
+  max-height:none !important;
+  padding:12px !important;
+  overflow:auto !important;
+}
+.web-project-canvas iframe{
+  width:100% !important;
+  min-width:0 !important;
+  height:100% !important;
+  min-height:670px !important;
+}
+.web-project-canvas.mobile iframe{
+  width:375px !important;
+  min-width:375px !important;
+  margin:0 auto !important;
+}
+.web-project-chat{
+  width:100% !important;
+  height:420px !important;
+  overflow:auto !important;
+  padding:16px !important;
+}
+.web-project-message-row{
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  margin:0 0 12px 0 !important;
+}
+.web-project-message-row.is-mine{align-items:flex-end !important}
+.web-project-message-row.is-team{align-items:flex-start !important}
+.web-project-message-bubble{
+  display:inline-block !important;
+  width:fit-content !important;
+  max-width:min(68%,620px) !important;
+  padding:10px 13px !important;
+  border-radius:12px !important;
+  font-size:.78rem !important;
+  line-height:1.45 !important;
+  overflow-wrap:anywhere !important;
+  white-space:pre-wrap !important;
+}
+.web-project-message-bubble.mine{
+  background:#e6f4ea !important;
+  color:#137333 !important;
+  border-bottom-right-radius:4px !important;
+}
+.web-project-message-bubble.team{
+  background:#fff !important;
+  color:var(--text-dark) !important;
+  border:1px solid var(--border-color) !important;
+  border-bottom-left-radius:4px !important;
+}
+.web-project-message-meta{
+  margin-top:4px !important;
+  color:#94a3b8 !important;
+  font-size:.62rem !important;
+  font-weight:700 !important;
+}
+.web-project-chat-empty{
+  padding:42px 18px !important;
+  text-align:center !important;
+  color:#94a3b8 !important;
+  font-size:.78rem !important;
+}
+@media(max-width:991px){
+  .web-project-content{padding:24px 20px 50px !important}
+  .web-project-canvas{height:650px !important;min-height:650px !important}
+  .web-project-canvas iframe{min-height:620px !important}
+  .web-project-message-bubble{max-width:78% !important}
+}
+@media(max-width:600px){
+  .web-project-content{padding:16px 12px 35px !important}
+  .web-project-card{padding:18px !important}
+  .web-project-canvas{height:620px !important;min-height:620px !important}
+  .web-project-canvas iframe{height:600px !important;min-height:600px !important}
+  .web-project-message-bubble{max-width:88% !important}
+}
+</style>
+  
+</head><body>
+  
+  <div class="dashboard-wrapper">
+    <!-- 🖥️ PRIMARY CONTENT AREA -->
     <main class="portal-main">
-      <header class="portal-header">
-        <div class="welcome-text">
-          <h1 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-dark);">Web Design Ingestion Hub</h1>
+           <!-- UPGRADED COMPACT TOP NAVIGATION BAR ELEMENT -->
+
+      <header class="portal-header web-project-page-header">
+
+        <div class="web-project-header-copy">
+          <div class="web-project-header-eyebrow">WEBSITE PROJECT STUDIO</div>
+          <h1>Website Review Workspace</h1>
+          <p>Review the live staging link, request changes, and approve the current version.</p>
         </div>
-        <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700;">
-          ⏱️ <span id="portal-clock">Syncing...</span>
+
+        <div class="web-project-header-actions">
+
+          <a
+            href="#notifications-anchor"
+            id="dashboardBellTriggerBtn"
+            class="web-project-header-bell"
+            aria-label="View Account Notifications Feed"
+          >
+            <span class="web-project-bell-icon">🔔</span>
+            <span id="globalNavUnreadCounterBadge" class="web-project-unread-badge">0</span>
+          </a>
+
+          <div class="web-project-clock">
+            <span class="web-project-clock-icon">⏱️</span>
+            <span id="portal-clock">Syncing...</span>
+          </div>
+
+          <div class="web-project-search-wrap">
+            <input
+              type="text"
+              id="portalGlobalSearchField"
+              class="web-project-search"
+              placeholder="Search your filings, entities..."
+              autocomplete="off"
+            >
+          </div>
+
         </div>
+
       </header>
 
-<div class="content-container" style="display: flex; flex-direction: column; gap: 28px; width: 100%; padding: 24px 32px 32px 32px; box-sizing: border-box; background: var(--bg-light);">
 
-  <!-- 🖥️ TOP LAYER (ROW 1): INTERACTIVE STAGING CANVAS - FULL WIDTH -->
-  <div class="project-top-sandbox-row" style="width: 100%; box-sizing: border-box;">
-    <div class="console-card" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; height: 65vh; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-      
-      <!-- Canvas Device View Mode Controller Bar -->
-      <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="display: inline-block; width: 8px; height: 8px; background: var(--emerald); border-radius: 50%;"></span>
-          <strong style="font-size: 0.8rem; color: var(--text-dark);">Live Production Draft Staging View</strong>
-        </div>
-        <div style="display: flex; background: #e2e8f0; padding: 2px; border-radius: 6px; gap: 2px;">
-          <button type="button" onclick="setStagingViewCanvasMode('desktop')" id="canvasBtnDesktop" style="border: none; background: #ffffff; color: var(--text-dark); padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">🖥️ Desktop View</button>
-          <button type="button" onclick="setStagingViewCanvasMode('mobile')" id="canvasBtnMobile" style="border: none; background: transparent; color: var(--text-muted); padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">📱 Mobile View</button>
-        </div>
-      </div>
 
-      <!-- Centered Sandboxed Viewing Iframe Wrapper Grid -->
-      <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #cbd5e1; border-radius: 8px; padding: 16px; overflow: hidden; border: 1px solid var(--border-color); position: relative;">
-        <iframe id="webStagingPreviewIframeTarget" src="about:blank" style="width: 100%; height: 100%; border: none; border-radius: 4px; background: #ffffff; box-shadow: 0 4px 12px rgba(15,23,42,0.1); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: top center;"></iframe>
-      </div>
-    </div>
-  </div>
-
-  <!-- 🛠️ BOTTOM LAYER (ROW 2): OPERATIONS SPLIT MATRIX -->
-  <div class="project-split-matrix" id="webProjectProductionWorkspace" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 28px; width: 100%; box-sizing: border-box; align-items: start;">
-    
-    <!-- LEFT COMPONENT COLUMN: MILESTONES & DROPZONE -->
-    <div class="project-left-col" style="display: flex; flex-direction: column; gap: 20px;">
-      <div class="console-card" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-sizing: border-box;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
-          <h2 id="webProjectTitleHeader" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-dark);">Custom Web Architecture</h2>
-          <span id="webProjectStatusPill" style="background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap;">Review Stage</span>
-        </div>
-        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px;">Ref: <span id="webTrackingRefLabel" style="font-family: monospace; font-weight: 700; color: var(--text-dark);">F4U-W3B99</span></div>
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px;">
-          <label style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Development Milestones</label>
-          <span id="webProgressTextPct" style="color: var(--emerald);">65%</span>
-        </div>
-        <div class="progress-bar-container" style="background: #f1f5f9; height: 8px; border-radius: 4px; overflow: hidden; width: 100%;"><div class="progress-bar-fill" id="webProgressBarNode" style="width: 65%; background: var(--emerald); height: 100%; transition: width 0.3s ease;"></div></div>
-
-        <!-- Dynamic File Request Alert Box -->
-        <div id="webActionRequiredAlertBox" style="margin-top: 20px; padding: 12px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 8px;">
-          <h5 style="margin: 0 0 4px 0; font-size: 0.8rem; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 4px;"><span>📋</span> Action Required: Creative Assets</h5>
-          <p id="webActionRequiredTextDisplay" style="margin: 0; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">Our design team needs your high-resolution company branding files or vector logos to populate the preview headers.</p>
-        </div>
-
-        <!-- Content Form/Asset Upload Field Dropzone -->
-        <div style="border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 20px; width: 100%; box-sizing: border-box;">
-          <h4 style="margin: 0 0 6px 0; font-size: 0.85rem; font-weight: 700; color: var(--text-dark);">Upload Requested Materials</h4>
-          <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin: 0 0 12px 0;">Select your text copy drafts, graphics, or layout inspiration attachments directly below.</p>
-          <form id="webProjectAssetUploadForm" style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box;">
-            <input type="file" id="webAssetFileField" class="team-field" style="padding: 6px 10px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.75rem; width: 100%; box-sizing: border-box; display: block;" required accept="image/*,application/pdf,.doc,.docx">
-            <button type="submit" class="team-btn" style="white-space: nowrap; width: 100%; height: 34px; background: var(--emerald); color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer; padding: 0 10px; box-sizing: border-box; display: block; text-align: center;">Submit Artifacts ➔</button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COMPONENT COLUMN: FEEDBACK STREAM -->
-    <div class="project-right-col" style="display: flex; flex-direction: column; min-width: 0;">
-      <div class="console-card" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; height: 50vh; justify-content: space-between;">
+<div class="web-project-content">
+  <div class="web-project-grid">
+    <section class="web-project-card web-project-preview-card">
+      <div class="web-project-preview-toolbar">
         <div>
-          <h3 style="margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 800; color: var(--text-dark);">Workspace Sprint Feed</h3>
-          <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0 0 16px 0;">Post layout revisions or copy update requests straight to your creative sprint timeline.</p>
-          <!-- Scrollable Chat Timeline Window Shell -->
-          <div id="webCommentsHistoryWindow" style="display: flex; flex-direction: column; gap: 12px; max-height: 28vh; overflow-y: auto; padding-right: 4px; box-sizing: border-box;">
-            <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 0.78rem; line-height: 1.4; border-left: 3px solid var(--text-dark);">
-              <strong style="color: var(--text-dark); display: block; font-size: 0.72rem; margin-bottom: 2px;">Desk Note [Senior Architect]:</strong> Initial wireframe composition structures are locked down. Please submit company copy assets or target image uploads to initialize code generation.
-            </div>
+          <h2 class="web-project-title" id="title">Website Project</h2>
+          <div class="web-project-meta">Tracking: <b id="tracking">—</b></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="web-project-status-pill" id="pill">Awaiting Review</span>
+          <div class="web-project-device-switcher" role="group" aria-label="Preview device">
+            <button type="button" class="web-project-device-btn active" id="desktopBtn">🖥 Desktop</button>
+            <button type="button" class="web-project-device-btn" id="mobileBtn">📱 Mobile</button>
           </div>
         </div>
-        <!-- Real-Time User Message Feed Input Slat -->
-        <form id="webCommentSubmissionForm" style="display: flex; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 12px; background: #ffffff; margin: 0;">
-          <input type="text" id="webCommentInputField" class="team-field" style="margin: 0; flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.78rem; box-sizing: border-box; outline: none;" placeholder="Submit layout revisions..." required autocomplete="off">
-          <button type="submit" class="team-btn" style="height: 34px; padding: 0 14px; background: var(--text-dark); color: #ffffff; border: none; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer; white-space: nowrap;">Post ➔</button>
-        </form>
       </div>
-    </div>
 
+      <div class="web-project-canvas desktop" id="previewCanvas">
+        <iframe id="frame" src="about:blank" title="Website preview"></iframe>
+      </div>
+
+      <div class="web-project-info-strip">
+        <div class="web-project-info-box">
+          <small>Project Progress</small>
+          <strong id="progressText">—</strong>
+        </div>
+        <div class="web-project-info-box">
+          <small>Current Status</small>
+          <strong id="statusText">Awaiting Review</strong>
+        </div>
+      </div>
+
+      <div class="web-project-actions">
+        <button class="web-project-approve" id="approve">Approve Website</button>
+        <button class="web-project-changes" id="changes">Request Changes</button>
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="web-project-card web-project-conversation-card">
+      <h2 style="margin:0;font-size:1rem">Project Conversation</h2>
+      <p style="font-size:.74rem;color:var(--text-muted);margin:5px 0 14px;">
+        Send comments and revision requests to the project team.
+      </p>
+      <div class="web-project-chat" id="chat"></div>
+      <form class="web-project-chat-form" id="form">
+        <input id="input" placeholder="Type a comment or revision request..." required>
+        <button type="submit">Send</button>
+      </form>
+    </section>
   </div>
 </div>
 
+<!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
 
-
-    </main>
-  </div>
- 
-        <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
- 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <script src="assets/js/client-navigation.js"></script>
 
   <script src="assets/js/client-footer.js"></script>
 
+
+
+
 <script>
-/**
- * filings4u Platform Architecture
- * Module: client-project-web-engine.js (Dedicated Web Chat Synchronization)
- */
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
-  const commentWindow = document.getElementById("webCommentsHistoryWindow");
-  const uploadForm = document.getElementById("webProjectAssetUploadForm");
-  const commentForm = document.getElementById("webCommentSubmissionForm");
-  const previewIframe = document.getElementById("webStagingPreviewIframeTarget");
+  const SUPABASE_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
+  const ANON_KEY = window.SUPABASE_ANON_KEY || window.supabaseAnonKey || "";
+  let db = window.supabaseInstance || window.supabaseClient;
 
-  // Interface Grid Object Mappings
-  const headerTitle = document.getElementById("webProjectTitleHeader");
-  const statusPill = document.getElementById("webProjectStatusPill");
-  const trackingRef = document.getElementById("webTrackingRefLabel");
-  const progressPctText = document.getElementById("webProgressTextPct");
-  const progressBarFill = document.getElementById("webProgressBarNode");
-  const actionAlertBox = document.getElementById("webActionRequiredAlertBox");
-  const actionTextDisplay = document.getElementById("webActionRequiredTextDisplay");
-
-  // Establish Supabase Client Handshake
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client && typeof supabase !== 'undefined') {
-    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
-  }
-  if (!client) return;
-
-  // Verify Active Login Session Properties
-  const { data: { session } } = await client.auth.getSession();
-  if (!session || !session.user) {
-    window.location.href = "portal-login.html";
-    return;
+  if (!db && window.supabase && ANON_KEY) {
+    db = window.supabase.createClient(SUPABASE_URL, ANON_KEY);
   }
 
-  const userEmail = String(session.user.email).trim().toLowerCase();
-  let liveSprintChannel = null;
-  // 1. QUERY WEB DESIGN PROJECT DATA FROM DATABASE ROWS
-  async function loadDynamicWebProjectData() {
-    try {
-      const { data: project, error: fetchError } = await client
-        .from('web_projects')
-        .select('*')
-        .eq('client_email', userEmail)
-        .maybeSingle();
+  if (!db) return;
 
-      if (fetchError) throw fetchError;
+  const $ = id => document.getElementById(id);
+  let email = "";
+  let clientProfileId = null;
+  let activeChannel = null;
+  let projectChannel = null;
 
-      if (project) {
-        if (headerTitle) headerTitle.textContent = project.project_title;
-        if (statusPill) {
-          statusPill.textContent = project.status_label;
-          statusPill.style.background = project.status_label.toLowerCase().includes('review') ? '#10b981' : '#fef3c7';
-          statusPill.style.color = project.status_label.toLowerCase().includes('review') ? '#ffffff' : '#92400e';
-        }
-        if (trackingRef) trackingRef.textContent = project.tracking_ref;
-        if (progressPctText) progressPctText.textContent = `${project.progress_pct}%`;
-        if (progressBarFill) progressBarFill.style.width = `${project.progress_pct}%`;
-        if (previewIframe) previewIframe.setAttribute("src", project.staging_url || "about:blank");
+  function note(message, isError = false) {
+    const box = $("status");
+    if (!box) return;
+    box.textContent = message;
+    box.className = "status " + (isError ? "err" : "ok");
+    window.clearTimeout(note.timer);
+    note.timer = window.setTimeout(() => box.className = "status", 4500);
+  }
 
-        if (project.action_required_text) {
-          if (actionAlertBox) actionAlertBox.style.display = "block";
-          if (actionTextDisplay) actionTextDisplay.textContent = project.action_required_text;
-        } else if (actionAlertBox) {
-          actionAlertBox.style.display = "none";
-        }
-      }
-    } catch (fault) {
-      console.error("✕ Failed to synchronize staging preview parameters:", fault);
+  function renderMessage(message) {
+    if (!message?.id || !message.message_content) return;
+    if (document.querySelector(`[data-message-id="${CSS.escape(message.id)}"]`)) return;
+
+    const row = document.createElement("div");
+    row.className = "web-project-message-row " +
+      (message.sender_type === "client" ? "is-mine" : "is-team");
+    row.dataset.messageId = message.id;
+
+    const bubble = document.createElement("div");
+    bubble.className = "web-project-message-bubble " +
+      (message.sender_type === "client" ? "mine" : "team");
+    bubble.textContent = message.message_content;
+
+    const meta = document.createElement("div");
+    meta.className = "web-project-message-meta";
+    meta.textContent = message.sender_type === "client" ? "You" : "filings4u Team";
+
+    row.appendChild(bubble);
+    row.appendChild(meta);
+    $("chat").appendChild(row);
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
+
+  async function stopChannels() {
+    if (activeChannel) {
+      try { await db.removeChannel(activeChannel); } catch (_) {}
+      activeChannel = null;
+    }
+    if (projectChannel) {
+      try { await db.removeChannel(projectChannel); } catch (_) {}
+      projectChannel = null;
     }
   }
 
-  // 2. HISTORICAL TIMELINE LOGGER: Pull logs directly from web_projects_chat
-  async function loadSprintChatHistory() {
-    try {
-      console.log("📡 [Feed Engine] Pulling historical data nodes from public.web_projects_chat...");
-      const { data: messages, error: historyError } = await client
-        .from('web_projects_chat')
-        .select('*')
-        .eq('client_email', userEmail)
-        .order('created_at', { ascending: true });
+  async function loadProfile() {
+    const { data, error } = await db
+      .from("client_profiles")
+      .select("id,email_address,first_name,last_name,company_name")
+      .eq("id", (await db.auth.getUser()).data.user.id)
+      .maybeSingle();
 
-      if (historyError) throw historyError;
+    if (error) throw error;
+    if (!data) throw new Error("Your client profile could not be found.");
 
-      if (commentWindow) {
-        commentWindow.innerHTML = "";
-        if (!messages || messages.length === 0) {
-          commentWindow.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 24px; font-style: italic;">
-              Workspace comment timeline empty. Type a sprint note response below to populate logs.
-            </div>`;
-        } else {
-          messages.forEach(msg => renderIndividualMessageBubble(msg));
-        }
-      }
-    } catch (fault) {
-      console.error("✕ Failed to fetch chat ledger entries:", fault);
-    }
+    clientProfileId = data.id;
+    email = String(data.email_address || "").trim().toLowerCase();
   }
 
-  // 3. REAL-TIME ISOLATED STREAMING SUBSCRIPTION OBSERVER
-  async function initializeRealtimeSprintFeed() {
-    console.log(`📡 [Realtime Stream] Establishing live timeline link via email channel: ${userEmail}`);
-    if (liveSprintChannel) liveSprintChannel.unsubscribe();
+  async function load() {
+    const { data: { session } } = await db.auth.getSession();
 
-    liveSprintChannel = client
-      .channel(`client-isolated-sprint-${userEmail.replace(/[^a-z0-9]/g, '')}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'web_projects_chat',
-        filter: `client_email=eq.${userEmail}`
+    if (!session?.user) {
+      location.href = "portal-login.html";
+      return;
+    }
+
+    await loadProfile();
+    await stopChannels();
+
+    const { data: project, error: projectError } = await db
+      .from("web_projects")
+      .select("*")
+      .eq("email_address", email)
+      .maybeSingle();
+
+    if (projectError) {
+      note(projectError.message, true);
+      return;
+    }
+
+    if (!project) {
+      $("title").textContent = "No Website Project Published";
+      $("tracking").textContent = "—";
+      $("pill").textContent = "Awaiting Project";
+      $("statusText").textContent = "Awaiting Project";
+      $("progressText").textContent = "—";
+      $("frame").src = "about:blank";
+      $("approve").disabled = true;
+      $("changes").disabled = true;
+      $("chat").innerHTML =
+        '<div class="web-project-chat-empty">Your website review workspace is waiting for the project team to publish a staging version.</div>';
+      return;
+    }
+
+    $("title").textContent = project.project_title || "Website Project";
+    $("tracking").textContent = project.tracking_ref || "—";
+    $("pill").textContent =
+      project.approval_status === "approved" ? "Approved" : (project.status_label || "Awaiting Review");
+    $("statusText").textContent = project.status_label || "Awaiting Review";
+    $("progressText").textContent = `${project.progress_pct ?? 0}%`;
+    $("frame").src = project.staging_url || "about:blank";
+
+    const approved = project.approval_status === "approved";
+    $("approve").disabled = approved;
+    $("changes").disabled = approved;
+    $("approve").textContent = approved ? "Website Approved" : "Approve Website";
+
+    const { data: messages, error: chatError } = await db
+      .from("web_projects_chat")
+      .select("*")
+      .eq("email_address", email)
+      .order("created_at", { ascending: true });
+
+    if (chatError) {
+      note(chatError.message, true);
+      return;
+    }
+
+    $("chat").innerHTML = "";
+    if (!messages?.length) {
+      $("chat").innerHTML =
+        '<div class="web-project-chat-empty">No review comments yet. Start the conversation below.</div>';
+    } else {
+      messages.forEach(renderMessage);
+    }
+
+    const channelKey = email.replace(/[^a-z0-9]/gi, "_").slice(0, 60);
+
+    activeChannel = db
+      .channel(`client-web-chat-${channelKey}-${Date.now()}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "web_projects_chat",
+        filter: `email_address=eq.${email}`
+      }, payload => renderMessage(payload.new))
+      .subscribe();
+
+    projectChannel = db
+      .channel(`client-web-project-${channelKey}-${Date.now()}`)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "web_projects",
+        filter: `email_address=eq.${email}`
       }, payload => {
-        console.log("✓ [Sprint Feed Sync] Isolated message intercept:", payload.new);
-        if (commentWindow && commentWindow.querySelector('div[style*="text-align:center"]')) {
-          commentWindow.innerHTML = "";
-        }
-        renderIndividualMessageBubble(payload.new);
+        const p = payload.new;
+
+        $("title").textContent = p.project_title || "Website Project";
+        $("tracking").textContent = p.tracking_ref || "—";
+        $("pill").textContent =
+          p.approval_status === "approved" ? "Approved" : (p.status_label || "Awaiting Review");
+        $("statusText").textContent = p.status_label || "Awaiting Review";
+        $("progressText").textContent = `${p.progress_pct ?? 0}%`;
+        $("frame").src = p.staging_url || "about:blank";
+
+        const approvedNow = p.approval_status === "approved";
+        $("approve").disabled = approvedNow;
+        $("changes").disabled = approvedNow;
+        $("approve").textContent = approvedNow ? "Website Approved" : "Approve Website";
       })
       .subscribe();
   }
-  // 4. ELEMENT RENDERING ENGINE: Compiles and appends message bubbles to the UI window
-  function renderIndividualMessageBubble(msg) {
-    if (!commentWindow) return;
-    const div = document.createElement("div");
-    const isAdmin = msg.sender_type.toLowerCase() === 'admin';
-    
-    div.style.cssText = `background: ${isAdmin ? "#f8fafc" : "#ffffff"}; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 0.78rem; line-height: 1.4; border-left: 3px solid ${isAdmin ? "var(--text-dark)" : "var(--emerald)"}; margin-top: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.01);`;
-    div.innerHTML = `<strong style="color: var(--text-dark); display: block; font-size: 0.72rem; margin-bottom: 2px;">${isAdmin ? "Desk Note [System Architect]" : "Client Note"}:</strong> ${escapeSprintHtml(msg.message_content)}`;
-    
-    commentWindow.appendChild(div);
-    commentWindow.scrollTop = commentWindow.scrollHeight;
-  }
 
-  // 5. FORM TRANSMISSION SUBMISSION HANDLER DETECTOR (Fixed Page Refresh Layouts)
-  if (commentForm) {
-    commentForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  $("form").addEventListener("submit", async event => {
+    event.preventDefault();
 
-      const inputField = document.getElementById("webCommentInputField");
-      if (!inputField || !inputField.value.trim()) return;
+    const input = $("input");
+    const text = input.value.trim();
 
-      const clientMessageText = inputField.value.trim();
+    if (!email || !clientProfileId || !text) return;
 
-      try {
-        const { error: insertError } = await client
-          .from('web_projects_chat')
-          .insert([{
-            client_email: userEmail,
-            sender_type: 'client',
-            message_content: clientMessageText
-          }]);
+    input.disabled = true;
+    $("form").querySelector("button").disabled = true;
 
-        if (insertError) throw insertError;
-        inputField.value = "";
-      } catch (err) {
-        console.error("✕ Client sprint submission failed to commit:", err);
-      }
-    });
-  }
+    try {
+      const { error } = await db
+        .from("web_projects_chat")
+        .insert({
+          email_address: email,
+          client_profile_id: clientProfileId,
+          admin_profile_id: null,
+          sender_type: "client",
+          message_content: text
+        });
 
-  // 6. DEVICE CANVAS VIEW TOGGLES CONTROLLER ROUTINES
-  window.setStagingViewCanvasMode = function(viewMode) {
-    const btnDesktop = document.getElementById("canvasBtnDesktop");
-    const btnMobile = document.getElementById("canvasBtnMobile");
-    if (!previewIframe || !btnDesktop || !btnMobile) return;
-
-    if (viewMode === 'mobile') {
-      previewIframe.style.width = "375px";
-      btnMobile.style.background = "#ffffff";
-      btnMobile.style.color = "var(--text-dark)";
-      btnDesktop.style.background = "transparent";
-      btnDesktop.style.color = "var(--text-muted)";
-    } else {
-      previewIframe.style.width = "100%";
-      btnDesktop.style.background = "#ffffff";
-      btnDesktop.style.color = "var(--text-dark)";
-      btnMobile.style.background = "transparent";
-      btnMobile.style.color = "var(--text-muted)";
+      if (error) throw error;
+      input.value = "";
+    } catch (error) {
+      note(error.message || "Message could not be sent.", true);
+    } finally {
+      input.disabled = false;
+      $("form").querySelector("button").disabled = false;
+      input.focus();
     }
+  });
+
+  $("changes").addEventListener("click", async () => {
+    const requestedChanges = window.prompt("What would you like changed?");
+    if (!requestedChanges?.trim() || !email || !clientProfileId) return;
+
+    try {
+      const { error } = await db
+        .from("web_projects_chat")
+        .insert({
+          email_address: email,
+          client_profile_id: clientProfileId,
+          admin_profile_id: null,
+          sender_type: "client",
+          message_content: "Revision Request: " + requestedChanges.trim()
+        });
+
+      if (error) throw error;
+      note("Your revision request was sent.");
+    } catch (error) {
+      note(error.message || "Revision request could not be sent.", true);
+    }
+  });
+
+  $("approve").addEventListener("click", async () => {
+    const confirmed = window.confirm(
+      "Approve this website as the current final version?"
+    );
+    if (!confirmed) return;
+
+    $("approve").disabled = true;
+
+    try {
+      const { error } = await db.functions.invoke("approve_web_project", {
+        body: { action: "approve" }
+      });
+
+      if (error) throw error;
+
+      note("Website approved.");
+      await load();
+    } catch (error) {
+      $("approve").disabled = false;
+      note(error.message || "Approval failed.", true);
+    }
+  });
+
+  const canvas = $("previewCanvas");
+  $("desktopBtn").onclick = () => {
+    canvas.classList.add("desktop");
+    canvas.classList.remove("mobile");
+    $("desktopBtn").classList.add("active");
+    $("mobileBtn").classList.remove("active");
   };
 
-  function escapeSprintHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  $("mobileBtn").onclick = () => {
+    canvas.classList.add("mobile");
+    canvas.classList.remove("desktop");
+    $("mobileBtn").classList.add("active");
+    $("desktopBtn").classList.remove("active");
+  };
+
+  function updateClock() {
+    const clock = $("portal-clock");
+    if (clock) clock.textContent = new Date().toLocaleTimeString();
   }
 
-  // 🏁 EXECUTE COCKPIT RUNTIME LOOPS
-  await loadDynamicWebProjectData();
-  await loadSprintChatHistory();
-  await initializeRealtimeSprintFeed();
+  updateClock();
+  setInterval(updateClock, 1000);
+  await load();
 });
-
-  // 🟢 PORTAL CLOCK SYSTEM CORE MOTOR ENGINE
-  function initializeLiveClientClock() {
-    const clockElement = document.getElementById("portal-clock");
-    if (!clockElement) return;
-
-    function refreshTimeDisplay() {
-      const now = new Date();
-      
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      
-      hours = hours % 12;
-      hours = hours ? hours : 12; // Formats the hour '0' to '12' cleanly
-
-      clockElement.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
-    }
-
-    refreshTimeDisplay();
-    setInterval(refreshTimeDisplay, 1000);
-  }
-  // Trigger clock runtime loop inside execution stack context threads
-  initializeLiveClientClock();
-
-
-  function runPortalClock() {
-    const el = document.getElementById("portal-clock");
-    if (el) el.textContent = new Date().toLocaleTimeString();
-  }
-  setInterval(runPortalClock, 1000);
-  runPortalClock();
-  
 </script>
-
-
-</body>
-</html>
+</body></html>
