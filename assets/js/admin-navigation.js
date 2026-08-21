@@ -280,7 +280,7 @@ if (headerNode && headerNode.parentNode) {
       <a href="admin-profiles.html" class="nav-item m-link" data-page="admin-profiles.html">Master Profiles Ledger</a>
       <a href="admin-compliance-audit.html" class="nav-item m-link" data-page="admin-compliance-audit.html">Compliance Audit</a>
       <a href="admin-entities-ledger.html" class="nav-item m-link" data-page="admin-entities-ledger.html">Entity Master Ledger</a>
-      <a href="admin-orders.html" class="nav-item m-link" data-page="admin-orders.html">Active Orders Queue</a>
+      <a href="admin-orders.html" class="nav-item m-link" data-page="admin-orders.html">Create an Order</a>
     </div>
   </div>
 

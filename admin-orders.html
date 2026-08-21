@@ -1,787 +1,173 @@
-<!-- admin-orders -->
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Orders | filings4u Staff</title>
+<link rel="icon" type="image/png" href="images/fav.png">
 <script src="assets/js/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.stripe.com/v3/"></script>
 
-  <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
-<script>
-  (function() {
-    "use strict";
-    // Define the exact project storage lookup path signature
-    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
-    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
-    
-    // Synchronously check local storage cache arrays before browser can paint any HTML elements
-    const rawSessionJson = localStorage.getItem(sessionTokenKey);
-    let isAuthenticated = false;
-    let userRole = null;
-
-    if (rawSessionJson) {
-      try {
-        const sessionData = JSON.parse(rawSessionJson);
-        if (sessionData && sessionData.access_token) {
-          isAuthenticated = true;
-          // Extract nested metadata flags out of JWT payload context securely
-          if (sessionData.user && sessionData.user.user_metadata) {
-            userRole = sessionData.user.user_metadata.role;
-          }
-          if (sessionData.user && !userRole && sessionData.user.email) {
-            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
-              userRole = 'admin';
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Security parsing failure:", e);
-      }
-    }
-
-    // Determine current view file track rules path parameters
-    const pagePathString = window.location.pathname.toLowerCase();
-    const isAdminViewPage = pagePathString.includes('/admin-');
-
-    if (!isAuthenticated) {
-      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
-      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
-      
-      // Inject CSS rule to hide everything in case browser delays routing
-      document.documentElement.style.display = "none";
-      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
-    }
-
-    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
-    if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
-      window.location.replace("client-dashboard.html");
-      document.documentElement.style.display = "none";
-      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
-    }
-  })();
-</script>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Customer CRM Matrix | filings4u Staff</title>
-  <meta name="theme-color" content="#c15254">
-  <link rel="icon" type="image/png" href="images/fav.png">
-  <!-- PLATFORM CORE INFRASTRUCTURE LINKS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-    <style>
-        /* ==========================================================================
-           🎯 ZERO-CONFLICT SELF-CONTAINED GLOBAL GRID MATRIX
-           ========================================================================== */
-        :root {
-            --bg-light: #f4f6f9;
-            --white: #ffffff;
-            --border-color: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #475569;
-            --emerald: #10b981;
-            --staff-red: #c15254;
-            --sidebar-width: 260px;
-        }
-
-        body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100vh !important;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            background-color: var(--bg-light) !important;
-            color: var(--text-dark) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important; /* Forces normal native scrolling rules */
-        }
-
-        .dashboard-wrapper {
-            display: flex !important;
-            min-height: 100vh !important;
-            width: 100% !important;
-            position: relative !important;
-        }
-
-        /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-        .portal-sidebar {
-            width: var(--sidebar-width) !important;
-            background: var(--white) !important;
-            border-right: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: fixed !important; /* Locks sidebar stationary on the screen viewport frame */
-            top: 0 !important;
-            left: 0 !important;
-            height: 100vh !important;
-            z-index: 1000 !important;
-            box-sizing: border-box !important;
-        }
-
-        .sidebar-brand-block {
-            padding: 24px 20px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        }
-
-        .admin-badge {
-            display: inline-block !important;
-            background: rgba(193, 82, 84, 0.08) !important;
-            color: var(--staff-red) !important;
-            font-size: 0.65rem !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            padding: 4px 10px !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            border: 1px solid rgba(193, 82, 84, 0.15) !important;
-        }
-
-        .sidebar-accordion-menu {
-            flex: 1 !important;
-            overflow-y: auto !important;
-            padding: 15px 12px !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger {
-            width: 100% !important;
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 14px !important;
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            color: var(--text-muted) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            cursor: pointer !important;
-            border-radius: 6px !important;
-            margin-top: 10px !important;
-            outline: none !important;
-            transition: all 0.2s !important;
-            box-sizing: border-box !important;
-        }
-
-        .accordion-trigger:hover, .accordion-trigger.active {
-            background: #edf2f7 !important;
-            color: var(--text-dark) !important;
-        }
-
-        .accordion-trigger .chevron {
-            font-size: 0.6rem !important;
-            transition: transform 0.2s !important;
-        }
-
-        .accordion-trigger.active .chevron {
-            transform: rotate(180deg) !important;
-        }
-
-        .accordion-panel {
-            max-height: 0;
-            overflow: hidden !important;
-            transition: max-height 0.25s ease-out !important;
-            padding-left: 4px !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 8px 12px !important;
-            color: var(--text-muted) !important;
-            text-decoration: none !important;
-            font-size: 0.8rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            margin-top: 2px !important;
-            white-space: nowrap !important;
-            transition: all 0.15s !important;
-            box-sizing: border-box !important;
-        }
-
-        .nav-item:hover {
-            background: rgba(10, 31, 68, 0.02) !important;
-            color: var(--emerald) !important;
-            padding-left: 14px !important;
-        }
-
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08) !important;
-            color: var(--emerald) !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar-footer-lock {
-            padding: 16px !important;
-            border-top: 1px solid var(--border-color) !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-        }
-
-        .logout-btn {
-            width: 100% !important;
-            background: var(--text-dark) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-            cursor: pointer !important;
-        }
-
-        /* 🖥️ PRIMARY SCROLLABLE CONTENT AREA */
-        .portal-main {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            
-            /* 🎯 THE RESILIENT SHIFT: Offsets content dynamically to make space for the locked sidebar */
-            margin-left: var(--sidebar-width) !important; 
-            width: calc(100% - var(--sidebar-width)) !important;
-            min-height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-
-        .portal-header {
-            background: var(--white) !important;
-            padding: 20px 40px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 90 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .welcome-text h1 { margin: 0 !important; font-size: 1.5rem !important; font-weight: 800 !important; color: var(--text-dark) !important; }
-        .welcome-text p { margin: 4px 0 0 0 !important; font-size: 0.82rem !important; color: var(--text-muted) !important; }
-
-        .header-actions-wrapper {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-        }
-
-        /* ⏱️ Input-styled unified date/time pill element */
-        .header-clock-pill {
-            background: #f8fafc !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 10px 16px !important;
-            border-radius: 10px !important;
-            font-family: monospace !important;
-            font-size: 0.9rem !important;
-            font-weight: 700 !important;
-            color: var(--text-dark) !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            white-space: nowrap !important;
-        }
-
-        .search-input {
-            padding: 10px 16px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 10px !important;
-            font-size: 0.82rem !important;
-            width: 220px !important;
-            outline: none !important;
-            background: #f8fafc !important;
-            box-sizing: border-box !important;
-            height: 40px !important;
-            color: var(--text-dark) !important;
-        }
-
-        .search-input:focus {
-            background: var(--white) !important;
-            border-color: var(--emerald) !important;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
-        }
-
-        .content-container {
-            padding: 40px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        /* CARD CAROUSELS SYSTEM CORES */
-        .stats-row {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-            gap: 20px !important;
-            margin-bottom: 30px !important;
-            width: 100% !important;
-        }
-
-        .stat-card {
-            background: var(--white) !important;
-            padding: 20px !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            box-sizing: border-box !important;
-        }
-
-        .stat-card small { font-size: 0.68rem !important; text-transform: uppercase !important; font-weight: 700 !important; color: var(--text-muted) !important; letter-spacing: 0.5px !important; }
-        .stat-card h2 { margin: 6px 0 0 0 !important; font-size: 1.6rem !important; font-weight: 800 !important; }
-
-        .dashboard-grid-layout {
-            display: grid !important;
-            grid-template-columns: 2fr 1fr !important;
-            gap: 24px !important;
-            align-items: start !important;
-            width: 100% !important;
-        }
-
-        @media (max-width: 1100px) {
-            .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-        }
-
-        .console-card {
-            background: var(--white) !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--border-color) !important;
-            padding: 24px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-            margin-bottom: 24px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-        .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
-   
-   @media (max-width: 991px) {
-    body, html { overflow-y: auto !important; }
-    .dashboard-wrapper { flex-direction: column !important; }
-    .portal-sidebar { width: 100% !important; height: auto !important; position: relative !important; border-right: none !important; border-bottom: 1px solid var(--border-color) !important; }
-    .portal-main { margin-left: 0 !important; width: 100% !important; }
-    .portal-header { flex-direction: column !important; gap: 15px !important; padding: 20px !important; align-items: flex-start !important; }
-    .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; }
-    .search-input { width: 100% !important; }
-    .content-container { padding: 20px !important; }
-    .dashboard-grid-layout { grid-template-columns: 1fr !important; }
-}
-
-   /* ==========================================================================
-   🎯 ARCHITECTURAL STRUCTURAL MATRIX (FIXES MISALIGNMENTS)
-   ========================================================================== */
+<style>
 :root {
-  --bg-light: #f4f6f9;
-  --white: #ffffff;
-  --border-color: #e2e8f0;
-  --text-dark: #0f172a;
-  --text-muted: #475569;
-  --emerald: #10b981;
-  --staff-red: #c15254;
-  --sidebar-width: 260px;
+  --bg-light:#f4f6f9; --white:#fff; --border-color:#e2e8f0;
+  --text-dark:#0f172a; --text-muted:#475569; --emerald:#10b981;
+  --staff-red:#c15254; --sidebar-width:260px;
+  --danger:#dc2626; --soft:#f8fafc;
 }
-
-body, html {
-  margin: 0 !important;
-  padding: 0 !important;
-  min-height: 100vh !important;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-  background-color: var(--bg-light) !important;
-  color: var(--text-dark) !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
+*{box-sizing:border-box}
+html,body{margin:0!important;padding:0!important;min-height:100vh!important;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif!important;background:var(--bg-light)!important;color:var(--text-dark)!important;overflow-x:hidden!important;overflow-y:auto!important}
+.dashboard-wrapper{display:flex!important;min-height:100vh!important;width:100%!important;position:relative!important}
+.portal-sidebar{width:var(--sidebar-width)!important;background:#fff!important;border-right:1px solid var(--border-color)!important;display:flex!important;flex-direction:column!important;position:fixed!important;top:0!important;left:0!important;height:100vh!important;z-index:1000!important;box-sizing:border-box!important}
+.sidebar-brand-block{padding:24px 20px!important;border-bottom:1px solid #f1f5f9!important;text-align:center!important}
+.admin-badge{display:inline-block!important;background:rgba(193,82,84,.08)!important;color:var(--staff-red)!important;font-size:.65rem!important;font-weight:800!important;text-transform:uppercase!important;letter-spacing:1px!important;padding:4px 10px!important;border-radius:12px!important;margin-top:6px!important;border:1px solid rgba(193,82,84,.15)!important}
+.sidebar-accordion-menu{flex:1!important;overflow-y:auto!important;padding:15px 12px!important}
+.accordion-trigger{width:100%!important;background:#f8fafc!important;border:1px solid var(--border-color)!important;padding:10px 14px!important;font-size:.72rem!important;font-weight:700!important;color:var(--text-muted)!important;text-transform:uppercase!important;letter-spacing:.5px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;cursor:pointer!important;border-radius:6px!important;margin-top:10px!important;outline:none!important}
+.accordion-panel{max-height:0;overflow:hidden!important;transition:max-height .25s ease-out!important;padding-left:4px!important}
+.accordion-panel.open{max-height:900px!important}
+.nav-item{display:flex!important;align-items:center!important;gap:8px!important;padding:8px 12px!important;color:var(--text-muted)!important;text-decoration:none!important;font-size:.8rem!important;font-weight:600!important;border-radius:6px!important;margin-top:2px!important;white-space:nowrap!important;box-sizing:border-box!important}
+.nav-item:hover,.nav-item.active{background:rgba(16,185,129,.08)!important;color:var(--emerald)!important}
+.sidebar-footer-lock{padding:16px!important;border-top:1px solid var(--border-color)!important;background:#f8fafc!important}
+.logout-btn{width:100%!important;background:var(--text-dark)!important;color:#fff!important;border:none!important;padding:10px!important;border-radius:6px!important;font-weight:700!important;font-size:.8rem!important;cursor:pointer!important}
+.portal-main{flex:1!important;display:flex!important;flex-direction:column!important;margin-left:var(--sidebar-width)!important;width:calc(100% - var(--sidebar-width))!important;min-height:100vh!important}
+.portal-header{background:#fff!important;padding:20px 40px!important;border-bottom:1px solid var(--border-color)!important;display:flex!important;justify-content:space-between!important;align-items:center!important;position:sticky!important;top:0!important;z-index:90!important;width:100%!important}
+.welcome-text h1{margin:0!important;font-size:1.5rem!important;font-weight:800!important}
+.welcome-text p{margin:4px 0 0!important;font-size:.82rem!important;color:var(--text-muted)!important}
+.header-actions-wrapper{display:flex!important;align-items:center!important;gap:12px!important}
+.header-clock-pill{background:#f8fafc!important;border:1px solid var(--border-color)!important;padding:10px 16px!important;border-radius:10px!important;font-family:monospace!important;font-size:.9rem!important;font-weight:700!important;height:40px!important;display:flex!important;align-items:center!important;gap:8px!important}
+.search-input{padding:10px 16px!important;border:1px solid var(--border-color)!important;border-radius:10px!important;font-size:.82rem!important;width:220px!important;height:40px!important;outline:none!important;background:#f8fafc!important}
+.content-container{padding:32px 40px 50px!important;width:100%!important}
+.order-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:24px;align-items:start}
+.console-card{background:#fff;border-radius:12px;border:1px solid var(--border-color);padding:24px;box-shadow:0 2px 4px rgba(0,0,0,.02);margin-bottom:24px}
+.card-head{border-bottom:1px solid var(--border-color);padding-bottom:16px;margin-bottom:20px}
+.card-head h2{margin:0;font-size:1.1rem;font-weight:850}
+.card-head p{margin:5px 0 0;color:var(--text-muted);font-size:.78rem;line-height:1.5}
+.section-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:800;color:var(--text-muted);margin:0 0 8px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.field-group{display:flex;flex-direction:column;gap:6px}
+.field-group.full{grid-column:1/-1}
+.field-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;font-weight:750;color:var(--text-muted)}
+.field{width:100%;padding:12px 13px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:.88rem;color:var(--text-dark);outline:none}
+.field:focus{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,.08)}
+.customer-select{font-weight:750}
+.customer-summary{display:none;margin-top:16px;padding:15px;border:1px solid #dbeafe;border-radius:10px;background:#eff6ff}
+.customer-summary.show{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.customer-summary strong{display:block;font-size:.8rem}
+.customer-summary span{font-size:.7rem;color:var(--text-muted)}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.price-card{border:2px solid #cbd5e1;border-radius:10px;padding:15px;cursor:pointer;background:#fff;position:relative}
+.price-card.selected{border-color:var(--emerald);background:#ecfdf5}
+.price-card input{position:absolute;right:12px;top:12px}
+.price-card strong{display:block;font-size:.85rem;text-transform:uppercase}
+.price-card b{display:block;font-size:1.35rem;margin-top:7px}
+.price-card small{display:block;color:var(--text-muted);font-size:.65rem;margin-top:3px}
+.payment-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.payment-option{border:1px solid var(--border-color);border-radius:9px;padding:14px;cursor:pointer;background:#fff}
+.payment-option.selected{border:2px solid var(--emerald);background:#ecfdf5}
+.payment-option input{margin-right:8px}
+.payment-option strong{font-size:.78rem}
+.payment-option small{display:block;margin:5px 0 0 25px;color:var(--text-muted);font-size:.65rem}
+.card-terminal{display:none;margin-top:18px;padding:15px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:9px}
+.card-terminal.show{display:block}
+#secureCardElementContainer{padding:12px;background:#fff;border:1px solid #cbd5e1;border-radius:7px}
+.summary-row{display:flex;justify-content:space-between;gap:15px;padding:9px 0;font-size:.8rem}
+.summary-row.total{border-top:1px dashed #cbd5e1;margin-top:7px;padding-top:14px;font-weight:900;font-size:1.05rem}
+.status{display:none;padding:13px;border-radius:8px;margin-bottom:15px;font-size:.8rem;font-weight:700}
+.status.show{display:block}
+.status.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.status.error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+.primary-btn{width:100%;padding:14px;border:0;border-radius:8px;background:var(--text-dark);color:#fff;font-size:.9rem;font-weight:800;cursor:pointer}
+.primary-btn:disabled{opacity:.55;cursor:not-allowed}
+.secondary-btn{padding:10px 14px;border:1px solid var(--border-color);border-radius:8px;background:#fff;font-weight:750;cursor:pointer}
+.result{display:none}
+.result.show{display:block}
+.result-code{font-family:monospace;font-size:1.25rem;font-weight:900;padding:12px;background:#f8fafc;border:1px solid var(--border-color);border-radius:8px;margin:10px 0}
+.muted{color:var(--text-muted);font-size:.72rem}
+@media(max-width:1100px){.order-layout{grid-template-columns:1fr}}
+@media(max-width:991px){
+.portal-sidebar{display:none!important}.portal-main{margin-left:0!important;width:100%!important}
+.portal-header{flex-direction:column;gap:15px;padding:20px;align-items:flex-start}
+.header-actions-wrapper{width:100%;flex-wrap:wrap}.search-input{width:100%}
+.content-container{padding:20px}.field-grid,.payment-options{grid-template-columns:1fr}
+.customer-summary.show{grid-template-columns:1fr 1fr}.price-grid{grid-template-columns:1fr}
 }
-
-.dashboard-wrapper {
-  display: flex !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  position: relative !important;
-}
-
-/* 📁 LOCKED STATIONARY SIDEBAR PANEL (FLAWLESS TRANSLATIONS) */
-.portal-sidebar {
-  width: var(--sidebar-width) !important;
-  background: var(--white) !important;
-  border-right: 1px solid var(--border-color) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  position: fixed !important; 
-  top: 0 !important;
-  left: 0 !important;
-  height: 100vh !important;
-  z-index: 1000 !important;
-  box-sizing: border-box !important;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease, border-right 0.3s ease !important;
-}
-
-.portal-sidebar.sidebar-collapsed-hidden {
-  width: 0px !important;
-  padding: 0px !important;
-  border-right: none !important;
-}
-
-/* 🖥️ PRIMARY SCROLLABLE CONTENT AREA (DYNAMIC GAP AUTO-OFFSET) */
-.portal-main {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  margin-left: var(--sidebar-width) !important;
-  width: calc(100% - var(--sidebar-width)) !important;
-  min-height: 100vh !important;
-  box-sizing: border-box !important;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.portal-main.main-stretched-full {
-  margin-left: 0px !important;
-  width: 100% !important;
-}
-
-.portal-header {
-  background: var(--white) !important;
-  padding: 20px 40px !important;
-  border-bottom: 1px solid var(--border-color) !important;
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 90 !important;
-  box-sizing: border-box !important;
-  width: 100% !important;
-}
-
-.welcome-text h1 {
-  margin: 0 !important;
-  font-size: 1.5rem !important;
-  font-weight: 800 !important;
-  color: var(--text-dark) !important;
-}
-
-.welcome-text p {
-  margin: 4px 0 0 0 !important;
-  font-size: 0.82rem !important;
-  color: var(--text-muted) !important;
-}
-
-.header-actions-wrapper {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-}
-
-.header-clock-pill {
-  background: #f8fafc !important;
-  border: 1px solid var(--border-color) !important;
-  padding: 10px 16px !important;
-  border-radius: 10px !important;
-  font-family: monospace !important;
-  font-size: 0.9rem !important;
-  font-weight: 700 !important;
-  color: var(--text-dark) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  box-sizing: border-box !important;
-  height: 40px !important;
-  white-space: nowrap !important;
-}
-
-.search-input {
-  padding: 10px 16px !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 10px !important;
-  font-size: 0.82rem !important;
-  width: 220px !important;
-  outline: none !important;
-  background: #f8fafc !important;
-  box-sizing: border-box !important;
-  height: 40px !important;
-  color: var(--text-dark) !important;
-}
-
-.search-input:focus {
-  background: var(--white) !important;
-  border-color: var(--emerald) !important;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08) !important;
-}
-
-.content-container {
-  padding: 40px !important;
-  box-sizing: border-box !important;
-  width: 100% !important;
-}
-
-/* 📊 ANALYTICS DASHBOARD CARD TRACKS */
-.stats-row {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-  gap: 20px !important;
-  margin-bottom: 30px !important;
-  width: 100% !important;
-}
-
-.stat-card {
-  background: var(--white) !important;
-  padding: 20px !important;
-  border-radius: 10px !important;
-  border: 1px solid var(--border-color) !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-  box-sizing: border-box !important;
-}
-
-.stat-card small {
-  font-size: 0.68rem !important;
-  text-transform: uppercase !important;
-  font-weight: 700 !important;
-  color: var(--text-muted) !important;
-  letter-spacing: 0.5px !important;
-}
-
-.stat-card h2 {
-  margin: 6px 0 0 0 !important;
-  font-size: 1.6rem !important;
-  font-weight: 800 !important;
-}
-
-.dashboard-grid-layout {
-  display: grid !important;
-  grid-template-columns: 2fr 1fr !important;
-  gap: 24px !important;
-  align-items: start !important;
-  width: 100% !important;
-}
-
-.console-card {
-  background: var(--white) !important;
-  border-radius: 10px !important;
-  border: 1px solid var(--border-color) !important;
-  padding: 24px !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-  margin-bottom: 24px !important;
-  box-sizing: border-box !important;
-  width: 100% !important;
-}
-
-.console-card h2 {
-  font-size: 1.1rem !important;
-  font-weight: 800 !important;
-  margin: 0 0 16px 0 !important;
-  color: var(--text-dark) !important;
-}
-
-.admin-select {
-  width: 100% !important;
-  padding: 12px !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 6px !important;
-  background: #fff !important;
-}
-
-/* ==========================================================================
-   📱 MOBILE & RESPONSIVE GRID COLLAPSE CHANNELS (UNDER 991PX)
-   ========================================================================== */
-@media (max-width: 991px) {
-  body, html {
-    overflow-y: auto !important;
-  }
-  .portal-sidebar {
-    display: none !important;
-  }
-  .portal-main {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-  .portal-header {
-    flex-direction: column !important;
-    gap: 15px !important;
-    padding: 20px !important;
-    align-items: flex-start !important;
-  }
-  .header-actions-wrapper {
-    width: 100% !important;
-    flex-wrap: wrap !important;
-    justify-content: space-between !important;
-    gap: 10px !important;
-  }
-  .search-input {
-    width: 100% !important;
-  }
-  .content-container {
-    padding: 20px !important;
-  }
-  .dashboard-grid-layout {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-   </style>
-  <style>
-    :root {
-      --moto-bg: #f8fafc;
-      --moto-card: #ffffff;
-      --moto-border: #e2e8f0;
-      --moto-dark: #0f172a;
-      --moto-muted: #475569;
-      --moto-emerald: #16a34a;
-      --moto-rose: #dc2626;
-    }
-    .moto-body { margin: 0; padding: 0; background: var(--moto-bg); font-family: system-ui, -apple-system, sans-serif; color: var(--moto-dark); }
-    .moto-wrapper { display: flex; flex-direction: column; width: 100%; min-height: 100vh; box-sizing: border-box; }
-    
-    /* 🟢 THE STACK FIX: Swapped out side-by-side grid template layout for a vertical, fluid 100% full-width column layout */
-    .moto-container { display: flex; flex-direction: column; gap: 36px; width: 100%; box-sizing: border-box; padding: 32px; }
-    
-    .moto-panel { background: var(--moto-card); border: 1px solid var(--moto-border); border-radius: 16px; padding: 36px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%; }
-    .moto-header { border-bottom: 1px solid var(--moto-border); padding-bottom: 16px; margin-bottom: 24px; }
-    
-    /* Form input layout grid rows match fields side-by-side inside the full card */
-    .moto-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
-    
-    .moto-group { display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box; }
-    .moto-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: var(--moto-muted); }
-    .moto-field { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; color: var(--moto-dark); background-color: #ffffff; box-sizing: border-box; outline: none; transition: border 0.15s; }
-    .moto-field:focus { border-color: var(--moto-dark); }
-    .moto-btn { width: 100%; padding: 14px; background-color: var(--moto-dark); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 6px rgba(15,23,42,0.15); transition: background 0.15s; margin-top: 8px; }
-    .moto-btn:hover { background-color: #1e293b; }
-    .moto-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
-    .moto-table th { background: #f8fafc; border-bottom: 2px solid var(--moto-border); padding: 14px 12px; color: var(--moto-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem; }
-    .moto-table td { padding: 16px 12px; border-bottom: 1px solid var(--moto-border); vertical-align: middle; }
-  </style>
+</style>
 </head>
-<body class="crm-body">
- <div class="dashboard-wrapper">
-    <!-- 🧱 SCROLLABLE MAIN WORKSPACE -->
-    <main class="portal-main">
-    <header class="portal-header">
-        <div class="welcome-text">
-          <h1>Admin Orders</h1>
-        </div>
-        
-        <!-- 🎯 UNIFIED RIGHT-SIDE TOOLS MATRIX -->
-        <div class="header-actions-wrapper">
-          <!-- 🧱 STRUCTURAL NAVIGATION BELL CONTAINER -->
-          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 100% !important; margin-right: 5px !important; box-sizing: border-box !important;">
-            <a href="javascript:void(0);" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Central Notifications Channel" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important;">
-              <span class="nav-bell-icon" style="font-size: 1.3rem !important; cursor: pointer !important;">🔔</span>
-              <div id="globalNavUnreadCounterBadge" class="nav-bell-badge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.65rem !important; font-weight: 800 !important; padding: 2px 6px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-            </a>
-          </div>
 
-          <!-- LIVE SYSTEM CLOCK COMPONENT PILL -->
-          <div class="header-clock-pill">
-            <span>⏱️</span>
-            <span id="portal-clock">00/00/0000 | 00:00:00</span>
-          </div>
+<body>
+<div class="dashboard-wrapper">
 
-          <!-- DYNAMIC GLOBAL SEARCH FIELD -->
-          <div>
-            <input type="text" id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
-          </div>
-        </div>
-      </header>
-
-
- <div class="moto-wrapper">
-  <div class="moto-container">
-    <!-- LAYER 1: UNIFIED OFF-LINE TERMINAL INTERFACE COMPONENT -->
-    <div class="moto-panel">
-      <div class="moto-header">
-        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 850; letter-spacing: -0.02em;">Process Direct Offline Transaction</h2>
-        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--moto-muted);">Establish live database records, generate custom platform tracking codes, and authorize customized clearing amounts over phone communication lines.</p>
+  <!-- Keep your existing navigation shell on every admin page. -->
+  <aside class="portal-sidebar">
+    <div class="sidebar-brand-block">
+      <strong>filings4u</strong><br>
+      <span class="admin-badge">Staff Console</span>
+    </div>
+    <nav class="sidebar-accordion-menu" id="adminSidebarNav">
+      <button class="accordion-trigger" type="button">Operations <span>⌄</span></button>
+      <div class="accordion-panel open">
+        <a class="nav-item active" href="admin-orders.html">🧾 Orders</a>
+        <a class="nav-item" href="admin-dashboard.html">📊 Dashboard</a>
+        <a class="nav-item" href="admin-tickets.html">🎫 Support Tickets</a>
+        <a class="nav-item" href="admin-notifications.html">🔔 Notifications</a>
       </div>
-      
-<form id="phoneCheckoutOrderForm" novalidate>
-  <!-- Input Row 1: Profile Identifiers -->
-  <div class="moto-grid-2">
-    <div class="moto-group">
-      <label class="moto-label">Customer First Name</label>
-      <input type="text" id="phoneCustFirstName" class="moto-field" required placeholder="John">
+      <button class="accordion-trigger" type="button">Client Management <span>⌄</span></button>
+      <div class="accordion-panel">
+        <a class="nav-item" href="admin-clients.html">👥 Clients</a>
+        <a class="nav-item" href="admin-entities.html">🏢 Entities</a>
+        <a class="nav-item" href="client-order-history.html">📜 Order History</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer-lock">
+      <button class="logout-btn" id="logoutBtn" type="button">Sign Out</button>
     </div>
-    <div class="moto-group">
-      <label class="moto-label">Customer Last Name</label>
-      <input type="text" id="phoneCustLastName" class="moto-field" required placeholder="Doe">
-    </div>
-  </div>
+  </aside>
 
-  <!-- Input Row 2: Communication Coordinates -->
-  <div class="moto-grid-2">
-    <div class="moto-group">
-      <label class="moto-label">Contact Email Address</label>
-      <input type="email" id="phoneCustEmail" class="moto-field" required placeholder="johndoe@email.com">
-    </div>
-    <div class="moto-group">
-      <label class="moto-label">Contact Telephone Number</label>
-      <input type="tel" id="phoneCustPhone" class="moto-field" required placeholder="(555) 019-2834">
-    </div>
-  </div>
+  <main class="portal-main">
+    <header class="portal-header">
+      <div class="welcome-text">
+        <h1>Admin Orders</h1>
+        <p>Process phone, in-person, complimentary, and Stripe orders for existing client accounts.</p>
+      </div>
+      <div class="header-actions-wrapper">
+        <a href="admin-notifications.html" class="nav-item" style="margin:0">🔔</a>
+        <div class="header-clock-pill">⏱️ <span id="portal-clock">Syncing...</span></div>
+        <input id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
+      </div>
+    </header>
 
-  
-  <div class="moto-grid-2">
-    <div class="moto-group">
-      <label class="moto-label">Street Address</label>
-      <input type="text" id="phoneStreetAddress" class="moto-field" required placeholder="123 Main St Suite 400">
-    </div>
-    <div class="moto-group">
-      <label class="moto-label">City</label>
-      <input type="text" id="phoneCity" class="moto-field" required placeholder="Austin">
-    </div>
-  </div>
+    <section class="content-container">
+      <div id="status" class="status"></div>
 
-  <!-- Input Row 4: Location Identifiers (Maps directly to state & zip_code) -->
-  <div class="moto-grid-2">
-    <div class="moto-group">
-  <label class="moto-label">State / Region</label>
-  <select id="phoneStateRegion" class="moto-field" required>
-    <option value="" selected disabled>-- Select State --</option>
-    <option value="AL">Alabama</option><option value="AK">Alaska</option>
-    <option value="AZ">Arizona</option><option value="AR">Arkansas</option>
-    <option value="CA">California</option><option value="CO">Colorado</option>
-    <option value="CT">Connecticut</option><option value="DE">Delaware</option>
-    <option value="FL">Florida</option><option value="GA">Georgia</option>
-    <option value="HI">Hawaii</option><option value="ID">Idaho</option>
-    <option value="IL">Illinois</option><option value="IN">Indiana</option>
-    <option value="IA">Iowa</option><option value="KS">Kansas</option>
-    <option value="KY">Kentucky</option><option value="LA">Louisiana</option>
-    <option value="ME">Maine</option><option value="MD">Maryland</option>
-    <option value="MA">Massachusetts</option><option value="MI">Michigan</option>
-    <option value="MN">Minnesota</option><option value="MS">Mississippi</option>
-    <option value="MO">Missouri</option><option value="MT">Montana</option>
-    <option value="NE">Nebraska</option><option value="NV">Nevada</option>
-    <option value="NH">New Hampshire</option><option value="NJ">New Jersey</option>
-    <option value="NM">New Mexico</option><option value="NY">New York</option>
-    <option value="NC">North Carolina</option><option value="ND">North Dakota</option>
-    <option value="OH">Ohio</option><option value="OK">Oklahoma</option>
-    <option value="OR">Oregon</option><option value="PA">Pennsylvania</option>
-    <option value="RI">Rhode Island</option><option value="SC">South Carolina</option>
-    <option value="SD">South Dakota</option><option value="TN">Tennessee</option>
-    <option value="TX">Texas</option><option value="UT">Utah</option>
-    <option value="VT">Vermont</option><option value="VA">Virginia</option>
-    <option value="WA">Washington</option><option value="WV">West Virginia</option>
-    <option value="WI">Wisconsin</option><option value="WY">Wyoming</option>
-  </select>
-</div>
+      <div class="order-layout">
+        <div>
+          <div class="console-card">
+            <div class="card-head">
+              <h2>Customer Selection</h2>
+              <p>Select the client from the live client registry. Do not manually retype customer information for an existing account.</p>
+            </div>
 
-    <div class="moto-group">
-      <label class="moto-label">Zip Code</label>
-      <input type="text" id="phoneZipCode" class="moto-field" required placeholder="78701" maxlength="20">
-    </div>
-  </div>
+            <div class="field-group">
+              <label class="field-label" for="clientSelector">Client Account</label>
+              <select id="clientSelector" class="field customer-select" required>
+                <option value="">Loading clients...</option>
+              </select>
+            </div>
 
+            <div id="customerSummary" class="customer-summary"></div>
+          </div>
 
-        <!-- Input Row 3: Corporate Matrix Specs & Service Hierarchy -->
-        <div class="moto-grid-1" style="grid-column: span 2; margin-bottom: 15px;">
-          <div class="moto-group">
-            <label class="moto-label">Filing Business Service Selection</label>
-            <select id="phoneServiceTitle" class="moto-field" required style="font-weight: 700;">
+          <div class="console-card">
+            <div class="card-head">
+              <h2>Order Configuration</h2>
+              <p>Choose the service, package, jurisdiction, entity name, and optional services.</p>
+            </div>
+
+            <div class="field-grid">
+              <div class="field-group full">
+                <label class="field-label">Filing Business Service</label>
+                <select id="phoneServiceTitle" class="field" required style="font-weight: 700;">
               <optgroup label="🏢 Entity Formation & Structuring">
                 <option value="llc-formation" data-starter="99.00" data-compliance="199.00" data-enterprise="399.00" selected>LLC Formation</option>
                 <option value="corporations" data-starter="129.00" data-compliance="249.00" data-enterprise="599.00">Corporations (C/S-Corp)</option>
@@ -830,41 +216,35 @@ body, html {
                 <option value="logo-design" data-starter="75.00" data-compliance="125.00" data-enterprise="299.00">Logo Design Package</option>
               </optgroup>
             </select>
-          </div>
-        </div>
+              </div>
 
-        <!-- Dynamic Enterprise Side-by-Side Tier Selector Matrix (Extra drop-down completely removed below) -->
-        <div style="grid-column: span 2; margin-bottom: 24px;">
-          <label class="moto-label" style="margin-bottom: 8px; display:block;">Select Assigned Package Tier</label>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%;">
-            
-            <!-- Card 1: Starter -->
-            <label style="border: 2px solid #cbd5e1; border-radius: 8px; padding: 14px; background: #ffffff; cursor: pointer; display: flex; flex-direction: column; position: relative;" id="card-starter">
-              <input type="radio" name="enterpriseTierSelection" value="starter" checked style="position: absolute; top: 14px; right: 14px;">
-              <span style="font-weight: 850; font-size: 0.95rem; color: #1e293b; text-transform: uppercase;">Starter Suite</span>
-              <span style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-top: 6px;" id="price-lbl-starter">$0.00</span>
-            </label>
+              <div class="field-group full">
+                <label class="field-label">Assigned Package Tier</label>
+                <div class="price-grid">
+                  <label class="price-card selected" id="tierCardStarter">
+                    <input type="radio" name="tier" value="starter" checked>
+                    <strong>Starter Suite</strong>
+                    <b id="priceStarter">$0.00</b>
+                    <small>Core service package</small>
+                  </label>
+                  <label class="price-card" id="tierCardCompliance">
+                    <input type="radio" name="tier" value="compliance">
+                    <strong>Compliance Suite</strong>
+                    <b id="priceCompliance">$0.00</b>
+                    <small>Expanded compliance package</small>
+                  </label>
+                  <label class="price-card" id="tierCardEnterprise">
+                    <input type="radio" name="tier" value="enterprise">
+                    <strong>Enterprise Custom</strong>
+                    <b id="priceEnterprise">$0.00</b>
+                    <small>Maximum service package</small>
+                  </label>
+                </div>
+              </div>
 
-            <!-- Card 2: Compliance -->
-            <label style="border: 2px solid #cbd5e1; border-radius: 8px; padding: 14px; background: #ffffff; cursor: pointer; display: flex; flex-direction: column; position: relative;" id="card-compliance">
-              <input type="radio" name="enterpriseTierSelection" value="compliance" style="position: absolute; top: 14px; right: 14px;">
-              <span style="font-weight: 850; font-size: 0.95rem; color: #1e293b; text-transform: uppercase;">Compliance Suite</span>
-              <span style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-top: 6px;" id="price-lbl-compliance">$0.00</span>
-            </label>
-            <label style="border: 2px solid #cbd5e1; border-radius: 8px; padding: 14px; background: #ffffff; cursor: pointer; display: flex; flex-direction: column; position: relative;" id="card-enterprise">
-              <input type="radio" name="enterpriseTierSelection" value="enterprise" style="position: absolute; top: 14px; right: 14px;">
-              <span style="font-weight: 850; font-size: 0.95rem; color: #1e293b; text-transform: uppercase;">Enterprise Custom</span>
-              <span style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-top: 6px;" id="price-lbl-enterprise">$0.00</span>
-            </label>
-
-          </div>
-        </div>
-
-        
-        <div class="moto-grid-2">
-          <div class="moto-group">
-            <label class="moto-label">Target State Jurisdiction (Live Registry Cost)</label>
-            <select id="phoneFilingState" class="moto-field" required>
+              <div class="field-group">
+                <label class="field-label">Target State Jurisdiction</label>
+                <select id="phoneFilingState" class="field" required>
               <option value="NATIONAL" data-price="0.00" selected>Federal / Cross-State Regulation (No State Fee)</option>
               <option value="AL" data-price="50.00">Alabama (+$50.00)</option><option value="AK" data-price="250.00">Alaska (+$250.00)</option>
               <option value="AZ" data-price="50.00">Arizona (+$50.00)</option><option value="AR" data-price="45.00">Arkansas (+$45.00)</option>
@@ -892,18 +272,16 @@ body, html {
               <option value="WA" data-price="200.00">Washington (+$200.00)</option><option value="WV" data-price="100.00">West Virginia (+$100.00)</option>
               <option value="WI" data-price="130.00">Wisconsin (+$130.00)</option><option value="WY" data-price="100.00">Wyoming (+$100.00)</option>
             </select>
-          </div>
-          <div class="moto-group">
-            <label class="moto-label">Proposed Legal Entity Name</label>
-            <input type="text" id="phoneCompanyName" class="moto-field" required placeholder="Enterprise Solutions LLC">
-          </div>
-        </div>
+              </div>
 
-        <!-- Input Row 5: Dynamic Compliance Add-ons & Live Calculation Overrides -->
-        <div class="moto-grid-2">
-          <div class="moto-group">
-            <label class="moto-label">Available Contextual Upsell Add-ons</label>
-            <select id="phoneUpsellSelection" class="moto-field" multiple style="min-height: 120px !important;">
+              <div class="field-group">
+                <label class="field-label">Proposed Legal Entity Name</label>
+                <input id="phoneCompanyName" class="field" placeholder="Enterprise Solutions LLC" required>
+              </div>
+
+              <div class="field-group full">
+                <label class="field-label">Available Add-ons — Ctrl/Cmd + Click for Multiple</label>
+                <select id="phoneUpsellSelection" class="field" multiple style="min-height: 120px !important;">
               <option value="ein_procurement" data-price="49.00">EIN Federal Tax ID Procurement (+$49.00)</option>
               <option value="operating_agreement" data-price="39.00">Custom Corporate Operating Agreement (+$39.00)</option>
               <option value="registered_agent" data-price="125.00">Registered Agent Compliance Shield (+$125.00)</option>
@@ -913,563 +291,515 @@ body, html {
               <option value="web_design" data-price="725.00">Professional Website (+$725.00)</option>
               <option value="logo_design" data-price="125.00">Professional Logo (+$125.00)</option>
             </select>
+              </div>
+            </div>
           </div>
-          <div class="moto-group">
-            <label class="moto-label">Calculated Total Settlement Charge ($)</label>
-            <input type="number" step="0.01" id="phoneOverrideCost" class="moto-field" required placeholder="0.00" style="font-size: 1.15rem; color: var(--moto-emerald); font-weight: 800; border-left: 4px solid var(--moto-emerald);">
 
-            <!-- Live Summary Preview Panel -->
-            <div id="livePricingBreakdownPanel" style="margin-top:10px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:12px; font-size:0.78rem; color:#334155; line-height:1.5;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>Service Core Rate:</span><span id="calcBaseCost">$0.00</span></div>
-              <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>Jurisdiction Surcharge:</span><span id="calcStateCost">$0.00</span></div>
-              <div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>Selected Add-ons:</span><span id="calcUpsellCost">$0.00</span></div>
-              <div style="display:flex; justify-content:space-between; margin-top:6px; padding-top:6px; border-top:1px dashed #cbd5e1; font-weight:700; color:var(--moto-dark);"><span>Aggregate Settle Fee:</span><span id="calcTotalAggregate">$0.00</span></div>
+          <div class="console-card">
+            <div class="card-head">
+              <h2>Payment & Order Commitment</h2>
+              <p>Use Stripe for live card collection or record the order without collecting payment.</p>
+            </div>
+
+            <div class="payment-options">
+              <label class="payment-option selected" id="paymentStripeOption">
+                <input type="radio" name="paymentStrategy" value="stripe_live" checked>
+                <strong>💳 Process Credit Card Through Stripe</strong>
+                <small>Payment must be confirmed before the paid order is committed.</small>
+              </label>
+              <label class="payment-option" id="paymentOfflineOption">
+                <input type="radio" name="paymentStrategy" value="log_without_payment">
+                <strong>📄 Record Without Payment</strong>
+                <small>For complimentary, check, wire, or other offline arrangements.</small>
+              </label>
+            </div>
+
+            <div id="cardTerminal" class="card-terminal">
+              <div class="section-label">Secure Stripe Card Collection</div>
+              <div id="secureCardElementContainer"></div>
+              <div class="muted" style="margin-top:8px">Card details are collected by Stripe and are not stored in this page.</div>
             </div>
           </div>
         </div>
 
-        <!-- Input Row 6: Payment Collection Strategy Dropdown -->
-        <div class="moto-group" style="margin-bottom: 18px;">
-          <label class="moto-label">Payment Collection Strategy</label>
-          <select id="phonePaymentStrategy" class="moto-field" style="font-weight: 700; color: #1e293b;" required>
-            <option value="stripe_live" selected>💳 Process and Capture Live Credit Card Payment via Stripe Terminal</option>
-            <option value="log_without_payment">📄 Log and Register Order Record Without Payment (Complimentary/Wire/Check)</option>
-          </select>
-        </div>
-
-        <!-- Stripe Card Terminal Container -->
-        <div class="moto-group" id="stripeCardTerminalContainerFrame" style="margin-bottom: 24px; display: flex;">
-          <label class="moto-label">Secure Credit Card Collection Terminal (Merchant Entry Input)</label>
-          <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; background-color: #f8fafc; width: 100%; box-sizing: border-box;">
-            <div id="secureCardElementContainer" style="width: 100%; min-height: 20px;"></div>
+        <aside>
+          <div class="console-card">
+            <div class="card-head">
+              <h2>Settlement Summary</h2>
+              <p>Live calculation based on the selected service, package, jurisdiction, and add-ons.</p>
+            </div>
+            <div class="summary-row"><span>Service Core</span><strong id="summaryBase">$0.00</strong></div>
+            <div class="summary-row"><span>Jurisdiction</span><strong id="summaryState">$0.00</strong></div>
+            <div class="summary-row"><span>Add-ons</span><strong id="summaryUpsells">$0.00</strong></div>
+            <div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
           </div>
-        </div>
 
-        <div id="moto-checkout-status-slat" style="display: none; padding: 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 20px; box-sizing: border-box; width:100%;"></div>
-        <button type="submit" class="moto-btn" id="motoProcessBtn">Authorize Terminal Payment & Commit Records ➔</button>
-      </form>
-    </div>
-  </div>
+          <div class="console-card">
+            <div class="card-head">
+              <h2>Commit Order</h2>
+              <p id="commitHelp">Select a client and complete the order configuration.</p>
+            </div>
+            <button id="processOrderBtn" class="primary-btn" type="button" disabled>
+              Process Payment & Create Order ➜
+            </button>
+          </div>
+
+          <div id="resultCard" class="console-card result">
+            <div class="card-head">
+              <h2>✓ Order Created</h2>
+              <p>The order has been committed to the dashboard order ledger.</p>
+            </div>
+            <div class="muted">Tracking Number</div>
+            <div id="resultTracking" class="result-code">—</div>
+            <div id="resultDetails" class="muted"></div>
+            <button class="secondary-btn" style="width:100%;margin-top:16px" type="button" onclick="location.reload()">Create Another Order</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
 </div>
-       
-  
-
-  <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
-  <!-- 1. The Global Library Core MUST load absolute first -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/admin-master-ledger.js"></script>
-
-   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/admin-navigation.js"></script>
-
-<!-- Include your separate price tracking scripts -->
-<script src="state-pricing.js"></script>
-<script src="government-pricing.js"></script>
-
-
-
 
 <script>
-window.CENTRAL_SERVICE_PLAN_DB = window.CENTRAL_SERVICE_PLAN_DB || {};
-window.FILINGS4U_GOVERNMENT_PRICING = window.FILINGS4U_GOVERNMENT_PRICING || {};
-
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
-  const orderForm = document.getElementById("phoneCheckoutOrderForm");
-  const strategySelect = document.getElementById("phonePaymentStrategy");
-  const terminalFrame = document.getElementById("stripeCardTerminalContainerFrame");
-  const statusSlat = document.getElementById("moto-checkout-status-slat");
-  const processBtn = document.getElementById("motoProcessBtn");
-  const tableBody = document.getElementById("admin-orders-stream-rows");
+  const DB_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
+  const DB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
 
-  // Price Calculation Selection Elements Mapping Nodes
-  const serviceSelect = document.getElementById("phoneServiceTitle");
-  const planSelect = document.getElementById("phonePlanTier");
-  const stateSelect = document.getElementById("phoneFilingState");
-  const upsellSelect = document.getElementById("phoneUpsellSelection");
-  const priceOverrideField = document.getElementById("phoneOverrideCost");
+  let db = window.supabaseInstance || window.supabaseClient;
+  if (!db && window.supabase) db = window.supabase.createClient(DB_URL, DB_KEY);
+  if (!db) return;
 
-  let liveOrdersChannel = null;
+  const $ = id => document.getElementById(id);
+  const money = n => Number(n || 0).toLocaleString("en-US", {style:"currency",currency:"USD"});
+  const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 
-  // Establish Supabase Connection Handshake Properties
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client && typeof supabase !== 'undefined') {
-    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
+  let clients = [];
+  let selectedClient = null;
+  let stripe = null;
+  let elements = null;
+  let cardElement = null;
+  let currentTotal = 0;
+
+  function showStatus(message, error=false) {
+    const el = $("status");
+    el.textContent = message;
+    el.className = "status show " + (error ? "error" : "success");
   }
-  if (!client) return;
 
-  // Initialize Sandbox Stripe Card Fields Mount
-  let stripe = null, elements = null, cardElement = null;
-  if (typeof Stripe !== 'undefined') {
-    stripe = Stripe('pk_test_placeholder_key_abc123');
-    elements = stripe.elements();
-    cardElement = elements.create('card', { style: { base: { fontSize: '14px', color: '#0f172a' } } });
-    cardElement.mount('#secureCardElementContainer');
+  function hideStatus() {
+    $("status").className = "status";
   }
-  // 🟢 LIVE UI INTERCEPTOR: Toggles Stripe payment container visibility based on active strategy choices
-  if (strategySelect && terminalFrame) {
-    strategySelect.addEventListener("change", () => {
-      if (strategySelect.value === "stripe_live") {
-        terminalFrame.style.setProperty("display", "flex", "important");
-      } else {
-        terminalFrame.style.setProperty("display", "none", "important");
-      }
+
+  function updateClock() {
+    $("portal-clock").textContent = new Date().toLocaleString("en-US", {
+      month:"2-digit",day:"2-digit",year:"numeric",
+      hour:"2-digit",minute:"2-digit",second:"2-digit"
     });
-    
-    // Execute an initial pass to align visibility with the page entry selection
-    if (strategySelect.value === "stripe_live") {
-      terminalFrame.style.setProperty("display", "flex", "important");
-    } else {
-      terminalFrame.style.setProperty("display", "none", "important");
-    }
   }
+  updateClock();
+  setInterval(updateClock,1000);
 
-  function displayStatusMessage(text, isError) {
-    if (!statusSlat) return;
-    statusSlat.textContent = text;
-    statusSlat.style.display = "block";
-    statusSlat.style.background = isError ? "#fee2e2" : "#ecfdf5";
-    statusSlat.style.color = isError ? "#991b1b" : "#047857";
-    statusSlat.style.border = `1px solid ${isError ? '#fca5a5' : '#a7f3d0'}`;
-  }
-
-  function escapeMotoHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
-  // REAL-TIME SYNC OVER THE AIR FOR TRANSACTIONS TABLES
-  async function bindLiveOrdersRealtimeFeed() {
-    if (liveOrdersChannel) liveOrdersChannel.unsubscribe();
-    liveOrdersChannel = client
-      .channel('admin-dashboard-orders-live-stream')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_orders' }, async () => {
-        await loadRecentDashboardOrdersFeed();
-      })
-      .subscribe();
-  }
-
-  // Load ledger records and subscribe to over-the-air database updates instantly
-  await loadRecentDashboardOrdersFeed();
-  await bindLiveOrdersRealtimeFeed();
-
-
-   // 🟢 FIXED HANDSHAKE: Syncs HTML drop-downs directly with the real database records
-  function syncGlobalPricingMatrixData() {
-    if (!serviceSelect || !stateSelect || !planSelect) return;
-
-    // Convert display value text securely to the dictionary's explicit hyphenated keys
-    const rawService = serviceSelect.value || "";
-    const currentService = rawService.replace(/\s+/g, ' ').trim().toLowerCase()
-      .replace("corporations (c/s-corp)", "corporations")
-      .replace("nonprofit organization", "nonprofits")
-      .replace("foreign qualification certificate", "foreign-qualification")
-      .replace("foreign qualification", "foreign-qualification")
-      .replace("certificate of good standing", "certificate-of-good-standing")
-      .replace("llc reinstatement processing", "llc-reinstatement")
-      .replace("annual reports", "annual-reports")
-      .replace("operating agreement", "operating-agreement")
-      .replace("registered agent", "registered-agent")
-      .replace("business licenses", "business-licenses")
-      .replace("entity dissolution", "dissolution")
-      .replace("employer id (ein)", "employer-id-ein")
-      .replace("cage code", "cage-code")
-      .replace("duns number procurement", "duns-number")
-      .replace("owner operators trucker authority", "owner-operators")
-      .replace("broker authority", "broker-authority")
-      .replace("ucr registration", "ucr-registration")
-      .replace("scac code registration", "scac-code")
-      .replace("dot consortium", "dot-consortium")
-      .replace("driver qualification file", "driver-file")
-      .replace("process agent (boc-3)", "process-agents-boc-3")
-      .replace("ifta registration", "ifta-registration")
-      .replace("hazmat registration", "hazmat-registration")
-      .replace("licenses & permits", "dot-permits")
-      .replace("federal income tax", "federal-tax")
-      .replace("franchise tax filing", "franchise-tax")
-      .replace("sales tax registration", "sales-tax-registration")
-      .replace("apostille authentication services", "apostille-services");
-
-    // Pull values straight out of window.CENTRAL_SERVICE_PLAN_DB and write onto options
-    if (window.CENTRAL_SERVICE_PLAN_DB[currentService]) {
-      const servicePlanMap = window.CENTRAL_SERVICE_PLAN_DB[currentService];
-      Array.from(planSelect.options).forEach(opt => {
-        let tierKey = opt.value.toLowerCase().trim();
-        if (tierKey === "premium") tierKey = "compliance"; // 🟢 Maps HTML premium selection straight to your real database compliance row
-
-        if (servicePlanMap[tierKey] !== undefined) {
-          opt.setAttribute('data-price', servicePlanMap[tierKey]);
-        }
-      });
-    }
-
-    // Pull values straight out of window.FILINGS4U_GOVERNMENT_PRICING and write onto options
-    if (window.FILINGS4U_GOVERNMENT_PRICING && window.FILINGS4U_GOVERNMENT_PRICING[currentService]) {
-      const stateFeesMap = window.FILINGS4U_GOVERNMENT_PRICING[currentService];
-      Array.from(stateSelect.options).forEach(opt => {
-        const stateKey = opt.value.toUpperCase().trim();
-        if (stateFeesMap[stateKey] !== undefined) {
-          opt.setAttribute('data-price', stateFeesMap[stateKey]);
-        } else if (stateFeesMap["DEFAULT"] !== undefined) {
-          opt.setAttribute('data-price', stateFeesMap["DEFAULT"]);
-        } else {
-          opt.setAttribute('data-price', "0.00");
-        }
-      });
-    }
-  }
-
-   // 🟢 ENTERPRISE MATRIX CALCULATION ENGINE: Manages multi-tier pricing blocks natively
-  function computeMOTOInvoicePricing() {
-    const serviceSelect = document.getElementById("phoneServiceTitle");
-    const stateSelect = document.getElementById("phoneFilingState");
-    const upsellSelect = document.getElementById("phoneUpsellSelection");
-    const priceOverrideField = document.getElementById("phoneOverrideCost");
-
-    if (!serviceSelect || !stateSelect || !upsellSelect || !priceOverrideField) return;
-
-    // 1. Resolve raw price metrics attached inline to the current service selection option node
-    const selectedServiceOption = serviceSelect.options[serviceSelect.selectedIndex];
-    
-    const starterPrice = parseFloat(selectedServiceOption ? selectedServiceOption.getAttribute('data-starter') || 0 : 0);
-    const compliancePrice = parseFloat(selectedServiceOption ? selectedServiceOption.getAttribute('data-compliance') || 0 : 0);
-    const enterprisePrice = parseFloat(selectedServiceOption ? selectedServiceOption.getAttribute('data-enterprise') || 0 : 0);
-
-    // 2. Refresh text label amounts inside the side-by-side option cards instantly
-    const starterLbl = document.getElementById("price-lbl-starter");
-    const complianceLbl = document.getElementById("price-lbl-compliance");
-    const enterpriseLbl = document.getElementById("price-lbl-enterprise");
-
-    if (starterLbl) starterLbl.textContent = `$${starterPrice.toFixed(2)}`;
-    if (complianceLbl) complianceLbl.textContent = `$${compliancePrice.toFixed(2)}`;
-    if (enterpriseLbl) enterpriseLbl.textContent = `$${enterprisePrice.toFixed(2)}`;
-
-    // 3. Pin down the active radio selection out of the card cluster array
-    const activeRadio = document.querySelector('input[name="enterpriseTierSelection"]:checked');
-    const activeTier = activeRadio ? activeRadio.value : 'starter';
-
-    let baseRate = starterPrice;
-    if (activeTier === 'compliance') baseRate = compliancePrice;
-    if (activeTier === 'enterprise') baseRate = enterprisePrice;
-
-    // 4. Update card selection borders visually to match user input actions
-    ['starter', 'compliance', 'enterprise'].forEach(tier => {
-      const card = document.getElementById(`card-${tier}`);
-      if (card) {
-        if (tier === activeTier) {
-          card.style.borderColor = "var(--moto-emerald, #10b981)";
-          card.style.background = "#f0fdf4";
-        } else {
-          card.style.borderColor = "#cbd5e1";
-          card.style.background = "#ffffff";
-        }
-      }
+  // Sidebar accordion behavior.
+  document.querySelectorAll(".accordion-trigger").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.classList.toggle("active");
+      btn.nextElementSibling.classList.toggle("open");
     });
-
-    // 5. Extract jurisdiction regional state outlays
-    const selectedStateOption = stateSelect.options[stateSelect.selectedIndex];
-    const stateSurcharge = parseFloat(selectedStateOption ? selectedStateOption.getAttribute('data-price') || 0 : 0);
-
-    // 6. Compile selected multi-add-ons parameters
-    let upsellTotal = 0.00;
-    Array.from(upsellSelect.selectedOptions).forEach(opt => {
-      upsellTotal += parseFloat(opt.getAttribute('data-price') || 0);
-    });
-
-    // 7. Sum up absolute calculations
-    const aggregateTotal = baseRate + stateSurcharge + upsellTotal;
-
-    // 8. Flash calculations onto visual layout view elements
-    const baseCostEl = document.getElementById("calcBaseCost");
-    const stateCostEl = document.getElementById("calcStateCost");
-    const upsellCostEl = document.getElementById("calcUpsellCost");
-    const aggregateCostEl = document.getElementById("calcTotalAggregate");
-
-    if (baseCostEl) baseCostEl.textContent = `$${baseRate.toFixed(2)}`;
-    if (stateCostEl) stateCostEl.textContent = `$${stateSurcharge.toFixed(2)}`;
-    if (upsellCostEl) upsellCostEl.textContent = `$${upsellTotal.toFixed(2)}`;
-    if (aggregateCostEl) aggregateCostEl.textContent = `$${aggregateTotal.toFixed(2)}`;
-
-    // Push total calculations straight inside price override field box
-    priceOverrideField.value = aggregateTotal.toFixed(2);
-  }
-
-  // 🟢 ATTENTIVE CHANGE REGISTRATION TRIGGER RAIL
-  const trackingSelectors = [
-    document.getElementById("phoneServiceTitle"),
-    document.getElementById("phoneFilingState"),
-    document.getElementById("phoneUpsellSelection")
-  ];
-
-  trackingSelectors.forEach(node => {
-    if (node) node.addEventListener("change", computeMOTOInvoicePricing);
   });
 
-  // Bind change listeners to your radio cluster cards dynamically
-  document.querySelectorAll('input[name="enterpriseTierSelection"]').forEach(radio => {
-    radio.addEventListener("change", computeMOTOInvoicePricing);
+  $("logoutBtn").addEventListener("click", async () => {
+    await db.auth.signOut();
+    location.replace("admin-login.html");
   });
 
-  // Fire an immediate layout calculation sweep to establish start parameters
-  computeMOTOInvoicePricing();
-
-
-
-  // 📡 FETCH LIVE ENTRIES FROM PUBLIC.DASHBOARD_ORDERS FOR AUDITING RAIL
-  async function loadRecentDashboardOrdersFeed() {
-    if (!tableBody) return;
-    try {
-      const { data: records, error } = await client
-        .from('dashboard_orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-
-      if (!records || records.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:30px; font-style:italic;">No recorded transaction rows found.</td></tr>`;
-        return;
-      }
-
-      tableBody.innerHTML = "";
-      records.forEach(row => {
-        const tr = document.createElement("tr");
-        const totalPaid = parseFloat(row.total_paid_amount || 0).toFixed(2);
-        const isStripe = row.payment_collection_strategy === 'stripe_live';
-
-        tr.innerHTML = `
-          <td>
-            <div style="font-weight:700; color:var(--moto-dark);">${escapeMotoHtml(row.first_name)} ${escapeMotoHtml(row.last_name)}</div>
-            <div style="font-size:0.72rem; color:var(--moto-muted); font-family:monospace;">${row.email_address}</div>
-          </td>
-          <td style="font-weight:600; color:var(--moto-muted);">${escapeMotoHtml(row.company_name)}</td>
-          <td style="font-family:monospace; font-weight:700; color:var(--moto-dark);">${escapeMotoHtml(row.tracking_number)}</td>
-          <td style="font-family:monospace; font-weight:700; color:var(--moto-emerald);">$${totalPaid}</td>
-          <td style="text-align:right;">
-            <span style="background:${isStripe ? '#e0f2fe' : '#f1f5f9'}; color:${isStripe ? '#0369a1' : '#475569'}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase;">${isStripe ? 'Stripe Gateway' : 'Offline'}</span>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    } catch (err) {
-      console.error("✕ Ledger load failure:", err);
+  async function verifyAdmin() {
+    const {data,error} = await db.auth.getUser();
+    if (error || !data?.user) throw new Error("Authentication required.");
+    const role = data.user.user_metadata?.role;
+    if (role !== "admin" && !String(data.user.email || "").toLowerCase().endsWith("@filings4u.com")) {
+      throw new Error("Administrative access required.");
     }
   }
 
-  // 🚀 ENTERPRISE TRANSACTION HANDLING MODULE
-  if (orderForm) {
-    orderForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  async function loadClients() {
+    const {data,error} = await db
+      .from("client_profiles")
+      .select("id,email_address,first_name,last_name,phone_number,street_address,city,state,zip_code,tracking_number,company_name,stripe_customer_id,updated_at")
+      .order("first_name", {ascending:true})
+      .order("last_name", {ascending:true});
 
-      // Catch element mappings cleanly
-      const serviceSelect = document.getElementById("phoneServiceTitle");
-      const stateSelect = document.getElementById("phoneFilingState");
-      const upsellSelect = document.getElementById("phoneUpsellSelection");
-      const strategySelect = document.getElementById("phonePaymentStrategy");
-      const priceOverrideField = document.getElementById("phoneOverrideCost");
+    if (error) throw error;
+    clients = data || [];
 
-      const fName = document.getElementById("phoneCustFirstName").value.trim();
-      const lName = document.getElementById("phoneCustLastName").value.trim();
-      const email = document.getElementById("phoneCustEmail").value.trim().toLowerCase();
-      const phone = document.getElementById("phoneCustPhone").value.trim();
-      const compName = document.getElementById("phoneCompanyName").value.trim();
-      
-      // 🟢 FIXED: Extracting the new geographic field data parameters from your template
-      const streetVal = document.getElementById("phoneStreetAddress").value.trim();
-      const cityVal = document.getElementById("phoneCity").value.trim();
-      const stateVal = document.getElementById("phoneStateRegion").value;
-      const zipVal = document.getElementById("phoneZipCode").value.trim();
+    const select = $("clientSelector");
+    select.innerHTML = '<option value="">-- Select Client Account --</option>';
 
-      const activeService = serviceSelect ? serviceSelect.options[serviceSelect.selectedIndex].text : 'Not Specified';
-      
-      // 🟢 FIXED: Resolves the selected plan directly from the active card layout instead of a ghost selector
-      const activeRadio = document.querySelector('input[name="enterpriseTierSelection"]:checked');
-      const activePlan = activeRadio ? activeRadio.value : 'starter';
-      
-      const finalAmount = parseFloat(priceOverrideField ? priceOverrideField.value || 0 : 0);
-      const strategy = strategySelect ? strategySelect.value : 'stripe_live';
+    clients.forEach(c => {
+      const name = [c.first_name,c.last_name].filter(Boolean).join(" ").trim() || "Unnamed Client";
+      const company = c.company_name && c.company_name !== "Not Specified" ? ` — ${c.company_name}` : "";
+      const option = document.createElement("option");
+      option.value = c.id;
+      option.textContent = `${name} — ${c.email_address}${company}`;
+      select.appendChild(option);
+    });
+  }
 
-      // 🟢 FIXED: Verifies that all required fields are full before execution loops run
-      if (!fName || !lName || !email || !phone || !compName || !streetVal || !cityVal || !stateVal || !zipVal) {
-        displayStatusMessage("✕ Validation error: Customer tracking strings and billing coordinates must be fully populated.", true);
-        return;
-      }
+  function renderClient() {
+    selectedClient = clients.find(c => c.id === $("clientSelector").value) || null;
+    const box = $("customerSummary");
 
-      if (processBtn) {
-        processBtn.disabled = true;
-        processBtn.textContent = "Authorizing transaction ledger transaction... 📡";
-      }
+    if (!selectedClient) {
+      box.className = "customer-summary";
+      box.innerHTML = "";
+      $("processOrderBtn").disabled = true;
+      return;
+    }
 
-      try {
-        let resolvedStripeChargeToken = "ch_offline_logged_" + Date.now();
+    box.className = "customer-summary show";
+    box.innerHTML = `
+      <div><span>Name</span><strong>${esc([selectedClient.first_name,selectedClient.last_name].filter(Boolean).join(" ") || "—")}</strong></div>
+      <div><span>Email</span><strong>${esc(selectedClient.email_address)}</strong></div>
+      <div><span>Phone</span><strong>${esc(selectedClient.phone_number || "—")}</strong></div>
+      <div><span>Company</span><strong>${esc(selectedClient.company_name || "Not Specified")}</strong></div>
+      <div><span>Address</span><strong>${esc([selectedClient.street_address,selectedClient.city,selectedClient.state,selectedClient.zip_code].filter(Boolean).join(", ") || "—")}</strong></div>
+      <div><span>Tracking</span><strong>${esc(selectedClient.tracking_number || "—")}</strong></div>
+    `;
+    validateReady();
+  }
 
-        // COMPLIMENTARY/FREE GUARD: Bypasses Stripe token creation if logged without payment or $0.00 total
-        if (strategy === 'stripe_live' && stripe && cardElement) {
-          if (finalAmount > 0) {
-            const { token, error } = await stripe.createToken(cardElement);
-            if (error) throw new Error(`Stripe Gateway Fault: ${error.message}`);
-            resolvedStripeChargeToken = token.id;
-          } else {
-            resolvedStripeChargeToken = "ch_free_tier_auth_" + Date.now();
-          }
-        } else {
-          resolvedStripeChargeToken = "ch_offline_bypass_" + Date.now();
-        }
+  $("clientSelector").addEventListener("change", renderClient);
 
-        // 🟢 FIXED: Compiles the selected upsell multi-list variable before referencing it in payload
-        const selectedUpsellsList = upsellSelect ? Array.from(upsellSelect.selectedOptions).map(o => o.text).join(", ") : "None";
-        const randomTrackingCode = "F4U-SALE-" + Math.floor(100000 + Math.random() * 900000);
+  function getSelectedTier() {
+    return document.querySelector('input[name="tier"]:checked')?.value || "starter";
+  }
 
-        // 📡 FIRST: Fire the direct background tunnel request to your Edge Function
-        console.log("📡 [Auth Engine] Invoking workspace edge tunnel...");
-        const edgeResponse = await fetch("https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/dashboard-orders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${client.supabaseKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"}`
-          },
-          body: JSON.stringify({
-            email_address: email,
-            first_name: fName,
-            last_name: lName,
-            company_name: compName,
-            selected_service: activeService,
-            selected_plan: activePlan
-          })
+  function calculate() {
+    const service = $("phoneServiceTitle");
+    const option = service?.selectedOptions?.[0];
+    const tier = getSelectedTier();
+    const base = Number(option?.dataset?.[tier] || 0);
+    const state = Number($("phoneFilingState")?.selectedOptions?.[0]?.dataset?.price || 0);
+    const upsells = [...($("phoneUpsellSelection")?.selectedOptions || [])]
+      .reduce((sum,opt) => sum + Number(opt.dataset.price || 0), 0);
+
+    currentTotal = Math.max(0, base + state + upsells);
+
+    $("priceStarter").textContent = money(option?.dataset?.starter);
+    $("priceCompliance").textContent = money(option?.dataset?.compliance);
+    $("priceEnterprise").textContent = money(option?.dataset?.enterprise);
+
+    $("summaryBase").textContent = money(base);
+    $("summaryState").textContent = money(state);
+    $("summaryUpsells").textContent = money(upsells);
+    $("summaryTotal").textContent = money(currentTotal);
+
+    document.querySelectorAll(".price-card").forEach(card => card.classList.remove("selected"));
+    const active = document.querySelector(`input[name="tier"][value="${tier}"]`);
+    active?.closest(".price-card")?.classList.add("selected");
+
+    validateReady();
+  }
+
+  ["phoneServiceTitle","phoneFilingState","phoneUpsellSelection"].forEach(id => {
+    $(id).addEventListener("change", calculate);
+  });
+  document.querySelectorAll('input[name="tier"]').forEach(r => r.addEventListener("change", calculate));
+
+  function getStrategy() {
+    return document.querySelector('input[name="paymentStrategy"]:checked')?.value || "stripe_live";
+  }
+
+  document.querySelectorAll('input[name="paymentStrategy"]').forEach(r => {
+    r.addEventListener("change", () => {
+      $("paymentStripeOption").classList.toggle("selected", getStrategy() === "stripe_live");
+      $("paymentOfflineOption").classList.toggle("selected", getStrategy() === "log_without_payment");
+      const stripeSelected = getStrategy() === "stripe_live";
+      $("cardTerminal").classList.toggle("show", stripeSelected);
+
+      if (stripeSelected && !cardElement) {
+        initStripe().catch(err => {
+          console.error("Stripe mount error:", err);
+          showStatus(err.message || "Unable to mount Stripe card collection.", true);
         });
+      }
 
-        const isAccountProvisioned = edgeResponse.ok ? "true" : "false";
+      $("processOrderBtn").textContent = stripeSelected
+        ? "Process Payment & Create Order ➜"
+        : "Create Order Without Payment ➜";
+      validateReady();
+    });
+  });
 
-        // 🟢 FIXED: Transmits the real billing address data to matching columns instead of hardcoded strings
-        const databasePayload = {
-          tracking_number: randomTrackingCode,
-          first_name: fName,
-          last_name: lName,
-          email_address: email,
-          phone_number: phone,
-          company_name: compName,
-          selected_service: activeService,
-          selected_plan: activePlan,
-          total_paid_amount: finalAmount,
-          stripe_payment_id: resolvedStripeChargeToken,
-          payment_collection_strategy: strategy,
-          selected_upsells: selectedUpsellsList,
-          poa_signature: "MOTO-Merchant-Assigned",
-          poa_execution_stamp: new Date().toISOString(),
-          account_created: isAccountProvisioned,
-          form_payload: "{}",
-          street_address: streetVal,
-          city: cityVal,
-          state: stateVal,
-          zip_code: zipVal
-        };
+  function validateReady() {
+    const ready = !!selectedClient &&
+      !!$("phoneServiceTitle").value &&
+      !!$("phoneFilingState").value &&
+      !!$("phoneCompanyName").value.trim() &&
+      currentTotal >= 0;
+    $("processOrderBtn").disabled = !ready;
+  }
 
+  async function initStripe() {
+    const publishableKey = window.FILINGS4U_STRIPE_PUBLISHABLE_KEY || "pk_test_51TTy4i0dNjSlvyScX676lZwB34Lby8nEuv0sRorwo6kGYKkTJYiTyPQA6PVjzwUSjB9Kz90LdHtCh2E1BTMMEkTX00HCLPKUkf";
 
-        // STEP 2: Commit the complete record cleanly to public.dashboard_orders database ledger
-        const { error: insertError } = await client
-          .from('dashboard_orders')
-          .insert([databasePayload]);
+    if (!publishableKey) {
+      throw new Error("Stripe publishable key is not configured.");
+    }
 
-        if (insertError) throw insertError;
+    if (!window.Stripe) {
+      throw new Error("Stripe.js did not load. Please refresh the page and try again.");
+    }
 
+    if (cardElement) {
+      return true;
+    }
 
-        displayStatusMessage(`✓ Success! Transaction committed to ledger. Tracking: [${randomTrackingCode}]`, false);
-        orderForm.reset();
-        if (cardElement) cardElement.clear();
-        
-        computeMOTOInvoicePricing();
-        if (typeof loadRecentDashboardOrdersFeed === 'function') await loadRecentDashboardOrdersFeed();
+    stripe = Stripe(publishableKey);
+    elements = stripe.elements();
 
-      } catch (fault) {
-        console.error(fault);
-        displayStatusMessage(`✕ Transaction Aborted: ${fault.message}`, true);
-      } finally {
-        if (processBtn) {
-          processBtn.disabled = false;
-          processBtn.textContent = "Authorize Terminal Payment & Commit Records ➔";
+    cardElement = elements.create("card", {
+      style: {
+        base: {
+          fontSize: "14px",
+          color: "#0f172a",
+          fontFamily: "system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
+          "::placeholder": { color: "#94a3b8" }
+        },
+        invalid: {
+          color: "#dc2626"
         }
       }
     });
+
+    cardElement.mount("#secureCardElementContainer");
+
+    cardElement.on("change", event => {
+      if (event.error) {
+        showStatus(event.error.message, true);
+      } else {
+        hideStatus();
+      }
+    });
+
+    return true;
   }
 
+  function buildOrderPayload(paymentId=null) {
+    const serviceOption = $("phoneServiceTitle").selectedOptions[0];
+    const tier = getSelectedTier();
+    const upsells = [...$("phoneUpsellSelection").selectedOptions].map(o => ({
+      code:o.value, name:o.textContent, price:Number(o.dataset.price || 0)
+    }));
 
-  function displayStatusMessage(text, isError) {
-    if (!statusSlat) return;
-    statusSlat.textContent = text;
-    statusSlat.style.display = "block";
-    statusSlat.style.background = isError ? "#fee2e2" : "#ecfdf5";
-    statusSlat.style.color = isError ? "#991b1b" : "#047857";
-    statusSlat.style.border = `1px solid ${isError ? '#fca5a5' : '#a7f3d0'}`;
-  }
+    const tracking = "F4U-" + crypto.randomUUID().replaceAll("-","").slice(0,12).toUpperCase();
 
-  function escapeMotoHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
-  // REAL-TIME SYNC OVER THE AIR FOR TRANSACTIONS TABLES
-  async function bindLiveOrdersRealtimeFeed() {
-    if (liveOrdersChannel) liveOrdersChannel.unsubscribe();
-    liveOrdersChannel = client
-      .channel('admin-dashboard-orders-live-stream')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_orders' }, async () => {
-        await loadRecentDashboardOrdersFeed();
+    return {
+      tracking_number: tracking,
+      first_name: selectedClient.first_name || "",
+      last_name: selectedClient.last_name || "",
+      email_address: selectedClient.email_address.toLowerCase(),
+      phone_number: selectedClient.phone_number || "",
+      company_name: $("phoneCompanyName").value.trim(),
+      selected_service: serviceOption.textContent.trim(),
+      selected_plan: tier,
+      total_paid_amount: getStrategy() === "stripe_live" ? currentTotal : 0,
+      stripe_payment_id: paymentId,
+      payment_collection_strategy: getStrategy(),
+      selected_upsells: JSON.stringify(upsells),
+      account_created: "existing",
+      street_address: selectedClient.street_address || null,
+      city: selectedClient.city || null,
+      state: selectedClient.state || null,
+      zip_code: selectedClient.zip_code || null,
+      form_payload: JSON.stringify({
+        source:"admin-orders",
+        client_profile_id:selectedClient.id,
+        service_code:serviceOption.value,
+        service_name:serviceOption.textContent.trim(),
+        package_tier:tier,
+        jurisdiction:$("phoneFilingState").value,
+        jurisdiction_fee:Number($("phoneFilingState").selectedOptions[0]?.dataset.price || 0),
+        add_ons:upsells,
+        order_total:currentTotal
       })
-      .subscribe();
+    };
   }
 
-  await loadRecentDashboardOrdersFeed();
-  await bindLiveOrdersRealtimeFeed();
+  async function createDashboardOrder(payload) {
+    const {data,error} = await db.from("dashboard_orders").insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  }
 
-  // 🟢 COMPONENT KEY BRIDGE: Converts dropdown option text directly to database dictionary keys
-  function normalizeDropdownValueToMatrixKey(displayValue) {
-    if (!displayValue) return "";
-    const cleanString = displayValue.replace(/\s+/g, ' ').trim().toLowerCase();
-    
-    const operationalBridgeMap = {
-      "llc formation": "llc-formation",
-      "corporations (c/s-corp)": "corporations",
-      "series llc": "series-llc",
-      "sole proprietorship": "sole-proprietorship",
-      "dba registration": "dba-registration",
-      "nonprofit organization": "nonprofits",
-      "foreign qualification": "foreign-qualification",
-      "certificate of good standing": "certificate-of-good-standing",
-      "llc reinstatement processing": "llc-reinstatement",
-      "annual reports": "annual-reports",
-      "operating agreement": "operating-agreement",
-      "registered agent": "registered-agent",
-      "business licenses": "business-licenses",
-      "entity dissolution": "dissolution",
-      "employer id (ein)": "employer-id-ein",
-      "cage code": "cage-code",
-      "duns number procurement": "duns-number",
-      "owner operators trucker authority": "owner-operators",
-      "broker authority": "broker-authority",
-      "ucr registration": "ucr-registration",
-      "scac code registration": "scac-code",
-      "dot consortium": "dot-consortium",
-      "driver qualification file": "driver-file",
-      "process agent (boc-3)": "process-agents-boc-3",
-      "ifta registration": "ifta-registration",
-      "hazmat registration": "hazmat-registration",
-      "licenses & permits": "dot-permits",
-      "federal income tax": "federal-tax",
-      "franchise tax filing": "franchise-tax",
-      "sales tax registration": "sales-tax-registration",
-      "apostille authentication services": "apostille-services",
-      "web design": "web-design",
-      "logo_design": "logo-design"
-    };
-    return operationalBridgeMap[cleanString] || cleanString;
+  async function createStripePayment() {
+    if (!stripe || !cardElement) {
+      throw new Error("Stripe card payment is not available. Verify the Stripe publishable key.");
+    }
+
+    const {data:{session}} = await db.auth.getSession();
+    if (!session) {
+      throw new Error("Your administrator session has expired.");
+    }
+
+    const serviceOption = $("phoneServiceTitle").selectedOptions[0];
+    const stateOption = $("phoneFilingState").selectedOptions[0];
+    const tier = getSelectedTier();
+
+    const upsells = [...$("phoneUpsellSelection").selectedOptions].map(o => ({
+      code:o.value,
+      name:o.textContent.trim(),
+      price:Number(o.dataset.price || 0)
+    }));
+
+    // Ask the authenticated Edge Function to create a PaymentIntent.
+    // The card itself remains mounted in Stripe Elements on this page.
+    const response = await fetch(
+      "https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${session.access_token}`
+        },
+        body:JSON.stringify({
+          mode:"admin_moto_payment",
+          amount:Math.round(currentTotal * 100),
+          currency:"usd",
+          customer_id:selectedClient.stripe_customer_id || null,
+          customer_email:selectedClient.email_address,
+          description:`filings4u Admin Order — ${serviceOption.textContent.trim()}`,
+          metadata:{
+            client_profile_id:selectedClient.id,
+            company_name:$("phoneCompanyName").value.trim(),
+            service:serviceOption.value,
+            service_name:serviceOption.textContent.trim(),
+            state:stateOption.value,
+            package_tier:tier,
+            state_fee:Number(stateOption.dataset.price || 0),
+            upsells:JSON.stringify(upsells)
+          }
+        })
+      }
+    );
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result.error || "Stripe PaymentIntent could not be initialized.");
+    }
+
+    const clientSecret =
+      result.client_secret ||
+      result.payment_intent_client_secret ||
+      result.paymentIntent?.client_secret;
+
+    if (!clientSecret) {
+      throw new Error("Stripe PaymentIntent was created without a client secret.");
+    }
+
+    const billingName =
+      [selectedClient.first_name, selectedClient.last_name]
+        .filter(Boolean)
+        .join(" ") || selectedClient.email_address;
+
+    const confirmed = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: {
+          name: billingName,
+          email: selectedClient.email_address,
+          phone: selectedClient.phone_number || undefined,
+          address: {
+            line1: selectedClient.street_address || undefined,
+            city: selectedClient.city || undefined,
+            state: selectedClient.state || undefined,
+            postal_code: selectedClient.zip_code || undefined
+          }
+        }
+      }
+    });
+
+    if (confirmed.error) {
+      throw new Error(confirmed.error.message);
+    }
+
+    if (!confirmed.paymentIntent ||
+        confirmed.paymentIntent.status !== "succeeded") {
+      throw new Error("Stripe did not confirm the payment.");
+    }
+
+    return confirmed.paymentIntent.id;
+  }
+
+  $("processOrderBtn").addEventListener("click", async () => {
+    hideStatus();
+
+    if (!selectedClient) {
+      showStatus("Select a client account before creating the order.", true);
+      return;
+    }
+
+    const btn = $("processOrderBtn");
+    btn.disabled = true;
+
+    try {
+      let paymentId = null;
+
+      if (getStrategy() === "stripe_live") {
+        showStatus("Opening secure Stripe payment collection...");
+        paymentId = await createStripePayment();
+
+        if (!paymentId) return;
+      }
+
+      showStatus("Payment confirmed. Committing the dashboard order...");
+
+      const payload = buildOrderPayload(paymentId);
+      const order = await createDashboardOrder(payload);
+
+      $("resultTracking").textContent = order.tracking_number;
+      $("resultDetails").innerHTML =
+        `<strong>${esc(payload.first_name)} ${esc(payload.last_name)}</strong><br>` +
+        `${esc(payload.email_address)}<br>` +
+        `${esc(payload.selected_service)} — ${esc(payload.selected_plan)}<br>` +
+        `Recorded: ${money(payload.total_paid_amount)}`;
+
+      $("resultCard").classList.add("show");
+      showStatus("✓ Order successfully committed.", false);
+      $("commitHelp").textContent = "Order created successfully. The client order history can now retrieve this record.";
+
+      // Prevent accidental duplicate submission.
+      btn.textContent = "Order Created ✓";
+      btn.disabled = true;
+
+    } catch (err) {
+      console.error("Admin order failure:", err);
+      showStatus(err.message || "Unable to complete the order.", true);
+      btn.disabled = false;
+    }
+  });
+
+  try {
+    await verifyAdmin();
+    await loadClients();
+    calculate();
+
+    // Stripe Elements is mounted when the Stripe payment option is selected.
+    // This keeps the existing page/template intact and prevents mounting into
+    // a hidden terminal during initial page load.
+    if (getStrategy() === "stripe_live") {
+      $("cardTerminal").classList.add("show");
+      await initStripe();
+    }
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Administrative session verification failed.");
+    location.replace("admin-login.html");
   }
 });
 </script>
-
 
 </body>
 </html>
