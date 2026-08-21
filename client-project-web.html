@@ -1,3 +1,60 @@
+ <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
+<script>
+  (function() {
+    "use strict";
+    // Define the exact project storage lookup path signature
+    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
+    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
+    
+    // Synchronously check local storage cache arrays before browser can paint any HTML elements
+    const rawSessionJson = localStorage.getItem(sessionTokenKey);
+    let isAuthenticated = false;
+    let userRole = null;
+
+    if (rawSessionJson) {
+      try {
+        const sessionData = JSON.parse(rawSessionJson);
+        if (sessionData && sessionData.access_token) {
+          isAuthenticated = true;
+          // Extract nested metadata flags out of JWT payload context securely
+          if (sessionData.user && sessionData.user.user_metadata) {
+            userRole = sessionData.user.user_metadata.role;
+          }
+          if (sessionData.user && !userRole && sessionData.user.email) {
+            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
+              userRole = 'admin';
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Security parsing failure:", e);
+      }
+    }
+
+    // Determine current view file track rules path parameters
+    const pagePathString = window.location.pathname.toLowerCase();
+    const isAdminViewPage = pagePathString.includes('/admin-');
+
+    if (!isAuthenticated) {
+      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
+      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
+      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
+      
+      // Inject CSS rule to hide everything in case browser delays routing
+      document.documentElement.style.display = "none";
+      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
+    }
+
+    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
+    if (isAdminViewPage && userRole !== 'admin') {
+      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
+      window.location.replace("client-dashboard.html");
+      document.documentElement.style.display = "none";
+      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
+    }
+  })();
+</script>
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -211,10 +268,55 @@ function startPolling(){
 }
 
 $("form").addEventListener("submit",async e=>{e.preventDefault();const text=$("input").value.trim();if(!text||!clientId||!projectId)return;const btn=$("form").querySelector("button");sending=true;$("input").disabled=true;btn.disabled=true;try{
- const payload={sender_type:"client",message_content:text,client_profile_id:clientId,admin_profile_id:null,web_project_id:projectId,email_address:email};
- const r=await db.from("web_projects_chat").insert(payload).select("id,sender_type,message_content,created_at,client_profile_id,admin_profile_id,email_address,web_project_id").single();if(r.error)throw r.error;if($("chat").querySelector(".empty"))$("chat").innerHTML="";render(r.data);$("input").value=""
+ const result=await db.functions.invoke("send_web_project_chat",{body:{
+  sender_type:"client",
+  message_content:text,
+  client_profile_id:clientId,
+  admin_profile_id:null,
+  web_project_id:projectId,
+  email_address:email
+ }});
+ if(result.error){
+  let detail=result.error.message||"Message could not be sent.";
+  try{
+   const context=result.error.context;
+   if(context&&typeof context.json==="function"){
+    const responseBody=await context.json();
+    if(responseBody?.error)detail=responseBody.error;
+   }
+  }catch(_){}
+  throw new Error(detail);
+ }
+ if(result.data?.error)throw new Error(result.data.error);
+ if(!result.data?.message)throw new Error("The message was not returned by the chat service.");
+ if($("chat").querySelector(".empty"))$("chat").innerHTML="";
+ render(result.data.message);
+ $("input").value=""
 }catch(err){note(err.message||"Message could not be sent.",true)}finally{sending=false;$("input").disabled=false;btn.disabled=false;$("input").focus()}});
-$("changes").onclick=async()=>{const text=window.prompt("What would you like changed?");if(!text?.trim()||!clientId||!projectId)return;try{const r=await db.from("web_projects_chat").insert({sender_type:"client",message_content:"Revision Request: "+text.trim(),client_profile_id:clientId,admin_profile_id:null,web_project_id:projectId,email_address:email}).select("id,sender_type,message_content,created_at,client_profile_id,admin_profile_id,email_address,web_project_id").single();if(r.error)throw r.error;if($("chat").querySelector(".empty"))$("chat").innerHTML="";render(r.data);note("Your revision request was sent.")}catch(e){note(e.message||"Revision request could not be sent.",true)}};
+$("changes").onclick=async()=>{const text=window.prompt("What would you like changed?");if(!text?.trim()||!clientId||!projectId)return;try{const result=await db.functions.invoke("send_web_project_chat",{body:{
+ sender_type:"client",
+ message_content:"Revision Request: "+text.trim(),
+ client_profile_id:clientId,
+ admin_profile_id:null,
+ web_project_id:projectId,
+ email_address:email
+}});
+if(result.error){
+ let detail=result.error.message||"Revision request could not be sent.";
+ try{
+  const context=result.error.context;
+  if(context&&typeof context.json==="function"){
+   const responseBody=await context.json();
+   if(responseBody?.error)detail=responseBody.error;
+  }
+ }catch(_){}
+ throw new Error(detail);
+}
+if(result.data?.error)throw new Error(result.data.error);
+if(!result.data?.message)throw new Error("The revision request was not returned by the chat service.");
+if($("chat").querySelector(".empty"))$("chat").innerHTML="";
+render(result.data.message);
+note("Your revision request was sent.")}catch(e){note(e.message||"Revision request could not be sent.",true)}};
 $("approve").onclick=async()=>{
   if(!confirm("Approve this website as the current final version?"))return;
   $("approve").disabled=true;

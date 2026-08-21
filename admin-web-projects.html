@@ -718,9 +718,31 @@ $("client").addEventListener("change",async()=>{clearInterval(pollTimer);if(chat
 $("chatForm").addEventListener("submit",async e=>{e.preventDefault();const text=$("message").value.trim();if(!text||!clientId||!projectId||!adminId)return;
  const btn=$("chatForm").querySelector("button");$("message").disabled=true;btn.disabled=true;loading=true;
  try{
-  const payload={sender_type:"admin",message_content:text,client_profile_id:clientId,admin_profile_id:adminId,web_project_id:projectId,email_address:email};
-  const {data,error}=await db.from("web_projects_chat").insert(payload).select("id,sender_type,message_content,created_at,client_profile_id,admin_profile_id,email_address,web_project_id").single();
-  if(error)throw error;if(data){if($("chat").querySelector(".empty"))$("chat").innerHTML="";render(data)}$("message").value="";
+  const result=await db.functions.invoke("send_web_project_chat",{body:{
+   sender_type:"admin",
+   message_content:text,
+   client_profile_id:clientId,
+   admin_profile_id:adminId,
+   web_project_id:projectId,
+   email_address:email
+  }});
+  if(result.error){
+   let detail=result.error.message||"Message could not be sent.";
+   try{
+    const context=result.error.context;
+    if(context&&typeof context.json==="function"){
+     const responseBody=await context.json();
+     if(responseBody?.error)detail=responseBody.error;
+    }
+   }catch(_){}
+   throw new Error(detail);
+  }
+  if(result.data?.error)throw new Error(result.data.error);
+  if(result.data?.message){
+   if($("chat").querySelector(".empty"))$("chat").innerHTML="";
+   render(result.data.message);
+  }
+  $("message").value="";
  }catch(err){note(err.message||"Message could not be sent.",true)}
  finally{loading=false;$("message").disabled=false;btn.disabled=false;$("message").focus()}
 });
