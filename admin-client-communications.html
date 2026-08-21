@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Client Communications Center | filings4u Staff</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase-config.js"></script>
+
+  <style>
+
+    :root {
+      --bg-light: #f4f6f9;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+      --text-dark: #0f172a;
+      --text-muted: #475569;
+      --emerald: #10b981;
+      --staff-red: #c15254;
+      --sidebar-width: 260px;
+    }
+
+    body, html {
+      margin: 0 !important;
+      padding: 0 !important;
+      min-height: 100vh !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      background-color: var(--bg-light) !important;
+      color: var(--text-dark) !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+    }
+
+    .dashboard-wrapper {
+      display: flex !important;
+      min-height: 100vh !important;
+      width: 100% !important;
+      position: relative !important;
+    }
+
+    /* SIDEBAR DEFINITION */
+    .portal-sidebar {
+      width: var(--sidebar-width) !important;
+      background: var(--white) !important;
+      border-right: 1px solid var(--border-color) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      height: 100vh !important;
+      z-index: 1000 !important;
+      box-sizing: border-box !important;
+    }
+
+    .sidebar-brand-block {
+      padding: 24px 20px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+      text-align: center !important;
+      box-sizing: border-box !important;
+    }
+
+    .admin-badge {
+      display: inline-block !important;
+      background: rgba(193, 82, 84, 0.08) !important;
+      color: var(--staff-red) !important;
+      font-size: 0.65rem !important;
+      font-weight: 800 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      padding: 4px 10px !important;
+      border-radius: 12px !important;
+      margin-top: 6px !important;
+      border: 1px solid rgba(193, 82, 84, 0.15) !important;
+    }
+
+    .sidebar-accordion-menu {
+      flex: 1 !important;
+      overflow-y: auto !important;
+      padding: 15px 12px !important;
+      box-sizing: border-box !important;
+    }
+
+    .accordion-trigger {
+      width: 100% !important;
+      background: #f8fafc !important;
+      border: 1px solid var(--border-color) !important;
+      padding: 10px 14px !important;
+      font-size: 0.72rem !important;
+      font-weight: 700 !important;
+      color: var(--text-muted) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      cursor: pointer !important;
+      border-radius: 6px !important;
+      margin-top: 10px !important;
+      outline: none !important;
+      box-sizing: border-box !important;
+    }
+
+    .accordion-panel {
+      max-height: 0;
+      overflow: hidden !important;
+      transition: max-height 0.25s ease-out !important;
+      padding-left: 4px !important;
+      box-sizing: border-box !important;
+    }
+
+    .nav-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 8px 12px !important;
+      color: var(--text-muted) !important;
+      text-decoration: none !important;
+      font-size: 0.8rem !important;
+      font-weight: 600 !important;
+      border-radius: 6px !important;
+      margin-top: 2px !important;
+      white-space: nowrap !important;
+      box-sizing: border-box !important;
+    }
+
+    .nav-item.active {
+      background: rgba(16, 185, 129, 0.08) !important;
+      color: var(--emerald) !important;
+      font-weight: 700 !important;
+    }
+
+    .sidebar-footer-lock {
+      padding: 16px !important;
+      border-top: 1px solid var(--border-color) !important;
+      background: #f8fafc !important;
+      box-sizing: border-box !important;
+    }
+
+    .logout-btn {
+      width: 100% !important;
+      background: var(--text-dark) !important;
+      color: white !important;
+      border: none !important;
+      padding: 10px !important;
+      border-radius: 6px !important;
+      font-weight: 700 !important;
+      font-size: 0.8rem !important;
+      cursor: pointer !important;
+    }
+
+    /* WORKSPACE FRAME */
+    .portal-main {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      margin-left: var(--sidebar-width) !important;
+      width: calc(100% - var(--sidebar-width)) !important;
+      min-height: 100vh !important;
+      box-sizing: border-box !important;
+    }
+
+    .portal-header {
+      background: var(--white) !important;
+      padding: 20px 40px !important;
+      border-bottom: 1px solid var(--border-color) !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 90 !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+    }
+
+    .welcome-text h1 {
+      margin: 0 !important;
+      font-size: 1.5rem !important;
+      font-weight: 800 !important;
+      color: var(--text-dark) !important;
+    }
+
+    .welcome-text p {
+      margin: 4px 0 0 0 !important;
+      font-size: 0.82rem !important;
+      color: var(--text-muted) !important;
+    }
+
+    .header-actions-wrapper {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+    }
+
+    .search-input {
+      padding: 10px 16px !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 10px !important;
+      font-size: 0.82rem !important;
+      width: 260px !important;
+      outline: none !important;
+      background: #f8fafc !important;
+      box-sizing: border-box !important;
+      height: 40px !important;
+      color: var(--text-dark) !important;
+    }
+
+    .search-input:focus {
+      background: var(--white) !important;
+      border-color: var(--emerald) !important;
+    }
+
+    .content-container {
+      padding: 40px !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+    }
+
+    .console-card {
+      background: var(--white) !important;
+      border-radius: 10px !important;
+      border: 1px solid var(--border-color) !important;
+      padding: 24px !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+    }
+
+    .console-card h2 {
+      font-size: 1.1rem !important;
+      font-weight: 800 !important;
+      margin: 0 0 16px 0 !important;
+      color: var(--text-dark) !important;
+    }
+
+    /* Page-specific communications workspace */
+    * { box-sizing: border-box; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .content { padding: 28px 40px 44px; width: 100%; }
+    .hero { background: linear-gradient(135deg,#fff,#fffafb); border:1px solid var(--border-color); border-radius:10px; padding:24px; box-shadow:0 2px 4px rgba(0,0,0,.01); }
+    .hero h2 { margin:0; color:var(--text-dark); font-size:1.3rem; }
+    .hero p { margin:6px 0 0; color:var(--text-muted); font-size:.82rem; }
+
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:11px; margin-top:16px; }
+    .metric { background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:14px; }
+    .metric span { display:block; color:#94a3b8; font-size:.62rem; text-transform:uppercase; font-weight:900; letter-spacing:.07em; }
+    .metric strong { display:block; margin-top:5px; color:var(--text-dark); font-size:1.35rem; }
+
+    .tabs { display:flex; gap:8px; margin:22px 0 18px; flex-wrap:wrap; }
+    .tab { border:1px solid var(--border-color); background:#fff; color:#475569; padding:10px 15px; border-radius:6px; font-weight:800; font-size:.78rem; }
+    .tab.active { background:var(--text-dark); border-color:var(--text-dark); color:#fff; }
+    .tab .count { margin-left:6px; opacity:.8; }
+
+    .panel { background:#fff; border:1px solid var(--border-color); border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,.01); }
+    .panel-head { padding:18px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .panel-head h3 { margin:0; font-size:1rem; color:var(--text-dark); }
+    .panel-head p { margin:4px 0 0; color:var(--text-muted); font-size:.75rem; }
+    .panel-body { padding:18px; }
+
+    .split { display:grid; grid-template-columns:340px minmax(0,1fr); min-height:620px; }
+    .list-pane { border-right:1px solid var(--border-color); overflow:auto; }
+    .detail-pane { min-width:0; }
+    .list-toolbar { padding:14px; border-bottom:1px solid var(--border-color); }
+    .search { width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; outline:none; }
+    .list-item { padding:14px 15px; border-bottom:1px solid #f1f5f9; cursor:pointer; }
+    .list-item:hover,.list-item.active { background:#f8fafc; }
+    .list-item .name { font-weight:850; color:var(--text-dark); font-size:.8rem; }
+    .list-item .sub { font-size:.72rem; color:#64748b; margin-top:3px; }
+    .list-item .preview { font-size:.73rem; color:#475569; margin-top:7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .badge { font-size:.59rem; padding:4px 7px; border-radius:999px; background:#f1f5f9; color:#64748b; font-weight:900; }
+    .badge.unread { background:#ecfdf5; color:#047857; }
+    .badge.high { background:#fef2f2; color:#b91c1c; }
+
+    .empty { padding:55px 20px; text-align:center; color:#94a3b8; font-size:.82rem; }
+    .detail-empty { height:100%; display:flex; align-items:center; justify-content:center; }
+    .detail-head { padding:20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; gap:15px; }
+    .detail-head h3 { margin:0; color:var(--text-dark); }
+    .detail-head p { margin:4px 0 0; color:var(--text-muted); font-size:.75rem; }
+    .chat-log { height:430px; overflow:auto; padding:20px; background:#fafbfc; }
+    .bubble-row { display:flex; width:100%; margin-bottom:12px; }
+    .bubble-row.client { justify-content:flex-start; }
+    .bubble-row.admin { justify-content:flex-end; }
+    .bubble { max-width:76%; padding:11px 14px; border-radius:14px; }
+    .bubble.client { background:#f1f5f9; color:var(--text-dark); border-radius:14px 14px 14px 3px; }
+    .bubble.admin { background:var(--text-dark); color:#fff; border-radius:14px 14px 3px 14px; }
+    .bubble-meta { display:flex; justify-content:space-between; gap:12px; font-size:.61rem; font-weight:850; opacity:.78; margin-bottom:5px; }
+    .bubble p { margin:0; white-space:pre-wrap; word-break:break-word; font-size:.79rem; line-height:1.48; }
+
+    .composer { padding:13px; border-top:1px solid var(--border-color); display:flex; gap:8px; }
+    .composer textarea { flex:1; border:1px solid var(--border-color); border-radius:6px; padding:10px; min-height:45px; resize:none; outline:none; }
+    .primary { background:var(--text-dark); color:#fff; border:0; border-radius:6px; padding:10px 15px; font-weight:850; }
+    .secondary { background:#fff; color:#475569; border:1px solid var(--border-color); border-radius:6px; padding:9px 13px; font-weight:800; }
+    .danger { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; border-radius:6px; padding:9px 13px; font-weight:800; }
+
+    .ticket-card { border:1px solid var(--border-color); border-left:4px solid #cbd5e1; border-radius:10px; padding:15px; background:#fff; cursor:pointer; }
+    .ticket-card:hover { box-shadow:0 8px 20px rgba(15,23,42,.06); }
+    .ticket-card.high { border-left-color:#ef4444; }
+    .ticket-card.medium { border-left-color:#f59e0b; }
+    .ticket-card.low { border-left-color:#94a3b8; }
+    .ticket-card.urgent { border-left-color:#b91c1c; }
+    .ticket-list { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .eyebrow { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:#64748b; font-weight:900; }
+    .ticket-title { margin:7px 0 4px; font-weight:850; color:var(--text-dark); font-size:.9rem; }
+    .ticket-desc { margin:0; color:#475569; font-size:.78rem; line-height:1.45; }
+    .ticket-footer { display:flex; justify-content:space-between; margin-top:10px; padding-top:9px; border-top:1px solid #f1f5f9; font-size:.66rem; color:#94a3b8; }
+
+    .notice-card { border:1px solid var(--border-color); border-left:4px solid var(--emerald); border-radius:10px; padding:15px; }
+    .notice-card h4 { margin:7px 0 5px; color:var(--text-dark); }
+    .notice-card p { margin:0; color:#475569; font-size:.8rem; line-height:1.5; white-space:pre-wrap; }
+    .notice-actions { margin-top:12px; display:flex; gap:8px; }
+
+    .detail-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:18px; }
+    .detail-box { background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; padding:11px; }
+    .detail-box span { display:block; color:#94a3b8; font-size:.6rem; text-transform:uppercase; font-weight:900; }
+    .detail-box strong { display:block; color:var(--text-dark); font-size:.76rem; margin-top:4px; }
+    .description { margin:0 18px 18px; padding:15px; border:1px solid var(--border-color); border-radius:6px; color:#475569; font-size:.8rem; line-height:1.5; white-space:pre-wrap; }
+
+    .compose { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field.full { grid-column:1/-1; }
+    .field label { font-size:.65rem; text-transform:uppercase; font-weight:900; color:#475569; }
+    .field input,.field textarea,.field select { border:1px solid var(--border-color); border-radius:6px; padding:10px; outline:none; }
+    .field textarea { min-height:130px; resize:vertical; }
+    .notice { display:none; padding:10px 12px; border-radius:6px; font-size:.75rem; font-weight:800; margin-bottom:12px; }
+    .notice.success { display:block; background:#ecfdf5; color:#047857; }
+    .notice.error { display:block; background:#fef2f2; color:#b91c1c; }
+
+    @media(max-width:991px){
+      .content { padding:28px 20px 40px; }
+      .metrics { grid-template-columns:repeat(2,1fr); }
+      .split { grid-template-columns:1fr; }
+      .list-pane { border-right:0; border-bottom:1px solid var(--border-color); max-height:280px; }
+      .ticket-list { grid-template-columns:1fr; }
+      .detail-grid { grid-template-columns:repeat(2,1fr); }
+    }
+
+    @media(max-width:650px){
+      .content { padding:20px 16px 35px; }
+      .metrics { grid-template-columns:1fr 1fr; }
+      .compose { grid-template-columns:1fr; }
+      .detail-grid { grid-template-columns:1fr 1fr; }
+      .bubble { max-width:90%; }
+    }
+
+  </style>
+</head>
+<body>
+<div class="dashboard-wrapper">
+  <main class="portal-main">
+    <header class="portal-header">
+      <div class="welcome-text">
+        <h1>Client Communications Center</h1>
+        <p>Client messages, support tickets, and incoming notifications in one workspace.</p>
+      </div>
+      <div class="header-actions-wrapper">
+        <div class="header-clock-pill" style="display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid var(--border-color);padding:8px 12px;border-radius:6px;font-size:.78rem;font-weight:700;">
+          <span aria-hidden="true">⏱️</span>
+          <span id="portal-clock">--:--:--</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="hero">
+        <h2>Support Desk Communications</h2>
+        <p>Respond to client conversations, manage formal support tickets, and review incoming client activity. Outbound account notifications remain available as a separate compose action.</p>
+        <div class="metrics">
+          <div class="metric"><span>Unread Messages</span><strong id="metricMessages">0</strong></div>
+          <div class="metric"><span>Open Tickets</span><strong id="metricTickets">0</strong></div>
+          <div class="metric"><span>Client Notifications</span><strong id="metricNotifications">0</strong></div>
+          <div class="metric"><span>High / Urgent</span><strong id="metricPriority">0</strong></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-view="messages">💬 Client Messages <span class="count" id="messageTabCount">0</span></button>
+        <button class="tab" data-view="tickets">🎫 Support Tickets <span class="count" id="ticketTabCount">0</span></button>
+        <button class="tab" data-view="notifications">🔔 Client Notifications <span class="count" id="notificationTabCount">0</span></button>
+        <button class="tab" data-view="compose">✉️ Send Notification</button>
+      </div>
+
+      <section id="messagesView" class="panel">
+        <div class="split">
+          <div class="list-pane">
+            <div class="list-toolbar"><input class="search" id="messageSearch" placeholder="Search client or email..."></div>
+            <div id="conversationList"><div class="empty">Loading client conversations...</div></div>
+          </div>
+          <div class="detail-pane" id="conversationDetail"><div class="detail-empty"><div class="empty">Select a client conversation.</div></div></div>
+        </div>
+      </section>
+
+      <section id="ticketsView" class="panel" style="display:none">
+        <div class="panel-head"><div><h3>Support Ticket Queue</h3><p>Formal client support cases requiring tracking and assignment.</p></div><button class="secondary" id="refreshTicketsBtn">Refresh</button></div>
+        <div class="panel-body"><div id="ticketList" class="ticket-list"><div class="empty">Loading tickets...</div></div></div>
+        <div id="ticketDetail" style="display:none"></div>
+      </section>
+
+      <section id="notificationsView" class="panel" style="display:none">
+        <div class="panel-head"><div><h3>Incoming Client Notifications</h3><p>Activity alerts generated by client actions and platform events.</p></div><button class="secondary" id="refreshNotificationsBtn">Refresh</button></div>
+        <div class="panel-body"><div id="incomingNotificationList"><div class="empty">Loading client notifications...</div></div></div>
+      </section>
+
+      <section id="composeView" class="panel" style="display:none">
+        <div class="panel-head"><div><h3>Send Client Notification</h3><p>Publish an official account notice to a selected client.</p></div></div>
+        <div class="panel-body">
+          <div id="composeNotice" class="notice"></div>
+          <form id="composeForm" class="compose">
+            <div class="field"><label>Client</label><select id="recipientSelect" required><option value="">Loading clients...</option></select></div>
+            <div class="field"><label>Subject</label><input id="notificationTitle" required placeholder="e.g. Filing Update"></div>
+            <div class="field full"><label>Message</label><textarea id="notificationMessage" required placeholder="Write the official notice the client should see in Support & Communications."></textarea></div>
+            <div style="grid-column:1/-1;display:flex;justify-content:flex-end"><button class="primary" id="sendNotificationBtn" type="submit">Send Notification</button></div>
+          </form>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+
+
+</div>
+
+<script src="assets/js/admin-navigation.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async()=>{
+  "use strict";
+  (function securityShield(){
+    const key="sb-lrbimrlbskjweynxlgas-auth-token";
+    let raw=null; try{raw=localStorage.getItem(key)}catch(e){}
+    let ok=false,role=null;
+    try{const s=raw?JSON.parse(raw):null;if(s?.access_token){ok=true;role=s.user?.user_metadata?.role||"";if(!role&&s.user?.email?.toLowerCase().endsWith("@filings4u.com"))role="admin"}}catch(e){}
+    if(!ok){window.location.replace("admin-login.html");return}
+    if(role!=="admin"){window.location.replace("client-dashboard.html");return}
+  })();
+
+  const client=window.supabaseInstance||window.supabaseClient||window.supabase;
+  if(!client||typeof client.from!=="function"){alert("Admin communications workspace could not initialize.");return}
+  let session=null,selectedClient=null,conversationRows=[],ticketRows=[],incomingRows=[],channels=[];
+
+  const esc=v=>String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  const fmt=v=>v?new Date(v).toLocaleString([],{dateStyle:"medium",timeStyle:"short"}):"—";
+
+  function setView(view){
+    document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+    ["messages","tickets","notifications","compose"].forEach(x=>document.getElementById(x+"View").style.display=x===view?"":"none");
+  }
+  document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
+
+  async function loadClients(){
+    const {data,error}=await client.from("client_profiles").select("id,email_address,first_name,last_name,company_name").order("email_address");
+    if(error)throw error;
+    const select=document.getElementById("recipientSelect");
+    select.innerHTML='<option value="">-- Select Client --</option>';
+    (data||[]).forEach(c=>{
+      if(!c.email_address)return;
+      const opt=document.createElement("option");
+      opt.value=c.email_address.toLowerCase();
+      opt.dataset.clientId=c.id;
+      opt.textContent=`${c.first_name||""} ${c.last_name||""}`.trim()||c.email_address;
+      opt.textContent += ` — ${c.email_address}`;
+      select.appendChild(opt);
+    });
+  }
+
+  async function loadIncomingNotifications(){
+    const {data,error}=await client.from("system_notifications").select("*").order("created_at",{ascending:false}).limit(200);
+    if(error)throw error;
+    incomingRows=data||[];
+    const unread=incomingRows.filter(x=>x.is_read_by_admin===false).length;
+    document.getElementById("metricNotifications").textContent=unread;
+    document.getElementById("notificationTabCount").textContent=unread;
+    const box=document.getElementById("incomingNotificationList");
+    if(!incomingRows.length){box.innerHTML='<div class="empty">No incoming client notifications.</div>';return}
+    box.innerHTML="";
+    incomingRows.forEach(n=>{
+      const card=document.createElement("article");card.className="notice-card";
+      const unreadClass=n.is_read_by_admin===false?"unread":"";
+      card.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px"><span class="eyebrow">${esc(n.source_action||"Client Activity")}</span><span class="badge ${unreadClass}">${n.is_read_by_admin===false?"New":"Read"}</span></div>
+      <h4>${esc(n.alert_title||"Client Notification")}</h4><p>${esc(n.alert_message||"")}</p>
+      <div style="margin-top:9px;color:#94a3b8;font:600 .66rem monospace">${esc(n.client_email||"")} · ${esc(fmt(n.created_at))}</div>
+      <div class="notice-actions"><button class="secondary respondNotificationBtn">Respond to Client</button><button class="secondary markNotificationBtn">${n.is_read_by_admin===false?"Mark Read":"Mark Unread"}</button></div>`;
+      card.querySelector(".respondNotificationBtn").addEventListener("click",()=>openConversationByEmail(n.client_email,n.alert_message||""));
+      card.querySelector(".markNotificationBtn").addEventListener("click",async()=>{
+        await client.from("system_notifications").update({is_read_by_admin:n.is_read_by_admin===false?true:false}).eq("id",n.id);
+        loadIncomingNotifications();
+      });
+      box.appendChild(card);
+    });
+  }
+
+  async function loadMessages(){
+    const {data,error}=await client.from("chat_messages").select("*").order("created_at",{ascending:false}).limit(1000);
+    if(error)throw error;
+    const rows=data||[];
+    const groups=new Map();
+    rows.forEach(r=>{
+      const email=String(r.email_address||"").trim().toLowerCase();
+      const key=String(r.id||email);
+      if(!groups.has(key))groups.set(key,{id:key,email,first_name:r.first_name||"",last_name:r.last_name||"",company_name:r.company_name||"",rows:[]});
+      groups.get(key).rows.push(r);
+    });
+    conversationRows=[...groups.values()];
+    const unread=rows.filter(r=>String(r.sender_type||"").toLowerCase()==="client"&&r.is_read_by_admin===false).length;
+    document.getElementById("metricMessages").textContent=unread;
+    document.getElementById("messageTabCount").textContent=unread;
+    renderConversationList(conversationRows);
+  }
+
+  function renderConversationList(groups){
+    const box=document.getElementById("conversationList");
+    if(!groups.length){box.innerHTML='<div class="empty">No client conversations found.</div>';return}
+    box.innerHTML="";
+    groups.forEach(g=>{
+      const last=[...g.rows].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+      const unread=g.rows.filter(r=>String(r.sender_type||"").toLowerCase()==="client"&&r.is_read_by_admin===false).length;
+      const item=document.createElement("div");item.className="list-item";
+      item.dataset.search=`${g.email} ${g.first_name} ${g.last_name} ${g.company_name}`.toLowerCase();
+      item.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><div class="name">${esc((g.first_name+" "+g.last_name).trim()||g.email||"Client")}</div>${unread?`<span class="badge unread">${unread}</span>`:""}</div>
+      <div class="sub">${esc(g.company_name||g.email||"")}</div><div class="preview">${esc(last?.message_content||"No message")}</div>`;
+      item.addEventListener("click",()=>openConversation(g));
+      box.appendChild(item);
+    });
+  }
+
+  document.getElementById("messageSearch").addEventListener("input",e=>{
+    const q=e.target.value.toLowerCase().trim();
+    document.querySelectorAll("#conversationList .list-item").forEach(x=>x.style.display=!q||x.dataset.search.includes(q)?"":"none");
+  });
+
+  async function openConversationByEmail(email,context=""){
+    if(!email)return;
+    const group=conversationRows.find(g=>g.email===String(email).toLowerCase());
+    if(group){openConversation(group);return}
+    selectedClient={id:null,email:String(email).toLowerCase(),first_name:"",last_name:"",company_name:""};
+    renderConversationDetail([],context);
+  }
+
+  async function openConversation(g,context=""){
+    selectedClient=g;
+    renderConversationDetail(g.rows,context);
+    const clientMessages=g.rows.filter(r=>String(r.sender_type||"").toLowerCase()==="client"&&r.is_read_by_admin===false);
+    if(clientMessages.length){
+      await client.from("chat_messages").update({is_read_by_admin:true}).eq("id",g.id).eq("sender_type","client").eq("is_read_by_admin",false);
+      await loadMessages();
+    }
+  }
+
+  function renderConversationDetail(rows,context=""){
+    const box=document.getElementById("conversationDetail");
+    const sorted=[...(rows||[])].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    box.innerHTML=`<div class="detail-head"><div><h3>${esc((selectedClient?.first_name+" "+selectedClient?.last_name).trim()||selectedClient?.email||"Client Conversation")}</h3><p>${esc(selectedClient?.company_name||"")} ${selectedClient?.email?`· ${esc(selectedClient.email)}`:""}</p></div><span class="badge">Support Conversation</span></div>
+      ${context?`<div style="margin:14px 18px 0;padding:11px;background:#f8fafc;border:1px solid var(--border);border-radius:9px;font-size:.74rem;color:#475569"><strong>Incoming notification:</strong><br>${esc(context)}</div>`:""}
+      <div class="chat-log" id="adminChatLog">${sorted.length?sorted.map(m=>{const isClient=String(m.sender_type||"").toLowerCase()==="client";return `<div class="bubble-row ${isClient?"client":"admin"}"><div class="bubble ${isClient?"client":"admin"}"><div class="bubble-meta"><span>${isClient?"Client":"Support Desk"}</span><span>${esc(fmt(m.created_at))}</span></div><p>${esc(m.message_content||"")}</p></div></div>`}).join(""):`<div class="empty">No chat messages yet. Start the conversation below.</div>`}</div>
+      <div class="composer"><textarea id="adminReplyInput" placeholder="Reply to this client..."></textarea><button class="primary" id="sendAdminReplyBtn">Send Reply</button></div>`;
+    const log=document.getElementById("adminChatLog");log.scrollTop=log.scrollHeight;
+    document.getElementById("sendAdminReplyBtn").addEventListener("click",sendAdminReply);
+  }
+
+  async function sendAdminReply(){
+    if(!selectedClient)return;
+    const input=document.getElementById("adminReplyInput");const text=input.value.trim();if(!text)return;
+    const btn=document.getElementById("sendAdminReplyBtn");btn.disabled=true;
+    try{
+      if(!selectedClient.id){
+        const {data:p}=await client.from("client_profiles").select("id,first_name,last_name,company_name,phone_number,street_address,city,state,zip_code,tracking_number,sync_encryption_status,avatar_url,stripe_customer_id").eq("email_address",selectedClient.email).maybeSingle();
+        if(!p)throw new Error("Client profile could not be resolved.");
+        selectedClient={...selectedClient,...p}; 
+      }
+      const payload={id:selectedClient.id,email_address:selectedClient.email,first_name:selectedClient.first_name||null,last_name:selectedClient.last_name||null,company_name:selectedClient.company_name||null,phone_number:selectedClient.phone_number||null,street_address:selectedClient.street_address||null,city:selectedClient.city||null,state:selectedClient.state||null,zip_code:selectedClient.zip_code||null,tracking_number:selectedClient.tracking_number||null,sync_encryption_status:selectedClient.sync_encryption_status||"Active",avatar_url:selectedClient.avatar_url||null,stripe_customer_id:selectedClient.stripe_customer_id||null,message_content:text,sender_type:"admin",is_read_by_admin:true,is_read_by_client:false,created_at:new Date().toISOString()};
+      const {error}=await client.from("chat_messages").insert([payload]);if(error)throw error;
+      input.value="";await loadMessages();const g=conversationRows.find(x=>x.id===selectedClient.id||x.email===selectedClient.email);if(g)renderConversationDetail(g.rows);
+    }catch(err){alert(`Reply failed: ${err.message}`)}finally{btn.disabled=false}
+  }
+
+  async function loadTickets(){
+    const {data,error}=await client.from("support_tickets").select("*").order("updated_at",{ascending:false});
+    if(error)throw error;ticketRows=data||[];
+    const open=ticketRows.filter(t=>!["Resolved","Closed"].includes(String(t.status))).length;
+    const high=ticketRows.filter(t=>["High","Urgent"].includes(String(t.priority))).length;
+    document.getElementById("metricTickets").textContent=open;document.getElementById("ticketTabCount").textContent=open;document.getElementById("metricPriority").textContent=high;
+    renderTickets();
+  }
+
+  function renderTickets(){
+    const box=document.getElementById("ticketList");if(!ticketRows.length){box.innerHTML='<div class="empty">No support tickets found.</div>';return}
+    box.innerHTML="";
+    ticketRows.forEach(t=>{
+      const card=document.createElement("article");const pri=String(t.priority||"Medium").toLowerCase();card.className=`ticket-card ${pri}`;
+      card.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px"><span class="eyebrow">${esc(t.ticket_id||"Ticket")}</span><span class="badge ${pri==="high"||pri==="urgent"?"high":""}">${esc(t.priority||"Medium")}</span></div><h4 class="ticket-title">${esc(t.subject||"Support Request")}</h4><p class="ticket-desc">${esc((t.description||"").slice(0,230))}${(t.description||"").length>230?"…":""}</p><div class="ticket-footer"><span>${esc(t.company_name||t.email_address||"Client")}</span><span>${esc(t.status||"New")} · ${esc(fmt(t.updated_at||t.created_at))}</span></div>`;
+      card.addEventListener("click",()=>openTicket(t));box.appendChild(card);
+    });
+  }
+
+  function openTicket(t){
+    const box=document.getElementById("ticketDetail");document.getElementById("ticketList").style.display="none";box.style.display="";
+    box.innerHTML=`<div class="panel-head"><div><h3>${esc(t.subject||"Support Ticket")}</h3><p>${esc(t.ticket_id||"")} · ${esc(t.company_name||t.email_address||"")}</p></div><button class="secondary" id="backTicketsBtn">Back to Queue</button></div>
+      <div class="detail-grid"><div class="detail-box"><span>Priority</span><strong>${esc(t.priority||"Medium")}</strong></div><div class="detail-box"><span>Status</span><strong>${esc(t.status||"New")}</strong></div><div class="detail-box"><span>Assigned Agent</span><strong>${esc(t.assigned_agent||"Unassigned")}</strong></div><div class="detail-box"><span>Updated</span><strong>${esc(fmt(t.updated_at||t.created_at))}</strong></div></div>
+      <div class="description">${esc(t.description||"")}</div>
+      <div class="panel-body" style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="ticketReplyBtn">Reply to Client</button><select id="ticketStatusSelect" style="border:1px solid var(--border);border-radius:9px;padding:9px"><option ${t.status==="New"?"selected":""}>New</option><option ${t.status==="In Progress"?"selected":""}>In Progress</option><option ${t.status==="Waiting on Client"?"selected":""}>Waiting on Client</option><option ${t.status==="Resolved"?"selected":""}>Resolved</option><option ${t.status==="Closed"?"selected":""}>Closed</option></select><button class="secondary" id="saveTicketStatusBtn">Save Status</button></div>`;
+    document.getElementById("backTicketsBtn").addEventListener("click",()=>{box.style.display="none";document.getElementById("ticketList").style.display=""});
+    document.getElementById("ticketReplyBtn").addEventListener("click",()=>{setView("messages");openConversationByEmail(t.email_address,`Ticket ${t.ticket_id||""}: ${t.subject||""}`)});
+    document.getElementById("saveTicketStatusBtn").addEventListener("click",async()=>{const status=document.getElementById("ticketStatusSelect").value;const {error}=await client.from("support_tickets").update({status,updated_at:new Date().toISOString()}).eq("id",t.id);if(error)alert(error.message);else{t.status=status;await loadTickets();openTicket(t)}});
+  }
+
+  document.getElementById("refreshTicketsBtn").addEventListener("click",loadTickets);
+  document.getElementById("refreshNotificationsBtn").addEventListener("click",loadIncomingNotifications);
+
+  document.getElementById("composeForm").addEventListener("submit",async e=>{
+    e.preventDefault();const btn=document.getElementById("sendNotificationBtn"),notice=document.getElementById("composeNotice");btn.disabled=true;notice.className="notice";
+    try{
+      const email=document.getElementById("recipientSelect").value,title=document.getElementById("notificationTitle").value.trim(),message=document.getElementById("notificationMessage").value.trim();if(!email||!title||!message)throw new Error("Client, subject, and message are required.");
+      const {error}=await client.from("portal_notifications").insert([{title,message,is_read:false,is_archived:false,recipient_email:email,email_address:email,created_at:new Date().toISOString()}]);if(error)throw error;
+      notice.textContent="Notification sent successfully.";notice.className="notice success";e.target.reset();await loadIncomingNotifications();
+    }catch(err){notice.textContent=`Unable to send notification: ${err.message}`;notice.className="notice error"}finally{btn.disabled=false}
+  });
+
+  async function bindRealtime(){
+    channels.forEach(c=>client.removeChannel(c));channels=[];
+    channels.push(client.channel("admin-client-chat-live").on("postgres_changes",{event:"*",schema:"public",table:"chat_messages"},async()=>loadMessages()).subscribe());
+    channels.push(client.channel("admin-support-tickets-live").on("postgres_changes",{event:"*",schema:"public",table:"support_tickets"},async()=>loadTickets()).subscribe());
+    channels.push(client.channel("admin-client-notifications-live").on("postgres_changes",{event:"*",schema:"public",table:"system_notifications"},async()=>loadIncomingNotifications()).subscribe());
+  }
+
+
+  try{
+    const {data,error}=await client.auth.getSession();if(error||!data.session){window.location.href="admin-login.html";return}session=data.session;
+    await Promise.all([loadClients(),loadMessages(),loadTickets(),loadIncomingNotifications()]);
+    await bindRealtime();
+  }catch(err){console.error(err);alert(`Client Communications Center error: ${err.message}`)}
+});
+</script>
+</body>
+</html>

@@ -1,70 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Support & Communications | filings4u</title>
+  <link rel="icon" type="image/png" href="images/fav.png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-config.js"></script>
 
-  <!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
-<script>
-  (function() {
-    "use strict";
-    // Define the exact project storage lookup path signature
-    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
-    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
-    
-    // Synchronously check local storage cache arrays before browser can paint any HTML elements
-    const rawSessionJson = localStorage.getItem(sessionTokenKey);
-    let isAuthenticated = false;
-    let userRole = null;
-
-    if (rawSessionJson) {
-      try {
-        const sessionData = JSON.parse(rawSessionJson);
-        if (sessionData && sessionData.access_token) {
-          isAuthenticated = true;
-          // Extract nested metadata flags out of JWT payload context securely
-          if (sessionData.user && sessionData.user.user_metadata) {
-            userRole = sessionData.user.user_metadata.role;
-          }
-          if (sessionData.user && !userRole && sessionData.user.email) {
-            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
-              userRole = 'admin';
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Security parsing failure:", e);
-      }
-    }
-
-    // Determine current view file track rules path parameters
-    const pagePathString = window.location.pathname.toLowerCase();
-    const isAdminViewPage = pagePathString.includes('/admin-');
-
-    if (!isAuthenticated) {
-      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
-      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
-      
-      // Inject CSS rule to hide everything in case browser delays routing
-      document.documentElement.style.display = "none";
-      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
-    }
-
-    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
-    if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
-      window.location.replace("client-dashboard.html");
-      document.documentElement.style.display = "none";
-      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
-    }
-  })();
-</script>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Corporate Support Center | filings4u</title>
   <style>
+    :root{
+      --navy:#0a1f44;--green:#10b981;--green-dark:#047857;--bg:#f4f6f9;
+      --white:#fff;--border:#e2e8f0;--muted:#64748b;--text:#0f172a;
+      --danger:#b91c1c;--warning:#b45309;--sidebar:260px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+    body{overflow-x:hidden}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    .dashboard-wrapper{min-height:100vh;display:flex}
+    .portal-sidebar{width:var(--sidebar);position:fixed;inset:0 auto 0 0;background:#fff;border-right:1px solid var(--border);z-index:1000;display:flex;flex-direction:column}
+    .sidebar-brand-block{padding:24px 20px;border-bottom:1px solid #f1f5f9;text-align:center}
+    .brand-name{font-size:1.05rem;font-weight:900;color:var(--navy)}
+    .brand-sub{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--green-dark);font-weight:800;margin-top:5px}
+    .sidebar-accordion-menu{padding:16px 12px;overflow:auto;flex:1}
+    .nav-section{margin:10px 0 5px;padding:0 10px;font-size:.65rem;font-weight:900;color:#94a3b8;letter-spacing:.1em;text-transform:uppercase}
+    .nav-item{display:flex;align-items:center;gap:9px;text-decoration:none;color:#475569;font-size:.82rem;font-weight:650;padding:10px 12px;border-radius:8px;margin:2px 0}
+    .nav-item:hover,.nav-item.active{background:#ecfdf5;color:var(--green-dark)}
+    .sidebar-footer-lock{padding:16px;border-top:1px solid var(--border);background:#f8fafc}
+    .logout-btn{width:100%;border:0;background:var(--navy);color:#fff;padding:10px;border-radius:8px;font-weight:800}
+    .portal-main{margin-left:var(--sidebar);width:calc(100% - var(--sidebar));min-height:100vh}
+    .portal-header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:1px solid var(--border);padding:18px 38px;display:flex;justify-content:space-between;align-items:center}
+    .header-title h1{margin:0;font-size:1.35rem;color:var(--navy)}
+    .header-title p{margin:4px 0 0;color:var(--muted);font-size:.8rem}
+    .clock{font:700 .78rem monospace;background:#f8fafc;border:1px solid var(--border);padding:8px 12px;border-radius:8px}
+    .content{padding:28px 38px 44px}
+    .hero{background:linear-gradient(135deg,#fff,#f8fffb);border:1px solid var(--border);border-radius:18px;padding:26px;display:flex;justify-content:space-between;gap:20px;align-items:center;box-shadow:0 8px 28px rgba(15,23,42,.04)}
+    .hero h2{margin:0;color:var(--navy);font-size:1.35rem}.hero p{margin:7px 0 0;color:var(--muted);font-size:.84rem;max-width:720px;line-height:1.5}
+    .hero-badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{padding:7px 11px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:.72rem;font-weight:800;white-space:nowrap}
+    .pill.green{background:#ecfdf5;color:#047857}.pill.red{background:#fef2f2;color:#b91c1c}
+    .tabs{display:flex;gap:8px;margin:22px 0 18px;flex-wrap:wrap}
+    .tab{border:1px solid var(--border);background:#fff;color:#475569;padding:10px 15px;border-radius:9px;font-weight:800;font-size:.78rem}
+    .tab.active{background:var(--navy);border-color:var(--navy);color:#fff}
+    .tab .count{margin-left:6px;opacity:.8}
+    .workspace{min-height:520px}
+    .panel{background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 22px rgba(15,23,42,.035)}
+    .panel-head{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .panel-head h3{margin:0;font-size:1rem;color:var(--navy)}.panel-head p{margin:4px 0 0;color:var(--muted);font-size:.76rem}
+    .panel-body{padding:20px}
+    .notification-list,.ticket-list{display:flex;flex-direction:column;gap:11px}
+    .notification-card,.ticket-card{border:1px solid var(--border);border-left:4px solid #cbd5e1;border-radius:12px;padding:16px;background:#fff;transition:.16s}
+    .notification-card:hover,.ticket-card:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(15,23,42,.06)}
+    .notification-card.unread{border-left-color:var(--green);background:linear-gradient(90deg,rgba(16,185,129,.04),#fff 38%)}
+    .row-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .eyebrow{font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;color:#64748b;font-weight:900}
+    .status{font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;font-weight:900;border-radius:999px;padding:5px 8px;background:#f1f5f9;color:#64748b}
+    .status.new,.status.open,.status.inprogress{background:#ecfdf5;color:#047857}
+    .status.high,.status.urgent{background:#fef2f2;color:#b91c1c}
+    .card-title{margin:8px 0 5px;font-weight:850;color:var(--navy);font-size:.92rem}
+    .card-message{margin:0;color:#475569;font-size:.82rem;line-height:1.5;white-space:pre-wrap}
+    .card-footer{margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;gap:10px;color:#94a3b8;font:600 .68rem monospace}
+    .empty{padding:55px 20px;text-align:center;color:#94a3b8;font-size:.84rem}
+    .chat-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px}
+    .chat-panel{height:600px;display:flex;flex-direction:column}
+    .chat-log{flex:1;overflow:auto;padding:22px;background:#fafbfc}
+    .bubble-row{display:flex;width:100%;margin-bottom:13px}
+    .bubble-row.client{justify-content:flex-end}.bubble-row.admin{justify-content:flex-start}
+    .bubble{max-width:76%;padding:12px 15px;border-radius:15px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .bubble.client{background:var(--navy);color:#fff;border-radius:15px 15px 3px 15px}
+    .bubble.admin{background:#f1f5f9;color:var(--navy);border-radius:15px 15px 15px 3px}
+    .bubble-meta{display:flex;justify-content:space-between;gap:14px;font-size:.64rem;font-weight:850;margin-bottom:5px;opacity:.82}
+    .bubble p{margin:0;white-space:pre-wrap;word-break:break-word;font-size:.82rem;line-height:1.48}
+    .composer{padding:13px;border-top:1px solid var(--border);display:flex;gap:8px;background:#fff}
+    .composer input{flex:1;border:1px solid var(--border);border-radius:9px;padding:10px 12px;outline:none}
+    .composer button{border:0;background:var(--navy);color:#fff;border-radius:9px;padding:0 16px;font-weight:800}
+    .side-card{padding:18px}.side-card h4{margin:0;color:var(--navy);font-size:.85rem}.side-card p{font-size:.76rem;color:var(--muted);line-height:1.5}
+    .quick-btn{width:100%;border:1px solid var(--border);background:#fff;padding:10px;border-radius:9px;text-align:left;font-weight:750;color:#334155;margin-top:8px}
+    .quick-btn:hover{border-color:var(--green);background:#ecfdf5}
+    .ticket-detail{display:none}.ticket-detail.active{display:block}
+    .ticket-detail-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.ticket-number{font:800 .7rem monospace;color:#64748b}
+    .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+    .detail-box{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:11px}.detail-box span{display:block;font-size:.62rem;text-transform:uppercase;color:#94a3b8;font-weight:900}.detail-box strong{display:block;margin-top:4px;font-size:.78rem;color:var(--navy)}
+    .description-box{padding:16px;background:#fff;border:1px solid var(--border);border-radius:10px;color:#475569;font-size:.82rem;line-height:1.55;white-space:pre-wrap}
+    .new-ticket{display:none}.new-ticket.active{display:block}
+    .form-grid{display:grid;grid-template-columns:2fr 1fr;gap:13px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:#475569;font-weight:850}.field input,.field textarea,.field select{border:1px solid var(--border);border-radius:9px;padding:10px 12px;outline:none;background:#fff}.field textarea{min-height:150px;resize:vertical}.primary{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:11px 16px;font-weight:850}.secondary{background:#fff;color:#475569;border:1px solid var(--border);border-radius:9px;padding:10px 14px;font-weight:800}
+    .notice{padding:11px 13px;border-radius:9px;font-size:.76rem;font-weight:750;display:none;margin-bottom:12px}.notice.success{display:block;background:#ecfdf5;color:#047857}.notice.error{display:block;background:#fef2f2;color:#b91c1c}
+    @media(max-width:1050px){.portal-sidebar{display:none}.portal-main{margin-left:0;width:100%}.chat-layout{grid-template-columns:1fr}.hero{align-items:flex-start;flex-direction:column}.hero-badges{justify-content:flex-start}.detail-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:650px){.portal-header,.content{padding-left:16px;padding-right:16px}.hero{padding:19px}.panel-head,.panel-body{padding:15px}.form-grid{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr 1fr}.bubble{max-width:88%}.composer{padding:10px}.composer button{padding:0 12px}.header-title h1{font-size:1.1rem}.clock{display:none}}
+  </style>
+
+   <style>
     /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
     :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
     body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
@@ -96,793 +124,378 @@
     .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
     .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
   </style>
-  <style>
-    :root {
-      --bg-light: #f4f6f9;
-      --white: #ffffff;
-      --border-color: #e2e8f0;
-      --text-dark: #0a1f44;
-      --text-muted: #475569;
-      --emerald: #10b981;
-    }
-    body, html {
-      margin: 0 !important; padding: 0 !important;
-      min-height: 100vh !important;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-      background-color: var(--bg-light) !important;
-      color: var(--text-dark) !important;
-    }
-    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; }
-    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; width: 100% !important; box-sizing: border-box !important; }
-    .portal-header { background: var(--white) !important; padding: 12px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; min-height: 60px !important; }
-  </style>
 </head>
 <body>
-  <div class="dashboard-wrapper">
-<main class="portal-main">
-  <header class="portal-header">
-    <div class="welcome-text">
-      <h1 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-dark);">Welcome Back, <span id="clientNameField" style="color: #10b981;">Client</span></h1>
-    </div>
-    <div style="display: flex; align-items: center; gap: 16px;">
-      <div class="header-clock-pill" style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px; height: 32px;">
-        <span>⏱️</span><span id="portal-clock">Syncing...</span>
-      </div>
-    </div>
-  </header>
+<div class="dashboard-wrapper">
 
-  <!-- SYSTEM STATUS ALERT BAR -->
-  <div style="padding: 0 40px; margin-top: 24px; box-sizing: border-box; width: 100%;">
-    <div id="status-strip-notification" style="padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:10px; background:#e2e8f0; color:#475569; border:1px solid #cbd5e1; box-sizing: border-box; width: 100%;">
-      <div class="status-pulse-dot" style="width: 8px; height: 8px; background: #64748b; border-radius: 50%; flex-shrink: 0;"></div>
-      <span id="status-strip-text-target">Analyzing desk operation timetables framework...</span>
-    </div>
-  </div>
-  <!-- METADATA CARD AT THE TOP OF THE CONTENT STACK -->
-  <div id="profileTransmissionDataCard" style="display: none; padding: 0 40px; margin-top: 16px; box-sizing: border-box; width: 100%;">
-    <div style="padding: 20px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; box-sizing: border-box; width: 100%;">
-      <h4 style="margin: 0 0 8px 0; font-size: 0.75rem; font-weight: 800; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">🛡️ Unified Profile Metadata Synchronization Token</h4>
-      <pre id="profileHandshakeVerificationString" style="margin: 0; font-family: monospace; font-size: 0.75rem; color: #334155; line-height: 1.5; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); overflow-x: auto; font-weight: 600;"></pre>
-    </div>
-  </div>
 
-  <!-- THE VERTICAL STRETCH CONTENT CONTAINER -->
-  <div style="display: flex; flex-direction: column; gap: 32px; padding: 24px 40px 40px 40px; box-sizing: border-box; width: 100%; flex: 1;">
-    
-    <!-- FULL SCREEN CHAT PANEL -->
-    <div id="liveChatWorkspacePanel" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; flex-direction: column; height: 580px; box-sizing: border-box; position: relative; width: 100%;">
-      <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: #f8fafc; border-radius: 12px 12px 0 0;">
-        <h3 style="margin: 0; font-size: 0.9rem; font-weight: 800; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.5px;">💬 Real-Time Live Messaging Channel</h3>
-      </div>
-      <div id="clientChatMessagesLog" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; background: #fafbfc;">
-        <div style="text-align: center; color: #94a3b8; font-size: 0.8rem; font-style: italic; padding-top: 40px;">Synchronizing message pipelines...</div>
-      </div>
-      <div id="chatUploadPreviewBar" style="display: none; padding: 8px 16px; background: #e0f2fe; border-top: 1px solid var(--border-color); align-items: center; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #0369a1;">
-        <span id="chatUploadPreviewFileNameString">📎 Attachment Ready</span>
-        <button type="button" id="chatCancelUploadBtn" style="background: none; border: none; color: #ef4444; font-weight: 800; cursor: pointer; font-size: 0.8rem;">Remove ✕</button>
-      </div>
-      <div style="padding: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; background: #ffffff; border-radius: 0 0 12px 12px; box-sizing: border-box; width: 100%;">
-        <button type="button" id="chatPaperclipTriggerBtn" style="background: #f1f5f9; border: 1px solid var(--border-color); width: 38px; height: 38px; border-radius: 6px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">📎</button>
-        <input type="file" id="chatHiddenBinaryFileInputElement" style="display: none !important;">
-        <input type="text" id="clientChatMessageInputField" placeholder="Type your dynamic support case response text here..." style="flex: 1; height: 38px; padding: 0 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; box-sizing: border-box;">
-        <button type="button" id="clientChatSendButton" style="background: #0a1f44; color: #ffffff; border: none; padding: 0 16px; height: 38px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 4px rgba(10,31,68,0.15);">Send Message</button>
-      </div>
-    </div>
-    <!-- FULL SCREEN STRUCTURED DESK CASE TICKET SYSTEM FORM -->
-    <div id="afterHoursTicketFormPanel" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); padding: 24px; box-sizing: border-box; display: none; flex-direction: column; width: 100%;">
-      <h3 style="margin: 0 0 4px 0; font-size: 1rem; font-weight: 800; color: var(--text-dark);">📥 Structured Desk Case Ticket System</h3>
-      <p style="margin: 0 0 20px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">Submit an offline case file tracking node directly to our support desk operators for prioritized request processing logs.</p>
-      
-      <form id="structuredSupportTicketForm" style="display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 0; box-sizing: border-box; width: 100%;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%;">
-          <div>
-            <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dark); margin-bottom: 4px;">First Name</label>
-            <input type="text" id="ticketFirstName" disabled style="width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); background: #f1f5f9; border-radius: 6px; font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dark); margin-bottom: 4px;">Last Name</label>
-            <input type="text" id="ticketLastName" disabled style="width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); background: #f1f5f9; border-radius: 6px; font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%;">
-          <div>
-            <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dark); margin-bottom: 4px;">Account Email</label>
-            <input type="text" id="ticketEmailAddress" disabled style="width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); background: #f1f5f9; border-radius: 6px; font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dark); margin-bottom: 4px;">Callback Phone</label>
-            <input type="text" id="ticketPhoneNumber" disabled style="width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); background: #f1f5f9; border-radius: 6px; font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; width: 100%;">
-          <div>
-            <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dark); margin-bottom: 4px;">Inquiry Subject</label>
-            <input type="text" id="ticketSubject" required placeholder="e.g. Corporate Amendment Filing Delay" style="width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; outline: none;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dark); margin-bottom: 4px;">Case Priority</label>
-            <select id="ticketPriority" style="width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); background: #ffffff; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; outline: none; font-weight: 600;">
-              <option value="Low">Low</option>
-              <option value="Medium" selected>Medium</option>
-              <option value="High">High</option>
-              <option value="Urgent">Urgent</option>
-            </select>
-          </div>
-        </div>
+  <main class="portal-main">
+    <header class="portal-header">
+      <div class="header-title"><h1>Support & Communications</h1><p>Notifications, support messages, and support tickets in one place.</p></div>
+      <div class="clock" id="portalClock">Syncing...</div>
+    </header>
+
+    <section class="content">
+      <div class="hero">
         <div>
-          <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-dark); margin-bottom: 4px;">Granular Description Narrative</label>
-          <textarea id="ticketMessagePayload" required placeholder="Provide granular operational directives..." style="width: 100%; height: 140px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; box-sizing: border-box; resize: none; font-family: inherit; line-height: 1.45;"></textarea>
+          <h2>How can we help, <span id="clientName">Client</span>?</h2>
+          <p>Your official account notifications, live support conversation, and support cases are now managed from one secure workspace.</p>
         </div>
-        <button type="submit" style="background: #0a1f44; color: #ffffff; border: none; padding: 0 20px; height: 42px; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; box-shadow: 0 2px 4px rgba(10,31,68,0.15); margin-top: 6px; width: 100%;">Submit Prioritized Support Ticket ➔</button>
-      </form>
-    </div>
-  </div>
-</main>
-
-  </div>
-  <!-- 🔑 FORCED IDENTITY COMPLIANCE MODAL BACKDROP LAYER -->
-  <div id="forcedProfileComplianceModalMask" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; z-index: 9999; align-items: center; justify-content: center; box-sizing: border-box; padding: 20px;">
-    <div style="background: var(--white); width: 100%; max-width: 750px; padding: 36px 40px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); box-sizing: border-box; max-height: 95vh; overflow-y: auto;">
-      <div style="font-size: 2rem; margin-bottom: 6px; text-align: center;">👤</div>
-      <h3 style="margin: 0 0 4px 0; font-size: 1.3rem; font-weight: 800; text-align: center; color: var(--text-dark);">Profile Integration Required</h3>
-      <p style="margin: 0 0 20px 0; font-size: 0.83rem; text-align: center; color: var(--text-muted); line-height: 1.45; padding: 0 10px;">To open secure support channels, your record rows must align perfectly with standard identification profiles. Please fill out your system access variables below:</p>
-
-      
-        <!-- ROW 1: Names Config info fields -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">First Name</label>
-            <input type="text" id="setupFirstName" required style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Last Name</label>
-            <input type="text" id="setupLastName" required style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
+        <div class="hero-badges">
+          <span class="pill" id="unreadPill">0 Unread</span>
+          <span class="pill" id="openTicketPill">0 Open Tickets</span>
+          <span class="pill green">Secure Workspace</span>
         </div>
+      </div>
 
-        <!-- ROW 2: Contact metrics coordinates -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Callback Telephone Number</label>
-            <input type="text" id="setupPhoneNumber" placeholder="e.g. +1 (555) 0199" required style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Registered Corporate Entity Company Name</label>
-            <input type="text" id="setupCompanyName" placeholder="e.g. Acme Ventures LLC" style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
-        </div>
+      <div class="tabs">
+        <button class="tab active" data-view="notifications">🔔 Notifications <span class="count" id="notificationCount">0</span></button>
+        <button class="tab" data-view="messages">💬 Support Messages <span class="count" id="messageCount">0</span></button>
+        <button class="tab" data-view="tickets">🎫 Support Tickets <span class="count" id="ticketCount">0</span></button>
+      </div>
 
-        <!-- ROW 3: Address Line Row Block Parameter -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 12px;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Street Physical Address</label>
-            <input type="text" id="setupStreetAddress" required style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Filing Tracking ID Ref</label>
-            <input type="text" id="setupTrackingNumber" placeholder="Optional" style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
-        </div>
+      <div class="workspace">
+        <section class="panel view-panel" id="notificationsView">
+          <div class="panel-head"><div><h3>Account Notifications</h3><p>Official updates and alerts from the filings4u team.</p></div><button class="secondary" id="markAllReadBtn">Mark All Read</button></div>
+          <div class="panel-body"><div class="notification-list" id="notificationList"><div class="empty">Loading notifications...</div></div></div>
+        </section>
 
-        <!-- ROW 4: Region splits metrics layout parameters codes -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-top: 12px;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">City</label>
-            <input type="text" id="setupCity" required style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
+        <section class="view-panel" id="messagesView" style="display:none">
+          <div class="chat-layout">
+            <div class="panel chat-panel">
+              <div class="panel-head"><div><h3>Live Support Messages</h3><p>Use this conversation for questions and ongoing support.</p></div><span class="pill green" id="supportStatus">Checking...</span></div>
+              <div class="chat-log" id="chatLog"><div class="empty">Loading support messages...</div></div>
+              <div class="composer"><input id="chatInput" placeholder="Type a message to the support desk..."><button id="sendChatBtn">Send</button></div>
+            </div>
+            <div class="panel side-card">
+              <h4>Need a formal case?</h4>
+              <p>Use a support ticket when the request needs tracking, assignment, or a formal status.</p>
+              <button class="quick-btn" id="openTicketFromChat">🎫 Create Support Ticket</button>
+              <h4 style="margin-top:22px">Notifications</h4>
+              <p>Administrative notices are read here. To respond to an issue, use this support conversation instead of replying to the notification itself.</p>
+            </div>
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">State</label>
-            <input type="text" id="setupState" required style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Zip Postal Code</label>
-            <input type="text" id="setupZipCode" required style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #f8fafc; height: 38px; box-sizing: border-box;">
-          </div>
-        </div>
+        </section>
 
-        <!-- ROW 5: System Configuration parameters keys -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Account Email Address (Locked)</label>
-            <input type="text" id="setupEmailAddress" disabled style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #e2e8f0; color: #475569; font-weight: 600; cursor: not-allowed; height: 38px; box-sizing: border-box;">
+        <section class="view-panel" id="ticketsView" style="display:none">
+          <div class="panel" id="ticketListPanel">
+            <div class="panel-head"><div><h3>Support Tickets</h3><p>Track your formal support requests and their current status.</p></div><button class="primary" id="newTicketBtn">+ New Ticket</button></div>
+            <div class="panel-body"><div class="ticket-list" id="ticketList"><div class="empty">Loading support tickets...</div></div></div>
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-dark);">Stripe Customer Identifier Key</label>
-            <input type="text" id="setupStripeCustomerId" placeholder="Generated automatically on purchase billing" disabled style="display: block; width: 100%; padding: 10px 14px; border: 1px solid var(--border-color) !important; border-radius: 6px; font-size: 0.82rem; outline: none; background: #e2e8f0; color: #64748b; height: 38px; box-sizing: border-box; cursor: not-allowed;">
+
+          <div class="panel ticket-detail" id="ticketDetailPanel" style="margin-top:18px">
+            <div class="panel-head"><div><h3 id="detailSubject">Ticket</h3><p id="detailCompany"></p></div><button class="secondary" id="closeTicketDetail">Back to Tickets</button></div>
+            <div class="panel-body">
+              <div class="ticket-detail-head"><div class="ticket-number" id="detailTicketId"></div><span class="status" id="detailStatus"></span></div>
+              <div class="detail-grid">
+                <div class="detail-box"><span>Priority</span><strong id="detailPriority">—</strong></div>
+                <div class="detail-box"><span>Status</span><strong id="detailStatusText">—</strong></div>
+                <div class="detail-box"><span>Assigned Agent</span><strong id="detailAgent">—</strong></div>
+                <div class="detail-box"><span>Updated</span><strong id="detailUpdated">—</strong></div>
+              </div>
+              <div class="description-box" id="detailDescription"></div>
+              <div style="margin-top:16px;display:flex;gap:8px"><button class="primary" id="openTicketChatBtn">Open Support Messages</button></div>
+            </div>
           </div>
-        </div>
 
-        <div id="complianceFormErrorAlertBanner" style="display: none; color: #b91c1c; font-size: 0.78rem; font-weight: 700; background: #fef2f2; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(185,28,28,0.1); margin-top: 14px;"></div>
+          <div class="panel new-ticket" id="newTicketPanel" style="margin-top:18px">
+            <div class="panel-head"><div><h3>Create Support Ticket</h3><p>Submit a formal request to the support team.</p></div><button class="secondary" id="cancelNewTicket">Cancel</button></div>
+            <div class="panel-body">
+              <div id="ticketNotice" class="notice"></div>
+              <form id="newTicketForm">
+                <div class="form-grid">
+                  <div class="field"><label>Subject</label><input id="newTicketSubject" required placeholder="What do you need help with?"></div>
+                  <div class="field"><label>Priority</label><select id="newTicketPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+                  <div class="field full"><label>Description</label><textarea id="newTicketDescription" required placeholder="Describe the issue or request in detail."></textarea></div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="primary" type="submit" id="submitTicketBtn">Submit Support Ticket</button></div>
+              </form>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
 
-        <!-- MODAL INTERACTION FOOTER TRAYS ACTIONS -->
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 20px; width: 100%;">
-          <button type="button" id="modalDismissComplianceCloseBtn" style="background: #cbd5e1 !important; color: var(--text-dark) !important; border: none !important; padding: 0 14px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.85rem !important; cursor: pointer !important; height: 42px !important; box-sizing: border-box !important;">Close Window</button>
-          <button type="submit" id="modalComplianceSubmitBtn" style="background: #10b981; color: white; border: none; width: 100% !important; margin: 0 !important; height: 42px !important; font-weight: 700; border-radius: 6px; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 4px rgba(16,185,129,0.2);">Save Profile & Unlock Support Workspace Channels</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  <script src="assets/js/client-master-ledger.js"></script>
   <script src="assets/js/client-navigation.js"></script>
+
   <script src="assets/js/client-footer.js"></script>
 
-<!-- ⚙️ REAL-TIME SUPPORT DESK WORKSPACE CONTROLLER CORE -->
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
 
-  // --- 1. CORE DOM INTERFACE VIEWPORTS ---
-  const chatMessagesLog = document.getElementById("clientChatMessagesLog");
-  const complianceForm = document.getElementById("forcedIdentityComplianceSubmissionForm");
-  const modalSubmitBtn = document.getElementById("modalComplianceSubmitBtn");
-  const complianceModalMask = document.getElementById("forcedProfileComplianceModalMask");
-  const complianceFormErrorAlertBanner = document.getElementById("complianceFormErrorAlertBanner");
-  
-  // Interactive Outbound Message Triggers
-  const inputField = document.getElementById("clientChatMessageInputField");
-  const sendButton = document.getElementById("clientChatSendButton");
-  const paperclipBtn = document.getElementById("chatPaperclipTriggerBtn");
-  const hiddenFileInput = document.getElementById("chatHiddenBinaryFileInputElement");
-  const previewBar = document.getElementById("chatUploadPreviewBar");
-  const previewString = document.getElementById("chatUploadPreviewFileNameString");
-  const cancelUploadBtn = document.getElementById("chatCancelUploadBtn");
-
-  // State Management Scopes
-  let dedicatedClientInstance = null;
-  let liveChatSubscriptionChannel = null;
-  window.activeStagedFilePayload = null;
-  window.clientActiveUserId = "";
-  window.clientEmail = "";
-  
-  // Localized Profile Property Memory Caches for Inline Schema Mirroring
-  let cachedProfileRecord = {
-    first_name: "", last_name: "", phone_number: "", street_address: "",
-    city: "", state: "", zip_code: "", tracking_number: "", company_name: "",
-    sync_encryption_status: "Active", avatar_url: null, stripe_customer_id: null
-  };
-
-  // Visual XSS markup sanitizer helper tool
-  window.escapeClientChatMarkup = function(str) {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
-  };
-
-  function scrollChatTimelineToAbsoluteBottom() {
-    if (chatMessagesLog) chatMessagesLog.scrollTop = chatMessagesLog.scrollHeight;
+  const client = window.supabaseInstance || window.supabaseClient || window.supabase;
+  if (!client || typeof client.from !== "function") {
+    alert("Support workspace could not initialize. Supabase configuration is unavailable.");
+    return;
   }
 
-  // --- 2. ISOLATED CLIENT INITIALIZATION ENGINE (COLLISION PROOF) ---
-  function initializeIsolatedClient() {
-    try {
-      const supabaseBuilder = window.supabase || window.Supabase || supabase;
-      if (supabaseBuilder && typeof supabaseBuilder.createClient === 'function') {
-        dedicatedClientInstance = supabaseBuilder.createClient(
-          "https://lrbimrlbskjweynxlgas.supabase.co", 
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"
-        );
-        console.log("🚀 [Workspace Initialization] Dedicated service channel connected safely using unified global namespace.");
-      } else {
-        dedicatedClientInstance = window.supabaseInstance || window.supabaseClient;
-        console.log("🚀 [Workspace Initialization] Falling back to pre-warmed shared global instance tracking context.");
-      }
-    } catch (err) {
-      console.error("✕ Dedicated Client Initialization Failed:", err.message);
-    }
+  let session = null;
+  let clientId = "";
+  let clientEmail = "";
+  let profile = {};
+  let notificationRows = [];
+  let ticketRows = [];
+  let chatChannel = null;
+  let notificationChannel = null;
+
+  const esc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  const fmt = (v) => v ? new Date(v).toLocaleString([], {dateStyle:"medium",timeStyle:"short"}) : "—";
+  const shortFmt = (v) => v ? new Date(v).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Recent";
+
+  function setView(view) {
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+    document.getElementById("notificationsView").style.display = view === "notifications" ? "" : "none";
+    document.getElementById("messagesView").style.display = view === "messages" ? "" : "none";
+    document.getElementById("ticketsView").style.display = view === "tickets" ? "" : "none";
+    if (view === "messages") setTimeout(() => { const log=document.getElementById("chatLog"); log.scrollTop=log.scrollHeight; }, 30);
   }
 
-  // --- 3. DYNAMIC OPERATING BUSINESS HOURS SWITCH ENGINE ---
-  function evaluateSupportDeskWorkingHours() {
-    const rightNow = new Date();
-    const currentDay = rightNow.getDay();
-    const currentHour = rightNow.getHours();
-    
-    // Mon-Fri, 9:00 AM - 7:00 PM (19:00)
-    const isBusinessDay = currentDay >= 1 && currentDay <= 5;
-    const isWorkingHour = currentHour >= 9 && currentHour < 19;
+  document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => setView(btn.dataset.view)));
 
-    const statusPulseDot = document.querySelector(".status-pulse-dot");
-    const stripTextTarget = document.getElementById("status-strip-text-target");
-    const statusStrip = document.getElementById("status-strip-notification");
-
-    if (isBusinessDay && isWorkingHour) {
-      if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#e6f4ea; color:#137333; border:1px solid #cbd5e1; box-sizing:border-box; width:100%;";
-      if (statusPulseDot) statusPulseDot.style.background = "#137333";
-      if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Help Desk Active.</strong> Instant real-time messaging layers are unlocked.`;
-    } else {
-      if (statusStrip) statusStrip.style.cssText = "padding:14px 16px; border-radius:8px; font-size:0.85rem; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; background:#fff3cd; color:#856404; border:1px solid #cbd5e1; box-sizing:border-box; width:100%;";
-      if (statusPulseDot) statusPulseDot.style.background = "#856404";
-      if (stripTextTarget) stripTextTarget.innerHTML = `<strong>Live Systems Status: Desk Standby.</strong> Technicians respond within 12h. Please file a structured support ticket.`;
-    }
-    return { isBusinessDay, isWorkingHour };
+  async function loadProfile() {
+    const {data,error} = await client.from("client_profiles").select("*").eq("id",clientId).maybeSingle();
+    if (error) throw error;
+    profile = data || {};
+    document.getElementById("clientName").textContent = profile.first_name || clientEmail.split("@")[0] || "Client";
   }
 
-  // --- 4. PROFILE LOOKUP DATA-STORE HYDRATOR & COMPLIANCE GATE ---
-  async function autofillUserProfileMetrics() {
-    console.log(`📡 [Contact Ingestion Engine] Scanning client registry for user email: [${window.clientEmail}]`);
-
-    const { data: profile, error: lookupError } = await dedicatedClientInstance
-      .from('client_profiles')
-      .select('*')
-      .eq('email_address', window.clientEmail)
-      .maybeSingle();
-
-    if (lookupError) {
-      console.error("✕ Profile metadata check failed:", lookupError.message);
-      return;
-    }
-
-    if (profile) {
-      cachedProfileRecord = {
-        first_name: String(profile.first_name || "").trim(),
-        last_name: String(profile.last_name || "").trim(),
-        phone_number: String(profile.phone_number || "").trim(),
-        street_address: String(profile.street_address || "").trim(),
-        city: String(profile.city || "").trim(),
-        state: String(profile.state || "").trim(),
-        zip_code: String(profile.zip_code || "").trim(),
-        tracking_number: String(profile.tracking_number || "").trim(),
-        company_name: String(profile.company_name || "Not Specified").trim(),
-        sync_encryption_status: String(profile.sync_encryption_status || "Active").trim(),
-        avatar_url: profile.avatar_url || null,
-        stripe_customer_id: profile.stripe_customer_id || null
-      };
-    }
-
-    // Enforce pre-flight validation gates
-    if (!cachedProfileRecord.first_name || !cachedProfileRecord.last_name || !cachedProfileRecord.phone_number || !cachedProfileRecord.street_address) {
-      console.warn("⚠️ [Compliance Gate] Incomplete identification metadata block caught.");
-      if (complianceModalMask) complianceModalMask.style.setProperty("display", "flex", "important");
-      
-      const setupEmailField = document.getElementById("setupEmailAddress");
-      if (setupEmailField) setupEmailField.value = window.clientEmail;
-      return;
-    }
-
-    // Hydrate handshake display card
-    const transmissionCard = document.getElementById("profileTransmissionDataCard");
-    const stringTarget = document.getElementById("profileHandshakeVerificationString");
-    if (transmissionCard && stringTarget) {
-      transmissionCard.style.display = "block";
-      stringTarget.innerHTML = `ID       : ${window.clientActiveUserId}\nEMAIL    : ${window.escapeClientChatMarkup(window.clientEmail)}\nNAME     : ${window.escapeClientChatMarkup(cachedProfileRecord.first_name)} ${window.escapeClientChatMarkup(cachedProfileRecord.last_name)}\nPHONE    : ${window.escapeClientChatMarkup(cachedProfileRecord.phone_number)}\nCOMPANY  : ${window.escapeClientChatMarkup(cachedProfileRecord.company_name)}\nADDRESS  : ${window.escapeClientChatMarkup(cachedProfileRecord.street_address)}, ${window.escapeClientChatMarkup(cachedProfileRecord.city)}, ${window.escapeClientChatMarkup(cachedProfileRecord.state)} ${window.escapeClientChatMarkup(cachedProfileRecord.zip_code)}\nTRACKING : ${window.escapeClientChatMarkup(cachedProfileRecord.tracking_number)}`;
-    }
-
-    // Populate offline support fields
-    const fIn = document.getElementById("ticketFirstName");
-    const lIn = document.getElementById("ticketLastName");
-    const eIn = document.getElementById("ticketEmailAddress");
-    const pIn = document.getElementById("ticketPhoneNumber");
-
-    if (eIn) eIn.value = window.clientEmail;
-    if (fIn) fIn.value = cachedProfileRecord.first_name;
-    if (lIn) lIn.value = cachedProfileRecord.last_name;
-    if (pIn) pIn.value = cachedProfileRecord.phone_number;
-
-    evaluateSupportDeskWorkingHours();
-  }
-  // --- 5. COMPLIANCE PROFILE INTERACTIVE FORM SUBMISSION (BULLETPROOF DOUBLE-BIND) ---
-  const executeProfileUpsertTransaction = async (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    console.log("⚡ [Compliance Action] Form submission trigger captured successfully.");
-
-    if (complianceFormErrorAlertBanner) complianceFormErrorAlertBanner.style.display = "none";
-    const activeSubmitBtn = document.getElementById("modalComplianceSubmitBtn");
-
-    if (!window.clientActiveUserId || !window.clientEmail) {
-      if (complianceFormErrorAlertBanner) {
-        complianceFormErrorAlertBanner.textContent = "✕ Authorization Latency: Validating user credentials context pool. Please try again.";
-        complianceFormErrorAlertBanner.style.display = "block";
-      }
-      return;
-    }
-
-    const activeClient = dedicatedClientInstance || window.supabaseInstance || window.supabaseClient;
-    if (!activeClient) {
-      console.error("✕ Critical Failure: All Supabase network driver contexts are unavailable.");
-      return;
-    }
-
-    if (activeSubmitBtn) {
-      activeSubmitBtn.disabled = true;
-      activeSubmitBtn.textContent = "Processing Profile & Unlocking Channels... ⚙️";
-    }
-
-    const locateFormInputValue = (elementId) => {
-      const structuralNode = complianceForm ? complianceForm.querySelector(`#${elementId}`) : null;
-      const fallbackNode = structuralNode || document.getElementById(elementId);
-      return fallbackNode ? fallbackNode.value.trim() : "";
-    };
-
-    const payloadFields = {
-      id: window.clientActiveUserId,
-      email_address: String(window.clientEmail).trim().toLowerCase(),
-      first_name: locateFormInputValue("setupFirstName"),
-      last_name: locateFormInputValue("setupLastName"),
-      phone_number: locateFormInputValue("setupPhoneNumber"),
-      street_address: locateFormInputValue("setupStreetAddress"),
-      city: locateFormInputValue("setupCity"),
-      state: locateFormInputValue("setupState"),
-      zip_code: locateFormInputValue("setupZipCode"),
-      tracking_number: locateFormInputValue("setupTrackingNumber") || null,
-      company_name: locateFormInputValue("setupCompanyName") || 'Not Specified',
-      sync_encryption_status: 'Active',
-      updated_at: new Date().toISOString()
-    };
-
-    if (!payloadFields.first_name || !payloadFields.last_name || !payloadFields.phone_number || !payloadFields.street_address || !payloadFields.city || !payloadFields.state || !payloadFields.zip_code) {
-      if (activeSubmitBtn) {
-        activeSubmitBtn.disabled = false;
-        activeSubmitBtn.textContent = "Save Profile & Unlock Support Workspace Channels";
-      }
-      if (complianceFormErrorAlertBanner) {
-        complianceFormErrorAlertBanner.textContent = "✕ Validation Error: Required profile fields are missing or empty.";
-        complianceFormErrorAlertBanner.style.display = "block";
-      }
-      return;
-    }
-
-    try {
-      console.log("💾 [Compliance Gate] Upserting parameters straight to client_profiles table...", payloadFields);
-      
-      const { error: upsertError } = await activeClient
-        .from('client_profiles')
-        .upsert([payloadFields], { onConflict: 'id' });
-
-      if (upsertError) throw upsertError;
-
-      console.log("✓ [Compliance Gate] Row mutation transaction completely applied.");
-      cachedProfileRecord = { ...payloadFields };
-
-      if (complianceModalMask) complianceModalMask.style.setProperty("display", "none", "important");
-      if (liveChatWorkspacePanel) liveChatWorkspacePanel.style.setProperty("display", "flex", "important");
-
-      await autofillUserProfileMetrics();
-      await window.streamClientChatTimelineLogs();
-      window.establishRealtimeChatSynchronization();
-
-    } catch (err) {
-      console.error("✕ Compliance Workspace Unlock Failed:", err.message);
-      if (complianceFormErrorAlertBanner) {
-        complianceFormErrorAlertBanner.textContent = `✕ Transmission Blocked: ${err.message}`;
-        complianceFormErrorAlertBanner.style.display = "block";
-      }
-      if (activeSubmitBtn) {
-        activeSubmitBtn.disabled = false;
-        activeSubmitBtn.textContent = "Save Profile & Unlock Support Workspace Channels";
-      }
-    }
-  };
-
-  if (complianceForm) complianceForm.addEventListener("submit", executeProfileUpsertTransaction);
-  const rawSaveBtnNode = document.getElementById("modalComplianceSubmitBtn");
-  if (rawSaveBtnNode) rawSaveBtnNode.addEventListener("click", executeProfileUpsertTransaction);
-
- // --- 6. CHAT TIME-LINE ELEMENT RENDERING COMPONENT (EXPLICIT CLIENT-RIGHT FLOATS) ---
-window.appendSingleChatMessageBubbleToUI = function(msgRow) {
-  if (!chatMessagesLog) return;
-  const messageDomId = `chat-msg-${msgRow.message_id || 'sys-' + Date.now() + Math.random().toString(36).substr(2, 5)}`;
-  if (document.getElementById(messageDomId)) return;
-  if (chatMessagesLog.innerText.includes("Synchronizing message pipelines...")) {
-    chatMessagesLog.innerHTML = "";
-  }
-
-  // 🟢 FIXED VISUAL ALIGNMENT CHECK: Explicitly evaluates against your schema's 'client' string
-  const isClientAuthor = String(msgRow.sender_type || '').toLowerCase().trim() === 'client';
-  
-  const dateObj = new Date(msgRow.created_at);
-  const timeString = isNaN(dateObj.getTime()) ? 'Recent' : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  let fileMarkup = "";
-  if (msgRow.attached_file_url) {
-    const fileType = String(msgRow.attached_file_url).toLowerCase();
-    const bucketName = (fileType.includes('.png') || fileType.includes('.jpg') || fileType.includes('.jpeg') || fileType.includes('.webp')) ? "chat_attachments" : "chat_documents";
-    const { data } = dedicatedClientInstance.storage.from(bucketName).getPublicUrl(msgRow.attached_file_url);
-    const resolvedUrl = data?.publicUrl || "#";
-    fileMarkup = ` <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(0,0,0,0.06);"> <a href="${resolvedUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: ${isClientAuthor ? '#ffffff' : '#0066cc'}; text-decoration: underline;"> 📎 View Attached Document Package ➔ </a> </div>`;
-  }
-  const wrapperDiv = document.createElement("div");
-  wrapperDiv.id = messageDomId;
-  
-  // 🟢 CORRECTED FLOATS: Clients float right ('You'), Admin responses float left ('Support Desk Operator')
-  wrapperDiv.style.cssText = ` display: flex !important; width: 100% !important; justify-content: ${isClientAuthor ? 'flex-end' : 'flex-start'} !important; margin-bottom: 14px !important; box-sizing: border-box !important; `;
-  const bubbleDiv = document.createElement("div");
-  
-  bubbleDiv.style.cssText = ` max-width: 75% !important; background: ${isClientAuthor ? '#0a1f44' : '#f1f5f9'} !important; color: ${isClientAuthor ? '#ffffff' : '#0a1f44'} !important; padding: 12px 16px !important; border-radius: ${isClientAuthor ? '16px 16px 2px 16px' : '16px 16px 16px 2px'} !important; box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important; box-sizing: border-box !important; `;
-  bubbleDiv.innerHTML = ` <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 4px; opacity: 0.9;"> <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;">${isClientAuthor ? 'You' : 'Support Desk Operator'}</span> <span style="font-size: 0.65rem; font-family: monospace;">${timeString}</span> </div> <p style="margin: 0; font-size: 0.85rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word;">${window.escapeClientChatMarkup(msgRow.message_content)}</p> ${fileMarkup}`;
-  wrapperDiv.appendChild(bubbleDiv);
-  chatMessagesLog.appendChild(wrapperDiv);
-};
-
-// --- 7. CLEAN REHYDRATE VISUAL CHAT TIMELINES ---
-window.streamClientChatTimelineLogs = async function() {
-  try {
-    // 🟢 KEEPING THE WORKING QUERY FILTER: Pulls the channel feed based on the primary client profile relation ID
-    const { data: messages, error: fetchError } = await dedicatedClientInstance
-      .from('chat_messages')
-      .select('*')
-      .eq('id', window.clientActiveUserId)
-      .order('created_at', { ascending: true });
-    if (fetchError) throw fetchError;
-    if (chatMessagesLog) chatMessagesLog.innerHTML = "";
-    if (messages && messages.length > 0) {
-      messages.forEach(msgRow => window.appendSingleChatMessageBubbleToUI(msgRow));
-    } else {
-      const systemWelcomePayload = { id: window.clientActiveUserId, email_address: window.clientEmail, message_content: "Welcome to filings4u Corporate Support Desk! An asset specialist has been assigned to your entity file. Please state your query below.", sender_type: 'admin', created_at: new Date().toISOString() };
-      window.appendSingleChatMessageBubbleToUI(systemWelcomePayload);
-    }
-    if (typeof scrollChatTimelineToAbsoluteBottom === "function") {
-      scrollChatTimelineToAbsoluteBottom();
-    }
-  } catch (err) {
-    console.error("✕ Failed loading chat timelines:", err.message);
-  }
-};
-
-
-
-  // --- 8. REAL-TIME DATA STREAM SYNCHRONIZATION ---
-  window.establishRealtimeChatSynchronization = function() {
-    if (liveChatSubscriptionChannel) liveChatSubscriptionChannel.unsubscribe();
-
-    liveChatSubscriptionChannel = dedicatedClientInstance
-      .channel(`isolated-client-chat-stream-${window.clientActiveUserId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
-        const incomingPayload = payload.new;
-        if (incomingPayload && String(incomingPayload.id).trim() === String(window.clientActiveUserId).trim()) {
-          window.appendSingleChatMessageBubbleToUI(incomingPayload);
-          scrollChatTimelineToAbsoluteBottom();
+  async function loadNotifications() {
+    const {data,error} = await client.from("portal_notifications")
+      .select("id,title,message,is_read,is_archived,ticket_id,created_at,recipient_email,email_address")
+      .or(`recipient_email.eq.${clientEmail},email_address.eq.${clientEmail}`)
+      .eq("is_archived",false).order("created_at",{ascending:false});
+    if (error) throw error;
+    notificationRows = data || [];
+    const unread = notificationRows.filter(x => x.is_read === false).length;
+    document.getElementById("notificationCount").textContent = notificationRows.length;
+    document.getElementById("unreadPill").textContent = `${unread} Unread`;
+    document.getElementById("unreadPill").className = `pill${unread ? " red" : ""}`;
+    const list = document.getElementById("notificationList");
+    if (!notificationRows.length) { list.innerHTML = `<div class="empty">You have no new account notifications.</div>`; return; }
+    list.innerHTML = "";
+    notificationRows.forEach(n => {
+      const card = document.createElement("article");
+      const unreadClass = n.is_read === false ? " unread" : "";
+      card.className = `notification-card${unreadClass}`;
+      card.innerHTML = `<div class="row-top"><span class="eyebrow">${n.ticket_id ? "Support Case Notice" : "Account Notification"}</span><span class="status">${n.is_read === false ? "New" : "Read"}</span></div>
+        <h4 class="card-title">${esc(n.title || "Account Notification")}</h4>
+        <p class="card-message">${esc(n.message || "")}</p>
+        <div class="card-footer"><span>${esc(fmt(n.created_at))}</span><span>${n.is_read === false ? "Click to mark read" : "Opened"}</span></div>`;
+      card.addEventListener("click", async () => {
+        if (n.is_read === false) {
+          await client.from("portal_notifications").update({is_read:true}).eq("id",n.id);
+          n.is_read = true;
+          loadNotifications();
         }
-      })
-      .subscribe();
-  };
+      });
+      list.appendChild(card);
+    });
+  }
 
-  // --- 9. OUTBOUND CHAT MESSAGE DISPATCH ENGINE ---
-  window.dispatchClientChatMessage = async function() {
-    const rawText = inputField ? inputField.value.trim() : "";
-    if (!rawText && !window.activeStagedFilePayload) return;
+  async function loadTickets() {
+    const {data,error} = await client.from("support_tickets").select("*").eq("client_id",clientId).order("updated_at",{ascending:false});
+    if (error) throw error;
+    ticketRows = data || [];
+    const openCount = ticketRows.filter(t => !["Resolved","Closed"].includes(String(t.status))).length;
+    document.getElementById("ticketCount").textContent = ticketRows.length;
+    document.getElementById("openTicketPill").textContent = `${openCount} Open Tickets`;
+    const list = document.getElementById("ticketList");
+    if (!ticketRows.length) { list.innerHTML = `<div class="empty">No support tickets have been created for your account.</div>`; return; }
+    list.innerHTML = "";
+    ticketRows.forEach(t => {
+      const card = document.createElement("article");
+      const priority = String(t.priority || "Medium").toLowerCase();
+      card.className = "ticket-card";
+      card.innerHTML = `<div class="row-top"><span class="eyebrow">${esc(t.ticket_id || "Ticket")}</span><span class="status ${priority}">${esc(t.priority || "Medium")}</span></div>
+        <h4 class="card-title">${esc(t.subject || "Support Request")}</h4>
+        <p class="card-message">${esc((t.description || "").slice(0,220))}${(t.description || "").length > 220 ? "…" : ""}</p>
+        <div class="card-footer"><span>Status: ${esc(t.status || "New")}</span><span>${esc(fmt(t.updated_at || t.created_at))}</span></div>`;
+      card.addEventListener("click", () => openTicket(t));
+      list.appendChild(card);
+    });
+  }
 
-    if (inputField) inputField.disabled = true;
-    if (sendButton) sendButton.disabled = true;
+  function openTicket(t) {
+    document.getElementById("detailSubject").textContent = t.subject || "Support Ticket";
+    document.getElementById("detailCompany").textContent = t.company_name || profile.company_name || "";
+    document.getElementById("detailTicketId").textContent = t.ticket_id || "";
+    document.getElementById("detailStatus").textContent = t.status || "New";
+    document.getElementById("detailStatus").className = `status ${String(t.status||"").toLowerCase().replace(/[^a-z]/g,"")}`;
+    document.getElementById("detailStatusText").textContent = t.status || "New";
+    document.getElementById("detailPriority").textContent = t.priority || "Medium";
+    document.getElementById("detailAgent").textContent = t.assigned_agent || "Unassigned";
+    document.getElementById("detailUpdated").textContent = fmt(t.updated_at || t.created_at);
+    document.getElementById("detailDescription").textContent = t.description || "";
+    document.getElementById("ticketListPanel").style.display = "none";
+    document.getElementById("newTicketPanel").classList.remove("active");
+    document.getElementById("ticketDetailPanel").classList.add("active");
+  }
 
-    let resolvedAssetUrlPath = null;
-    let targetedBucketKeyIdentifier = "chat_documents";
+  document.getElementById("closeTicketDetail").addEventListener("click", () => {
+    document.getElementById("ticketDetailPanel").classList.remove("active");
+    document.getElementById("ticketListPanel").style.display = "";
+  });
 
-    try {
-      if (window.activeStagedFilePayload) {
-        const fileType = window.activeStagedFilePayload.type.toLowerCase();
-        targetedBucketKeyIdentifier = fileType.startsWith("image/") ? "chat_attachments" : "chat_documents";
-        const fingerprint = `${Date.now()}_${window.activeStagedFilePayload.name}`;
-        
-        const { data: uploadOutput, error: uploadError } = await dedicatedClientInstance.storage
-          .from(targetedBucketKeyIdentifier)
-          .upload(`${window.clientActiveUserId}/${fingerprint}`, window.activeStagedFilePayload);
+  function openNewTicket() {
+    document.getElementById("ticketListPanel").style.display = "none";
+    document.getElementById("ticketDetailPanel").classList.remove("active");
+    document.getElementById("newTicketPanel").classList.add("active");
+  }
+  document.getElementById("newTicketBtn").addEventListener("click", openNewTicket);
+  document.getElementById("openTicketFromChat").addEventListener("click", () => { setView("tickets"); openNewTicket(); });
+  document.getElementById("cancelNewTicket").addEventListener("click", () => {
+    document.getElementById("newTicketPanel").classList.remove("active");
+    document.getElementById("ticketListPanel").style.display = "";
+  });
 
-        if (uploadError) throw uploadError;
-        resolvedAssetUrlPath = uploadOutput.path;
-      }
-
-      // MIRRORED COLUMN SCHEMA INSERTION LAYER: Matches client_profiles line for line
-      const { error: insertError } = await dedicatedClientInstance
-        .from('chat_messages')
-        .insert([{
-          id: window.clientActiveUserId,
-          email_address: String(window.clientEmail).trim().toLowerCase(),
-          first_name: cachedProfileRecord.first_name,
-          last_name: cachedProfileRecord.last_name,
-          phone_number: cachedProfileRecord.phone_number,
-          street_address: cachedProfileRecord.street_address,
-          city: cachedProfileRecord.city,
-          state: cachedProfileRecord.state,
-          zip_code: cachedProfileRecord.zip_code,
-          tracking_number: cachedProfileRecord.tracking_number || null,
-          company_name: cachedProfileRecord.company_name,
-          sync_encryption_status: cachedProfileRecord.sync_encryption_status,
-          avatar_url: cachedProfileRecord.avatar_url,
-          stripe_customer_id: cachedProfileRecord.stripe_customer_id,
-          
-          message_content: rawText || `Attachment uploaded: ${window.activeStagedFilePayload?.name}`,
-          sender_type: 'client',
-          attached_file_url: resolvedAssetUrlPath || null,
-          is_read_by_admin: false,
-          is_read_by_client: true,
-          created_at: new Date().toISOString()
-        }]);
-
-      if (insertError) throw insertError;
-      if (inputField) inputField.value = "";
-      window.activeStagedFilePayload = null;
-      if (previewBar) previewBar.style.display = "none";
-
-    } catch (err) {
-      console.error("✕ Database Chat Insertion Failed:", err.message);
-    } finally {
-      if (inputField) { inputField.disabled = false; inputField.focus(); }
-      if (sendButton) sendButton.disabled = false;
-      scrollChatTimelineToAbsoluteBottom();
-    }
-  };
-
-  // --- 10. DUAL ONSITE AND AFTER-HOURS TICKET HANDLER ENGINE ---
-  document.getElementById("structuredSupportTicketForm")?.addEventListener("submit", async (e) => {
+  document.getElementById("newTicketForm").addEventListener("submit", async e => {
     e.preventDefault();
-    const submitFormBtn = e.target.querySelector('button[type="submit"]');
-    const messageInput = document.getElementById("ticketMessagePayload");
-    const tSubject = document.getElementById("ticketSubject")?.value?.trim() || "Support Request";
-    const tPriority = document.getElementById("ticketPriority")?.value || "Medium";
-
-    if (!messageInput || !messageInput.value.trim()) return;
-    submitFormBtn.disabled = true;
-
+    const btn = document.getElementById("submitTicketBtn");
+    const notice = document.getElementById("ticketNotice");
+    btn.disabled = true; notice.className="notice"; notice.textContent="";
     try {
-      const timeContext = evaluateSupportDeskWorkingHours();
-      const rightNow = new Date();
-
-      if (timeContext.isBusinessDay && timeContext.isWorkingHour) {
-        // MIRRORED COLUMN SCHEMA INSERTION LAYER: Pipes directly into support_tickets ITSM system table
-        const { error: ticketError } = await dedicatedClientInstance
-          .from('support_tickets')
-          .insert([{
-            id: window.clientActiveUserId,
-            email_address: String(window.clientEmail).trim().toLowerCase(),
-            first_name: cachedProfileRecord.first_name,
-            last_name: cachedProfileRecord.last_name,
-            phone_number: cachedProfileRecord.phone_number,
-            street_address: cachedProfileRecord.street_address,
-            city: cachedProfileRecord.city,
-            state: cachedProfileRecord.state,
-            zip_code: cachedProfileRecord.zip_code,
-            tracking_number: cachedProfileRecord.tracking_number || null,
-            company_name: cachedProfileRecord.company_name,
-            sync_encryption_status: cachedProfileRecord.sync_encryption_status,
-            avatar_url: cachedProfileRecord.avatar_url,
-            stripe_customer_id: cachedProfileRecord.stripe_customer_id,
-            
-            ticket_id: `ITSM-${Date.now().toString().slice(-6)}`,
-            subject: tSubject,
-            description: messageInput.value.trim(),
-            priority: tPriority,
-            status: 'New',
-            assigned_agent: 'Unassigned',
-            created_at: rightNow.toISOString()
-          }]);
-
-        if (ticketError) throw ticketError;
-      } else {
-        // MIRRORED COLUMN SCHEMA INSERTION LAYER: Pipes off-hours inputs into after_hours_tickets table
-        const { error: ahError } = await dedicatedClientInstance
-          .from('after_hours_tickets')
-          .insert([{
-            id: window.clientActiveUserId,
-            email_address: String(window.clientEmail).trim().toLowerCase(),
-            first_name: cachedProfileRecord.first_name,
-            last_name: cachedProfileRecord.last_name,
-            phone_number: cachedProfileRecord.phone_number,
-            street_address: cachedProfileRecord.street_address,
-            city: cachedProfileRecord.city,
-            state: cachedProfileRecord.state,
-            zip_code: cachedProfileRecord.zip_code,
-            tracking_number: cachedProfileRecord.tracking_number || null,
-            company_name: cachedProfileRecord.company_name,
-            sync_encryption_status: cachedProfileRecord.sync_encryption_status,
-            avatar_url: cachedProfileRecord.avatar_url,
-            stripe_customer_id: cachedProfileRecord.stripe_customer_id,
-            
-            ticket_message: messageInput.value.trim(),
-            status: 'Pending',
-            created_at: rightNow.toISOString()
-          }]);
-
-        if (ahError) throw ahError;
-      }
-
-      const ticketPanelCard = document.getElementById("afterHoursTicketFormPanel");
-      if (ticketPanelCard) {
-        ticketPanelCard.innerHTML = `
-          <div style="text-align:center; padding:40px 0;">
-            <h3 style="color:#0a1f44; font-weight:800; margin-bottom:8px;">📥 Support Request Dispatched</h3>
-            <p style="font-size:0.85rem; color:#64748b; margin-bottom:16px;">The database entry has synchronized matching column states. Engineers have been updated.</p>
-            <button id="ticketReturnHomeDashboardBtn" style="background:#0a1f44; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.8rem; box-shadow:0 2px 4px rgba(10,31,68,0.15);">Return to Dashboard Home</button>
-          </div>`;
-        
-        document.getElementById("ticketReturnHomeDashboardBtn")?.addEventListener("click", () => {
-          window.location.replace("client-dashboard.html");
-        });
-      }
-    } catch (err) {
-      console.error("✕ Form Submission Error:", err.message);
-      alert(`Submission Failed: ${err.message}`);
-    } finally {
-      if (submitFormBtn) submitFormBtn.disabled = false;
-    }
+      const payload = {
+        client_id: clientId,
+        company_name: profile.company_name || "Not Specified",
+        subject: document.getElementById("newTicketSubject").value.trim(),
+        description: document.getElementById("newTicketDescription").value.trim(),
+        priority: document.getElementById("newTicketPriority").value,
+        status: "New",
+        assigned_agent: "Unassigned",
+        first_name: profile.first_name || null,
+        last_name: profile.last_name || null,
+        email_address: clientEmail,
+        phone_number: profile.phone_number || null,
+        tracking_number: profile.tracking_number || null,
+        street_address: profile.street_address || null,
+        city: profile.city || null,
+        state: profile.state || null,
+        zip_code: profile.zip_code || null,
+        sync_encryption_status: profile.sync_encryption_status || "Active",
+        avatar_url: profile.avatar_url || null,
+        stripe_customer_id: profile.stripe_customer_id || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      const {error} = await client.from("support_tickets").insert([payload]);
+      if (error) throw error;
+      notice.textContent="Support ticket submitted successfully.";
+      notice.className="notice success";
+      document.getElementById("newTicketForm").reset();
+      await loadTickets();
+      setTimeout(() => { document.getElementById("newTicketPanel").classList.remove("active"); document.getElementById("ticketListPanel").style.display=""; }, 900);
+    } catch(err) {
+      notice.textContent=`Unable to submit ticket: ${err.message}`;
+      notice.className="notice error";
+    } finally { btn.disabled=false; }
   });
 
-  // --- 11. BINARY MEDIA PREVIEW FILE STAGING ---
-  if (paperclipBtn && hiddenFileInput) {
-    paperclipBtn.addEventListener("click", () => hiddenFileInput.click());
-    hiddenFileInput.addEventListener("change", function() {
-      if (this.files && this.files.length > 0) {
-        window.activeStagedFilePayload = this.files;
-        if (previewBar && previewString) {
-          previewString.textContent = `📎 Attachment Ready: ${window.activeStagedFilePayload.name}`;
-          previewBar.style.display = "flex";
-        }
-      }
+  function renderChat(rows) {
+    const log = document.getElementById("chatLog");
+    const unread = (rows || []).filter(x => String(x.sender_type||"").toLowerCase()==="admin" && x.is_read_by_client === false).length;
+    document.getElementById("messageCount").textContent = unread;
+    if (!rows || !rows.length) {
+      log.innerHTML = `<div class="empty">No support messages yet. Send a message to start the conversation.</div>`;
+      return;
+    }
+    log.innerHTML = "";
+    rows.forEach(m => {
+      const isClient = String(m.sender_type||"").toLowerCase() === "client";
+      const row = document.createElement("div");
+      row.className = `bubble-row ${isClient ? "client" : "admin"}`;
+      row.innerHTML = `<div class="bubble ${isClient ? "client" : "admin"}">
+        <div class="bubble-meta"><span>${isClient ? "You" : "Support Desk"}</span><span>${esc(shortFmt(m.created_at))}</span></div>
+        <p>${esc(m.message_content || "")}</p>
+        ${m.attached_file_url ? `<div style="margin-top:8px"><a target="_blank" href="${esc(m.attached_file_url)}" style="color:inherit;font-weight:800;font-size:.72rem">📎 Attachment</a></div>` : ""}
+      </div>`;
+      log.appendChild(row);
     });
+    log.scrollTop = log.scrollHeight;
   }
 
-  if (cancelUploadBtn) {
-    cancelUploadBtn.addEventListener("click", () => {
-      window.activeStagedFilePayload = null;
-      if (hiddenFileInput) hiddenFileInput.value = "";
-      if (previewBar) previewBar.style.display = "none";
-    });
+  async function loadChat() {
+    const {data,error} = await client.from("chat_messages").select("*").eq("id",clientId).order("created_at",{ascending:true});
+    if (error) throw error;
+    renderChat(data || []);
+    await client.from("chat_messages").update({is_read_by_client:true}).eq("id",clientId).eq("sender_type","admin").eq("is_read_by_client",false);
   }
 
-  // --- 12. RUNTIME LIFECYCLE MOUNT EXECUTION ---
-  async function runSupportCenterBootstrap() {
-    initializeIsolatedClient();
+  async function sendChat() {
+    const input = document.getElementById("chatInput"), btn=document.getElementById("sendChatBtn");
+    const text=input.value.trim(); if(!text) return;
+    btn.disabled=true;
     try {
-      const { data: { session }, error: sessionError } = await dedicatedClientInstance.auth.getSession();
-      if (sessionError || !session) {
-        window.location.href = "portal-login.html";
-        return;
-      }
-
-      window.clientActiveUserId = String(session.user.id).trim();
-      window.clientEmail = String(session.user.email).trim().toLowerCase();
-
-      const clientNameField = document.getElementById("clientNameField");
-      if (clientNameField && session.user.email) {
-        clientNameField.textContent = session.user.email.split('@')[0];
-      }
-
-      // Check validation gates
-      await autofillUserProfileMetrics();
-
-      // Launch chat history pipelines if compliance verification passed
-      if (liveChatWorkspacePanel && liveChatWorkspacePanel.style.display !== "none") {
-        await window.streamClientChatTimelineLogs();
-        window.establishRealtimeChatSynchronization();
-      }
-    } catch (e) {
-      console.error("✕ Support Portal System Initialization Error:", e.message);
-    }
+      const payload = {
+        id: clientId,
+        email_address: clientEmail,
+        first_name: profile.first_name || null,
+        last_name: profile.last_name || null,
+        phone_number: profile.phone_number || null,
+        street_address: profile.street_address || null,
+        city: profile.city || null,
+        state: profile.state || null,
+        zip_code: profile.zip_code || null,
+        tracking_number: profile.tracking_number || null,
+        company_name: profile.company_name || "Not Specified",
+        sync_encryption_status: profile.sync_encryption_status || "Active",
+        avatar_url: profile.avatar_url || null,
+        stripe_customer_id: profile.stripe_customer_id || null,
+        message_content:text,
+        sender_type:"client",
+        is_read_by_admin:false,
+        is_read_by_client:true,
+        created_at:new Date().toISOString()
+      };
+      const {error}=await client.from("chat_messages").insert([payload]);
+      if(error) throw error;
+      input.value=""; await loadChat();
+    } catch(err) { alert(`Message could not be sent: ${err.message}`); }
+    finally { btn.disabled=false; input.focus(); }
   }
 
-  // Live Digital Ticking Clock
-  function runSystemClock() {
-    const clockEl = document.getElementById("portal-clock");
-    if (clockEl) clockEl.textContent = new Date().toLocaleTimeString();
-  }
-  setInterval(runSystemClock, 1000);
-  runSystemClock();
+  document.getElementById("sendChatBtn").addEventListener("click",sendChat);
+  document.getElementById("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();}});
 
-  // Keyboard Enter accelerators trigger
-  inputField?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      window.dispatchClientChatMessage();
-    }
+  document.getElementById("markAllReadBtn").addEventListener("click",async()=>{
+    await client.from("portal_notifications").update({is_read:true}).or(`recipient_email.eq.${clientEmail},email_address.eq.${clientEmail}`).eq("is_read",false).eq("is_archived",false);
+    await loadNotifications();
   });
 
-  if (sendButton) {
-    sendButton.addEventListener("click", () => window.dispatchClientChatMessage());
+  document.getElementById("openTicketChatBtn").addEventListener("click",()=>setView("messages"));
+
+  async function bindRealtime() {
+    if(notificationChannel) await client.removeChannel(notificationChannel);
+    notificationChannel=client.channel(`client-support-notifications-${clientId}`)
+      .on("postgres_changes",{event:"*",schema:"public",table:"portal_notifications"},async()=>loadNotifications())
+      .subscribe();
+    if(chatChannel) await client.removeChannel(chatChannel);
+    chatChannel=client.channel(`client-support-chat-${clientId}`)
+      .on("postgres_changes",{event:"*",schema:"public",table:"chat_messages"},async()=>loadChat())
+      .subscribe();
   }
 
-  document.getElementById("modalDismissComplianceCloseBtn")?.addEventListener("click", () => {
-    window.location.replace("client-dashboard.html");
-  });
+  // Navigation and logout are handled centrally by assets/js/client-navigation.js.
+  // Do not attach a second page-level logout handler here.
+  setInterval(()=>document.getElementById("portalClock").textContent=new Date().toLocaleTimeString(),1000);
 
-  // Launch workspace bootstrap engine
-  runSupportCenterBootstrap();
+  try {
+    const {data,error}=await client.auth.getSession();
+    if(error||!data.session){window.location.href="portal-login.html";return;}
+    session=data.session; clientId=String(session.user.id); clientEmail=String(session.user.email).trim().toLowerCase();
+    await loadProfile();
+    await Promise.all([loadNotifications(),loadTickets(),loadChat()]);
+    await bindRealtime();
+    document.getElementById("supportStatus").textContent="Live";
+  } catch(err) {
+    console.error(err);
+    document.getElementById("supportStatus").textContent="Unavailable";
+    document.getElementById("supportStatus").className="pill red";
+    alert(`Support workspace error: ${err.message}`);
+  }
 });
 </script>
-
-
-
 </body>
 </html>

@@ -194,8 +194,7 @@ desktopSidebarNode.innerHTML = `
       <a href="admin-tickets.html" class="nav-item d-link" data-page="admin-tickets.html"><span>📋</span> Support Tickets</a>
       <a href="admin-documents.html" class="nav-item d-link" data-page="admin-documents.html"><span>📂</span> Document Vault</a>
       <a href="admin-appointments.html" class="nav-item d-link" data-page="admin-appointments.html"><span>⏰</span> Session Allocations</a>
-      <a href="admin-notifications.html" class="nav-item d-link" data-page="admin-notifications.html"><span>🔔</span> Notifications Log</a>
-      <a href="admin-notifications-center.html" class="nav-item d-link" data-page="admin-notifications-center.html"><span>📡</span> Notifications Center</a>
+      <a href="admin-client-communications.html" class="nav-item d-link" data-page="admin-notifications-center.html"><span>📡</span> Notifications Center</a>
     </div>
   </div>
 
@@ -306,8 +305,7 @@ if (headerNode && headerNode.parentNode) {
       <a href="admin-tickets.html" class="nav-item m-link" data-page="admin-tickets.html">After-Hours Tickets</a>
       <a href="admin-documents.html" class="nav-item m-link" data-page="admin-documents.html">Document Vault</a>
       <a href="admin-appointments.html" class="nav-item m-link" data-page="admin-appointments.html">Session Allocations</a>
-      <a href="admin-notifications.html" class="nav-item m-link" data-page="admin-notifications.html">Notifications Log</a>
-      <a href="admin-notifications-center.html" class="nav-item m-link" data-page="admin-notifications-center.html">Notifications Center</a>
+      <a href="admin-client-communications.html" class="nav-item m-link" data-page="admin-notifications-center.html">Notifications Center</a>
     </div>
   </div>
 
