@@ -91,8 +91,9 @@ async function mountStripe(){
   renderSummary();
 }
 
-function buildOrder(paymentStatus,paidAt){
-  const s=selectedService(),linked=clients.find(c=>String(c.id)===String($('client').value))||null;
+function buildOrder(paymentStatus,paidAt,customerLink=null){
+  const s=selectedService(),selected=clients.find(c=>String(c.id)===String($('client').value))||null;
+  const linked=customerLink?.user_id?{id:customerLink.user_id}:selected;
   const now=new Date().toISOString(),t=mode()==='free'?0:total();
   return {
     tracking_number:trackingNumber||makeTracking(),first_name:$('first').value.trim(),last_name:$('last').value.trim(),
@@ -102,9 +103,37 @@ function buildOrder(paymentStatus,paidAt){
     jurisdiction_state:$('state').value,order_status:$('orderStatus').value,payment_status:paymentStatus,currency:'USD',
     service_fee:mode()==='free'?0:Number($('serviceFee').value||0),government_fee:mode()==='free'?0:Number($('governmentFee').value||0),
     addons_total:mode()==='free'?0:Number($('addons').value||0),subtotal_amount:t,total_amount:t,total_paid_amount:paymentStatus==='paid'?t:0,
-    account_created:!!linked,account_setup_mode:linked?'returning_customer':null,submitted_at:now,paid_at:paidAt,updated_at:now,
+    account_created:!!linked,account_setup_mode:customerLink?.account_setup_mode||(linked?'returning_customer':null),submitted_at:now,paid_at:paidAt,updated_at:now,
     stripe_payment_intent_id:paymentIntentId||null,upsells_payload:[],form_payload:{source:'admin_order_intake',payment_mode:mode(),internal_note:$('note').value.trim()||null}
   };
+}
+
+async function ensureCustomerLink(orderId=null){
+  const selectedUserId=$('client').value||null;
+  const {data,error}=await db.functions.invoke('admin-link-order-customer',{body:{
+    order_id:orderId,
+    user_id:selectedUserId,
+    email_address:$('email').value.trim().toLowerCase(),
+    first_name:$('first').value.trim(),
+    last_name:$('last').value.trim(),
+    phone_number:$('phone').value.trim(),
+    company_name:$('company').value.trim(),
+    redirect_to:new URL('reset-password.html',window.location.href).href
+  }});
+  if(error)throw error;
+  if(data?.error)throw new Error(data.error);
+  if(!data?.user_id)throw new Error('Customer account could not be linked.');
+  if(!clients.some(c=>String(c.id)===String(data.user_id))){
+    clients.push({
+      id:data.user_id,
+      email_address:$('email').value.trim().toLowerCase(),
+      first_name:$('first').value.trim(),
+      last_name:$('last').value.trim(),
+      phone_number:$('phone').value.trim(),
+      company_name:$('company').value.trim()
+    });
+  }
+  return data;
 }
 
 async function createInvoice(order){
@@ -148,7 +177,8 @@ async function submit(event){
       }
       if(!paymentIntent)throw new Error('Stripe did not return a PaymentIntent.');
       if(paymentIntent.status!=='succeeded')throw new Error(`Payment is ${paymentIntent.status}. The order was not marked paid.`);
-      const orderPayload=buildOrder('paid',new Date().toISOString());
+      const customerLink=await ensureCustomerLink();
+      const orderPayload=buildOrder('paid',new Date().toISOString(),customerLink);
       const {data:order,error:orderError}=await db.from('orders').insert(orderPayload).select().single();if(orderError)throw orderError;
       await createInvoice({...order,payment_status:'paid'});
       const inv=await db.from('invoices').update({status:'paid',payment_status:'paid',paid_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('order_id',order.id);
@@ -158,7 +188,8 @@ async function submit(event){
 
     trackingNumber=trackingNumber||makeTracking();
     const paymentStatus=mode()==='free'?'paid':'pending';
-    const orderPayload=buildOrder(paymentStatus,mode()==='free'?new Date().toISOString():null);
+    const customerLink=mode()==='free'?await ensureCustomerLink():null;
+    const orderPayload=buildOrder(paymentStatus,mode()==='free'?new Date().toISOString():null,customerLink);
     const {data:order,error:orderError}=await db.from('orders').insert(orderPayload).select().single();if(orderError)throw orderError;
     if(mode()==='invoice')await createInvoice(order);
     location.href=`admin-orders.html?order=${encodeURIComponent(order.id)}`;

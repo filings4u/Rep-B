@@ -118,14 +118,63 @@ function openOrder(id){
   document.body.classList.add('drawer-open');$('close')?.focus();
 }
 
+async function ensureOrderCustomer(order){
+  if(order.user_id)return {user_id:order.user_id,created:false,account_setup_mode:order.account_setup_mode||'returning_customer'};
+  const {data,error}=await db.functions.invoke('admin-link-order-customer',{body:{
+    order_id:order.id,
+    user_id:null,
+    email_address:String(order.email_address||'').trim().toLowerCase(),
+    first_name:order.first_name||'',
+    last_name:order.last_name||'',
+    phone_number:order.phone_number||'',
+    company_name:order.company_name||'',
+    redirect_to:new URL('reset-password.html',window.location.href).href
+  }});
+  if(error)throw error;
+  if(data?.error)throw new Error(data.error);
+  if(!data?.user_id)throw new Error('Customer account could not be linked.');
+  return data;
+}
+
 async function save(){
   if(!active)return;
   const order_status=$('eos').value,payment_status=$('eps').value;
-  const {data,error}=await db.from('orders').update({order_status,payment_status,updated_at:new Date().toISOString()})
-    .eq('id',active.id).select().single();
-  if(error)return toast(error.message);
-  const idx=orders.findIndex(o=>o.id===data.id);if(idx>=0)orders[idx]=data;
-  filter();openOrder(data.id);toast('Order status updated.');
+  const button=$('save');button.disabled=true;button.textContent='Saving…';
+  try{
+    let customerLink=null;
+    if(payment_status==='paid'){
+      customerLink=await ensureOrderCustomer(active);
+    }
+    const now=new Date().toISOString();
+    const patch={order_status,payment_status,updated_at:now};
+    if(payment_status==='paid'){
+      patch.user_id=customerLink.user_id;
+      patch.account_created=true;
+      patch.account_setup_mode=customerLink.account_setup_mode||'returning_customer';
+      patch.paid_at=active.paid_at||now;
+      patch.total_paid_amount=Number(active.total_amount||active.total_paid_amount||0);
+    }
+    const {data,error}=await db.from('orders').update(patch).eq('id',active.id).select().single();
+    if(error)throw error;
+    if(payment_status==='paid'){
+      const invoice=invoiceFor(active.id);
+      if(invoice){
+        const {error:invoiceError}=await db.from('invoices').update({
+          client_profile_id:customerLink.user_id,
+          status:'paid',payment_status:'paid',
+          paid_at:invoice.paid_at||now,updated_at:now
+        }).eq('id',invoice.id);
+        if(invoiceError)throw invoiceError;
+      }
+    }
+    const idx=orders.findIndex(o=>o.id===data.id);if(idx>=0)orders[idx]=data;
+    await load();openOrder(data.id);
+    toast(customerLink?.created?'Order paid, customer account created and invitation sent.':'Order status updated and customer account linked.');
+  }catch(error){
+    toast(error.message||'Unable to update order.');
+  }finally{
+    if($('save')){$('save').disabled=false;$('save').textContent='Save status';}
+  }
 }
 
 function closeOverlays(){
