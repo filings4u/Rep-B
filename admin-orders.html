@@ -1,14 +1,14 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Admin Orders | filings4u Staff</title>
-<link rel="icon" type="image/png" href="images/fav.png">
+<link href="images/fav.png" rel="icon" type="image/png"/>
 <script src="assets/js/supabase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://js.stripe.com/v3/"></script>
-
 <style>
 :root {
   --bg-light:#f4f6f9; --white:#fff; --border-color:#e2e8f0;
@@ -93,273 +93,253 @@ html,body{margin:0!important;padding:0!important;min-height:100vh!important;font
 .customer-summary.show{grid-template-columns:1fr 1fr}.price-grid{grid-template-columns:1fr}
 }
 </style>
-</head>
-
-<body>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
+<body class="f4u-admin-page">
 <div class="dashboard-wrapper">
-
-  <!-- Keep your existing navigation shell on every admin page. -->
-  <aside class="portal-sidebar">
-    <div class="sidebar-brand-block">
-      <strong>filings4u</strong><br>
-      <span class="admin-badge">Staff Console</span>
-    </div>
-    <nav class="sidebar-accordion-menu" id="adminSidebarNav">
-      <button class="accordion-trigger" type="button">Operations <span>⌄</span></button>
-      <div class="accordion-panel open">
-        <a class="nav-item active" href="admin-orders.html">🧾 Orders</a>
-        <a class="nav-item" href="admin-dashboard.html">📊 Dashboard</a>
-        <a class="nav-item" href="admin-tickets.html">🎫 Support Tickets</a>
-        <a class="nav-item" href="admin-notifications.html">🔔 Notifications</a>
-      </div>
-      <button class="accordion-trigger" type="button">Client Management <span>⌄</span></button>
-      <div class="accordion-panel">
-        <a class="nav-item" href="admin-clients.html">👥 Clients</a>
-        <a class="nav-item" href="admin-entities.html">🏢 Entities</a>
-        <a class="nav-item" href="client-order-history.html">📜 Order History</a>
-      </div>
-    </nav>
-    <div class="sidebar-footer-lock">
-      <button class="logout-btn" id="logoutBtn" type="button">Sign Out</button>
-    </div>
-  </aside>
-
-  <main class="portal-main">
-    <header class="portal-header">
-      <div class="welcome-text">
-        <h1>Admin Orders</h1>
-        <p>Process phone, in-person, complimentary, and Stripe orders for existing client accounts.</p>
-      </div>
-      <div class="header-actions-wrapper">
-        <a href="admin-notifications.html" class="nav-item" style="margin:0">🔔</a>
-        <div class="header-clock-pill">⏱️ <span id="portal-clock">Syncing...</span></div>
-        <input id="adminGlobalSearchField" class="search-input" placeholder="Search operational matrices...">
-      </div>
-    </header>
-
-    <section class="content-container">
-      <div id="status" class="status"></div>
-
-      <div class="order-layout">
-        <div>
-          <div class="console-card">
-            <div class="card-head">
-              <h2>Customer Selection</h2>
-              <p>Select the client from the live client registry. Do not manually retype customer information for an existing account.</p>
-            </div>
-
-            <div class="field-group">
-              <label class="field-label" for="clientSelector">Client Account</label>
-              <select id="clientSelector" class="field customer-select" required>
-                <option value="">Loading clients...</option>
-              </select>
-            </div>
-
-            <div id="customerSummary" class="customer-summary"></div>
-          </div>
-
-          <div class="console-card">
-            <div class="card-head">
-              <h2>Order Configuration</h2>
-              <p>Choose the service, package, jurisdiction, entity name, and optional services.</p>
-            </div>
-
-            <div class="field-grid">
-              <div class="field-group full">
-                <label class="field-label">Filing Business Service</label>
-                <select id="phoneServiceTitle" class="field" required style="font-weight: 700;">
-              <optgroup label="🏢 Entity Formation & Structuring">
-                <option value="llc-formation" data-starter="99.00" data-compliance="199.00" data-enterprise="399.00" selected>LLC Formation</option>
-                <option value="corporations" data-starter="129.00" data-compliance="249.00" data-enterprise="599.00">Corporations (C/S-Corp)</option>
-                <option value="sole-proprietorship" data-starter="79.00" data-compliance="159.00" data-enterprise="239.00">Sole Proprietorship</option>
-                <option value="dba-registration" data-starter="39.00" data-compliance="99.00" data-enterprise="159.00">DBA Registration</option>
-                <option value="nonprofits" data-starter="149.00" data-compliance="299.00" data-enterprise="499.00">Nonprofit Organization</option>
-                <option value="series-llc" data-starter="199.00" data-compliance="299.00" data-enterprise="399.00">Series LLC</option>
-              </optgroup>
-              <optgroup label="📜 Corporate Maintenance & Compliance">
-                <option value="foreign-qualification" data-starter="149.00" data-compliance="249.00" data-enterprise="349.00">Foreign Qualification</option>
-                <option value="certificate-of-good-standing" data-starter="49.00" data-compliance="99.00" data-enterprise="149.00">Certificate of Good Standing</option>
-                <option value="llc-reinstatement" data-starter="79.00" data-compliance="149.00" data-enterprise="249.00">LLC Reinstatement Processing</option>
-                <option value="annual-reports" data-starter="89.00" data-compliance="159.00" data-enterprise="249.00">Annual Reports</option>
-                <option value="operating-agreement" data-starter="49.00" data-compliance="99.00" data-enterprise="199.00">Operating Agreement</option>
-                <option value="registered-agent" data-starter="99.00" data-compliance="179.00" data-enterprise="299.00">Registered Agent</option>
-                <option value="business-licenses" data-starter="79.00" data-compliance="149.00" data-enterprise="299.00">Business Licenses</option>
-                <option value="dissolution" data-starter="149.00" data-compliance="249.00" data-enterprise="349.00">Entity Dissolution</option>
-              </optgroup>
-              <optgroup label="🔑 Federal Tax & Corporate Identity">
-                <option value="employer-id-ein" data-starter="79.00" data-compliance="149.00" data-enterprise="199.00">Employer ID (EIN)</option>
-                <option value="cage-code" data-starter="249.00" data-compliance="349.00" data-enterprise="449.00">CAGE Code</option>
-                <option value="duns-number" data-starter="49.00" data-compliance="99.00" data-enterprise="179.00">DUNS Number Procurement</option>
-                <option value="minority-certificate" data-starter="99.00" data-compliance="249.00" data-enterprise="399.00">Minority Certificate</option>
-              </optgroup>
-              <optgroup label="🚛 Trucking Logistics & DOT Authority">
-                <option value="owner-operators" data-starter="199.00" data-compliance="299.00" data-enterprise="499.00">Owner Operators Trucker Authority</option>
-                <option value="broker-authority" data-starter="199.00" data-compliance="299.00" data-enterprise="499.00">Broker Authority</option>
-                <option value="ucr-registration" data-starter="99.00" data-compliance="179.00" data-enterprise="249.00">UCR Registration</option>
-                <option value="scac-code" data-starter="49.00" data-compliance="99.00" data-enterprise="149.00">SCAC Code Registration</option>
-                <option value="dot-consortium" data-starter="149.00" data-compliance="299.00" data-enterprise="499.00">DOT Consortium</option>
-                <option value="driver-file" data-starter="279.00" data-compliance="349.00" data-enterprise="449.00">Driver Qualification File</option>
-                <option value="process-agents-boc-3" data-starter="49.00" data-compliance="99.00" data-enterprise="149.00">Process Agent (BOC-3)</option>
-                <option value="ifta-registration" data-starter="159.00" data-compliance="279.00" data-enterprise="349.00">IFTA Registration</option>
-                <option value="hazmat-registration" data-starter="199.00" data-compliance="349.00" data-enterprise="449.00">HAZMAT Registration</option>
-                <option value="dot-permits" data-starter="79.00" data-compliance="149.00" data-enterprise="299.00">Licenses & Permits</option>
-              </optgroup>
-              <optgroup label="📊 Financial Services">
-                <option value="federal-tax" data-starter="299.00" data-compliance="499.00" data-enterprise="799.00">Federal Income Tax</option>
-                <option value="franchise-tax" data-starter="149.00" data-compliance="249.00" data-enterprise="399.00">Franchise Tax Filing</option>
-                <option value="sales-tax-registration" data-starter="99.00" data-compliance="199.00" data-enterprise="299.00">Sales Tax Registration</option>
-                <option value="apostille-services" data-starter="149.00" data-compliance="249.00" data-enterprise="399.00">Apostille Authentication Services</option>
-              </optgroup>
-              <optgroup label="🎨 Branding & Creative Services">
-                <!-- 🟢 FIXED CONTENT: Real unique pricing matrices injected for Web and Logo products -->
-                <option value="web-design" data-starter="399.00" data-compliance="725.00" data-enterprise="1499.00">Web Design Package</option>
-                <option value="logo-design" data-starter="75.00" data-compliance="125.00" data-enterprise="299.00">Logo Design Package</option>
-              </optgroup>
-            </select>
-              </div>
-
-              <div class="field-group full">
-                <label class="field-label">Assigned Package Tier</label>
-                <div class="price-grid">
-                  <label class="price-card selected" id="tierCardStarter">
-                    <input type="radio" name="tier" value="starter" checked>
-                    <strong>Starter Suite</strong>
-                    <b id="priceStarter">$0.00</b>
-                    <small>Core service package</small>
-                  </label>
-                  <label class="price-card" id="tierCardCompliance">
-                    <input type="radio" name="tier" value="compliance">
-                    <strong>Compliance Suite</strong>
-                    <b id="priceCompliance">$0.00</b>
-                    <small>Expanded compliance package</small>
-                  </label>
-                  <label class="price-card" id="tierCardEnterprise">
-                    <input type="radio" name="tier" value="enterprise">
-                    <strong>Enterprise Custom</strong>
-                    <b id="priceEnterprise">$0.00</b>
-                    <small>Maximum service package</small>
-                  </label>
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label class="field-label">Target State Jurisdiction</label>
-                <select id="phoneFilingState" class="field" required>
-              <option value="NATIONAL" data-price="0.00" selected>Federal / Cross-State Regulation (No State Fee)</option>
-              <option value="AL" data-price="50.00">Alabama (+$50.00)</option><option value="AK" data-price="250.00">Alaska (+$250.00)</option>
-              <option value="AZ" data-price="50.00">Arizona (+$50.00)</option><option value="AR" data-price="45.00">Arkansas (+$45.00)</option>
-              <option value="CA" data-price="70.00">California (+$70.00)</option><option value="CO" data-price="50.00">Colorado (+$50.00)</option>
-              <option value="CT" data-price="120.00">Connecticut (+$120.00)</option><option value="DE" data-price="90.00">Delaware (+$90.00)</option>
-              <option value="FL" data-price="125.00">Florida (+$125.00)</option><option value="GA" data-price="100.00">Georgia (+$100.00)</option>
-              <option value="HI" data-price="50.00">Hawaii (+$50.00)</option><option value="ID" data-price="100.00">Idaho (+$100.00)</option>
-              <option value="IL" data-price="150.00">Illinois (+$150.00)</option><option value="IN" data-price="95.00">Indiana (+$95.00)</option>
-              <option value="IA" data-price="50.00">Iowa (+$50.00)</option><option value="KS" data-price="165.00">Kansas (+$165.00)</option>
-              <option value="KY" data-price="40.00">Kentucky (+$40.00)</option><option value="LA" data-price="100.00">Louisiana (+$100.00)</option>
-              <option value="ME" data-price="175.00">Maine (+$175.00)</option><option value="MD" data-price="100.00">Maryland (+$100.00)</option>
-              <option value="MA" data-price="500.00">Massachusetts (+$500.00)</option><option value="MI" data-price="50.00">Michigan (+$50.00)</option>
-              <option value="MN" data-price="135.00">Minnesota (+$135.00)</option><option value="MS" data-price="50.00">Mississippi (+$50.00)</option>
-              <option value="MO" data-price="50.00">Missouri (+$50.00)</option><option value="MT" data-price="70.00">Montana (+$70.00)</option>
-              <option value="NE" data-price="100.00">Nebraska (+$100.00)</option><option value="NV" data-price="75.00">Nevada (+$75.00)</option>
-              <option value="NH" data-price="100.00">New Hampshire (+$100.00)</option><option value="NJ" data-price="125.00">New Jersey (+$125.00)</option>
-              <option value="NM" data-price="50.00">New Mexico (+$50.00)</option><option value="NY" data-price="200.00">New York (+$200.00)</option>
-              <option value="NC" data-price="125.00">North Carolina (+$125.00)</option><option value="ND" data-price="135.00">North Dakota (+$135.00)</option>
-              <option value="OH" data-price="99.00">Ohio (+$99.00)</option><option value="OK" data-price="100.00">Oklahoma (+$100.00)</option>
-              <option value="OR" data-price="100.00">Oregon (+$100.00)</option><option value="PA" data-price="125.00">Pennsylvania (+$125.00)</option>
-              <option value="RI" data-price="150.00">Rhode Island (+$150.00)</option><option value="SC" data-price="110.00">South Carolina (+$110.00)</option>
-              <option value="SD" data-price="150.00">South Dakota (+$150.00)</option><option value="TN" data-price="300.00">Tennessee (+$300.00)</option>
-              <option value="TX" data-price="300.00">Texas (+$300.00)</option><option value="UT" data-price="70.00">Utah (+$70.00)</option>
-              <option value="VT" data-price="125.00">Vermont (+$125.00)</option><option value="VA" data-price="100.00">Virginia (+$100.00)</option>
-              <option value="WA" data-price="200.00">Washington (+$200.00)</option><option value="WV" data-price="100.00">West Virginia (+$100.00)</option>
-              <option value="WI" data-price="130.00">Wisconsin (+$130.00)</option><option value="WY" data-price="100.00">Wyoming (+$100.00)</option>
-            </select>
-              </div>
-
-              <div class="field-group">
-                <label class="field-label">Proposed Legal Entity Name</label>
-                <input id="phoneCompanyName" class="field" placeholder="Enterprise Solutions LLC" required>
-              </div>
-
-              <div class="field-group full">
-                <label class="field-label">Available Add-ons — Ctrl/Cmd + Click for Multiple</label>
-                <select id="phoneUpsellSelection" class="field" multiple style="min-height: 120px !important;">
-              <option value="ein_procurement" data-price="49.00">EIN Federal Tax ID Procurement (+$49.00)</option>
-              <option value="operating_agreement" data-price="39.00">Custom Corporate Operating Agreement (+$39.00)</option>
-              <option value="registered_agent" data-price="125.00">Registered Agent Compliance Shield (+$125.00)</option>
-              <option value="boir_compliance" data-price="59.00">FinCEN BOI Regulatory Compliance Filing (+$59.00)</option>
-              <option value="trucking_boc3" data-price="45.00">Logistics Process Agent (BOC-3) Sheet (+$45.00)</option>
-              <option value="corporate_seal" data-price="79.00">Official Corporate Seal & Ledger Kit (+$79.00)</option>
-              <option value="web_design" data-price="725.00">Professional Website (+$725.00)</option>
-              <option value="logo_design" data-price="125.00">Professional Logo (+$125.00)</option>
-            </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="console-card">
-            <div class="card-head">
-              <h2>Payment & Order Commitment</h2>
-              <p>Use Stripe for live card collection or record the order without collecting payment.</p>
-            </div>
-
-            <div class="payment-options">
-              <label class="payment-option selected" id="paymentStripeOption">
-                <input type="radio" name="paymentStrategy" value="stripe_live" checked>
-                <strong>💳 Process Credit Card Through Stripe</strong>
-                <small>Payment must be confirmed before the paid order is committed.</small>
-              </label>
-              <label class="payment-option" id="paymentOfflineOption">
-                <input type="radio" name="paymentStrategy" value="log_without_payment">
-                <strong>📄 Record Without Payment</strong>
-                <small>For complimentary, check, wire, or other offline arrangements.</small>
-              </label>
-            </div>
-
-            <div id="cardTerminal" class="card-terminal">
-              <div class="section-label">Secure Stripe Card Collection</div>
-              <div id="secureCardElementContainer"></div>
-              <div class="muted" style="margin-top:8px">Card details are collected by Stripe and are not stored in this page.</div>
-            </div>
-          </div>
-        </div>
-
-        <aside>
-          <div class="console-card">
-            <div class="card-head">
-              <h2>Settlement Summary</h2>
-              <p>Live calculation based on the selected service, package, jurisdiction, and add-ons.</p>
-            </div>
-            <div class="summary-row"><span>Service Core</span><strong id="summaryBase">$0.00</strong></div>
-            <div class="summary-row"><span>Jurisdiction</span><strong id="summaryState">$0.00</strong></div>
-            <div class="summary-row"><span>Add-ons</span><strong id="summaryUpsells">$0.00</strong></div>
-            <div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
-          </div>
-
-          <div class="console-card">
-            <div class="card-head">
-              <h2>Commit Order</h2>
-              <p id="commitHelp">Select a client and complete the order configuration.</p>
-            </div>
-            <button id="processOrderBtn" class="primary-btn" type="button" disabled>
-              Process Payment & Create Order ➜
-            </button>
-          </div>
-
-          <div id="resultCard" class="console-card result">
-            <div class="card-head">
-              <h2>✓ Order Created</h2>
-              <p>The order has been committed to the dashboard order ledger.</p>
-            </div>
-            <div class="muted">Tracking Number</div>
-            <div id="resultTracking" class="result-code">—</div>
-            <div id="resultDetails" class="muted"></div>
-            <button class="secondary-btn" style="width:100%;margin-top:16px" type="button" onclick="location.reload()">Create Another Order</button>
-          </div>
-        </aside>
-      </div>
-    </section>
-  </main>
+<!-- Keep your existing navigation shell on every admin page. -->
+<aside class="portal-sidebar">
+<div class="sidebar-brand-block">
+<strong>filings4u</strong><br/>
+<span class="admin-badge">Staff Console</span>
 </div>
-
+<nav class="sidebar-accordion-menu" id="adminSidebarNav">
+<button class="accordion-trigger" type="button">Operations <span>⌄</span></button>
+<div class="accordion-panel open">
+<a class="nav-item active" href="admin-orders.html">🧾 Orders</a>
+<a class="nav-item" href="admin-dashboard.html">📊 Dashboard</a>
+<a class="nav-item" href="admin-tickets.html">🎫 Support Tickets</a>
+<a class="nav-item" href="admin-notifications.html">🔔 Notifications</a>
+</div>
+<button class="accordion-trigger" type="button">Client Management <span>⌄</span></button>
+<div class="accordion-panel">
+<a class="nav-item" href="admin-clients.html">👥 Clients</a>
+<a class="nav-item" href="admin-entities.html">🏢 Entities</a>
+<a class="nav-item" href="client-order-history.html">📜 Order History</a>
+</div>
+</nav>
+<div class="sidebar-footer-lock">
+<button class="logout-btn" id="logoutBtn" type="button">Sign Out</button>
+</div>
+</aside>
+<main class="portal-main">
+<header class="portal-header">
+<div class="welcome-text">
+<h1>Admin Orders</h1>
+<p>Process phone, in-person, complimentary, and Stripe orders for existing client accounts.</p>
+</div>
+<div class="header-actions-wrapper">
+<a class="nav-item" href="admin-notifications.html" style="margin:0">🔔</a>
+<div class="header-clock-pill">⏱️ <span id="portal-clock">Syncing...</span></div>
+<input class="search-input" id="adminGlobalSearchField" placeholder="Search operational matrices..."/>
+</div>
+</header>
+<section class="content-container">
+<div class="status" id="status"></div>
+<div class="order-layout">
+<div>
+<div class="console-card">
+<div class="card-head">
+<h2>Customer Selection</h2>
+<p>Select the client from the live client registry. Do not manually retype customer information for an existing account.</p>
+</div>
+<div class="field-group">
+<label class="field-label" for="clientSelector">Client Account</label>
+<select class="field customer-select" id="clientSelector" required="">
+<option value="">Loading clients...</option>
+</select>
+</div>
+<div class="customer-summary" id="customerSummary"></div>
+</div>
+<div class="console-card">
+<div class="card-head">
+<h2>Order Configuration</h2>
+<p>Choose the service, package, jurisdiction, entity name, and optional services.</p>
+</div>
+<div class="field-grid">
+<div class="field-group full">
+<label class="field-label">Filing Business Service</label>
+<select class="field" id="phoneServiceTitle" required="" style="font-weight: 700;">
+<optgroup label="🏢 Entity Formation &amp; Structuring">
+<option data-compliance="199.00" data-enterprise="399.00" data-starter="99.00" selected="" value="llc-formation">LLC Formation</option>
+<option data-compliance="249.00" data-enterprise="599.00" data-starter="129.00" value="corporations">Corporations (C/S-Corp)</option>
+<option data-compliance="159.00" data-enterprise="239.00" data-starter="79.00" value="sole-proprietorship">Sole Proprietorship</option>
+<option data-compliance="99.00" data-enterprise="159.00" data-starter="39.00" value="dba-registration">DBA Registration</option>
+<option data-compliance="299.00" data-enterprise="499.00" data-starter="149.00" value="nonprofits">Nonprofit Organization</option>
+<option data-compliance="299.00" data-enterprise="399.00" data-starter="199.00" value="series-llc">Series LLC</option>
+</optgroup>
+<optgroup label="📜 Corporate Maintenance &amp; Compliance">
+<option data-compliance="249.00" data-enterprise="349.00" data-starter="149.00" value="foreign-qualification">Foreign Qualification</option>
+<option data-compliance="99.00" data-enterprise="149.00" data-starter="49.00" value="certificate-of-good-standing">Certificate of Good Standing</option>
+<option data-compliance="149.00" data-enterprise="249.00" data-starter="79.00" value="llc-reinstatement">LLC Reinstatement Processing</option>
+<option data-compliance="159.00" data-enterprise="249.00" data-starter="89.00" value="annual-reports">Annual Reports</option>
+<option data-compliance="99.00" data-enterprise="199.00" data-starter="49.00" value="operating-agreement">Operating Agreement</option>
+<option data-compliance="179.00" data-enterprise="299.00" data-starter="99.00" value="registered-agent">Registered Agent</option>
+<option data-compliance="149.00" data-enterprise="299.00" data-starter="79.00" value="business-licenses">Business Licenses</option>
+<option data-compliance="249.00" data-enterprise="349.00" data-starter="149.00" value="dissolution">Entity Dissolution</option>
+</optgroup>
+<optgroup label="🔑 Federal Tax &amp; Corporate Identity">
+<option data-compliance="149.00" data-enterprise="199.00" data-starter="79.00" value="employer-id-ein">Employer ID (EIN)</option>
+<option data-compliance="349.00" data-enterprise="449.00" data-starter="249.00" value="cage-code">CAGE Code</option>
+<option data-compliance="99.00" data-enterprise="179.00" data-starter="49.00" value="duns-number">DUNS Number Procurement</option>
+<option data-compliance="249.00" data-enterprise="399.00" data-starter="99.00" value="minority-certificate">Minority Certificate</option>
+</optgroup>
+<optgroup label="🚛 Trucking Logistics &amp; DOT Authority">
+<option data-compliance="299.00" data-enterprise="499.00" data-starter="199.00" value="owner-operators">Owner Operators Trucker Authority</option>
+<option data-compliance="299.00" data-enterprise="499.00" data-starter="199.00" value="broker-authority">Broker Authority</option>
+<option data-compliance="179.00" data-enterprise="249.00" data-starter="99.00" value="ucr-registration">UCR Registration</option>
+<option data-compliance="99.00" data-enterprise="149.00" data-starter="49.00" value="scac-code">SCAC Code Registration</option>
+<option data-compliance="299.00" data-enterprise="499.00" data-starter="149.00" value="dot-consortium">DOT Consortium</option>
+<option data-compliance="349.00" data-enterprise="449.00" data-starter="279.00" value="driver-file">Driver Qualification File</option>
+<option data-compliance="99.00" data-enterprise="149.00" data-starter="49.00" value="process-agents-boc-3">Process Agent (BOC-3)</option>
+<option data-compliance="279.00" data-enterprise="349.00" data-starter="159.00" value="ifta-registration">IFTA Registration</option>
+<option data-compliance="349.00" data-enterprise="449.00" data-starter="199.00" value="hazmat-registration">HAZMAT Registration</option>
+<option data-compliance="149.00" data-enterprise="299.00" data-starter="79.00" value="dot-permits">Licenses &amp; Permits</option>
+</optgroup>
+<optgroup label="📊 Financial Services">
+<option data-compliance="499.00" data-enterprise="799.00" data-starter="299.00" value="federal-tax">Federal Income Tax</option>
+<option data-compliance="249.00" data-enterprise="399.00" data-starter="149.00" value="franchise-tax">Franchise Tax Filing</option>
+<option data-compliance="199.00" data-enterprise="299.00" data-starter="99.00" value="sales-tax-registration">Sales Tax Registration</option>
+<option data-compliance="249.00" data-enterprise="399.00" data-starter="149.00" value="apostille-services">Apostille Authentication Services</option>
+</optgroup>
+<optgroup label="🎨 Branding &amp; Creative Services">
+<!-- 🟢 FIXED CONTENT: Real unique pricing matrices injected for Web and Logo products -->
+<option data-compliance="725.00" data-enterprise="1499.00" data-starter="399.00" value="web-design">Web Design Package</option>
+<option data-compliance="125.00" data-enterprise="299.00" data-starter="75.00" value="logo-design">Logo Design Package</option>
+</optgroup>
+</select>
+</div>
+<div class="field-group full">
+<label class="field-label">Assigned Package Tier</label>
+<div class="price-grid">
+<label class="price-card selected" id="tierCardStarter">
+<input checked="" name="tier" type="radio" value="starter"/>
+<strong>Starter Suite</strong>
+<b id="priceStarter">$0.00</b>
+<small>Core service package</small>
+</label>
+<label class="price-card" id="tierCardCompliance">
+<input name="tier" type="radio" value="compliance"/>
+<strong>Compliance Suite</strong>
+<b id="priceCompliance">$0.00</b>
+<small>Expanded compliance package</small>
+</label>
+<label class="price-card" id="tierCardEnterprise">
+<input name="tier" type="radio" value="enterprise"/>
+<strong>Enterprise Custom</strong>
+<b id="priceEnterprise">$0.00</b>
+<small>Maximum service package</small>
+</label>
+</div>
+</div>
+<div class="field-group">
+<label class="field-label">Target State Jurisdiction</label>
+<select class="field" id="phoneFilingState" required="">
+<option data-price="0.00" selected="" value="NATIONAL">Federal / Cross-State Regulation (No State Fee)</option>
+<option data-price="50.00" value="AL">Alabama (+$50.00)</option><option data-price="250.00" value="AK">Alaska (+$250.00)</option>
+<option data-price="50.00" value="AZ">Arizona (+$50.00)</option><option data-price="45.00" value="AR">Arkansas (+$45.00)</option>
+<option data-price="70.00" value="CA">California (+$70.00)</option><option data-price="50.00" value="CO">Colorado (+$50.00)</option>
+<option data-price="120.00" value="CT">Connecticut (+$120.00)</option><option data-price="90.00" value="DE">Delaware (+$90.00)</option>
+<option data-price="125.00" value="FL">Florida (+$125.00)</option><option data-price="100.00" value="GA">Georgia (+$100.00)</option>
+<option data-price="50.00" value="HI">Hawaii (+$50.00)</option><option data-price="100.00" value="ID">Idaho (+$100.00)</option>
+<option data-price="150.00" value="IL">Illinois (+$150.00)</option><option data-price="95.00" value="IN">Indiana (+$95.00)</option>
+<option data-price="50.00" value="IA">Iowa (+$50.00)</option><option data-price="165.00" value="KS">Kansas (+$165.00)</option>
+<option data-price="40.00" value="KY">Kentucky (+$40.00)</option><option data-price="100.00" value="LA">Louisiana (+$100.00)</option>
+<option data-price="175.00" value="ME">Maine (+$175.00)</option><option data-price="100.00" value="MD">Maryland (+$100.00)</option>
+<option data-price="500.00" value="MA">Massachusetts (+$500.00)</option><option data-price="50.00" value="MI">Michigan (+$50.00)</option>
+<option data-price="135.00" value="MN">Minnesota (+$135.00)</option><option data-price="50.00" value="MS">Mississippi (+$50.00)</option>
+<option data-price="50.00" value="MO">Missouri (+$50.00)</option><option data-price="70.00" value="MT">Montana (+$70.00)</option>
+<option data-price="100.00" value="NE">Nebraska (+$100.00)</option><option data-price="75.00" value="NV">Nevada (+$75.00)</option>
+<option data-price="100.00" value="NH">New Hampshire (+$100.00)</option><option data-price="125.00" value="NJ">New Jersey (+$125.00)</option>
+<option data-price="50.00" value="NM">New Mexico (+$50.00)</option><option data-price="200.00" value="NY">New York (+$200.00)</option>
+<option data-price="125.00" value="NC">North Carolina (+$125.00)</option><option data-price="135.00" value="ND">North Dakota (+$135.00)</option>
+<option data-price="99.00" value="OH">Ohio (+$99.00)</option><option data-price="100.00" value="OK">Oklahoma (+$100.00)</option>
+<option data-price="100.00" value="OR">Oregon (+$100.00)</option><option data-price="125.00" value="PA">Pennsylvania (+$125.00)</option>
+<option data-price="150.00" value="RI">Rhode Island (+$150.00)</option><option data-price="110.00" value="SC">South Carolina (+$110.00)</option>
+<option data-price="150.00" value="SD">South Dakota (+$150.00)</option><option data-price="300.00" value="TN">Tennessee (+$300.00)</option>
+<option data-price="300.00" value="TX">Texas (+$300.00)</option><option data-price="70.00" value="UT">Utah (+$70.00)</option>
+<option data-price="125.00" value="VT">Vermont (+$125.00)</option><option data-price="100.00" value="VA">Virginia (+$100.00)</option>
+<option data-price="200.00" value="WA">Washington (+$200.00)</option><option data-price="100.00" value="WV">West Virginia (+$100.00)</option>
+<option data-price="130.00" value="WI">Wisconsin (+$130.00)</option><option data-price="100.00" value="WY">Wyoming (+$100.00)</option>
+</select>
+</div>
+<div class="field-group">
+<label class="field-label">Proposed Legal Entity Name</label>
+<input class="field" id="phoneCompanyName" placeholder="Enterprise Solutions LLC" required=""/>
+</div>
+<div class="field-group full">
+<label class="field-label">Available Add-ons — Ctrl/Cmd + Click for Multiple</label>
+<select class="field" id="phoneUpsellSelection" multiple="" style="min-height: 120px !important;">
+<option data-price="49.00" value="ein_procurement">EIN Federal Tax ID Procurement (+$49.00)</option>
+<option data-price="39.00" value="operating_agreement">Custom Corporate Operating Agreement (+$39.00)</option>
+<option data-price="125.00" value="registered_agent">Registered Agent Compliance Shield (+$125.00)</option>
+<option data-price="59.00" value="boir_compliance">FinCEN BOI Regulatory Compliance Filing (+$59.00)</option>
+<option data-price="45.00" value="trucking_boc3">Logistics Process Agent (BOC-3) Sheet (+$45.00)</option>
+<option data-price="79.00" value="corporate_seal">Official Corporate Seal &amp; Ledger Kit (+$79.00)</option>
+<option data-price="725.00" value="web_design">Professional Website (+$725.00)</option>
+<option data-price="125.00" value="logo_design">Professional Logo (+$125.00)</option>
+</select>
+</div>
+</div>
+</div>
+<div class="console-card">
+<div class="card-head">
+<h2>Payment &amp; Order Commitment</h2>
+<p>Use Stripe for live card collection or record the order without collecting payment.</p>
+</div>
+<div class="payment-options">
+<label class="payment-option selected" id="paymentStripeOption">
+<input checked="" name="paymentStrategy" type="radio" value="stripe_live"/>
+<strong>💳 Process Credit Card Through Stripe</strong>
+<small>Payment must be confirmed before the paid order is committed.</small>
+</label>
+<label class="payment-option" id="paymentOfflineOption">
+<input name="paymentStrategy" type="radio" value="log_without_payment"/>
+<strong>📄 Record Without Payment</strong>
+<small>For complimentary, check, wire, or other offline arrangements.</small>
+</label>
+</div>
+<div class="card-terminal" id="cardTerminal">
+<div class="section-label">Secure Stripe Card Collection</div>
+<div id="secureCardElementContainer"></div>
+<div class="muted" style="margin-top:8px">Card details are collected by Stripe and are not stored in this page.</div>
+</div>
+</div>
+</div>
+<aside>
+<div class="console-card">
+<div class="card-head">
+<h2>Settlement Summary</h2>
+<p>Live calculation based on the selected service, package, jurisdiction, and add-ons.</p>
+</div>
+<div class="summary-row"><span>Service Core</span><strong id="summaryBase">$0.00</strong></div>
+<div class="summary-row"><span>Jurisdiction</span><strong id="summaryState">$0.00</strong></div>
+<div class="summary-row"><span>Add-ons</span><strong id="summaryUpsells">$0.00</strong></div>
+<div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
+</div>
+<div class="console-card">
+<div class="card-head">
+<h2>Commit Order</h2>
+<p id="commitHelp">Select a client and complete the order configuration.</p>
+</div>
+<button class="primary-btn" disabled="" id="processOrderBtn" type="button">
+              Process Payment &amp; Create Order ➜
+            </button>
+</div>
+<div class="console-card result" id="resultCard">
+<div class="card-head">
+<h2>✓ Order Created</h2>
+<p>The order has been committed to the dashboard order ledger.</p>
+</div>
+<div class="muted">Tracking Number</div>
+<div class="result-code" id="resultTracking">—</div>
+<div class="muted" id="resultDetails"></div>
+<button class="secondary-btn" onclick="location.reload()" style="width:100%;margin-top:16px" type="button">Create Another Order</button>
+</div>
+</aside>
+</div>
+</section>
+</main>
+</div>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
@@ -800,6 +780,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 </script>
-
-</body>
+<script src="assets/js/filings4u-portal-shell.js"></script></body>
 </html>

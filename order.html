@@ -1,19 +1,17 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secure Payment Checkout | filings4u</title>
-  
-  <link rel="stylesheet" href="assets/css/portal-wizard.css">
-  <link rel="icon" type="image/png" href="images/fav.png">
-  
-  <!-- CORE DEPENDENCIES -->
-  <script src="https://js.stripe.com/v3/"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/wizards-config.js"></script>
-  
- <style> 
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Secure Payment Checkout | filings4u</title>
+<link href="assets/css/portal-wizard.css" rel="stylesheet"/>
+<link href="images/fav.png" rel="icon" type="image/png"/>
+<!-- CORE DEPENDENCIES -->
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/wizards-config.js"></script>
+<style> 
         :root { 
             --emerald: #10b981; 
             --navy: #0a1f44; 
@@ -102,66 +100,57 @@
                 text-align: center !important; 
             } 
         } 
-    </style> 
-</head>
-<body style="background-color: #f8fafc; margin:0; padding:15px; font-family: system-ui, -apple-system, sans-serif;">
-
-  <!-- 🎯 WIZARD CONTAINER CORE -->
-  <main class="wizard-container" style="max-width: 850px; width: 100%; margin: 20px auto; background: #ffffff; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02); position: relative; box-sizing: border-box;">
-    
-    <!-- Live System Clock Dashboard Component -->
-    <div style="position: absolute; top: 15px; right: 30px; text-align: right;">
-      <div id="live-wizard-date" style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">--/--/----</div>
-      <div id="live-wizard-clock" style="font-family: monospace; font-size: 0.95rem; font-weight: 800; color: var(--emerald); margin-top: 2px;">00:00:00</div>
-    </div>
-
-    <!-- Layout Frame Header Component -->
-    <div class="wizard-header-row" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <img src="images/logo.png" alt="filings4u" style="height: 32px; display:block; margin-bottom:8px;">
-        <h1 style="margin:0; font-size:1.5rem; color:#0a1f44; font-weight:800;">Secure Checkout Gateway</h1>
-      </div>
-      <!-- Locate this button code inside your wizard-header-row section and update it -->
-<button onclick="handleCancelAbortRedirect()" class="abort-btn">✕ Abort & Return</button>
-
-    </div>
-
-    <!-- Line Item Breakdowns Box Viewport Container -->
-    <div style="margin: 20px 0; width: 100%; box-sizing: border-box; text-align: left;">
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
-        <p style="margin: 0 0 10px 0; font-size: 1rem; color: #4a5568;">
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
+<body class="f4u-wizard-page">
+<!-- 🎯 WIZARD CONTAINER CORE -->
+<main class="wizard-container">
+<!-- Live System Clock Dashboard Component -->
+<div style="position: absolute; top: 15px; right: 30px; text-align: right;">
+<div id="live-wizard-date" style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">--/--/----</div>
+<div id="live-wizard-clock" style="font-family: monospace; font-size: 0.95rem; font-weight: 800; color: var(--emerald); margin-top: 2px;">00:00:00</div>
+</div>
+<!-- Layout Frame Header Component -->
+<div class="wizard-header-row">
+<div>
+<img alt="filings4u" src="images/logo.png" style="height: 32px; display:block; margin-bottom:8px;"/>
+<h1 style="margin:0; font-size:1.5rem; color:#0a1f44; font-weight:800;">Secure Checkout Gateway</h1>
+</div>
+<!-- Locate this button code inside your wizard-header-row section and update it -->
+<button class="abort-btn" onclick="handleCancelAbortRedirect()">✕ Abort &amp; Return</button>
+</div>
+<!-- Line Item Breakdowns Box Viewport Container -->
+<div style="margin: 20px 0; width: 100%; box-sizing: border-box; text-align: left;">
+<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
+<p style="margin: 0 0 10px 0; font-size: 1rem; color: #4a5568;">
           Filing Contact Email: <strong id="summary-customer-email" style="color: #0a1f44;">Loading...</strong>
-        </p>
-        <p style="margin: 0 0 10px 0; font-size: 1rem; color: #4a5568;">
+</p>
+<p style="margin: 0 0 10px 0; font-size: 1rem; color: #4a5568;">
           Filing Corporate Entity: <strong id="summary-company-name" style="color: #0a1f44;">Loading...</strong>
-        </p>
-        <p style="margin: 0; font-size: 1rem; color: #4a5568; border-top: 1px dashed #e2e8f0; padding-top: 12px; margin-top: 12px;">
+</p>
+<p style="margin: 0; font-size: 1rem; color: #4a5568; border-top: 1px dashed #e2e8f0; padding-top: 12px; margin-top: 12px;">
           Total Unified Amount Due: <strong id="summary-price-display" style="color: var(--emerald); font-size: 1.2rem;">$0.00</strong>
-        </p>
+</p>
+</div>
+<!-- Loading Spinner Hub Component -->
+<div id="loading-message" style="text-align: center; padding: 60px 0;">
+<p style="color: #4a5568; font-size: 0.95rem; margin-bottom: 15px;">Establishing secure encrypted connection layer parameters...</p>
+<div style="margin: 0 auto; width: 35px; height: 35px; border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+</div>
+<!-- Stripe Element Target Placement Anchor -->
+<div id="checkout"></div>
+</div>
+<!-- Secure Connection Footer Badging -->
+<div class="wizard-footer-row">
+<div class="trust-badge">
+<span>SECURE</span> 256-bit SSL Encrypted Connection
       </div>
-
-      <!-- Loading Spinner Hub Component -->
-      <div id="loading-message" style="text-align: center; padding: 60px 0;">
-        <p style="color: #4a5568; font-size: 0.95rem; margin-bottom: 15px;">Establishing secure encrypted connection layer parameters...</p>
-        <div style="margin: 0 auto; width: 35px; height: 35px; border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-      </div>
-
-      <!-- Stripe Element Target Placement Anchor -->
-      <div id="checkout"></div>
-    </div>
-
-    <!-- Secure Connection Footer Badging -->
-    <div class="wizard-footer-row" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; width: 100%;">
-      <div class="trust-badge">
-        <span>SECURE</span> 256-bit SSL Encrypted Connection
-      </div>
-      <div style="font-size: 0.8rem; color: #64748b; font-weight: 500;">
+<div style="font-size: 0.8rem; color: #64748b; font-weight: 500;">
         PCI-DSS Compliant Transaction Pipeline
       </div>
-    </div>
-  </main>
-
- <script>
+</div>
+</main>
+<script>
 // System Clock Tick Driver
 (function() {
     function updateCheckoutClock() {
@@ -261,6 +250,5 @@ function handleCancelAbortRedirect() {
     }
 }
 </script>
-
-</body>
+<script src="assets/js/filings4u-portal-shell.js"></script></body>
 </html>

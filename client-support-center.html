@@ -1,15 +1,15 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Support & Communications | filings4u</title>
-  <link rel="icon" type="image/png" href="images/fav.png">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-config.js"></script>
-
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="yes" name="mobile-web-app-capable"/>
+<title>Support &amp; Communications | filings4u</title>
+<link href="images/fav.png" rel="icon" type="image/png"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js"></script>
+<style>
     :root{
       --navy:#0a1f44;--green:#10b981;--green-dark:#047857;--bg:#f4f6f9;
       --white:#fff;--border:#e2e8f0;--muted:#64748b;--text:#0f172a;
@@ -91,8 +91,7 @@
     @media(max-width:1050px){.portal-sidebar{display:none}.portal-main{margin-left:0;width:100%}.chat-layout{grid-template-columns:1fr}.hero{align-items:flex-start;flex-direction:column}.hero-badges{justify-content:flex-start}.detail-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:650px){.portal-header,.content{padding-left:16px;padding-right:16px}.hero{padding:19px}.panel-head,.panel-body{padding:15px}.form-grid{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr 1fr}.bubble{max-width:88%}.composer{padding:10px}.composer button{padding:0 12px}.header-title h1{font-size:1.1rem}.clock{display:none}}
   </style>
-
-   <style>
+<style>
     /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
     :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
     body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
@@ -124,104 +123,92 @@
     .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
     .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
   </style>
-</head>
-<body>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
+<body class="f4u-client-page">
 <div class="dashboard-wrapper">
-
-
-  <main class="portal-main">
-    <header class="portal-header">
-      <div class="header-title"><h1>Support & Communications</h1><p>Notifications, support messages, and support tickets in one place.</p></div>
-      <div class="clock" id="portalClock">Syncing...</div>
-    </header>
-
-    <section class="content">
-      <div class="hero">
-        <div>
-          <h2>How can we help, <span id="clientName">Client</span>?</h2>
-          <p>Your official account notifications, live support conversation, and support cases are now managed from one secure workspace.</p>
-        </div>
-        <div class="hero-badges">
-          <span class="pill" id="unreadPill">0 Unread</span>
-          <span class="pill" id="openTicketPill">0 Open Tickets</span>
-          <span class="pill green">Secure Workspace</span>
-        </div>
-      </div>
-
-      <div class="tabs">
-        <button class="tab active" data-view="notifications">🔔 Notifications <span class="count" id="notificationCount">0</span></button>
-        <button class="tab" data-view="messages">💬 Support Messages <span class="count" id="messageCount">0</span></button>
-        <button class="tab" data-view="tickets">🎫 Support Tickets <span class="count" id="ticketCount">0</span></button>
-      </div>
-
-      <div class="workspace">
-        <section class="panel view-panel" id="notificationsView">
-          <div class="panel-head"><div><h3>Account Notifications</h3><p>Official updates and alerts from the filings4u team.</p></div><button class="secondary" id="markAllReadBtn">Mark All Read</button></div>
-          <div class="panel-body"><div class="notification-list" id="notificationList"><div class="empty">Loading notifications...</div></div></div>
-        </section>
-
-        <section class="view-panel" id="messagesView" style="display:none">
-          <div class="chat-layout">
-            <div class="panel chat-panel">
-              <div class="panel-head"><div><h3>Live Support Messages</h3><p>Use this conversation for questions and ongoing support.</p></div><span class="pill green" id="supportStatus">Checking...</span></div>
-              <div class="chat-log" id="chatLog"><div class="empty">Loading support messages...</div></div>
-              <div class="composer"><input id="chatInput" placeholder="Type a message to the support desk..."><button id="sendChatBtn">Send</button></div>
-            </div>
-            <div class="panel side-card">
-              <h4>Need a formal case?</h4>
-              <p>Use a support ticket when the request needs tracking, assignment, or a formal status.</p>
-              <button class="quick-btn" id="openTicketFromChat">🎫 Create Support Ticket</button>
-              <h4 style="margin-top:22px">Notifications</h4>
-              <p>Administrative notices are read here. To respond to an issue, use this support conversation instead of replying to the notification itself.</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="view-panel" id="ticketsView" style="display:none">
-          <div class="panel" id="ticketListPanel">
-            <div class="panel-head"><div><h3>Support Tickets</h3><p>Track your formal support requests and their current status.</p></div><button class="primary" id="newTicketBtn">+ New Ticket</button></div>
-            <div class="panel-body"><div class="ticket-list" id="ticketList"><div class="empty">Loading support tickets...</div></div></div>
-          </div>
-
-          <div class="panel ticket-detail" id="ticketDetailPanel" style="margin-top:18px">
-            <div class="panel-head"><div><h3 id="detailSubject">Ticket</h3><p id="detailCompany"></p></div><button class="secondary" id="closeTicketDetail">Back to Tickets</button></div>
-            <div class="panel-body">
-              <div class="ticket-detail-head"><div class="ticket-number" id="detailTicketId"></div><span class="status" id="detailStatus"></span></div>
-              <div class="detail-grid">
-                <div class="detail-box"><span>Priority</span><strong id="detailPriority">—</strong></div>
-                <div class="detail-box"><span>Status</span><strong id="detailStatusText">—</strong></div>
-                <div class="detail-box"><span>Assigned Agent</span><strong id="detailAgent">—</strong></div>
-                <div class="detail-box"><span>Updated</span><strong id="detailUpdated">—</strong></div>
-              </div>
-              <div class="description-box" id="detailDescription"></div>
-              <div style="margin-top:16px;display:flex;gap:8px"><button class="primary" id="openTicketChatBtn">Open Support Messages</button></div>
-            </div>
-          </div>
-
-          <div class="panel new-ticket" id="newTicketPanel" style="margin-top:18px">
-            <div class="panel-head"><div><h3>Create Support Ticket</h3><p>Submit a formal request to the support team.</p></div><button class="secondary" id="cancelNewTicket">Cancel</button></div>
-            <div class="panel-body">
-              <div id="ticketNotice" class="notice"></div>
-              <form id="newTicketForm">
-                <div class="form-grid">
-                  <div class="field"><label>Subject</label><input id="newTicketSubject" required placeholder="What do you need help with?"></div>
-                  <div class="field"><label>Priority</label><select id="newTicketPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
-                  <div class="field full"><label>Description</label><textarea id="newTicketDescription" required placeholder="Describe the issue or request in detail."></textarea></div>
-                </div>
-                <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="primary" type="submit" id="submitTicketBtn">Submit Support Ticket</button></div>
-              </form>
-            </div>
-          </div>
-        </section>
-      </div>
-    </section>
-  </main>
+<main class="portal-main">
+<header class="portal-header">
+<div class="header-title"><h1>Support &amp; Communications</h1><p>Notifications, support messages, and support tickets in one place.</p></div>
+<div class="clock" id="portalClock">Syncing...</div>
+</header>
+<section class="content">
+<div class="hero">
+<div>
+<h2>How can we help, <span id="clientName">Client</span>?</h2>
+<p>Your official account notifications, live support conversation, and support cases are now managed from one secure workspace.</p>
 </div>
-
-  <script src="assets/js/client-navigation.js"></script>
-
-  <script src="assets/js/client-footer.js"></script>
-
+<div class="hero-badges">
+<span class="pill" id="unreadPill">0 Unread</span>
+<span class="pill" id="openTicketPill">0 Open Tickets</span>
+<span class="pill green">Secure Workspace</span>
+</div>
+</div>
+<div class="tabs">
+<button class="tab active" data-view="notifications">🔔 Notifications <span class="count" id="notificationCount">0</span></button>
+<button class="tab" data-view="messages">💬 Support Messages <span class="count" id="messageCount">0</span></button>
+<button class="tab" data-view="tickets">🎫 Support Tickets <span class="count" id="ticketCount">0</span></button>
+</div>
+<div class="workspace">
+<section class="panel view-panel" id="notificationsView">
+<div class="panel-head"><div><h3>Account Notifications</h3><p>Official updates and alerts from the filings4u team.</p></div><button class="secondary" id="markAllReadBtn">Mark All Read</button></div>
+<div class="panel-body"><div class="notification-list" id="notificationList"><div class="empty">Loading notifications...</div></div></div>
+</section>
+<section class="view-panel" id="messagesView" style="display:none">
+<div class="chat-layout">
+<div class="panel chat-panel">
+<div class="panel-head"><div><h3>Live Support Messages</h3><p>Use this conversation for questions and ongoing support.</p></div><span class="pill green" id="supportStatus">Checking...</span></div>
+<div class="chat-log" id="chatLog"><div class="empty">Loading support messages...</div></div>
+<div class="composer"><input id="chatInput" placeholder="Type a message to the support desk..."/><button id="sendChatBtn">Send</button></div>
+</div>
+<div class="panel side-card">
+<h4>Need a formal case?</h4>
+<p>Use a support ticket when the request needs tracking, assignment, or a formal status.</p>
+<button class="quick-btn" id="openTicketFromChat">🎫 Create Support Ticket</button>
+<h4 style="margin-top:22px">Notifications</h4>
+<p>Administrative notices are read here. To respond to an issue, use this support conversation instead of replying to the notification itself.</p>
+</div>
+</div>
+</section>
+<section class="view-panel" id="ticketsView" style="display:none">
+<div class="panel" id="ticketListPanel">
+<div class="panel-head"><div><h3>Support Tickets</h3><p>Track your formal support requests and their current status.</p></div><button class="primary" id="newTicketBtn">+ New Ticket</button></div>
+<div class="panel-body"><div class="ticket-list" id="ticketList"><div class="empty">Loading support tickets...</div></div></div>
+</div>
+<div class="panel ticket-detail" id="ticketDetailPanel" style="margin-top:18px">
+<div class="panel-head"><div><h3 id="detailSubject">Ticket</h3><p id="detailCompany"></p></div><button class="secondary" id="closeTicketDetail">Back to Tickets</button></div>
+<div class="panel-body">
+<div class="ticket-detail-head"><div class="ticket-number" id="detailTicketId"></div><span class="status" id="detailStatus"></span></div>
+<div class="detail-grid">
+<div class="detail-box"><span>Priority</span><strong id="detailPriority">—</strong></div>
+<div class="detail-box"><span>Status</span><strong id="detailStatusText">—</strong></div>
+<div class="detail-box"><span>Assigned Agent</span><strong id="detailAgent">—</strong></div>
+<div class="detail-box"><span>Updated</span><strong id="detailUpdated">—</strong></div>
+</div>
+<div class="description-box" id="detailDescription"></div>
+<div style="margin-top:16px;display:flex;gap:8px"><button class="primary" id="openTicketChatBtn">Open Support Messages</button></div>
+</div>
+</div>
+<div class="panel new-ticket" id="newTicketPanel" style="margin-top:18px">
+<div class="panel-head"><div><h3>Create Support Ticket</h3><p>Submit a formal request to the support team.</p></div><button class="secondary" id="cancelNewTicket">Cancel</button></div>
+<div class="panel-body">
+<div class="notice" id="ticketNotice"></div>
+<form id="newTicketForm">
+<div class="form-grid">
+<div class="field"><label>Subject</label><input id="newTicketSubject" placeholder="What do you need help with?" required=""/></div>
+<div class="field"><label>Priority</label><select id="newTicketPriority"><option>Low</option><option selected="">Medium</option><option>High</option><option>Urgent</option></select></div>
+<div class="field full"><label>Description</label><textarea id="newTicketDescription" placeholder="Describe the issue or request in detail." required=""></textarea></div>
+</div>
+<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="primary" id="submitTicketBtn" type="submit">Submit Support Ticket</button></div>
+</form>
+</div>
+</div>
+</section>
+</div>
+</section>
+</main>
+</div>
+<script src="assets/js/client-navigation.js"></script>
+<script src="assets/js/client-footer.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
@@ -497,5 +484,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 </script>
-</body>
+<script src="assets/js/filings4u-portal-shell.js"></script></body>
 </html>

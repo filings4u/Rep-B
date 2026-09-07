@@ -1,13 +1,13 @@
 <!-- admin-customer-profile -->
- 
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Client Profiler Card Node - filings4u Headquarters</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Client Profiler Card Node - filings4u Headquarters</title>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
     :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
     body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
     .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
@@ -36,8 +36,7 @@
     .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
     .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; }
   </style>
-
-  <style>
+<style>
     :root {
       --prof-bg: #f8fafc;
       --prof-panel: #ffffff;
@@ -62,126 +61,106 @@
     .prof-field:focus { border-color: var(--prof-primary); }
     .prof-field:disabled { background: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; }
   </style>
-</head>
-
-<body class="crm-body">
-
-   <div class="dashboard-wrapper">
-    <!-- 🧱 SCROLLABLE MAIN WORKSPACE -->
-    <main class="portal-main">
-   
-
-  <div class="crm-layout">
-
-
-<body class="prof-body" style="margin:0; padding:0; background:#f8fafc; font-family:system-ui, -apple-system, sans-serif; color:#0f172a;">
-
-  <div class="prof-container" style="padding: 32px 40px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 32px;">
-    
-    <!-- 📋 ACTION BAR HEADER -->
-    <header class="prof-header-bar" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; width: 100%; box-sizing: border-box;">
-      <div>
-        <a href="admin-crm.html" class="prof-back-btn" style="text-decoration: none; color: #475569; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">📋 Back to CRM Directory</a>
-        <h1 style="margin: 8px 0 0 0; font-size: 1.35rem; font-weight: 850; letter-spacing: -0.025em; color: #0f172a;">Client Operational Profiler</h1>
-      </div>
-      <button type="button" id="profSaveMasterChangesBtn" style="background: #0f172a; color: #fff; border: none; padding: 12px 24px; font-weight: 700; font-size: 0.85rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(10,31,68,0.15);">Save Profile Modifications ➔</button>
-    </header>
-
-    <!-- 🟢 THE HTML HIERARCHY FIX: Added main workspace layout grid wrapper to bound component positioning safely -->
-    <main class="crm-workspace" style="width: 100%; box-sizing: border-box; display: block; margin: 0; padding: 0;">
-      <div class="prof-grid" style="display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: start; width: 100%; box-sizing: border-box;">
-        
-        <!-- COLUMN 1: LEFT COMPONENT PROFILE SUMMARY CARD -->
-        <div class="prof-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; text-align: center;">
-          <img src="images/fav.png" id="profAvatarDisplayNode" class="prof-avatar-circle" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #e2e8f0; background: #f1f5f9; object-fit: cover; margin: 0 auto;" alt="User Avatar">
-          <div>
-            <h2 id="profAccountSummaryTitle" style="margin: 12px 0 2px 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Loading Profile...</h2>
-            <p id="profEmailLabelField" style="margin: 0; font-size: 0.78rem; font-family: monospace; color: #475569; word-break: break-all;">--</p>
-          </div>
-          
-          <div style="border-top: 1px dashed #e2e8f0; padding-top: 16px; text-align: left; display: flex; flex-direction: column; gap: 12px;">
-            <div style="font-size: 0.8rem; color: #475569;">
-              <strong style="color: #0f172a;">Tracking ID:</strong> <span id="profTrackingLabelField" style="font-family: monospace; font-weight: 700;">--</span>
-            </div>
-            <div style="font-size: 0.8rem; color: #475569;">
-              <strong style="color: #0f172a;">Stripe Cust ID:</strong> <span id="profStripeLabelField" style="font-family: monospace; font-size: 0.75rem;">--</span>
-            </div>
-            <div style="font-size: 0.8rem; color: #475569;">
-              <strong style="color: #0f172a;">Ecosystem Status:</strong> <span id="profStatusLabelField" style="font-weight: 700;">--</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- COLUMN 2: RIGHT COMPONENT FORM INFORMATION LEDGER CARD -->
-        <div class="prof-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;">
-          <h3 style="margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Account Parameters Registry</h3>
-          <p style="margin: 0 0 12px 0; font-size: 0.78rem; color: #475569;">Inspect or modify geolocation bounding data, company descriptors, and security parameters mapped below.</p>
-          <!-- 🟢 THE GRID FORM LAYOUT RESOLUTION: Isolated internal block row wrapper controls -->
-          <form id="profMasterOperationsForm" onsubmit="return false;" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">First Name</label>
-              <input type="text" id="profFirstNameField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Last Name</label>
-              <input type="text" id="profLastNameField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Company Legal Designation</label>
-              <input type="text" id="profCompanyField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Phone Contact Field</label>
-              <input type="text" id="profPhoneField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group full-width" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box; grid-column: span 2;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Street Address Lines</label>
-              <input type="text" id="profStreetField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">City Bounding Node</label>
-              <input type="text" id="profCityField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">State Bounding Jurisdiction</label>
-              <input type="text" id="profStateField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Zip Postal Code</label>
-              <input type="text" id="profZipField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-            </div>
-            <div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Ecosystem Sync Status Controls</label>
-              <select id="profStatusField" class="prof-field" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
-                <option value="Active">Active / Synchronized</option>
-                <option value="Suspended">Suspended / Paused</option>
-              </select>
-            </div>
-          </form>
-          <div id="profSaveBannerAlert" style="display:none; font-size:0.8rem; font-weight:700; padding:12px; border-radius:8px; text-align: center; width:100%; box-sizing:border-box; margin-top:12px;"></div>
-        </div>
-
-      </div>
-    </main>
-  </div>
-
-
-
- <!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
-  <!-- 1. The Global Library Core MUST load absolute first -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- 2. The Configuration setup creates window.supabaseClient immediately -->
-  <script src="assets/js/supabase-config.js"></script>
-  
-  <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/admin-master-ledger.js"></script>
-
-   <!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
-  <script src="assets/js/admin-navigation.js"></script>
-
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
+<body class="crm-body f4u-admin-page">
+<div class="dashboard-wrapper">
+<!-- 🧱 SCROLLABLE MAIN WORKSPACE -->
+<main class="portal-main">
+<div class="crm-layout">
+<body class="prof-body">
+<div class="prof-container" style="padding: 32px 40px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 32px;">
+<!-- 📋 ACTION BAR HEADER -->
+<header class="prof-header-bar" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; width: 100%; box-sizing: border-box;">
+<div>
+<a class="prof-back-btn" href="admin-crm.html" style="text-decoration: none; color: #475569; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">📋 Back to CRM Directory</a>
+<h1 style="margin: 8px 0 0 0; font-size: 1.35rem; font-weight: 850; letter-spacing: -0.025em; color: #0f172a;">Client Operational Profiler</h1>
+</div>
+<button id="profSaveMasterChangesBtn" style="background: #0f172a; color: #fff; border: none; padding: 12px 24px; font-weight: 700; font-size: 0.85rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(10,31,68,0.15);" type="button">Save Profile Modifications ➔</button>
+</header>
+<!-- 🟢 THE HTML HIERARCHY FIX: Added main workspace layout grid wrapper to bound component positioning safely -->
+<main class="crm-workspace" style="width: 100%; box-sizing: border-box; display: block; margin: 0; padding: 0;">
+<div class="prof-grid" style="display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: start; width: 100%; box-sizing: border-box;">
+<!-- COLUMN 1: LEFT COMPONENT PROFILE SUMMARY CARD -->
+<div class="prof-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; text-align: center;">
+<img alt="User Avatar" class="prof-avatar-circle" id="profAvatarDisplayNode" src="images/fav.png" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #e2e8f0; background: #f1f5f9; object-fit: cover; margin: 0 auto;"/>
+<div>
+<h2 id="profAccountSummaryTitle" style="margin: 12px 0 2px 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Loading Profile...</h2>
+<p id="profEmailLabelField" style="margin: 0; font-size: 0.78rem; font-family: monospace; color: #475569; word-break: break-all;">--</p>
+</div>
+<div style="border-top: 1px dashed #e2e8f0; padding-top: 16px; text-align: left; display: flex; flex-direction: column; gap: 12px;">
+<div style="font-size: 0.8rem; color: #475569;">
+<strong style="color: #0f172a;">Tracking ID:</strong> <span id="profTrackingLabelField" style="font-family: monospace; font-weight: 700;">--</span>
+</div>
+<div style="font-size: 0.8rem; color: #475569;">
+<strong style="color: #0f172a;">Stripe Cust ID:</strong> <span id="profStripeLabelField" style="font-family: monospace; font-size: 0.75rem;">--</span>
+</div>
+<div style="font-size: 0.8rem; color: #475569;">
+<strong style="color: #0f172a;">Ecosystem Status:</strong> <span id="profStatusLabelField" style="font-weight: 700;">--</span>
+</div>
+</div>
+</div>
+<!-- COLUMN 2: RIGHT COMPONENT FORM INFORMATION LEDGER CARD -->
+<div class="prof-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;">
+<h3 style="margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Account Parameters Registry</h3>
+<p style="margin: 0 0 12px 0; font-size: 0.78rem; color: #475569;">Inspect or modify geolocation bounding data, company descriptors, and security parameters mapped below.</p>
+<!-- 🟢 THE GRID FORM LAYOUT RESOLUTION: Isolated internal block row wrapper controls -->
+<form id="profMasterOperationsForm" onsubmit="return false;" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; box-sizing: border-box;">
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">First Name</label>
+<input class="prof-field" id="profFirstNameField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Last Name</label>
+<input class="prof-field" id="profLastNameField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Company Legal Designation</label>
+<input class="prof-field" id="profCompanyField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Phone Contact Field</label>
+<input class="prof-field" id="profPhoneField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group full-width" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box; grid-column: span 2;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Street Address Lines</label>
+<input class="prof-field" id="profStreetField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">City Bounding Node</label>
+<input class="prof-field" id="profCityField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">State Bounding Jurisdiction</label>
+<input class="prof-field" id="profStateField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Zip Postal Code</label>
+<input class="prof-field" id="profZipField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;" type="text"/>
+</div>
+<div class="prof-input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+<label style="font-weight: 700; font-size: 0.8rem; color: #475569;">Ecosystem Sync Status Controls</label>
+<select class="prof-field" id="profStatusField" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; height: 42px; box-sizing: border-box; outline: none; background: #ffffff;">
+<option value="Active">Active / Synchronized</option>
+<option value="Suspended">Suspended / Paused</option>
+</select>
+</div>
+</form>
+<div id="profSaveBannerAlert" style="display:none; font-size:0.8rem; font-weight:700; padding:12px; border-radius:8px; text-align: center; width:100%; box-sizing:border-box; margin-top:12px;"></div>
+</div>
+</div>
+</main>
+</div>
+<!-- ✅ SECURE ADMIN INTEGRATION SEQUENCE ORDER -->
+<!-- 1. The Global Library Core MUST load absolute first -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 2. The Configuration setup creates window.supabaseClient immediately -->
+<script src="assets/js/supabase-config.js"></script>
+<!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+<script src="assets/js/admin-master-ledger.js"></script>
+<!-- 3. The unified master script processes pricing ledgers, filters, metrics, and navigation -->
+<script src="assets/js/admin-navigation.js"></script>
 <!-- JAVASCRIPT ARCHITECTURE CONTROLLER MODULES -->
-  <script>
+<script>
   document.addEventListener("DOMContentLoaded", async () => {
     "use strict";
 
@@ -759,4 +738,4 @@
   });
 </script>
 </body>
-</html>
+</div></main></div><script src="assets/js/filings4u-portal-shell.js"></script></body></html>

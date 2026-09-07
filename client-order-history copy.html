@@ -1,15 +1,15 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Order History & Receipts | filings4u Portal</title>
-  <link rel="icon" type="image/png" href="images/fav.png">
-  <!-- PLATFORM CORE CDN INFRASTRUCTURE -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-  
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<meta content="yes" name="mobile-web-app-capable"/>
+<title>Order History &amp; Receipts | filings4u Portal</title>
+<link href="images/fav.png" rel="icon" type="image/png"/>
+<!-- PLATFORM CORE CDN INFRASTRUCTURE -->
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
     :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0f172a; --text-muted: #475569; --emerald: #10b981; --sidebar-width: 260px; }
     body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
     .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
@@ -35,74 +35,63 @@
     .console-card { background: var(--white) !important; border-radius: 10px !important; border: 1px solid var(--border-color) !important; padding: 24px !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important; box-sizing: border-box !important; width: 100% !important; }
     .console-card h2 { font-size: 1.1rem !important; font-weight: 800 !important; margin: 0 0 16px 0 !important; color: var(--text-dark) !important; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
   </style>
-</head>
-<body>
-  <div class="dashboard-wrapper">
-
-    <main class="portal-main">
-      <header class="portal-header">
-        <div class="welcome-text">
-          <h1>Your Order History & Receipts</h1>
-          <p>Audit itemized transactional logs, review totals paid, and recover corporate order tracking metrics</p>
-        </div>
-
-            <div class="header-actions-wrapper" style="display: flex !important; align-items: center !important; gap: 16px !important;">
-          <!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
-          <div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
-            <a href="#notifications-anchor" id="dashboardBellTriggerBtn" class="nav-bell-wrapper" aria-label="View Account Notifications Feed" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
-              <span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
-              <div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-            </a>
-          </div>
-          
-          <!-- PORTAL CLOCK SYSTEM CONTAINER -->
-          <div class="header-clock-pill" style="background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 6px 12px !important; border-radius: 6px !important; font-family: monospace !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; height: 32px !important; white-space: nowrap !important;">
-            <span>⏱️</span>
-            <span id="portal-clock">Syncing...</span>
-          </div>
-          
-          <div>
-            <input type="text" id="portalGlobalSearchField" class="search-input" placeholder="Search your filings, entities..." style="padding: 6px 12px !important; border: 1px solid var(--border-color) !important; border-radius: 6px !important; font-size: 0.8rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; height: 32px !important;">
-          </div>
-        </div>
-      </header>
-
- <div class="content-container"> 
-  <div class="console-card"> 
-    <h2>Cleared Transactions & Invoices</h2> 
-    <div style="overflow-x:auto !important;"> 
-      <table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;"> 
-        <thead> 
-          <tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;"> 
-            <th style="padding:12px !important;">Tracking Number</th> 
-            <th style="padding:12px !important;">Service Ordered</th> 
-            <th style="padding:12px !important;">Service Description</th> 
-            <th style="padding:12px !important;">Corporate Entity</th> 
-            <th style="padding:12px !important; text-align:right !important;">Amount Paid</th> 
-            
-          </tr> 
-        </thead> 
-        <tbody id="client-orders-history-target-box"> 
-          <tr><td colspan="6" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing database financial records...</td></tr> 
-        </tbody> 
-      </table> 
-    </div> 
-  </div> 
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
+<body class="f4u-client-page">
+<div class="dashboard-wrapper">
+<main class="portal-main">
+<header class="portal-header">
+<div class="welcome-text">
+<h1>Your Order History &amp; Receipts</h1>
+<p>Audit itemized transactional logs, review totals paid, and recover corporate order tracking metrics</p>
 </div>
-
+<div class="header-actions-wrapper">
+<!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
+<div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
+<a aria-label="View Account Notifications Feed" class="nav-bell-wrapper" href="#notifications-anchor" id="dashboardBellTriggerBtn" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
+<span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
+<div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
+</a>
 </div>
+<!-- PORTAL CLOCK SYSTEM CONTAINER -->
+<div class="header-clock-pill" style="background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 6px 12px !important; border-radius: 6px !important; font-family: monospace !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; height: 32px !important; white-space: nowrap !important;">
+<span>⏱️</span>
+<span id="portal-clock">Syncing...</span>
+</div>
+<div>
+<input class="search-input" id="portalGlobalSearchField" placeholder="Search your filings, entities..." type="text"/>
+</div>
+</div>
+</header>
+<div class="content-container">
+<div class="console-card">
+<h2>Cleared Transactions &amp; Invoices</h2>
+<div style="overflow-x:auto !important;">
+<table style="width:100% !important; border-collapse:collapse !important; text-align:left !important; font-size:0.85rem !important;">
+<thead>
+<tr style="background:#f8fafc !important; border-bottom:2px solid var(--border-color) !important; color:var(--text-muted) !important;">
+<th style="padding:12px !important;">Tracking Number</th>
+<th style="padding:12px !important;">Service Ordered</th>
+<th style="padding:12px !important;">Service Description</th>
+<th style="padding:12px !important;">Corporate Entity</th>
+<th style="padding:12px !important; text-align:right !important;">Amount Paid</th>
+</tr>
+</thead>
+<tbody id="client-orders-history-target-box">
+<tr><td colspan="6" style="padding:30px !important; text-align:center !important; color:var(--text-muted) !important;">Parsing database financial records...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main></div>
 
-    </main>
-  </div>
 
-  <!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-config.js"></script>
-  <script src="assets/js/client-master-ledger.js"></script>
-  <script src="assets/js/client-navigation.js"></script>
-  <script src="assets/js/client-footer.js"></script>
-  
-
+<!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/client-master-ledger.js"></script>
+<script src="assets/js/client-navigation.js"></script>
+<script src="assets/js/client-footer.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   "use strict";
@@ -325,104 +314,88 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 </script>
-
-
-  
-<!-- 📄 FIXED RE-COMPACTED FLOATING OVERLAY VIEW CANVAS (Flicker Proofed) --> 
-<div id="receiptModalOverlay" style="display: none !important; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); align-items: center !important; justify-content: center !important; z-index: 10000; padding: 20px; box-sizing: border-box;"> 
-  
-  <!-- Outer Card Boundary Element (Scaled Down Height Limits Added) --> 
-  <div style="background: #ffffff; width: 100%; max-width: 480px; max-height: calc(100vh - 80px); border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15); display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;"> 
-    
-    <!-- Modal Control Header Bar --> 
-    <div style="background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;"> 
-      <span style="font-weight: 800; font-size: 0.825rem; color: #0a1f44; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;"> 
-        <i class="fa-solid fa-file-invoice-dollar" style="color: #10b981;"></i> Transaction Invoice Receipt 
-      </span> 
-      <button type="button" onclick="document.getElementById('receiptModalOverlay').style.setProperty('display', 'none', 'important')" style="background: none; border: none; font-size: 1.1rem; color: #64748b; cursor: pointer; padding: 4px; display: inline-flex; align-items: center;">✕</button> 
-    </div> 
-    
-    <!-- 🔄 ISOLATED INTERNAL CONTENT SCROLL BOX (Connected to PDF rendering loop below) --> 
-    <div id="printableReceiptArea" style="padding: 24px; flex: 1; overflow-y: auto !important; text-align: left; box-sizing: border-box;"> 
-      
-      <!-- Brand Logo Core Section --> 
-      <div style="text-align: center; margin-bottom: 28px;"> 
-        <img src="images/logo.png" alt="filings4u logo" style="height: 38px; margin-bottom: 6px;"> 
-        <p style="margin: 0; font-size: 0.725rem; color: #10b981; text-transform: uppercase; font-weight: 800; letter-spacing: 0.08em;">Official Corporate Fulfillment Summary</p> 
-      </div> 
-      
-      <!-- Transaction Anchors Split Subgrid --> 
-      <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 14px; margin-bottom: 18px; font-size: 0.85rem;"> 
-        <div> 
-          <div style="color: #64748b; font-weight: 600;">Tracking Reference:</div> 
-          <div id="rcptTracking" style="font-weight: 800; font-family: monospace; color: #0f172a; margin-top: 2px;">-</div> 
-        </div> 
-        <div style="text-align: right;"> 
-          <div style="color: #64748b; font-weight: 600;">Fulfillment Date:</div> 
-          <div id="rcptDate" style="font-weight: 700; color: #0f172a; margin-top: 2px;">-</div> 
-        </div> 
-      </div> 
-      
-      <!-- Customer Dossier Profile Metadata Block --> 
-      <div style="margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; line-height: 1.5;"> 
-        <div style="font-weight: 800; color: #0a1f44; font-size: 0.95rem; margin-bottom: 6px;" id="rcptCompany">-</div> 
-        <div style="display: grid; grid-template-columns: auto 1fr; gap: 0px 8px; color: #475569;"> 
-          <span style="color:#94a3b8; font-weight:600;">Authorized Agent:</span> 
-          <span id="rcptClientName" style="font-weight:600; color:#0f172a;">-</span> 
-          <span style="color:#94a3b8; font-weight:600;">Routing Contact:</span> 
-          <span id="rcptClientPhone">-</span> 
-          <span style="color:#94a3b8; font-weight:600;">Linked Email:</span> 
-          <span id="rcptClientEmail">-</span> 
-        </div> 
-      </div> 
-      
-      <!-- Itemized Pricing Breakdown Panel --> 
-      <div style="margin-bottom: 24px;"> 
-        <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; display: flex; justify-content: space-between;"> 
-          <span>Itemized Description Allocation</span> 
-          <span>Total Fee Paid</span> 
-        </div> 
-        <!-- Primary Plan Item Row --> 
-        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 8px 0; border-bottom: 1px solid #f1f5f9; align-items: baseline;"> 
-          <span id="rcptPlan" style="font-weight: 700; color: #0f172a;">-</span> 
-          <span id="rcptAmount" style="font-weight: 800; color: #0f172a;">-</span> 
-        </div> 
-        <!-- Add-on Upsells Dynamic Append Item Row --> 
-        <div id="rcptUpsellsWrapperRow" style="display: none; flex-direction: column; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid #f1f5f9; gap: 4px;"> 
-          <span style="font-weight: 600; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Active Market Add-ons Stacked:</span> 
-          <span id="rcptUpsellsList" style="color: #475569; font-style: italic; line-height: 1.4;">-</span> 
-        </div> 
-      </div> 
-      
-      <!-- Ledger Audit References Block --> 
-      <div style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.775rem; background: #fafafa; padding: 12px; border-radius: 6px; border: 1px solid #f1f5f9;"> 
-        <div> 
-          <span style="color:#94a3b8; font-weight:600; display:block;">Stripe Reference ID:</span> 
-          <span id="rcptStripeId" style="font-family:monospace; font-weight:600; color:#475569;">-</span> 
-        </div> 
-        <div> 
-          <span style="color:#94a3b8; font-weight:600; display:block;">Digital POA Signature:</span> 
-          <span id="rcptSignature" style="font-style:italic; font-weight:600; color:#475569;">-</span> 
-        </div> 
-      </div> 
-      
-      <!-- Bottom Security Verification Watermark --> 
-      <div style="text-align: center; font-size: 0.725rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 8px; border: 1px dashed rgba(16, 185, 129, 0.25); display: flex; align-items: center; justify-content: center; gap: 6px;"> 
-        <i class="fa-solid fa-shield-checkmark"></i> Secured 256-Bit SSL Cryptographic Transaction Authorization Verified 
-      </div> 
-    </div> 
-    
-    <!-- Modal Action Footer Control Layout --> 
-    <div style="background: #f8fafc; padding: 18px 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; box-sizing: border-box;"> 
-      <button type="button" id="rcptDownloadBinaryPdfBtn" style="flex: 12; cursor: pointer; background: #0a1f44; color: #ffffff; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;"> 
-        <i class="fa-solid fa-circle-arrow-down"></i> Download PDF Receipt 
-      </button> 
-      <button type="button" onclick="document.getElementById('receiptModalOverlay').style.setProperty('display', 'none', 'important')" style="flex: 7; cursor: pointer; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;">Dismiss Panel</button> 
-    </div> 
-  </div> 
+<!-- 📄 FIXED RE-COMPACTED FLOATING OVERLAY VIEW CANVAS (Flicker Proofed) -->
+<div id="receiptModalOverlay" style="display: none !important; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 31, 68, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); align-items: center !important; justify-content: center !important; z-index: 10000; padding: 20px; box-sizing: border-box;">
+<!-- Outer Card Boundary Element (Scaled Down Height Limits Added) -->
+<div style="background: #ffffff; width: 100%; max-width: 480px; max-height: calc(100vh - 80px); border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15); display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;">
+<!-- Modal Control Header Bar -->
+<div style="background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+<span style="font-weight: 800; font-size: 0.825rem; color: #0a1f44; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+<i class="fa-solid fa-file-invoice-dollar" style="color: #10b981;"></i> Transaction Invoice Receipt 
+      </span>
+<button onclick="document.getElementById('receiptModalOverlay').style.setProperty('display', 'none', 'important')" style="background: none; border: none; font-size: 1.1rem; color: #64748b; cursor: pointer; padding: 4px; display: inline-flex; align-items: center;" type="button">✕</button>
 </div>
-
-
-
-</body>
+<!-- 🔄 ISOLATED INTERNAL CONTENT SCROLL BOX (Connected to PDF rendering loop below) -->
+<div id="printableReceiptArea" style="padding: 24px; flex: 1; overflow-y: auto !important; text-align: left; box-sizing: border-box;">
+<!-- Brand Logo Core Section -->
+<div style="text-align: center; margin-bottom: 28px;">
+<img alt="filings4u logo" src="images/logo.png" style="height: 38px; margin-bottom: 6px;"/>
+<p style="margin: 0; font-size: 0.725rem; color: #10b981; text-transform: uppercase; font-weight: 800; letter-spacing: 0.08em;">Official Corporate Fulfillment Summary</p>
+</div>
+<!-- Transaction Anchors Split Subgrid -->
+<div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 14px; margin-bottom: 18px; font-size: 0.85rem;">
+<div>
+<div style="color: #64748b; font-weight: 600;">Tracking Reference:</div>
+<div id="rcptTracking" style="font-weight: 800; font-family: monospace; color: #0f172a; margin-top: 2px;">-</div>
+</div>
+<div style="text-align: right;">
+<div style="color: #64748b; font-weight: 600;">Fulfillment Date:</div>
+<div id="rcptDate" style="font-weight: 700; color: #0f172a; margin-top: 2px;">-</div>
+</div>
+</div>
+<!-- Customer Dossier Profile Metadata Block -->
+<div style="margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; line-height: 1.5;">
+<div id="rcptCompany" style="font-weight: 800; color: #0a1f44; font-size: 0.95rem; margin-bottom: 6px;">-</div>
+<div style="display: grid; grid-template-columns: auto 1fr; gap: 0px 8px; color: #475569;">
+<span style="color:#94a3b8; font-weight:600;">Authorized Agent:</span>
+<span id="rcptClientName" style="font-weight:600; color:#0f172a;">-</span>
+<span style="color:#94a3b8; font-weight:600;">Routing Contact:</span>
+<span id="rcptClientPhone">-</span>
+<span style="color:#94a3b8; font-weight:600;">Linked Email:</span>
+<span id="rcptClientEmail">-</span>
+</div>
+</div>
+<!-- Itemized Pricing Breakdown Panel -->
+<div style="margin-bottom: 24px;">
+<div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+<span>Itemized Description Allocation</span>
+<span>Total Fee Paid</span>
+</div>
+<!-- Primary Plan Item Row -->
+<div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 8px 0; border-bottom: 1px solid #f1f5f9; align-items: baseline;">
+<span id="rcptPlan" style="font-weight: 700; color: #0f172a;">-</span>
+<span id="rcptAmount" style="font-weight: 800; color: #0f172a;">-</span>
+</div>
+<!-- Add-on Upsells Dynamic Append Item Row -->
+<div id="rcptUpsellsWrapperRow" style="display: none; flex-direction: column; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid #f1f5f9; gap: 4px;">
+<span style="font-weight: 600; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Active Market Add-ons Stacked:</span>
+<span id="rcptUpsellsList" style="color: #475569; font-style: italic; line-height: 1.4;">-</span>
+</div>
+</div>
+<!-- Ledger Audit References Block -->
+<div style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.775rem; background: #fafafa; padding: 12px; border-radius: 6px; border: 1px solid #f1f5f9;">
+<div>
+<span style="color:#94a3b8; font-weight:600; display:block;">Stripe Reference ID:</span>
+<span id="rcptStripeId" style="font-family:monospace; font-weight:600; color:#475569;">-</span>
+</div>
+<div>
+<span style="color:#94a3b8; font-weight:600; display:block;">Digital POA Signature:</span>
+<span id="rcptSignature" style="font-style:italic; font-weight:600; color:#475569;">-</span>
+</div>
+</div>
+<!-- Bottom Security Verification Watermark -->
+<div style="text-align: center; font-size: 0.725rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 8px; border: 1px dashed rgba(16, 185, 129, 0.25); display: flex; align-items: center; justify-content: center; gap: 6px;">
+<i class="fa-solid fa-shield-checkmark"></i> Secured 256-Bit SSL Cryptographic Transaction Authorization Verified 
+      </div>
+</div>
+<!-- Modal Action Footer Control Layout -->
+<div style="background: #f8fafc; padding: 18px 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; box-sizing: border-box;">
+<button id="rcptDownloadBinaryPdfBtn" style="flex: 12; cursor: pointer; background: #0a1f44; color: #ffffff; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;" type="button">
+<i class="fa-solid fa-circle-arrow-down"></i> Download PDF Receipt 
+      </button>
+<button onclick="document.getElementById('receiptModalOverlay').style.setProperty('display', 'none', 'important')" style="flex: 7; cursor: pointer; background: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;" type="button">Dismiss Panel</button>
+</div>
+</div>
+</div>
+<script src="assets/js/filings4u-portal-shell.js"></script></body>
 </html>
