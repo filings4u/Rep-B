@@ -1,541 +1,473 @@
+const db=window.filings4uSupabase;
+const OS=['draft','submitted','processing','completed','cancelled','refunded'];
+const PS=['pending','processing','paid','failed','refunded','cancelled'];
 
-(function () {
-  "use strict";
-  const projectUrlHash = "lrbimrlbskjweynxlgas";
-  const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
-  const rawSessionJson = localStorage.getItem(sessionTokenKey);
-  let isAuthenticated = false;
-  let userRole = null;
+let orders=[],view=[],p=1,active=null,services=[],clients=[];
 
-  if (rawSessionJson) {
-    try {
-      const sessionData = JSON.parse(rawSessionJson);
-      if (sessionData && sessionData.access_token) {
-        isAuthenticated = true;
-        if (sessionData.user && sessionData.user.user_metadata) {
-          userRole = sessionData.user.user_metadata.role;
-        }
-        if (sessionData.user && !userRole && sessionData.user.email) {
-          if (String(sessionData.user.email).toLowerCase().endsWith("@filings4u.com")) {
-            userRole = "admin";
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Security parsing failure:", error);
-    }
+const $=x=>document.getElementById(x);
+const esc=x=>String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const title=x=>String(x||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+const money=x=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(x||0));
+const dt=x=>x?new Date(x).toLocaleString():'—';
+const badge=x=>`<span class="badge ${esc(x)}">${esc(title(x))}</span>`;
+
+async function boot(){
+  const auth=await window.filings4uRequireAdmin();
+  if(!auth)return;
+
+  $('gate').hidden=true;
+  $('app').hidden=false;
+
+  $('os').innerHTML='<option value="">All order statuses</option>'+OS.map(x=>`<option value="${x}">${title(x)}</option>`).join('');
+  $('ps').innerHTML='<option value="">All payment statuses</option>'+PS.map(x=>`<option value="${x}">${title(x)}</option>`).join('');
+
+  await loadReferenceData();
+  await load();
+}
+
+function deny(x){
+  $('gate').textContent=x;
+  $('gate').style.color='#991b1b';
+}
+
+async function loadReferenceData(){
+  const rs=await Promise.all([
+    db.from('services')
+      .select('id,slug,service_title,service_type,requires_jurisdiction,base_price_starter,base_price_compliance,base_price_enterprise')
+      .order('service_title'),
+    db.from('client_profiles')
+      .select('id,email_address,first_name,last_name,phone_number,company_name')
+      .order('first_name')
+  ]);
+
+  const failed=rs.find(x=>x.error);
+  if(failed){
+    toast(failed.error.message);
+    return;
   }
 
-  const pagePathString = window.location.pathname.toLowerCase();
-  const isAdminViewPage = pagePathString.includes("/admin-");
+  services=rs[0].data||[];
+  clients=rs[1].data||[];
 
-  if (!isAuthenticated) {
-    document.documentElement.style.display = "none";
-    window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
-    throw new Error("Authentication required.");
-  }
+  $('manualService').innerHTML='<option value="">Choose a service</option>'+
+    services.map(s=>`<option value="${esc(s.slug)}">${esc(s.service_title)} · ${esc(title(s.service_type))}</option>`).join('');
 
-  if (isAdminViewPage && userRole !== "admin") {
-    document.documentElement.style.display = "none";
-    window.location.replace("client-dashboard.html");
-    throw new Error("Administrator role required.");
-  }
-})();
+  $('manualClient').innerHTML='<option value="">Unlinked / new customer</option>'+
+    clients.map(c=>{
+      const name=[c.first_name,c.last_name].filter(Boolean).join(' ')||c.company_name||c.email_address;
+      return `<option value="${esc(c.id)}">${esc(name)} · ${esc(c.email_address)}</option>`;
+    }).join('');
+}
 
+async function load(){
+  const {data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});
+  if(error)return deny(error.message);
 
-window.CENTRAL_SERVICE_PLAN_DB = window.CENTRAL_SERVICE_PLAN_DB || {};
-window.FILINGS4U_GOVERNMENT_PRICING = window.FILINGS4U_GOVERNMENT_PRICING || {};
+  orders=data||[];
 
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
+  const serviceValues=[...new Set(orders.map(o=>o.service_key||o.selected_service).filter(Boolean))].sort();
+  $('svc').innerHTML='<option value="">All services</option>'+
+    serviceValues.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
 
-  const orderForm = document.getElementById("phoneCheckoutOrderForm");
-  const strategySelect = document.getElementById("phonePaymentStrategy");
-  const terminalFrame = document.getElementById("stripeCardTerminalContainerFrame");
-  const statusSlat = document.getElementById("moto-checkout-status-slat");
-  const processBtn = document.getElementById("motoProcessBtn");
-  const tableBody = document.getElementById("admin-orders-stream-rows");
+  filter();
+}
 
-  // Price Calculation Selection Elements Mapping Nodes
-  const serviceSelect = document.getElementById("phoneServiceTitle");
-  const planSelect = document.getElementById("phonePlanTier");
-  const stateSelect = document.getElementById("phoneFilingState");
-  const upsellSelect = document.getElementById("phoneUpsellSelection");
-  const priceOverrideField = document.getElementById("phoneOverrideCost");
+function filter(){
+  const q=$('q').value.trim().toLowerCase();
+  const os=$('os').value;
+  const ps=$('ps').value;
+  const svc=$('svc').value;
 
-  let liveOrdersChannel = null;
+  view=orders.filter(o=>{
+    const hay=[
+      o.tracking_number,o.first_name,o.last_name,o.email_address,
+      o.company_name,o.service_key,o.selected_service
+    ].join(' ').toLowerCase();
 
-  // Establish Supabase Connection Handshake Properties
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client && typeof supabase !== 'undefined') {
-    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
-  }
-  if (!client) return;
-
-  // Initialize Sandbox Stripe Card Fields Mount
-  let stripe = null, elements = null, cardElement = null;
-  if (typeof Stripe !== 'undefined') {
-    stripe = Stripe('pk_test_placeholder_key_abc123');
-    elements = stripe.elements();
-    cardElement = elements.create('card', { style: { base: { fontSize: '14px', color: '#0f172a' } } });
-    cardElement.mount('#secureCardElementContainer');
-  }
-  // 🟢 LIVE UI INTERCEPTOR: Toggles Stripe payment container visibility based on active strategy choices
-  if (strategySelect && terminalFrame) {
-    strategySelect.addEventListener("change", () => {
-      if (strategySelect.value === "stripe_live") {
-        terminalFrame.style.setProperty("display", "flex", "important");
-      } else {
-        terminalFrame.style.setProperty("display", "none", "important");
-      }
-    });
-    
-    // Execute an initial pass to align visibility with the page entry selection
-    if (strategySelect.value === "stripe_live") {
-      terminalFrame.style.setProperty("display", "flex", "important");
-    } else {
-      terminalFrame.style.setProperty("display", "none", "important");
-    }
-  }
-
-  function displayStatusMessage(text, isError) {
-    if (!statusSlat) return;
-    statusSlat.textContent = text;
-    statusSlat.style.display = "block";
-    statusSlat.style.background = isError ? "#fee2e2" : "#ecfdf5";
-    statusSlat.style.color = isError ? "#991b1b" : "#047857";
-    statusSlat.style.border = `1px solid ${isError ? '#fca5a5' : '#a7f3d0'}`;
-  }
-
-  function escapeMotoHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
-  // REAL-TIME SYNC OVER THE AIR FOR TRANSACTIONS TABLES
-  async function bindLiveOrdersRealtimeFeed() {
-    if (liveOrdersChannel) liveOrdersChannel.unsubscribe();
-    liveOrdersChannel = client
-      .channel('admin-dashboard-orders-live-stream')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_orders' }, async () => {
-        await loadRecentDashboardOrdersFeed();
-      })
-      .subscribe();
-  }
-
-  // Load ledger records and subscribe to over-the-air database updates instantly
-  await loadRecentDashboardOrdersFeed();
-  await bindLiveOrdersRealtimeFeed();
-
-
-   // 🟢 FIXED HANDSHAKE: Syncs HTML drop-downs directly with the real database records
-  function syncGlobalPricingMatrixData() {
-    if (!serviceSelect || !stateSelect || !planSelect) return;
-
-    // Convert display value text securely to the dictionary's explicit hyphenated keys
-    const rawService = serviceSelect.value || "";
-    const currentService = rawService.replace(/\s+/g, ' ').trim().toLowerCase()
-      .replace("corporations (c/s-corp)", "corporations")
-      .replace("nonprofit organization", "nonprofits")
-      .replace("foreign qualification certificate", "foreign-qualification")
-      .replace("foreign qualification", "foreign-qualification")
-      .replace("certificate of good standing", "certificate-of-good-standing")
-      .replace("llc reinstatement processing", "llc-reinstatement")
-      .replace("annual reports", "annual-reports")
-      .replace("operating agreement", "operating-agreement")
-      .replace("registered agent", "registered-agent")
-      .replace("business licenses", "business-licenses")
-      .replace("entity dissolution", "dissolution")
-      .replace("employer id (ein)", "employer-id-ein")
-      .replace("cage code", "cage-code")
-      .replace("duns number procurement", "duns-number")
-      .replace("owner operators trucker authority", "owner-operators")
-      .replace("broker authority", "broker-authority")
-      .replace("ucr registration", "ucr-registration")
-      .replace("scac code registration", "scac-code")
-      .replace("dot consortium", "dot-consortium")
-      .replace("driver qualification file", "driver-file")
-      .replace("process agent (boc-3)", "process-agents-boc-3")
-      .replace("ifta registration", "ifta-registration")
-      .replace("hazmat registration", "hazmat-registration")
-      .replace("licenses & permits", "dot-permits")
-      .replace("federal income tax", "federal-tax")
-      .replace("franchise tax filing", "franchise-tax")
-      .replace("sales tax registration", "sales-tax-registration")
-      .replace("apostille authentication services", "apostille-services");
-
-    // Pull values straight out of window.CENTRAL_SERVICE_PLAN_DB and write onto options
-    if (window.CENTRAL_SERVICE_PLAN_DB[currentService]) {
-      const servicePlanMap = window.CENTRAL_SERVICE_PLAN_DB[currentService];
-      Array.from(planSelect.options).forEach(opt => {
-        let tierKey = opt.value.toLowerCase().trim();
-        if (tierKey === "premium") tierKey = "compliance"; // 🟢 Maps HTML premium selection straight to your real database compliance row
-
-        if (servicePlanMap[tierKey] !== undefined) {
-          opt.setAttribute('data-price', servicePlanMap[tierKey]);
-        }
-      });
-    }
-
-    // Pull values straight out of window.FILINGS4U_GOVERNMENT_PRICING and write onto options
-    if (window.FILINGS4U_GOVERNMENT_PRICING && window.FILINGS4U_GOVERNMENT_PRICING[currentService]) {
-      const stateFeesMap = window.FILINGS4U_GOVERNMENT_PRICING[currentService];
-      Array.from(stateSelect.options).forEach(opt => {
-        const stateKey = opt.value.toUpperCase().trim();
-        if (stateFeesMap[stateKey] !== undefined) {
-          opt.setAttribute('data-price', stateFeesMap[stateKey]);
-        } else if (stateFeesMap["DEFAULT"] !== undefined) {
-          opt.setAttribute('data-price', stateFeesMap["DEFAULT"]);
-        } else {
-          opt.setAttribute('data-price', "0.00");
-        }
-      });
-    }
-  }
-
-   // 🟢 ENTERPRISE MATRIX CALCULATION ENGINE: Manages multi-tier pricing blocks natively
-  function computeMOTOInvoicePricing() {
-    const serviceSelect = document.getElementById("phoneServiceTitle");
-    const stateSelect = document.getElementById("phoneFilingState");
-    const upsellSelect = document.getElementById("phoneUpsellSelection");
-    const priceOverrideField = document.getElementById("phoneOverrideCost");
-
-    if (!serviceSelect || !stateSelect || !upsellSelect || !priceOverrideField) return;
-
-    // 1. Resolve raw price metrics attached inline to the current service selection option node
-    const selectedServiceOption = serviceSelect.options[serviceSelect.selectedIndex];
-    
-    const starterPrice = parseFloat(selectedServiceOption ? selectedServiceOption.getAttribute('data-starter') || 0 : 0);
-    const compliancePrice = parseFloat(selectedServiceOption ? selectedServiceOption.getAttribute('data-compliance') || 0 : 0);
-    const enterprisePrice = parseFloat(selectedServiceOption ? selectedServiceOption.getAttribute('data-enterprise') || 0 : 0);
-
-    // 2. Refresh text label amounts inside the side-by-side option cards instantly
-    const starterLbl = document.getElementById("price-lbl-starter");
-    const complianceLbl = document.getElementById("price-lbl-compliance");
-    const enterpriseLbl = document.getElementById("price-lbl-enterprise");
-
-    if (starterLbl) starterLbl.textContent = `$${starterPrice.toFixed(2)}`;
-    if (complianceLbl) complianceLbl.textContent = `$${compliancePrice.toFixed(2)}`;
-    if (enterpriseLbl) enterpriseLbl.textContent = `$${enterprisePrice.toFixed(2)}`;
-
-    // 3. Pin down the active radio selection out of the card cluster array
-    const activeRadio = document.querySelector('input[name="enterpriseTierSelection"]:checked');
-    const activeTier = activeRadio ? activeRadio.value : 'starter';
-
-    let baseRate = starterPrice;
-    if (activeTier === 'compliance') baseRate = compliancePrice;
-    if (activeTier === 'enterprise') baseRate = enterprisePrice;
-
-    // 4. Update card selection borders visually to match user input actions
-    ['starter', 'compliance', 'enterprise'].forEach(tier => {
-      const card = document.getElementById(`card-${tier}`);
-      if (card) {
-        if (tier === activeTier) {
-          card.style.borderColor = "var(--moto-emerald, #10b981)";
-          card.style.background = "#f0fdf4";
-        } else {
-          card.style.borderColor = "#cbd5e1";
-          card.style.background = "#ffffff";
-        }
-      }
-    });
-
-    // 5. Extract jurisdiction regional state outlays
-    const selectedStateOption = stateSelect.options[stateSelect.selectedIndex];
-    const stateSurcharge = parseFloat(selectedStateOption ? selectedStateOption.getAttribute('data-price') || 0 : 0);
-
-    // 6. Compile selected multi-add-ons parameters
-    let upsellTotal = 0.00;
-    Array.from(upsellSelect.selectedOptions).forEach(opt => {
-      upsellTotal += parseFloat(opt.getAttribute('data-price') || 0);
-    });
-
-    // 7. Sum up absolute calculations
-    const aggregateTotal = baseRate + stateSurcharge + upsellTotal;
-
-    // 8. Flash calculations onto visual layout view elements
-    const baseCostEl = document.getElementById("calcBaseCost");
-    const stateCostEl = document.getElementById("calcStateCost");
-    const upsellCostEl = document.getElementById("calcUpsellCost");
-    const aggregateCostEl = document.getElementById("calcTotalAggregate");
-
-    if (baseCostEl) baseCostEl.textContent = `$${baseRate.toFixed(2)}`;
-    if (stateCostEl) stateCostEl.textContent = `$${stateSurcharge.toFixed(2)}`;
-    if (upsellCostEl) upsellCostEl.textContent = `$${upsellTotal.toFixed(2)}`;
-    if (aggregateCostEl) aggregateCostEl.textContent = `$${aggregateTotal.toFixed(2)}`;
-
-    // Push total calculations straight inside price override field box
-    priceOverrideField.value = aggregateTotal.toFixed(2);
-  }
-
-  // 🟢 ATTENTIVE CHANGE REGISTRATION TRIGGER RAIL
-  const trackingSelectors = [
-    document.getElementById("phoneServiceTitle"),
-    document.getElementById("phoneFilingState"),
-    document.getElementById("phoneUpsellSelection")
-  ];
-
-  trackingSelectors.forEach(node => {
-    if (node) node.addEventListener("change", computeMOTOInvoicePricing);
+    return hay.includes(q)&&
+      (!os||o.order_status===os)&&
+      (!ps||o.payment_status===ps)&&
+      (!svc||(o.service_key||o.selected_service)===svc);
   });
 
-  // Bind change listeners to your radio cluster cards dynamically
-  document.querySelectorAll('input[name="enterpriseTierSelection"]').forEach(radio => {
-    radio.addEventListener("change", computeMOTOInvoicePricing);
+  p=1;
+  render();
+}
+
+function render(){
+  const paid=orders.filter(o=>o.payment_status==='paid').length;
+  const proc=orders.filter(o=>o.order_status==='processing').length;
+  const done=orders.filter(o=>o.order_status==='completed').length;
+
+  $('stats').innerHTML=[
+    ['Total orders',orders.length],
+    ['Paid',paid],
+    ['In processing',proc],
+    ['Completed',done]
+  ].map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
+
+  const pages=Math.max(1,Math.ceil(view.length/20));
+  if(p>pages)p=pages;
+  const rows=view.slice((p-1)*20,p*20);
+
+  $('rows').innerHTML=rows.length?rows.map(o=>`<tr>
+    <td>
+      <b>${esc(o.tracking_number)}</b>
+      <small>${o.user_id?'Client linked':'Historical / unlinked'}</small>
+    </td>
+    <td>
+      <b>${esc([o.first_name,o.last_name].filter(Boolean).join(' '))}</b>
+      <small>${esc(o.email_address)}</small>
+      <small>${esc(o.company_name)}</small>
+    </td>
+    <td>
+      ${esc(o.service_key||o.selected_service)}
+      <small>${esc(o.plan_tier||o.selected_plan)}${o.jurisdiction_state?' · '+esc(o.jurisdiction_state):''}</small>
+    </td>
+    <td>${badge(o.order_status)}</td>
+    <td>${badge(o.payment_status)}</td>
+    <td><b>${money(o.total_amount||o.total_paid_amount)}</b></td>
+    <td>${dt(o.created_at)}</td>
+    <td><button data-id="${esc(o.id)}" class="open">Open</button></td>
+  </tr>`).join('')
+  :'<tr><td colspan="8" class="empty">No matching orders.</td></tr>';
+
+  $('count').textContent=`${view.length} order${view.length===1?'':'s'}`;
+  $('page').textContent=`Page ${p} of ${pages}`;
+  $('prev').disabled=p===1;
+  $('next').disabled=p===pages;
+
+  document.querySelectorAll('.open').forEach(b=>{
+    b.onclick=()=>openOrder(b.dataset.id);
   });
+}
 
-  // Fire an immediate layout calculation sweep to establish start parameters
-  computeMOTOInvoicePricing();
+function box(t,a){
+  return `<section class="box">
+    <h3>${esc(t)}</h3>
+    <div class="grid">
+      ${a.map(x=>`<div class="item"><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('')}
+    </div>
+  </section>`;
+}
 
+function openOrder(id){
+  closeOverlays();
+  active=orders.find(o=>String(o.id)===String(id));
+  if(!active)return toast('Order record could not be found.');
 
+  const o=active;
+  $('drawerTitle').textContent=o.tracking_number||'Order record';
+  $('detail').innerHTML=`
+    <section class="box">
+      <h3>Operational controls</h3>
+      <div class="edit">
+        <select id="eos" aria-label="Order status">
+          ${OS.map(x=>`<option value="${x}" ${x===o.order_status?'selected':''}>${title(x)}</option>`).join('')}
+        </select>
+        <select id="eps" aria-label="Payment status">
+          ${PS.map(x=>`<option value="${x}" ${x===o.payment_status?'selected':''}>${title(x)}</option>`).join('')}
+        </select>
+        <button id="save" class="primary" type="button">Save status</button>
+      </div>
+    </section>
 
-  // 📡 FETCH LIVE ENTRIES FROM PUBLIC.DASHBOARD_ORDERS FOR AUDITING RAIL
-  async function loadRecentDashboardOrdersFeed() {
-    if (!tableBody) return;
-    try {
-      const { data: records, error } = await client
-        .from('dashboard_orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
+    ${box('Customer & account',[
+      ['Customer',[o.first_name,o.last_name].filter(Boolean).join(' ')],
+      ['Email',o.email_address],
+      ['Phone',o.phone_number],
+      ['Company',o.company_name],
+      ['Client account',o.user_id?'Linked':'Not linked'],
+      ['Account created',o.account_created?'Yes':'No']
+    ])}
 
-      if (error) throw error;
+    ${box('Service & filing',[
+      ['Service',o.service_key||o.selected_service],
+      ['Plan',o.plan_tier||o.selected_plan],
+      ['Service type',o.service_type],
+      ['Jurisdiction',o.jurisdiction_state],
+      ['Submitted',dt(o.submitted_at)],
+      ['Updated',dt(o.updated_at)]
+    ])}
 
-      if (!records || records.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:30px; font-style:italic;">No recorded transaction rows found.</td></tr>`;
-        return;
-      }
+    ${box('Payment',[
+      ['Payment status',title(o.payment_status)],
+      ['Service fee',money(o.service_fee)],
+      ['Government fee',money(o.government_fee)],
+      ['Add-ons',money(o.addons_total)],
+      ['Total',money(o.total_amount||o.total_paid_amount)],
+      ['Paid at',dt(o.paid_at)],
+      ['Stripe intent',o.stripe_payment_intent_id||o.stripe_payment_id],
+      ['Stripe customer',o.stripe_customer_id]
+    ])}
 
-      tableBody.innerHTML = "";
-      records.forEach(row => {
-        const tr = document.createElement("tr");
-        const totalPaid = parseFloat(row.total_paid_amount || 0).toFixed(2);
-        const isStripe = row.payment_collection_strategy === 'stripe_live';
+    ${box('Power of Attorney',[
+      ['Signature',o.poa_signature],
+      ['Execution stamp',dt(o.poa_execution_stamp)]
+    ])}
 
-        tr.innerHTML = `
-          <td>
-            <div style="font-weight:700; color:var(--moto-dark);">${escapeMotoHtml(row.first_name)} ${escapeMotoHtml(row.last_name)}</div>
-            <div style="font-size:0.72rem; color:var(--moto-muted); font-family:monospace;">${row.email_address}</div>
-          </td>
-          <td style="font-weight:600; color:var(--moto-muted);">${escapeMotoHtml(row.company_name)}</td>
-          <td style="font-family:monospace; font-weight:700; color:var(--moto-dark);">${escapeMotoHtml(row.tracking_number)}</td>
-          <td style="font-family:monospace; font-weight:700; color:var(--moto-emerald);">$${totalPaid}</td>
-          <td style="text-align:right;">
-            <span style="background:${isStripe ? '#e0f2fe' : '#f1f5f9'}; color:${isStripe ? '#0369a1' : '#475569'}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase;">${isStripe ? 'Stripe Gateway' : 'Offline'}</span>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    } catch (err) {
-      console.error("✕ Ledger load failure:", err);
+    <section class="box">
+      <h3>Selected add-ons / upsells</h3>
+      <pre class="json">${esc(JSON.stringify(o.upsells_payload??o.selected_upsells??[],null,2))}</pre>
+    </section>
+
+    <section class="box">
+      <h3>Wizard / service form payload</h3>
+      <pre class="json">${esc(JSON.stringify(o.form_payload??{},null,2))}</pre>
+    </section>`;
+
+  $('save').onclick=save;
+  $('shade').hidden=false;
+  $('drawer').classList.add('open');
+  $('drawer').setAttribute('aria-hidden','false');
+  document.body.classList.add('drawer-open');
+  $('close')?.focus();
+}
+
+async function save(){
+  if(!active)return;
+
+  const order_status=$('eos').value;
+  const payment_status=$('eps').value;
+
+  const {data,error}=await db.from('orders')
+    .update({order_status,payment_status,updated_at:new Date().toISOString()})
+    .eq('id',active.id)
+    .select()
+    .single();
+
+  if(error)return toast(error.message);
+
+  const idx=orders.findIndex(o=>o.id===data.id);
+  if(idx>=0)orders[idx]=data;
+
+  filter();
+  openOrder(data.id);
+  toast('Order status updated.');
+}
+
+function openManualOrder(){
+  closeOverlays();
+  $('manualForm').reset();
+  $('manualClient').value='';
+  $('manualPlan').value='starter';
+  $('manualStatus').value='processing';
+  document.querySelector('input[name="manualPaymentMode"][value="paid"]').checked=true;
+  $('manualServiceFee').value='0';
+  $('manualGovernmentFee').value='0';
+  $('manualAddons').value='0';
+  updateManualPricingState();
+  $('shade').hidden=false;
+  $('manualComposer').classList.add('open');
+  $('manualComposer').setAttribute('aria-hidden','false');
+  document.body.classList.add('drawer-open');
+  $('manualFirst').focus();
+}
+
+function populateClient(){
+  const client=clients.find(c=>String(c.id)===String($('manualClient').value));
+  if(!client)return;
+
+  $('manualFirst').value=client.first_name||'';
+  $('manualLast').value=client.last_name||'';
+  $('manualEmail').value=client.email_address||'';
+  $('manualPhone').value=client.phone_number||'';
+  $('manualCompany').value=client.company_name||'';
+}
+
+function selectedService(){
+  return services.find(s=>s.slug===$('manualService').value)||null;
+}
+
+function applyServiceDefaults(){
+  const s=selectedService();
+  if(!s)return;
+
+  const plan=$('manualPlan').value;
+  const priceMap={
+    starter:Number(s.base_price_starter||0),
+    compliance:Number(s.base_price_compliance||0),
+    enterprise:Number(s.base_price_enterprise||0)
+  };
+
+  if(plan!=='custom')$('manualServiceFee').value=(priceMap[plan]||0).toFixed(2);
+  if(!s.requires_jurisdiction)$('manualState').value='';
+  updateManualTotal();
+}
+
+function paymentMode(){
+  return document.querySelector('input[name="manualPaymentMode"]:checked')?.value||'paid';
+}
+
+function updateManualPricingState(){
+  const free=paymentMode()==='free';
+  ['manualServiceFee','manualGovernmentFee','manualAddons'].forEach(id=>{
+    $(id).disabled=free;
+  });
+  $('manualPaymentSummary').textContent=free?'Free / no-charge manual order':'Manual paid order';
+  updateManualTotal();
+}
+
+function updateManualTotal(){
+  const free=paymentMode()==='free';
+  const total=free?0:
+    Number($('manualServiceFee').value||0)+
+    Number($('manualGovernmentFee').value||0)+
+    Number($('manualAddons').value||0);
+
+  $('manualTotal').textContent=money(total);
+}
+
+function makeTrackingNumber(){
+  const date=new Date().toISOString().slice(0,10).replaceAll('-','');
+  const rand=crypto.randomUUID().replaceAll('-','').slice(0,8).toUpperCase();
+  return `M-${date}-${rand}`;
+}
+
+async function createManualOrder(event){
+  event.preventDefault();
+
+  const service=selectedService();
+  if(!service)return toast('Choose a service.');
+
+  const first=$('manualFirst').value.trim();
+  const last=$('manualLast').value.trim();
+  const email=$('manualEmail').value.trim().toLowerCase();
+  if(!first||!last||!email)return toast('First name, last name and email are required.');
+
+  const linkedClient=clients.find(c=>String(c.id)===String($('manualClient').value))||null;
+  const mode=paymentMode();
+  const free=mode==='free';
+
+  const serviceFee=free?0:Number($('manualServiceFee').value||0);
+  const governmentFee=free?0:Number($('manualGovernmentFee').value||0);
+  const addons=free?0:Number($('manualAddons').value||0);
+
+  if([serviceFee,governmentFee,addons].some(x=>!Number.isFinite(x)||x<0)){
+    return toast('Fees must be valid non-negative amounts.');
+  }
+
+  const total=serviceFee+governmentFee+addons;
+  const now=new Date().toISOString();
+  const plan=$('manualPlan').value;
+  const note=$('manualNote').value.trim()||null;
+
+  const payload={
+    tracking_number:makeTrackingNumber(),
+    first_name:first,
+    last_name:last,
+    email_address:email,
+    phone_number:$('manualPhone').value.trim()||'Not Provided',
+    company_name:$('manualCompany').value.trim()||'Not Specified',
+    selected_plan:plan,
+    selected_service:service.slug,
+    user_id:linkedClient?.id||null,
+    service_key:service.slug,
+    plan_tier:plan,
+    service_type:service.service_type,
+    jurisdiction_state:$('manualState').value.trim()||null,
+    order_status:$('manualStatus').value,
+    payment_status:'paid',
+    currency:'USD',
+    service_fee:serviceFee,
+    government_fee:governmentFee,
+    addons_total:addons,
+    subtotal_amount:total,
+    total_amount:total,
+    total_paid_amount:total,
+    account_created:!!linkedClient,
+    account_setup_mode:linkedClient?'returning_customer':null,
+    submitted_at:now,
+    paid_at:now,
+    updated_at:now,
+    upsells_payload:[],
+    form_payload:{
+      source:'admin_manual_order',
+      payment_mode:mode,
+      complimentary:free,
+      internal_note:note,
+      pricing_reference:free?{
+        plan,
+        listed_service_price:plan==='starter'?Number(service.base_price_starter||0):
+          plan==='compliance'?Number(service.base_price_compliance||0):
+          plan==='enterprise'?Number(service.base_price_enterprise||0):null
+      }:null
     }
+  };
+
+  const button=$('createManual');
+  button.disabled=true;
+  button.textContent='Creating…';
+
+  try{
+    const {data,error}=await db.from('orders').insert(payload).select().single();
+    if(error)throw error;
+
+    orders.unshift(data);
+    closeOverlays();
+    filter();
+    openOrder(data.id);
+    toast(free?'Free manual order created.':'Paid manual order created.');
+  }catch(error){
+    toast(error.message||'Unable to create manual order.');
+  }finally{
+    button.disabled=false;
+    button.textContent='Create order';
   }
+}
 
-  // 🚀 ENTERPRISE TRANSACTION HANDLING MODULE
-  if (orderForm) {
-    orderForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+function closeOverlays(){
+  $('drawer').classList.remove('open');
+  $('drawer').setAttribute('aria-hidden','true');
+  $('manualComposer').classList.remove('open');
+  $('manualComposer').setAttribute('aria-hidden','true');
+  $('shade').hidden=true;
+  document.body.classList.remove('drawer-open');
+}
 
-      // Catch element mappings cleanly
-      const serviceSelect = document.getElementById("phoneServiceTitle");
-      const stateSelect = document.getElementById("phoneFilingState");
-      const upsellSelect = document.getElementById("phoneUpsellSelection");
-      const strategySelect = document.getElementById("phonePaymentStrategy");
-      const priceOverrideField = document.getElementById("phoneOverrideCost");
+function toast(x){
+  $('toast').textContent=x;
+  $('toast').hidden=false;
+  clearTimeout(toast.timer);
+  toast.timer=setTimeout(()=>$('toast').hidden=true,2500);
+}
 
-      const fName = document.getElementById("phoneCustFirstName").value.trim();
-      const lName = document.getElementById("phoneCustLastName").value.trim();
-      const email = document.getElementById("phoneCustEmail").value.trim().toLowerCase();
-      const phone = document.getElementById("phoneCustPhone").value.trim();
-      const compName = document.getElementById("phoneCompanyName").value.trim();
-      
-      // 🟢 FIXED: Extracting the new geographic field data parameters from your template
-      const streetVal = document.getElementById("phoneStreetAddress").value.trim();
-      const cityVal = document.getElementById("phoneCity").value.trim();
-      const stateVal = document.getElementById("phoneStateRegion").value;
-      const zipVal = document.getElementById("phoneZipCode").value.trim();
-
-      const activeService = serviceSelect ? serviceSelect.options[serviceSelect.selectedIndex].text : 'Not Specified';
-      
-      // 🟢 FIXED: Resolves the selected plan directly from the active card layout instead of a ghost selector
-      const activeRadio = document.querySelector('input[name="enterpriseTierSelection"]:checked');
-      const activePlan = activeRadio ? activeRadio.value : 'starter';
-      
-      const finalAmount = parseFloat(priceOverrideField ? priceOverrideField.value || 0 : 0);
-      const strategy = strategySelect ? strategySelect.value : 'stripe_live';
-
-      // 🟢 FIXED: Verifies that all required fields are full before execution loops run
-      if (!fName || !lName || !email || !phone || !compName || !streetVal || !cityVal || !stateVal || !zipVal) {
-        displayStatusMessage("✕ Validation error: Customer tracking strings and billing coordinates must be fully populated.", true);
-        return;
-      }
-
-      if (processBtn) {
-        processBtn.disabled = true;
-        processBtn.textContent = "Authorizing transaction ledger transaction... 📡";
-      }
-
-      try {
-        let resolvedStripeChargeToken = "ch_offline_logged_" + Date.now();
-
-        // COMPLIMENTARY/FREE GUARD: Bypasses Stripe token creation if logged without payment or $0.00 total
-        if (strategy === 'stripe_live' && stripe && cardElement) {
-          if (finalAmount > 0) {
-            const { token, error } = await stripe.createToken(cardElement);
-            if (error) throw new Error(`Stripe Gateway Fault: ${error.message}`);
-            resolvedStripeChargeToken = token.id;
-          } else {
-            resolvedStripeChargeToken = "ch_free_tier_auth_" + Date.now();
-          }
-        } else {
-          resolvedStripeChargeToken = "ch_offline_bypass_" + Date.now();
-        }
-
-        // 🟢 FIXED: Compiles the selected upsell multi-list variable before referencing it in payload
-        const selectedUpsellsList = upsellSelect ? Array.from(upsellSelect.selectedOptions).map(o => o.text).join(", ") : "None";
-        const randomTrackingCode = "F4U-SALE-" + Math.floor(100000 + Math.random() * 900000);
-
-        // 📡 FIRST: Fire the direct background tunnel request to your Edge Function
-        console.log("📡 [Auth Engine] Invoking workspace edge tunnel...");
-        const edgeResponse = await fetch("https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/dashboard-orders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${client.supabaseKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU"}`
-          },
-          body: JSON.stringify({
-            email_address: email,
-            first_name: fName,
-            last_name: lName,
-            company_name: compName,
-            selected_service: activeService,
-            selected_plan: activePlan
-          })
-        });
-
-        const isAccountProvisioned = edgeResponse.ok ? "true" : "false";
-
-        // 🟢 FIXED: Transmits the real billing address data to matching columns instead of hardcoded strings
-        const databasePayload = {
-          tracking_number: randomTrackingCode,
-          first_name: fName,
-          last_name: lName,
-          email_address: email,
-          phone_number: phone,
-          company_name: compName,
-          selected_service: activeService,
-          selected_plan: activePlan,
-          total_paid_amount: finalAmount,
-          stripe_payment_id: resolvedStripeChargeToken,
-          payment_collection_strategy: strategy,
-          selected_upsells: selectedUpsellsList,
-          poa_signature: "MOTO-Merchant-Assigned",
-          poa_execution_stamp: new Date().toISOString(),
-          account_created: isAccountProvisioned,
-          form_payload: "{}",
-          street_address: streetVal,
-          city: cityVal,
-          state: stateVal,
-          zip_code: zipVal
-        };
-
-
-        // STEP 2: Commit the complete record cleanly to public.dashboard_orders database ledger
-        const { error: insertError } = await client
-          .from('dashboard_orders')
-          .insert([databasePayload]);
-
-        if (insertError) throw insertError;
-
-
-        displayStatusMessage(`✓ Success! Transaction committed to ledger. Tracking: [${randomTrackingCode}]`, false);
-        orderForm.reset();
-        if (cardElement) cardElement.clear();
-        
-        computeMOTOInvoicePricing();
-        if (typeof loadRecentDashboardOrdersFeed === 'function') await loadRecentDashboardOrdersFeed();
-
-      } catch (fault) {
-        console.error(fault);
-        displayStatusMessage(`✕ Transaction Aborted: ${fault.message}`, true);
-      } finally {
-        if (processBtn) {
-          processBtn.disabled = false;
-          processBtn.textContent = "Authorize Terminal Payment & Commit Records ➔";
-        }
-      }
-    });
-  }
-
-
-  function displayStatusMessage(text, isError) {
-    if (!statusSlat) return;
-    statusSlat.textContent = text;
-    statusSlat.style.display = "block";
-    statusSlat.style.background = isError ? "#fee2e2" : "#ecfdf5";
-    statusSlat.style.color = isError ? "#991b1b" : "#047857";
-    statusSlat.style.border = `1px solid ${isError ? '#fca5a5' : '#a7f3d0'}`;
-  }
-
-  function escapeMotoHtml(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
-  // REAL-TIME SYNC OVER THE AIR FOR TRANSACTIONS TABLES
-  async function bindLiveOrdersRealtimeFeed() {
-    if (liveOrdersChannel) liveOrdersChannel.unsubscribe();
-    liveOrdersChannel = client
-      .channel('admin-dashboard-orders-live-stream')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_orders' }, async () => {
-        await loadRecentDashboardOrdersFeed();
-      })
-      .subscribe();
-  }
-
-  await loadRecentDashboardOrdersFeed();
-  await bindLiveOrdersRealtimeFeed();
-
-  // 🟢 COMPONENT KEY BRIDGE: Converts dropdown option text directly to database dictionary keys
-  function normalizeDropdownValueToMatrixKey(displayValue) {
-    if (!displayValue) return "";
-    const cleanString = displayValue.replace(/\s+/g, ' ').trim().toLowerCase();
-    
-    const operationalBridgeMap = {
-      "llc formation": "llc-formation",
-      "corporations (c/s-corp)": "corporations",
-      "series llc": "series-llc",
-      "sole proprietorship": "sole-proprietorship",
-      "dba registration": "dba-registration",
-      "nonprofit organization": "nonprofits",
-      "foreign qualification": "foreign-qualification",
-      "certificate of good standing": "certificate-of-good-standing",
-      "llc reinstatement processing": "llc-reinstatement",
-      "annual reports": "annual-reports",
-      "operating agreement": "operating-agreement",
-      "registered agent": "registered-agent",
-      "business licenses": "business-licenses",
-      "entity dissolution": "dissolution",
-      "employer id (ein)": "employer-id-ein",
-      "cage code": "cage-code",
-      "duns number procurement": "duns-number",
-      "owner operators trucker authority": "owner-operators",
-      "broker authority": "broker-authority",
-      "ucr registration": "ucr-registration",
-      "scac code registration": "scac-code",
-      "dot consortium": "dot-consortium",
-      "driver qualification file": "driver-file",
-      "process agent (boc-3)": "process-agents-boc-3",
-      "ifta registration": "ifta-registration",
-      "hazmat registration": "hazmat-registration",
-      "licenses & permits": "dot-permits",
-      "federal income tax": "federal-tax",
-      "franchise tax filing": "franchise-tax",
-      "sales tax registration": "sales-tax-registration",
-      "apostille authentication services": "apostille-services",
-      "web design": "web-design",
-      "logo_design": "logo-design"
-    };
-    return operationalBridgeMap[cleanString] || cleanString;
-  }
+['q','os','ps','svc'].forEach(x=>{
+  $(x).addEventListener(x==='q'?'input':'change',filter);
 });
+
+$('clear').onclick=()=>{
+  $('q').value='';
+  $('os').value='';
+  $('ps').value='';
+  $('svc').value='';
+  filter();
+};
+
+$('refresh').onclick=async()=>{
+  await loadReferenceData();
+  await load();
+};
+
+$('prev').onclick=()=>{if(p>1){p--;render();}};
+$('next').onclick=()=>{if(p<Math.ceil(view.length/20)){p++;render();}};
+
+$('close').onclick=closeOverlays;
+$('closeManual').onclick=closeOverlays;
+$('cancelManual').onclick=closeOverlays;
+$('shade').onclick=closeOverlays;
+$('manualOrder').onclick=openManualOrder;
+$('manualClient').onchange=populateClient;
+$('manualService').onchange=applyServiceDefaults;
+$('manualPlan').onchange=applyServiceDefaults;
+['manualServiceFee','manualGovernmentFee','manualAddons'].forEach(id=>$(id).addEventListener('input',updateManualTotal));
+document.querySelectorAll('input[name="manualPaymentMode"]').forEach(x=>x.addEventListener('change',updateManualPricingState));
+$('manualForm').addEventListener('submit',createManualOrder);
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!$('shade').hidden)closeOverlays();
+});
+
+document.getElementById('signOut')?.addEventListener('click',window.filings4uSignOut);
+
+boot();

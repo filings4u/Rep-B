@@ -1,128 +1,169 @@
-/**
- * 🏢 CLIENT ENTITIES COMPONENT UTILITY DRIVER
- * Synchronized with filings4u customer portal core architecture frameworks.
- */
-window.addEventListener("supabaseEngineReady", function (engineEvent) {
-  "use strict";
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt=v=>v?new Date(v).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+let db,user,profile,entities=[],filtered=[];
 
-  // Validate that the system broadcast payload structure is fully populated
-  if (!engineEvent || !engineEvent.detail || !engineEvent.detail.session) {
-    throw new Error("Core Handshake Exception: Entities portfolio loader missing valid session validation.");
+async function boot(){
+  const auth=await window.filings4uRequireClient();
+  if(!auth)return;
+  ({db,user,profile}=auth);
+  hydrateProfile();
+
+  const {data,error}=await db
+    .from('client_entities')
+    .select('id,entity_name,filing_description,plan_tier,standing_status,state_of_formation,formation_date,client_email,registry_document_url,created_at,source_order_id,service_key,updated_at')
+    .eq('user_id',user.id)
+    .order('created_at',{ascending:false});
+
+  if(error){
+    $('gate').textContent='Unable to load your entities.';
+    return toast(error.message);
   }
 
-  const session = engineEvent.detail.session;
-  const currentUserId = session.user.id;
+  entities=data||[];
+  $('gate').hidden=true;
+  $('app').hidden=false;
+  buildFilters();
+  renderStats();
+  applyFilters();
+}
 
-  // Instantly dispatch data queries and establish background synchronization
-  fetchClientRegisteredEntities(currentUserId);
-  initializeRealtimeEntitySync(currentUserId);
-});
+function hydrateProfile(){
+  const name=[profile.first_name,profile.last_name].filter(Boolean).join(' ')||'My Account';
+  const company=profile.company_name||'filings4u client';
+  const initial=(profile.first_name||profile.company_name||profile.email_address||'C').charAt(0).toUpperCase();
+  $('clientName').textContent=name;
+  $('clientAvatar').textContent=initial;
+  if($('clientMenuName')) $('clientMenuName').textContent=name;
+  if($('clientMenuCompany')) $('clientMenuCompany').textContent=company;
+  if($('clientMenuAvatar')) $('clientMenuAvatar').textContent=initial;
+}
 
-/**
- * 📡 DATABASE ACCESS DISPATCH: FETCH REGISTERED ENTITIES
- * Gathers aggregate corporate structure profiles and explicitly handles layout logic.
- */
-async function fetchClientRegisteredEntities(userId) {
-  "use strict";
+function normalizedStatus(value){
+  return String(value||'').trim().toLowerCase().replace(/\s+/g,'-');
+}
 
-  if (!userId) {
-    throw new Error("Data Integrity Exception: Operation aborted due to unverified user identification variables.");
-  }
+function isGood(value){
+  const s=String(value||'').toLowerCase();
+  return ['good','active','good standing','in good standing','compliant'].some(x=>s.includes(x));
+}
 
-  const displayGridTarget = document.getElementById("entitiesDisplayGridTarget");
-  if (!displayGridTarget) {
-    throw new Error("Viewport Structure Exception: Required DOM insertion container #entitiesDisplayGridTarget missing from layout.");
-  }
+function needsAttention(value){
+  const s=String(value||'').toLowerCase();
+  return ['warning','revoked','inactive','not good','delinquent','attention','suspended'].some(x=>s.includes(x));
+}
 
-  // Query entity ledger entries from your database tier
-  const { data: records, error } = await window.supabaseInstance
-    .from('entities')
-    .select('id, entity_name, entity_type, state_of_formation, registration_date, status, file_number')
-    .eq('user_id', userId)
-    .order('entity_name', { ascending: true });
+function buildFilters(){
+  const standings=[...new Set(entities.map(e=>e.standing_status).filter(Boolean))].sort();
+  const states=[...new Set(entities.map(e=>e.state_of_formation).filter(Boolean))].sort();
 
-  // STRICT ERROR CHECKING: Intercept database faults instantly to prevent screen masking
-  if (error) {
-    console.error("Database Transaction Failure Context:", error);
-    throw new Error(`Database Operation Exception: [${error.code}] ${error.message}`);
-  }
+  $('standingFilter').innerHTML='<option value="">All standing statuses</option>'+standings.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  $('stateFilter').innerHTML='<option value="">All jurisdictions</option>'+states.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+}
 
-  // Handle empty portfolio status explicitly with zero-state UI layout actions
-  if (!records || records.length === 0) {
-    displayGridTarget.innerHTML = `
-      <div style="grid-column: 1 / -1; background: white; border: 1px solid var(--border-color); padding: 40px; text-align: center; border-radius: 8px;">
-        <span style="font-size: 2rem;">🏢</span>
-        <h3 style="margin: 10px 0 5px 0; font-size: 1rem; font-weight: 800;">No Entities Registered</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">You haven't formed a business entity under this profile yet.</p>
-        <a href="client-services.html" style="background: var(--emerald); color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 0.8rem; display: inline-block;">Start Formation Order</a>
-      </div>
-    `;
-    return;
-  }
+function renderStats(){
+  $('totalEntities').textContent=entities.length;
+  $('goodStanding').textContent=entities.filter(e=>isGood(e.standing_status)).length;
+  $('attentionEntities').textContent=entities.filter(e=>needsAttention(e.standing_status)).length;
+  $('jurisdictionCount').textContent=new Set(entities.map(e=>e.state_of_formation).filter(Boolean)).size;
+}
 
-  // Construct interface modules safely
-  displayGridTarget.innerHTML = records.map(ent => {
-    if (!ent.id || !ent.entity_name) {
-      throw new Error(`Data Integrity Exception: Entity row mapping fault encountered on profile token identity: ${ent.id || 'Unknown ID'}`);
-    }
+function applyFilters(){
+  const q=$('search').value.trim().toLowerCase();
+  const standing=$('standingFilter').value;
+  const state=$('stateFilter').value;
 
-    const isProfileActive = ent.status?.toLowerCase() === 'active';
-    const cleanTypeLabel = ent.entity_type || 'LLC';
-    const cleanStatusLabel = ent.status || 'Unknown';
-    const cleanStateLabel = ent.state_of_formation || 'N/A';
-    const cleanFileNumber = ent.file_number || 'Processing';
-    const formattedDate = ent.registration_date ? new Date(ent.registration_date).toLocaleDateString() : 'Pending';
+  filtered=entities.filter(e=>{
+    const hay=[e.entity_name,e.filing_description,e.plan_tier,e.standing_status,e.state_of_formation,e.service_key].join(' ').toLowerCase();
+    return (!q||hay.includes(q)) &&
+      (!standing||e.standing_status===standing) &&
+      (!state||e.state_of_formation===state);
+  });
+  renderEntities();
+}
 
-    // REPAIRED: Resolved raw broken trailing anchors by outputting valid corporate operational anchors
-    return `
-      <div style="background: white !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; min-height: 200px !important; box-sizing: border-box !important;">
+function renderEntities(){
+  $('entityList').innerHTML=filtered.length?filtered.map(e=>`
+    <article class="entity-card">
+      <div class="entity-card__top">
         <div>
-          <div style="display: flex !important; justify-content: space-between !important; align-items: flex-start !important; margin-bottom: 12px !important;">
-            <span style="font-size: 0.65rem !important; background: #f1f5f9 !important; padding: 4px 8px !important; border-radius: 4px !important; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-              ${cleanTypeLabel}
-            </span>
-            <span style="padding: 4px 8px !important; border-radius: 4px !important; font-weight: 800; font-size: 0.65rem !important; text-transform: uppercase; background: ${isProfileActive ? 'rgba(16, 185, 129, 0.1)' : '#fee2e2'} !important; color: ${isProfileActive ? 'var(--emerald)' : '#ef4444'} !important;">
-              ${cleanStatusLabel}
-            </span>
-          </div>
-          <h3 style="margin: 0 0 6px 0 !important; font-size: 1.05rem !important; font-weight: 800 !important; color: var(--text-dark) !important;">
-            ${ent.entity_name}
-          </h3>
-          <div style="display: flex !important; flex-direction: column !important; gap: 4px !important; margin-top: 12px !important; font-size: 0.8rem !important; color: var(--text-muted) !important;">
-            <div>📍 Jurisdiction: <strong>${cleanStateLabel}</strong></div>
-            <div>📄 File ID Number: <code>${cleanFileNumber}</code></div>
-            <div>📅 Formation Timestamp: <strong>${formattedDate}</strong></div>
-          </div>
+          <h3>${esc(e.entity_name||'Business entity')}</h3>
+          <p>${esc(e.filing_description||e.service_key||'Business record')}</p>
         </div>
-        <div style="margin-top: 20px !important; padding-top: 12px !important; border-top: 1px solid #f1f5f9 !important; display: flex !important; justify-content: space-between !important; gap: 10px !important;">
-          🛡️ Compliance Tracker</a>
-          📂 View Documents</a>
-        </div>
+        <span class="standing-pill ${esc(normalizedStatus(e.standing_status))}">${esc(e.standing_status||'Status pending')}</span>
       </div>
-    `;
-  }).join('');
+
+      <div class="entity-card__meta">
+        <div class="entity-meta"><span>Jurisdiction</span><b>${esc(e.state_of_formation||'—')}</b></div>
+        <div class="entity-meta"><span>Formation date</span><b>${dt(e.formation_date)}</b></div>
+        <div class="entity-meta"><span>Plan</span><b>${esc(e.plan_tier||'—')}</b></div>
+        <div class="entity-meta"><span>Service</span><b>${esc(e.service_key||'—')}</b></div>
+      </div>
+
+      <div class="entity-card__footer">
+        <small>Added ${dt(e.created_at)}</small>
+        <button class="open-entity" data-id="${esc(e.id)}">View entity →</button>
+      </div>
+    </article>
+  `).join(''):'<div class="empty-state">No business entities match your current filters.</div>';
+
+  document.querySelectorAll('.open-entity').forEach(btn=>btn.onclick=()=>openEntity(btn.dataset.id));
 }
 
-/**
- * ⚡ REAL-TIME REFRESH DISPATCH
- * Listens directly on Postgres rows and updates metrics instantly without full reloads.
- */
-function initializeRealtimeEntitySync(userId) {
-  "use strict";
+function openEntity(id){
+  const e=entities.find(x=>x.id===id);
+  if(!e)return;
+  $('drawerTitle').textContent=e.entity_name||'Business entity';
 
-  const realTimeChannelInstance = window.supabaseInstance
-    .channel(`public:entities:user=${userId}`)
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'entities', 
-      filter: `user_id=eq.${userId}` 
-    }, function () {
-      fetchClientRegisteredEntities(userId);
-    })
-    .subscribe(function (status) {
-      if (status === 'CHANNEL_ERROR') {
-        throw new Error("Realtime Connection Exception: Corporate entity background channel disconnected.");
-      }
-    });
+  $('drawerBody').innerHTML=`
+    <section class="detail-section">
+      <h3>Entity record</h3>
+      <div class="detail-grid">
+        ${detail('Entity name',e.entity_name)}
+        ${detail('Standing',e.standing_status)}
+        ${detail('State of formation',e.state_of_formation)}
+        ${detail('Formation date',dt(e.formation_date))}
+        ${detail('Plan',e.plan_tier)}
+        ${detail('Service',e.service_key)}
+        ${detail('Client email',e.client_email)}
+        ${detail('Added',dt(e.created_at))}
+        ${detail('Last updated',dt(e.updated_at))}
+        ${detail('Source order ID',e.source_order_id)}
+      </div>
+      ${e.registry_document_url?`<a class="registry-link" href="${esc(e.registry_document_url)}" target="_blank" rel="noopener">Open registry document →</a>`:''}
+    </section>
+
+    <section class="detail-section">
+      <h3>Filing description</h3>
+      <div class="drawer-body">
+        <p>${esc(e.filing_description||'No filing description is available for this entity.')}</p>
+      </div>
+    </section>`;
+
+  $('drawer').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
 }
+
+function detail(label,value){
+  return `<div class="detail"><span>${esc(label)}</span><b>${esc(value===null||value===undefined||value===''?'—':value)}</b></div>`;
+}
+
+function closeDrawer(){
+  $('drawer').setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+
+$('search').addEventListener('input',applyFilters);
+$('standingFilter').addEventListener('change',applyFilters);
+$('stateFilter').addEventListener('change',applyFilters);
+$('closeDrawer').onclick=closeDrawer;
+$('drawerBackdrop').onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+function toast(msg){
+  $('toast').textContent=msg;
+  $('toast').hidden=false;
+  setTimeout(()=>$('toast').hidden=true,2600);
+}
+
+boot();

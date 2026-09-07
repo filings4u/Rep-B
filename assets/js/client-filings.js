@@ -1,208 +1,188 @@
-/**
- * ⚙️ CLIENT FILINGS & PIPELINE UTILITY DRIVER
- * Synchronized with filings4u customer portal core architecture frameworks.
- */
-window.addEventListener("supabaseEngineReady", function (engineEvent) {
-  "use strict";
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt=v=>v?new Date(v).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+const dtm=v=>v?new Date(v).toLocaleString():'—';
 
-  // Validate that the system broadcast payload structure is fully populated
-  if (!engineEvent || !engineEvent.detail || !engineEvent.detail.session) {
-    throw new Error("Core Handshake Exception: Unified filings pipeline loader missing valid session validation.");
+let db,user,profile,applications=[],tracking=[],legacy=[],filtered=[];
+
+async function boot(){
+  const auth=await window.filings4uRequireClient();
+  if(!auth)return;
+  ({db,user,profile}=auth);
+  hydrateProfile();
+
+  const [appsResult, trackingResult, legacyResult] = await Promise.all([
+    db.from('applications')
+      .select('id,business_name,current_status,is_active,created_at,order_id,tracking_number,service_key,plan_tier,jurisdiction_state,updated_at')
+      .eq('user_id',user.id)
+      .order('updated_at',{ascending:false}),
+    db.from('application_tracking')
+      .select('id,application_id,step_order,title,is_completed,completed_at,created_at')
+      .order('step_order',{ascending:true}),
+    profile.email_address
+      ? db.from('user_filings')
+          .select('id,customer_email,company_name,plan_service_tier,price,is_completed,created_at,status,irs_submission_id,schedule_1_url')
+          .eq('customer_email',profile.email_address)
+          .order('created_at',{ascending:false})
+      : Promise.resolve({data:[],error:null})
+  ]);
+
+  const error=appsResult.error||trackingResult.error||legacyResult.error;
+  if(error) toast(error.message);
+
+  applications=appsResult.data||[];
+  tracking=trackingResult.data||[];
+  legacy=legacyResult.data||[];
+
+  $('gate').hidden=true;
+  $('app').hidden=false;
+  buildStatusFilter();
+  renderStats();
+  applyFilters();
+  renderLegacy();
+}
+
+function hydrateProfile(){
+  const name=[profile.first_name,profile.last_name].filter(Boolean).join(' ')||'My Account';
+  const company=profile.company_name||'filings4u client';
+  const initial=(profile.first_name||profile.company_name||profile.email_address||'C').charAt(0).toUpperCase();
+  $('clientName').textContent=name;
+  $('clientAvatar').textContent=initial;
+  if($('clientMenuName')) $('clientMenuName').textContent=name;
+  if($('clientMenuCompany')) $('clientMenuCompany').textContent=company;
+  if($('clientMenuAvatar')) $('clientMenuAvatar').textContent=initial;
+}
+
+function stepsFor(appId){
+  return tracking.filter(t=>t.application_id===appId).sort((a,b)=>(a.step_order||0)-(b.step_order||0));
+}
+
+function progressFor(app){
+  const steps=stepsFor(app.id);
+  if(!steps.length){
+    if((app.current_status||'').toLowerCase()==='completed') return 100;
+    return app.is_active===false ? 100 : 15;
   }
+  return Math.round((steps.filter(s=>s.is_completed).length/steps.length)*100);
+}
 
-  const session = engineEvent.detail.session;
-  const userUuidContext = session.user.id;
-  const customerEmailContext = session.user.email;
+function renderStats(){
+  const active=applications.filter(a=>a.is_active!==false&&!['completed','cancelled'].includes((a.current_status||'').toLowerCase()));
+  const completed=applications.filter(a=>(a.current_status||'').toLowerCase()==='completed'||a.is_active===false);
+  const attention=applications.filter(a=>['waiting','pending','error','failed','needs attention'].includes((a.current_status||'').toLowerCase()));
+  $('totalFilings').textContent=applications.length;
+  $('activeFilings').textContent=active.length;
+  $('completedFilings').textContent=completed.length;
+  $('attentionFilings').textContent=attention.length;
+}
 
-  const routingParameters = new URLSearchParams(window.location.search);
-  const filterQueryToken = routingParameters.get("search");
+function buildStatusFilter(){
+  const statuses=[...new Set(applications.map(a=>a.current_status).filter(Boolean))].sort();
+  $('statusFilter').innerHTML='<option value="">All statuses</option>'+statuses.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+}
 
-  // Dispatch initial database pipeline compilation
-  fetchUnifiedClientOrdersAndFilings(userUuidContext, customerEmailContext, filterQueryToken);
-  initializeRealtimeFilingPipelineListeners(userUuidContext, customerEmailContext);
-});
+function applyFilters(){
+  const q=$('search').value.trim().toLowerCase();
+  const status=$('statusFilter').value;
+  filtered=applications.filter(a=>{
+    const hay=[a.business_name,a.service_key,a.tracking_number,a.plan_tier,a.jurisdiction_state,a.current_status].join(' ').toLowerCase();
+    return (!q||hay.includes(q))&&(!status||a.current_status===status);
+  });
+  renderFilings();
+}
 
-
-/**
- * 📡 DATABASE ACCESS DISPATCH: COMPILE DUAL REGISTRY LEDGERS
- * Pulls row history data matching cross-identities and throws errors on anomalies.
- */
-async function fetchUnifiedClientOrdersAndFilings(userUuid, customerEmail, searchToken = null) {
-  "use strict";
-
-  if (!userUuid || !customerEmail) {
-    throw new Error("Data Integrity Exception: Query execution aborted due to unverified user credentials data.");
-  }
-
-  const target = document.getElementById("activeOrdersListTarget");
-  if (!target) {
-    throw new Error("Viewport Structure Exception: Required DOM insertion container #activeOrdersListTarget missing from layout.");
-  }
-
-  // Define database query builders targeting different data infrastructure tracks
-  let userFilingsQuery = window.supabaseInstance
-    .from('user_filings')
-    .select('id, company_name, plan_service_tier, price, is_completed, status, created_at, schedule_1_url')
-    .eq('customer_email', customerEmail);
-
-  let trueOrdersQuery = window.supabaseInstance
-    .from('orders')
-    .select('id, company_name, service_title, plan_tier, total_fee, status, tracking_number, created_at')
-    .or(`user_id.eq.${userUuid},email.eq.${customerEmail}`);
-
-  // Apply string filtering modifications across both queries safely if present
-  if (searchToken) {
-    const cleanSearchToken = `%${searchToken}%`;
-    userFilingsQuery = userFilingsQuery.ilike('company_name', cleanSearchToken);
-    trueOrdersQuery = trueOrdersQuery.ilike('company_name', cleanSearchToken);
-  }
-
-  // Execute async operations concurrently to reduce latency overhead
-  const [userFilingsRes, trueOrdersRes] = await Promise.all([userFilingsQuery, trueOrdersQuery]);
-
-  // STRICT ERROR CHECKING: Throw operational failure instantly to clear silent exceptions
-  if (userFilingsRes.error) {
-    throw new Error(`Database Operation Exception [user_filings]: [${userFilingsRes.error.code}] ${userFilingsRes.error.message}`);
-  }
-  if (trueOrdersRes.error) {
-    throw new Error(`Database Operation Exception [orders]: [${trueOrdersRes.error.code}] ${trueOrdersRes.error.message}`);
-  }
-
-  const normalizedRecordsList = [];
-
-  // Parse Tax Document Engine rows
-  if (userFilingsRes.data) {
-    userFilingsRes.data.forEach(f => {
-      if (!f.id || !f.company_name) {
-        throw new Error(`Data Integrity Exception: Malformed user_filings record layout payload entry ID: ${f.id || 'Unknown'}`);
-      }
-      let pct = f.is_completed ? 100 : 25;
-      if (!f.is_completed && f.status === 'Processing') pct = 60;
-      if (!f.is_completed && f.status === 'IRS Review') pct = 85;
-
-      normalizedRecordsList.push({
-        id: f.id,
-        origin: 'user_filings',
-        title: f.company_name,
-        subtitle: f.plan_service_tier || 'Filing Update',
-        price: parseFloat(f.price || 0),
-        status: f.status || (f.is_completed ? 'Completed' : 'Draft'),
-        progress: pct,
-        metaLabel: `Ref ID: ${String(f.id).slice(0, 8)}`,
-        actionUrl: f.schedule_1_url,
-        date: new Date(f.created_at)
-      });
-    });
-  }
-
-  // Parse Core Operations Lane rows
-  if (trueOrdersRes.data) {
-    trueOrdersRes.data.forEach(o => {
-      if (!o.id || !o.company_name) {
-        throw new Error(`Data Integrity Exception: Malformed orders record layout payload entry ID: ${o.id || 'Unknown'}`);
-      }
-      let pct = 20;
-      if (o.status === 'Processing' || o.status === 'In Review') pct = 65;
-      if (o.status === 'Completed' || o.status === 'Delivered') pct = 100;
-
-      normalizedRecordsList.push({
-        id: o.id,
-        origin: 'orders',
-        title: o.company_name,
-        subtitle: `${o.service_title} (${o.plan_tier || 'Standard'})`,
-        price: parseFloat(o.total_fee || 0),
-        status: o.status || 'Fulfillment Lane',
-        progress: pct,
-        metaLabel: o.tracking_number ? `Track ID: ${o.tracking_number}` : `Order Token: ${String(o.id).slice(0, 8)}`,
-        actionUrl: null,
-        date: o.created_at ? new Date(o.created_at) : new Date()
-      });
-    });
-  }
-
-  // Chronologically sort data timeline array metrics
-  normalizedRecordsList.sort((alpha, beta) => beta.date - alpha.date);
-
-  // Render zero-state element if aggregate outputs remain empty
-  if (normalizedRecordsList.length === 0) {
-    target.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:30px;">No registered filings located.</p>`;
-    return;
-  }
-
-
-    // Map consolidated array structures to the active presentation view frame safely
-  target.innerHTML = normalizedRecordsList.map(item => {
-    const formattedPrice = item.price.toFixed(2);
-    const formattedDate = item.date.toLocaleDateString();
-    
-    // Ensure all critical structural variables evaluate perfectly inside the mapping context
-    if (item.progress === undefined || !item.status || !item.title) {
-      throw new Error(`Data Integrity Exception: Unified template row rendering failed for record: ${item.id}`);
-    }
-
-    const actionControlElement = item.actionUrl 
-      ? `<a href="${encodeURI(item.actionUrl)}" target="_blank" style="background: var(--text-dark); color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-weight: 700; font-size: 0.68rem; display: inline-block;">📥 Download Document</a>` 
-      : `<a href="client-chat.html" style="color: var(--emerald); text-decoration: none; font-weight: 700; display: inline-block;">Query Specialist ➔</a>`;
-
-    const progressIsMaxed = item.progress === 100;
-
-    return `
-      <div style="border: 1px solid var(--border-color) !important; border-radius: 8px !important; padding: 20px !important; background: #ffffff !important; box-shadow: 0 1px 2px rgba(0,0,0,0.01); margin-bottom: 16px; box-sizing: border-box !important;">
-        <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; flex-wrap: wrap !important; gap: 10px !important; margin-bottom: 12px !important;">
-          <div>
-            <h3 style="margin: 0 !important; font-size: 1rem !important; font-weight: 800; color: var(--text-dark);">${item.title}</h3>
-            <small style="color: var(--text-muted); font-size: 0.72rem;">${item.subtitle} | <code style="background:#f1f5f9; padding:2px 4px; border-radius:3px;">${item.metaLabel}</code></small>
-          </div>
-          <span style="background: ${progressIsMaxed ? 'rgba(16, 185, 129, 0.08)' : '#edf2f7'}; color: ${progressIsMaxed ? 'var(--emerald)' : 'var(--text-muted)'}; padding: 6px 12px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; text-transform: uppercase;">${item.status}</span>
+function renderFilings(){
+  $('filingsList').innerHTML=filtered.length?filtered.map(app=>{
+    const progress=progressFor(app);
+    const steps=stepsFor(app.id);
+    return `<article class="filing-card">
+      <div class="filing-main">
+        <h3>${esc(app.business_name||app.service_key||'Filing application')}</h3>
+        <div class="filing-meta">
+          <span>${esc(app.service_key||'Service')}</span>
+          <span>${esc(app.plan_tier||'Plan not specified')}</span>
+          <span>${esc(app.jurisdiction_state||'Jurisdiction not specified')}</span>
+          <span>${esc(app.tracking_number||'No tracking number')}</span>
         </div>
-        <div style="margin: 15px 0 !important;">
-          <div style="display: flex !important; justify-content: space-between !important; font-size: 0.75rem !important; color: var(--text-muted) !important; margin-bottom: 6px !important;">
-            <span>Destination Pipeline: <strong>${item.origin === 'user_filings' ? 'Tax Document Engine' : 'Operations Fulfillment Lane'}</strong></span>
-            <span style="font-weight: 800; color: var(--text-dark);">${item.progress}%</span>
-          </div>
-          <div style="width: 100% !important; background: #f1f5f9 !important; height: 8px !important; border-radius: 4px !important; overflow: hidden !important;">
-            <div style="width: ${item.progress}% !important; background: var(--emerald) !important; height: 100% !important; transition: width 0.4s ease;"></div>
-          </div>
-        </div>
-        <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 0.72rem !important; color: #94a3b8 !important; padding-top: 10px !important; border-top: 1px solid #f1f5f9 !important; box-sizing: border-box !important;">
-          <span>Logged: ${formattedDate} | Fee Line: $${formattedPrice}</span>
-          ${actionControlElement}
+        <div class="progress-block">
+          <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+          <div class="progress-label"><span>${steps.length?`${steps.filter(s=>s.is_completed).length} of ${steps.length} steps complete`:'Status tracking'}</span><strong>${progress}%</strong></div>
         </div>
       </div>
-    `;
-  }).join('');
+      <div class="filing-status">
+        <span class="status-pill-page ${esc((app.current_status||'').toLowerCase())}">${esc(app.current_status||'Pending')}</span>
+        <button class="open-filing" data-id="${esc(app.id)}">View →</button>
+      </div>
+    </article>`;
+  }).join(''):'<div class="empty-state">No filings match your current filters.</div>';
+
+  document.querySelectorAll('.open-filing').forEach(btn=>btn.onclick=()=>openFiling(btn.dataset.id));
 }
 
-/**
- * ⚡ REAL-TIME MULTI-CHANNEL LISTENER ENGINE
- * Attaches split table monitoring subscriptions and flushes pipelines natively.
- */
-function initializeRealtimeFilingPipelineListeners(userUuid, customerEmail) {
-  "use strict";
+function openFiling(id){
+  const app=applications.find(a=>a.id===id);
+  if(!app)return;
+  const steps=stepsFor(id);
+  $('drawerTitle').textContent=app.business_name||app.service_key||'Application';
 
-  // Channel 1: Track tax operations table modifications
-  window.supabaseInstance
-    .channel(`realtime:user_filings_pipeline:${customerEmail}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'user_filings', filter: `customer_email=eq.${customerEmail}` }, function () {
-      const tokens = new URLSearchParams(window.location.search);
-      fetchUnifiedClientOrdersAndFilings(userUuid, customerEmail, tokens.get("search"));
-    })
-    .subscribe(function (status) {
-      if (status === 'CHANNEL_ERROR') {
-        throw new Error("Realtime Connection Exception: User filings subscription channel broke down.");
-      }
-    });
+  $('drawerBody').innerHTML=`
+    <section class="detail-section">
+      <h3>Application summary</h3>
+      <div class="detail-grid">
+        ${detail('Status',app.current_status)}
+        ${detail('Tracking number',app.tracking_number)}
+        ${detail('Service',app.service_key)}
+        ${detail('Plan',app.plan_tier)}
+        ${detail('Jurisdiction',app.jurisdiction_state)}
+        ${detail('Active',app.is_active===false?'No':'Yes')}
+        ${detail('Created',dtm(app.created_at))}
+        ${detail('Last updated',dtm(app.updated_at))}
+      </div>
+    </section>
+    <section class="detail-section">
+      <h3>Processing timeline</h3>
+      ${steps.length?`<div class="timeline">${steps.map(step=>`
+        <div class="timeline-step ${step.is_completed?'done':''}">
+          <span class="timeline-dot">${step.is_completed?'✓':esc(step.step_order||'•')}</span>
+          <div><b>${esc(step.title||'Processing step')}</b><small>${step.is_completed?`Completed ${dtm(step.completed_at)}`:'Pending'}</small></div>
+        </div>`).join('')}</div>`:'<div class="empty-state">No detailed processing milestones have been added yet.</div>'}
+    </section>`;
 
-  // Channel 2: Track global workflow orders table modifications
-  window.supabaseInstance
-    .channel(`realtime:orders_core_pipeline:${userUuid}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${userUuid}` }, function () {
-      const tokens = new URLSearchParams(window.location.search);
-      fetchUnifiedClientOrdersAndFilings(userUuid, customerEmail, tokens.get("search"));
-    })
-    .subscribe(function (status) {
-      if (status === 'CHANNEL_ERROR') {
-        throw new Error("Realtime Connection Exception: Core orders subscription channel broke down.");
-      }
-    });
+  $('drawer').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
 }
+
+function detail(label,value){
+  return `<div class="detail"><span>${esc(label)}</span><b>${esc(value===null||value===undefined||value===''?'—':value)}</b></div>`;
+}
+
+function renderLegacy(){
+  if(!legacy.length)return;
+  $('legacySection').hidden=false;
+  $('legacyList').innerHTML=legacy.map(f=>`
+    <div class="legacy-row">
+      <div><b>${esc(f.company_name||'Previous filing')}</b><small>${esc(f.plan_service_tier||'')} · ${dt(f.created_at)}</small></div>
+      <div><span class="status-pill-page ${esc((f.status||'').toLowerCase())}">${esc(f.status||'Pending')}</span></div>
+      <div><small>${f.irs_submission_id?'IRS submission '+esc(f.irs_submission_id):'Legacy record'}</small></div>
+      <div>${f.schedule_1_url?`<a class="open-filing" href="${esc(f.schedule_1_url)}" target="_blank" rel="noopener">Document</a>`:''}</div>
+    </div>`).join('');
+}
+
+function closeDrawer(){
+  $('drawer').setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+
+$('search').addEventListener('input',applyFilters);
+$('statusFilter').addEventListener('change',applyFilters);
+$('closeDrawer').onclick=closeDrawer;
+$('drawerBackdrop').onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+function toast(msg){
+  $('toast').textContent=msg;
+  $('toast').hidden=false;
+  setTimeout(()=>$('toast').hidden=true,2600);
+}
+
+boot();

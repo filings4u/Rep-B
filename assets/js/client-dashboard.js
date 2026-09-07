@@ -1,199 +1,165 @@
-/**
- * 📁 FILE PATH: client-dashboard.js
- * Responsibility: UI Layout Mechanics, Clock Engine, Accordions, and Safe Sign-Out
- */
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt=v=>v?new Date(v).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
 
-document.addEventListener("DOMContentLoaded", () => {
-    initLiveSystemClock();
-    initializeSecureSignOutAction();
-});
+let db,user,profile;
+let orders=[],applications=[],entities=[],notifications=[],documents=[],tickets=[];
+let toastTimer;
 
-function initLiveSystemClock() {
-    const clockElement = document.getElementById("client-clock");
-    if (!clockElement) return;
-    
-    setInterval(() => {
-        const now = new Date();
-        clockElement.textContent = `${now.toLocaleDateString('en-US')} | ${now.toLocaleTimeString('en-US', { hour12: false })}`;
-    }, 1000);
+async function boot(){
+  const auth=await window.filings4uRequireClient();
+  if(!auth)return;
+
+  ({db,user,profile}=auth);
+  hydrateProfile();
+
+  const results=await Promise.all([
+    db.from('orders')
+      .select('id,tracking_number,selected_service,service_key,company_name,order_status,payment_status,created_at,updated_at')
+      .eq('user_id',user.id)
+      .order('created_at',{ascending:false})
+      .limit(20),
+
+    db.from('applications')
+      .select('id,business_name,current_status,is_active,tracking_number,service_key,created_at,updated_at')
+      .eq('user_id',user.id)
+      .order('updated_at',{ascending:false})
+      .limit(20),
+
+    db.from('client_entities')
+      .select('id,entity_name,standing_status,state_of_formation,created_at')
+      .eq('user_id',user.id)
+      .order('created_at',{ascending:false})
+      .limit(20),
+
+    db.from('portal_notifications')
+      .select('id,title,message,is_read,is_archived,created_at')
+      .eq('user_id',user.id)
+      .eq('is_archived',false)
+      .order('created_at',{ascending:false})
+      .limit(20),
+
+    db.from('user_documents')
+      .select('id,file_name,created_at')
+      .eq('user_id',user.id)
+      .order('created_at',{ascending:false})
+      .limit(20),
+
+    db.from('support_tickets')
+      .select('id,ticket_id,subject,status,priority,created_at,updated_at')
+      .eq('client_id',user.id)
+      .order('updated_at',{ascending:false})
+      .limit(20)
+  ]);
+
+  const failed=results.find(r=>r.error);
+  if(failed){
+    showGateError(failed.error.message);
+    return;
+  }
+
+  [orders,applications,entities,notifications,documents,tickets]=results.map(r=>r.data||[]);
+
+  $('gate').hidden=true;
+  $('app').hidden=false;
+  render();
 }
 
-function toggleSidebarAccordion(buttonElement) {
-    buttonElement.classList.toggle('active');
-    const panel = buttonElement.nextElementSibling;
-    if (panel && panel.style) {
-        panel.style.maxHeight = (panel.style.maxHeight && panel.style.maxHeight !== "0px") ? "0px" : panel.scrollHeight + "px";
-    }
+function showGateError(message){
+  $('gate').textContent=message||'Unable to load your secure workspace.';
+  $('gate').style.color='#991b1b';
 }
 
-function initializeSecureSignOutAction() {
-    const logoutBtn = document.getElementById("portalLogoutBtn") || document.getElementById("adminLogoutBtn");
-    if (!logoutBtn) return;
+function hydrateProfile(){
+  const full=[profile.first_name,profile.last_name].filter(Boolean).join(' ')||'My Account';
+  const company=profile.company_name||'filings4u client';
+  const initial=(profile.first_name||profile.company_name||profile.email_address||'C').charAt(0).toUpperCase();
 
-    logoutBtn.onclick = null;
-    logoutBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        logoutBtn.disabled = true;
-        logoutBtn.textContent = "Logging out...";
+  $('clientName').textContent=full;
+  $('clientAvatar').textContent=initial;
 
-        const activeClient = window.supabaseInstance || window.supabaseClient;
-
-        if (activeClient && activeClient.auth) {
-            try { 
-                await activeClient.auth.signOut(); 
-            } catch (err) { 
-                console.warn("Supabase clean exit skipped:", err.message); 
-            }
-        }
-
-        localStorage.removeItem("filings4u_secure_session_token");
-        sessionStorage.clear();
-        window.location.replace("https://filings4u.com");
-    });
+  if($('clientMenuName'))$('clientMenuName').textContent=full;
+  if($('clientMenuCompany'))$('clientMenuCompany').textContent=company;
+  if($('clientMenuAvatar'))$('clientMenuAvatar').textContent=initial;
 }
 
-// ========================================================================== //
-// 🌐 SECURE SUPABASE REALTIME BROADCAST CHANNELS SETUP                       //
-// ========================================================================== //
-async function initializeRealtimeBroadcastNetwork() {
-    "use strict";
+function render(){
+  const openOrders=orders.filter(o=>!['completed','cancelled','refunded'].includes((o.order_status||'').toLowerCase())).length;
+  const activeFilings=applications.filter(a=>a.is_active!==false&&!['completed','cancelled'].includes((a.current_status||'').toLowerCase())).length;
+  const unread=notifications.filter(n=>!n.is_read).length;
+  const openTickets=tickets.filter(t=>!['closed','resolved'].includes((t.status||'').toLowerCase())).length;
 
-    // 🚀 THE BREAKOUT FIX: Evaluate the global property LIVE on every single tick cycle instead of saving a dead local pointer
-    if (!window.supabaseInstance || typeof window.supabaseInstance.channel !== 'function') {
-        console.warn("⚠️ Realtime Channel Intercept: Active client system instance not ready. Polling...");
-        setTimeout(initializeRealtimeBroadcastNetwork, 200);
-        return;
-    }
+  $('openOrders').textContent=openOrders;
+  $('activeFilings').textContent=activeFilings;
+  $('unreadCount').textContent=unread;
+  $('ticketCount').textContent=openTickets;
 
-    // Capture the valid, alive client reference now that the check pass has confirmed it exists
-    const activeClient = window.supabaseInstance;
+  $('entitySummary').textContent=`${entities.length} linked ${entities.length===1?'entity':'entities'}`;
+  $('filingSummary').textContent=`${activeFilings} active ${activeFilings===1?'filing':'filings'}`;
+  $('documentSummary').textContent=`${documents.length} secure ${documents.length===1?'record':'records'}`;
 
-    try {
-        let userInstance = window.activeClientSessionUser;
+  const health=Math.max(0,Math.min(100,100-(openOrders*4)-(openTickets*6)));
+  $('healthScore').textContent=health;
 
-        if (!userInstance && activeClient.auth && typeof activeClient.auth.getUser === 'function') {
-            const { data: { user }, error } = await activeClient.auth.getUser();
-            if (!error && user) userInstance = user;
-        }
+  const activity=[
+    ...orders.slice(0,5).map(o=>({
+      title:o.selected_service||o.service_key||'Service order',
+      sub:o.tracking_number||o.company_name||'',
+      status:o.order_status,
+      date:o.updated_at||o.created_at
+    })),
+    ...applications.slice(0,5).map(a=>({
+      title:a.business_name||a.service_key||'Filing',
+      sub:a.tracking_number||'',
+      status:a.current_status,
+      date:a.updated_at||a.created_at
+    }))
+  ]
+  .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0))
+  .slice(0,7);
 
-        if (!userInstance || !userInstance.id) {
-            console.log("[Realtime Engine] Postponing connection: User session context unverified. Retrying...");
-            setTimeout(initializeRealtimeBroadcastNetwork, 400);
-            return;
-        }
+  $('clientActivity').innerHTML=activity.length
+    ?activity.map(x=>`<div class="activity-row">
+        <div>
+          <b>${esc(x.title)}</b>
+          <small>${esc(x.sub)}${x.sub?' · ':''}${dt(x.date)}</small>
+        </div>
+        <span class="status-tag">${esc(x.status||'Pending')}</span>
+      </div>`).join('')
+    :'<div class="empty-state">No orders or filings are linked to this account yet.</div>';
 
-        window.realtimeTelemetryChannel = activeClient.channel(`telemetry_desk_${userInstance.id}`);
-
-        window.realtimeTelemetryChannel
-            .on('broadcast', { event: 'pipeline_mutation' }, (payload) => {
-                console.log('⚡ Realtime state sync received:', payload);
-                if (typeof handleIncomingStateSync === 'function') {
-                    handleIncomingStateSync(payload.payload);
-                }
-            })
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('📡 Synchronized cleanly to Supabase Realtime Broadcast Network');
-                    
-                    // Update Action Log on Dashboard to mirror live status confirmation
-                    const liveLogBox = document.querySelector('.live-log, p[style*="continuous state sync"]');
-                    if (liveLogBox || document.getElementById('liveLogDisplay')) {
-                        (liveLogBox || document.getElementById('liveLogDisplay')).textContent = "✓ Live state tracking synchronized cleanly to network.";
-                    }
-                }
-            });
-
-    } catch (realtimeSetupException) {
-        console.error("[Fatal Realtime Setup Interception Failure]", realtimeSetupException);
-    }
+  $('notificationList').innerHTML=notifications.length
+    ?notifications.slice(0,6).map(n=>`<div class="notice-row ${n.is_read?'':'unread'}">
+        <b>${esc(n.title||'Portal update')}</b>
+        <small>${esc(n.message||'')} · ${dt(n.created_at)}</small>
+      </div>`).join('')
+    :'<div class="empty-state">You have no portal updates.</div>';
 }
 
+$('markRead').onclick=async()=>{
+  const ids=notifications.filter(n=>!n.is_read).map(n=>n.id);
+  if(!ids.length)return toast('All updates are already read.');
 
+  $('markRead').disabled=true;
+  const {error}=await db.from('portal_notifications')
+    .update({is_read:true})
+    .in('id',ids)
+    .eq('user_id',user.id);
 
-function toggleSidebarAccordion(buttonElement) {
-    buttonElement.classList.toggle('active');
-    const panel = buttonElement.nextElementSibling;
-    if (panel && panel.style) {
-        if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-            panel.style.maxHeight = "0px";
-        } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-    }
+  $('markRead').disabled=false;
+
+  if(error)return toast(error.message);
+
+  notifications=notifications.map(n=>({...n,is_read:true}));
+  render();
+  toast('Updates marked as read.');
+};
+
+function toast(message){
+  clearTimeout(toastTimer);
+  $('toast').textContent=message;
+  $('toast').hidden=false;
+  toastTimer=setTimeout(()=>$('toast').hidden=true,2500);
 }
 
-// ========================================================================== //
-// 🛑 SECURE SIGN-OUT ROUTE CONTROLLER ACTION (SAFE BINDING)                  //
-// ========================================================================== //
-document.addEventListener("DOMContentLoaded", () => {
-    const logoutBtn = document.getElementById("portalLogoutBtn") || document.getElementById("adminLogoutBtn");
-    if (logoutBtn) {
-        logoutBtn.onclick = null;
-        logoutBtn.addEventListener("click", async (e) => {
-            e.preventDefault();
-            console.log("🔐 Logout sequence initiated. Cleaning local token parameters...");
-            logoutBtn.disabled = true;
-            logoutBtn.textContent = "Logging out...";
-            
-            const activeClient = window.supabaseInstance || window.supabaseClient || window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-            if (activeClient && activeClient.auth) {
-                try {
-                    await activeClient.auth.signOut();
-                } catch (err) {
-                    console.warn("Supabase clean exit skipped:", err.message);
-                }
-            }
-            
-            localStorage.removeItem("filings4u_secure_session_token");
-            sessionStorage.clear();
-            
-            const targetRedirect = "https://filings4u.com";
-            window.location.replace(targetRedirect);
-        });
-        console.log("✅ Secure logout listener successfully locked onto client DOM button.");
-    } else {
-        console.log("[Portal Engine] Skipping logout binding: No matching button target in current layout context.");
-    }
-});
-
-
-/**
- * ⏱️ 3. YOUR ORIGINAL CLOCK MATRIX ENGINE (SEPARATED)
- * Responsibility: Updates interface layouts with synchronized structural time vectors
- */
-(function initializeGlobalAdminClockMatrix() {
-    "use strict";
-
-    function executeClockSynchronization() {
-        const targetClock = document.getElementById('portal-clock');
-        if (!targetClock) return;
-
-        function renderTime() {
-            const now = new Date();
-            const d = String(now.getDate()).padStart(2, '0');
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const y = now.getFullYear();
-            
-            let rawHours = now.getHours();
-            const ampmMarker = rawHours >= 12 ? 'PM' : 'AM';
-            
-            rawHours = rawHours % 12;
-            rawHours = rawHours ? rawHours : 12; // Handle midnight loop points safely
-            
-            const hrs = String(rawHours).padStart(2, '0');
-            const mins = String(now.getMinutes()).padStart(2, '0');
-            const secs = String(now.getSeconds()).padStart(2, '0');
-            
-            targetClock.textContent = `${m}/${d}/${y} | ${hrs}:${mins}:${secs} ${ampmMarker}`;
-        }
-
-        renderTime();
-        setInterval(renderTime, 1000);
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', executeClockSynchronization);
-    } else {
-        executeClockSynchronization();
-    }
-})();
+boot();

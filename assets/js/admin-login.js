@@ -1,103 +1,95 @@
-// assets/js/admin-login.js
-async function startAdminLoginEngine() {
-    "use strict";
+const db = window.filings4uSupabase;
+const $ = (id) => document.getElementById(id);
 
-    function waitForSupabaseClientEngine() {
-        return new Promise((resolve) => {
-            if (window.supabaseClient) return resolve(window.supabaseClient);
-            const trackingInterval = setInterval(() => {
-                if (window.supabaseClient) {
-                    clearInterval(trackingInterval);
-                    resolve(window.supabaseClient);
-                }
-            }, 10);
-        });
-    }
-
-    const client = await waitForSupabaseClientEngine();
-    const adminLoginForm = document.getElementById('adminLoginForm');
-    const loginSubmitBtn = document.getElementById('loginBtn');
-    const passError = document.getElementById('password-error');
-
-    async function evaluateAdminRoute(userEmail) {
-        const cleanedEmail = userEmail.toLowerCase().trim();
-        
-        // 🎯 SCALABLE RULE: test-admin OR any standard corporate domain account holds admin rank
-        const isTestAdmin = (cleanedEmail === 'test-admin@filings4u.com');
-        const isCorporateStaff = cleanedEmail.endsWith('@filings4u.com');
-
-        if (isTestAdmin || isCorporateStaff) {
-            window.location.assign(`${window.productionRootUrl}/admin-dashboard.html`);
-        } else {
-            console.error("Access Denied: Standard profile attempting admin panel entry.");
-            alert("ACCESS DENIED:\nThis terminal is strictly reserved for authorized filings4u corporate staff.");
-            
-            if (passError) {
-                passError.innerText = "Authorization Denied: This profile lacks admin clearance.";
-            }
-            if (loginSubmitBtn) {
-                loginSubmitBtn.innerText = "Verify Terminal Session →";
-                loginSubmitBtn.disabled = false;
-            }
-            // Wipe token instantly to clear Cloudflare caching traps
-            await client.auth.signOut();
-        }
-    }
-
-    try {
-        const { data: { session } } = await client.auth.getSession();
-        
-        if (session && session.user) {
-            await evaluateAdminRoute(session.user.email);
-            return;
-        }
-
-        if (adminLoginForm) {
-            adminLoginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const emailInput = document.getElementById('email');
-                const passwordInput = document.getElementById('password');
-                if (!emailInput || !passwordInput) return;
-
-                emailInput.classList.remove('field-error');
-                passwordInput.classList.remove('field-error');
-                if (passError) passError.innerText = "";
-
-                const email = emailInput.value.trim().toLowerCase();
-                const password = passwordInput.value;
-                let hasFormErrors = false;
-
-                if (!email) { emailInput.classList.add('field-error'); hasFormErrors = true; }
-                if (!password) { passwordInput.classList.add('field-error'); hasFormErrors = true; }
-
-                if (hasFormErrors) return;
-
-                if (loginSubmitBtn) {
-                    loginSubmitBtn.innerText = "Authenticating Admin...";
-                    loginSubmitBtn.disabled = true;
-                }
-
-                try {
-                    const result = await client.auth.signInWithPassword({ email, password });
-                    if (result.error) throw new Error(result.error.message);
-                    
-                    await evaluateAdminRoute(result.data.user.email);
-                } catch (err) {
-                    console.warn("Auth exception caught:", err.message);
-                    alert(`AUTHENTICATION ERROR:\n${err.message}`);
-                    
-                    emailInput.classList.add('field-error');
-                    passwordInput.classList.add('field-error');
-                    if (passError) passError.innerText = `Authorization Failed: ${err.message}`;
-                    if (loginSubmitBtn) {
-                        loginSubmitBtn.innerText = "Verify Terminal Session →";
-                        loginSubmitBtn.disabled = false;
-                    }
-                }
-            });
-        }
-    } catch (err) {
-        console.error("Login System Error:", err.message);
-    }
+function showMessage(text, type = 'error') {
+  $('message').textContent = text;
+  $('message').className = `message ${type}`;
+  $('message').hidden = false;
 }
+
+function nextPage() {
+  const params = new URLSearchParams(location.search);
+  const next = params.get('next');
+  if (!next || next.includes('://') || next.startsWith('//')) return 'admin-dashboard.html';
+  return next;
+}
+
+async function validateAdmin(user) {
+  const { data, error } = await db
+    .from('admin_profiles')
+    .select('id,email_address,first_name,last_name,role,terminated_date')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data && !data.terminated_date ? data : null;
+}
+
+async function checkExistingSession() {
+  if (!db) return showMessage('Supabase client failed to load.');
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('error') === 'not-admin') {
+    showMessage('That account is not an active filings4u administrator.');
+  }
+
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return;
+
+  $('signOutExisting').hidden = false;
+
+  try {
+    const admin = await validateAdmin(user);
+    if (admin) {
+      showMessage(`Already signed in as ${admin.email_address}. Redirecting…`, 'ok');
+      setTimeout(() => location.href = nextPage(), 350);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+$('loginForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  $('message').hidden = true;
+  $('submit').disabled = true;
+  $('submit').textContent = 'Signing in…';
+
+  try {
+    const email = $('email').value.trim();
+    const password = $('password').value;
+
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (!data.user) throw new Error('No authenticated user was returned.');
+
+    const admin = await validateAdmin(data.user);
+
+    if (!admin) {
+      await db.auth.signOut();
+      throw new Error('This account is not an active filings4u administrator.');
+    }
+
+    showMessage('Sign-in successful. Opening the management system…', 'ok');
+    location.href = nextPage();
+  } catch (error) {
+    showMessage(error.message || 'Unable to sign in.');
+  } finally {
+    $('submit').disabled = false;
+    $('submit').textContent = 'Sign in';
+  }
+});
+
+$('togglePassword').addEventListener('click', () => {
+  const input = $('password');
+  input.type = input.type === 'password' ? 'text' : 'password';
+  $('togglePassword').textContent = input.type === 'password' ? 'Show' : 'Hide';
+});
+
+$('signOutExisting').addEventListener('click', async () => {
+  await db.auth.signOut();
+  $('signOutExisting').hidden = true;
+  showMessage('The existing session has been signed out.', 'ok');
+});
+
+checkExistingSession();

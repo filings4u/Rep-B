@@ -1,79 +1,133 @@
-/**
- * 💼 CLIENT ACCOUNT & BILLING LEDGER UTILITY DRIVER
- * Synchronized with filings4u customer portal core architecture.
- */
-window.addEventListener("supabaseEngineReady", function (engineEvent) {
-  "use strict";
+const $=id=>document.getElementById(id);
 
-  // Validate that the system broadcast payload structure is fully populated
-  if (!engineEvent || !engineEvent.detail || !engineEvent.detail.session) {
-    throw new Error("Core Handshake Exception: Payload schema missing active session verification parameters.");
+let db,user,profile;
+let toastTimer;
+
+async function boot(){
+  const auth=await window.filings4uRequireClient();
+  if(!auth)return;
+  ({db,user,profile}=auth);
+  fill();
+  $('gate').hidden=true;
+  $('app').hidden=false;
+}
+
+function fill(){
+  const name=[profile.first_name,profile.last_name].filter(Boolean).join(' ')||'My Account';
+  const company=profile.company_name||'filings4u client';
+  const initial=(profile.first_name||profile.company_name||profile.email_address||'C')[0].toUpperCase();
+
+  $('clientName').textContent=name;
+  $('clientAvatar').textContent=initial;
+  $('largeAvatar').textContent=initial;
+  $('profileName').textContent=name;
+  $('profileCompany').textContent=company;
+
+  if($('clientMenuName'))$('clientMenuName').textContent=name;
+  if($('clientMenuCompany'))$('clientMenuCompany').textContent=company;
+  if($('clientMenuAvatar'))$('clientMenuAvatar').textContent=initial;
+
+  $('firstName').value=profile.first_name||'';
+  $('lastName').value=profile.last_name||'';
+  $('email').value=user.email||profile.email_address||'';
+  $('phone').value=profile.phone_number||'';
+  $('company').value=profile.company_name||'';
+  $('street').value=profile.street_address||'';
+  $('city').value=profile.city||'';
+  $('state').value=profile.state||'';
+  $('zip').value=profile.zip_code||'';
+  $('securityEmail').textContent=user.email||profile.email_address||'—';
+}
+
+async function updateProfile(payload,button,message){
+  button.disabled=true;
+  const old=button.textContent;
+  button.textContent='Saving…';
+  try{
+    const {data,error}=await db
+      .from('client_profiles')
+      .update({...payload,updated_at:new Date().toISOString()})
+      .eq('id',user.id)
+      .select('id,email_address,first_name,last_name,phone_number,street_address,city,state,zip_code,updated_at,company_name,avatar_url')
+      .single();
+
+    if(error)throw error;
+    profile={...profile,...data};
+    fill();
+    $(message).textContent='Saved';
+    setTimeout(()=>$(message).textContent='',2200);
+    toast('Account updated.');
+  }catch(e){
+    toast(e.message||'Unable to save changes.');
+  }finally{
+    button.disabled=false;
+    button.textContent=old;
   }
+}
 
-  const session = engineEvent.detail.session;
-  
-  // Instantly fire the account balance hydration sequence using the verified session token
-  fetchClientFinancialLedger(session.user.id);
+$('profileForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  updateProfile({
+    first_name:$('firstName').value.trim()||null,
+    last_name:$('lastName').value.trim()||null,
+    phone_number:$('phone').value.trim()||null,
+    company_name:$('company').value.trim()||null
+  },$('saveProfile'),'profileSaved');
 });
 
-/**
- * 📡 DATABASE ACCESS DISPATCH: FETCH HISTORY LEDGERS
- * Pulls row history records and throws error states explicitly on tracking anomalies.
- */
-async function fetchClientFinancialLedger(userId) {
-  "use strict";
+$('addressForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  updateProfile({
+    street_address:$('street').value.trim()||null,
+    city:$('city').value.trim()||null,
+    state:$('state').value.trim()||null,
+    zip_code:$('zip').value.trim()||null
+  },$('saveAddress'),'addressSaved');
+});
 
-  if (!userId) {
-    throw new Error("Data Integrity Exception: Query parameter userId is invalid or undefined.");
+$('passwordForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const current=$('currentPassword').value;
+  const next=$('newPassword').value;
+  const confirm=$('confirmPassword').value;
+
+  if(next!==confirm)return toast('The passwords do not match.');
+  if(next.length<8)return toast('Use at least 8 characters.');
+  if(current===next)return toast('Choose a new password that is different from your current password.');
+
+  const b=$('savePassword');
+  b.disabled=true;
+  b.textContent='Updating…';
+
+  try{
+    const {error}=await db.auth.updateUser({
+      password:next,
+      currentPassword:current
+    });
+    if(error)throw error;
+
+    $('passwordForm').reset();
+    $('passwordSaved').textContent='Password updated';
+    setTimeout(()=>$('passwordSaved').textContent='',2500);
+    toast('Password updated successfully.');
+  }catch(err){
+    toast(err.message||'Unable to update password.');
+  }finally{
+    b.disabled=false;
+    b.textContent='Update password';
   }
+});
 
-  const layerTarget = document.getElementById("billingLedgerOutputContainer");
-  if (!layerTarget) {
-    throw new Error("Viewport Structure Exception: Required DOM node #billingLedgerOutputContainer is missing from active page layout.");
-  }
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('is-active',x===btn));
+  document.querySelectorAll('[data-panel]').forEach(x=>x.classList.toggle('is-active',x.dataset.panel===btn.dataset.tab));
+});
 
-  // Query records directly from your billing database infrastructure
-  const { data: invoices, error } = await window.supabaseInstance
-    .from('billing_history')
-    .select('id, description, amount, status, created_at, invoice_number')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  // STRICT ERROR CHECKING: Throw database operational failure instantly
-  if (error) {
-    console.error("Database Transaction Failure Context:", error);
-    throw new Error(`Database Operation Exception: [${error.code}] ${error.message}`);
-  }
-
-  // Handle empty account records gracefully only if query returned validly with 0 elements
-  if (!invoices || invoices.length === 0) {
-    layerTarget.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:20px;">Zero transaction logs balance active under this profile ledger record loop.</p>`;
-    return;
-  }
-
-  // Construct UI output safely
-  layerTarget.innerHTML = invoices.map(inv => {
-    if (!inv.id || !inv.description || inv.amount === undefined || !inv.status) {
-      throw new Error(`Data Integrity Exception: Invoice object row parsing failed for record identity token: ${inv.id || 'Unknown ID'}`);
-    }
-
-    const isOpenBalance = inv.status.toLowerCase() === 'unpaid' || inv.status.toLowerCase() === 'pending';
-    const cleanInvoiceNumber = inv.invoice_number || String(inv.id).slice(0, 8);
-    const formattedAmount = parseFloat(inv.amount).toFixed(2);
-
-    return `
-      <div style="background: #ffffff !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; padding: 16px !important; display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 0.85rem !important;">
-        <div>
-          <span style="font-weight: 800 !important; color: var(--text-dark) !important; display: block !important;">${inv.description}</span>
-          <small style="color: var(--text-muted) !important; font-size: 0.72rem !important;">Invoice ID Token: <code>${cleanInvoiceNumber}</code> | Date: ${new Date(inv.created_at).toLocaleDateString()}</small>
-        </div>
-        <div style="display: flex !important; align-items: center !important; gap: 15px !important;">
-          <strong style="font-size: 1rem !important; color: var(--text-dark) !important;">$${formattedAmount}</strong>
-          <span style="padding: 4px 10px !important; border-radius: 4px !important; font-size: 0.68rem !important; font-weight: 800 !important; text-transform: uppercase !important; background: ${isOpenBalance ? '#fee2e2' : 'rgba(16, 185, 129, 0.1)'} !important; color: ${isOpenBalance ? '#ef4444' : 'var(--emerald)'} !important;">
-            ${inv.status}
-          </span>
-        </div>
-      </div>
-    `;
-  }).join('');
+function toast(message){
+  clearTimeout(toastTimer);
+  $('toast').textContent=message;
+  $('toast').hidden=false;
+  toastTimer=setTimeout(()=>$('toast').hidden=true,2800);
 }
+
+boot();

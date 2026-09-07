@@ -1,458 +1,286 @@
-/**
- * filings4u Client Portal Unified Layout & Navigation Lifecycle Engine
- * Handles collapsible static desktop sidebars and non-disruptive mobile absolute dropdowns.
- */
-document.addEventListener("DOMContentLoaded", () => {
-    "use strict";
+(function(){
+'use strict';
 
-    // 1. Locate primary platform geometric parent containers
-    const portalMain = document.querySelector(".portal-main");
-    const dashboardWrapper = document.querySelector(".dashboard-wrapper");
+const TARGETS = Object.freeze({
+  overview: 'admin-dashboard.html',
+  orders: 'admin-orders.html',
+  invoices: 'admin-invoices.html',
+  applications: 'admin-applications.html',
+  clients: 'admin-clients.html',
+  entities: 'admin-entities.html',
+  services: 'admin-services.html',
+  design: 'admin-design.html',
+  documents: 'admin-documents.html',
+  support: 'admin-support.html',
+  messages: 'admin-messages.html',
+  staff: 'admin-staff.html',
+  audit: 'admin-audit.html',
+  settings: 'admin-settings.html'
+});
 
-    if (!portalMain || !dashboardWrapper) {
-        console.warn("✕ Navigation Interrupted: Core structural layout targets '.portal-main' or '.dashboard-wrapper' missing.");
-        return;
-    }
+const GROUPS = [
+  {
+    key: 'operations',
+    label: 'Operations',
+    items: [
+      ['overview','Overview','▦'],
+      ['orders','Orders','▤'],
+      ['invoices','Invoices & Billing','$'],
+      ['applications','Applications & Filings','◫'],
+      ['clients','Clients','◎'],
+      ['entities','Business Entities','◇']
+    ]
+  },
+  {
+    key: 'service',
+    label: 'Service Management',
+    items: [
+      ['services','Services & Pricing','☷'],
+      ['design','Design Projects','✦'],
+      ['documents','Documents','▱'],
+      ['support','Support Tickets','◌'],
+      ['messages','Messages','✉']
+    ]
+  },
+  {
+    key: 'administration',
+    label: 'Administration',
+    items: [
+      ['staff','Staff & Access','♙'],
+      ['audit','Audit & System Logs','⌁'],
+      ['settings','Platform Settings','⚙']
+    ]
+  }
+];
 
-    // 2. Identify the active page path name string to apply instant highlight styles
-    const activePagePath = window.location.pathname.split("/").pop() || "client-dashboard.html";
-
-    // --- STAGE A: INJECT SYSTEM RESPONSIVE CSS STYLING OVERRIDES ---
-    const structuralNavigationStyles = document.createElement("style");
-    structuralNavigationStyles.innerHTML = `
-    /* ========================================== Desktop Layout Transitions ========================================== */
-    .portal-sidebar { 
-        width: 260px;
-        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease, border-right 0.3s ease !important; 
-        overflow-y: auto !important; 
-        overflow-x: hidden !important; 
-        box-sizing: border-box;
-    }
-    .portal-sidebar.sidebar-collapsed-hidden {
-        width: 0px !important;
-        padding: 0px !important;
-        border-right: none !important;
-    }
-    .portal-main { 
-        margin-left: 260px;
-        width: calc(100% - 260px);
-        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; 
-        box-sizing: border-box;
-    }
-    .portal-main.main-stretched-full {
-        margin-left: 0px !important;
-        width: 100% !important;
-    }
-    #f4uSidebarCollapseToggleHandle { 
-        width: 100%; 
-        background: #f1f5f9; 
-        color: var(--text-dark); 
-        border: 1px solid var(--border-color); 
-        padding: 10px; 
-        border-radius: 6px; 
-        font-size: 0.8rem; 
-        font-weight: 700; 
-        cursor: pointer; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        gap: 6px; 
-        outline: none; 
-        margin-bottom: 10px; 
-        box-sizing: border-box; 
-        transition: all 0.15s ease; 
-    }
-    #f4uSidebarCollapseToggleHandle:hover { 
-        background: #e2e8f0; 
-    }
-    /* Floating Widget Toggle Trigger Button (Appears pinned on left edge when Sidebar is closed) */
-    #f4uSidebarFloatingRestoreWidget { 
-        position: fixed; 
-        bottom: 25px; 
-        left: -80px; 
-        width: 50px; 
-        height: 50px; 
-        background: #c15254; 
-        color: #ffffff; 
-        border: none; 
-        border-radius: 50%; 
-        font-size: 1.3rem; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        cursor: pointer; 
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); 
-        z-index: 1500; 
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease; 
-        outline: none; 
-    }
-    #f4uSidebarFloatingRestoreWidget:hover { 
-        transform: scale(1.08); 
-        background: #0a1f44; 
-    }
-    #f4uSidebarFloatingRestoreWidget.widget-visible-active { 
-        left: 25px !important; 
-    }
-    /* ========================================== Mobile Navigation Dropdown Overlay Panels ========================================== */
-    #f4uBrandedMobileNavToggleBar { 
-        display: none; 
-        width: 100%; 
-        align-items: center; 
-        justify-content: space-between; 
-        padding: 15px 20px; 
-        background: #ffffff; 
-        border-bottom: 1px solid #e2e8f0; 
-        box-sizing: border-box; 
-        height: 70px; 
-    }
-    #f4uMobileDropdownContainerTray { 
-        display: none; 
-        position: absolute !important; 
-        top: 75px !important; 
-        left: 15px !important; 
-        width: calc(100% - 30px) !important; 
-        background: #ffffff !important; 
-        border: 1px solid #e2e8f0 !important; 
-        border-radius: 12px !important; 
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1) !important; 
-        padding: 20px !important; 
-        box-sizing: border-box !important; 
-        z-index: 2100 !important; 
-    }
-    #f4uMobileDropdownContainerTray.tray-active-revealed { 
-        display: block !important; 
-    }
-    @media (max-width: 991px) {
-        #f4uBrandedMobileNavToggleBar { display: flex !important; }
-        .portal-sidebar { display: none !important; }
-        .portal-main { margin-left: 0 !important; width: 100% !important; }
-        .portal-header { padding: 20px !important; flex-direction: column !important; gap: 14px !important; height: auto !important; align-items: flex-start !important; }
-        .header-actions-wrapper { width: 100% !important; flex-wrap: wrap !important; justify-content: space-between !important; gap: 10px !important; }
-        .search-input { width: 100% !important; }
-        #f4uSidebarFloatingRestoreWidget { display: none !important; }
-    }
-    `;
-    document.head.appendChild(structuralNavigationStyles);
-
-// --- STAGE B: INJECT STATIC COLLAPSIBLE DESKTOP SIDEBAR MENU ---
-const desktopSidebarNode = document.createElement("aside");
-desktopSidebarNode.className = "portal-sidebar";
-desktopSidebarNode.id = "f4uDesktopStaticSidebar";
-desktopSidebarNode.innerHTML = `
-<div class="sidebar-brand-block">
-  <img src="images/logo.png" alt="filings4u" style="height: 35px !important; width: auto !important; object-fit: contain !important; display: block !important; margin: 0 auto !important;">
-  <div><div class="admin-badge" style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; margin-top:4px; display:inline-block;">Admin Dashboard</div></div>
-</div>
-
-<nav class="sidebar-accordion-menu">
-  <!-- Group 1: Control Systems -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger d-trigger" data-group="core" onclick="toggleSidebarAccordion(this)">
-      Control Systems <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel d-panel" data-group="core">
-      <a href="admin-dashboard.html" class="nav-item d-link" data-page="admin-dashboard.html"><span>📊</span> System Hub Home</a>
-      <a href="admin-billing.html" class="nav-item d-link" data-page="admin-billing.html"><span>💰</span> Sales & Price Audit</a>
-      <a href="admin-blog.html" class="nav-item d-link" data-page="admin-blog.html"><span>📰</span> Manage Insights Blog</a>
-      <a href="admin-faqs.html" class="nav-item d-link" data-page="admin-faqs.html"><span>🚀</span> Manage FAQs Matrix</a>
-    </div>
-  </div>
-
-  <!-- Group 2: Operations & CRM -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger d-trigger" data-group="crm" onclick="toggleSidebarAccordion(this)">
-      Operations & CRM <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel d-panel" data-group="crm">
-      <a href="admin-crm.html" class="nav-item d-link" data-page="admin-crm.html"><span>👥</span> Customer CRM</a>
-      <a href="admin-profiles.html" class="nav-item d-link" data-page="admin-profiles.html"><span>👤</span> Master Profiles Ledger</a>
-      <a href="admin-compliance-audit.html" class="nav-item d-link" data-page="admin-compliance-audit.html"><span>🛡️</span> Compliance Audit</a>
-      <a href="admin-entities-ledger.html" class="nav-item d-link" data-page="admin-entities-ledger.html"><span>🏢</span> Entity Master Ledger</a>
-      <a href="admin-orders.html" class="nav-item d-link" data-page="admin-orders.html"><span>📦</span> Active Orders Queue</a>
-    </div>
-  </div>
-
-  <!-- Group 3: Financials & Health -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger d-trigger" data-group="finance" onclick="toggleSidebarAccordion(this)">
-      Financials & Health <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel d-panel" data-group="finance">
-      <a href="admin-invoice.html" class="nav-item d-link" data-page="admin-invoice.html"><span>💳</span> Invoice Deployment</a>
-      <a href="admin-invoice-view.html" class="nav-item d-link" data-page="admin-invoice-view.html"><span>💰</span> Sent Invoices</a>
-      <a href="admin-system-logs.html" class="nav-item d-link" data-page="admin-system-logs.html"><span>📋</span> System Event Logs</a>
-    </div>
-  </div>
-
-  <!-- Group 4: Communication & Tools -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger d-trigger" data-group="tools" onclick="toggleSidebarAccordion(this)">
-      Communication & Tools <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel d-panel" data-group="tools">
-      <a href="admin-chat.html" class="nav-item d-link" data-page="admin-chat.html"><span>💬</span> Client Chat Workspace</a>
-      <a href="admin-tickets.html" class="nav-item d-link" data-page="admin-tickets.html"><span>📋</span> Support Tickets</a>
-      <a href="admin-documents.html" class="nav-item d-link" data-page="admin-documents.html"><span>📂</span> Document Vault</a>
-      <a href="admin-appointments.html" class="nav-item d-link" data-page="admin-appointments.html"><span>⏰</span> Session Allocations</a>
-      <a href="admin-client-communications.html" class="nav-item d-link" data-page="admin-notifications-center.html"><span>📡</span> Notifications Center</a>
-    </div>
-  </div>
-
-  <!-- Group 5: Intake & Design Hub -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger d-trigger" data-group="intake" onclick="toggleSidebarAccordion(this)">
-      Intake & Design Hub <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel d-panel" data-group="intake">
-      <a href="admin-design-hub.html" class="nav-item d-link" data-page="admin-design-hub.html"><span>🎨</span> Creative Asset Hub</a>
-      <a href="admin-logo-projects.html" class="nav-item d-link" data-page="admin-logo-projects.html"><span>✏️</span> Logo Branding Queues</a>
-      <a href="admin-web-projects.html" class="nav-item d-link" data-page="admin-web-projects.html"><span>💻</span> Web Design Projects</a>
-    </div>
-  </div>
-
-  <!-- Group 6: HQ Infrastructure -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger d-trigger" data-group="hq" onclick="toggleSidebarAccordion(this)">
-      HQ Infrastructure <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel d-panel" data-group="hq">
-      <a href="admin-packages.html" class="nav-item d-link" data-page="admin-packages.html"><span>📦</span> Freight Package Matrix</a>
-      <a href="admin-status.html" class="nav-item d-link" data-page="admin-status.html"><span>🚦</span> System Status Tracker</a>
-      <a href="admin-global-settings.html" class="nav-item d-link" data-page="admin-global-settings.html"><span>🔧</span> Global Config Desk</a>
-    </div>
-  </div>
-</nav>
-
-
-<div class="sidebar-footer-lock" style="padding-top:10px !important; text-align: center; width: 100%; box-sizing: border-box;">
-  <button id="f4uSidebarCollapseToggleHandle" title="Hide Sidebar Menu" style="margin-bottom: 8px;">◀ Hide Sidebar Menu</button>
-  <button id="desktopPortalLogoutBtn" class="logout-btn" style="background:#dc2626; color:#ffffff; width:100%; padding:10px; font-weight:700; border:none; border-radius:6px; cursor:pointer;">Exit Admin Session</button>
-</div>
-
-`;
-dashboardWrapper.prepend(desktopSidebarNode);
-
-// --- STAGE C: INJECT FLOATING RE-OPEN BALLOON WIDGET BUTTON ---
-const floatingWidgetNode = document.createElement("button");
-floatingWidgetNode.id = "f4uSidebarFloatingRestoreWidget";
-floatingWidgetNode.innerHTML = "☰";
-floatingWidgetNode.title = "Expand Side Navigation Menu Layout Canvas";
-document.body.appendChild(floatingWidgetNode);
-
-// --- STAGE D: INJECT BRANDED MOBILE HEADER BAR & DROPDOWN ACCORDION MENU ---
-const headerNode = document.querySelector(".portal-header") || document.querySelector("header");
-
-if (headerNode && headerNode.parentNode) {
-    const mobileBrandedBar = document.createElement("div");
-    mobileBrandedBar.id = "f4uBrandedMobileNavToggleBar";
-    mobileBrandedBar.innerHTML = `
-    <img src="images/logo.png" alt="filings4u" style="height: 28px; width: auto; object-fit: contain;">
-    <button id="f4uMobileMenuTextTriggerBtn" style="background: #fef2f2; color: #0a1f44; border: 1px solid rgba(220, 38, 38, 0.15); display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 700; cursor: pointer; outline: none; padding: 8px 14px; border-radius: 6px;">
-        <span>☰</span>
-        <span style="text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.5px;">Menu</span>
-    </button>
-    `;
-
-    const mobileDropdownTray = document.createElement("div");
-    mobileDropdownTray.id = "f4uMobileDropdownContainerTray";
-    mobileDropdownTray.innerHTML = `
-<nav class="sidebar-accordion-menu" style="padding: 0 !important;">
-  <!-- Group 1: Control Systems -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger m-trigger" data-group="m-core" onclick="toggleSidebarAccordion(this)">
-      Control Systems <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel m-panel" data-group="m-core">
-      <a href="admin-dashboard.html" class="nav-item m-link" data-page="admin-dashboard.html">System Hub Home</a>
-      <a href="admin-billing.html" class="nav-item m-link" data-page="admin-billing.html">Sales & Price Audit</a>
-      <a href="admin-blog.html" class="nav-item m-link" data-page="admin-blog.html">Manage Insights Blog</a>
-      <a href="admin-faqs.html" class="nav-item m-link" data-page="admin-faqs.html">Manage FAQs Matrix</a>
-    </div>
-  </div>
-
-  <!-- Group 2: Operations & CRM -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger m-trigger" data-group="m-crm" onclick="toggleSidebarAccordion(this)">
-      Operations & CRM <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel m-panel" data-group="m-crm">
-      <a href="admin-crm.html" class="nav-item m-link" data-page="admin-crm.html">Customer CRM</a>
-      <a href="admin-profiles.html" class="nav-item m-link" data-page="admin-profiles.html">Master Profiles Ledger</a>
-      <a href="admin-compliance-audit.html" class="nav-item m-link" data-page="admin-compliance-audit.html">Compliance Audit</a>
-      <a href="admin-entities-ledger.html" class="nav-item m-link" data-page="admin-entities-ledger.html">Entity Master Ledger</a>
-      <a href="admin-orders.html" class="nav-item m-link" data-page="admin-orders.html">Create an Order</a>
-    </div>
-  </div>
-
-  <!-- Group 3: Financials & Health -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger m-trigger" data-group="m-finance" onclick="toggleSidebarAccordion(this)">
-      Financials & Health <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel m-panel" data-group="m-finance">
-      <a href="admin-invoice.html" class="nav-item m-link" data-page="admin-invoice.html">Invoice Deployment Studio</a>
-      <a href="admin-system-logs.html" class="nav-item m-link" data-page="admin-system-logs.html">System Event Logs</a>
-    </div>
-  </div>
-
-  <!-- Group 4: Communication & Tools -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger m-trigger" data-group="m-tools" onclick="toggleSidebarAccordion(this)">
-      Communication & Tools <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel m-panel" data-group="m-tools">
-      <a href="admin-chat.html" class="nav-item m-link" data-page="admin-chat.html">Client Chat Workspace</a>
-      <a href="admin-tickets.html" class="nav-item m-link" data-page="admin-tickets.html">After-Hours Tickets</a>
-      <a href="admin-documents.html" class="nav-item m-link" data-page="admin-documents.html">Document Vault</a>
-      <a href="admin-appointments.html" class="nav-item m-link" data-page="admin-appointments.html">Session Allocations</a>
-      <a href="admin-client-communications.html" class="nav-item m-link" data-page="admin-notifications-center.html">Notifications Center</a>
-    </div>
-  </div>
-
-  <!-- Group 5: Intake & Design Hub -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger m-trigger" data-group="m-intake" onclick="toggleSidebarAccordion(this)">
-      Intake & Design Hub <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel m-panel" data-group="m-intake">
-      <a href="admin-design-hub.html" class="nav-item m-link" data-page="admin-design-hub.html">Creative Asset Hub</a>
-      <a href="admin-logo-projects.html" class="nav-item m-link" data-page="admin-logo-projects.html">Logo Branding Queues</a>
-      <a href="admin-web-projects.html" class="nav-item m-link" data-page="admin-web-projects.html">Web Design Projects</a>
-    </div>
-  </div>
-
-  <!-- Group 6: HQ Infrastructure -->
-  <div class="accordion-group">
-    <button type="button" class="accordion-trigger m-trigger" data-group="m-hq" onclick="toggleSidebarAccordion(this)">
-      HQ Infrastructure <span class="chevron">▼</span>
-    </button>
-    <div class="accordion-panel m-panel" data-group="m-hq">
-      <a href="admin-packages.html" class="nav-item m-link" data-page="admin-packages.html">Freight Package Matrix</a>
-      <a href="admin-status.html" class="nav-item m-link" data-page="admin-status.html">System Status Tracker</a>
-      <a href="admin-global-settings.html" class="nav-item m-link" data-page="admin-global-settings.html">Global Config Desk</a>
-    </div>
-  </div>
-
-  <!-- Session Termination Button -->
-  <button id="mobilePortalDrawerLogoutBtn" class="logout-btn" style="background:#dc2626; color:#ffffff; width:100%; padding:12px; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:15px;">Exit Admin Session</button>
-</nav>
-
-
-    `;
-
-    headerNode.parentNode.insertBefore(mobileBrandedBar, headerNode);
-    headerNode.parentNode.insertBefore(mobileDropdownTray, headerNode);
-
-    mobileBrandedBar.querySelector("#f4uMobileMenuTextTriggerBtn").addEventListener("click", () => {
-        mobileDropdownTray.classList.toggle("tray-active-revealed");
-    });
+function currentPageKey(){
+  const file=(location.pathname.split('/').pop()||'admin-portal-shell.html').toLowerCase();
+  return Object.entries(TARGETS).find(([,target])=>target.toLowerCase()===file)?.[0] || document.body.dataset.page || 'overview';
 }
 
-    // --- STAGE E: ATTACH ATOMIC INTERCEPTORS FOR GEOMETRIC DISPLACEMENTS ---
-    const executePortalCanvasLayoutShift = (collapseFlag) => {
-        if (collapseFlag) {
-            desktopSidebarNode.classList.add("sidebar-collapsed-hidden");
-            if (portalMain) portalMain.classList.add("main-stretched-full");
-            floatingWidgetNode.classList.add("widget-visible-active");
-        } else {
-            desktopSidebarNode.classList.remove("sidebar-collapsed-hidden");
-            if (portalMain) portalMain.classList.remove("main-stretched-full");
-            floatingWidgetNode.classList.remove("widget-visible-active");
-        }
+function activeGroupFor(page){
+  return GROUPS.find(group=>group.items.some(([key])=>key===page))?.key || 'operations';
+}
+
+function shellMarkup(page){
+  const activeGroup=activeGroupFor(page);
+  return `
+    <header class="admin-header">
+      <div class="admin-header__left">
+        <button class="admin-mobile-toggle" id="adminMobileToggle" type="button" aria-label="Open administration navigation" aria-expanded="false">☰</button>
+        <button class="admin-desktop-toggle" id="adminDesktopToggle" type="button" aria-label="Hide administration navigation" aria-pressed="false">☰</button>
+        <a class="admin-brand" href="${TARGETS.overview}">
+          <img src="images/logo.png" alt="filings4u" class="admin-logo">
+          <span class="admin-brand-divider" aria-hidden="true"></span>
+          <span class="admin-brand-label">Administration</span>
+        </a>
+      </div>
+
+      <div class="admin-account">
+        <button class="admin-profile" id="adminProfileButton" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="adminAccountMenu">
+          <span class="admin-avatar" id="adminAvatar">A</span>
+          <span class="admin-profile-copy">
+            <strong id="adminName">Administrator</strong>
+            <small id="adminEmail">Checking access…</small>
+          </span>
+          <span class="admin-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="admin-account-menu" id="adminAccountMenu" role="menu" hidden>
+          <div class="admin-menu-profile">
+            <span class="admin-menu-avatar" id="adminMenuAvatar">A</span>
+            <div><strong id="adminMenuName">Administrator</strong><small id="adminMenuRole">Management access</small></div>
+          </div>
+          <div class="admin-menu-links">
+            <a href="${TARGETS.staff}" data-admin-target="staff">Staff & Access</a>
+            <a href="${TARGETS.audit}" data-admin-target="audit">Audit & System Logs</a>
+            <a href="${TARGETS.settings}" data-admin-target="settings">Platform Settings</a>
+          </div>
+          <button id="signOut" class="admin-signout" type="button">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+
+    <aside class="admin-sidebar" id="adminSidebar" aria-label="Administration navigation">
+      <div class="admin-sidebar__intro">
+        <span class="admin-sidebar__eyebrow"><i></i> Management system</span>
+        <strong>Administration</strong>
+        <small>filings4u operations</small>
+      </div>
+
+      <nav class="admin-accordion">
+        ${GROUPS.map(group=>`
+          <section class="admin-nav-group ${group.key===activeGroup?'is-open':''}" data-admin-group="${group.key}">
+            <button class="admin-nav-toggle" type="button" aria-expanded="${group.key===activeGroup?'true':'false'}">
+              <span>${group.label}</span><span class="admin-nav-chevron">⌄</span>
+            </button>
+            <div class="admin-nav-panel" ${group.key===activeGroup?'':'hidden'}>
+              ${group.items.map(([key,label,icon])=>`
+                <a href="${TARGETS[key]}" data-admin-target="${key}" class="admin-nav-item ${key===page?'is-active':''}">
+                  <span class="admin-nav-icon">${icon}</span><span>${label}</span>
+                </a>`).join('')}
+            </div>
+          </section>`).join('')}
+      </nav>
+
+      <div class="admin-sidebar__footer">
+        <span>Secure admin workspace</span>
+        <small>filings4u, LLC</small>
+      </div>
+    </aside>`;
+}
+
+function closeSidebar(){
+  document.body.classList.remove('admin-nav-open');
+  const btn=document.getElementById('adminMobileToggle');
+  if(btn) btn.setAttribute('aria-expanded','false');
+}
+
+
+function applyDesktopSidebarState(collapsed){
+  document.body.classList.toggle('admin-sidebar-collapsed',collapsed);
+  const btn=document.getElementById('adminDesktopToggle');
+  if(btn){
+    btn.setAttribute('aria-pressed',String(collapsed));
+    btn.setAttribute('aria-label',collapsed?'Show administration navigation':'Hide administration navigation');
+    btn.title=collapsed?'Show navigation':'Hide navigation';
+  }
+}
+
+function wireDesktopSidebar(){
+  const button=document.getElementById('adminDesktopToggle');
+  if(!button) return;
+  let collapsed=false;
+  try{ collapsed=localStorage.getItem('filings4u-admin-sidebar')==='collapsed'; }catch(_){}
+  applyDesktopSidebarState(collapsed);
+  button.addEventListener('click',()=>{
+    collapsed=!document.body.classList.contains('admin-sidebar-collapsed');
+    applyDesktopSidebarState(collapsed);
+    try{ localStorage.setItem('filings4u-admin-sidebar',collapsed?'collapsed':'open'); }catch(_){}
+  });
+}
+
+function wireAccordion(){
+  document.querySelectorAll('.admin-nav-toggle').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const current=button.closest('.admin-nav-group');
+      const opening=!current.classList.contains('is-open');
+
+      document.querySelectorAll('.admin-nav-group').forEach(group=>{
+        const open=group===current && opening;
+        group.classList.toggle('is-open',open);
+        const toggle=group.querySelector('.admin-nav-toggle');
+        const panel=group.querySelector('.admin-nav-panel');
+        toggle?.setAttribute('aria-expanded',String(open));
+        if(panel) panel.hidden=!open;
+      });
+    });
+  });
+}
+
+function wireAccountMenu(){
+  const button=document.getElementById('adminProfileButton');
+  const menu=document.getElementById('adminAccountMenu');
+  if(!button||!menu) return;
+
+  function close(){
+    menu.hidden=true;
+    button.setAttribute('aria-expanded','false');
+  }
+  button.addEventListener('click',event=>{
+    event.stopPropagation();
+    const opening=menu.hidden;
+    menu.hidden=!opening;
+    button.setAttribute('aria-expanded',String(opening));
+  });
+  menu.addEventListener('click',event=>event.stopPropagation());
+  document.addEventListener('click',close);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')close()});
+}
+
+async function hydrateAdmin(){
+  try{
+    const db=window.filings4uSupabase;
+    if(!db) return;
+    const {data:userData}=await db.auth.getUser();
+    const user=userData?.user;
+    if(!user) return;
+    const {data:admin}=await db.from('admin_profiles')
+      .select('first_name,last_name,email_address,role')
+      .eq('id',user.id).maybeSingle();
+
+    const name=[admin?.first_name,admin?.last_name].filter(Boolean).join(' ') || 'Administrator';
+    const email=admin?.email_address || user.email || 'Administrator';
+    const role=(admin?.role || 'Management access').replace(/_/g,' ');
+    const initial=(admin?.first_name || user.email || 'A').charAt(0).toUpperCase();
+
+    const values={
+      adminName:name,adminEmail:email,adminAvatar:initial,
+      adminMenuName:name,adminMenuAvatar:initial,adminMenuRole:role
     };
-
-    // Attach controllers to your hide toggle button handles inside your layout
-    document.getElementById("f4uSidebarCollapseToggleHandle")?.addEventListener("click", () => {
-        executePortalCanvasLayoutShift(true);
+    Object.entries(values).forEach(([id,value])=>{
+      const el=document.getElementById(id);
+      if(el) el.textContent=value;
     });
+  }catch(error){
+    console.warn('[filings4u admin navigation]',error);
+  }
+}
 
-    floatingWidgetNode.addEventListener("click", () => {
-        executePortalCanvasLayoutShift(false);
+function init(){
+  const page=currentPageKey();
+  document.body.dataset.page=page;
+  document.body.classList.add('admin-shell-ready');
+
+  const mount=document.getElementById('adminNavigationMount');
+  if(mount) mount.innerHTML=shellMarkup(page);
+  else document.body.insertAdjacentHTML('afterbegin',shellMarkup(page));
+
+  wireAccordion();
+  wireDesktopSidebar();
+  wireAccountMenu();
+
+  document.getElementById('adminMobileToggle')?.addEventListener('click',()=>{
+    const open=document.body.classList.toggle('admin-nav-open');
+    document.getElementById('adminMobileToggle')?.setAttribute('aria-expanded',String(open));
+  });
+  document.getElementById('adminSidebarBackdrop')?.addEventListener('click',closeSidebar);
+  document.querySelectorAll('[data-admin-target]').forEach(link=>link.addEventListener('click',closeSidebar));
+
+  const signOut=document.getElementById('signOut');
+  if(signOut){
+    signOut.addEventListener('click',async()=>{
+      if(window.filings4uSignOut) return window.filings4uSignOut();
+      if(window.filings4uSupabase) await window.filings4uSupabase.auth.signOut({ scope: 'local' });
+      location.href='admin-login.html';
     });
+  }
 
-    // --- STAGE F: HYDRATE INTERACTIVE LINK STATES AND ACCORDIONS ---
-    const allPlatformLinks = document.querySelectorAll(".sidebar-accordion-menu a");
-    allPlatformLinks.forEach(linkItem => {
-        const pathTarget = linkItem.getAttribute("href") || linkItem.getAttribute("data-page");
-        if (pathTarget === activePagePath) {
-            linkItem.classList.add("active");
-            linkItem.style.cssText = "background: rgba(220, 38, 38, 0.08) !important; color: #0a1f44 !important; font-weight: 700 !important;";
-            
-            // Auto-expand the desktop panels matching the active window route location
-            const desktopPanel = linkItem.closest(".accordion-panel, .d-panel");
-            if (desktopPanel) {
-                desktopPanel.style.maxHeight = desktopPanel.scrollHeight + "px";
-                const matchingTrigger = desktopPanel.previousElementSibling;
-                if (matchingTrigger && matchingTrigger.classList.contains("accordion-trigger")) {
-                    matchingTrigger.classList.add("active");
-                    matchingTrigger.innerHTML = matchingTrigger.innerHTML.replace("▼", "▲");
-                }
-            }
+  hydrateAdmin();
+}
 
-            // Auto-expand the mobile overlay blocks matching the active location
-            const mobilePanel = linkItem.closest(".m-panel");
-            if (mobilePanel) {
-                mobilePanel.style.maxHeight = mobilePanel.scrollHeight + "px";
-                const matchingMTrigger = mobilePanel.previousElementSibling;
-                if (matchingMTrigger) {
-                    matchingMTrigger.classList.add("active");
-                    matchingMTrigger.innerHTML = matchingMTrigger.innerHTML.replace("▼", "▲");
-                }
-            }
-        }
-    });
-    // --- STAGE G: INTERACTIVE SIDEBAR UI CONTROLS ---
-    function toggleSidebarAccordion(buttonElement) {
-        if (!buttonElement) return;
-        buttonElement.classList.toggle('active');
-        const panel = buttonElement.nextElementSibling;
-        if (panel) {
-            if (panel.style.maxHeight && panel.style.maxHeight !== "0px") {
-                panel.style.maxHeight = "0px";
-                if (buttonElement.innerHTML.includes("▲")) {
-                    buttonElement.innerHTML = buttonElement.innerHTML.replace("▲", "▼");
-                }
-            } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-                if (buttonElement.innerHTML.includes("▼")) {
-                    buttonElement.innerHTML = buttonElement.innerHTML.replace("▼", "▲");
-                }
-            }
-        }
-    }
-    // Bind to the global window object so inline onclick attributes function perfectly
-    window.toggleSidebarAccordion = toggleSidebarAccordion;
+window.filings4uAdminTargets=TARGETS;
+window.filings4uAdminNavigation={currentPageKey,closeSidebar};
 
-    // --- STAGE H: HEADER SYSTEM DIGITAL TICK CLOCK ---
-    function runHeaderPortalClockTick() {
-        const clock = document.getElementById("portal-clock");
-        if (clock) clock.textContent = new Date().toLocaleString();
-    }
-    setInterval(runHeaderPortalClockTick, 1000);
-    runHeaderPortalClockTick();
+let navigationInitialized=false;
+function startNavigation(){
+  if(navigationInitialized) return;
+  navigationInitialized=true;
+  init();
+}
 
-    // --- STAGE I: UNIFIED HQ LOGOUT PROCESSOR ROUTINES ---
-    const clearPortalIdentitySessionCaches = () => {
-        console.log("[Admin Session] Purging identity metadata and storage token pools...");
-        
-        window.localStorage.clear();
-        window.sessionStorage.clear();
-        
-        const activeClientInstance = window.supabaseInstance || window.supabaseClient;
-        if (activeClientInstance && activeClientInstance.auth) {
-            activeClientInstance.auth.signOut().then(() => {
-                window.location.replace("admin-login.html");
-            }).catch(() => {
-                window.location.replace("admin-login.html");
-            });
-        } else {
-            window.location.replace("admin-login.html");
-        }
-    };
-
-    // Attach unified handlers to every explicit administration escape route button
-    document.getElementById("sidebarFallbackLogoutBtn")?.addEventListener("click", clearPortalIdentitySessionCaches);
-    document.getElementById("portalLogoutBtn")?.addEventListener("click", clearPortalIdentitySessionCaches);
-    document.getElementById("desktopPortalLogoutBtn")?.addEventListener("click", clearPortalIdentitySessionCaches);
-    document.getElementById("mobilePortalDrawerLogoutBtn")?.addEventListener("click", clearPortalIdentitySessionCaches);
-});
+/*
+ * Admin pages load navigation.js at the end of <body>, before their page-specific JS.
+ * The mount already exists at that point even if document.readyState is still "loading".
+ * Initialize immediately so #signOut, #adminEmail, and the shared shell exist before
+ * page-specific scripts bind to them.
+ */
+if(document.getElementById('adminNavigationMount')){
+  startNavigation();
+}else if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',startNavigation,{once:true});
+}else{
+  startNavigation();
+}
+})();

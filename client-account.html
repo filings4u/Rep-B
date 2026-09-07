@@ -1,752 +1,142 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="en">
 <head>
-<script src="assets/js/supabase-config.js"></script>
-<!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
-<script>
-  (function() {
-    "use strict";
-    // Define the exact project storage lookup path signature
-    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
-    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
-    
-    // Synchronously check local storage cache arrays before browser can paint any HTML elements
-    const rawSessionJson = localStorage.getItem(sessionTokenKey);
-    let isAuthenticated = false;
-    let userRole = null;
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10b981">
+<title>filings4u | My Account</title>
+<link href="images/fav.png" rel="icon" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/client-account.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/client-auth-guard.js"></script>
+</head>
+<body data-portal="client" data-page="account">
+<header class="client-header">
+  <a class="client-brand" href="client-dashboard.html">
+    <img src="images/logo.png" alt="filings4u" class="client-logo">
+    <span class="client-brand-divider" aria-hidden="true"></span>
+    <span class="client-portal-label">Client Portal</span>
+  </a>
 
-    if (rawSessionJson) {
-      try {
-        const sessionData = JSON.parse(rawSessionJson);
-        if (sessionData && sessionData.access_token) {
-          isAuthenticated = true;
-          // Extract nested metadata flags out of JWT payload context securely
-          if (sessionData.user && sessionData.user.user_metadata) {
-            userRole = sessionData.user.user_metadata.role;
-          }
-          if (sessionData.user && !userRole && sessionData.user.email) {
-            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
-              userRole = 'admin';
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Security parsing failure:", e);
-      }
-    }
+  <nav class="client-nav" aria-label="Client portal navigation">
+    <a href="client-dashboard.html" data-nav-target="dashboard">Dashboard</a>
+    <a href="client-orders.html" data-nav-target="orders">Orders</a>
+    <a href="client-filings.html" data-nav-target="filings">Filings</a>
+    <a href="client-entities.html" data-nav-target="entities">Entities</a>
+    <a href="client-documents.html" data-nav-target="documents">Documents</a>
+    <a href="client-design.html" data-nav-target="design">Design</a>
+    <a href="client-support.html" data-nav-target="support">Support</a>
+  </nav>
 
-    // Determine current view file track rules path parameters
-    const pagePathString = window.location.pathname.toLowerCase();
-    const isAdminViewPage = pagePathString.includes('/admin-');
+  <div class="client-account">
+    <button class="client-profile" id="clientProfileButton" type="button"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="clientAccountMenu">
+      <span class="avatar" id="clientAvatar">C</span>
+      <strong id="clientName">My Account</strong>
+      <span class="account-chevron" aria-hidden="true">⌄</span>
+    </button>
 
-    if (!isAuthenticated) {
-      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
-      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
-      
-      // Inject CSS rule to hide everything in case browser delays routing
-      document.documentElement.style.display = "none";
-      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
-    }
-
-    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
-    if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
-      window.location.replace("client-dashboard.html");
-      document.documentElement.style.display = "none";
-      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
-    }
-  })();
-</script>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-<meta content="yes" name="mobile-web-app-capable"/>
-<title>My Profile Settings | filings4u Portal</title>
-<link href="images/fav.png" rel="icon" type="image/png"/>
-<meta content="#0a1f44" name="theme-color"/>
-<meta content="#10b981" name="apple-mobile-web-app-status-bar-style"/>
-<meta content="#10b981" name="msapplication-navbutton-color"/>
-<style>
-    :root {
-      --bg-light: #f4f6f9;
-      --white: #ffffff;
-      --border-color: #e2e8f0;
-      --text-dark: #0f172a;
-      --text-muted: #475569;
-      --emerald: #10b981;
-      --sidebar-width: 260px;
-    }
-    body, html {
-      margin: 0 !important;
-      padding: 0 !important;
-      min-height: 100vh !important;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-      background-color: var(--bg-light) !important;
-      color: var(--text-dark) !important;
-      overflow-x: hidden !important;
-      overflow-y: auto !important;
-    }
-    .dashboard-wrapper {
-      display: flex !important;
-      min-height: 100vh !important;
-      width: 100% !important;
-      position: relative !important;
-    }
-    /* SIDEBAR SYSTEM ACCORDION SHEET */
-    .portal-sidebar {
-      width: var(--sidebar-width) !important;
-      background: var(--white) !important;
-      border-right: 1px solid var(--border-color) !important;
-      display: flex !important;
-      flex-direction: column !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      height: 100vh !important;
-      z-index: 1000 !important;
-      box-sizing: border-box !important;
-    }
-    .sidebar-brand-block {
-      padding: 24px 20px !important;
-      border-bottom: 1px solid #f1f5f9 !important;
-      text-align: center !important;
-      box-sizing: border-box !important;
-    }
-    .admin-badge {
-      display: inline-block !important;
-      background: rgba(16, 185, 129, 0.08) !important;
-      color: #10b981 !important;
-      font-size: 0.65rem !important;
-      font-weight: 800 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 1px !important;
-      padding: 4px 10px !important;
-      border-radius: 12px !important;
-      margin-top: 6px !important;
-      border: 1px solid rgba(16, 185, 129, 0.15) !important;
-    }
-    .sidebar-accordion-menu {
-      flex: 1 !important;
-      overflow-y: auto !important;
-      padding: 15px 12px !important;
-      box-sizing: border-box !important;
-    }
-    .accordion-trigger {
-      width: 100% !important;
-      background: #f8fafc !important;
-      border: 1px solid var(--border-color) !important;
-      padding: 10px 14px !important;
-      font-size: 0.72rem !important;
-      font-weight: 700 !important;
-      color: var(--text-muted) !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.5px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      cursor: pointer !important;
-      border-radius: 6px !important;
-      margin-top: 10px !important;
-      outline: none !important;
-      transition: all 0.2s !important;
-      box-sizing: border-box !important;
-    }
-    .accordion-panel {
-      max-height: 0;
-      overflow: hidden !important;
-      padding-left: 4px !important;
-      box-sizing: border-box !important;
-      transition: max-height 0.25s ease-out !important;
-    }
-    .nav-item {
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      padding: 8px 12px !important;
-      color: var(--text-muted) !important;
-      text-decoration: none !important;
-      font-size: 0.8rem !important;
-      font-weight: 600 !important;
-      border-radius: 6px !important;
-      margin-top: 2px !important;
-      white-space: nowrap !important;
-      transition: all 0.15s !important;
-      box-sizing: border-box !important;
-    }
-    .nav-item:hover {
-      background: rgba(10, 31, 68, 0.02) !important;
-      color: var(--emerald) !important;
-    }
-    .sidebar-footer-lock {
-      padding: 16px !important;
-      border-top: 1px solid var(--border-color) !important;
-      background: #f8fafc !important;
-      box-sizing: border-box !important;
-    }
-    .logout-btn {
-      width: 100% !important;
-      background: var(--text-dark) !important;
-      color: white !important;
-      border: none !important;
-      padding: 10px !important;
-      border-radius: 6px !important;
-      font-weight: 700 !important;
-      font-size: 0.8rem !important;
-      cursor: pointer !important;
-    }
-    /* MAIN PLATFORM WORKSPACE GEOMETRY */
-    .portal-main {
-      flex: 1 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      margin-left: var(--sidebar-width) !important;
-      width: calc(100% - var(--sidebar-width)) !important;
-      min-height: 100vh !important;
-      box-sizing: border-box !important;
-    }
-    .portal-header {
-      background: var(--white) !important;
-      padding: 20px 40px !important;
-      border-bottom: 1px solid var(--border-color) !important;
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      position: sticky !important;
-      top: 0 !important;
-      z-index: 90 !important;
-      box-sizing: border-box !important;
-      width: 100% !important;
-    }
-    .welcome-text h1 {
-      margin: 0 !important;
-      font-size: 1.5rem !important;
-      font-weight: 800 !important;
-      color: var(--text-dark) !important;
-    }
-    .welcome-text p {
-      margin: 4px 0 0 0 !important;
-      font-size: 0.82rem !important;
-      color: var(--text-muted) !important;
-    }
-    .content-container {
-      padding: 40px !important;
-      box-sizing: border-box !important;
-      width: 100% !important;
-    }
-    .console-card {
-      background: var(--white) !important;
-      border-radius: 10px !important;
-      border: 1px solid var(--border-color) !important;
-      padding: 32px !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
-      box-sizing: border-box !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      margin: 0 !important;
-    }
-    .console-card h2 {
-      font-size: 1.2rem !important;
-      font-weight: 800 !important;
-      margin: 0 0 24px 0 !important;
-      color: var(--text-dark) !important;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
-    }
-    /* MODULAR INTAKE FORM LAYOUT RULES */
-    .form-group {
-      text-align: left;
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-    }
-    .form-group label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-      color: var(--text-dark);
-    }
-    .form-group input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.88rem;
-      color: var(--text-dark);
-      background: #f8fafc;
-      outline: none;
-      box-sizing: border-box;
-      font-family: inherit;
-    }
-    .form-group input:focus {
-      background: var(--white);
-      border-color: var(--emerald);
-    }
-    .form-group input:disabled {
-      background: #f1f5f9;
-      color: #94a3b8;
-      cursor: not-allowed;
-    }
-    .action-btn {
-      width: 100%;
-      background: var(--text-dark);
-      color: var(--white);
-      border: none;
-      padding: 14px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      box-sizing: border-box;
-    }
-    .action-btn:hover { background: #1e293b; }
-    #account-form-status { display: none; font-size: 0.85rem; font-weight: 700; margin-bottom: 20px; padding: 12px; border-radius: 6px; text-align: left; }
- 
-        /* 🔄 SECURE STRIPE GRAPHIC SPINNER ELEMENT KEYFRAMES */
-    .stripe-loading-spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid #e2e8f0;
-      border-top: 2px solid var(--primary, #0a1f44);
-      border-radius: 50%;
-      display: inline-block;
-      box-sizing: border-box;
-      animation: stripeSpinLoader 0.75s linear infinite;
-      margin-left: 4px;
-      vertical-align: middle;
-    }
-
-    @keyframes stripeSpinLoader {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-
- 
- </style>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
-<body class="f4u-client-page">
-<div class="dashboard-wrapper">
-<main class="portal-main">
-<header class="portal-header">
-<div class="welcome-text">
-<h1>My Profile Settings</h1>
-<p>Update your portal contact metrics, account preferences, and user coordinates</p>
-</div>
-<div class="header-actions-wrapper">
-<!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
-<div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
-<a aria-label="View Account Notifications Feed" class="nav-bell-wrapper" href="#notifications-anchor" id="dashboardBellTriggerBtn" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
-<span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
-<div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-</a>
-</div>
-<!-- PORTAL CLOCK SYSTEM CONTAINER -->
-<div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700;">
-          ⏱️ <span id="portal-clock">Syncing...</span>
-</div>
-<div>
-<input class="search-input" id="portalGlobalSearchField" placeholder="Search your filings, entities..." type="text"/>
-</div>
-</div>
+    <div class="client-account-menu" id="clientAccountMenu" role="menu" hidden>
+      <div class="account-menu-header">
+        <span class="account-menu-avatar" id="clientMenuAvatar">C</span>
+        <div>
+          <strong id="clientMenuName">My Account</strong>
+          <small id="clientMenuCompany">filings4u client</small>
+        </div>
+      </div>
+      <div class="account-menu-links">
+        <a href="client-account.html" data-account-target="account" role="menuitem">
+          <span>My Account</span><small>Profile & contact details</small>
+        </a>
+        <a href="client-notifications.html" data-account-target="notifications" role="menuitem">
+          <span>Notifications</span><small>Portal alerts & updates</small>
+        </a>
+        <a href="client-support.html" data-account-target="support" role="menuitem">
+          <span>Support</span><small>Help with an order or filing</small>
+        </a>
+      </div>
+      <button id="clientSignOut" class="account-menu-signout" type="button" role="menuitem">Sign out</button>
+    </div>
+  </div>
 </header>
-<!-- 📦 TOP LAYER: ACCOUNT MANAGEMENT CONTROLLER MATRIX -->
-<div class="content-container" style="display: flex; flex-direction: column; gap: 32px; width: 100%; box-sizing: border-box; padding: 24px;">
-<div style="display: grid; grid-template-columns: 1fr; gap: 32px; width: 100%;">
-<!-- 👤 UNIFIED ACCOUNT FORM MATRIX CONTROLLER wrapper -->
-<form id="unifiedClientAccountForm" novalidate="" style="display: flex; flex-direction: column; gap: 32px; width: 100%;">
-<!-- 📦 SEGMENT A: ACCOUNT PROFILE & AVATAR CANVAS -->
-<div class="console-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-sizing: border-box;">
-<div style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
-<h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Personal Profile Identity</h2>
-</div>
-<!-- Avatar Upload Center Matrix Workspace -->
-<div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-<div style="position: relative; width: 80px; height: 80px;">
-<img alt="User Profile Image Avatar" id="clientAvatarPreview" src="images/fav.png" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #10b981;"/>
-<label for="avatarFileTrigger" style="position: absolute; bottom: 0; right: 0; background: #0a1f44; color: #ffffff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">📷</label>
-<input accept="image/*" id="avatarFileTrigger" style="display: none;" type="file"/>
-</div>
-<div>
-<h4 style="margin: 0 0 4px 0; font-size: 0.9rem; font-weight: 700; color: #0f172a;">Profile Photograph Identity</h4>
-<p style="margin: 0; font-size: 0.75rem; color: #64748b;">Supports compressed JPG, PNG formats. Max threshold: 5MB.</p>
-<span id="avatarUploadStatusText" style="font-size: 0.72rem; font-weight: 700; color: #10b981; display: block; margin-top: 4px;"></span>
-</div>
-</div>
-<div style="display: flex; flex-direction: column; gap: 16px;">
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:6px;">First Name</label>
-<input class="form-input-element" id="accountFirstName" placeholder="e.g., Andre" required="" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px;" type="text"/>
-</div>
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:6px;">Last Name</label>
-<input class="form-input-element" id="accountLastName" placeholder="e.g., Erving" required="" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px;" type="text"/>
-</div>
-</div>
-<!-- LOCKED EMAIL ADDRESS CONTAINER ROW WITH CLICKABLE COMPLIANCE TOOLTIP -->
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-          Registered Account Email
-          <span class="secure-tooltip-anchor" onclick="toggleAccountTooltip(event)" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center; background:#64748b; color:#ffffff; font-size:10px; width:14px; height:14px; border-radius:50%; font-weight:bold; position:relative;">
-            ?
-            <span id="emailLockTooltipPopup" style="display:none; position:absolute; bottom:22px; left:50%; transform:translateX(-50%); width:240px; background:#0a1f44; color:#ffffff; padding:10px 12px; border-radius:6px; font-size:11px; line-height:1.4; font-family:sans-serif; text-transform:none; font-weight:500; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:1001; box-sizing:border-box;">
-              Contact Client Support to change your email address. You may <a href="client-chat.html" style="color:#10b981; font-weight:700; text-decoration:underline;">open a ticket</a> to request changes.
-            </span>
-</span>
-</label>
-<input disabled="" id="accountEmailAddressField" placeholder="loading account email..." readonly="" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; background:#f1f5f9; color:#64748b; cursor:not-allowed; font-weight:600;" type="email"/>
-</div>
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:6px;">Contact Phone Number</label>
-<input class="form-input-element" id="accountPhoneNumber" placeholder="+1 (555) 000-0000" required="" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px;" type="tel"/>
-</div>
-</div>
-</div>
-<!-- 📍 SEGMENT B: CORPORATE POSTAL COORDINATES -->
-<div class="console-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-sizing: border-box;">
-<div style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
-<h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Primary Billing &amp; Street Address</h2>
-</div>
-<div style="display: flex; flex-direction: column; gap: 16px;">
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:6px;">Street Address</label>
-<input class="form-input-element" id="accountStreetAddress" placeholder="e.g., 123 Business Way Suite 100" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px;" type="text"/>
-</div>
-<div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px;">
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:6px;">City</label>
-<input class="form-input-element" id="accountCity" placeholder="e.g., Chicago" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px;" type="text"/>
-</div>
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:6px;">State</label>
-<input class="form-input-element" id="accountState" placeholder="e.g., IL" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px;" type="text"/>
-</div>
-<div class="form-group">
-<label class="field-label-text" style="font-weight:700; font-size:0.8rem; color:#475569; display:block; margin-bottom:6px;">Zip Code</label>
-<input class="form-input-element" id="accountZipCode" placeholder="e.g., 60601" style="width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px;" type="text"/>
-</div>
-</div>
-<!-- 🟢 FIXED: Combined single profile update submission action button -->
-<button class="action-btn-primary" id="saveUnifiedProfileBtn" style="background:#0a1f44; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:700; cursor:pointer; margin-top: 8px; width: 100%;" type="submit">Update My Profile ➔</button>
-</div>
-</div>
-</form>
-<!-- 💳 SEGMENT C: PAYMENT METHOD SUBSYSTEM -->
-<div class="console-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-sizing: border-box;">
-<div style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
-<h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Active Payment Profiles</h2>
-</div>
-<div style="display: flex; flex-direction: column; gap: 16px;">
-<div id="paymentMethodsGrid" style="display: flex; flex-direction: column; gap: 12px;">
-<!-- Active Card Template -->
-<div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
-<div style="display: flex; align-items: center; gap: 12px;">
-<span style="font-size: 1.5rem;">💳</span>
-<div>
-<strong id="cardDetailsDisplay" style="font-size: 0.875rem; color: #0f172a;">Visa ending in 4242</strong>
-<p id="cardExpiryDisplay" style="margin: 2px 0 0 0; font-size: 0.75rem; color: #64748b;">Expires: 12/2029</p>
-</div>
-</div>
-<span style="background: rgba(16, 185, 129, 0.08); color: #10b981; font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.15);">DEFAULT</span>
-</div>
-</div>
-<!-- Placeholder Form for Secure Card Configuration Links -->
-<div style="padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #fff; text-align: center;">
-<p style="margin: 0 0 8px 0; font-size: 0.78rem; color: #64748b;">Billing infrastructure runs via a secure Stripe checkout tunnel context.</p>
-<button id="updatePaymentTunnelTrigger" style="background: #0a1f44; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">Link New Payment Card ➔</button>
-</div>
-</div>
-</div>
-</div>
-<div id="accountFormGlobalStatus" style="display: none; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700;"></div>
+
+<main class="client-main" id="app" hidden>
+<section class="page-heading">
+  <span class="section-kicker">Account settings</span>
+  <h1>My account</h1>
+  <p>Manage your contact information, company profile, mailing address, and account security.</p>
+</section>
+
+<div class="account-layout">
+  <aside class="account-sidebar">
+    <div class="profile-summary">
+      <div class="profile-avatar" id="largeAvatar">C</div>
+      <h2 id="profileName">My Account</h2>
+      <p id="profileCompany">filings4u client</p>
+      <span class="account-status"><i></i> Active client</span>
+    </div>
+    <nav class="account-tabs" aria-label="Account sections">
+      <button class="is-active" data-tab="profile" type="button">Profile information</button>
+      <button data-tab="address" type="button">Mailing address</button>
+      <button data-tab="security" type="button">Account security</button>
+    </nav>
+  </aside>
+
+  <section class="account-content">
+    <div class="account-panel is-active" data-panel="profile">
+      <div class="panel-heading"><div><span class="section-kicker">Personal details</span><h2>Profile information</h2><p>Keep your contact information current for filings and service updates.</p></div></div>
+      <form id="profileForm">
+        <div class="form-grid">
+          <label>First name<input id="firstName" autocomplete="given-name"></label>
+          <label>Last name<input id="lastName" autocomplete="family-name"></label>
+          <label>Email address<input id="email" type="email" disabled><small>Your login email cannot be changed from this page.</small></label>
+          <label>Phone number<input id="phone" type="tel" autocomplete="tel"></label>
+          <label class="full">Company name<input id="company" autocomplete="organization"></label>
+        </div>
+        <div class="form-actions"><span id="profileSaved" class="saved-message"></span><button class="button button--primary" id="saveProfile" type="submit">Save profile</button></div>
+      </form>
+    </div>
+
+    <div class="account-panel" data-panel="address">
+      <div class="panel-heading"><div><span class="section-kicker">Contact address</span><h2>Mailing address</h2><p>This address is used for account and service correspondence where applicable.</p></div></div>
+      <form id="addressForm">
+        <div class="form-grid">
+          <label class="full">Street address<input id="street" autocomplete="street-address"></label>
+          <label>City<input id="city" autocomplete="address-level2"></label>
+          <label>State<input id="state" maxlength="30" autocomplete="address-level1"></label>
+          <label>ZIP code<input id="zip" autocomplete="postal-code"></label>
+        </div>
+        <div class="form-actions"><span id="addressSaved" class="saved-message"></span><button class="button button--primary" id="saveAddress" type="submit">Save address</button></div>
+      </form>
+    </div>
+
+    <div class="account-panel" data-panel="security">
+      <div class="panel-heading"><div><span class="section-kicker">Login & security</span><h2>Account security</h2><p>Review your login email and update your password securely.</p></div></div>
+      <div class="security-card">
+        <div><span>Login email</span><strong id="securityEmail">—</strong><small>Your Supabase Auth account email.</small></div>
+      </div>
+      <form id="passwordForm" class="password-form">
+        <h3>Change password</h3>
+        <div class="form-grid">
+          <label>Current password<input id="currentPassword" type="password" autocomplete="current-password" required></label>
+          <label>New password<input id="newPassword" type="password" minlength="8" autocomplete="new-password" required></label>
+          <label>Confirm new password<input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" required></label>
+        </div>
+        <p class="security-note">Use at least 8 characters. Your current client session remains active after a successful password update.</p>
+        <div class="form-actions"><span id="passwordSaved" class="saved-message"></span><button class="button button--primary" id="savePassword" type="submit">Update password</button></div>
+      </form>
+    </div>
+  </section>
 </div>
 </main>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/client-master-ledger.js"></script>
+
+<div id="gate" class="gate">Loading your account…</div>
+<div id="toast" class="toast" hidden></div>
 <script src="assets/js/client-navigation.js"></script>
-<script src="assets/js/client-footer.js"></script>
-<script>
-/**
- * filings4u Platform Architecture
- * Module: client-account-controller.js (Unified Profile Management - CORRECTED)
- */
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
-
-  const formStatus = document.getElementById("accountFormGlobalStatus");
-  const avatarPreview = document.getElementById("clientAvatarPreview");
-  const avatarInput = document.getElementById("avatarFileTrigger");
-  const avatarStatusText = document.getElementById("avatarUploadStatusText");
-  const emailField = document.getElementById("accountEmailAddressField");
-  const unifiedForm = document.getElementById("unifiedClientAccountForm");
-
-  // Input Fields Mappings
-  const fieldFn = document.getElementById("accountFirstName");
-  const fieldLn = document.getElementById("accountLastName");
-  const fieldPhone = document.getElementById("accountPhoneNumber");
-  const fieldStreet = document.getElementById("accountStreetAddress");
-  const fieldCity = document.getElementById("accountCity");
-  const fieldState = document.getElementById("accountState");
-  const fieldZip = document.getElementById("accountZipCode");
-
-  // Global Registry Memory Caches for Stripe Card Modification Blocks
-  window.cachedStripeCustomerId = null;
-
-  // Establish Supabase Connection Engine
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client && typeof supabase !== 'undefined') {
-    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
-  }
-  if (!client) {
-    console.error("✕ Core initialization failure: Supabase connection engine unassigned.");
-    return;
-  }
-
-  // 1. RESOLVE USER AUTH SESSION PROFILE
-  const { data: { session }, error: sessionError } = await client.auth.getSession();
-  if (sessionError || !session || !session.user) {
-    window.location.href = "portal-login.html";
-    return;
-  }
-
-  const userUid = session.user.id;
-  const authUserEmail = String(session.user.email).trim().toLowerCase();
-
-  // 2. MULTI-LAYER EMAIL RESOLUTION AND PROFILE INGESTION GRID
-  async function loadClientAccountMetadata() {
-    try {
-      console.log(`📡 [Account Matrix] Querying data nodes for user session: ${authUserEmail}`);
-
-      // Step A: Load base parameters straight from your profiles index row table 
-      // 🟢 FIXED: Requesting stripe_customer_id explicitly from client_profiles schema
-      const { data: profile, error: queryError } = await client
-        .from("client_profiles")
-        .select("first_name, last_name, phone_number, street_address, city, state, zip_code, avatar_url, email_address, stripe_customer_id")
-        .eq("id", userUid)
-        .maybeSingle();
-
-      if (queryError) throw queryError;
-
-      let resolvedCustomerEmail = authUserEmail;
-
-      if (profile) {
-        if (fieldFn) fieldFn.value = profile.first_name || "";
-        if (fieldLn) fieldLn.value = profile.last_name || "";
-        if (fieldPhone) fieldPhone.value = profile.phone_number || "";
-        if (fieldStreet) fieldStreet.value = profile.street_address || "";
-        if (fieldCity) fieldCity.value = profile.city || "";
-        if (fieldState) fieldState.value = profile.state || "";
-        if (fieldZip) fieldZip.value = profile.zip_code || "";
-        if (profile.avatar_url && avatarPreview) avatarPreview.src = profile.avatar_url;
-        if (profile.email_address) resolvedCustomerEmail = profile.email_address;
-        
-        // 🟢 FIXED: Caching the verified customer token string safely for upcoming billing management cards
-        if (profile.stripe_customer_id) {
-          window.cachedStripeCustomerId = profile.stripe_customer_id.trim();
-        }
-      }
-
-      // Step B: Fallback pipeline to extract from order tracking layers if profile value is missing
-      if (!profile || !profile.email_address) {
-        // 🟢 FIXED: Adjusted column matches to search the table space using email strings instead of incompatible auth user UUIDs
-        const { data: dashOrder } = await client
-          .from("dashboard_orders")
-          .select("email_address")
-          .eq("email_address", authUserEmail)
-          .limit(1)
-          .maybeSingle();
-
-        if (dashOrder && dashOrder.email_address) {
-          resolvedCustomerEmail = dashOrder.email_address;
-        } else {
-          const { data: coreOrder } = await client
-            .from("orders")
-            .select("email_address")
-            .eq("email_address", authUserEmail)
-            .limit(1)
-            .maybeSingle();
-
-          if (coreOrder && coreOrder.email_address) {
-            resolvedCustomerEmail = coreOrder.email_address;
-          }
-        }
-      }
-
-      // Map resolved email directly to the locked interface element view
-      if (emailField) {
-        emailField.value = String(resolvedCustomerEmail).trim().toLowerCase();
-      }
-
-    } catch (err) {
-      console.error("✕ Failed to compile customer ledger parameters:", err);
-      showAccountFeedback("✕ System Connection Refused: Unable to load profile parameters.", true);
-    }
-  }
-
-  // 3. SECURE INTERACTIVE AVATAR UPLOAD HANDLER
-  if (avatarInput) {
-    avatarInput.addEventListener("change", async () => {
-      if (!avatarInput.files || avatarInput.files.length === 0) return;
-      const file = avatarInput.files[0];
-      if (avatarStatusText) avatarStatusText.textContent = "Processing upload...";
-
-      try {
-        const fileExt = file.name.split('.').pop();
-        const storageFilePath = `avatars/${userUid}_${Date.now()}.${fileExt}`;
-
-        const { error: uploadError } = await client.storage
-          .from("client_documents_vault")
-          .upload(storageFilePath, file, { cacheControl: "3600", upsert: true });
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = client.storage
-          .from("client_documents_vault")
-          .getPublicUrl(storageFilePath);
-
-        const { error: updateError } = await client
-          .from("client_profiles")
-          .update({ avatar_url: publicUrl })
-          .eq("id", userUid);
-
-        if (updateError) throw updateError;
-        if (avatarPreview) avatarPreview.src = publicUrl;
-        if (avatarStatusText) avatarStatusText.textContent = "✓ Avatar synchronized.";
-
-      } catch (fault) {
-        console.error("✕ Avatar sync transaction aborted:", fault);
-        if (avatarStatusText) avatarStatusText.textContent = "✕ Upload failed.";
-      }
-    });
-  }
-
-  // 4. UNIFIED SINGLE SUBMISSION PROFILE PROCESSING INTERCEPTOR
-  if (unifiedForm) {
-    unifiedForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      showNotification("Synchronizing complete profile records matrix...", false);
-
-      try {
-        const { error: updateError } = await client
-          .from("client_profiles")
-          .update({
-            first_name: fieldFn.value.trim(),
-            last_name: fieldLn.value.trim(),
-            phone_number: fieldPhone.value.trim(),
-            street_address: fieldStreet.value.trim(),
-            city: fieldCity.value.trim(),
-            state: fieldState.value.trim(),
-            zip_code: fieldZip.value.trim(),
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", userUid);
-
-        if (updateError) throw updateError;
-        showNotification("✓ Success! Profile matrix and coordinates registered securely.", false);
-
-      } catch (err) {
-        showNotification(`✕ Synchronization failure: ${err.message}`, true);
-      }
-    });
-  }
-
-  // 5. SECURE CSS TOOLTIP INTERACTION EXECUTOR DROPDOWN ROADS
-  window.toggleAccountTooltip = function(event) {
-    event.stopPropagation();
-    const popup = document.getElementById("emailLockTooltipPopup");
-    if (!popup) return;
-    const isVisible = popup.style.display === "block";
-    popup.style.display = isVisible ? "none" : "block";
-  };
-
-  document.addEventListener("click", () => {
-    const popup = document.getElementById("emailLockTooltipPopup");
-    if (popup) popup.style.display = "none";
-  });
-
-  function showNotification(text, isError) {
-    if (!formStatus) return;
-    formStatus.textContent = text;
-    formStatus.style.display = "block";
-    formStatus.style.background = isError ? "#fee2e2" : "#ecfdf5";
-    formStatus.style.color = isError ? "#991b1b" : "#047857";
-    formStatus.style.border = `1px solid ${isError ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)"}`;
-    setTimeout(() => {
-      formStatus.style.display = "none";
-    }, 5000);
-  }
-
-  // 🟢 6. STRIPE SECURE SELF-SERVICE WALLET MANAGEMENT PORTAL LINK
-  const checkoutTunnelTrigger = document.getElementById("updatePaymentTunnelTrigger");
-  if (checkoutTunnelTrigger) {
-    checkoutTunnelTrigger.addEventListener("click", async (e) => {
-      e.preventDefault();
-      
-      const originalText = checkoutTunnelTrigger.textContent;
-      checkoutTunnelTrigger.disabled = true;
-      checkoutTunnelTrigger.textContent = "Securing Billing Session Token...";
-
-      try {
-        console.log("📡 [Payment Engine] Dispatching token generation request to customer billing portal edge relay...");
-        
-        // 🟢 FIXED ENDPOINT PATH: Pointing explicitly to your serverless sub-path instead of the root url
-        const edgeRelayRoute = "https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-billing-portal";
-        const projectSessionToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-
-        const networkResponse = await fetch(edgeRelayRoute, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": projectSessionToken
-          },
-          body: JSON.stringify({
-            account_user_id: userUid,
-            account_user_email: authUserEmail,
-            stripe_customer_id: window.cachedStripeCustomerId || null,
-            return_redirect_url: window.location.href
-          })
-        });
-
-        if (!networkResponse.ok) {
-          throw new Error(`Stripe gateway handshake rejected with status code: ${networkResponse.status}`);
-        }
-
-        const responsePayload = await networkResponse.json();
-        
-        if (responsePayload && responsePayload.portal_session_url) {
-          console.log("✓ [Billing Tunnel Secured] Handoff confirmed. Executing external redirection router...");
-          window.location.href = responsePayload.portal_session_url;
-        } else {
-          throw new Error("Invalid response structural signature returned from the payment router edge node.");
-        }
-
-      } catch (fault) {
-        console.error("✕ Payment tunnel connection collapsed:", fault);
-        alert(`Billing Connection Failure: ${fault.message || "Unable to safely map financial endpoints right now."}`);
-      } finally {
-        if (checkoutTunnelTrigger) {
-          checkoutTunnelTrigger.disabled = false;
-          checkoutTunnelTrigger.textContent = originalText;
-        }
-      }
-    });
-  }
-
-  // Run initialization profile loader routines
-  await loadClientAccountMetadata();
-});
-
-function runPortalClock() {
-  const el = document.getElementById("portal-clock");
-  if (el) el.textContent = new Date().toLocaleTimeString();
-}
-setInterval(runPortalClock, 1000);
-runPortalClock();
-</script>
-<script src="assets/js/filings4u-portal-shell.js"></script></body>
+<script src="assets/js/client-account.js"></script>
+</body>
 </html>

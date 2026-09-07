@@ -1,519 +1,134 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10b981">
+<title>filings4u | Client Dashboard</title>
+<link href="images/fav.png" rel="icon" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/client-dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase-config.js"></script>
-<!-- 🔒 CRITICAL SECURITY ENFORCEMENT: SYNCHRONOUS RENDER-BLOCK SHIELD -->
-<script>
-  (function() {
-    "use strict";
-    // Define the exact project storage lookup path signature
-    const projectUrlHash = "lrbimrlbskjweynxlgas"; 
-    const sessionTokenKey = `sb-${projectUrlHash}-auth-token`;
-    
-    // Synchronously check local storage cache arrays before browser can paint any HTML elements
-    const rawSessionJson = localStorage.getItem(sessionTokenKey);
-    let isAuthenticated = false;
-    let userRole = null;
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/client-auth-guard.js"></script>
+</head>
+<body data-portal="client" data-page="dashboard">
 
-    if (rawSessionJson) {
-      try {
-        const sessionData = JSON.parse(rawSessionJson);
-        if (sessionData && sessionData.access_token) {
-          isAuthenticated = true;
-          // Extract nested metadata flags out of JWT payload context securely
-          if (sessionData.user && sessionData.user.user_metadata) {
-            userRole = sessionData.user.user_metadata.role;
-          }
-          if (sessionData.user && !userRole && sessionData.user.email) {
-            if (sessionData.user.email.toLowerCase().endsWith('@filings4u.com')) {
-              userRole = 'admin';
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Security parsing failure:", e);
-      }
-    }
+<header class="client-header">
+  <a class="client-brand" href="client-dashboard.html">
+    <img src="images/logo.png" alt="filings4u" class="client-logo">
+    <span class="client-brand-divider" aria-hidden="true"></span>
+    <span class="client-portal-label">Client Portal</span>
+  </a>
 
-    // Determine current view file track rules path parameters
-    const pagePathString = window.location.pathname.toLowerCase();
-    const isAdminViewPage = pagePathString.includes('/admin-');
+  <nav class="client-nav" aria-label="Client portal navigation">
+    <a href="client-dashboard.html" data-nav-target="dashboard">Dashboard</a>
+    <a href="client-orders.html" data-nav-target="orders">Orders</a>
+    <a href="client-filings.html" data-nav-target="filings">Filings</a>
+    <a href="client-entities.html" data-nav-target="entities">Entities</a>
+    <a href="client-documents.html" data-nav-target="documents">Documents</a>
+    <a href="client-design.html" data-nav-target="design">Design</a>
+    <a href="client-support.html" data-nav-target="support">Support</a>
+  </nav>
 
-    if (!isAuthenticated) {
-      // 🚨 CRITICAL REDIRECT: Halt thread and eject out-of-bounds requests immediately
-      alert("🔒 Access Denied: Authentication required. Redirecting to secure login desk portal...");
-      window.location.replace(isAdminViewPage ? "admin-login.html" : "portal-login.html");
-      
-      // Inject CSS rule to hide everything in case browser delays routing
-      document.documentElement.style.display = "none";
-      throw new Error("🔒 Execution Halted: Unauthorized navigation attempt terminated.");
-    }
+  <div class="client-account">
+    <button class="client-profile" id="clientProfileButton" type="button"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="clientAccountMenu">
+      <span class="avatar" id="clientAvatar">C</span>
+      <strong id="clientName">My Account</strong>
+      <span class="account-chevron" aria-hidden="true">⌄</span>
+    </button>
 
-    // Role Enforcement Shield: Blocks non-admins from hitting administrative paths
-    if (isAdminViewPage && userRole !== 'admin') {
-      alert("🛡️ Security Exception: Restricted Administrative Territory. Access Refused.");
-      window.location.replace("client-dashboard.html");
-      document.documentElement.style.display = "none";
-      throw new Error("🛡️ Execution Halted: Insufficient role permissions clearance.");
-    }
-  })();
-</script>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-<meta content="yes" name="mobile-web-app-capable"/>
-<title>Customer Portal Dashboard | filings4u</title>
-<meta content="#0a1f44" name="theme-color"/>
-<meta content="#10b981" name="apple-mobile-web-app-status-bar-style"/>
-<meta content="#10b981" name="msapplication-navbutton-color"/>
-<link href="images/fav.png" rel="icon" type="image/png"/>
-<style>
-    /* ========================================================================== 🎨 ZERO-CONFLICT SELF-CONTAINED GLOBAL PORTAL MATRIX ========================================================================== */
-    :root { --bg-light: #f4f6f9; --white: #ffffff; --border-color: #e2e8f0; --text-dark: #0a1f44; --text-muted: #475569; --emerald: #10b981; --staff-red: #c15254; --sidebar-width: 260px; }
-    body, html { margin: 0 !important; padding: 0 !important; min-height: 100vh !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; background-color: var(--bg-light) !important; color: var(--text-dark) !important; overflow-x: hidden !important; overflow-y: auto !important; }
-    .dashboard-wrapper { display: flex !important; min-height: 100vh !important; width: 100% !important; position: relative !important; }
-    
-    /* 📁 LOCKED STATIONARY SIDEBAR PANEL */
-    .portal-sidebar { width: var(--sidebar-width) !important; background: var(--white) !important; border-right: 1px solid var(--border-color) !important; display: flex !important; flex-direction: column !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; z-index: 1000 !important; box-sizing: border-box !important; }
-    .sidebar-brand-block { padding: 24px 20px !important; border-bottom: 1px solid #f1f5f9 !important; text-align: center !important; box-sizing: border-box !important; }
-    .admin-badge { display: inline-block !important; background: rgba(16, 185, 129, 0.08) !important; color: #10b981 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 1px !important; padding: 4px 10px !important; border-radius: 12px !important; margin-top: 6px !important; border: 1px solid rgba(16, 185, 129, 0.15) !important; }
-    .sidebar-accordion-menu { flex: 1 !important; overflow-y: auto !important; padding: 15px 12px !important; box-sizing: border-box !important; }
-    .accordion-trigger { width: 100% !important; background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 14px !important; font-size: 0.72rem !important; font-weight: 700 !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; cursor: pointer !important; border-radius: 6px !important; margin-top: 10px !important; outline: none !important; transition: all 0.2s !important; box-sizing: border-box !important; }
-    .accordion-panel { max-height: 0; overflow: hidden !important; padding-left: 4px !important; box-sizing: border-box !important; transition: max-height 0.25s ease-out !important; }
-    .nav-item { display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 12px !important; color: var(--text-muted) !important; text-decoration: none !important; font-size: 0.8rem !important; font-weight: 600 !important; border-radius: 6px !important; margin-top: 2px !important; white-space: nowrap !important; transition: all 0.15s !important; box-sizing: border-box !important; }
-    .nav-item:hover { background: rgba(10, 31, 68, 0.02) !important; color: var(--emerald) !important; padding-left: 14px !important; }
-    
-    .sidebar-footer-lock { padding: 16px !important; border-top: 1px solid var(--border-color) !important; background: #f8fafc !important; box-sizing: border-box !important; }
-    .logout-btn { width: 100% !important; background: var(--text-dark) !important; color: white !important; border: none !important; padding: 10px !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.8rem !important; cursor: pointer !important; }
-    /* 🖥️ PRIMARY CONTENT AREA STRETCH */
-    .portal-main { flex: 1 !important; display: flex !important; flex-direction: column !important; margin-left: var(--sidebar-width) !important; width: calc(100% - var(--sidebar-width)) !important; min-height: 100vh !important; box-sizing: border-box !important; }
-    .portal-header { background: var(--white) !important; padding: 20px 40px !important; border-bottom: 1px solid var(--border-color) !important; display: flex !important; justify-content: space-between !important; align-items: center !important; position: sticky !important; top: 0 !important; z-index: 90 !important; box-sizing: border-box !important; width: 100% !important; }
-    .header-actions-wrapper { display: flex !important; align-items: center !important; gap: 16px !important; }
-    .header-clock-pill { background: #f8fafc !important; border: 1px solid var(--border-color) !important; padding: 10px 16px !important; border-radius: 10px !important; font-family: monospace !important; font-size: 0.9rem !important; font-weight: 700 !important; color: var(--text-dark) !important; display: flex !important; align-items: center !important; gap: 8px !important; box-sizing: border-box !important; height: 40px !important; white-space: nowrap !important; }
-    .search-input { padding: 10px 14px !important; border: 1px solid var(--border-color) !important; border-radius: 8px !important; font-size: 0.85rem !important; outline: none !important; box-sizing: border-box !important; width: 220px !important; }
-    
-    .nav-bell-wrapper { position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 6px !important; line-height: 1 !important; }
-    .document-vault-download-btn { background: #f1f5f9; color: #334155; border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
-    .document-vault-download-btn:hover { background: var(--text-dark); color: white; }
-    
-    .timeline-event-row { padding: 10px 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; text-align: left; font-size: 0.82rem; }
-    .action-alert-strip { padding: 12px; font-size: 0.82rem; font-weight: 700; text-align: left; border-radius: 6px; border: 1px solid rgba(193,82,84,0.15); background: #fef2f2; color: #991b1b; }
-  </style>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
-<body class="f4u-client-page">
-<div class="dashboard-wrapper">
-<!-- 🖥️ PRIMARY CONTENT AREA -->
-<main class="portal-main">
-<!-- UPGRADED COMPACT TOP NAVIGATION BAR ELEMENT -->
-<header class="portal-header">
-<div class="welcome-text">
-<h1 style="margin: 0 !important; font-size: 1.25rem !important; font-weight: 800 !important; color: var(--text-dark) !important; letter-spacing: -0.5px !important;">Welcome Back, <span id="clientNameField" style="color: #10b981 !important;"></span></h1>
-</div>
-<div class="header-actions-wrapper">
-<!-- REAL-TIME UNREAD BELL NOTIFICATION BADGE -->
-<div style="display: inline-flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important;">
-<a aria-label="View Account Notifications Feed" class="nav-bell-wrapper" href="#notifications-anchor" id="dashboardBellTriggerBtn" style="position: relative !important; display: inline-block !important; text-decoration: none !important; padding: 4px !important; line-height: 1 !important;">
-<span class="nav-bell-icon" style="font-size: 1.15rem !important; cursor: pointer !important;">🔔</span>
-<div id="globalNavUnreadCounterBadge" style="position: absolute !important; top: -2px !important; right: -2px !important; background: #ef4444 !important; color: #ffffff !important; font-size: 0.6rem !important; font-weight: 800 !important; padding: 1px 5px !important; border-radius: 50% !important; line-height: 1 !important; z-index: 10 !important; display: none;">0</div>
-</a>
-</div>
-<!-- PORTAL CLOCK SYSTEM CONTAINER -->
-<div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; font-weight: 700;">
-          ⏱️ <span id="portal-clock">Syncing...</span>
-</div>
-<div>
-<input class="search-input" id="portalGlobalSearchField" placeholder="Search your filings, entities..." type="text"/>
-</div>
-</div>
+    <div class="client-account-menu" id="clientAccountMenu" role="menu" hidden>
+      <div class="account-menu-header">
+        <span class="account-menu-avatar" id="clientMenuAvatar">C</span>
+        <div>
+          <strong id="clientMenuName">My Account</strong>
+          <small id="clientMenuCompany">filings4u client</small>
+        </div>
+      </div>
+
+      <div class="account-menu-links">
+        <a href="client-account.html" data-account-target="account" role="menuitem">
+          <span>My Account</span><small>Profile & contact details</small>
+        </a>
+        <a href="client-notifications.html" data-account-target="notifications" role="menuitem">
+          <span>Notifications</span><small>Portal alerts & updates</small>
+        </a>
+        <a href="client-support.html" data-account-target="support" role="menuitem">
+          <span>Support</span><small>Help with an order or filing</small>
+        </a>
+      </div>
+
+      <button id="clientSignOut" class="account-menu-signout" type="button" role="menuitem">Sign out</button>
+    </div>
+  </div>
 </header>
-<!-- 📦 COMPLETE REDESIGNED CLIENT WORKSPACE GRID FLOW -->
-<div style="margin-top: 36px; padding: 0 40px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; gap: 36px; background: #f8fafc;">
-<!-- 📊 STAGE 1 NUMERICAL STATISTICAL BLOCK: CLICKABLE MICRO-INTERACTIVE PILLS -->
-<div style="display: flex; gap: 28px; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
-<!-- Active Corporate Entities Card -->
-<a href="client-entities.html" onmouseout="this.style.transform='translateY(0px)'; this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)';" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#0a1f44'; this.style.boxShadow='0 12px 20px -3px rgba(10,31,68,0.08)';" style="flex: 1; min-width: 260px; background: #ffffff; border: 1px solid #e2e8f0; padding: 26px 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); text-decoration: none; display: block; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, box-shadow 0.2s;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-<h3 style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; margin: 0; letter-spacing: 0.06em; font-weight: 800;">Active Entities</h3>
-<span style="font-size: 1.25rem; background: #eff6ff; color: #1e40af; padding: 6px 10px; border-radius: 8px;">🏢</span>
-</div>
-<div id="statActiveEntities" style="font-size: 2.2rem; font-weight: 800; color: #0a1f44; text-align: left; line-height: 1;">3</div>
-<div style="font-size: 0.75rem; color: #94a3b8; margin-top: 10px; font-weight: 600; display: flex; align-items: center; gap: 4px;">Click to view ledger database ➔</div>
-</a>
-<!-- Ongoing Filings Card -->
-<a href="client-filings.html" onmouseout="this.style.transform='translateY(0px)'; this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)';" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#0a1f44'; this.style.boxShadow='0 12px 20px -3px rgba(10,31,68,0.08)';" style="flex: 1; min-width: 260px; background: #ffffff; border: 1px solid #e2e8f0; padding: 26px 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); text-decoration: none; display: block; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, box-shadow 0.2s;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-<h3 style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; margin: 0; letter-spacing: 0.06em; font-weight: 800;">Ongoing Filings</h3>
-<span style="font-size: 1.25rem; background: #fff7ed; color: #b45309; padding: 6px 10px; border-radius: 8px;">🔄</span>
-</div>
-<div id="statOngoingFilings" style="font-size: 2.2rem; font-weight: 800; color: #0a1f44; text-align: left; line-height: 1;">2</div>
-<div style="font-size: 0.75rem; color: #94a3b8; margin-top: 10px; font-weight: 600; display: flex; align-items: center; gap: 4px;">Click to view processing tracks ➔</div>
-</a>
-<!-- Compliance Alerts Card -->
-<a href="client-notifications.html" onmouseout="this.style.transform='translateY(0px)'; this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)';" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#ef4444'; this.style.boxShadow='0 12px 20px -3px rgba(239,68,68,0.1)';" style="flex: 1; min-width: 260px; background: #ffffff; border: 1px solid #e2e8f0; padding: 26px 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); text-decoration: none; display: block; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, box-shadow 0.2s;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-<h3 style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; margin: 0; letter-spacing: 0.06em; font-weight: 800;">Compliance Alerts</h3>
-<span style="font-size: 1.25rem; background: #fef2f2; color: #b91c1c; padding: 6px 10px; border-radius: 8px;">⚠️</span>
-</div>
-<div id="statComplianceAlerts" style="font-size: 2.2rem; font-weight: 800; color: #ef4444; text-align: left; line-height: 1;">0</div>
-<div style="font-size: 0.75rem; color: #f87171; margin-top: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px;">Click to open communications hub ➔</div>
-</a>
-</div>
-<!-- 🔄 MIDDLE BLOCK LAYOUT: DATAGRIDS & CHRONO TIMELINES -->
-<div style="display: flex; gap: 32px; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
-<!-- Left Workspace Panel: Interactive Entities Data Ledger Tracker Matrix -->
-<div style="flex: 2; min-width: 440px; background: #ffffff; border: 1px solid #e2e8f0; padding: 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); box-sizing: border-box;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-<h3 style="font-size: 1.05rem; color: #0a1f44; margin: 0; font-weight: 800; letter-spacing: -0.01em;">Registered Corporate Entities Ledger</h3>
-<a href="client-entities.html" style="font-size: 0.78rem; font-weight: 700; color: #0066cc; text-decoration: none;">View Ledger Database ➔</a>
-</div>
-<div style="overflow-x: auto; width: 100%;">
-<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
-<thead>
-<tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;">
-<th style="padding: 10px 12px;">Entity Corporate Name</th>
-<th style="padding: 10px 12px;">Filing Description</th>
-<th style="padding: 10px 12px;">Plan Tier</th>
-<th style="padding: 10px 12px; text-align: right;">Standing Status</th>
-</tr>
-</thead>
-<tbody id="entitiesTableBody">
-<!-- Populated contextually via telemetry loading strings mapping row states -->
-<tr><td colspan="4" style="color: #94a3b8; padding: 20px 12px; font-style: italic;">Streaming verified telemetry layers...</td></tr>
-</tbody>
-</table>
-</div>
-</div>
-<!-- Right Workspace Panel: Chronological Compliance Action Timelines Timeline -->
-<div style="flex: 1; min-width: 320px; background: #ffffff; border: 1px solid #e2e8f0; padding: 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); box-sizing: border-box;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-<h3 style="font-size: 1.05rem; color: #0a1f44; margin: 0; font-weight: 800; letter-spacing: -0.01em;">Urgent Consultation Timelines</h3>
-<a href="client-filings.html" style="font-size: 0.78rem; font-weight: 700; color: #0066cc; text-decoration: none;">Track All ➔</a>
-</div>
-<div id="filingTimeline" style="display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; width: 100%;">
-<div style="font-size: 0.85rem; color: #64748b; line-height: 1.5; font-style: italic; text-align: center; padding: 32px 0;">Scanning active compliance tracks...</div>
-</div>
-</div>
-</div>
-<!-- 📁 LOWER BLOCK LAYOUT: LIVE ACTION ALERTS & SECURE DOCUMENT VAULTS -->
-<div id="notifications-anchor" style="display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; width: 100%; box-sizing: border-box;">
-<!-- Left Workspace Panel: Secure Automated File Vault Storage Box -->
-<div style="flex: 2; min-width: 440px; background: #ffffff; border: 1px solid #e2e8f0; padding: 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); box-sizing: border-box;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-<h3 style="font-size: 1.05rem; color: #0a1f44; margin: 0; font-weight: 800; letter-spacing: -0.01em;">Secure Corporate Document Vault</h3>
-<a href="client-vault.html" style="font-size: 0.78rem; font-weight: 700; color: #0066cc; text-decoration: none;">Open Vault ➔</a>
-</div>
-<div style="overflow-x: auto; width: 100%;">
-<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
-<thead>
-<tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;">
-<th style="padding: 10px 12px;">Vaulted Asset File Item</th>
-<th style="padding: 10px 12px;">Storage Reference Identifier</th>
-<th style="padding: 10px 12px; text-align: right;">Action Core</th>
-</tr>
-</thead>
-<tbody id="clientVaultTableLayoutBody">
-<tr><td colspan="3" style="color: #94a3b8; padding: 20px 12px; font-style: italic; text-align: center;">Establishing absolute replication sync stream...</td></tr>
-</tbody>
-</table>
-</div>
-</div>
-<!-- Right Workspace Panel: Live Action Log Notification Feed Stream Panel -->
-<div style="flex: 1; min-width: 320px; background: #ffffff; border: 1px solid #e2e8f0; padding: 28px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); box-sizing: border-box;">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-<h3 style="font-size: 1.05rem; color: #0a1f44; margin: 0; font-weight: 800; letter-spacing: -0.01em;">Live Action Push Alerts</h3>
-<a href="client-notifications.html" style="font-size: 0.78rem; font-weight: 700; color: #0066cc; text-decoration: none;">View All ➔</a>
-</div>
-<div id="realtimeNotificationFeedTarget" style="display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; width: 100%;">
-<p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; font-style: italic; text-align: center; padding: 32px 0;">Establishing continuous state sync...</p>
-</div>
-</div>
-</div>
-</div>
+
+<main class="client-main" id="app" hidden>
+  <section class="client-hero">
+    <div>
+      <span class="eyebrow"><i></i> Secure compliance workspace</span>
+      <h1>Your business,<br><span>organized.</span></h1>
+      <p>Track orders, filing progress, compliance items, documents, design work, and support in one secure portal.</p>
+      <div class="hero-actions">
+        <a class="button button--primary" href="client-orders.html">View my orders →</a>
+        <a class="button button--secondary" href="get-started.html">Start a new service</a>
+      </div>
+    </div>
+
+    <div class="health-card">
+      <div class="health-card__top">
+        <div><small>COMPLIANCE OVERVIEW</small><h2>Account status</h2></div>
+        <span class="status-pill"><i></i> Active</span>
+      </div>
+      <div class="health-score">
+        <div class="score-ring"><strong id="healthScore">—</strong><small>Health</small></div>
+        <div><strong>Stay on track</strong><p>Your active work and open support requests appear here.</p></div>
+      </div>
+      <div class="quick-list">
+        <div><span>✓</span><div><strong>Business entities</strong><small id="entitySummary">Loading…</small></div></div>
+        <div><span>↗</span><div><strong>Active filings</strong><small id="filingSummary">Loading…</small></div></div>
+        <div><span>#</span><div><strong>Documents</strong><small id="documentSummary">Loading…</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="client-section">
+    <div class="section-heading">
+      <div><span class="section-kicker">At a glance</span><h2>What needs your attention</h2></div>
+    </div>
+    <div class="client-grid">
+      <a class="summary-card" href="client-orders.html"><span>Open orders</span><strong id="openOrders">0</strong><small>Orders being prepared or fulfilled</small></a>
+      <a class="summary-card" href="client-filings.html"><span>Active filings</span><strong id="activeFilings">0</strong><small>Current filing work</small></a>
+      <a class="summary-card" href="client-notifications.html"><span>Unread updates</span><strong id="unreadCount">0</strong><small>Portal notices and status updates</small></a>
+      <a class="summary-card" href="client-support.html"><span>Support tickets</span><strong id="ticketCount">0</strong><small>Open customer service requests</small></a>
+    </div>
+  </section>
+
+  <section class="client-section client-section--soft">
+    <div class="section-heading">
+      <div><span class="section-kicker">Recent activity</span><h2>Your current work</h2></div>
+      <a href="client-orders.html">View all →</a>
+    </div>
+    <div class="activity-layout">
+      <div class="activity-panel">
+        <div class="activity-panel__head"><strong>Orders & filings</strong></div>
+        <div id="clientActivity"></div>
+      </div>
+      <div class="activity-panel" id="updates">
+        <div class="activity-panel__head"><strong>Portal updates</strong><button id="markRead" class="text-link" type="button">Mark all read</button></div>
+        <div id="notificationList"></div>
+      </div>
+    </div>
+  </section>
 </main>
-</div>
-<!-- ✅ SECURE CLIENT INTEGRATION SEQUENCE ORDER -->
+
+<div id="gate" class="gate">Loading your secure workspace…</div>
+<div id="toast" class="toast" hidden></div>
 <script src="assets/js/client-navigation.js"></script>
-<script src="assets/js/client-footer.js"></script>
-<!-- 🏁 MASTER CLIENT DASHBOARD TELEMETRY & CLOCK CONTROL ENGINE -->
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
-
-  // 🟢 1. LIVE TICKING DIGITAL CLOCK ENGINE
-  function initializeDashboardClock() {
-    const clockElement = document.getElementById("portal-notifications-clock");
-    if (!clockElement) {
-      console.warn("⚠️ Clock container element [#portal-notifications-clock] not found in markup.");
-      return;
-    }
-
-    function updateClockTime() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      
-      hours = hours % 12;
-      hours = hours ? hours : 12; // Normalizes hour '0' directly to '12'
-
-      clockElement.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
-    }
-
-    updateClockTime();
-    setInterval(updateClockTime, 1000);
-    console.log("✓ [Clock Engine] Digital workspace clock attached and ticking.");
-  }
-
-  // Fire clock motor instantly on thread boot
-  initializeDashboardClock();
-
-  // Telemetry Node Layout Selectors
-  const activeEntitiesLabel = document.getElementById("statActiveEntities");
-  const ongoingFilingsLabel = document.getElementById("statOngoingFilings");
-  const complianceAlertsLabel = document.getElementById("statComplianceAlerts");
-  const entitiesTableBody = document.getElementById("entitiesTableBody");
-  const filingTimeline = document.getElementById("filingTimeline");
-  const vaultTableBody = document.getElementById("clientVaultTableLayoutBody");
-  const alertsFeedTarget = document.getElementById("realtimeNotificationFeedTarget");
-
-  let liveDashboardChannel = null;
-
-  // Establish Supabase Connection Handshake
-  let client = window.supabaseInstance || window.supabaseClient;
-  if (!client && typeof supabase !== 'undefined') {
-    client = supabase.createClient("https://lrbimrlbskjweynxlgas.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU");
-  }
-  if (!client) {
-    console.error("✕ Supabase connection instance missing from window context.");
-    return;
-  }
-
-  // Session Handshake Guard
-  const { data: { session }, error: sessionError } = await client.auth.getSession();
-  if (sessionError || !session || !session.user) {
-    window.location.href = "portal-login.html";
-    return;
-  }
-  
-  const userEmail = String(session.user.email).trim().toLowerCase();
-  const userUid = session.user.id;
-
-  
-  
- // 📡 2. TELEMETRY LOOKUP MODULE: PIPELINE ACCUMULATION FROM NEW VALIDATED TABLES (CORRECTED)
-async function hydrateDashboardTelemetryData() {
-  try {
-    console.log(`📡 [Dashboard Telemetry] Extracting live data profiles for customer: [${userEmail}]`);
-
-    // 🟢 FIXED PERIMETER SECURITY: Swapped unsafe .or() filters for explicit .eq() matching to lock down data isolation
-    const [entitiesRes, vaultRes, alertsRes] = await Promise.all([
-      client
-        .from('client_entities')
-        .select('*')
-        .eq('client_email', userEmail)
-        .order('created_at', { ascending: false }),
-      client
-        .from('client_vault')
-        .select('*')
-        .eq('email_address', userEmail)
-        .order('created_at', { ascending: false }),
-      client
-        .from('chat_messages')
-        .select('*')
-        .eq('id', userUid) // Maps to your core authorization session variable
-        .eq('sender_type', 'admin')
-        .order('created_at', { ascending: false })
-    ]);
-
-    if (entitiesRes.error) throw entitiesRes.error;
-    if (vaultRes.error) throw vaultRes.error;
-    if (alertsRes.error) throw alertsRes.error;
-
-    const entities = entitiesRes.data || [];
-    const vaultFiles = vaultRes.data || [];
-    const alerts = alertsRes.data || [];
-
-    // Map Numerical Top Card Telemetry Counters
-    const activeEntitiesCount = entities.filter(row => String(row.standing_status || '').toLowerCase() === 'active').length;
-    const ongoingFilingsCount = entities.filter(row => String(row.standing_status || '').toLowerCase().includes('pending') || String(row.standing_status || '').toLowerCase().includes('intake')).length;
-    const unreadAlertsCount = alerts.filter(n => n.is_read_by_client === false).length;
-
-    if (activeEntitiesLabel) activeEntitiesLabel.textContent = activeEntitiesCount;
-    if (ongoingFilingsLabel) ongoingFilingsLabel.textContent = ongoingFilingsCount;
-    if (complianceAlertsLabel) {
-      complianceAlertsLabel.textContent = unreadAlertsCount;
-      complianceAlertsLabel.style.color = unreadAlertsCount > 0 ? '#ef4444' : '#0a1f44';
-    }
-
-    // Render Corporate Entities Ledger Table Rows
-    if (entitiesTableBody) {
-      entitiesTableBody.innerHTML = "";
-      if (entities.length === 0) {
-        entitiesTableBody.innerHTML = `<tr><td colspan="4" style="color: #94a3b8; padding: 24px 12px; font-style: italic; text-align: center;">No registered corporate entity items cataloged.</td></tr>`;
-      } else {
-        entities.slice(0, 5).forEach(row => {
-          const tr = document.createElement("tr");
-          tr.style.cssText = "border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.15s;";
-          tr.onmouseover = () => tr.style.backgroundColor = "#f8fafc";
-          tr.onmouseout = () => tr.style.backgroundColor = "";
-          tr.onclick = () => window.location.href = "client-entities.html";
-          const status = String(row.standing_status || 'ACTIVE').toUpperCase();
-          let colorStyle = '#10b981';
-          if (status.includes('PENDING')) colorStyle = '#f59e0b';
-          else if (status.includes('SUSPENDED') || status.includes('INACTIVE')) colorStyle = '#ef4444';
-          tr.innerHTML = `
-            <td style="padding: 12px; font-weight: 700; color: #1e293b;">${escapeDashboardTextHtml(row.entity_name)}</td>
-            <td style="padding: 12px; color: #475569;">${escapeDashboardTextHtml(row.filing_description)}</td>
-            <td style="padding: 12px; font-family: monospace; font-weight: 600; color: #64748b;">${row.plan_tier}</td>
-            <td style="padding: 12px; text-align: right; font-weight: 800; font-size: 0.78rem; color: ${colorStyle}; text-transform: uppercase;">${status}</td>
-          `;
-          entitiesTableBody.appendChild(tr);
-        });
-      }
-    }
-
-    // Render Chronological Compliance Timelines (Ongoing Filings)
-    if (filingTimeline) {
-      filingTimeline.innerHTML = "";
-      const pendingEntities = entities.filter(row => String(row.standing_status || '').toLowerCase().includes('pending') || String(row.standing_status || '').toLowerCase().includes('intake'));
-      if (pendingEntities.length === 0) {
-        filingTimeline.innerHTML = `<div style="font-size: 0.8rem; color: #94a3b8; font-style: italic; text-align: center; padding: 24px 0;">All filing corporate tracks fully synchronized.</div>`;
-      } else {
-        pendingEntities.slice(0, 3).forEach(item => {
-          const div = document.createElement("div");
-          div.style.cssText = "display: flex; align-items: flex-start; gap: 12px; padding: 10px; border-left: 3px solid #f59e0b; background: #fffdeb; border-radius: 0 8px 8px 0; cursor: pointer;";
-          div.onclick = () => window.location.href = "client-filings.html";
-          div.innerHTML = `
-            <div style="flex: 1;">
-              <div style="font-weight: 700; font-size: 0.85rem; color: #0a1f44;">Intake Processing Pending</div>
-              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Target Entity: ${escapeDashboardTextHtml(item.entity_name)}</div>
-            </div>
-          `;
-          filingTimeline.appendChild(div);
-        });
-      }
-    }
-
-    // Render Secure Corporate Document Vault from public.client_vault
-    if (vaultTableBody) {
-      vaultTableBody.innerHTML = "";
-      if (vaultFiles.length === 0) {
-        vaultTableBody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8; padding: 24px 12px; font-style: italic; text-align: center;">No active compiled document packages found inside your vault track.</td></tr>`;
-      } else {
-        vaultFiles.slice(0, 5).forEach(file => {
-          const tr = document.createElement("tr");
-          tr.style.cssText = "border-bottom: 1px solid #f1f5f9; transition: background 0.15s;";
-          tr.onmouseover = () => tr.style.backgroundColor = "#f8fafc";
-          tr.onmouseout = () => tr.style.backgroundColor = "";
-          tr.innerHTML = `
-            <td style="padding: 12px; font-weight: 700; color: #1e293b;">${escapeDashboardTextHtml(file.file_name)}</td>
-            <td style="padding: 12px; font-family: monospace; color: #64748b; font-size: 0.78rem;">${escapeDashboardTextHtml(file.asset_vault_category || 'Formation Document')}</td>
-            <td style="padding: 12px; text-align: right;">
-              <a href="client-vault.html" style="background: #0a1f44; color: white; border: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; text-decoration: none; display: inline-block; box-shadow: 0 1px 2px rgba(10,31,68,0.15);">Open Vault ➔</a>
-            </td>
-          `;
-          vaultTableBody.appendChild(tr);
-        });
-      }
-    }
-
-    // Render Live Action Notification Feeds Stream matching your exact structural card parameters
-    if (alertsFeedTarget) {
-      alertsFeedTarget.innerHTML = "";
-      if (alerts.length === 0) {
-        alertsFeedTarget.innerHTML = `<p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; font-style: italic; text-align: center; padding: 32px 0;">No active system alert directives recorded.</p>`;
-      } else {
-        // Slice newest 3 entries for compact dashboard layout balancing
-        alerts.slice(0, 3).forEach(alert => {
-          const isUnread = alert.is_read_by_client === false;
-          const dateObj = new Date(alert.created_at);
-          const timeString = isNaN(dateObj.getTime()) ? 'Recent' : dateObj.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          });
-
-          const div = document.createElement("div");
-          div.style.cssText = `display: flex; gap: 12px; background: ${isUnread ? 'rgba(16, 185, 129, 0.02)' : '#ffffff'}; border: 1px solid ${isUnread ? 'rgba(16, 185, 129, 0.25)' : '#e2e8f0'}; padding: 12px; border-radius: 10px; border-left: 4px solid ${isUnread ? '#10b981' : '#cbd5e1'}; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box; width: 100%;`;
-          div.onclick = () => window.location.href = "client-notifications.html";
-
-          div.innerHTML = `
-            <div style="flex: 1;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
-                <h4 style="font-size: 0.88rem; font-weight: 700; color: #0a1f44; margin: 0;">Admin Notice</h4>
-                <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 500;">${timeString}</span>
-              </div>
-              <p style="font-size: 0.8rem; color: #475569; margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
-                ${escapeDashboardTextHtml(alert.message_content)}
-              </p>
-            </div>
-          `;
-          alertsFeedTarget.appendChild(div);
-        });
-      }
-    }
-
-  } catch (fault) {
-    console.error("✕ Dashboard telemetry data rehydration broken:", fault);
-  }
-}
-
-function escapeDashboardTextHtml(s) {
-  if (!s) return "";
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-
-// 🔄 3. REAL-TIME SYNC: Re-bind channels to subscribe to the correct newly assigned tables 
-async function bindLiveDashboardRealtimeSubscribers() { 
-  if (liveDashboardChannel) liveDashboardChannel.unsubscribe(); 
-
-  // Safely extract active runtime user context to bypass reference scoping errors
-  const currentSession = await client.auth.getSession();
-  const sessionUserEmail = currentSession?.data?.session?.user?.email 
-    ? String(currentSession.data.session.user.email).trim().toLowerCase() 
-    : '';
-
-  liveDashboardChannel = client 
-    .channel('client-dashboard-synchronized-master-stream-channel') 
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'client_entities' }, async () => { 
-      console.log("⚡ Sync: client_entities modification detected. Updating overview counters..."); 
-      await hydrateDashboardTelemetryData(); 
-    }) 
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'client_vault' }, async () => { 
-      console.log("⚡ Sync: client_vault modification detected. Updating document storage panels..."); 
-      await hydrateDashboardTelemetryData(); 
-    }) 
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'portal_notifications' }, async payload => { 
-      if (!sessionUserEmail) return;
-
-      // Enforce boundary filter checks to reject random memory block pushes completely 
-      const isTarget = payload.new && ( 
-        String(payload.new.email_address).toLowerCase() === sessionUserEmail || 
-        String(payload.new.recipient_email || '').toLowerCase() === sessionUserEmail 
-      ); 
-
-      if (isTarget || payload.eventType === 'DELETE') { 
-        console.log("⚡ Sync: portal_notifications modification captured. Re-rendering alerts..."); 
-        await hydrateDashboardTelemetryData(); 
-      } 
-    }) 
-    .subscribe(); 
-}
-
-  // 🏁 INITIALIZATION MOUNT TRIGGERS ACTIVE RUNTIME LIFECYCLES
-  await hydrateDashboardTelemetryData();
-  await bindLiveDashboardRealtimeSubscribers();
-});
-
-function runPortalClock() {
-  const el = document.getElementById("portal-clock");
-  if (el) el.textContent = new Date().toLocaleTimeString();
-}
-setInterval(runPortalClock, 1000);
-runPortalClock();
-
-</script>
-<script src="assets/js/filings4u-portal-shell.js"></script></body>
+<script src="assets/js/client-dashboard.js"></script>
+</body>
 </html>

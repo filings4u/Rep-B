@@ -1,784 +1,151 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Admin Orders | filings4u Staff</title>
-<link href="images/fav.png" rel="icon" type="image/png"/>
-<script src="assets/js/supabase-config.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10b981">
+<title>Orders Management | filings4u Admin</title>
+<link href="images/fav.png" rel="icon" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/admin-orders.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://js.stripe.com/v3/"></script>
-<style>
-:root {
-  --bg-light:#f4f6f9; --white:#fff; --border-color:#e2e8f0;
-  --text-dark:#0f172a; --text-muted:#475569; --emerald:#10b981;
-  --staff-red:#c15254; --sidebar-width:260px;
-  --danger:#dc2626; --soft:#f8fafc;
-}
-*{box-sizing:border-box}
-html,body{margin:0!important;padding:0!important;min-height:100vh!important;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif!important;background:var(--bg-light)!important;color:var(--text-dark)!important;overflow-x:hidden!important;overflow-y:auto!important}
-.dashboard-wrapper{display:flex!important;min-height:100vh!important;width:100%!important;position:relative!important}
-.portal-sidebar{width:var(--sidebar-width)!important;background:#fff!important;border-right:1px solid var(--border-color)!important;display:flex!important;flex-direction:column!important;position:fixed!important;top:0!important;left:0!important;height:100vh!important;z-index:1000!important;box-sizing:border-box!important}
-.sidebar-brand-block{padding:24px 20px!important;border-bottom:1px solid #f1f5f9!important;text-align:center!important}
-.admin-badge{display:inline-block!important;background:rgba(193,82,84,.08)!important;color:var(--staff-red)!important;font-size:.65rem!important;font-weight:800!important;text-transform:uppercase!important;letter-spacing:1px!important;padding:4px 10px!important;border-radius:12px!important;margin-top:6px!important;border:1px solid rgba(193,82,84,.15)!important}
-.sidebar-accordion-menu{flex:1!important;overflow-y:auto!important;padding:15px 12px!important}
-.accordion-trigger{width:100%!important;background:#f8fafc!important;border:1px solid var(--border-color)!important;padding:10px 14px!important;font-size:.72rem!important;font-weight:700!important;color:var(--text-muted)!important;text-transform:uppercase!important;letter-spacing:.5px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;cursor:pointer!important;border-radius:6px!important;margin-top:10px!important;outline:none!important}
-.accordion-panel{max-height:0;overflow:hidden!important;transition:max-height .25s ease-out!important;padding-left:4px!important}
-.accordion-panel.open{max-height:900px!important}
-.nav-item{display:flex!important;align-items:center!important;gap:8px!important;padding:8px 12px!important;color:var(--text-muted)!important;text-decoration:none!important;font-size:.8rem!important;font-weight:600!important;border-radius:6px!important;margin-top:2px!important;white-space:nowrap!important;box-sizing:border-box!important}
-.nav-item:hover,.nav-item.active{background:rgba(16,185,129,.08)!important;color:var(--emerald)!important}
-.sidebar-footer-lock{padding:16px!important;border-top:1px solid var(--border-color)!important;background:#f8fafc!important}
-.logout-btn{width:100%!important;background:var(--text-dark)!important;color:#fff!important;border:none!important;padding:10px!important;border-radius:6px!important;font-weight:700!important;font-size:.8rem!important;cursor:pointer!important}
-.portal-main{flex:1!important;display:flex!important;flex-direction:column!important;margin-left:var(--sidebar-width)!important;width:calc(100% - var(--sidebar-width))!important;min-height:100vh!important}
-.portal-header{background:#fff!important;padding:20px 40px!important;border-bottom:1px solid var(--border-color)!important;display:flex!important;justify-content:space-between!important;align-items:center!important;position:sticky!important;top:0!important;z-index:90!important;width:100%!important}
-.welcome-text h1{margin:0!important;font-size:1.5rem!important;font-weight:800!important}
-.welcome-text p{margin:4px 0 0!important;font-size:.82rem!important;color:var(--text-muted)!important}
-.header-actions-wrapper{display:flex!important;align-items:center!important;gap:12px!important}
-.header-clock-pill{background:#f8fafc!important;border:1px solid var(--border-color)!important;padding:10px 16px!important;border-radius:10px!important;font-family:monospace!important;font-size:.9rem!important;font-weight:700!important;height:40px!important;display:flex!important;align-items:center!important;gap:8px!important}
-.search-input{padding:10px 16px!important;border:1px solid var(--border-color)!important;border-radius:10px!important;font-size:.82rem!important;width:220px!important;height:40px!important;outline:none!important;background:#f8fafc!important}
-.content-container{padding:32px 40px 50px!important;width:100%!important}
-.order-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:24px;align-items:start}
-.console-card{background:#fff;border-radius:12px;border:1px solid var(--border-color);padding:24px;box-shadow:0 2px 4px rgba(0,0,0,.02);margin-bottom:24px}
-.card-head{border-bottom:1px solid var(--border-color);padding-bottom:16px;margin-bottom:20px}
-.card-head h2{margin:0;font-size:1.1rem;font-weight:850}
-.card-head p{margin:5px 0 0;color:var(--text-muted);font-size:.78rem;line-height:1.5}
-.section-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:800;color:var(--text-muted);margin:0 0 8px}
-.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
-.field-group{display:flex;flex-direction:column;gap:6px}
-.field-group.full{grid-column:1/-1}
-.field-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;font-weight:750;color:var(--text-muted)}
-.field{width:100%;padding:12px 13px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:.88rem;color:var(--text-dark);outline:none}
-.field:focus{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,.08)}
-.customer-select{font-weight:750}
-.customer-summary{display:none;margin-top:16px;padding:15px;border:1px solid #dbeafe;border-radius:10px;background:#eff6ff}
-.customer-summary.show{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.customer-summary strong{display:block;font-size:.8rem}
-.customer-summary span{font-size:.7rem;color:var(--text-muted)}
-.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.price-card{border:2px solid #cbd5e1;border-radius:10px;padding:15px;cursor:pointer;background:#fff;position:relative}
-.price-card.selected{border-color:var(--emerald);background:#ecfdf5}
-.price-card input{position:absolute;right:12px;top:12px}
-.price-card strong{display:block;font-size:.85rem;text-transform:uppercase}
-.price-card b{display:block;font-size:1.35rem;margin-top:7px}
-.price-card small{display:block;color:var(--text-muted);font-size:.65rem;margin-top:3px}
-.payment-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.payment-option{border:1px solid var(--border-color);border-radius:9px;padding:14px;cursor:pointer;background:#fff}
-.payment-option.selected{border:2px solid var(--emerald);background:#ecfdf5}
-.payment-option input{margin-right:8px}
-.payment-option strong{font-size:.78rem}
-.payment-option small{display:block;margin:5px 0 0 25px;color:var(--text-muted);font-size:.65rem}
-.card-terminal{display:none;margin-top:18px;padding:15px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:9px}
-.card-terminal.show{display:block}
-#secureCardElementContainer{padding:12px;background:#fff;border:1px solid #cbd5e1;border-radius:7px}
-.summary-row{display:flex;justify-content:space-between;gap:15px;padding:9px 0;font-size:.8rem}
-.summary-row.total{border-top:1px dashed #cbd5e1;margin-top:7px;padding-top:14px;font-weight:900;font-size:1.05rem}
-.status{display:none;padding:13px;border-radius:8px;margin-bottom:15px;font-size:.8rem;font-weight:700}
-.status.show{display:block}
-.status.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
-.status.error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
-.primary-btn{width:100%;padding:14px;border:0;border-radius:8px;background:var(--text-dark);color:#fff;font-size:.9rem;font-weight:800;cursor:pointer}
-.primary-btn:disabled{opacity:.55;cursor:not-allowed}
-.secondary-btn{padding:10px 14px;border:1px solid var(--border-color);border-radius:8px;background:#fff;font-weight:750;cursor:pointer}
-.result{display:none}
-.result.show{display:block}
-.result-code{font-family:monospace;font-size:1.25rem;font-weight:900;padding:12px;background:#f8fafc;border:1px solid var(--border-color);border-radius:8px;margin:10px 0}
-.muted{color:var(--text-muted);font-size:.72rem}
-@media(max-width:1100px){.order-layout{grid-template-columns:1fr}}
-@media(max-width:991px){
-.portal-sidebar{display:none!important}.portal-main{margin-left:0!important;width:100%!important}
-.portal-header{flex-direction:column;gap:15px;padding:20px;align-items:flex-start}
-.header-actions-wrapper{width:100%;flex-wrap:wrap}.search-input{width:100%}
-.content-container{padding:20px}.field-grid,.payment-options{grid-template-columns:1fr}
-.customer-summary.show{grid-template-columns:1fr 1fr}.price-grid{grid-template-columns:1fr}
-}
-</style>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/><link href="assets/css/filings4u-portal-shell.css" rel="stylesheet"/></head>
-<body class="f4u-admin-page">
-<div class="dashboard-wrapper">
-<!-- Keep your existing navigation shell on every admin page. -->
-<aside class="portal-sidebar">
-<div class="sidebar-brand-block">
-<strong>filings4u</strong><br/>
-<span class="admin-badge">Staff Console</span>
-</div>
-<nav class="sidebar-accordion-menu" id="adminSidebarNav">
-<button class="accordion-trigger" type="button">Operations <span>⌄</span></button>
-<div class="accordion-panel open">
-<a class="nav-item active" href="admin-orders.html">🧾 Orders</a>
-<a class="nav-item" href="admin-dashboard.html">📊 Dashboard</a>
-<a class="nav-item" href="admin-tickets.html">🎫 Support Tickets</a>
-<a class="nav-item" href="admin-notifications.html">🔔 Notifications</a>
-</div>
-<button class="accordion-trigger" type="button">Client Management <span>⌄</span></button>
-<div class="accordion-panel">
-<a class="nav-item" href="admin-clients.html">👥 Clients</a>
-<a class="nav-item" href="admin-entities.html">🏢 Entities</a>
-<a class="nav-item" href="client-order-history.html">📜 Order History</a>
-</div>
-</nav>
-<div class="sidebar-footer-lock">
-<button class="logout-btn" id="logoutBtn" type="button">Sign Out</button>
-</div>
-</aside>
-<main class="portal-main">
-<header class="portal-header">
-<div class="welcome-text">
-<h1>Admin Orders</h1>
-<p>Process phone, in-person, complimentary, and Stripe orders for existing client accounts.</p>
-</div>
-<div class="header-actions-wrapper">
-<a class="nav-item" href="admin-notifications.html" style="margin:0">🔔</a>
-<div class="header-clock-pill">⏱️ <span id="portal-clock">Syncing...</span></div>
-<input class="search-input" id="adminGlobalSearchField" placeholder="Search operational matrices..."/>
-</div>
-</header>
-<section class="content-container">
-<div class="status" id="status"></div>
-<div class="order-layout">
-<div>
-<div class="console-card">
-<div class="card-head">
-<h2>Customer Selection</h2>
-<p>Select the client from the live client registry. Do not manually retype customer information for an existing account.</p>
-</div>
-<div class="field-group">
-<label class="field-label" for="clientSelector">Client Account</label>
-<select class="field customer-select" id="clientSelector" required="">
-<option value="">Loading clients...</option>
-</select>
-</div>
-<div class="customer-summary" id="customerSummary"></div>
-</div>
-<div class="console-card">
-<div class="card-head">
-<h2>Order Configuration</h2>
-<p>Choose the service, package, jurisdiction, entity name, and optional services.</p>
-</div>
-<div class="field-grid">
-<div class="field-group full">
-<label class="field-label">Filing Business Service</label>
-<select class="field" id="phoneServiceTitle" required="" style="font-weight: 700;">
-<optgroup label="🏢 Entity Formation &amp; Structuring">
-<option data-compliance="199.00" data-enterprise="399.00" data-starter="99.00" selected="" value="llc-formation">LLC Formation</option>
-<option data-compliance="249.00" data-enterprise="599.00" data-starter="129.00" value="corporations">Corporations (C/S-Corp)</option>
-<option data-compliance="159.00" data-enterprise="239.00" data-starter="79.00" value="sole-proprietorship">Sole Proprietorship</option>
-<option data-compliance="99.00" data-enterprise="159.00" data-starter="39.00" value="dba-registration">DBA Registration</option>
-<option data-compliance="299.00" data-enterprise="499.00" data-starter="149.00" value="nonprofits">Nonprofit Organization</option>
-<option data-compliance="299.00" data-enterprise="399.00" data-starter="199.00" value="series-llc">Series LLC</option>
-</optgroup>
-<optgroup label="📜 Corporate Maintenance &amp; Compliance">
-<option data-compliance="249.00" data-enterprise="349.00" data-starter="149.00" value="foreign-qualification">Foreign Qualification</option>
-<option data-compliance="99.00" data-enterprise="149.00" data-starter="49.00" value="certificate-of-good-standing">Certificate of Good Standing</option>
-<option data-compliance="149.00" data-enterprise="249.00" data-starter="79.00" value="llc-reinstatement">LLC Reinstatement Processing</option>
-<option data-compliance="159.00" data-enterprise="249.00" data-starter="89.00" value="annual-reports">Annual Reports</option>
-<option data-compliance="99.00" data-enterprise="199.00" data-starter="49.00" value="operating-agreement">Operating Agreement</option>
-<option data-compliance="179.00" data-enterprise="299.00" data-starter="99.00" value="registered-agent">Registered Agent</option>
-<option data-compliance="149.00" data-enterprise="299.00" data-starter="79.00" value="business-licenses">Business Licenses</option>
-<option data-compliance="249.00" data-enterprise="349.00" data-starter="149.00" value="dissolution">Entity Dissolution</option>
-</optgroup>
-<optgroup label="🔑 Federal Tax &amp; Corporate Identity">
-<option data-compliance="149.00" data-enterprise="199.00" data-starter="79.00" value="employer-id-ein">Employer ID (EIN)</option>
-<option data-compliance="349.00" data-enterprise="449.00" data-starter="249.00" value="cage-code">CAGE Code</option>
-<option data-compliance="99.00" data-enterprise="179.00" data-starter="49.00" value="duns-number">DUNS Number Procurement</option>
-<option data-compliance="249.00" data-enterprise="399.00" data-starter="99.00" value="minority-certificate">Minority Certificate</option>
-</optgroup>
-<optgroup label="🚛 Trucking Logistics &amp; DOT Authority">
-<option data-compliance="299.00" data-enterprise="499.00" data-starter="199.00" value="owner-operators">Owner Operators Trucker Authority</option>
-<option data-compliance="299.00" data-enterprise="499.00" data-starter="199.00" value="broker-authority">Broker Authority</option>
-<option data-compliance="179.00" data-enterprise="249.00" data-starter="99.00" value="ucr-registration">UCR Registration</option>
-<option data-compliance="99.00" data-enterprise="149.00" data-starter="49.00" value="scac-code">SCAC Code Registration</option>
-<option data-compliance="299.00" data-enterprise="499.00" data-starter="149.00" value="dot-consortium">DOT Consortium</option>
-<option data-compliance="349.00" data-enterprise="449.00" data-starter="279.00" value="driver-file">Driver Qualification File</option>
-<option data-compliance="99.00" data-enterprise="149.00" data-starter="49.00" value="process-agents-boc-3">Process Agent (BOC-3)</option>
-<option data-compliance="279.00" data-enterprise="349.00" data-starter="159.00" value="ifta-registration">IFTA Registration</option>
-<option data-compliance="349.00" data-enterprise="449.00" data-starter="199.00" value="hazmat-registration">HAZMAT Registration</option>
-<option data-compliance="149.00" data-enterprise="299.00" data-starter="79.00" value="dot-permits">Licenses &amp; Permits</option>
-</optgroup>
-<optgroup label="📊 Financial Services">
-<option data-compliance="499.00" data-enterprise="799.00" data-starter="299.00" value="federal-tax">Federal Income Tax</option>
-<option data-compliance="249.00" data-enterprise="399.00" data-starter="149.00" value="franchise-tax">Franchise Tax Filing</option>
-<option data-compliance="199.00" data-enterprise="299.00" data-starter="99.00" value="sales-tax-registration">Sales Tax Registration</option>
-<option data-compliance="249.00" data-enterprise="399.00" data-starter="149.00" value="apostille-services">Apostille Authentication Services</option>
-</optgroup>
-<optgroup label="🎨 Branding &amp; Creative Services">
-<!-- 🟢 FIXED CONTENT: Real unique pricing matrices injected for Web and Logo products -->
-<option data-compliance="725.00" data-enterprise="1499.00" data-starter="399.00" value="web-design">Web Design Package</option>
-<option data-compliance="125.00" data-enterprise="299.00" data-starter="75.00" value="logo-design">Logo Design Package</option>
-</optgroup>
-</select>
-</div>
-<div class="field-group full">
-<label class="field-label">Assigned Package Tier</label>
-<div class="price-grid">
-<label class="price-card selected" id="tierCardStarter">
-<input checked="" name="tier" type="radio" value="starter"/>
-<strong>Starter Suite</strong>
-<b id="priceStarter">$0.00</b>
-<small>Core service package</small>
-</label>
-<label class="price-card" id="tierCardCompliance">
-<input name="tier" type="radio" value="compliance"/>
-<strong>Compliance Suite</strong>
-<b id="priceCompliance">$0.00</b>
-<small>Expanded compliance package</small>
-</label>
-<label class="price-card" id="tierCardEnterprise">
-<input name="tier" type="radio" value="enterprise"/>
-<strong>Enterprise Custom</strong>
-<b id="priceEnterprise">$0.00</b>
-<small>Maximum service package</small>
-</label>
-</div>
-</div>
-<div class="field-group">
-<label class="field-label">Target State Jurisdiction</label>
-<select class="field" id="phoneFilingState" required="">
-<option data-price="0.00" selected="" value="NATIONAL">Federal / Cross-State Regulation (No State Fee)</option>
-<option data-price="50.00" value="AL">Alabama (+$50.00)</option><option data-price="250.00" value="AK">Alaska (+$250.00)</option>
-<option data-price="50.00" value="AZ">Arizona (+$50.00)</option><option data-price="45.00" value="AR">Arkansas (+$45.00)</option>
-<option data-price="70.00" value="CA">California (+$70.00)</option><option data-price="50.00" value="CO">Colorado (+$50.00)</option>
-<option data-price="120.00" value="CT">Connecticut (+$120.00)</option><option data-price="90.00" value="DE">Delaware (+$90.00)</option>
-<option data-price="125.00" value="FL">Florida (+$125.00)</option><option data-price="100.00" value="GA">Georgia (+$100.00)</option>
-<option data-price="50.00" value="HI">Hawaii (+$50.00)</option><option data-price="100.00" value="ID">Idaho (+$100.00)</option>
-<option data-price="150.00" value="IL">Illinois (+$150.00)</option><option data-price="95.00" value="IN">Indiana (+$95.00)</option>
-<option data-price="50.00" value="IA">Iowa (+$50.00)</option><option data-price="165.00" value="KS">Kansas (+$165.00)</option>
-<option data-price="40.00" value="KY">Kentucky (+$40.00)</option><option data-price="100.00" value="LA">Louisiana (+$100.00)</option>
-<option data-price="175.00" value="ME">Maine (+$175.00)</option><option data-price="100.00" value="MD">Maryland (+$100.00)</option>
-<option data-price="500.00" value="MA">Massachusetts (+$500.00)</option><option data-price="50.00" value="MI">Michigan (+$50.00)</option>
-<option data-price="135.00" value="MN">Minnesota (+$135.00)</option><option data-price="50.00" value="MS">Mississippi (+$50.00)</option>
-<option data-price="50.00" value="MO">Missouri (+$50.00)</option><option data-price="70.00" value="MT">Montana (+$70.00)</option>
-<option data-price="100.00" value="NE">Nebraska (+$100.00)</option><option data-price="75.00" value="NV">Nevada (+$75.00)</option>
-<option data-price="100.00" value="NH">New Hampshire (+$100.00)</option><option data-price="125.00" value="NJ">New Jersey (+$125.00)</option>
-<option data-price="50.00" value="NM">New Mexico (+$50.00)</option><option data-price="200.00" value="NY">New York (+$200.00)</option>
-<option data-price="125.00" value="NC">North Carolina (+$125.00)</option><option data-price="135.00" value="ND">North Dakota (+$135.00)</option>
-<option data-price="99.00" value="OH">Ohio (+$99.00)</option><option data-price="100.00" value="OK">Oklahoma (+$100.00)</option>
-<option data-price="100.00" value="OR">Oregon (+$100.00)</option><option data-price="125.00" value="PA">Pennsylvania (+$125.00)</option>
-<option data-price="150.00" value="RI">Rhode Island (+$150.00)</option><option data-price="110.00" value="SC">South Carolina (+$110.00)</option>
-<option data-price="150.00" value="SD">South Dakota (+$150.00)</option><option data-price="300.00" value="TN">Tennessee (+$300.00)</option>
-<option data-price="300.00" value="TX">Texas (+$300.00)</option><option data-price="70.00" value="UT">Utah (+$70.00)</option>
-<option data-price="125.00" value="VT">Vermont (+$125.00)</option><option data-price="100.00" value="VA">Virginia (+$100.00)</option>
-<option data-price="200.00" value="WA">Washington (+$200.00)</option><option data-price="100.00" value="WV">West Virginia (+$100.00)</option>
-<option data-price="130.00" value="WI">Wisconsin (+$130.00)</option><option data-price="100.00" value="WY">Wyoming (+$100.00)</option>
-</select>
-</div>
-<div class="field-group">
-<label class="field-label">Proposed Legal Entity Name</label>
-<input class="field" id="phoneCompanyName" placeholder="Enterprise Solutions LLC" required=""/>
-</div>
-<div class="field-group full">
-<label class="field-label">Available Add-ons — Ctrl/Cmd + Click for Multiple</label>
-<select class="field" id="phoneUpsellSelection" multiple="" style="min-height: 120px !important;">
-<option data-price="49.00" value="ein_procurement">EIN Federal Tax ID Procurement (+$49.00)</option>
-<option data-price="39.00" value="operating_agreement">Custom Corporate Operating Agreement (+$39.00)</option>
-<option data-price="125.00" value="registered_agent">Registered Agent Compliance Shield (+$125.00)</option>
-<option data-price="59.00" value="boir_compliance">FinCEN BOI Regulatory Compliance Filing (+$59.00)</option>
-<option data-price="45.00" value="trucking_boc3">Logistics Process Agent (BOC-3) Sheet (+$45.00)</option>
-<option data-price="79.00" value="corporate_seal">Official Corporate Seal &amp; Ledger Kit (+$79.00)</option>
-<option data-price="725.00" value="web_design">Professional Website (+$725.00)</option>
-<option data-price="125.00" value="logo_design">Professional Logo (+$125.00)</option>
-</select>
-</div>
-</div>
-</div>
-<div class="console-card">
-<div class="card-head">
-<h2>Payment &amp; Order Commitment</h2>
-<p>Use Stripe for live card collection or record the order without collecting payment.</p>
-</div>
-<div class="payment-options">
-<label class="payment-option selected" id="paymentStripeOption">
-<input checked="" name="paymentStrategy" type="radio" value="stripe_live"/>
-<strong>💳 Process Credit Card Through Stripe</strong>
-<small>Payment must be confirmed before the paid order is committed.</small>
-</label>
-<label class="payment-option" id="paymentOfflineOption">
-<input name="paymentStrategy" type="radio" value="log_without_payment"/>
-<strong>📄 Record Without Payment</strong>
-<small>For complimentary, check, wire, or other offline arrangements.</small>
-</label>
-</div>
-<div class="card-terminal" id="cardTerminal">
-<div class="section-label">Secure Stripe Card Collection</div>
-<div id="secureCardElementContainer"></div>
-<div class="muted" style="margin-top:8px">Card details are collected by Stripe and are not stored in this page.</div>
-</div>
-</div>
-</div>
-<aside>
-<div class="console-card">
-<div class="card-head">
-<h2>Settlement Summary</h2>
-<p>Live calculation based on the selected service, package, jurisdiction, and add-ons.</p>
-</div>
-<div class="summary-row"><span>Service Core</span><strong id="summaryBase">$0.00</strong></div>
-<div class="summary-row"><span>Jurisdiction</span><strong id="summaryState">$0.00</strong></div>
-<div class="summary-row"><span>Add-ons</span><strong id="summaryUpsells">$0.00</strong></div>
-<div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
-</div>
-<div class="console-card">
-<div class="card-head">
-<h2>Commit Order</h2>
-<p id="commitHelp">Select a client and complete the order configuration.</p>
-</div>
-<button class="primary-btn" disabled="" id="processOrderBtn" type="button">
-              Process Payment &amp; Create Order ➜
-            </button>
-</div>
-<div class="console-card result" id="resultCard">
-<div class="card-head">
-<h2>✓ Order Created</h2>
-<p>The order has been committed to the dashboard order ledger.</p>
-</div>
-<div class="muted">Tracking Number</div>
-<div class="result-code" id="resultTracking">—</div>
-<div class="muted" id="resultDetails"></div>
-<button class="secondary-btn" onclick="location.reload()" style="width:100%;margin-top:16px" type="button">Create Another Order</button>
-</div>
-</aside>
-</div>
-</section>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/admin-auth-guard.js"></script>
+<script src="assets/js/admin-navigation.js"></script>
+</head>
+<body data-page="orders">
+<div id="adminNavigationMount"></div>
+
+<main>
+  <div id="gate" class="gate">Verifying administrator access…</div>
+  <section id="app" hidden>
+    <div class="head">
+      <div>
+        <label>OPERATIONS</label>
+        <h1>Orders Management</h1>
+        <p>Search, review, manage and manually create filings4u orders.</p>
+      </div>
+      <div class="head-actions">
+        <button id="manualOrder" class="primary" type="button">Create manual order</button>
+        <button id="refresh" type="button">Refresh orders</button>
+      </div>
+    </div>
+
+    <div id="stats" class="stats"></div>
+
+    <section class="panel">
+      <div class="filters">
+        <input id="q" placeholder="Search tracking #, customer, email, company or service">
+        <select id="os"><option value="">All order statuses</option></select>
+        <select id="ps"><option value="">All payment statuses</option></select>
+        <select id="svc"><option value="">All services</option></select>
+        <button id="clear" type="button">Clear</button>
+      </div>
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th>Tracking</th><th>Customer</th><th>Service</th><th>Order</th><th>Payment</th><th>Total</th><th>Created</th><th></th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <footer>
+        <span id="count"></span>
+        <div><button id="prev" type="button">Previous</button><span id="page"></span><button id="next" type="button">Next</button></div>
+      </footer>
+    </section>
+  </section>
 </main>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  "use strict";
 
-  const DB_URL = "https://lrbimrlbskjweynxlgas.supabase.co";
-  const DB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyYmltcmxic2tqd2V5bnhsZ2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ0NTYsImV4cCI6MjA5NDEwMDQ1Nn0.I8fQ6ZjA9oaTqJCF-7Z7vUboXC8zv2cogBv4PC_1ihU";
-
-  let db = window.supabaseInstance || window.supabaseClient;
-  if (!db && window.supabase) db = window.supabase.createClient(DB_URL, DB_KEY);
-  if (!db) return;
-
-  const $ = id => document.getElementById(id);
-  const money = n => Number(n || 0).toLocaleString("en-US", {style:"currency",currency:"USD"});
-  const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-
-  let clients = [];
-  let selectedClient = null;
-  let stripe = null;
-  let elements = null;
-  let cardElement = null;
-  let currentTotal = 0;
-
-  function showStatus(message, error=false) {
-    const el = $("status");
-    el.textContent = message;
-    el.className = "status show " + (error ? "error" : "success");
-  }
-
-  function hideStatus() {
-    $("status").className = "status";
-  }
-
-  function updateClock() {
-    $("portal-clock").textContent = new Date().toLocaleString("en-US", {
-      month:"2-digit",day:"2-digit",year:"numeric",
-      hour:"2-digit",minute:"2-digit",second:"2-digit"
-    });
-  }
-  updateClock();
-  setInterval(updateClock,1000);
-
-  // Sidebar accordion behavior.
-  document.querySelectorAll(".accordion-trigger").forEach(btn => {
-    btn.addEventListener("click", () => {
-      btn.classList.toggle("active");
-      btn.nextElementSibling.classList.toggle("open");
-    });
-  });
-
-  $("logoutBtn").addEventListener("click", async () => {
-    await db.auth.signOut();
-    location.replace("admin-login.html");
-  });
-
-  async function verifyAdmin() {
-    const {data,error} = await db.auth.getUser();
-    if (error || !data?.user) throw new Error("Authentication required.");
-    const role = data.user.user_metadata?.role;
-    if (role !== "admin" && !String(data.user.email || "").toLowerCase().endsWith("@filings4u.com")) {
-      throw new Error("Administrative access required.");
-    }
-  }
-
-  async function loadClients() {
-    const {data,error} = await db
-      .from("client_profiles")
-      .select("id,email_address,first_name,last_name,phone_number,street_address,city,state,zip_code,tracking_number,company_name,stripe_customer_id,updated_at")
-      .order("first_name", {ascending:true})
-      .order("last_name", {ascending:true});
-
-    if (error) throw error;
-    clients = data || [];
-
-    const select = $("clientSelector");
-    select.innerHTML = '<option value="">-- Select Client Account --</option>';
-
-    clients.forEach(c => {
-      const name = [c.first_name,c.last_name].filter(Boolean).join(" ").trim() || "Unnamed Client";
-      const company = c.company_name && c.company_name !== "Not Specified" ? ` — ${c.company_name}` : "";
-      const option = document.createElement("option");
-      option.value = c.id;
-      option.textContent = `${name} — ${c.email_address}${company}`;
-      select.appendChild(option);
-    });
-  }
-
-  function renderClient() {
-    selectedClient = clients.find(c => c.id === $("clientSelector").value) || null;
-    const box = $("customerSummary");
-
-    if (!selectedClient) {
-      box.className = "customer-summary";
-      box.innerHTML = "";
-      $("processOrderBtn").disabled = true;
-      return;
-    }
-
-    box.className = "customer-summary show";
-    box.innerHTML = `
-      <div><span>Name</span><strong>${esc([selectedClient.first_name,selectedClient.last_name].filter(Boolean).join(" ") || "—")}</strong></div>
-      <div><span>Email</span><strong>${esc(selectedClient.email_address)}</strong></div>
-      <div><span>Phone</span><strong>${esc(selectedClient.phone_number || "—")}</strong></div>
-      <div><span>Company</span><strong>${esc(selectedClient.company_name || "Not Specified")}</strong></div>
-      <div><span>Address</span><strong>${esc([selectedClient.street_address,selectedClient.city,selectedClient.state,selectedClient.zip_code].filter(Boolean).join(", ") || "—")}</strong></div>
-      <div><span>Tracking</span><strong>${esc(selectedClient.tracking_number || "—")}</strong></div>
-    `;
-    validateReady();
-  }
-
-  $("clientSelector").addEventListener("change", renderClient);
-
-  function getSelectedTier() {
-    return document.querySelector('input[name="tier"]:checked')?.value || "starter";
-  }
-
-  function calculate() {
-    const service = $("phoneServiceTitle");
-    const option = service?.selectedOptions?.[0];
-    const tier = getSelectedTier();
-    const base = Number(option?.dataset?.[tier] || 0);
-    const state = Number($("phoneFilingState")?.selectedOptions?.[0]?.dataset?.price || 0);
-    const upsells = [...($("phoneUpsellSelection")?.selectedOptions || [])]
-      .reduce((sum,opt) => sum + Number(opt.dataset.price || 0), 0);
-
-    currentTotal = Math.max(0, base + state + upsells);
-
-    $("priceStarter").textContent = money(option?.dataset?.starter);
-    $("priceCompliance").textContent = money(option?.dataset?.compliance);
-    $("priceEnterprise").textContent = money(option?.dataset?.enterprise);
-
-    $("summaryBase").textContent = money(base);
-    $("summaryState").textContent = money(state);
-    $("summaryUpsells").textContent = money(upsells);
-    $("summaryTotal").textContent = money(currentTotal);
-
-    document.querySelectorAll(".price-card").forEach(card => card.classList.remove("selected"));
-    const active = document.querySelector(`input[name="tier"][value="${tier}"]`);
-    active?.closest(".price-card")?.classList.add("selected");
-
-    validateReady();
-  }
-
-  ["phoneServiceTitle","phoneFilingState","phoneUpsellSelection"].forEach(id => {
-    $(id).addEventListener("change", calculate);
-  });
-  document.querySelectorAll('input[name="tier"]').forEach(r => r.addEventListener("change", calculate));
-
-  function getStrategy() {
-    return document.querySelector('input[name="paymentStrategy"]:checked')?.value || "stripe_live";
-  }
-
-  document.querySelectorAll('input[name="paymentStrategy"]').forEach(r => {
-    r.addEventListener("change", () => {
-      $("paymentStripeOption").classList.toggle("selected", getStrategy() === "stripe_live");
-      $("paymentOfflineOption").classList.toggle("selected", getStrategy() === "log_without_payment");
-      const stripeSelected = getStrategy() === "stripe_live";
-      $("cardTerminal").classList.toggle("show", stripeSelected);
-
-      if (stripeSelected && !cardElement) {
-        initStripe().catch(err => {
-          console.error("Stripe mount error:", err);
-          showStatus(err.message || "Unable to mount Stripe card collection.", true);
-        });
-      }
-
-      $("processOrderBtn").textContent = stripeSelected
-        ? "Process Payment & Create Order ➜"
-        : "Create Order Without Payment ➜";
-      validateReady();
-    });
-  });
-
-  function validateReady() {
-    const ready = !!selectedClient &&
-      !!$("phoneServiceTitle").value &&
-      !!$("phoneFilingState").value &&
-      !!$("phoneCompanyName").value.trim() &&
-      currentTotal >= 0;
-    $("processOrderBtn").disabled = !ready;
-  }
-
-  async function initStripe() {
-    const publishableKey = window.FILINGS4U_STRIPE_PUBLISHABLE_KEY || "pk_test_51TTy4i0dNjSlvyScX676lZwB34Lby8nEuv0sRorwo6kGYKkTJYiTyPQA6PVjzwUSjB9Kz90LdHtCh2E1BTMMEkTX00HCLPKUkf";
-
-    if (!publishableKey) {
-      throw new Error("Stripe publishable key is not configured.");
-    }
-
-    if (!window.Stripe) {
-      throw new Error("Stripe.js did not load. Please refresh the page and try again.");
-    }
-
-    if (cardElement) {
-      return true;
-    }
-
-    stripe = Stripe(publishableKey);
-    elements = stripe.elements();
-
-    cardElement = elements.create("card", {
-      style: {
-        base: {
-          fontSize: "14px",
-          color: "#0f172a",
-          fontFamily: "system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
-          "::placeholder": { color: "#94a3b8" }
-        },
-        invalid: {
-          color: "#dc2626"
-        }
-      }
-    });
-
-    cardElement.mount("#secureCardElementContainer");
-
-    cardElement.on("change", event => {
-      if (event.error) {
-        showStatus(event.error.message, true);
-      } else {
-        hideStatus();
-      }
-    });
-
-    return true;
-  }
-
-  function buildOrderPayload(paymentId=null) {
-    const serviceOption = $("phoneServiceTitle").selectedOptions[0];
-    const tier = getSelectedTier();
-    const upsells = [...$("phoneUpsellSelection").selectedOptions].map(o => ({
-      code:o.value, name:o.textContent, price:Number(o.dataset.price || 0)
-    }));
-
-    const tracking = "F4U-" + crypto.randomUUID().replaceAll("-","").slice(0,12).toUpperCase();
-
-    return {
-      tracking_number: tracking,
-      first_name: selectedClient.first_name || "",
-      last_name: selectedClient.last_name || "",
-      email_address: selectedClient.email_address.toLowerCase(),
-      phone_number: selectedClient.phone_number || "",
-      company_name: $("phoneCompanyName").value.trim(),
-      selected_service: serviceOption.textContent.trim(),
-      selected_plan: tier,
-      total_paid_amount: getStrategy() === "stripe_live" ? currentTotal : 0,
-      stripe_payment_id: paymentId,
-      payment_collection_strategy: getStrategy(),
-      selected_upsells: JSON.stringify(upsells),
-      account_created: "existing",
-      street_address: selectedClient.street_address || null,
-      city: selectedClient.city || null,
-      state: selectedClient.state || null,
-      zip_code: selectedClient.zip_code || null,
-      form_payload: JSON.stringify({
-        source:"admin-orders",
-        client_profile_id:selectedClient.id,
-        service_code:serviceOption.value,
-        service_name:serviceOption.textContent.trim(),
-        package_tier:tier,
-        jurisdiction:$("phoneFilingState").value,
-        jurisdiction_fee:Number($("phoneFilingState").selectedOptions[0]?.dataset.price || 0),
-        add_ons:upsells,
-        order_total:currentTotal
-      })
-    };
-  }
-
-  async function createDashboardOrder(payload) {
-    const {data,error} = await db.from("dashboard_orders").insert(payload).select().single();
-    if (error) throw error;
-    return data;
-  }
-
-  async function createStripePayment() {
-    if (!stripe || !cardElement) {
-      throw new Error("Stripe card payment is not available. Verify the Stripe publishable key.");
-    }
-
-    const {data:{session}} = await db.auth.getSession();
-    if (!session) {
-      throw new Error("Your administrator session has expired.");
-    }
-
-    const serviceOption = $("phoneServiceTitle").selectedOptions[0];
-    const stateOption = $("phoneFilingState").selectedOptions[0];
-    const tier = getSelectedTier();
-
-    const upsells = [...$("phoneUpsellSelection").selectedOptions].map(o => ({
-      code:o.value,
-      name:o.textContent.trim(),
-      price:Number(o.dataset.price || 0)
-    }));
-
-    // Ask the authenticated Edge Function to create a PaymentIntent.
-    // The card itself remains mounted in Stripe Elements on this page.
-    const response = await fetch(
-      "https://lrbimrlbskjweynxlgas.supabase.co/functions/v1/stripe-webhook",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization":`Bearer ${session.access_token}`
-        },
-        body:JSON.stringify({
-          mode:"admin_moto_payment",
-          amount:Math.round(currentTotal * 100),
-          currency:"usd",
-          customer_id:selectedClient.stripe_customer_id || null,
-          customer_email:selectedClient.email_address,
-          description:`filings4u Admin Order — ${serviceOption.textContent.trim()}`,
-          metadata:{
-            client_profile_id:selectedClient.id,
-            company_name:$("phoneCompanyName").value.trim(),
-            service:serviceOption.value,
-            service_name:serviceOption.textContent.trim(),
-            state:stateOption.value,
-            package_tier:tier,
-            state_fee:Number(stateOption.dataset.price || 0),
-            upsells:JSON.stringify(upsells)
-          }
-        })
-      }
-    );
-
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(result.error || "Stripe PaymentIntent could not be initialized.");
-    }
-
-    const clientSecret =
-      result.client_secret ||
-      result.payment_intent_client_secret ||
-      result.paymentIntent?.client_secret;
-
-    if (!clientSecret) {
-      throw new Error("Stripe PaymentIntent was created without a client secret.");
-    }
-
-    const billingName =
-      [selectedClient.first_name, selectedClient.last_name]
-        .filter(Boolean)
-        .join(" ") || selectedClient.email_address;
-
-    const confirmed = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: cardElement,
-        billing_details: {
-          name: billingName,
-          email: selectedClient.email_address,
-          phone: selectedClient.phone_number || undefined,
-          address: {
-            line1: selectedClient.street_address || undefined,
-            city: selectedClient.city || undefined,
-            state: selectedClient.state || undefined,
-            postal_code: selectedClient.zip_code || undefined
-          }
-        }
-      }
-    });
-
-    if (confirmed.error) {
-      throw new Error(confirmed.error.message);
-    }
-
-    if (!confirmed.paymentIntent ||
-        confirmed.paymentIntent.status !== "succeeded") {
-      throw new Error("Stripe did not confirm the payment.");
-    }
-
-    return confirmed.paymentIntent.id;
-  }
-
-  $("processOrderBtn").addEventListener("click", async () => {
-    hideStatus();
-
-    if (!selectedClient) {
-      showStatus("Select a client account before creating the order.", true);
-      return;
-    }
-
-    const btn = $("processOrderBtn");
-    btn.disabled = true;
-
-    try {
-      let paymentId = null;
-
-      if (getStrategy() === "stripe_live") {
-        showStatus("Opening secure Stripe payment collection...");
-        paymentId = await createStripePayment();
-
-        if (!paymentId) return;
-      }
-
-      showStatus("Payment confirmed. Committing the dashboard order...");
-
-      const payload = buildOrderPayload(paymentId);
-      const order = await createDashboardOrder(payload);
-
-      $("resultTracking").textContent = order.tracking_number;
-      $("resultDetails").innerHTML =
-        `<strong>${esc(payload.first_name)} ${esc(payload.last_name)}</strong><br>` +
-        `${esc(payload.email_address)}<br>` +
-        `${esc(payload.selected_service)} — ${esc(payload.selected_plan)}<br>` +
-        `Recorded: ${money(payload.total_paid_amount)}`;
-
-      $("resultCard").classList.add("show");
-      showStatus("✓ Order successfully committed.", false);
-      $("commitHelp").textContent = "Order created successfully. The client order history can now retrieve this record.";
-
-      // Prevent accidental duplicate submission.
-      btn.textContent = "Order Created ✓";
-      btn.disabled = true;
-
-    } catch (err) {
-      console.error("Admin order failure:", err);
-      showStatus(err.message || "Unable to complete the order.", true);
-      btn.disabled = false;
-    }
-  });
-
-  try {
-    await verifyAdmin();
-    await loadClients();
-    calculate();
-
-    // Stripe Elements is mounted when the Stripe payment option is selected.
-    // This keeps the existing page/template intact and prevents mounting into
-    // a hidden terminal during initial page load.
-    if (getStrategy() === "stripe_live") {
-      $("cardTerminal").classList.add("show");
-      await initStripe();
-    }
-  } catch (err) {
-    console.error(err);
-    alert(err.message || "Administrative session verification failed.");
-    location.replace("admin-login.html");
-  }
-});
-</script>
-<script src="assets/js/filings4u-portal-shell.js"></script></body>
+<div id="shade" class="shade" hidden></div>
+
+<section id="drawer" class="drawer" aria-hidden="true">
+  <div class="drawerHead">
+    <div><label>ORDER RECORD</label><h2 id="drawerTitle"></h2></div>
+    <button id="close" type="button" aria-label="Close order">×</button>
+  </div>
+  <div id="detail" class="detailBody"></div>
+</section>
+
+<section id="manualComposer" class="manual-composer" aria-hidden="true">
+  <div class="drawerHead">
+    <div><label>MANUAL ORDER</label><h2>Create order</h2></div>
+    <button id="closeManual" type="button" aria-label="Close manual order">×</button>
+  </div>
+
+  <form id="manualForm" class="manual-body">
+    <section class="box">
+      <h3>Customer</h3>
+      <div class="manual-grid">
+        <label class="wide">Existing client account
+          <select id="manualClient">
+            <option value="">Unlinked / new customer</option>
+          </select>
+        </label>
+        <label>First name<input id="manualFirst" required></label>
+        <label>Last name<input id="manualLast" required></label>
+        <label>Email address<input id="manualEmail" type="email" required></label>
+        <label>Phone number<input id="manualPhone" type="tel"></label>
+        <label class="wide">Company name<input id="manualCompany"></label>
+      </div>
+    </section>
+
+    <section class="box">
+      <h3>Service</h3>
+      <div class="manual-grid">
+        <label class="wide">Service
+          <select id="manualService" required><option value="">Choose a service</option></select>
+        </label>
+        <label>Plan
+          <select id="manualPlan" required>
+            <option value="starter">Starter</option>
+            <option value="compliance">Compliance</option>
+            <option value="enterprise">Enterprise</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label>Jurisdiction / state<input id="manualState" maxlength="30" placeholder="Optional"></label>
+        <label class="wide">Internal order note<textarea id="manualNote" rows="3" placeholder="Optional note about why this manual order was created"></textarea></label>
+      </div>
+    </section>
+
+    <section class="box">
+      <h3>Pricing & payment</h3>
+      <div class="payment-choice">
+        <label><input type="radio" name="manualPaymentMode" value="paid" checked> Paid order</label>
+        <label><input type="radio" name="manualPaymentMode" value="free"> Free / no-charge order</label>
+      </div>
+
+      <div class="manual-grid pricing-grid">
+        <label>Service fee<input id="manualServiceFee" type="number" min="0" step=".01" value="0"></label>
+        <label>Government fee<input id="manualGovernmentFee" type="number" min="0" step=".01" value="0"></label>
+        <label>Add-ons<input id="manualAddons" type="number" min="0" step=".01" value="0"></label>
+        <label>Order status
+          <select id="manualStatus">
+            <option value="submitted">Submitted</option>
+            <option value="processing" selected>Processing</option>
+            <option value="completed">Completed</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="manual-total">
+        <span>Order total</span>
+        <strong id="manualTotal">$0.00</strong>
+        <small id="manualPaymentSummary">Manual paid order</small>
+      </div>
+    </section>
+
+    <div class="manual-actions">
+      <button id="cancelManual" type="button">Cancel</button>
+      <button id="createManual" class="primary" type="submit">Create order</button>
+    </div>
+  </form>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+<script src="assets/js/admin-orders.js"></script>
+</body>
 </html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10b981">
+<title>Invoices & Billing | filings4u Administration</title>
+<link href="images/fav.png" rel="icon" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/admin-invoices.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/admin-auth-guard.js"></script>
+<script src="assets/js/admin-navigation.js"></script>
+</head>
+<body data-page="invoices">
+<div id="adminNavigationMount"></div>
+<main>
+  <div id="gate" class="gate">Verifying administrator access…</div>
+  <section id="app" hidden>
+    <div class="head invoice-head">
+      <div>
+        <label>BILLING & ACCOUNTS RECEIVABLE</label>
+        <h1>Invoices & Billing</h1>
+        <p>Create itemized filings4u invoices, deliver them to client portals, track balances, and manage payment status.</p>
+      </div>
+      <button id="newInvoice" class="primary">+ Create invoice</button>
+    </div>
+
+    <section class="invoice-stats">
+      <article><span>Outstanding</span><strong id="statOutstanding">$0.00</strong><small>Unpaid client balance</small></article>
+      <article><span>Overdue</span><strong id="statOverdue">$0.00</strong><small>Past due balance</small></article>
+      <article><span>Paid</span><strong id="statPaid">$0.00</strong><small>Collected invoices</small></article>
+      <article><span>Drafts</span><strong id="statDraft">0</strong><small>Not yet delivered</small></article>
+    </section>
+
+    <section class="panel invoice-panel">
+      <div class="filters invoice-filters">
+        <input id="invoiceSearch" type="search" placeholder="Search invoice #, client, email or tracking #">
+        <select id="statusFilter"><option value="">All invoice statuses</option></select>
+        <select id="paymentFilter"><option value="">All payment statuses</option></select>
+        <button id="clearFilters" type="button">Clear</button>
+      </div>
+      <div class="table">
+        <table>
+          <thead><tr><th>Invoice</th><th>Client</th><th>Issued</th><th>Due</th><th>Status</th><th>Payment</th><th>Total</th><th></th></tr></thead>
+          <tbody id="invoiceRows"></tbody>
+        </table>
+      </div>
+      <footer><span id="invoiceCount"></span></footer>
+    </section>
+  </section>
+</main>
+
+<div id="invoiceShade" class="invoice-shade" hidden></div>
+
+<aside id="invoiceDrawer" class="invoice-drawer" aria-hidden="true">
+  <div class="drawer-top">
+    <div><label>INVOICE RECORD</label><h2 id="drawerInvoiceNumber">Invoice</h2></div>
+    <button id="closeDrawer" class="icon-button" type="button">×</button>
+  </div>
+  <div id="drawerContent" class="drawer-content"></div>
+</aside>
+
+<section id="invoiceComposer" class="composer" aria-hidden="true">
+  <div class="composer-head">
+    <div><label>BRANDED INVOICE BUILDER</label><h2 id="composerTitle">Create invoice</h2></div>
+    <button id="closeComposer" class="icon-button" type="button">×</button>
+  </div>
+  <form id="invoiceForm">
+    <div class="composer-scroll">
+      <section class="form-section">
+        <div class="form-section-title"><span>1</span><div><h3>Client & invoice details</h3><p>Select the client, due date, order, and invoice status.</p></div></div>
+        <div class="form-grid">
+          <label>Client<select id="clientId" required><option value="">Select a client</option></select></label>
+          <label>Client email<input id="clientEmail" type="email" required readonly></label>
+          <label>Related order<select id="orderId"><option value="">No related order</option></select></label>
+          <label>Tracking number<input id="trackingNumber" readonly></label>
+          <label>Due date<input id="dueDate" type="date" required></label>
+          <label>Invoice status<select id="invoiceStatus"><option value="draft">Draft</option><option value="open">Open</option><option value="sent">Sent</option><option value="overdue">Overdue</option><option value="paid">Paid</option><option value="void">Void</option><option value="cancelled">Cancelled</option></select></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title line-title"><span>2</span><div><h3>Itemized charges</h3><p>Add as many products, government fees, filing services, or other billable items as needed.</p></div><button id="addLine" type="button" class="secondary-action">+ Add line</button></div>
+        <div class="line-header"><span>Description</span><span>Qty</span><span>Unit price</span><span>Total</span><span></span></div>
+        <div id="lineItems" class="line-items"></div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title"><span>3</span><div><h3>Adjustments & terms</h3><p>Apply discounts, tax, shipping, customer notes, and payment instructions.</p></div></div>
+        <div class="form-grid">
+          <label>Discount amount<input id="discount" type="number" min="0" step="0.01" value="0"></label>
+          <label>Tax rate (%)<input id="taxRate" type="number" min="0" step="0.01" value="0"></label>
+          <label>Shipping / delivery<input id="shipping" type="number" min="0" step="0.01" value="0"></label>
+          <label>Payment status<select id="paymentStatus"><option value="unpaid">Unpaid</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="failed">Failed</option><option value="refunded">Refunded</option><option value="cancelled">Cancelled</option></select></label>
+          <label class="full">Payment terms<input id="paymentTerms" placeholder="Example: Due upon receipt or Net 15"></label>
+          <label class="full">Payment URL<input id="paymentUrl" type="url" placeholder="Optional secure payment link"></label>
+          <label class="full">Customer notes<textarea id="customerNotes" rows="4" placeholder="Thank you for choosing filings4u."></textarea></label>
+        </div>
+      </section>
+
+      <section class="invoice-totals">
+        <div><span>Subtotal</span><strong id="calcSubtotal">$0.00</strong></div>
+        <div><span>Discount</span><strong id="calcDiscount">− $0.00</strong></div>
+        <div><span>Tax</span><strong id="calcTax">$0.00</strong></div>
+        <div><span>Shipping</span><strong id="calcShipping">$0.00</strong></div>
+        <div class="grand-total"><span>Total</span><strong id="calcTotal">$0.00</strong></div>
+      </section>
+    </div>
+
+    <div class="composer-actions">
+      <button type="button" id="saveDraft" class="button-secondary">Save draft</button>
+      <button type="submit" id="saveInvoice" class="primary">Save invoice</button>
+    </div>
+  </form>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+<script src="assets/js/admin-invoices.js"></script>
+</body>
+</html>
