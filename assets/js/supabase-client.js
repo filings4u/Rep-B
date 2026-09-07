@@ -3,7 +3,7 @@
 
   const SUPABASE_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_RlmqwQM8ATOc7-ML9hvwgw_UljUEavh';
-  const STORAGE_KEY = 'filings4u-client-auth-v2';
+  const STORAGE_KEY = 'filings4u-admin-auth-v2';
 
   if (!window.supabase?.createClient) {
     console.error('Supabase JS failed to load.');
@@ -23,6 +23,6 @@
     }
   );
 
-  window.filings4uAuthRealm = 'client';
+  window.filings4uAuthRealm = 'admin';
   window.filings4uAuthStorageKey = STORAGE_KEY;
 })();

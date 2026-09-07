@@ -3,41 +3,80 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(v||0));
 const date=v=>v?new Date(v).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
 const dateTime=v=>v?new Date(v).toLocaleString():'—';
+
 let db,user,profile,orders=[],filtered=[];
+let toastTimer;
 
 async function boot(){
   const auth=await window.filings4uRequireClient();
   if(!auth)return;
+
   ({db,user,profile}=auth);
+  hydrateProfile();
 
-  document.querySelectorAll('.client-nav a').forEach(a=>a.classList.toggle('is-active',a.dataset.page===document.body.dataset.page));
-  const name=[profile.first_name,profile.last_name].filter(Boolean).join(' ')||'My Account';
-  const company=profile.company_name||'filings4u client';
-  const initial=(profile.first_name||profile.company_name||profile.email_address||'C').charAt(0).toUpperCase();
-  $('clientName').textContent=name;
-  $('clientAvatar').textContent=initial;
-  if($('clientMenuName')) $('clientMenuName').textContent=name;
-  if($('clientMenuCompany')) $('clientMenuCompany').textContent=company;
-  if($('clientMenuAvatar')) $('clientMenuAvatar').textContent=initial;
+  const {data,error}=await db.from('orders')
+    .select('id,tracking_number,company_name,first_name,last_name,email_address,phone_number,selected_plan,selected_service,created_at,user_id,service_key,plan_tier,service_type,jurisdiction_state,order_status,payment_status,currency,service_fee,government_fee,addons_total,subtotal_amount,total_amount,total_paid_amount,submitted_at,paid_at,updated_at')
+    .eq('user_id',user.id)
+    .order('created_at',{ascending:false});
 
-  const {data,error}=await db.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
   if(error){
     $('gate').textContent='Unable to load your orders.';
+    $('gate').style.color='#991b1b';
     return toast(error.message);
   }
 
   orders=data||[];
   $('gate').hidden=true;
   $('app').hidden=false;
+
   renderStats();
   applyFilters();
+
+  const requestedOrder=new URLSearchParams(location.search).get('order');
+  if(requestedOrder){
+    const owned=orders.some(o=>String(o.id)===String(requestedOrder));
+    if(owned){
+      openOrder(requestedOrder);
+    }else{
+      toast('That order is not available in this account.');
+    }
+  }
+}
+
+function hydrateProfile(){
+  const name=[profile.first_name,profile.last_name].filter(Boolean).join(' ')||'My Account';
+  const company=profile.company_name||'filings4u client';
+  const initial=(profile.first_name||profile.company_name||profile.email_address||'C').charAt(0).toUpperCase();
+
+  $('clientName').textContent=name;
+  $('clientAvatar').textContent=initial;
+  if($('clientMenuName'))$('clientMenuName').textContent=name;
+  if($('clientMenuCompany'))$('clientMenuCompany').textContent=company;
+  if($('clientMenuAvatar'))$('clientMenuAvatar').textContent=initial;
+}
+
+function statusClass(value){
+  return String(value||'')
+    .trim().toLowerCase()
+    .replace(/\s+/g,'-')
+    .replace(/_/g,'-')
+    .replace(/[^a-z0-9-]/g,'');
 }
 
 function renderStats(){
   $('totalOrders').textContent=orders.length;
-  $('openOrders').textContent=orders.filter(o=>!['completed','cancelled','refunded'].includes((o.order_status||'').toLowerCase())).length;
-  $('completedOrders').textContent=orders.filter(o=>(o.order_status||'').toLowerCase()==='completed').length;
-  $('totalPaid').textContent=money(orders.reduce((sum,o)=>sum+Number(o.total_paid_amount||0),0));
+
+  $('openOrders').textContent=orders.filter(o=>
+    !['completed','cancelled','refunded'].includes((o.order_status||'').toLowerCase())
+  ).length;
+
+  $('completedOrders').textContent=orders.filter(o=>
+    (o.order_status||'').toLowerCase()==='completed'
+  ).length;
+
+  $('totalPaid').textContent=money(
+    orders.reduce((sum,o)=>sum+Number(o.total_paid_amount||0),0)
+  );
 }
 
 function applyFilters(){
@@ -46,11 +85,16 @@ function applyFilters(){
   const payment=$('paymentFilter').value;
 
   filtered=orders.filter(o=>{
-    const hay=[o.tracking_number,o.selected_service,o.service_key,o.company_name,o.plan_tier,o.jurisdiction_state].join(' ').toLowerCase();
+    const hay=[
+      o.tracking_number,o.selected_service,o.service_key,o.company_name,
+      o.plan_tier,o.selected_plan,o.jurisdiction_state
+    ].join(' ').toLowerCase();
+
     return (!q||hay.includes(q)) &&
       (!status||o.order_status===status) &&
       (!payment||o.payment_status===payment);
   });
+
   renderList();
 }
 
@@ -59,27 +103,28 @@ function renderList(){
     <div class="order-row">
       <div>
         <b>${esc(o.selected_service||o.service_key||'filings4u service')}</b>
-        <small>${esc(o.company_name||'')} ${o.plan_tier?'· '+esc(o.plan_tier):''}</small>
+        <small>${esc(o.company_name||'')} ${(o.plan_tier||o.selected_plan)?'· '+esc(o.plan_tier||o.selected_plan):''}</small>
       </div>
+
       <div><b>${esc(o.tracking_number||'—')}</b></div>
-      <div><span class="pill ${esc((o.order_status||'').toLowerCase())}">${esc(o.order_status||'Pending')}</span></div>
-      <div><span class="pill ${esc((o.payment_status||'').toLowerCase())}">${esc(o.payment_status||'Pending')}</span></div>
+      <div><span class="pill ${esc(statusClass(o.order_status))}">${esc(o.order_status||'Pending')}</span></div>
+      <div><span class="pill ${esc(statusClass(o.payment_status))}">${esc(o.payment_status||'Pending')}</span></div>
       <div><b>${money(o.total_amount||o.total_paid_amount)}</b></div>
       <div><small>${date(o.created_at)}</small></div>
-      <div><button class="view-btn" data-id="${esc(o.id)}" aria-label="View order">›</button></div>
+      <div><button class="view-btn" type="button" data-id="${esc(o.id)}" aria-label="View order">›</button></div>
     </div>
   `).join(''):'<div class="empty">No orders match your current filters.</div>';
 
-  document.querySelectorAll('.view-btn').forEach(btn=>btn.onclick=()=>openOrder(btn.dataset.id));
+  document.querySelectorAll('.view-btn[data-id]').forEach(btn=>{
+    btn.onclick=()=>openOrder(btn.dataset.id);
+  });
 }
 
 function openOrder(id){
-  const o=orders.find(x=>x.id===id);
+  const o=orders.find(x=>String(x.id)===String(id));
   if(!o)return;
-  $('drawerTitle').textContent=o.selected_service||o.service_key||'Order';
 
-  const upsells=Array.isArray(o.upsells_payload)?o.upsells_payload:o.upsells_payload||[];
-  const formPayload=o.form_payload&&typeof o.form_payload==='object'?o.form_payload:{};
+  $('drawerTitle').textContent=o.selected_service||o.service_key||'Order';
 
   $('drawerBody').innerHTML=`
     <section class="detail-section">
@@ -118,23 +163,11 @@ function openOrder(id){
         ${detail('Order total',money(o.total_amount))}
         ${detail('Amount paid',money(o.total_paid_amount))}
       </div>
-    </section>
-
-    ${upsells && (Array.isArray(upsells)?upsells.length:Object.keys(upsells).length)?`
-    <section class="detail-section">
-      <h3>Add-ons</h3>
-      <div class="drawer-body"><div class="json-box">${esc(JSON.stringify(upsells,null,2))}</div></div>
-    </section>`:''}
-
-    ${Object.keys(formPayload).length?`
-    <section class="detail-section">
-      <h3>Submitted information</h3>
-      <div class="drawer-body"><div class="json-box">${esc(JSON.stringify(formPayload,null,2))}</div></div>
-    </section>`:''}
-  `;
+    </section>`;
 
   $('drawer').setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
+  document.body.classList.add('order-drawer-open');
+  $('closeDrawer').focus();
 }
 
 function detail(label,value){
@@ -143,7 +176,14 @@ function detail(label,value){
 
 function closeDrawer(){
   $('drawer').setAttribute('aria-hidden','true');
-  document.body.style.overflow='';
+  document.body.classList.remove('order-drawer-open');
+}
+
+function toast(message){
+  clearTimeout(toastTimer);
+  $('toast').textContent=message;
+  $('toast').hidden=false;
+  toastTimer=setTimeout(()=>$('toast').hidden=true,2800);
 }
 
 $('search').addEventListener('input',applyFilters);
@@ -151,12 +191,9 @@ $('statusFilter').addEventListener('change',applyFilters);
 $('paymentFilter').addEventListener('change',applyFilters);
 $('closeDrawer').onclick=closeDrawer;
 $('drawerBackdrop').onclick=closeDrawer;
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
 
-function toast(msg){
-  $('toast').textContent=msg;
-  $('toast').hidden=false;
-  setTimeout(()=>$('toast').hidden=true,2800);
-}
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&$('drawer').getAttribute('aria-hidden')==='false')closeDrawer();
+});
 
 boot();

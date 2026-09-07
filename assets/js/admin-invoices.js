@@ -266,3 +266,25 @@ $('invoiceSearch').oninput=filterInvoices;$('statusFilter').onchange=filterInvoi
 $('clearFilters').onclick=()=>{$('invoiceSearch').value='';$('statusFilter').value='';$('paymentFilter').value='';filterInvoices()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
 boot();
+
+/* Order ↔ invoice deep-link bridge */
+window.addEventListener('load',()=>{
+  const params=new URLSearchParams(location.search);
+  const orderId=params.get('order');
+  const invoiceId=params.get('invoice');
+  if(orderId){
+    const tryOrder=()=>{
+      const select=document.getElementById('invoiceOrder')||document.getElementById('orderId')||document.querySelector('select[name="order_id"]');
+      const create=document.getElementById('newInvoice')||document.getElementById('createInvoice');
+      if(create&&!document.body.classList.contains('invoice-overlay-open'))create.click();
+      if(select){select.value=orderId;select.dispatchEvent(new Event('change',{bubbles:true}));}
+    };
+    setTimeout(tryOrder,350);
+  }
+  if(invoiceId){
+    setTimeout(()=>{
+      const target=document.querySelector(`[data-id="${CSS.escape(invoiceId)}"]`);
+      if(target)target.click();
+    },350);
+  }
+});

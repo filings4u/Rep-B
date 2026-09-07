@@ -1,22 +1,26 @@
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dt=v=>v?new Date(v).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+
 let db,user,profile,entities=[],filtered=[];
+let toastTimer;
 
 async function boot(){
   const auth=await window.filings4uRequireClient();
   if(!auth)return;
+
   ({db,user,profile}=auth);
   hydrateProfile();
 
   const {data,error}=await db
     .from('client_entities')
-    .select('id,entity_name,filing_description,plan_tier,standing_status,state_of_formation,formation_date,client_email,registry_document_url,created_at,source_order_id,service_key,updated_at')
+    .select('id,entity_name,filing_description,plan_tier,standing_status,state_of_formation,formation_date,registry_document_url,created_at,source_order_id,service_key,updated_at')
     .eq('user_id',user.id)
     .order('created_at',{ascending:false});
 
   if(error){
     $('gate').textContent='Unable to load your entities.';
+    $('gate').style.color='#991b1b';
     return toast(error.message);
   }
 
@@ -32,20 +36,21 @@ function hydrateProfile(){
   const name=[profile.first_name,profile.last_name].filter(Boolean).join(' ')||'My Account';
   const company=profile.company_name||'filings4u client';
   const initial=(profile.first_name||profile.company_name||profile.email_address||'C').charAt(0).toUpperCase();
+
   $('clientName').textContent=name;
   $('clientAvatar').textContent=initial;
-  if($('clientMenuName')) $('clientMenuName').textContent=name;
-  if($('clientMenuCompany')) $('clientMenuCompany').textContent=company;
-  if($('clientMenuAvatar')) $('clientMenuAvatar').textContent=initial;
+  if($('clientMenuName'))$('clientMenuName').textContent=name;
+  if($('clientMenuCompany'))$('clientMenuCompany').textContent=company;
+  if($('clientMenuAvatar'))$('clientMenuAvatar').textContent=initial;
 }
 
 function normalizedStatus(value){
-  return String(value||'').trim().toLowerCase().replace(/\s+/g,'-');
+  return String(value||'').trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
 }
 
 function isGood(value){
   const s=String(value||'').toLowerCase();
-  return ['good','active','good standing','in good standing','compliant'].some(x=>s.includes(x));
+  return ['good standing','in good standing','active','compliant'].some(x=>s.includes(x));
 }
 
 function needsAttention(value){
@@ -57,8 +62,11 @@ function buildFilters(){
   const standings=[...new Set(entities.map(e=>e.standing_status).filter(Boolean))].sort();
   const states=[...new Set(entities.map(e=>e.state_of_formation).filter(Boolean))].sort();
 
-  $('standingFilter').innerHTML='<option value="">All standing statuses</option>'+standings.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
-  $('stateFilter').innerHTML='<option value="">All jurisdictions</option>'+states.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  $('standingFilter').innerHTML='<option value="">All standing statuses</option>'+
+    standings.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+  $('stateFilter').innerHTML='<option value="">All jurisdictions</option>'+
+    states.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
 }
 
 function renderStats(){
@@ -79,6 +87,7 @@ function applyFilters(){
       (!standing||e.standing_status===standing) &&
       (!state||e.state_of_formation===state);
   });
+
   renderEntities();
 }
 
@@ -102,7 +111,7 @@ function renderEntities(){
 
       <div class="entity-card__footer">
         <small>Added ${dt(e.created_at)}</small>
-        <button class="open-entity" data-id="${esc(e.id)}">View entity →</button>
+        <button class="open-entity" type="button" data-id="${esc(e.id)}">View entity →</button>
       </div>
     </article>
   `).join(''):'<div class="empty-state">No business entities match your current filters.</div>';
@@ -110,11 +119,23 @@ function renderEntities(){
   document.querySelectorAll('.open-entity').forEach(btn=>btn.onclick=()=>openEntity(btn.dataset.id));
 }
 
+function safeHttpUrl(value){
+  if(!value)return null;
+  try{
+    const url=new URL(String(value));
+    return ['http:','https:'].includes(url.protocol)?url.href:null;
+  }catch{
+    return null;
+  }
+}
+
 function openEntity(id){
   const e=entities.find(x=>x.id===id);
   if(!e)return;
-  $('drawerTitle').textContent=e.entity_name||'Business entity';
 
+  const registryUrl=safeHttpUrl(e.registry_document_url);
+
+  $('drawerTitle').textContent=e.entity_name||'Business entity';
   $('drawerBody').innerHTML=`
     <section class="detail-section">
       <h3>Entity record</h3>
@@ -125,12 +146,11 @@ function openEntity(id){
         ${detail('Formation date',dt(e.formation_date))}
         ${detail('Plan',e.plan_tier)}
         ${detail('Service',e.service_key)}
-        ${detail('Client email',e.client_email)}
         ${detail('Added',dt(e.created_at))}
         ${detail('Last updated',dt(e.updated_at))}
         ${detail('Source order ID',e.source_order_id)}
       </div>
-      ${e.registry_document_url?`<a class="registry-link" href="${esc(e.registry_document_url)}" target="_blank" rel="noopener">Open registry document →</a>`:''}
+      ${registryUrl?`<a class="registry-link" href="${esc(registryUrl)}" target="_blank" rel="noopener noreferrer">Open registry document →</a>`:''}
     </section>
 
     <section class="detail-section">
@@ -141,7 +161,8 @@ function openEntity(id){
     </section>`;
 
   $('drawer').setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
+  document.body.classList.add('entity-drawer-open');
+  $('closeDrawer').focus();
 }
 
 function detail(label,value){
@@ -150,7 +171,14 @@ function detail(label,value){
 
 function closeDrawer(){
   $('drawer').setAttribute('aria-hidden','true');
-  document.body.style.overflow='';
+  document.body.classList.remove('entity-drawer-open');
+}
+
+function toast(message){
+  clearTimeout(toastTimer);
+  $('toast').textContent=message;
+  $('toast').hidden=false;
+  toastTimer=setTimeout(()=>$('toast').hidden=true,2600);
 }
 
 $('search').addEventListener('input',applyFilters);
@@ -158,12 +186,8 @@ $('standingFilter').addEventListener('change',applyFilters);
 $('stateFilter').addEventListener('change',applyFilters);
 $('closeDrawer').onclick=closeDrawer;
 $('drawerBackdrop').onclick=closeDrawer;
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
-
-function toast(msg){
-  $('toast').textContent=msg;
-  $('toast').hidden=false;
-  setTimeout(()=>$('toast').hidden=true,2600);
-}
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&$('drawer').getAttribute('aria-hidden')==='false')closeDrawer();
+});
 
 boot();
