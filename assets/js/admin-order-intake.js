@@ -135,8 +135,18 @@ async function submit(event){
     if(mode()==='card'){
       if(!elements){await mountStripe();toast('Secure payment form is ready. Enter payment details, then click Pay & create order.');return;}
       const {error:submitError}=await elements.submit();if(submitError)throw submitError;
-      const {paymentIntent,error}=await stripe.confirmPayment({elements,clientSecret,redirect:'if_required'});
-      if(error)throw error;
+      const returnUrl=new URL('admin-order-intake.html?payment_return=1',window.location.href).href;
+      const {paymentIntent,error}=await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams:{return_url:returnUrl},
+        redirect:'if_required'
+      });
+      if(error){
+        const detail=[error.message,error.code,error.decline_code].filter(Boolean).join(' · ');
+        throw new Error(detail||'Stripe could not confirm the payment.');
+      }
+      if(!paymentIntent)throw new Error('Stripe did not return a PaymentIntent.');
       if(paymentIntent.status!=='succeeded')throw new Error(`Payment is ${paymentIntent.status}. The order was not marked paid.`);
       const orderPayload=buildOrder('paid',new Date().toISOString());
       const {data:order,error:orderError}=await db.from('orders').insert(orderPayload).select().single();if(orderError)throw orderError;

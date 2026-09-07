@@ -66,7 +66,7 @@ $('loginForm').addEventListener('submit', async (event) => {
     const admin = await validateAdmin(data.user);
 
     if (!admin) {
-      await db.auth.signOut();
+      await db.auth.signOut({ scope: 'local' });
       throw new Error('This account is not an active filings4u administrator.');
     }
 
@@ -87,7 +87,7 @@ $('togglePassword').addEventListener('click', () => {
 });
 
 $('signOutExisting').addEventListener('click', async () => {
-  await db.auth.signOut();
+  await db.auth.signOut({ scope: 'local' });
   $('signOutExisting').hidden = true;
   showMessage('The existing session has been signed out.', 'ok');
 });
