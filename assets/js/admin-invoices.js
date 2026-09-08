@@ -13,6 +13,7 @@ async function boot(){
   $('gate').hidden=true;$('app').hidden=false;
   await loadReferenceData();
   await loadInvoices();
+  handleIncomingReference();
   if(new URLSearchParams(location.search).get('new')==='1'){
     setTimeout(()=>openComposer(),0);
     history.replaceState({},'',location.pathname);
@@ -123,7 +124,7 @@ function filterInvoices(){
 
 function resetComposer(){
   editId=null;currentInvoice=null;lines=[];$('invoiceForm').reset();
-  $('invoiceStatus').value='draft';$('paymentStatus').value='unpaid';$('discount').value='0';$('taxRate').value='0';$('shipping').value='0';
+  $('invoiceStatus').value='draft';$('paymentStatus').value='unpaid';$('discountType').value='none';$('discount').value='0';$('discount').disabled=true;$('taxRate').value='0';$('shipping').value='0';
   $('clientEmail').value='';$('trackingNumber').value='';$('orderId').innerHTML='<option value="">No related order</option>';
   const d=new Date();d.setDate(d.getDate()+15);$('dueDate').value=d.toISOString().slice(0,10);
   addLine({description:'',quantity:1,unit_price:0});$('composerTitle').textContent='Create invoice';calculate();
@@ -135,7 +136,7 @@ function openComposer(invoice=null){
     $('clientId').value=invoice.client_profile_id||'';syncClient();
     setTimeout(()=>{$('orderId').value=invoice.order_id||'';syncOrder()},0);
     $('clientEmail').value=invoice.client_email||'';$('trackingNumber').value=invoice.tracking_number||'';$('dueDate').value=invoice.due_date||'';
-    $('invoiceStatus').value=invoice.status||'draft';$('paymentStatus').value=invoice.payment_status||'unpaid';$('discount').value=invoice.discount_amount||0;$('taxRate').value=invoice.tax_rate||0;$('shipping').value=invoice.shipping_amount||0;$('paymentTerms').value=invoice.payment_terms||'';$('paymentUrl').value=invoice.payment_url||'';$('customerNotes').value=invoice.customer_notes||'';
+    $('invoiceStatus').value=invoice.status||'draft';$('paymentStatus').value=invoice.payment_status||'unpaid';$('discountType').value=invoice.discount_type||((Number(invoice.discount_amount)||0)>0?'cash':'none');$('discount').value=invoice.discount_value??invoice.discount_amount??0;$('discount').disabled=$('discountType').value==='none';$('taxRate').value=invoice.tax_rate||0;$('shipping').value=invoice.shipping_amount||0;$('paymentTerms').value=invoice.payment_terms||'';$('paymentUrl').value=invoice.payment_url||'';$('customerNotes').value=invoice.customer_notes||'';
     lines=[];$('lineItems').innerHTML='';(invoice.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number).forEach(addLine);if(!lines.length)addLine({description:invoice.line_item_description||'',quantity:1,unit_price:invoice.subtotal_amount||invoice.total_amount||0});
   }
   showOverlay('invoiceComposer');calculate();
@@ -163,10 +164,18 @@ function renderLines(){
 }
 function renderLineTotal(row,l){row.querySelector('.line-total').textContent=money(l.quantity*l.unit_price)}
 function totals(){
-  const subtotal=lines.reduce((s,l)=>s+(Number(l.quantity)||0)*(Number(l.unit_price)||0),0);
-  const discount=Math.min(Number($('discount').value)||0,subtotal);
-  const taxable=Math.max(0,subtotal-discount);const rate=Number($('taxRate').value)||0;const tax=taxable*(rate/100);const shipping=Number($('shipping').value)||0;const total=taxable+tax+shipping;
-  return{subtotal,discount,tax,shipping,total,rate};
+  const subtotal=lines.reduce((sum,l)=>sum+(Number(l.quantity)||0)*(Number(l.unit_price)||0),0);
+  const discountType=$('discountType').value||'none';
+  const discountValue=Math.max(0,Number($('discount').value)||0);
+  let discount=0;
+  if(discountType==='percent') discount=Math.min(subtotal,subtotal*(Math.min(discountValue,100)/100));
+  if(discountType==='cash') discount=Math.min(subtotal,discountValue);
+  const taxable=Math.max(0,subtotal-discount);
+  const rate=Math.max(0,Number($('taxRate').value)||0);
+  const tax=taxable*(rate/100);
+  const shipping=Math.max(0,Number($('shipping').value)||0);
+  const total=taxable+tax+shipping;
+  return{subtotal,discount,discountType,discountValue,tax,shipping,total,rate};
 }
 function calculate(){
   const t=totals();$('calcSubtotal').textContent=money(t.subtotal);$('calcDiscount').textContent='− '+money(t.discount);$('calcTax').textContent=money(t.tax);$('calcShipping').textContent=money(t.shipping);$('calcTotal').textContent=money(t.total);
@@ -193,7 +202,7 @@ async function saveInvoice(forceDraft=false){
   const payload={
     document_type:'invoice',client_email:$('clientEmail').value.trim().toLowerCase(),client_profile_id:$('clientId').value,
     order_id:$('orderId').value||null,tracking_number:$('trackingNumber').value||null,line_item_description:lines[0].description,
-    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_amount:t.discount,tax_rate:t.rate,tax_amount:t.tax,
+    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_type:t.discountType,discount_value:t.discountValue,discount_amount:t.discount,tax_rate:t.rate,tax_amount:t.tax,
     shipping_amount:t.shipping,total_amount:t.total,payment_status:$('paymentStatus').value,payment_url:paymentUrl||null,
     customer_notes:$('customerNotes').value.trim()||null,payment_terms:$('paymentTerms').value.trim()||null,created_by:user.id,updated_at:new Date().toISOString()
   };
@@ -228,8 +237,8 @@ async function openDrawer(id){
   $('drawerContent').innerHTML=`
     <div class="drawer-actions">
       <button data-action="edit">Edit invoice</button>
-      <button data-action="print">Print / Save PDF</button>
-      ${inv.status!=='paid'&&inv.status!=='void'?'<button class="send" data-action="send">Send to client portal</button>':''}
+      <button class="download" data-action="print">Download / Print PDF</button>
+      ${inv.status!=='paid'&&inv.status!=='void'&&inv.status!=='cancelled'?'<button class="send" data-action="send">Send invoice</button>':''}
       ${inv.payment_status!=='paid'?'<button data-action="paid">Mark paid</button>':''}
       ${inv.status==='draft'?'<button class="danger" data-action="delete">Delete draft</button>':''}
       ${safePaymentLink(inv.payment_url)}
@@ -238,7 +247,7 @@ async function openDrawer(id){
       <div class="invoice-preview-top"><div><img src="images/logo.png" alt="filings4u"><small>filings4u, LLC · A Subsidiary of Roseland Companies, LLC</small></div><div><h3>${esc(inv.invoice_number||'Invoice')}</h3><small>Due ${date(inv.due_date)}</small></div></div>
       <div class="invoice-client"><div><span>Bill to</span><strong>${esc(name)}</strong><small>${esc(inv.client_email)}</small></div><div><span>Invoice status</span><strong>${esc(inv.status)}</strong><small>${esc(inv.payment_status)}</small></div></div>
       <div class="preview-lines">${lines.map(l=>`<div class="preview-line"><span>${esc(l.description)}</span><span>${l.quantity}</span><span class="unit">${money(l.unit_price)}</span><strong>${money(l.line_total)}</strong></div>`).join('')}</div>
-      <div class="preview-total"><div><span>Subtotal</span><strong>${money(inv.subtotal_amount)}</strong></div>${Number(inv.discount_amount)?`<div><span>Discount</span><strong>− ${money(inv.discount_amount)}</strong></div>`:''}${Number(inv.tax_amount)?`<div><span>Tax (${Number(inv.tax_rate)}%)</span><strong>${money(inv.tax_amount)}</strong></div>`:''}${Number(inv.shipping_amount)?`<div><span>Shipping</span><strong>${money(inv.shipping_amount)}</strong></div>`:''}<div class="grand"><span>Total</span><strong>${money(inv.total_amount)}</strong></div></div>
+      <div class="preview-total"><div><span>Subtotal</span><strong>${money(inv.subtotal_amount)}</strong></div>${Number(inv.discount_amount)?`<div><span>Discount${inv.discount_type==='percent'&&Number(inv.discount_value)?` (${Number(inv.discount_value)}%)`:''}</span><strong>− ${money(inv.discount_amount)}</strong></div>`:''}${Number(inv.tax_amount)?`<div><span>Tax (${Number(inv.tax_rate)}%)</span><strong>${money(inv.tax_amount)}</strong></div>`:''}${Number(inv.shipping_amount)?`<div><span>Shipping</span><strong>${money(inv.shipping_amount)}</strong></div>`:''}<div class="grand"><span>Total</span><strong>${money(inv.total_amount)}</strong></div></div>
     </article>
     <div class="detail-card">
       <div class="detail-row"><div><span>Tracking number</span><strong>${esc(inv.tracking_number||'—')}</strong></div><div><span>Created</span><strong>${datetime(inv.created_at)}</strong></div></div>
@@ -264,17 +273,23 @@ function safePaymentLink(url){
 }
 
 async function sendInvoice(inv){
-  if(!inv.client_profile_id)return toast('This invoice is not linked to a client profile.');
-  const lines=(inv.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price),line_total:Number(l.line_total)}));
-  const mirror={invoice_code:inv.invoice_number,client_id:inv.client_profile_id,email_address:String(inv.client_email||'').trim().toLowerCase(),subtotal:inv.subtotal_amount,tax_percentage:inv.tax_rate,grand_total:inv.total_amount,payment_status:inv.payment_status==='paid'?'Paid':'Unpaid',due_date:inv.due_date,itemized_lines:lines};
+  if(!inv.client_profile_id)return toast('This invoice must be linked to a client before it can be sent.');
+  if(inv.payment_status==='paid')return toast('This invoice is already paid.');
+  const button=$('drawerContent').querySelector('[data-action="send"]');
+  const old=button?.textContent||'Send invoice';
+  if(button){button.disabled=true;button.textContent='Sending…';}
   try{
-    const {data:existing,error:lookupError}=await db.from('client_invoices').select('invoice_id').eq('invoice_code',inv.invoice_number).eq('client_id',inv.client_profile_id).maybeSingle();
-    if(lookupError)throw lookupError;
-    if(existing){const {error}=await db.from('client_invoices').update(mirror).eq('invoice_id',existing.invoice_id);if(error)throw error;}
-    else {const {error}=await db.from('client_invoices').insert(mirror);if(error)throw error;}
-    const {error:updateError}=await db.from('invoices').update({status:'sent',sent_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',inv.id);if(updateError)throw updateError;
-    toast('Invoice delivered to the client billing flow.');closeAll();await loadInvoices();
-  }catch(e){toast(e.message||'Unable to send invoice.')}
+    const {data,error}=await db.functions.invoke('send-invoice-checkout',{body:{invoice_id:inv.id}});
+    if(error)throw error;
+    if(data?.error)throw new Error(data.error);
+    toast(`Invoice sent to ${inv.client_email}.`);
+    closeAll();
+    await loadInvoices();
+  }catch(e){
+    toast(e.message||'Unable to send invoice.');
+  }finally{
+    if(button){button.disabled=false;button.textContent=old;}
+  }
 }
 async function markPaid(inv){
   try{const now=new Date().toISOString();const {error}=await db.from('invoices').update({status:'paid',payment_status:'paid',paid_at:now,updated_at:now}).eq('id',inv.id);if(error)throw error;
@@ -319,6 +334,7 @@ function toast(m){$('toast').textContent=m;$('toast').hidden=false;clearTimeout(
 
 $('newInvoice').onclick=()=>openComposer();$('closeComposer').onclick=closeAll;$('closeDrawer').onclick=closeAll;$('invoiceShade').onclick=closeAll;
 $('addLine').onclick=()=>addLine();$('clientId').onchange=syncClient;$('orderId').onchange=syncOrder;
+$('discountType').addEventListener('change',()=>{const type=$('discountType').value;$('discount').disabled=type==='none';if(type==='none')$('discount').value='0';$('discount').max=type==='percent'?'100':'';calculate();});
 ['discount','taxRate','shipping'].forEach(id=>$(id).addEventListener('input',calculate));
 $('invoiceForm').onsubmit=e=>{e.preventDefault();saveInvoice(false)};$('saveDraft').onclick=()=>saveInvoice(true);
 $('invoiceSearch').oninput=filterInvoices;$('statusFilter').onchange=filterInvoices;$('paymentFilter').onchange=filterInvoices;
