@@ -1,5 +1,6 @@
 const SUPABASE_URL='https://lrbimrlbskjweynxlgas.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_RlmqwQM8ATOc7-ML9hvwgw_UljUEavh';
+const STRIPE_PUBLISHABLE_KEY='pk_test_51TTy4i0dNjSlvyScX676lZwB34Lby8nEuv0sRorwo6kGYKkTJYiTyPQA6PVjzwUSjB9Kz90LdHtCh2E1BTMMEkTX00HCLPKUkf';
 const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 const $=id=>document.getElementById(id);
 const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(v)||0);
@@ -46,9 +47,10 @@ async function preparePayment(){
   const data=await invoke('create_payment');
   if(data.paid){return showPaid(data.invoice_number||invoice.invoice_number);}
   if(!data.client_secret)throw new Error('Secure payment could not be initialized.');
-  if(!data.publishable_key)throw new Error('Stripe publishable key is not configured.');
+  const stripePublishableKey=data.publishable_key||STRIPE_PUBLISHABLE_KEY;
+  if(!stripePublishableKey)throw new Error('Stripe publishable key is not configured.');
   clientSecret=data.client_secret;
-  stripe=Stripe(data.publishable_key);
+  stripe=Stripe(stripePublishableKey);
   elements=stripe.elements({clientSecret,appearance:{theme:'stripe',variables:{colorPrimary:'#10b981',borderRadius:'9px',fontFamily:'DM Sans, sans-serif'}}});
   paymentElement=elements.create('payment',{layout:'tabs'});
   paymentElement.mount('#paymentElement');
