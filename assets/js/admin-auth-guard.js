@@ -1,62 +1,27 @@
-(() => {
-  'use strict';
-
-  const db = window.filings4uSupabase;
-  const LOGIN_PAGE = 'admin-login.html';
-
-  function loginUrl(reason) {
-    const next = encodeURIComponent(location.pathname.split('/').pop() + location.search);
-    return `${LOGIN_PAGE}?error=${encodeURIComponent(reason)}&next=${next}`;
+(function(){'use strict';
+window.filings4uRequireAdmin=async function(options={}){
+  const db=window.filings4uAdminSupabase;
+  const loginUrl=options.loginUrl||'admin-login.html';
+  if(!db){console.error('[filings4u] Admin Supabase client missing.');return null}
+  const {data,error}=await db.auth.getUser();
+  const user=data?.user||null;
+  if(error||!user){
+    const next=encodeURIComponent((location.pathname.split('/').pop()||'admin-dashboard.html')+location.search+location.hash);
+    if(options.redirect!==false)location.href=`${loginUrl}?error=sign-in-required&next=${next}`;
+    return null;
   }
-
-  async function localSignOut() {
-    if (db) await db.auth.signOut({ scope: 'local' });
+  const {data:admin,error:adminError}=await db.from('admin_profiles')
+    .select('id,email_address,first_name,last_name,role,terminated_date')
+    .eq('id',user.id).maybeSingle();
+  if(adminError||!admin||admin.terminated_date){
+    await db.auth.signOut({scope:'local'});
+    if(options.redirect!==false)location.href=`${loginUrl}?error=not-admin`;
+    return null;
   }
-
-  window.filings4uRequireAdmin = async function filings4uRequireAdmin() {
-    if (!db) {
-      location.replace(loginUrl('auth-unavailable'));
-      return null;
-    }
-
-    const { data: userData, error: userError } = await db.auth.getUser();
-    const user = userError ? null : userData?.user;
-
-    if (!user) {
-      location.replace(loginUrl('sign-in-required'));
-      return null;
-    }
-
-    const [{ data: admin, error: adminError }, { data: client, error: clientError }] = await Promise.all([
-      db.from('admin_profiles')
-        .select('id,email_address,first_name,last_name,role,terminated_date,avatar_url')
-        .eq('id', user.id)
-        .maybeSingle(),
-      db.from('client_profiles')
-        .select('id,email_address')
-        .eq('id', user.id)
-        .maybeSingle()
-    ]);
-
-    if (adminError || clientError) {
-      console.error(adminError || clientError);
-      await localSignOut();
-      location.replace(loginUrl('access-check-failed'));
-      return null;
-    }
-
-    if (!admin || admin.terminated_date || client) {
-      await localSignOut();
-      location.replace(loginUrl(client ? 'client-account' : 'not-admin'));
-      return null;
-    }
-
-    return { db, user, profile: admin };
-  };
-
-  window.filings4uSignOut = async function filings4uSignOut(event) {
-    event?.preventDefault?.();
-    await localSignOut();
-    location.replace(LOGIN_PAGE);
-  };
+  return {db,user,admin};
+};
+window.filings4uSignOut=async function(){
+  if(window.filings4uAdminSupabase)await window.filings4uAdminSupabase.auth.signOut({scope:'local'});
+  location.href='admin-login.html';
+};
 })();

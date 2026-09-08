@@ -1,62 +1,35 @@
-(() => {
-  'use strict';
-
-  const db = window.filings4uSupabase;
-  const LOGIN_PAGE = 'customer-login.html';
-
-  function loginUrl(reason) {
-    const next = encodeURIComponent(location.pathname.split('/').pop() + location.search);
-    return `${LOGIN_PAGE}?error=${encodeURIComponent(reason)}&next=${next}`;
+(function(){'use strict';
+window.filings4uRequireClient=async function(options={}){
+  const db=window.filings4uClientSupabase;
+  const loginUrl=options.loginUrl||'customer-login.html';
+  if(!db){console.error('[filings4u] Client Supabase client missing.');return null}
+  const {data,error}=await db.auth.getUser();
+  const user=data?.user||null;
+  if(error||!user){
+    const next=encodeURIComponent((location.pathname.split('/').pop()||'client-dashboard.html')+location.search+location.hash);
+    if(options.redirect!==false)location.href=`${loginUrl}?error=sign-in-required&next=${next}`;
+    return null;
   }
-
-  async function localSignOut() {
-    if (db) await db.auth.signOut({ scope: 'local' });
+  // Explicitly reject admin accounts on the CLIENT session only.
+  const [{data:profile,error:profileError},{data:admin}]=await Promise.all([
+    db.from('client_profiles').select('id,email_address,first_name,last_name,company_name,avatar_url,tracking_number').eq('id',user.id).maybeSingle(),
+    db.from('admin_profiles').select('id,terminated_date').eq('id',user.id).maybeSingle()
+  ]);
+  if(profileError){console.error(profileError);return null}
+  if(admin&&!admin.terminated_date){
+    await db.auth.signOut({scope:'local'});
+    if(options.redirect!==false)location.href=`${loginUrl}?error=admin-account&next=${encodeURIComponent('client-dashboard.html')}`;
+    return null;
   }
-
-  window.filings4uRequireClient = async function filings4uRequireClient() {
-    if (!db) {
-      location.replace(loginUrl('auth-unavailable'));
-      return null;
-    }
-
-    const { data: userData, error: userError } = await db.auth.getUser();
-    const user = userError ? null : userData?.user;
-
-    if (!user) {
-      location.replace(loginUrl('sign-in-required'));
-      return null;
-    }
-
-    const [{ data: client, error: clientError }, { data: admin, error: adminError }] = await Promise.all([
-      db.from('client_profiles')
-        .select('id,email_address,first_name,last_name,company_name,avatar_url')
-        .eq('id', user.id)
-        .maybeSingle(),
-      db.from('admin_profiles')
-        .select('id,email_address,terminated_date')
-        .eq('id', user.id)
-        .maybeSingle()
-    ]);
-
-    if (clientError || adminError) {
-      console.error(clientError || adminError);
-      await localSignOut();
-      location.replace(loginUrl('access-check-failed'));
-      return null;
-    }
-
-    if (!client || admin) {
-      await localSignOut();
-      location.replace(loginUrl(admin ? 'admin-account' : 'not-client'));
-      return null;
-    }
-
-    return { db, user, profile: client };
-  };
-
-  window.filings4uSignOut = async function filings4uSignOut(event) {
-    event?.preventDefault?.();
-    await localSignOut();
-    location.replace(LOGIN_PAGE);
-  };
+  if(!profile){
+    await db.auth.signOut({scope:'local'});
+    if(options.redirect!==false)location.href=`${loginUrl}?error=client-profile-required&next=${encodeURIComponent('client-dashboard.html')}`;
+    return null;
+  }
+  return {db,user,profile};
+};
+window.filings4uClientSignOut=async function(){
+  if(window.filings4uClientSupabase)await window.filings4uClientSupabase.auth.signOut({scope:'local'});
+  location.href='customer-login.html';
+};
 })();
