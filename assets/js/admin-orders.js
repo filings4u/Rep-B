@@ -76,6 +76,111 @@ function render(){
 
 function box(t,a){return `<section class="box"><h3>${esc(t)}</h3><div class="grid">${a.map(x=>`<div class="item"><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('')}</div></section>`;}
 
+
+function humanLabel(key){
+  return String(key||'')
+    .replace(/([a-z0-9])([A-Z])/g,'$1 $2')
+    .replace(/[_-]+/g,' ')
+    .replace(/\b\w/g,c=>c.toUpperCase())
+    .trim();
+}
+function displayValue(value){
+  if(value===true)return 'Yes';
+  if(value===false)return 'No';
+  if(value===null||value===undefined||value==='')return '—';
+  if(Array.isArray(value))return value.length?value.map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(', '):'—';
+  if(typeof value==='number')return String(value);
+  if(typeof value==='object')return JSON.stringify(value);
+  return String(value);
+}
+function addonRows(payload){
+  let list=payload;
+  if(typeof list==='string'){try{list=JSON.parse(list)}catch{list=[]}}
+  if(!Array.isArray(list)){
+    if(Array.isArray(list?.items))list=list.items;
+    else if(Array.isArray(list?.addons))list=list.addons;
+    else list=[];
+  }
+  if(!list.length)return '<div class="structured-empty">No add-ons were selected for this order.</div>';
+  return `<div class="addon-list">${list.map((item,index)=>{
+    if(typeof item!=='object'||item===null){
+      return `<div class="addon-card"><div><strong>${esc(displayValue(item))}</strong></div></div>`;
+    }
+    const name=item.description||item.name||item.title||item.label||humanLabel(item.item_key||item.addon_key||`Add-on ${index+1}`);
+    const qty=Number(item.quantity||1);
+    const unit=Number(item.unit_amount??item.price??item.amount??0);
+    const line=Number(item.line_total??item.total??unit*qty);
+    const code=item.item_key||item.addon_key||item.key||'';
+    return `<div class="addon-card">
+      <div class="addon-card__main">
+        <strong>${esc(name)}</strong>
+        ${code?`<small>${esc(code)}</small>`:''}
+      </div>
+      <div class="addon-card__meta">
+        <span><b>Qty</b>${esc(qty)}</span>
+        <span><b>Unit</b>${money(unit)}</span>
+        <span><b>Total</b>${money(line)}</span>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+function primitiveEntries(obj){
+  return Object.entries(obj||{}).filter(([,v])=>v===null||['string','number','boolean'].includes(typeof v));
+}
+function objectEntries(obj){
+  return Object.entries(obj||{}).filter(([,v])=>v&&typeof v==='object'&&!Array.isArray(v));
+}
+function arrayEntries(obj){
+  return Object.entries(obj||{}).filter(([,v])=>Array.isArray(v));
+}
+function fieldGrid(obj){
+  const entries=primitiveEntries(obj).filter(([k])=>!['schema'].includes(k));
+  if(!entries.length)return '';
+  return `<div class="form-field-grid">${entries.map(([k,v])=>`
+    <div class="form-field-row">
+      <b>${esc(humanLabel(k))}</b>
+      <span>${esc(displayValue(v))}</span>
+    </div>`).join('')}</div>`;
+}
+function arrayBlock(key,arr){
+  if(!arr?.length)return '';
+  if(arr.every(v=>v===null||['string','number','boolean'].includes(typeof v))){
+    return `<div class="form-subsection"><h4>${esc(humanLabel(key))}</h4><div class="form-value-list">${arr.map(v=>`<span>${esc(displayValue(v))}</span>`).join('')}</div></div>`;
+  }
+  return `<div class="form-subsection"><h4>${esc(humanLabel(key))}</h4>${arr.map((v,i)=>typeof v==='object'&&v!==null?`<div class="form-repeat"><strong>${esc(humanLabel(key))} ${i+1}</strong>${fieldGrid(v)}</div>`:`<div class="form-repeat">${esc(displayValue(v))}</div>`).join('')}</div>`;
+}
+function objectBlock(key,obj,depth=0){
+  if(!obj||typeof obj!=='object')return '';
+  const direct=fieldGrid(obj);
+  const children=objectEntries(obj).map(([k,v])=>objectBlock(k,v,depth+1)).join('');
+  const arrays=arrayEntries(obj).map(([k,v])=>arrayBlock(k,v)).join('');
+  if(!direct&&!children&&!arrays)return '';
+  const heading=depth===0?'h3':'h4';
+  return `<section class="${depth===0?'form-section':'form-subsection'}">
+    <${heading}>${esc(humanLabel(key))}</${heading}>
+    ${direct}${arrays}${children}
+  </section>`;
+}
+function serviceFormView(payload){
+  let data=payload;
+  if(typeof data==='string'){try{data=JSON.parse(data)}catch{return '<div class="structured-empty">The saved application payload could not be parsed.</div>'}}
+  if(!data||typeof data!=='object'||Array.isArray(data))return '<div class="structured-empty">No completed service form is stored for this order.</div>';
+
+  const metaKeys=['schema','email','phone','company_name','contact_email','contact_phone'];
+  const meta={};
+  for(const k of metaKeys)if(data[k]!==undefined)meta[k]=data[k];
+
+  const sections=[];
+  for(const [k,v] of Object.entries(data)){
+    if(metaKeys.includes(k))continue;
+    if(v&&typeof v==='object'&&!Array.isArray(v))sections.push(objectBlock(k,v,0));
+    else if(Array.isArray(v))sections.push(`<section class="form-section"><h3>${esc(humanLabel(k))}</h3>${arrayBlock(k,v)}</section>`);
+    else sections.push('');
+  }
+  const top=fieldGrid(meta);
+  return `${top?`<div class="form-summary">${top}</div>`:''}${sections.filter(Boolean).join('')||'<div class="structured-empty">No application answers were saved.</div>'}`;
+}
+
 function openOrder(id){
   closeOverlays();
   active=orders.find(o=>String(o.id)===String(id)); if(!active)return toast('Order record could not be found.');
@@ -111,8 +216,8 @@ function openOrder(id){
         `}
       </div>
     </section>
-    <section class="box"><h3>Selected add-ons / upsells</h3><pre class="json">${esc(JSON.stringify(o.upsells_payload??o.selected_upsells??[],null,2))}</pre></section>
-    <section class="box"><h3>Wizard / service form payload</h3><pre class="json">${esc(JSON.stringify(o.form_payload??{},null,2))}</pre></section>`;
+    <section class="box structured-box"><h3>Selected add-ons / upsells</h3>${addonRows(o.upsells_payload??o.selected_upsells??[])}</section>
+    <section class="box structured-box"><h3>Completed service application</h3><div class="completed-form">${serviceFormView(o.form_payload??{})}</div></section>`;
   $('save').onclick=save;
   $('shade').hidden=false;$('drawer').classList.add('open');$('drawer').setAttribute('aria-hidden','false');
   document.body.classList.add('drawer-open');$('close')?.focus();
