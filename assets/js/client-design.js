@@ -1,12 +1,29 @@
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let db,user,profile,projects=[],current;
 async function boot(){const a=await window.filings4uRequireClient();if(!a)return;({db,user,profile}=a);const name=[profile?.first_name,profile?.last_name].filter(Boolean).join(' ')||'My Account',company=profile?.company_name||'filings4u client',initial=(profile?.first_name||user.email||'C')[0].toUpperCase();['clientName','clientMenuName'].forEach(id=>{if($(id))$(id).textContent=name});$('clientMenuCompany').textContent=company;['clientAvatar','clientMenuAvatar'].forEach(id=>$(id).textContent=initial);await load()}
 async function load(){
-  const {data,error}=await db.from('design_projects')
-    .select('id,order_id,client_profile_id,client_email,project_type,title,status,tracking_number,review_url,intake_status,intake_payload,intake_completed_at,created_at,updated_at,design_proofs(id,project_id,version_number,proof_title,storage_path,mime_type,status,client_decision_note,decided_at,created_at),design_comments(id,project_id,proof_id,author_user_id,author_type,message,created_at)')
+  const projectResult=await db.from('design_projects')
+    .select('id,order_id,client_profile_id,client_email,project_type,title,status,tracking_number,review_url,intake_status,intake_payload,intake_completed_at,created_at,updated_at')
     .eq('client_profile_id',user.id)
     .order('updated_at',{ascending:false});
-  if(error)return toast(error.message);
-  projects=data||[];
+  if(projectResult.error)throw projectResult.error;
+
+  projects=projectResult.data||[];
+  const ids=projects.map(p=>p.id);
+  if(!ids.length){render();return;}
+
+  const [proofResult,commentResult]=await Promise.all([
+    db.from('design_proofs').select('id,project_id,version_number,proof_title,storage_path,mime_type,status,client_decision_note,decided_at,created_at').in('project_id',ids),
+    db.from('design_comments').select('id,project_id,proof_id,author_user_id,author_type,message,created_at').in('project_id',ids)
+  ]);
+
+  if(proofResult.error)console.warn('Design proofs load failed',proofResult.error);
+  if(commentResult.error)console.warn('Design comments load failed',commentResult.error);
+  const proofs=proofResult.data||[],comments=commentResult.data||[];
+  projects=projects.map(p=>({
+    ...p,
+    design_proofs:proofs.filter(x=>x.project_id===p.id),
+    design_comments:comments.filter(x=>x.project_id===p.id)
+  }));
   render();
 }
 function render(){
@@ -83,4 +100,36 @@ async function submitIntake(e){
   close();
 }
 function toast(m){$('toast').textContent=m;$('toast').hidden=false;setTimeout(()=>$('toast').hidden=true,2800)}
-document.querySelectorAll('[data-open-intake]').forEach(b=>b.onclick=()=>openIntake(b.dataset.openIntake));$('closeWorkspace').onclick=close;$('closeIntake').onclick=close;$('shade').onclick=close;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('shade').hidden)close()});boot();
+function wireDesignActions(){
+  document.addEventListener('click',e=>{
+    const intakeButton=e.target.closest('[data-open-intake]');
+    if(intakeButton){e.preventDefault();openIntake(intakeButton.dataset.openIntake);return;}
+    const projectIntake=e.target.closest('[data-project-intake]');
+    if(projectIntake){e.preventDefault();openProjectIntake(projectIntake.dataset.projectIntake);return;}
+    const projectButton=e.target.closest('[data-project]');
+    if(projectButton){e.preventDefault();openProject(projectButton.dataset.project);return;}
+  });
+  $('closeWorkspace')?.addEventListener('click',close);
+  $('closeIntake')?.addEventListener('click',close);
+  $('shade')?.addEventListener('click',close);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('shade')?.hidden)close()});
+}
+async function startDesignCenter(){
+  wireDesignActions();
+  try{
+    const auth=await window.filings4uRequireClient();
+    if(!auth)return;
+    ({db,user,profile}=auth);
+    const name=[profile?.first_name,profile?.last_name].filter(Boolean).join(' ')||'My Account';
+    const company=profile?.company_name||'filings4u client';
+    const initial=(profile?.first_name||profile?.company_name||user?.email||'C')[0].toUpperCase();
+    ['clientName','clientMenuName'].forEach(id=>{if($(id))$(id).textContent=name});
+    if($('clientMenuCompany'))$('clientMenuCompany').textContent=company;
+    ['clientAvatar','clientMenuAvatar'].forEach(id=>{if($(id))$(id).textContent=initial});
+    await load();
+  }catch(err){
+    console.error('Design Center failed to load',err);
+    toast(err?.message||'Unable to load your Design Center.');
+  }
+}
+startDesignCenter();

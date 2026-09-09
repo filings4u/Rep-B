@@ -1,5 +1,20 @@
-const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let db,user,clients=[],projects=[],logoIntakes=[],webIntakes=[],activeTab='logo',current=null;
-async function boot(){const a=await window.filings4uRequireAdmin();if(!a)return;({db,user}=a);$('gate').hidden=true;$('app').hidden=false;await load()}
+const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));const db=window.filings4uSupabase;let user,clients=[],projects=[],logoIntakes=[],webIntakes=[],activeTab='logo',current=null;
+async function boot(){
+  try{
+    if(!db)throw new Error('Admin Supabase client missing.');
+    const auth=await window.filings4uRequireAdmin();
+    if(!auth)return;
+    user=auth.user;
+    $('gate').hidden=true;
+    $('app').hidden=false;
+    await load();
+  }catch(err){
+    console.error('Design admin boot failed',err);
+    $('gate').hidden=false;
+    $('gate').textContent=err?.message||'Unable to load Design Projects.';
+    $('gate').style.color='#991b1b';
+  }
+}
 async function load(){
   const [c,p,l,w]=await Promise.all([
     db.from('client_profiles').select('id,first_name,last_name,email_address,company_name').order('company_name'),
