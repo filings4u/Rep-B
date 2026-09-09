@@ -313,17 +313,61 @@ async function deleteDraft(inv){
   toast('Draft deleted.');closeAll();await loadInvoices();
 }
 function printInvoice(inv){
-  const c=clientFor(inv);const name=c?.company_name||[c?.first_name,c?.last_name].filter(Boolean).join(' ')||inv.client_email;const ls=(inv.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number);
-  const w=window.open('','_blank','noopener,noreferrer');if(!w)return toast('Allow popups to print the invoice.');
-  w.document.write(`<!doctype html><html><head><title>${esc(inv.invoice_number||'Invoice')}</title><style>body{font-family:Arial,sans-serif;color:#13213a;margin:0;padding:42px}.top{display:flex;justify-content:space-between;border-bottom:4px solid #10b981;padding-bottom:20px}.logo{width:130px}.navy{color:#0a1f44}.meta{text-align:right}.bill{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin:30px 0}small{color:#64748b}table{width:100%;border-collapse:collapse}th{text-align:left;background:#0a1f44;color:#fff;padding:10px}td{padding:11px 10px;border-bottom:1px solid #e5eaf0}.num{text-align:right}.totals{width:340px;margin:24px 0 0 auto}.totals div{display:flex;justify-content:space-between;padding:7px 0}.grand{border-top:2px solid #0a1f44;font-size:20px;font-weight:bold}.notes{margin-top:35px;padding:18px;background:#f8fafc}.foot{margin-top:40px;border-top:1px solid #e5eaf0;padding-top:15px;color:#64748b;font-size:12px}@media print{body{padding:20px}}</style></head><body>
-  <div class="top"><div><img class="logo" src="images/logo.png"><div><strong>filings4u, LLC</strong><br><small>A Subsidiary of Roseland Companies, LLC</small></div></div><div class="meta"><h1 class="navy">INVOICE</h1><strong>${esc(inv.invoice_number||'')}</strong><br><small>Issued ${datetime(inv.created_at)} · Due ${date(inv.due_date)}</small></div></div>
+  const c=clientFor(inv);
+  const name=c?.company_name||[c?.first_name,c?.last_name].filter(Boolean).join(' ')||inv.client_email;
+  const ls=(inv.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number);
+
+  // Do not use noopener/noreferrer here. Some browsers return null from window.open
+  // when those features are passed, which made the Print / Save PDF button appear dead.
+  const w=window.open('about:blank','_blank');
+  if(!w)return toast('Your browser blocked the invoice window. Allow popups for this site and try again.');
+
+  const logoUrl=new URL('images/logo.png',window.location.href).href;
+  const invoiceHtml=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(inv.invoice_number||'Invoice')}</title><style>
+  body{font-family:Arial,sans-serif;color:#13213a;margin:0;padding:42px;background:#fff}
+  .top{display:flex;justify-content:space-between;border-bottom:4px solid #10b981;padding-bottom:20px}
+  .logo{width:130px;max-height:70px;object-fit:contain}
+  .navy{color:#0a1f44}.meta{text-align:right}
+  .bill{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin:30px 0}
+  small{color:#64748b}table{width:100%;border-collapse:collapse}
+  th{text-align:left;background:#0a1f44;color:#fff;padding:10px}
+  td{padding:11px 10px;border-bottom:1px solid #e5eaf0}.num{text-align:right}
+  .totals{width:340px;margin:24px 0 0 auto}.totals div{display:flex;justify-content:space-between;padding:7px 0}
+  .grand{border-top:2px solid #0a1f44;font-size:20px;font-weight:bold}
+  .notes{margin-top:35px;padding:18px;background:#f8fafc}
+  .foot{margin-top:40px;border-top:1px solid #e5eaf0;padding-top:15px;color:#64748b;font-size:12px}
+  @media print{body{padding:20px}.no-print{display:none!important}}
+  </style></head><body>
+  <div class="top"><div><img class="logo" src="${logoUrl}" alt="filings4u"><div><strong>filings4u, LLC</strong><br><small>A Subsidiary of Roseland Companies, LLC</small></div></div><div class="meta"><h1 class="navy">INVOICE</h1><strong>${esc(inv.invoice_number||'')}</strong><br><small>Issued ${datetime(inv.created_at)} · Due ${date(inv.due_date)}</small></div></div>
   <div class="bill"><div><small>BILL TO</small><h3>${esc(name)}</h3><div>${esc(inv.client_email)}</div>${c?.street_address?`<div>${esc(c.street_address)}<br>${esc([c.city,c.state,c.zip_code].filter(Boolean).join(', '))}</div>`:''}</div><div><small>REFERENCE</small><h3>${esc(inv.tracking_number||'filings4u services')}</h3><div>${esc(inv.payment_terms||'Due by stated due date')}</div></div></div>
   <table><thead><tr><th>Description</th><th>Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody>${ls.map(l=>`<tr><td>${esc(l.description)}</td><td>${l.quantity}</td><td class="num">${money(l.unit_price)}</td><td class="num">${money(l.line_total)}</td></tr>`).join('')}</tbody></table>
   <div class="totals"><div><span>Subtotal</span><strong>${money(inv.subtotal_amount)}</strong></div><div><span>Discount</span><strong>− ${money(inv.discount_amount)}</strong></div><div><span>Tax</span><strong>${money(inv.tax_amount)}</strong></div><div><span>Shipping</span><strong>${money(inv.shipping_amount)}</strong></div><div><span>Invoice total</span><strong>${money(inv.total_amount)}</strong></div><div><span>Payment received / deposit</span><strong>− ${money(inv.amount_paid||0)}</strong></div><div class="grand"><span>Balance due</span><strong>${money(inv.balance_due??Math.max(0,Number(inv.total_amount||0)-Number(inv.amount_paid||0)))}</strong></div></div>
   ${inv.customer_notes?`<div class="notes"><strong>Notes</strong><p>${esc(inv.customer_notes)}</p></div>`:''}${inv.payment_url?`<div class="notes"><strong>Payment link</strong><p>${esc(inv.payment_url)}</p></div>`:''}
   <div class="foot">Thank you for choosing filings4u. This invoice was generated from the secure filings4u Administration system.</div>
-  <script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);
+  </body></html>`;
+
+  w.document.open();
+  w.document.write(invoiceHtml);
   w.document.close();
+
+  const triggerPrint=()=>{
+    try{
+      w.focus();
+      w.print();
+    }catch(e){
+      console.error('Invoice print failed:',e);
+      toast('The invoice opened, but the print dialog could not start automatically. Use Ctrl+P or Cmd+P in the invoice window.');
+    }
+  };
+
+  if(w.document.readyState==='complete'){
+    setTimeout(triggerPrint,350);
+  }else{
+    w.addEventListener('load',()=>setTimeout(triggerPrint,350),{once:true});
+    setTimeout(()=>{
+      if(!w.closed)triggerPrint();
+    },1200);
+  }
 }
 function showOverlay(id){
   const target=$(id);
