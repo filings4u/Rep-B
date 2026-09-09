@@ -112,11 +112,43 @@ function icon(type){
   return '•';
 }
 
+
+function notificationAction(n){
+  const type=String(n.notification_type||'').toLowerCase();
+  const title=String(n.title||'').toLowerCase();
+  const hay=`${type} ${title}`;
+
+  if(hay.includes('support')||n.ticket_id){
+    return {href:'client-support.html',label:'Reply to support →'};
+  }
+  if(hay.includes('invoice')||hay.includes('billing')||hay.includes('payment')||hay.includes('receipt')){
+    return {href:'client-billing.html',label:'Open billing →'};
+  }
+  if(hay.includes('filing')||hay.includes('application')){
+    return {href:'client-filings.html',label:'View filing →'};
+  }
+  if(hay.includes('document')||hay.includes('file')){
+    return {href:'client-documents.html',label:'Open documents →'};
+  }
+  if(hay.includes('entity')||hay.includes('business')){
+    return {href:'client-entities.html',label:'View entity →'};
+  }
+  if(hay.includes('design')){
+    return {href:'client-design.html',label:'Open design project →'};
+  }
+  if(hay.includes('order')||n.order_id){
+    const suffix=n.order_id?`?order=${encodeURIComponent(n.order_id)}`:'';
+    return {href:`client-orders.html${suffix}`,label:'View order →'};
+  }
+  return {href:'client-dashboard.html',label:'Open dashboard →'};
+}
+
 async function openNotification(id){
   const n=items.find(x=>x.id===id);
   if(!n)return;
 
   $('drawerTitle').textContent=n.title||'Portal update';
+  const action=notificationAction(n);
   $('drawerBody').innerHTML=`
     <section class="message-card">
       <div class="message-meta">
@@ -125,7 +157,7 @@ async function openNotification(id){
         ${n.ticket_id?`<span class="type-pill">Ticket ${esc(n.ticket_id)}</span>`:''}
       </div>
       <p>${esc(n.message||'No additional message was provided.')}</p>
-      ${n.order_id?`<a class="linked-order" href="client-orders.html?order=${encodeURIComponent(n.order_id)}">View linked order →</a>`:''}
+      <a class="linked-order notification-action" href="${esc(action.href)}">${esc(action.label)}</a>
     </section>`;
 
   $('drawer').setAttribute('aria-hidden','false');
