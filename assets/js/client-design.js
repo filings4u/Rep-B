@@ -29,16 +29,23 @@ async function load(){
 function render(){
   $('projects').innerHTML=projects.length?projects.map(p=>{
     const needsIntake=String(p.intake_status||'').toLowerCase()==='required';
-    return `<article class="project">
+    const proofCount=p.design_proofs?.length||0;
+    const hasReview=proofCount>0 || !!safeHttpUrl(p.review_url);
+    const pendingProof=(p.design_proofs||[]).some(x=>String(x.status||'').toLowerCase()==='pending');
+    return `<article class="project ${hasReview?'review-ready':''}">
       <small>${esc(p.project_type)} design</small>
       <h2>${esc(p.title)}</h2>
-      <p>${needsIntake?'Complete the project discovery form so our design team can begin.':(p.project_type==='website'?'Review your website build and send revision notes.':'Review concepts, approve proofs, or request changes.')}</p>
+      <p>${hasReview?(p.project_type==='website'?'A website review is ready. View the current proof, leave comments, approve it, or request changes.':'A design proof is ready for your review.'):(needsIntake?'Complete the project discovery form so our design team can begin.':(p.project_type==='website'?'Your website project is in progress.':'Your design project is in progress.'))}</p>
       <div class="project-meta">
-        <span>${esc(needsIntake?'intake required':String(p.status||'').replaceAll('_',' '))}</span>
-        <span>${p.design_proofs?.length||0} proof${p.design_proofs?.length===1?'':'s'}</span>
+        <span>${esc(hasReview?(pendingProof?'review required':'proof posted'):(needsIntake?'intake required':String(p.status||'').replaceAll('_',' ')))}</span>
+        <span>${proofCount} proof${proofCount===1?'':'s'}</span>
         <span>${p.design_comments?.length||0} comment${p.design_comments?.length===1?'':'s'}</span>
       </div>
-      ${needsIntake?`<button data-project-intake="${esc(p.id)}">Complete ${p.project_type==='website'?'website':'logo'} intake →</button>`:`<button data-project="${esc(p.id)}">Open design workspace →</button>`}
+      <div class="project-actions">
+        ${hasReview?`<button class="review-project" data-project="${esc(p.id)}">Review ${p.project_type==='website'?'website':'proof'} →</button>`:''}
+        ${needsIntake?`<button class="${hasReview?'secondary-project-action':''}" data-project-intake="${esc(p.id)}">Complete ${p.project_type==='website'?'website':'logo'} intake →</button>`:''}
+        ${!hasReview&&!needsIntake?`<button data-project="${esc(p.id)}">Open design workspace →</button>`:''}
+      </div>
     </article>`;
   }).join(''):'<div class="empty">Your active logo and website design projects will appear here.</div>';
   document.querySelectorAll('[data-project]').forEach(b=>b.onclick=()=>openProject(b.dataset.project));
@@ -47,7 +54,27 @@ function render(){
 function show(id){$('shade').hidden=false;$(id).setAttribute('aria-hidden','false');document.body.style.overflow='hidden'}function close(){$('shade').hidden=true;$('workspace').setAttribute('aria-hidden','true');$('intakeModal').setAttribute('aria-hidden','true');document.body.style.overflow=''}
 
 function safeHttpUrl(value){try{const u=new URL(String(value||''));return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}}
-async function openProject(id){current=projects.find(p=>p.id===id);$('workspaceTitle').textContent=current.title;const proofs=(current.design_proofs||[]).sort((a,b)=>b.version_number-a.version_number),comments=(current.design_comments||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));$('workspaceBody').innerHTML=`<div class="workspace-content">${safeHttpUrl(current.review_url)?`<section class="review-link"><div class="box-title">Website review</div><div class="box-content"><p>Open the current website build in a new tab, then return here to leave revision notes.</p><a href="${esc(safeHttpUrl(current.review_url))}" target="_blank" rel="noopener">View website proof →</a></div></section>`:''}<section class="proofs"><div class="box-title">Design proofs</div><div class="box-content"><div class="proof-grid">${proofs.length?proofs.map(p=>`<article class="proof"><strong>v${p.version_number} · ${esc(p.proof_title)}</strong><span>${esc(String(p.status||'').replaceAll('_',' '))}</span><div class="proof-actions"><button data-view="${esc(p.storage_path)}">View proof</button>${p.status==='pending'?`<button class="approve" data-decide="${p.id}" data-value="approved">Approve</button><button class="changes" data-decide="${p.id}" data-value="changes_requested">Request changes</button>`:''}</div></article>`).join(''):'<div class="empty">No proofs have been posted yet.</div>'}</div></div></section><section class="conversation"><div class="box-title">Comments & revision requests</div><div class="box-content">${comments.map(c=>`<div class="comment"><strong>${c.author_type==='client'?'You':'filings4u design team'}</strong><p>${esc(c.message)}</p></div>`).join('')||'<div class="empty">No comments yet.</div>'}<form id="commentForm" class="comment-form"><textarea id="message" required rows="2" placeholder="Describe changes or send a note…"></textarea><button>Send</button></form></div></section></div>`;show('workspace');document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>viewProof(b.dataset.view));document.querySelectorAll('[data-decide]').forEach(b=>b.onclick=()=>decide(b.dataset.decide,b.dataset.value));$('commentForm').onsubmit=comment}
+async function openProject(id){
+  current=projects.find(p=>p.id===id);if(!current)return;
+  const proofs=[...(current.design_proofs||[])].sort((a,b)=>b.version_number-a.version_number);
+  const comments=[...(current.design_comments||[])].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const hasReview=proofs.length>0||!!safeHttpUrl(current.review_url);
+  if(String(current.intake_status||'').toLowerCase()==='required'&&!hasReview)return openProjectIntake(id);
+
+  $('workspaceTitle').textContent=current.title;
+  const reviewUrl=safeHttpUrl(current.review_url);
+  const reviewBanner=hasReview?`<section class="review-task-banner"><div><small>DESIGN REVIEW REQUIRED</small><h3>Your design team posted a review.</h3><p>Review the current website/proof below. You can approve it, request changes, and send comments directly to the design team.</p></div></section>`:'';
+  const websiteReview=reviewUrl?`<section class="review-link"><div class="box-title">Website review</div><div class="box-content"><p>Open the current website build, then return here to leave revision notes.</p><a href="${esc(reviewUrl)}" target="_blank" rel="noopener">View website →</a></div></section>`:'';
+  const proofHtml=`<section class="proofs"><div class="box-title">${current.project_type==='website'?'Website proofs':'Design proofs'}</div><div class="box-content"><div class="proof-grid">${proofs.length?proofs.map(p=>`<article class="proof"><strong>v${p.version_number} · ${esc(p.proof_title)}</strong><span>${esc(String(p.status||'').replaceAll('_',' '))}</span><div class="proof-actions"><button data-view="${esc(p.storage_path)}">View ${current.project_type==='website'?'website proof':'proof'}</button>${String(p.status||'').toLowerCase()==='pending'?`<button class="approve" data-decide="${p.id}" data-value="approved">Approve</button><button class="changes" data-decide="${p.id}" data-value="changes_requested">Request changes</button>`:''}</div></article>`).join(''):'<div class="empty">No proofs have been posted yet.</div>'}</div></div></section>`;
+  const intakeReminder=String(current.intake_status||'').toLowerCase()==='required'?`<section class="intake-reminder"><div><strong>Website intake is still incomplete.</strong><p>You can review the posted proof now and complete the discovery form separately.</p></div><button data-project-intake="${esc(current.id)}">Complete intake</button></section>`:'';
+
+  $('workspaceBody').innerHTML=`<div class="workspace-content">${reviewBanner}${websiteReview}${proofHtml}${intakeReminder}<section class="conversation"><div class="box-title">Comments & revision requests</div><div class="box-content">${comments.map(c=>`<div class="comment"><strong>${c.author_type==='client'?'You':'filings4u design team'}</strong><p>${esc(c.message)}</p></div>`).join('')||'<div class="empty">No comments yet.</div>'}<form id="commentForm" class="comment-form"><textarea id="message" required rows="2" placeholder="Describe changes or send a note…"></textarea><button>Send</button></form></div></section></div>`;
+  show('workspace');
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>viewProof(b.dataset.view));
+  document.querySelectorAll('[data-decide]').forEach(b=>b.onclick=()=>decide(b.dataset.decide,b.dataset.value));
+  document.querySelectorAll('[data-project-intake]').forEach(b=>b.onclick=()=>openProjectIntake(b.dataset.projectIntake));
+  $('commentForm').onsubmit=comment;
+}
 async function viewProof(path){const {data,error}=await db.storage.from('design_proofs').createSignedUrl(path,900);if(error)return toast(error.message);window.open(data.signedUrl,'_blank','noopener,noreferrer')}
 async function decide(id,value){let note='';if(value==='changes_requested'){note=prompt('Describe the changes you want:')||'';if(!note.trim())return}if(value==='approved'&&!confirm('Approve this design proof?'))return;const {error}=await db.rpc('decide_design_proof',{p_proof_id:id,p_decision:value,p_note:note||null});if(error)return toast(error.message);toast(value==='approved'?'Proof approved.':'Revision request sent.');close();await load()}
 async function comment(e){e.preventDefault();const m=$('message').value.trim();if(!m)return;const {error}=await db.from('design_comments').insert({project_id:current.id,author_user_id:user.id,author_type:'client',message:m});if(error)return toast(error.message);toast('Comment sent.');close();await load();openProject(current.id)}
