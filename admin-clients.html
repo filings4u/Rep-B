@@ -1,11 +1,19 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#10b981"><title>Clients Management | filings4u Admin</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10b981">
+<title>Client CRM | filings4u Administration</title>
 <link href="images/fav.png" rel="icon" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/admin-clients.css">
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/admin-auth-guard.js"></script>
+<script src="assets/js/admin-navigation.js"></script>
 </head>
 <body data-page="clients">
 <div id="adminNavigationMount"></div>
@@ -15,36 +23,29 @@
     <div class="head">
       <div>
         <label>RELATIONSHIP MANAGEMENT</label>
-        <h1>Clients Management</h1>
-        <p>One client record across portal profile, orders, applications, entities and support.</p>
+        <h1>Client CRM</h1>
+        <p>Every customer relationship across portal accounts, free activity, purchases, filings, billing and support.</p>
       </div>
       <button id="refresh" class="primary">Refresh clients</button>
     </div>
+
     <div id="stats" class="stats"></div>
+
     <section class="panel">
       <div class="filters">
-        <input id="q" placeholder="Search name, email, company, phone or tracking number">
+        <input id="q" placeholder="Search name, email, company, phone or customer ID">
         <select id="account">
-          <option value="">All accounts</option>
-          <option value="linked">Auth linked</option>
-          <option value="unlinked">Not auth linked</option>
+          <option value="">All customers</option>
+          <option value="portal">Portal accounts</option>
+          <option value="paid">Paid customers</option>
+          <option value="free">Free / no paid orders</option>
+          <option value="open">Open invoices</option>
         </select>
         <button id="clear">Clear</button>
       </div>
       <div class="table">
         <table>
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>Company</th>
-              <th>Portal</th>
-              <th>Orders</th>
-              <th>Applications</th>
-              <th>Entities</th>
-              <th>Last activity</th>
-              <th></th>
-            </tr>
-          </thead>
+          <thead><tr><th>Customer</th><th>Company</th><th>Relationship</th><th>Orders</th><th>Lifetime value</th><th>Filings</th><th>Last activity</th><th></th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
@@ -53,24 +54,14 @@
 </main>
 
 <div id="shade" class="shade" hidden></div>
-
-<section id="drawer" class="drawer">
+<section id="drawer" class="drawer crm-drawer">
   <div class="drawerHead">
-    <div><label>CLIENT RECORD</label><h2 id="drawerTitle"></h2></div>
-    <button id="close">×</button>
+    <div><label>CLIENT 360° RECORD</label><h2 id="drawerTitle">Customer</h2><p id="drawerSubtitle"></p></div>
+    <button id="close" aria-label="Close customer record">×</button>
   </div>
   <div id="detail" class="detailBody"></div>
 </section>
-
 <div id="toast" class="toast" hidden></div>
-
-<!-- ADMIN PROTECTED PAGE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/admin-supabase-client.js"></script>
-<script src="assets/js/admin-auth-guard.js"></script>
-<script src="assets/js/admin-navigation.js"></script>
 <script src="assets/js/admin-clients.js"></script>
-
 </body>
-
 </html>
