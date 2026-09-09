@@ -63,6 +63,20 @@ async function verifyAndFinish(){
   return false;
 }
 function showPaid(number){
+  if(paymentElement){
+    try{paymentElement.unmount();}catch(e){}
+  }
+  paymentElement=null;
+  elements=null;
+  stripe=null;
+  clientSecret='';
+
+  const app=$('checkoutApp');
+  if(app)app.hidden=true;
+
+  const paymentForm=$('paymentForm');
+  if(paymentForm)paymentForm.hidden=true;
+
   $('paidInvoiceNumber').textContent=number||invoice?.invoice_number||'Invoice';
   showOnly('checkoutPaid');
 }
