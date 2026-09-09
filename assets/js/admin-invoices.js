@@ -13,6 +13,10 @@ async function boot(){
   $('gate').hidden=true;$('app').hidden=false;
   await loadReferenceData();
   await loadInvoices();
+  if(new URLSearchParams(location.search).get('new')==='1'){
+    setTimeout(()=>openComposer(),0);
+    history.replaceState({},'',location.pathname);
+  }
 }
 
 async function loadReferenceData(){
@@ -33,9 +37,9 @@ async function loadInvoices(){
 function clientFor(inv){return clients.find(c=>c.id===inv.client_profile_id)}
 function stats(){
   const today=new Date().toISOString().slice(0,10);
-  const outstanding=invoices.filter(i=>!['paid','void','cancelled'].includes(i.status)&&i.payment_status!=='paid').reduce((s,i)=>s+Number(i.total_amount||0),0);
-  const overdue=invoices.filter(i=>i.due_date<today&&i.payment_status!=='paid'&&!['void','cancelled'].includes(i.status)).reduce((s,i)=>s+Number(i.total_amount||0),0);
-  const paid=invoices.filter(i=>i.payment_status==='paid').reduce((s,i)=>s+Number(i.total_amount||0),0);
+  const outstanding=invoices.filter(i=>!['paid','void','cancelled'].includes(i.status)&&i.payment_status!=='paid').reduce((s,i)=>s+Math.max(0,Number(i.balance_due??(Number(i.total_amount||0)-Number(i.amount_paid||0)))),0);
+  const overdue=invoices.filter(i=>i.due_date<today&&i.payment_status!=='paid'&&!['void','cancelled'].includes(i.status)).reduce((s,i)=>s+Math.max(0,Number(i.balance_due??(Number(i.total_amount||0)-Number(i.amount_paid||0)))),0);
+  const paid=invoices.reduce((s,i)=>s+Math.max(0,Number(i.amount_paid||0)),0);
   $('statOutstanding').textContent=money(outstanding);$('statOverdue').textContent=money(overdue);$('statPaid').textContent=money(paid);$('statDraft').textContent=invoices.filter(i=>i.status==='draft').length;
 }
 function buildFilters(){
@@ -60,7 +64,7 @@ function filterInvoices(){
 
 function resetComposer(){
   editId=null;currentInvoice=null;lines=[];$('invoiceForm').reset();
-  $('invoiceStatus').value='draft';$('paymentStatus').value='unpaid';$('discount').value='0';$('taxRate').value='0';$('shipping').value='0';
+  $('invoiceStatus').value='draft';$('paymentStatus').value='unpaid';$('discountType').value='none';$('discountValue').value='0';$('taxRate').value='0';$('shipping').value='0';$('amountPaid').value='0';
   $('clientEmail').value='';$('trackingNumber').value='';$('orderId').innerHTML='<option value="">No related order</option>';
   const d=new Date();d.setDate(d.getDate()+15);$('dueDate').value=d.toISOString().slice(0,10);
   addLine({description:'',quantity:1,unit_price:0});$('composerTitle').textContent='Create invoice';calculate();
@@ -72,7 +76,7 @@ function openComposer(invoice=null){
     $('clientId').value=invoice.client_profile_id||'';syncClient();
     setTimeout(()=>{$('orderId').value=invoice.order_id||'';syncOrder()},0);
     $('clientEmail').value=invoice.client_email||'';$('trackingNumber').value=invoice.tracking_number||'';$('dueDate').value=invoice.due_date||'';
-    $('invoiceStatus').value=invoice.status||'draft';$('paymentStatus').value=invoice.payment_status||'unpaid';$('discount').value=invoice.discount_amount||0;$('taxRate').value=invoice.tax_rate||0;$('shipping').value=invoice.shipping_amount||0;$('paymentTerms').value=invoice.payment_terms||'';$('paymentUrl').value=invoice.payment_url||'';$('customerNotes').value=invoice.customer_notes||'';
+    $('invoiceStatus').value=invoice.status||'draft';$('paymentStatus').value=invoice.payment_status||'unpaid';$('discountType').value=invoice.discount_type||((Number(invoice.discount_amount)||0)>0?'fixed':'none');$('discountValue').value=invoice.discount_value??invoice.discount_amount??0;$('taxRate').value=invoice.tax_rate||0;$('shipping').value=invoice.shipping_amount||0;$('amountPaid').value=invoice.amount_paid||0;$('paymentTerms').value=invoice.payment_terms||'';$('paymentUrl').value=invoice.payment_url||'';$('customerNotes').value=invoice.customer_notes||'';
     lines=[];$('lineItems').innerHTML='';(invoice.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number).forEach(addLine);if(!lines.length)addLine({description:invoice.line_item_description||'',quantity:1,unit_price:invoice.subtotal_amount||invoice.total_amount||0});
   }
   showOverlay('invoiceComposer');calculate();
@@ -85,7 +89,7 @@ function renderLines(){
   $('lineItems').innerHTML=lines.map((l,idx)=>`<div class="line-item" data-line="${l.id}">
     <input class="line-desc" value="${esc(l.description)}" placeholder="Service or fee description">
     <input class="line-qty" type="number" min="0.01" step="0.01" value="${l.quantity}">
-    <input class="line-price" type="number" min="0" step="0.01" value="${l.unit_price}">
+    <input class="line-price" type="number" step="0.01" value="${l.unit_price}" title="Use a negative amount to subtract a credit or adjustment">
     <div class="line-total">${money(l.quantity*l.unit_price)}</div>
     <button class="remove-line" type="button" title="Remove line">×</button>
   </div>`).join('');
@@ -101,12 +105,41 @@ function renderLines(){
 function renderLineTotal(row,l){row.querySelector('.line-total').textContent=money(l.quantity*l.unit_price)}
 function totals(){
   const subtotal=lines.reduce((s,l)=>s+(Number(l.quantity)||0)*(Number(l.unit_price)||0),0);
-  const discount=Math.min(Number($('discount').value)||0,subtotal);
-  const taxable=Math.max(0,subtotal-discount);const rate=Number($('taxRate').value)||0;const tax=taxable*(rate/100);const shipping=Number($('shipping').value)||0;const total=taxable+tax+shipping;
-  return{subtotal,discount,tax,shipping,total,rate};
+  const discountType=$('discountType').value||'none';
+  let discountValue=Math.max(0,Number($('discountValue').value)||0);
+  const discountBase=Math.max(0,subtotal);
+  let discount=0;
+  if(discountType==='percent'){
+    discountValue=Math.min(discountValue,100);
+    discount=discountBase*(discountValue/100);
+  }else if(discountType==='fixed'){
+    discount=Math.min(discountValue,discountBase);
+  }
+  const taxable=Math.max(0,subtotal-discount);
+  const rate=Math.max(0,Number($('taxRate').value)||0);
+  const tax=taxable*(rate/100);
+  const shipping=Math.max(0,Number($('shipping').value)||0);
+  const total=Math.max(0,taxable+tax+shipping);
+  const amountPaid=Math.min(Math.max(0,Number($('amountPaid').value)||0),total);
+  const balance=Math.max(0,total-amountPaid);
+  return{subtotal,discountType,discountValue,discount,tax,shipping,total,amountPaid,balance,rate};
 }
 function calculate(){
-  const t=totals();$('calcSubtotal').textContent=money(t.subtotal);$('calcDiscount').textContent='− '+money(t.discount);$('calcTax').textContent=money(t.tax);$('calcShipping').textContent=money(t.shipping);$('calcTotal').textContent=money(t.total);
+  const t=totals();
+  $('calcSubtotal').textContent=money(t.subtotal);
+  $('calcDiscount').textContent='− '+money(t.discount);
+  $('calcTax').textContent=money(t.tax);
+  $('calcShipping').textContent=money(t.shipping);
+  $('calcTotal').textContent=money(t.total);
+  $('calcPaid').textContent='− '+money(t.amountPaid);
+  $('calcBalance').textContent=money(t.balance);
+  if(t.total>0&&t.amountPaid>=t.total){
+    $('paymentStatus').value='paid';
+  }else if(t.amountPaid>0){
+    $('paymentStatus').value='partially_paid';
+  }else if(['paid','partially_paid'].includes($('paymentStatus').value)){
+    $('paymentStatus').value='unpaid';
+  }
 }
 function syncClient(){
   const c=clients.find(c=>c.id===$('clientId').value);$('clientEmail').value=c?.email_address||'';
@@ -121,13 +154,17 @@ async function saveInvoice(forceDraft=false){
   if(!$('clientId').value)return toast('Select a client.');
   if(!$('clientEmail').value)return toast('Client email is required.');
   if(!$('dueDate').value)return toast('Due date is required.');
-  if(!lines.length||lines.some(l=>!l.description.trim()||l.quantity<=0||l.unit_price<0))return toast('Complete every invoice line item.');
+  if(!lines.length||lines.some(l=>!l.description.trim()||l.quantity<=0||!Number.isFinite(Number(l.unit_price))))return toast('Complete every invoice line item.');
+  const paymentUrl=$('paymentUrl').value.trim();
+  if(paymentUrl){
+    try{new URL(paymentUrl);}catch{return toast('Enter a valid payment URL.');}
+  }
   const t=totals();const status=forceDraft?'draft':$('invoiceStatus').value;
   const payload={
     document_type:'invoice',client_email:$('clientEmail').value.trim().toLowerCase(),client_profile_id:$('clientId').value,
     order_id:$('orderId').value||null,tracking_number:$('trackingNumber').value||null,line_item_description:lines[0].description,
-    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_amount:t.discount,tax_rate:t.rate,tax_amount:t.tax,
-    shipping_amount:t.shipping,total_amount:t.total,payment_status:$('paymentStatus').value,payment_url:$('paymentUrl').value.trim()||null,
+    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_amount:t.discount,discount_type:t.discountType,discount_value:t.discountValue,tax_rate:t.rate,tax_amount:t.tax,
+    shipping_amount:t.shipping,total_amount:t.total,amount_paid:t.amountPaid,balance_due:t.balance,payment_status:$('paymentStatus').value,payment_url:paymentUrl||null,
     customer_notes:$('customerNotes').value.trim()||null,payment_terms:$('paymentTerms').value.trim()||null,created_by:user.id,updated_at:new Date().toISOString()
   };
   const btn=forceDraft?$('saveDraft'):$('saveInvoice');const old=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
@@ -154,35 +191,10 @@ function syncLinesFromDom(){
 }
 
 async function openDrawer(id){
-  let inv=invoices.find(i=>i.id===id);
-  if(!inv)return;
-
-  // Always fetch the latest invoice record so customer-view activity is current
-  // even when the admin page has been open for a while.
-  try{
-    const {data:fresh,error}=await db.from('invoices')
-      .select('*,invoice_line_items(*)')
-      .eq('id',id)
-      .maybeSingle();
-
-    if(!error&&fresh){
-      inv=fresh;
-      const idx=invoices.findIndex(i=>i.id===fresh.id);
-      if(idx>=0)invoices[idx]=fresh;
-    }
-  }catch(error){
-    console.warn('Unable to refresh invoice activity:',error);
-  }
-
-  currentInvoice=inv;
-  const c=clientFor(inv);
-  const name=c?.company_name||[c?.first_name,c?.last_name].filter(Boolean).join(' ')||inv.client_email;
-  const viewed=Boolean(inv.first_viewed_at)||Number(inv.view_count||0)>0;
-  const viewCount=Number(inv.view_count||0);
-
+  const inv=invoices.find(i=>i.id===id);if(!inv)return;currentInvoice=inv;
+  const c=clientFor(inv);const name=c?.company_name||[c?.first_name,c?.last_name].filter(Boolean).join(' ')||inv.client_email;
   $('drawerInvoiceNumber').textContent=inv.invoice_number||'Invoice';
   const lines=(inv.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number);
-
   $('drawerContent').innerHTML=`
     <div class="drawer-actions">
       <button data-action="edit">Edit invoice</button>
@@ -190,96 +202,19 @@ async function openDrawer(id){
       ${inv.status!=='paid'&&inv.status!=='void'?'<button class="send" data-action="send">Send to client portal</button>':''}
       ${inv.payment_status!=='paid'?'<button data-action="paid">Mark paid</button>':''}
       ${inv.status==='draft'?'<button class="danger" data-action="delete">Delete draft</button>':''}
-      ${inv.payment_url?`<a href="${esc(inv.payment_url)}" target="_blank" rel="noopener">Open payment link</a>`:''}
+      ${safePaymentLink(inv.payment_url)}
     </div>
-
-    <section class="invoice-activity-card ${viewed?'is-viewed':'not-viewed'}">
-      <div class="invoice-activity-head">
-        <div>
-          <span class="activity-kicker">Customer activity</span>
-          <h3>Invoice viewing</h3>
-        </div>
-        <span class="view-status ${viewed?'viewed':'not-viewed'}">
-          ${viewed?'Viewed':'Not viewed'}
-        </span>
-      </div>
-
-      <div class="invoice-activity-grid">
-        <div>
-          <span>First viewed</span>
-          <strong>${inv.first_viewed_at?datetime(inv.first_viewed_at):'Not viewed yet'}</strong>
-        </div>
-        <div>
-          <span>Last viewed</span>
-          <strong>${inv.last_viewed_at?datetime(inv.last_viewed_at):'—'}</strong>
-        </div>
-        <div>
-          <span>View count</span>
-          <strong>${viewCount} ${viewCount===1?'view':'views'}</strong>
-        </div>
-        <div>
-          <span>Invoice sent</span>
-          <strong>${inv.sent_at?datetime(inv.sent_at):'Not sent'}</strong>
-        </div>
-      </div>
-
-      <p class="activity-note">
-        A view is recorded when the customer opens the secure invoice checkout or opens the invoice from Billing.
-      </p>
-    </section>
-
     <article class="invoice-preview">
-      <div class="invoice-preview-top">
-        <div>
-          <img src="images/logo.png" alt="filings4u">
-          <small>filings4u, LLC · A Subsidiary of Roseland Companies, LLC</small>
-        </div>
-        <div>
-          <h3>${esc(inv.invoice_number||'Invoice')}</h3>
-          <small>Due ${date(inv.due_date)}</small>
-        </div>
-      </div>
-
-      <div class="invoice-client">
-        <div>
-          <span>Bill to</span>
-          <strong>${esc(name)}</strong>
-          <small>${esc(inv.client_email)}</small>
-        </div>
-        <div>
-          <span>Invoice status</span>
-          <strong>${esc(inv.status)}</strong>
-          <small>${esc(inv.payment_status)}</small>
-        </div>
-      </div>
-
-      <div class="preview-lines">
-        ${lines.map(l=>`<div class="preview-line"><span>${esc(l.description)}</span><span>${l.quantity}</span><span class="unit">${money(l.unit_price)}</span><strong>${money(l.line_total)}</strong></div>`).join('')}
-      </div>
-
-      <div class="preview-total">
-        <div><span>Subtotal</span><strong>${money(inv.subtotal_amount)}</strong></div>
-        ${Number(inv.discount_amount)?`<div><span>Discount</span><strong>− ${money(inv.discount_amount)}</strong></div>`:''}
-        ${Number(inv.tax_amount)?`<div><span>Tax (${Number(inv.tax_rate)}%)</span><strong>${money(inv.tax_amount)}</strong></div>`:''}
-        ${Number(inv.shipping_amount)?`<div><span>Shipping</span><strong>${money(inv.shipping_amount)}</strong></div>`:''}
-        ${Number(inv.amount_paid||0)>0?`<div><span>Paid to date</span><strong>${money(inv.amount_paid)}</strong></div>`:''}
-        ${Number(inv.balance_due??inv.total_amount)>0&&Number(inv.amount_paid||0)>0?`<div><span>Remaining balance</span><strong>${money(inv.balance_due)}</strong></div>`:''}
-        <div class="grand"><span>Total</span><strong>${money(inv.total_amount)}</strong></div>
-      </div>
+      <div class="invoice-preview-top"><div><img src="images/logo.png" alt="filings4u"><small>filings4u, LLC · A Subsidiary of Roseland Companies, LLC</small></div><div><h3>${esc(inv.invoice_number||'Invoice')}</h3><small>Due ${date(inv.due_date)}</small></div></div>
+      <div class="invoice-client"><div><span>Bill to</span><strong>${esc(name)}</strong><small>${esc(inv.client_email)}</small></div><div><span>Invoice status</span><strong>${esc(inv.status)}</strong><small>${esc(inv.payment_status)}</small></div></div>
+      <div class="preview-lines">${lines.map(l=>`<div class="preview-line"><span>${esc(l.description)}</span><span>${l.quantity}</span><span class="unit">${money(l.unit_price)}</span><strong>${money(l.line_total)}</strong></div>`).join('')}</div>
+      <div class="preview-total"><div><span>Subtotal</span><strong>${money(inv.subtotal_amount)}</strong></div>${Number(inv.discount_amount)?`<div><span>Discount</span><strong>− ${money(inv.discount_amount)}</strong></div>`:''}${Number(inv.tax_amount)?`<div><span>Tax (${Number(inv.tax_rate)}%)</span><strong>${money(inv.tax_amount)}</strong></div>`:''}${Number(inv.shipping_amount)?`<div><span>Shipping</span><strong>${money(inv.shipping_amount)}</strong></div>`:''}<div><span>Invoice total</span><strong>${money(inv.total_amount)}</strong></div>${Number(inv.amount_paid||0)>0?`<div><span>Payment received / deposit</span><strong>− ${money(inv.amount_paid)}</strong></div>`:''}<div class="grand"><span>Balance due</span><strong>${money(inv.balance_due??Math.max(0,Number(inv.total_amount||0)-Number(inv.amount_paid||0)))}</strong></div></div>
     </article>
-
     <div class="detail-card">
-      <div class="detail-row">
-        <div><span>Tracking number</span><strong>${esc(inv.tracking_number||'—')}</strong></div>
-        <div><span>Created</span><strong>${datetime(inv.created_at)}</strong></div>
-      </div>
-      <div class="detail-row">
-        <div><span>Payment terms</span><strong>${esc(inv.payment_terms||'—')}</strong></div>
-        <div><span>Sent</span><strong>${inv.sent_at?datetime(inv.sent_at):'Not sent'}</strong></div>
-      </div>
+      <div class="detail-row"><div><span>Tracking number</span><strong>${esc(inv.tracking_number||'—')}</strong></div><div><span>Created</span><strong>${datetime(inv.created_at)}</strong></div></div>
+      <div class="detail-row"><div><span>Payment terms</span><strong>${esc(inv.payment_terms||'—')}</strong></div><div><span>Sent</span><strong>${inv.sent_at?datetime(inv.sent_at):'Not sent'}</strong></div></div>
       ${inv.customer_notes?`<div class="detail-row"><div><span>Customer notes</span><strong>${esc(inv.customer_notes)}</strong></div><div><span>Paid</span><strong>${inv.paid_at?datetime(inv.paid_at):'—'}</strong></div></div>`:''}
     </div>`;
-
   $('drawerContent').querySelector('[data-action="edit"]')?.addEventListener('click',()=>{closeAll();openComposer(inv)});
   $('drawerContent').querySelector('[data-action="print"]')?.addEventListener('click',()=>printInvoice(inv));
   $('drawerContent').querySelector('[data-action="send"]')?.addEventListener('click',()=>sendInvoice(inv));
@@ -287,10 +222,21 @@ async function openDrawer(id){
   $('drawerContent').querySelector('[data-action="delete"]')?.addEventListener('click',()=>deleteDraft(inv));
   showOverlay('invoiceDrawer');
 }
+
+function safePaymentLink(url){
+  if(!url)return '';
+  try{
+    const parsed=new URL(url,location.href);
+    return `<a href="${esc(parsed.href)}" target="_blank" rel="noopener noreferrer">Open payment link</a>`;
+  }catch{
+    return '';
+  }
+}
+
 async function sendInvoice(inv){
   if(!inv.client_profile_id)return toast('This invoice is not linked to a client profile.');
   const lines=(inv.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number).map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price),line_total:Number(l.line_total)}));
-  const mirror={invoice_code:inv.invoice_number,client_id:inv.client_profile_id,email_address:inv.client_email.toLowerCase(),subtotal:inv.subtotal_amount,tax_percentage:inv.tax_rate,grand_total:inv.total_amount,payment_status:inv.payment_status==='paid'?'Paid':'Unpaid',due_date:inv.due_date,itemized_lines:lines};
+  const mirror={invoice_code:inv.invoice_number,client_id:inv.client_profile_id,email_address:String(inv.client_email||'').trim().toLowerCase(),subtotal:inv.subtotal_amount,tax_percentage:inv.tax_rate,grand_total:inv.total_amount,payment_status:inv.payment_status==='paid'?'Paid':inv.payment_status==='partially_paid'?'Partial':'Unpaid',due_date:inv.due_date,itemized_lines:lines};
   try{
     const {data:existing,error:lookupError}=await db.from('client_invoices').select('invoice_id').eq('invoice_code',inv.invoice_number).eq('client_id',inv.client_profile_id).maybeSingle();
     if(lookupError)throw lookupError;
@@ -301,7 +247,7 @@ async function sendInvoice(inv){
   }catch(e){toast(e.message||'Unable to send invoice.')}
 }
 async function markPaid(inv){
-  try{const now=new Date().toISOString();const {error}=await db.from('invoices').update({status:'paid',payment_status:'paid',paid_at:now,updated_at:now}).eq('id',inv.id);if(error)throw error;
+  try{const now=new Date().toISOString();const total=Number(inv.total_amount||0);const {error}=await db.from('invoices').update({status:'paid',payment_status:'paid',amount_paid:total,balance_due:0,paid_at:now,updated_at:now}).eq('id',inv.id);if(error)throw error;
     await db.from('client_invoices').update({payment_status:'Paid'}).eq('invoice_code',inv.invoice_number).eq('client_id',inv.client_profile_id);
     toast('Invoice marked paid.');closeAll();await loadInvoices();
   }catch(e){toast(e.message||'Unable to update payment status.')}
@@ -318,19 +264,32 @@ function printInvoice(inv){
   <div class="top"><div><img class="logo" src="images/logo.png"><div><strong>filings4u, LLC</strong><br><small>A Subsidiary of Roseland Companies, LLC</small></div></div><div class="meta"><h1 class="navy">INVOICE</h1><strong>${esc(inv.invoice_number||'')}</strong><br><small>Issued ${datetime(inv.created_at)} · Due ${date(inv.due_date)}</small></div></div>
   <div class="bill"><div><small>BILL TO</small><h3>${esc(name)}</h3><div>${esc(inv.client_email)}</div>${c?.street_address?`<div>${esc(c.street_address)}<br>${esc([c.city,c.state,c.zip_code].filter(Boolean).join(', '))}</div>`:''}</div><div><small>REFERENCE</small><h3>${esc(inv.tracking_number||'filings4u services')}</h3><div>${esc(inv.payment_terms||'Due by stated due date')}</div></div></div>
   <table><thead><tr><th>Description</th><th>Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody>${ls.map(l=>`<tr><td>${esc(l.description)}</td><td>${l.quantity}</td><td class="num">${money(l.unit_price)}</td><td class="num">${money(l.line_total)}</td></tr>`).join('')}</tbody></table>
-  <div class="totals"><div><span>Subtotal</span><strong>${money(inv.subtotal_amount)}</strong></div><div><span>Discount</span><strong>− ${money(inv.discount_amount)}</strong></div><div><span>Tax</span><strong>${money(inv.tax_amount)}</strong></div><div><span>Shipping</span><strong>${money(inv.shipping_amount)}</strong></div><div class="grand"><span>Total</span><strong>${money(inv.total_amount)}</strong></div></div>
+  <div class="totals"><div><span>Subtotal</span><strong>${money(inv.subtotal_amount)}</strong></div><div><span>Discount</span><strong>− ${money(inv.discount_amount)}</strong></div><div><span>Tax</span><strong>${money(inv.tax_amount)}</strong></div><div><span>Shipping</span><strong>${money(inv.shipping_amount)}</strong></div><div><span>Invoice total</span><strong>${money(inv.total_amount)}</strong></div><div><span>Payment received / deposit</span><strong>− ${money(inv.amount_paid||0)}</strong></div><div class="grand"><span>Balance due</span><strong>${money(inv.balance_due??Math.max(0,Number(inv.total_amount||0)-Number(inv.amount_paid||0)))}</strong></div></div>
   ${inv.customer_notes?`<div class="notes"><strong>Notes</strong><p>${esc(inv.customer_notes)}</p></div>`:''}${inv.payment_url?`<div class="notes"><strong>Payment link</strong><p>${esc(inv.payment_url)}</p></div>`:''}
   <div class="foot">Thank you for choosing filings4u. This invoice was generated from the secure filings4u Administration system.</div>
   <script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);
   w.document.close();
 }
-function showOverlay(id){$('invoiceShade').hidden=false;$(id).setAttribute('aria-hidden','false');document.body.style.overflow='hidden'}
-function closeAll(){$('invoiceShade').hidden=true;$('invoiceDrawer').setAttribute('aria-hidden','true');$('invoiceComposer').setAttribute('aria-hidden','true');document.body.style.overflow=''}
-function toast(m){$('toast').textContent=m;$('toast').hidden=false;setTimeout(()=>$('toast').hidden=true,3000)}
+function showOverlay(id){
+  const target=$(id);
+  if(!target)return;
+  $('invoiceShade').hidden=false;
+  target.setAttribute('aria-hidden','false');
+  document.body.classList.add('invoice-overlay-open');
+  const closer=id==='invoiceDrawer'?'closeDrawer':'closeComposer';
+  $(closer)?.focus();
+}
+function closeAll(){
+  $('invoiceShade').hidden=true;
+  $('invoiceDrawer').setAttribute('aria-hidden','true');
+  $('invoiceComposer').setAttribute('aria-hidden','true');
+  document.body.classList.remove('invoice-overlay-open');
+}
+function toast(m){$('toast').textContent=m;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,3000)}
 
 $('newInvoice').onclick=()=>openComposer();$('closeComposer').onclick=closeAll;$('closeDrawer').onclick=closeAll;$('invoiceShade').onclick=closeAll;
 $('addLine').onclick=()=>addLine();$('clientId').onchange=syncClient;$('orderId').onchange=syncOrder;
-['discount','taxRate','shipping'].forEach(id=>$(id).addEventListener('input',calculate));
+['discountValue','taxRate','shipping','amountPaid'].forEach(id=>$(id).addEventListener('input',calculate));$('discountType').addEventListener('change',calculate);
 $('invoiceForm').onsubmit=e=>{e.preventDefault();saveInvoice(false)};$('saveDraft').onclick=()=>saveInvoice(true);
 $('invoiceSearch').oninput=filterInvoices;$('statusFilter').onchange=filterInvoices;$('paymentFilter').onchange=filterInvoices;
 $('clearFilters').onclick=()=>{$('invoiceSearch').value='';$('statusFilter').value='';$('paymentFilter').value='';filterInvoices()};
