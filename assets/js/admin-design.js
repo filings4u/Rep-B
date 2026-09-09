@@ -21,219 +21,38 @@ async function load(){
 function cname(id,email){const c=clients.find(x=>x.id===id);return c?.company_name||[c?.first_name,c?.last_name].filter(Boolean).join(' ')||email||'Client'}
 function hydrateClients(){$('client').innerHTML='<option value="">Select client</option>'+clients.map(c=>`<option value="${c.id}">${esc(cname(c.id,c.email_address))} — ${esc(c.email_address)}</option>`).join('')}
 function filters(){const vals=[...new Set(projects.map(p=>p.status))];$('statusFilter').innerHTML='<option value="">All statuses</option>'+vals.map(v=>`<option value="${v}">${esc(v.replaceAll('_',' '))}</option>`).join('')}
-function render(){
-  const q=$('search').value.toLowerCase(),t=$('typeFilter').value,s=$('statusFilter').value;
-  const rows=projects.filter(p=>(!q||[p.title,p.client_email,p.tracking_number,cname(p.client_profile_id)].join(' ').toLowerCase().includes(q))&&(!t||p.project_type===t)&&(!s||p.status===s));
-  $('projects').innerHTML=rows.length?rows.map(p=>{
-    const proofs=(p.design_proofs||[]).length,comments=(p.design_comments||[]).length;
-    const latestProof=[...(p.design_proofs||[])].sort((a,b)=>Number(b.version_number||0)-Number(a.version_number||0))[0];
-    const status=String(p.status||'intake').replaceAll('_',' ');
-    const statusClass=['approved','completed'].includes(p.status)?'success':p.status==='awaiting_feedback'?'waiting':'active';
-    return `<article class="project-card">
-      <div class="project-card-head">
-        <div class="project-kind"><span>${p.project_type==='website'?'WEB':'LOGO'}</span>${esc(p.project_type)} design</div>
-        <span class="badge ${statusClass}">${esc(status)}</span>
-      </div>
-      <div class="project-card-body">
-        <h3>${esc(p.title)}</h3>
-        <p class="client-name">${esc(cname(p.client_profile_id,p.client_email))}</p>
-        <div class="project-reference"><span>Tracking</span><strong>${esc(p.tracking_number||'Not linked')}</strong></div>
-        <div class="project-metrics">
-          <div><small>Proofs</small><strong>${proofs}</strong></div>
-          <div><small>Comments</small><strong>${comments}</strong></div>
-          <div><small>Latest proof</small><strong>${latestProof?'v'+latestProof.version_number:'—'}</strong></div>
-        </div>
-        <div class="project-status-row">
-          <span class="${p.review_url?'ready':'missing'}">${p.review_url?'Review link added':'Review link needed'}</span>
-          <small>Updated ${p.updated_at?new Date(p.updated_at).toLocaleDateString():'—'}</small>
-        </div>
-      </div>
-      <button class="open-project" data-id="${p.id}">Open design workspace <span>→</span></button>
-    </article>`;
-  }).join(''):'<div class="empty project-empty"><strong>No design projects found.</strong><span>Create a project or adjust the filters above.</span></div>';
-  document.querySelectorAll('.open-project').forEach(b=>b.onclick=()=>openProject(b.dataset.id));
-  $('activeCount').textContent=projects.filter(p=>!['approved','completed','cancelled'].includes(p.status)).length;
-  $('feedbackCount').textContent=projects.filter(p=>p.status==='awaiting_feedback').length;
-  $('approvedCount').textContent=projects.filter(p=>['approved','completed'].includes(p.status)).length;
-  $('intakeCount').textContent=logoIntakes.length+webIntakes.length;
-}
-function renderIntakes(){
-  const a=activeTab==='logo'?logoIntakes:webIntakes;
-  $('intakes').innerHTML=a.length?a.map(i=>{
-    if(activeTab==='logo'){
-      return `<article class="intake-card">
-        <div class="intake-card-top"><span class="intake-type">LOGO BRIEF</span><small>${i.created_at?new Date(i.created_at).toLocaleDateString():'—'}</small></div>
-        <h3>${esc(i.business_name||i.logo_text||'Logo project')}</h3>
-        <p class="intake-client">${esc(i.client_name)} · ${esc(i.email_address)}</p>
-        <div class="intake-highlights">
-          <div><span>Logo text</span><strong>${esc(i.logo_text||'—')}</strong></div>
-          <div><span>Style</span><strong>${esc(i.logo_style||'—')}</strong></div>
-          <div><span>Brand mood</span><strong>${esc(i.brand_mood||'—')}</strong></div>
-          <div><span>Colors</span><strong>${esc(i.brand_colors||'—')}</strong></div>
-        </div>
-        <button class="review-intake" data-intake="${i.id}" data-kind="logo">Review creative brief <span>→</span></button>
-      </article>`;
-    }
-    return `<article class="intake-card">
-      <div class="intake-card-top"><span class="intake-type web">WEB BRIEF</span><small>${i.created_at?new Date(i.created_at).toLocaleDateString():'—'}</small></div>
-      <h3>${esc(i.business_name||'Website project')}</h3>
-      <p class="intake-client">${esc(i.client_name)} · ${esc(i.email_address)}</p>
-      <div class="intake-highlights">
-        <div><span>Website type</span><strong>${esc(i.website_type||i.website_type_other||'—')}</strong></div>
-        <div><span>Style</span><strong>${esc(i.style_preference||i.style_preference_other||'—')}</strong></div>
-        <div><span>Pages</span><strong>${esc(i.estimated_page_count||'—')}</strong></div>
-        <div><span>Goal</span><strong>${esc(i.main_goal||'—')}</strong></div>
-      </div>
-      <button class="review-intake" data-intake="${i.id}" data-kind="web">Review creative brief <span>→</span></button>
-    </article>`;
-  }).join(''):'<div class="empty intake-empty"><strong>No intake submissions yet.</strong><span>New client discovery forms will appear here.</span></div>';
-  document.querySelectorAll('.review-intake').forEach(b=>b.onclick=()=>openIntake(b.dataset.kind,b.dataset.intake));
-}
+function render(){const q=$('search').value.toLowerCase(),t=$('typeFilter').value,s=$('statusFilter').value;const rows=projects.filter(p=>(!q||[p.title,p.client_email,p.tracking_number,cname(p.client_profile_id)].join(' ').toLowerCase().includes(q))&&(!t||p.project_type===t)&&(!s||p.status===s));$('projects').innerHTML=rows.length?rows.map(p=>`<article class="project-card"><div class="project-top"><div><span class="project-type">${p.project_type} design</span><h3>${esc(p.title)}</h3><p>${esc(cname(p.client_profile_id,p.client_email))}</p></div><span class="badge">${esc(p.status.replaceAll('_',' '))}</span></div><div class="project-meta"><div><small>Proofs</small><strong>${p.design_proofs?.length||0}</strong></div><div><small>Comments</small><strong>${p.design_comments?.length||0}</strong></div><div><small>Tracking</small><strong>${esc(p.tracking_number||'—')}</strong></div><div><small>Review link</small><strong>${p.review_url?'Added':'Not added'}</strong></div></div><button class="open-project" data-id="${p.id}">Manage project →</button></article>`).join(''):'<div class="empty">No design projects found.</div>';document.querySelectorAll('.open-project').forEach(b=>b.onclick=()=>openProject(b.dataset.id));$('activeCount').textContent=projects.filter(p=>!['approved','completed','cancelled'].includes(p.status)).length;$('feedbackCount').textContent=projects.filter(p=>p.status==='awaiting_feedback').length;$('approvedCount').textContent=projects.filter(p=>['approved','completed'].includes(p.status)).length;$('intakeCount').textContent=logoIntakes.length+webIntakes.length}
+function renderIntakes(){const a=activeTab==='logo'?logoIntakes:webIntakes;$('intakes').innerHTML=a.length?a.map(i=>activeTab==='logo'?`<article class="intake-card"><h3>${esc(i.business_name)}</h3><p>${esc(i.client_name)} · ${esc(i.email_address)}</p><dl><div><dt>Logo text</dt><dd>${esc(i.logo_text)}</dd></div><div><dt>Style</dt><dd>${esc(i.logo_style)}</dd></div><div><dt>Brand mood</dt><dd>${esc(i.brand_mood)}</dd></div><div><dt>Colors</dt><dd>${esc(i.brand_colors)}</dd></div></dl></article>`:`<article class="intake-card"><h3>${esc(i.business_name)}</h3><p>${esc(i.client_name)} · ${esc(i.email_address)}</p><dl><div><dt>Website type</dt><dd>${esc(i.website_type)}</dd></div><div><dt>Style</dt><dd>${esc(i.style_preference)}</dd></div><div><dt>Pages</dt><dd>${esc(i.estimated_page_count)}</dd></div><div><dt>Goal</dt><dd>${esc(i.main_goal)}</dd></div></dl></article>`).join(''):'<div class="empty">No intake submissions yet.</div>'}
 function show(id){
   const target=$(id);
   if(!target)return;
   $('shade').hidden=false;
   target.setAttribute('aria-hidden','false');
   document.body.classList.add('design-overlay-open');
-  const closer=id==='projectDrawer'?'closeDrawer':id==='intakeDrawer'?'closeIntakeDrawer':'closeModal';
+  const closer=id==='projectDrawer'?'closeDrawer':'closeModal';
   $(closer)?.focus();
 }
 function close(){
   $('shade').hidden=true;
   $('projectDrawer').setAttribute('aria-hidden','true');
-  $('intakeDrawer').setAttribute('aria-hidden','true');
   $('projectModal').setAttribute('aria-hidden','true');
   document.body.classList.remove('design-overlay-open');
 }
-
-function intakeField(label,value){
-  if(value===null||value===undefined||value===''||(Array.isArray(value)&&!value.length))return '';
-  const rendered=Array.isArray(value)?value.join(', '):String(value);
-  return `<div class="brief-field"><span>${esc(label)}</span><strong>${esc(rendered)}</strong></div>`;
-}
-function openIntake(kind,id){
-  const source=kind==='logo'?logoIntakes:webIntakes;
-  const i=source.find(x=>String(x.id)===String(id));
-  if(!i)return;
-  $('intakeDrawerTitle').textContent=i.business_name||i.logo_text||'Design intake';
-  $('intakeDrawerSubtitle').textContent=[i.client_name,i.email_address,i.phone_number].filter(Boolean).join(' · ');
-  let fields='';
-  if(kind==='logo'){
-    fields=[
-      intakeField('Tracking / reference',i.tracking_number),
-      intakeField('Logo text',i.logo_text),
-      intakeField('Tagline',i.logo_tagline),
-      intakeField('Preferred style',i.logo_style),
-      intakeField('Brand mood',i.brand_mood),
-      intakeField('Brand colors',i.brand_colors),
-      intakeField('Creative description',i.logo_description),
-      intakeField('Competitor / inspiration links',i.competitor_inspiration_links),
-      intakeField('Reference asset',i.reference_asset_url)
-    ].join('');
-  }else{
-    fields=[
-      intakeField('Tracking / reference',i.tracking_number),
-      intakeField('Current website',i.current_url),
-      intakeField('Website type',i.website_type||i.website_type_other),
-      intakeField('Primary goal',i.main_goal),
-      intakeField('Target audience',i.target_audience),
-      intakeField('Branding status',i.branding_status),
-      intakeField('Brand assets',i.brand_assets_links),
-      intakeField('Style preference',i.style_preference||i.style_preference_other),
-      intakeField('Aesthetic tone',i.aesthetic_tone),
-      intakeField('Design inspiration',i.design_inspiration_links),
-      intakeField('Required features',i.required_features),
-      intakeField('Other features',i.required_features_other),
-      intakeField('Estimated page count',i.estimated_page_count),
-      intakeField('Copy / asset readiness',i.asset_copy_status),
-      intakeField('Logo status',i.logo_status),
-      intakeField('Logo asset',i.logo_asset_url),
-      intakeField('Architecture / notes',i.architectural_notes)
-    ].join('');
-  }
-  $('intakeDrawerBody').innerHTML=`<div class="brief-summary">
-    <div class="brief-meta"><div><span>Submitted</span><strong>${i.created_at?new Date(i.created_at).toLocaleString():'—'}</strong></div><div><span>Project type</span><strong>${kind==='logo'?'Logo design':'Website design'}</strong></div></div>
-    <section class="brief-section"><div class="box-head"><h3>Client creative brief</h3><span>${kind==='logo'?'Logo':'Website'}</span></div><div class="brief-grid">${fields||'<div class="empty">No brief details were provided.</div>'}</div></section>
-    <div class="brief-actions"><button class="secondary-action" id="copyClientEmail">Copy client email</button><button class="primary" id="startFromIntake">Start project from intake</button></div>
-  </div>`;
-  $('copyClientEmail').onclick=async()=>{try{await navigator.clipboard.writeText(i.email_address||'');toast('Client email copied.')}catch{toast(i.email_address||'No email available.')}};
-  $('startFromIntake').onclick=()=>{
-    close();
-    const client=clients.find(c=>String(c.email_address||'').trim().toLowerCase()===String(i.email_address||'').trim().toLowerCase());
-    $('client').value=client?.id||'';
-    $('projectType').value=kind==='logo'?'logo':'website';
-    $('projectTitle').value=i.business_name?`${i.business_name} — ${kind==='logo'?'Logo Design':'Website Design'}`:'';
-    $('tracking').value=i.tracking_number||'';
-    $('adminNotes').value=`Created from ${kind==='logo'?'logo':'website'} intake submitted ${i.created_at?new Date(i.created_at).toLocaleDateString():''}.`;
-    show('projectModal');
-  };
-  show('intakeDrawer');
-}
-
-function intakeSummary(p){
-  const x=p.intake_payload||{};
-  const entries=p.project_type==='website'
-    ?[['Website type',x.website_type],['Goal',x.main_goal],['Audience',x.target_audience],['Pages',x.estimated_page_count],['Style',x.style_preference],['Features',Array.isArray(x.required_features)?x.required_features.join(', '):x.required_features]]
-    :[['Logo text',x.logo_text],['Style',x.logo_style],['Brand mood',x.brand_mood],['Colors',x.brand_colors],['Description',x.logo_description],['Uses',Array.isArray(x.logo_uses)?x.logo_uses.join(', '):x.logo_uses]];
-  return entries.filter(([,v])=>v).map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
-}
-function openProject(id){
-  current=projects.find(p=>p.id===id);if(!current)return;
-  $('drawerTitle').textContent=current.title;
-  const proofs=(current.design_proofs||[]).sort((a,b)=>b.version_number-a.version_number);
-  const comments=(current.design_comments||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  const intakeDone=current.intake_status==='completed'||current.intake_status==='waived';
-  $('drawerBody').innerHTML=`<div class="project-detail">
-    <section class="admin-project-state">
-      <div><span>INTAKE</span><strong class="${intakeDone?'ok':'needs'}">${intakeDone?'Completed':'Waiting on client'}</strong></div>
-      <div><span>PROJECT STATUS</span><strong>${esc(String(current.status||'').replaceAll('_',' '))}</strong></div>
-      <div><span>CLIENT APPROVAL</span><strong>${current.client_approved_at?'Approved '+new Date(current.client_approved_at).toLocaleDateString():'Not approved yet'}</strong></div>
-    </section>
-    ${intakeDone?`<section class="intake-summary-box"><div class="box-head"><h3>Project intake</h3><span>${current.intake_completed_at?new Date(current.intake_completed_at).toLocaleDateString():'Complete'}</span></div><div class="admin-intake-grid">${intakeSummary(current)||'<div class="empty">Intake was completed through the order workflow.</div>'}</div></section>`:`<section class="admin-waiting-intake"><strong>Customer intake required</strong><p>This project came from a manual order. The customer now sees a ${current.project_type==='website'?'website':'logo'} discovery form in their Design Center. Review controls can be prepared now, but production should begin after the intake is submitted.</p></section>`}
-    ${current.project_type==='website'?`<section class="review-box"><div class="box-head"><h3>Private website preview</h3><span class="badge">Portal review</span></div><div class="box-body">
-      <p class="admin-helper">Paste the current build URL here. The customer will view it inside their filings4u Design Center; the URL itself is not presented as their final website address.</p>
-      <form id="reviewForm" class="review-form review-form-v2">
-        <input id="previewLabel" value="${esc(current.preview_label||'Current website build')}" placeholder="Preview label">
-        <input id="reviewInput" type="url" value="${esc(current.review_url||'')}" placeholder="Private/staging build URL">
-        <button class="primary">Publish preview</button>
-      </form>
-      ${current.review_url?`<div class="published-preview"><span>Published ${current.preview_published_at?new Date(current.preview_published_at).toLocaleString():'for client review'}</span><a href="${esc(current.review_url)}" target="_blank" rel="noopener">Admin preview →</a></div>`:''}
-    </div></section>
-    <section class="finalize-box"><div class="box-head"><h3>Final production website</h3><span>${current.finalized_at?'Finalized':'Not released'}</span></div><div class="box-body"><p class="admin-helper">Do not add the production URL until the website is complete. Once finalized, this URL becomes visible to the customer.</p><form id="finalizeForm" class="review-form"><input id="finalUrl" type="url" value="${esc(current.final_url||'')}" placeholder="https://customer-domain.com"><button class="primary">${current.finalized_at?'Update final URL':'Finalize website'}</button></form></div></section>`:''}
-    <section class="proof-box"><div class="box-head"><h3>${current.project_type==='logo'?'Logo / design proofs':'Supporting design proofs'}</h3><span>${proofs.length} uploaded</span></div><div class="box-body"><form id="proofForm" class="proof-form"><input id="proofTitle" required placeholder="Proof title / version"><input id="proofFile" required type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"><button class="primary">Upload proof</button></form><div class="proof-list">${proofs.length?proofs.map(x=>`<div class="proof-row"><div><strong>v${x.version_number} · ${esc(x.proof_title)}</strong><small>${esc(String(x.status||'').replaceAll('_',' '))}${x.client_decision_note?' · '+esc(x.client_decision_note):''}</small></div><button data-proof="${x.storage_path}">View</button></div>`).join(''):'<div class="empty">No proofs uploaded.</div>'}</div></div></section>
-    <section class="comments-box"><div class="box-head"><h3>Revision conversation</h3><span>${comments.length} comments</span></div><div class="box-body"><div>${comments.map(c=>`<div class="comment"><strong>${c.author_type==='admin'?'filings4u':'Client'}</strong><p>${esc(c.message)}</p></div>`).join('')||'<div class="empty">No comments yet.</div>'}</div><form id="commentForm" class="comment-form"><textarea id="commentText" required rows="2" placeholder="Reply to the client…"></textarea><button class="primary">Send</button></form></div></section>
-  </div>`;
-  show('projectDrawer');
-  if($('reviewForm'))$('reviewForm').onsubmit=saveReview;
-  if($('finalizeForm'))$('finalizeForm').onsubmit=finalizeWebsite;
-  $('proofForm').onsubmit=uploadProof;$('commentForm').onsubmit=comment;
-  document.querySelectorAll('[data-proof]').forEach(b=>b.onclick=()=>viewProof(b.dataset.proof));
-}
+function openProject(id){current=projects.find(p=>p.id===id);if(!current)return;$('drawerTitle').textContent=current.title;const proofs=(current.design_proofs||[]).sort((a,b)=>b.version_number-a.version_number),comments=(current.design_comments||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));$('drawerBody').innerHTML=`<div class="project-detail"><section class="review-box"><div class="box-head"><h3>Website review link</h3><span class="badge">${current.project_type}</span></div><div class="box-body"><form id="reviewForm" class="review-form"><input id="reviewInput" type="url" value="${esc(current.review_url||'')}" placeholder="Paste staging or review URL"><button class="primary">Save link</button></form>${current.review_url?`<p><a href="${esc(current.review_url)}" target="_blank" rel="noopener">Open current review site →</a></p>`:''}</div></section><section class="proof-box"><div class="box-head"><h3>Logo / design proofs</h3><span>${proofs.length} uploaded</span></div><div class="box-body"><form id="proofForm" class="proof-form"><input id="proofTitle" required placeholder="Proof title / version"><input id="proofFile" required type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"><button class="primary">Upload proof</button></form><div class="proof-list">${proofs.length?proofs.map(x=>`<div class="proof-row"><div><strong>v${x.version_number} · ${esc(x.proof_title)}</strong><small>${esc(x.status.replaceAll('_',' '))}${x.client_decision_note?' · '+esc(x.client_decision_note):''}</small></div><button data-proof="${x.storage_path}">View</button></div>`).join(''):'<div class="empty">No proofs uploaded.</div>'}</div></div></section><section class="comments-box"><div class="box-head"><h3>Revision conversation</h3><span>${comments.length} comments</span></div><div class="box-body"><div>${comments.map(c=>`<div class="comment"><strong>${c.author_type==='admin'?'filings4u':'Client'}</strong><p>${esc(c.message)}</p></div>`).join('')||'<div class="empty">No comments yet.</div>'}</div><form id="commentForm" class="comment-form"><textarea id="commentText" required rows="2" placeholder="Reply to the client…"></textarea><button class="primary">Send</button></form></div></section></div>`;show('projectDrawer');$('reviewForm').onsubmit=saveReview;$('proofForm').onsubmit=uploadProof;$('commentForm').onsubmit=comment;document.querySelectorAll('[data-proof]').forEach(b=>b.onclick=()=>viewProof(b.dataset.proof))}
 async function saveReview(e){
   e.preventDefault();
-  const raw=$('reviewInput').value.trim(),label=$('previewLabel').value.trim()||'Current website build';
-  if(!raw)return toast('Enter the website preview URL.');
-  try{const u=new URL(raw);if(!['http:','https:'].includes(u.protocol))throw new Error()}catch{return toast('Enter a valid HTTP or HTTPS preview URL.')}
-  const {error}=await db.from('design_projects').update({
-    review_url:raw,preview_label:label,preview_published_at:new Date().toISOString(),
-    status:'awaiting_feedback',client_approved_at:null,updated_at:new Date().toISOString()
-  }).eq('id',current.id);
+  const raw=$('reviewInput').value.trim();
+  let url=raw||null;
+  if(url){
+    try{ new URL(url); }catch{ return toast('Enter a valid review URL.'); }
+  }const {error}=await db.from('design_projects')
+    .update({review_url:url,status:url?'awaiting_feedback':current.status,updated_at:new Date().toISOString()})
+    .eq('id',current.id);
   if(error)return toast(error.message);
-  toast('Private website preview published to the client portal.');
-  const id=current.id;await load();openProject(id);
-}
-async function finalizeWebsite(e){
-  e.preventDefault();
-  const raw=$('finalUrl').value.trim();
-  if(!raw)return toast('Enter the final production URL.');
-  try{const u=new URL(raw);if(!['http:','https:'].includes(u.protocol))throw new Error()}catch{return toast('Enter a valid final website URL.')}
-  if(!current.client_approved_at&&!confirm('The customer has not approved the current website preview. Finalize anyway?'))return;
-  const {error}=await db.from('design_projects').update({
-    final_url:raw,finalized_at:new Date().toISOString(),status:'completed',updated_at:new Date().toISOString()
-  }).eq('id',current.id);
-  if(error)return toast(error.message);
-  toast('Website finalized. The production URL is now available to the client.');
-  const id=current.id;await load();openProject(id);
+  toast('Review link saved.');
+  const id=current.id;
+  await load();
+  openProject(id);
 }
 async function uploadProof(e){
   e.preventDefault();
@@ -246,7 +65,7 @@ async function viewProof(path){const {data,error}=await db.storage.from('design_
 async function comment(e){e.preventDefault();const m=$('commentText').value.trim();if(!m)return;const {error}=await db.from('design_comments').insert({project_id:current.id,author_user_id:user.id,author_type:'admin',message:m});if(error)return toast(error.message);toast('Comment sent.');const id=current.id;await load();openProject(id)}
 $('projectForm').onsubmit=async e=>{e.preventDefault();const c=clients.find(x=>x.id===$('client').value);if(!c)return;const {error}=await db.from('design_projects').insert({client_profile_id:c.id,client_email:String(c.email_address||'').trim().toLowerCase(),project_type:$('projectType').value,title:$('projectTitle').value.trim(),tracking_number:$('tracking').value.trim()||null,review_url:$('reviewUrl').value.trim()||null,admin_notes:$('adminNotes').value.trim()||null,status:$('reviewUrl').value.trim()?'awaiting_feedback':'intake',created_by:user.id});if(error)return toast(error.message);close();$('projectForm').reset();toast('Design project created.');await load()}
 function toast(m){$('toast').textContent=m;$('toast').hidden=false;setTimeout(()=>$('toast').hidden=true,2800)}
-$('newProject').onclick=()=>show('projectModal');$('closeModal').onclick=close;$('cancelModal').onclick=close;$('closeDrawer').onclick=close;$('closeIntakeDrawer').onclick=close;$('shade').onclick=close;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(!$('shade').hidden))close()});$('refresh').onclick=load;$('search').oninput=render;$('typeFilter').onchange=render;$('statusFilter').onchange=render;document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{activeTab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('is-active',x===b));renderIntakes()});boot().then(()=>{
+$('newProject').onclick=()=>show('projectModal');$('closeModal').onclick=close;$('cancelModal').onclick=close;$('closeDrawer').onclick=close;$('shade').onclick=close;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(!$('shade').hidden))close()});$('refresh').onclick=load;$('search').oninput=render;$('typeFilter').onchange=render;$('statusFilter').onchange=render;document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{activeTab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('is-active',x===b));renderIntakes()});boot().then(()=>{
   if(new URLSearchParams(location.search).get('new')==='1'){
     setTimeout(()=>show('projectModal'),0);
     history.replaceState({},'',location.pathname);
