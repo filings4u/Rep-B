@@ -190,8 +190,8 @@ function openIntakeRecord(kind,id){
       </div>`).join('')}</div>
     </section>`).join('')}
     <div class="completed-intake-actions">
-      <button id="copyIntakeEmail" class="secondary-action">Copy client email</button>
-      ${i.tracking_number?`<button id="copyIntakeTracking" class="secondary-action">Copy tracking #</button>`:''}
+      <button id="copyIntakeEmail" class="intake-action-btn intake-action-primary" type="button">Copy client email</button>
+      ${i.tracking_number?`<button id="copyIntakeTracking" class="intake-action-btn intake-action-secondary" type="button">Copy tracking #</button>`:''}
     </div>
   </div>`;
   show('intakeDrawer');
