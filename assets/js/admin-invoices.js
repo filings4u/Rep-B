@@ -123,7 +123,7 @@ function filterInvoices(){
 
 function resetComposer(){
   editId=null;currentInvoice=null;lines=[];$('invoiceForm').reset();
-  $('invoiceStatus').value='draft';$('paymentStatus').value='unpaid';$('discountType').value='none';$('discountValue').value='0';$('taxRate').value='0';$('shipping').value='0';$('amountPaid').value='0';
+  $('invoiceStatus').value='draft';$('paymentStatus').value='unpaid';$('discountType').value='amount';$('discountValue').value='0';$('taxRate').value='0';$('shipping').value='0';$('amountPaid').value='0';
   $('clientEmail').value='';$('trackingNumber').value='';$('orderId').innerHTML='<option value="">No related order</option>';
   const d=new Date();d.setDate(d.getDate()+15);$('dueDate').value=d.toISOString().slice(0,10);
   addLine({description:'',quantity:1,unit_price:0});$('composerTitle').textContent='Create invoice';calculate();
@@ -135,7 +135,7 @@ function openComposer(invoice=null){
     $('clientId').value=invoice.client_profile_id||'';syncClient();
     setTimeout(()=>{$('orderId').value=invoice.order_id||'';syncOrder()},0);
     $('clientEmail').value=invoice.client_email||'';$('trackingNumber').value=invoice.tracking_number||'';$('dueDate').value=invoice.due_date||'';
-    $('invoiceStatus').value=invoice.status||'draft';$('paymentStatus').value=invoice.payment_status||'unpaid';$('discountType').value=invoice.discount_type||((Number(invoice.discount_amount)||0)>0?'fixed':'none');$('discountValue').value=invoice.discount_value??invoice.discount_amount??0;$('taxRate').value=invoice.tax_rate||0;$('shipping').value=invoice.shipping_amount||0;$('amountPaid').value=invoice.amount_paid||0;$('paymentTerms').value=invoice.payment_terms||'';$('paymentUrl').value=invoice.payment_url||'';$('customerNotes').value=invoice.customer_notes||'';
+    $('invoiceStatus').value=invoice.status||'draft';$('paymentStatus').value=invoice.payment_status||'unpaid';$('discountType').value=invoice.discount_type||'amount';$('discountValue').value=invoice.discount_value??invoice.discount_amount??0;$('taxRate').value=invoice.tax_rate||0;$('shipping').value=invoice.shipping_amount||0;$('amountPaid').value=invoice.amount_paid||0;$('paymentTerms').value=invoice.payment_terms||'';$('paymentUrl').value=invoice.payment_url||'';$('customerNotes').value=invoice.customer_notes||'';
     lines=[];$('lineItems').innerHTML='';(invoice.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number).forEach(addLine);if(!lines.length)addLine({description:invoice.line_item_description||'',quantity:1,unit_price:invoice.subtotal_amount||invoice.total_amount||0});
   }
   showOverlay('invoiceComposer');calculate();
@@ -164,14 +164,14 @@ function renderLines(){
 function renderLineTotal(row,l){row.querySelector('.line-total').textContent=money(l.quantity*l.unit_price)}
 function totals(){
   const subtotal=lines.reduce((s,l)=>s+(Number(l.quantity)||0)*(Number(l.unit_price)||0),0);
-  const discountType=$('discountType').value||'none';
+  const discountType=$('discountType').value||'amount';
   let discountValue=Math.max(0,Number($('discountValue').value)||0);
   const discountBase=Math.max(0,subtotal);
   let discount=0;
   if(discountType==='percent'){
     discountValue=Math.min(discountValue,100);
     discount=discountBase*(discountValue/100);
-  }else if(discountType==='fixed'){
+  }else if(discountType==='amount'){
     discount=Math.min(discountValue,discountBase);
   }
   const taxable=Math.max(0,subtotal-discount);
@@ -218,7 +218,7 @@ async function saveInvoice(forceDraft=false){
   const payload={
     document_type:'invoice',client_email:$('clientEmail').value.trim().toLowerCase(),client_profile_id:$('clientId').value,
     order_id:$('orderId').value||null,tracking_number:$('trackingNumber').value||null,line_item_description:lines[0].description,
-    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_amount:t.discount,discount_type:t.discountType,discount_value:t.discountValue,tax_rate:t.rate,tax_amount:t.tax,
+    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_amount:t.discount,discount_type:(t.discountType==='percent'?'percent':'amount'),discount_value:t.discountValue,tax_rate:t.rate,tax_amount:t.tax,
     shipping_amount:t.shipping,total_amount:t.total,amount_paid:t.amountPaid,balance_due:t.balance,payment_status:$('paymentStatus').value,payment_url:paymentUrl||null,
     customer_notes:$('customerNotes').value.trim()||null,payment_terms:$('paymentTerms').value.trim()||null,created_by:user.id,updated_at:new Date().toISOString()
   };
