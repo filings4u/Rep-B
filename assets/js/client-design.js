@@ -58,26 +58,310 @@ async function openProject(id){
   current=projects.find(p=>p.id===id);if(!current)return;
   const proofs=[...(current.design_proofs||[])].sort((a,b)=>b.version_number-a.version_number);
   const comments=[...(current.design_comments||[])].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  const hasReview=proofs.length>0||!!safeHttpUrl(current.review_url);
-  if(String(current.intake_status||'').toLowerCase()==='required'&&!hasReview)return openProjectIntake(id);
+  const reviewUrl=safeHttpUrl(current.review_url);
+  const hasReview=proofs.length>0||!!reviewUrl;
+
+  if(String(current.intake_status||'').toLowerCase()==='required'&&!hasReview){
+    return openProjectIntake(id);
+  }
 
   $('workspaceTitle').textContent=current.title;
-  const reviewUrl=safeHttpUrl(current.review_url);
-  const reviewBanner=hasReview?`<section class="review-task-banner"><div><small>DESIGN REVIEW REQUIRED</small><h3>Your design team posted a review.</h3><p>Review the current website/proof below. You can approve it, request changes, and send comments directly to the design team.</p></div></section>`:'';
-  const websiteReview=reviewUrl?`<section class="review-link"><div class="box-title">Website review</div><div class="box-content"><p>Open the current website build, then return here to leave revision notes.</p><a href="${esc(reviewUrl)}" target="_blank" rel="noopener">View website →</a></div></section>`:'';
-  const proofHtml=`<section class="proofs"><div class="box-title">${current.project_type==='website'?'Website proofs':'Design proofs'}</div><div class="box-content"><div class="proof-grid">${proofs.length?proofs.map(p=>`<article class="proof"><strong>v${p.version_number} · ${esc(p.proof_title)}</strong><span>${esc(String(p.status||'').replaceAll('_',' '))}</span><div class="proof-actions"><button data-view="${esc(p.storage_path)}">View ${current.project_type==='website'?'website proof':'proof'}</button>${String(p.status||'').toLowerCase()==='pending'?`<button class="approve" data-decide="${p.id}" data-value="approved">Approve</button><button class="changes" data-decide="${p.id}" data-value="changes_requested">Request changes</button>`:''}</div></article>`).join(''):'<div class="empty">No proofs have been posted yet.</div>'}</div></div></section>`;
-  const intakeReminder=String(current.intake_status||'').toLowerCase()==='required'?`<section class="intake-reminder"><div><strong>Website intake is still incomplete.</strong><p>You can review the posted proof now and complete the discovery form separately.</p></div><button data-project-intake="${esc(current.id)}">Complete intake</button></section>`:'';
 
-  $('workspaceBody').innerHTML=`<div class="workspace-content">${reviewBanner}${websiteReview}${proofHtml}${intakeReminder}<section class="conversation"><div class="box-title">Comments & revision requests</div><div class="box-content">${comments.map(c=>`<div class="comment"><strong>${c.author_type==='client'?'You':'filings4u design team'}</strong><p>${esc(c.message)}</p></div>`).join('')||'<div class="empty">No comments yet.</div>'}<form id="commentForm" class="comment-form"><textarea id="message" required rows="2" placeholder="Describe changes or send a note…"></textarea><button>Send</button></form></div></section></div>`;
+  const previewPanel=reviewUrl?`
+    <section class="secure-preview-panel">
+      <div class="secure-preview-head">
+        <div>
+          <small>PRIVATE WEBSITE REVIEW</small>
+          <h3>${esc(current.preview_label||'Current website build')}</h3>
+          <p>Review the current build inside your filings4u account. The preview address is not presented as your final website URL.</p>
+        </div>
+        <span class="secure-badge">Private preview</span>
+      </div>
+
+      <div class="portal-browser">
+        <div class="portal-browser-bar">
+          <div class="browser-dots"><i></i><i></i><i></i></div>
+          <div class="portal-address">filings4u secure website review</div>
+          <span>Portal only</span>
+        </div>
+        <iframe
+          src="${esc(reviewUrl)}"
+          title="Private website review"
+          referrerpolicy="no-referrer"
+          sandbox="allow-forms allow-modals allow-popups allow-same-origin allow-scripts"
+        ></iframe>
+      </div>
+    </section>`:'';
+
+  const proofsPanel=`
+    <section class="proofs">
+      <div class="box-title">${current.project_type==='website'?'Website proofs':'Design proofs'}</div>
+      <div class="box-content">
+        <div class="proof-grid">
+          ${proofs.length?proofs.map(p=>`
+            <article class="proof">
+              <div class="proof-copy">
+                <strong>v${p.version_number} · ${esc(p.proof_title)}</strong>
+                <span>${esc(String(p.status||'').replaceAll('_',' '))}</span>
+              </div>
+              <div class="proof-actions">
+                ${!reviewUrl?`<button class="btn btn-secondary" data-view="${esc(p.storage_path)}">View proof</button>`:''}
+                ${String(p.status||'').toLowerCase()==='pending'?`
+                  <button class="btn btn-success" data-approve-proof="${p.id}">Approve</button>
+                  <button class="btn btn-danger-soft" data-request-proof="${p.id}">Request changes</button>`:''}
+              </div>
+            </article>`).join(''):'<div class="empty">No proofs have been posted yet.</div>'}
+        </div>
+      </div>
+    </section>`;
+
+  const reviewActions=hasReview?`
+    <section class="review-response-panel">
+      <div class="review-response-copy">
+        <small>YOUR REVIEW</small>
+        <h3>Ready to respond?</h3>
+        <p>Approve the current version or send the exact changes you want our design team to make.</p>
+      </div>
+      <div class="review-response-actions">
+        <button id="openRevisionComposer" class="btn btn-danger-soft">Request changes</button>
+        <button id="openApprovalPanel" class="btn btn-success">Approve current version</button>
+      </div>
+
+      <div id="revisionComposer" class="inline-action-panel" hidden>
+        <div class="inline-action-head">
+          <div><small>REVISION REQUEST</small><strong>Describe the changes you want</strong></div>
+          <button type="button" class="icon-close" data-close-inline="revisionComposer" aria-label="Close revision form">×</button>
+        </div>
+        <textarea id="revisionText" rows="5" placeholder="Example: On the home page, move the quote button higher, change the hero image, and make the services section more compact."></textarea>
+        <div class="inline-action-buttons">
+          <button type="button" class="btn btn-secondary" data-close-inline="revisionComposer">Cancel</button>
+          <button type="button" id="submitRevision" class="btn btn-primary">Send revision request</button>
+        </div>
+      </div>
+
+      <div id="approvalPanel" class="inline-action-panel approval-panel" hidden>
+        <div class="inline-action-head">
+          <div><small>APPROVAL</small><strong>Approve this version?</strong></div>
+          <button type="button" class="icon-close" data-close-inline="approvalPanel" aria-label="Close approval">×</button>
+        </div>
+        <p>Approval tells the filings4u design team that the current version is approved for finalization.</p>
+        <div class="inline-action-buttons">
+          <button type="button" class="btn btn-secondary" data-close-inline="approvalPanel">Not yet</button>
+          <button type="button" id="confirmApproval" class="btn btn-success">Approve version</button>
+        </div>
+      </div>
+    </section>`:'';
+
+  const intakeReminder=String(current.intake_status||'').toLowerCase()==='required'?`
+    <section class="intake-reminder">
+      <div>
+        <strong>${current.project_type==='website'?'Website':'Logo'} intake is still incomplete.</strong>
+        <p>You can review the posted work now and complete the discovery form separately.</p>
+      </div>
+      <button class="btn btn-secondary" data-project-intake="${esc(current.id)}">Complete intake</button>
+    </section>`:'';
+
+  $('workspaceBody').innerHTML=`
+    <div class="workspace-content secure-review-workspace">
+      ${hasReview?`<section class="review-task-banner"><div><small>DESIGN REVIEW READY</small><h3>Your design team posted a new review.</h3><p>Review the work below, then approve it or request changes without leaving your portal.</p></div></section>`:''}
+      ${previewPanel}
+      ${proofsPanel}
+      ${reviewActions}
+      ${intakeReminder}
+      <section class="conversation">
+        <div class="box-title">Comments & revision requests</div>
+        <div class="box-content">
+          <div id="commentThread">
+            ${comments.map(c=>`<div class="comment ${c.author_type==='client'?'mine':''}">
+              <strong>${c.author_type==='client'?'You':'filings4u design team'}</strong>
+              <p>${esc(c.message)}</p>
+            </div>`).join('')||'<div class="empty">No comments yet.</div>'}
+          </div>
+          <form id="commentForm" class="comment-form">
+            <textarea id="message" required rows="3" placeholder="Send a project comment or question…"></textarea>
+            <button class="btn btn-primary" type="submit">Send comment</button>
+          </form>
+        </div>
+      </section>
+    </div>`;
+
   show('workspace');
-  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>viewProof(b.dataset.view));
-  document.querySelectorAll('[data-decide]').forEach(b=>b.onclick=()=>decide(b.dataset.decide,b.dataset.value));
+
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>viewProofInline(b.dataset.view));
   document.querySelectorAll('[data-project-intake]').forEach(b=>b.onclick=()=>openProjectIntake(b.dataset.projectIntake));
+  document.querySelectorAll('[data-close-inline]').forEach(b=>b.onclick=()=>$(b.dataset.closeInline).hidden=true);
+
+  if($('openRevisionComposer')){
+    $('openRevisionComposer').onclick=()=>{
+      $('revisionComposer').hidden=false;
+      $('approvalPanel').hidden=true;
+      setTimeout(()=>$('revisionText')?.focus(),0);
+    };
+  }
+  if($('openApprovalPanel')){
+    $('openApprovalPanel').onclick=()=>{
+      $('approvalPanel').hidden=false;
+      $('revisionComposer').hidden=true;
+    };
+  }
+  if($('submitRevision')){
+    $('submitRevision').onclick=()=>submitWebsiteRevision();
+  }
+  if($('confirmApproval')){
+    $('confirmApproval').onclick=()=>approveCurrentReview();
+  }
+
+  document.querySelectorAll('[data-request-proof]').forEach(b=>b.onclick=()=>{
+    $('revisionComposer').hidden=false;
+    $('approvalPanel').hidden=true;
+    $('revisionComposer').dataset.proofId=b.dataset.requestProof;
+    setTimeout(()=>$('revisionText')?.focus(),0);
+  });
+  document.querySelectorAll('[data-approve-proof]').forEach(b=>b.onclick=()=>{
+    $('approvalPanel').hidden=false;
+    $('revisionComposer').hidden=true;
+    $('approvalPanel').dataset.proofId=b.dataset.approveProof;
+  });
+
   $('commentForm').onsubmit=comment;
 }
-async function viewProof(path){const {data,error}=await db.storage.from('design_proofs').createSignedUrl(path,900);if(error)return toast(error.message);window.open(data.signedUrl,'_blank','noopener,noreferrer')}
-async function decide(id,value){let note='';if(value==='changes_requested'){note=prompt('Describe the changes you want:')||'';if(!note.trim())return}if(value==='approved'&&!confirm('Approve this design proof?'))return;const {error}=await db.rpc('decide_design_proof',{p_proof_id:id,p_decision:value,p_note:note||null});if(error)return toast(error.message);toast(value==='approved'?'Proof approved.':'Revision request sent.');close();await load()}
-async function comment(e){e.preventDefault();const m=$('message').value.trim();if(!m)return;const {error}=await db.from('design_comments').insert({project_id:current.id,author_user_id:user.id,author_type:'client',message:m});if(error)return toast(error.message);toast('Comment sent.');close();await load();openProject(current.id)}
+
+async function viewProofInline(path){
+  const {data,error}=await db.storage.from('design_proofs').createSignedUrl(path,900);
+  if(error)return toast(error.message);
+
+  const url=safeHttpUrl(data?.signedUrl);
+  if(!url)return toast('Unable to open this proof.');
+
+  const existing=$('proofViewer');
+  if(existing)existing.remove();
+
+  const panel=document.createElement('section');
+  panel.id='proofViewer';
+  panel.className='inline-proof-viewer';
+  panel.innerHTML=`
+    <div class="inline-proof-head">
+      <div><small>SECURE PROOF VIEWER</small><strong>Design proof</strong></div>
+      <button type="button" class="icon-close" id="closeProofViewer" aria-label="Close proof viewer">×</button>
+    </div>
+    <iframe src="${esc(url)}" title="Design proof" referrerpolicy="no-referrer"></iframe>`;
+  $('workspaceBody').prepend(panel);
+  $('closeProofViewer').onclick=()=>panel.remove();
+}
+
+async function submitWebsiteRevision(){
+  const text=$('revisionText')?.value.trim()||'';
+  if(!text)return toast('Describe the changes you want.');
+
+  const proofId=$('revisionComposer')?.dataset.proofId||null;
+  $('submitRevision').disabled=true;
+  $('submitRevision').textContent='Sending…';
+
+  try{
+    if(proofId){
+      const {error}=await db.rpc('decide_design_proof',{
+        p_proof_id:proofId,
+        p_decision:'changes_requested',
+        p_note:text
+      });
+      if(error)throw error;
+    }else{
+      const {error}=await db.from('design_comments').insert({
+        project_id:current.id,
+        author_user_id:user.id,
+        author_type:'client',
+        message:`Revision requested: ${text}`
+      });
+      if(error)throw error;
+
+      if(current.project_type==='website'&&safeHttpUrl(current.review_url)){
+        const {error:reviewError}=await db.rpc('review_website_design_project',{
+          p_project_id:current.id,
+          p_decision:'changes_requested',
+          p_note:text
+        });
+        if(reviewError)console.warn('Website review status update:',reviewError.message);
+      }
+    }
+
+    toast('Revision request sent.');
+    await load();
+    await openProject(current.id);
+  }catch(error){
+    toast(error.message||'Unable to send revision request.');
+  }finally{
+    if($('submitRevision')){
+      $('submitRevision').disabled=false;
+      $('submitRevision').textContent='Send revision request';
+    }
+  }
+}
+
+async function approveCurrentReview(){
+  const proofId=$('approvalPanel')?.dataset.proofId||null;
+  $('confirmApproval').disabled=true;
+  $('confirmApproval').textContent='Approving…';
+
+  try{
+    if(proofId){
+      const {error}=await db.rpc('decide_design_proof',{
+        p_proof_id:proofId,
+        p_decision:'approved',
+        p_note:null
+      });
+      if(error)throw error;
+    }else if(current.project_type==='website'&&safeHttpUrl(current.review_url)){
+      const {error}=await db.rpc('review_website_design_project',{
+        p_project_id:current.id,
+        p_decision:'approved',
+        p_note:null
+      });
+      if(error)throw error;
+    }else{
+      const pending=(current.design_proofs||[]).find(p=>String(p.status||'').toLowerCase()==='pending');
+      if(!pending)throw new Error('There is no pending review to approve.');
+      const {error}=await db.rpc('decide_design_proof',{
+        p_proof_id:pending.id,
+        p_decision:'approved',
+        p_note:null
+      });
+      if(error)throw error;
+    }
+
+    toast('Current version approved.');
+    await load();
+    await openProject(current.id);
+  }catch(error){
+    toast(error.message||'Unable to approve this version.');
+  }finally{
+    if($('confirmApproval')){
+      $('confirmApproval').disabled=false;
+      $('confirmApproval').textContent='Approve version';
+    }
+  }
+}
+
+async function comment(e){
+  e.preventDefault();
+  const m=$('message').value.trim();if(!m)return;
+  const button=e.currentTarget.querySelector('button[type="submit"]');
+  button.disabled=true;button.textContent='Sending…';
+
+  const {error}=await db.from('design_comments').insert({
+    project_id:current.id,
+    author_user_id:user.id,
+    author_type:'client',
+    message:m
+  });
+
+  button.disabled=false;button.textContent='Send comment';
+  if(error)return toast(error.message);
+
+  toast('Comment sent.');
+  await load();
+  await openProject(current.id);
+}
+
 const logoFields=`<label>Tracking number<input name="tracking_number" required></label><label>Business name<input name="business_name" required></label><label>Client name<input name="client_name" required></label><label>Email<input name="email_address" type="email" required></label><label>Phone<input name="phone_number" required></label><label>Logo text<input name="logo_text" required></label><label>Tagline<input name="logo_tagline"></label><label>Logo style<select name="logo_style" required><option>Modern</option><option>Classic</option><option>Minimal</option><option>Bold</option><option>Luxury</option><option>Playful</option></select></label><label>Brand mood<input name="brand_mood" required placeholder="Professional, energetic, trustworthy…"></label><label>Brand colors<input name="brand_colors" required></label><label class="full">Describe the logo you envision<textarea name="logo_description" rows="4" required></textarea></label><label class="full">Competitor / inspiration links<textarea name="competitor_inspiration_links" rows="3"></textarea></label><label class="full">Reference asset URL<input name="reference_asset_url" type="url"></label><button class="submit">Submit logo intake</button>`;
 const webFields=`<label>Tracking number<input name="tracking_number" required></label><label>Business name<input name="business_name" required></label><label>Client name<input name="client_name" required></label><label>Email<input name="email_address" type="email" required></label><label>Phone<input name="phone_number" required></label><label>Current website<input name="current_url" type="url"></label><label>Website type<select name="website_type" required><option>Business website</option><option>E-commerce</option><option>Landing page</option><option>Portfolio</option><option>Booking / service site</option><option>Other</option></select></label><label>Estimated page count<select name="estimated_page_count" required><option>1-3</option><option>4-6</option><option>7-10</option><option>11-20</option><option>20+</option></select></label><label class="full">Primary website goal<textarea name="main_goal" required></textarea></label><label class="full">Target audience<textarea name="target_audience" required></textarea></label><label>Branding status<select name="branding_status" required><option>Complete</option><option>Partial</option><option>Need branding</option></select></label><label>Design style<select name="style_preference" required><option>Modern</option><option>Corporate</option><option>Minimal</option><option>Luxury</option><option>Bold</option><option>Other</option></select></label><label>Aesthetic tone<input name="aesthetic_tone" required placeholder="Clean, premium, friendly…"></label><label>Brand asset links<input name="brand_assets_links"></label><label class="full">Websites you like<textarea name="design_inspiration_links"></textarea></label><label class="full">Required features<input name="required_features" required placeholder="Contact form, booking, payments, blog"></label><label>Copy/content status<select name="asset_copy_status" required><option>Ready</option><option>Partial</option><option>Need help</option></select></label><label>Logo status<select name="logo_status" required><option>Ready</option><option>In progress</option><option>Need a logo</option></select></label><label class="full">Architecture / page notes<textarea name="architectural_notes" rows="4"></textarea></label><button class="submit">Submit web design intake</button>`;
 function openProjectIntake(id){
