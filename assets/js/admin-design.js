@@ -36,7 +36,7 @@ async function load(){
 function cname(id,email){const c=clients.find(x=>x.id===id);return c?.company_name||[c?.first_name,c?.last_name].filter(Boolean).join(' ')||email||'Client'}
 function hydrateClients(){$('client').innerHTML='<option value="">Select client</option>'+clients.map(c=>`<option value="${c.id}">${esc(cname(c.id,c.email_address))} — ${esc(c.email_address)}</option>`).join('')}
 function filters(){const vals=[...new Set(projects.map(p=>p.status))];$('statusFilter').innerHTML='<option value="">All statuses</option>'+vals.map(v=>`<option value="${v}">${esc(v.replaceAll('_',' '))}</option>`).join('')}
-function render(){const q=$('search').value.toLowerCase(),t=$('typeFilter').value,s=$('statusFilter').value;const rows=projects.filter(p=>(!q||[p.title,p.client_email,p.tracking_number,cname(p.client_profile_id)].join(' ').toLowerCase().includes(q))&&(!t||p.project_type===t)&&(!s||p.status===s));$('projects').innerHTML=rows.length?rows.map(p=>`<article class="project-card"><div class="project-top"><div><span class="project-type">${p.project_type} design</span><h3>${esc(p.title)}</h3><p>${esc(cname(p.client_profile_id,p.client_email))}</p></div><span class="badge">${esc(p.status.replaceAll('_',' '))}</span></div><div class="project-meta"><div><small>Proofs</small><strong>${p.design_proofs?.length||0}</strong></div><div><small>Comments</small><strong>${p.design_comments?.length||0}</strong></div><div><small>Tracking</small><strong>${esc(p.tracking_number||'—')}</strong></div><div><small>Review link</small><strong>${p.review_url?'Added':'Not added'}</strong></div></div><button class="open-project" data-id="${p.id}">Manage project →</button></article>`).join(''):'<div class="empty">No design projects found.</div>';document.querySelectorAll('.open-project').forEach(b=>b.onclick=()=>openProject(b.dataset.id));$('activeCount').textContent=projects.filter(p=>!['approved','completed','cancelled'].includes(p.status)).length;$('feedbackCount').textContent=projects.filter(p=>p.status==='awaiting_feedback').length;$('approvedCount').textContent=projects.filter(p=>['approved','completed'].includes(p.status)).length;$('intakeCount').textContent=logoIntakes.length+webIntakes.length}
+function render(){const q=$('search').value.toLowerCase(),t=$('typeFilter').value,s=$('statusFilter').value;const rows=projects.filter(p=>(!q||[p.title,p.client_email,p.tracking_number,cname(p.client_profile_id)].join(' ').toLowerCase().includes(q))&&(!t||p.project_type===t)&&(!s||p.status===s));$('projects').innerHTML=rows.length?rows.map(p=>`<article class="project-card"><div class="project-top"><div><span class="project-type">${p.project_type} design</span><h3>${esc(p.title)}</h3><p>${esc(cname(p.client_profile_id,p.client_email))}</p></div><span class="badge">${esc(p.status.replaceAll('_',' '))}</span></div><div class="project-meta"><div><small>Proofs</small><strong>${p.design_proofs?.length||0}</strong></div><div><small>Comments</small><strong>${p.design_comments?.length||0}</strong></div><div><small>Tracking</small><strong>${esc(p.tracking_number||'—')}</strong></div><div><small>Review link</small><strong>${p.review_url?'Added':'Not added'}</strong></div></div><button class="open-project" data-id="${p.id}">Manage project →</button></article>`).join(''):'<div class="empty">No design projects found.</div>';document.querySelectorAll('.open-project').forEach(b=>b.onclick=()=>openProject(b.dataset.id));$('activeCount').textContent=projects.filter(p=>!['approved','completed','cancelled'].includes(p.status)).length;$('feedbackCount').textContent=projects.filter(p=>p.status==='awaiting_feedback').length;$('approvedCount').textContent=projects.filter(p=>['approved','completed'].includes(p.status)).length;$('intakeCount').textContent=allIntakes('logo').length+allIntakes('web').length}
 function fmtIntakeValue(v){
   if(v===null||v===undefined||v==='')return '';
   if(Array.isArray(v))return v.join(', ');
@@ -45,42 +45,154 @@ function fmtIntakeValue(v){
 }
 const INTAKE_LABELS={
   tracking_number:'Tracking / reference',business_name:'Business / brand',client_name:'Client name',email_address:'Email',phone_number:'Phone',
-  current_url:'Current website',website_type:'Website type',website_type_other:'Website type details',main_goal:'Primary website goal',target_audience:'Target audience',
-  branding_status:'Branding status',brand_assets_links:'Brand asset links',style_preference:'Style preference',style_preference_other:'Style details',aesthetic_tone:'Aesthetic / visual tone',
-  design_inspiration_links:'Design inspiration',required_features:'Required features',required_features_other:'Other required features',estimated_page_count:'Estimated page count',
-  asset_copy_status:'Copy / content readiness',logo_status:'Logo status',logo_asset_url:'Logo asset',architectural_notes:'Pages / architecture / additional notes',
-  logo_text:'Exact logo text',logo_tagline:'Tagline / slogan',logo_style:'Logo style',brand_mood:'Brand mood',brand_colors:'Brand colors',logo_description:'Logo direction / description',
-  competitor_inspiration_links:'Competitors / inspiration',reference_asset_url:'Reference asset'
+  current_url:'Current website',has_current_site:'Current website status',website_type:'Website type',website_type_other:'Website type details',
+  main_goal:'Primary website goal',target_audience:'Target audience',products_services:'Products / services to feature',
+  estimated_page_count:'Estimated page count',required_features:'Required features',required_features_other:'Other functionality',
+  architectural_notes:'Pages / site architecture',branding_status:'Branding status',logo_status:'Logo status',style_preference:'Design style',
+  style_preference_other:'Style details',aesthetic_tone:'Aesthetic / visual tone',brand_color_notes:'Brand colors / color preferences',
+  brand_assets_links:'Brand asset links',design_inspiration_links:'Websites / design inspiration',design_avoid_notes:'Styles / websites to avoid',
+  asset_copy_status:'Website copy / content readiness',media_status:'Photos / media readiness',content_asset_links:'Content / asset links',
+  competitors:'Competitors / similar businesses',additional_notes:'Additional notes',
+  logo_asset_url:'Logo asset URL',
+  logo_text:'Exact logo text',logo_tagline:'Tagline / slogan',industry:'Industry / business type',
+  business_description:'Business description',brand_message:'Brand message',logo_style:'Logo style',brand_mood:'Brand mood',
+  brand_colors:'Brand colors',symbol_preference:'Icon / symbol preference',typography_preference:'Typography preference',
+  logo_description:'Logo direction / description',competitor_inspiration_links:'Competitors / inspiration',
+  reference_asset_url:'Reference asset URL',logo_uses:'Primary logo uses',avoid_notes:'Things to avoid'
 };
-function intakeRows(i,kind){
-  const preferred=kind==='logo'
-    ?['tracking_number','business_name','client_name','email_address','phone_number','logo_text','logo_tagline','logo_style','brand_mood','brand_colors','logo_description','competitor_inspiration_links','reference_asset_url']
-    :['tracking_number','business_name','client_name','email_address','phone_number','current_url','website_type','website_type_other','main_goal','target_audience','estimated_page_count','required_features','required_features_other','branding_status','brand_assets_links','style_preference','style_preference_other','aesthetic_tone','design_inspiration_links','asset_copy_status','logo_status','logo_asset_url','architectural_notes'];
-  const skip=new Set(['id','created_at','updated_at']);
-  const keys=[...preferred,...Object.keys(i).filter(k=>!preferred.includes(k)&&!skip.has(k))];
-  return keys.filter((k,idx)=>keys.indexOf(k)===idx).map(k=>[k,fmtIntakeValue(i[k])]).filter(([,v])=>v);
+const INTAKE_SECTIONS={
+  website:[
+    ['Project & contact',['tracking_number','business_name','client_name','email_address','phone_number']],
+    ['Business & website goals',['has_current_site','current_url','website_type','website_type_other','estimated_page_count','main_goal','target_audience','products_services']],
+    ['Pages & functionality',['required_features','required_features_other','architectural_notes']],
+    ['Brand & visual direction',['branding_status','logo_status','style_preference','style_preference_other','aesthetic_tone','brand_color_notes','brand_assets_links','design_inspiration_links','design_avoid_notes']],
+    ['Content & launch',['asset_copy_status','media_status','content_asset_links','competitors','additional_notes','logo_asset_url']]
+  ],
+  logo:[
+    ['Project & contact',['tracking_number','business_name','client_name','email_address','phone_number']],
+    ['Brand foundation',['logo_text','logo_tagline','industry','target_audience','business_description','brand_message']],
+    ['Logo direction',['logo_style','brand_mood','brand_colors','symbol_preference','typography_preference','logo_description','competitor_inspiration_links','reference_asset_url']],
+    ['Usage & final notes',['logo_uses','avoid_notes','additional_notes']]
+  ]
+};
+function intakeProjectMatch(kind,i){
+  const projectType=kind==='web'?'website':'logo';
+  const tracking=String(i?.tracking_number||'').trim().toLowerCase();
+  const email=String(i?.email_address||'').trim().toLowerCase();
+  return projects.find(p=>{
+    if(p.project_type!==projectType)return false;
+    const pt=String(p.tracking_number||'').trim().toLowerCase();
+    const pe=String(p.client_email||'').trim().toLowerCase();
+    return (tracking&&pt===tracking)||(email&&pe===email);
+  })||null;
+}
+function mergedIntake(kind,i){
+  const p=intakeProjectMatch(kind,i);
+  const payload=p?.intake_payload&&typeof p.intake_payload==='object'&&!Array.isArray(p.intake_payload)?p.intake_payload:{};
+  return {
+    ...i,
+    ...payload,
+    id:i?.id||`project-${p?.id||crypto.randomUUID()}`,
+    _project_id:p?.id||null,
+    _payload_backed:Object.keys(payload).length>0,
+    _project_title:p?.title||null,
+    _intake_completed_at:p?.intake_completed_at||null,
+    tracking_number:payload.tracking_number||i?.tracking_number||p?.tracking_number||'',
+    email_address:payload.email_address||i?.email_address||p?.client_email||'',
+    business_name:payload.business_name||i?.business_name||p?.title?.replace(/\s+—\s+(Website|Logo) Design$/i,'')||'',
+    created_at:p?.intake_completed_at||i?.created_at||null
+  };
+}
+function payloadOnlyIntakes(kind){
+  const projectType=kind==='web'?'website':'logo';
+  const legacy=kind==='web'?webIntakes:logoIntakes;
+  return projects
+    .filter(p=>p.project_type===projectType && p.intake_payload && typeof p.intake_payload==='object' && Object.keys(p.intake_payload).length)
+    .filter(p=>!legacy.some(i=>{
+      const tracking=String(i.tracking_number||'').trim().toLowerCase();
+      const email=String(i.email_address||'').trim().toLowerCase();
+      return (tracking&&tracking===String(p.tracking_number||'').trim().toLowerCase()) ||
+             (email&&email===String(p.client_email||'').trim().toLowerCase());
+    }))
+    .map(p=>mergedIntake(kind,{
+      id:`project-${p.id}`,
+      tracking_number:p.tracking_number,
+      email_address:p.client_email,
+      business_name:p.title?.replace(/\s+—\s+(Website|Logo) Design$/i,''),
+      created_at:p.intake_completed_at
+    }));
+}
+function allIntakes(kind){
+  const legacy=kind==='web'?webIntakes:logoIntakes;
+  return [...legacy.map(i=>mergedIntake(kind,i)),...payloadOnlyIntakes(kind)]
+    .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+}
+function fmtIntakeValue(v){
+  if(v===null||v===undefined||v==='')return '';
+  if(Array.isArray(v))return v.join(', ');
+  if(typeof v==='boolean')return v?'Yes':'No';
+  if(typeof v==='object')return Object.entries(v).map(([k,x])=>`${k.replaceAll('_',' ')}: ${fmtIntakeValue(x)}`).join('\n');
+  return String(v);
+}
+function intakeSectionData(i,kind){
+  const config=INTAKE_SECTIONS[kind==='web'?'website':'logo'];
+  const used=new Set();
+  const sections=config.map(([title,keys])=>{
+    const rows=keys.map(k=>[k,fmtIntakeValue(i[k])]).filter(([,v])=>v);
+    rows.forEach(([k])=>used.add(k));
+    return {title,rows};
+  }).filter(s=>s.rows.length);
+  const skip=new Set(['id','created_at','updated_at','_project_id','_payload_backed','_project_title','_intake_completed_at']);
+  const extra=Object.keys(i)
+    .filter(k=>!used.has(k)&&!skip.has(k)&&fmtIntakeValue(i[k]))
+    .map(k=>[k,fmtIntakeValue(i[k])]);
+  if(extra.length)sections.push({title:'Additional submitted information',rows:extra});
+  return sections;
 }
 function renderIntakes(){
-  const a=activeTab==='logo'?logoIntakes:webIntakes;
+  const kind=activeTab==='logo'?'logo':'web';
+  const a=allIntakes(kind);
   $('intakes').className='intake-submission-list';
   $('intakes').innerHTML=a.length?a.map(i=>`<article class="intake-submission-row">
-    <div class="intake-submission-type">${activeTab==='logo'?'LOGO DESIGN':'WEBSITE DESIGN'}</div>
-    <div class="intake-submission-main"><h3>${esc(i.business_name||'Client design intake')}</h3><p>${esc(i.client_name||'—')} · ${esc(i.email_address||'—')}</p><small>${esc(i.tracking_number||'No tracking reference')} · Submitted ${i.created_at?new Date(i.created_at).toLocaleString():'—'}</small></div>
-    <div class="intake-submission-summary"><span>${activeTab==='logo'?'Direction':'Primary goal'}</span><strong>${esc(activeTab==='logo'?(i.logo_description||i.logo_style||'Completed'):(i.main_goal||i.website_type||'Completed'))}</strong></div>
-    <button class="open-intake" data-intake-id="${esc(i.id)}" data-intake-kind="${activeTab}">Open completed intake →</button>
+    <div class="intake-submission-type">${kind==='logo'?'LOGO DESIGN':'WEBSITE DESIGN'}</div>
+    <div class="intake-submission-main">
+      <h3>${esc(i.business_name||'Client design intake')}</h3>
+      <p>${esc(i.client_name||'—')} · ${esc(i.email_address||'—')}</p>
+      <small>${esc(i.tracking_number||'No tracking reference')} · Submitted ${i.created_at?new Date(i.created_at).toLocaleString():'—'}</small>
+      ${i._payload_backed?'<span class="payload-badge">Full project intake</span>':'<span class="legacy-badge">Legacy intake</span>'}
+    </div>
+    <div class="intake-submission-summary">
+      <span>${kind==='logo'?'Direction':'Primary goal'}</span>
+      <strong>${esc(kind==='logo'?(i.logo_description||i.logo_style||'Completed'):(i.main_goal||i.website_type||'Completed'))}</strong>
+    </div>
+    <button class="open-intake" data-intake-id="${esc(i.id)}" data-intake-kind="${kind}">Open completed intake →</button>
   </article>`).join(''):'<div class="empty">No completed intake submissions yet.</div>';
   document.querySelectorAll('.open-intake').forEach(b=>b.onclick=()=>openIntakeRecord(b.dataset.intakeKind,b.dataset.intakeId));
 }
 function openIntakeRecord(kind,id){
-  const source=kind==='logo'?logoIntakes:webIntakes;
-  const i=source.find(x=>String(x.id)===String(id));if(!i)return;
+  const i=allIntakes(kind).find(x=>String(x.id)===String(id));if(!i)return;
+  const sections=intakeSectionData(i,kind);
+  const answerCount=sections.reduce((n,s)=>n+s.rows.length,0);
   $('intakeDrawerTitle').textContent=`${i.business_name||i.client_name||'Client'} — ${kind==='logo'?'Logo Intake':'Website Intake'}`;
   $('intakeDrawerMeta').textContent=`${i.client_name||'Client'} · ${i.email_address||'—'} · ${i.tracking_number||'No tracking reference'}`;
-  const rows=intakeRows(i,kind);
   $('intakeDrawerBody').innerHTML=`<div class="completed-intake-view">
-    <div class="completed-intake-head"><div><span>SUBMITTED</span><strong>${i.created_at?new Date(i.created_at).toLocaleString():'—'}</strong></div><div><span>FORM TYPE</span><strong>${kind==='logo'?'Logo design discovery':'Website design discovery'}</strong></div><div><span>ANSWERS</span><strong>${rows.length}</strong></div></div>
-    <section class="completed-intake-section"><div class="box-head"><h3>Customer discovery form</h3><span>Read-only submission</span></div><div class="completed-intake-grid">${rows.map(([k,v])=>`<div class="completed-intake-field"><span>${esc(INTAKE_LABELS[k]||k.replaceAll('_',' '))}</span><strong>${esc(v)}</strong></div>`).join('')}</div></section>
-    <div class="completed-intake-actions"><button id="copyIntakeEmail" class="secondary-action">Copy client email</button>${i.tracking_number?`<button id="copyIntakeTracking" class="secondary-action">Copy tracking #</button>`:''}</div>
+    <div class="completed-intake-head">
+      <div><span>SUBMITTED</span><strong>${i.created_at?new Date(i.created_at).toLocaleString():'—'}</strong></div>
+      <div><span>FORM TYPE</span><strong>${kind==='logo'?'Logo design discovery':'Website design discovery'}</strong></div>
+      <div><span>ANSWERS</span><strong>${answerCount}</strong></div>
+    </div>
+    ${!i._payload_backed?`<div class="legacy-intake-notice"><strong>Historical intake record</strong><span>This submission predates the full project intake payload. Every field stored in the original record is shown below; answers that were never stored cannot be reconstructed.</span></div>`:''}
+    ${sections.map((section,index)=>`<section class="completed-intake-section">
+      <div class="box-head"><h3>${String(index+1).padStart(2,'0')} · ${esc(section.title)}</h3><span>${section.rows.length} answer${section.rows.length===1?'':'s'}</span></div>
+      <div class="completed-intake-grid">${section.rows.map(([k,v])=>`<div class="completed-intake-field ${String(v).length>120?'wide':''}">
+        <span>${esc(INTAKE_LABELS[k]||k.replaceAll('_',' '))}</span>
+        <strong>${esc(v)}</strong>
+      </div>`).join('')}</div>
+    </section>`).join('')}
+    <div class="completed-intake-actions">
+      <button id="copyIntakeEmail" class="secondary-action">Copy client email</button>
+      ${i.tracking_number?`<button id="copyIntakeTracking" class="secondary-action">Copy tracking #</button>`:''}
+    </div>
   </div>`;
   show('intakeDrawer');
   $('copyIntakeEmail').onclick=()=>navigator.clipboard.writeText(i.email_address||'').then(()=>toast('Client email copied.'));
