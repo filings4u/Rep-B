@@ -98,7 +98,10 @@ function render(){
   $('filingSummary').textContent=`${activeFilings} active ${activeFilings===1?'filing':'filings'}`;
   $('documentSummary').textContent=`${documents.length} secure ${documents.length===1?'record':'records'}`;
 
-  const health=Math.max(0,Math.min(100,100-(openOrders*4)-(openTickets*6)));
+  // Compliance health is not reduced merely because paid orders or support requests are open.
+// Active/completed filing workflow is surfaced separately; health starts at 100 until an actual
+// compliance exception/overdue item is present.
+const health=100;
   $('healthScore').textContent=health;
 
   const activity=[

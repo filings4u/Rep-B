@@ -79,7 +79,7 @@ function render(){
   const closed=new Set(['Closed','Resolved']);
   const open=tickets.filter(t=>!closed.has(t.status)).length;
   const urgent=tickets.filter(t=>['High','Urgent'].includes(t.priority)&&!closed.has(t.status)).length;
-  const unassigned=tickets.filter(t=>!t.assigned_agent&&!closed.has(t.status)).length;
+  const unassigned=tickets.filter(t=>(!t.assigned_agent||String(t.assigned_agent).toLowerCase()==='unassigned')&&!closed.has(t.status)).length;
 
   $('stats').innerHTML=[
     ['Support tickets',tickets.length],
