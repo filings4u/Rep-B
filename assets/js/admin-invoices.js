@@ -19,10 +19,69 @@ async function boot(){
   }
 }
 
+
+function handleIncomingReference(){
+  const params=new URLSearchParams(location.search);
+  const invoiceId=params.get('invoice');
+  const orderId=params.get('order');
+
+  if(invoiceId){
+    const invoice=invoices.find(i=>String(i.id)===String(invoiceId));
+    if(invoice)openDrawer(invoice.id);
+    else toast('The requested invoice could not be found.');
+    return;
+  }
+
+  if(orderId){
+    openComposerForOrder(orderId);
+  }
+}
+function openComposerForOrder(orderId){
+  const order=orders.find(o=>String(o.id)===String(orderId));
+  if(!order)return toast('The requested order could not be found.');
+
+  const client=clients.find(c=>
+    String(c.id)===String(order.user_id||'') ||
+    (c.email_address&&order.email_address&&c.email_address.toLowerCase()===order.email_address.toLowerCase())
+  );
+  if(!client)return toast('This order must be linked to a client before an invoice can be created.');
+
+  resetComposer();
+  $('clientId').value=client.id;
+  syncClient();
+  $('orderId').value=order.id;
+  syncOrder();
+  $('clientEmail').value=order.email_address||client.email_address||'';
+  $('trackingNumber').value=order.tracking_number||'';
+
+  lines=[];
+  $('lineItems').innerHTML='';
+  const serviceName=order.selected_service||order.service_key||'filings4u service';
+  const serviceFee=Number(order.service_fee||0);
+  const governmentFee=Number(order.government_fee||0);
+  const addons=Number(order.addons_total||0);
+
+  if(serviceFee>0)addLine({description:serviceName,quantity:1,unit_price:serviceFee});
+  if(governmentFee>0)addLine({description:'Government / filing fee',quantity:1,unit_price:governmentFee});
+  if(addons>0)addLine({description:'Selected add-ons / upsells',quantity:1,unit_price:addons});
+  if(!lines.length)addLine({description:serviceName,quantity:1,unit_price:Number(order.total_amount||order.total_paid_amount||0)});
+
+  if(order.payment_status==='paid'){
+    if([...$('paymentStatus').options].some(o=>o.value==='paid'))$('paymentStatus').value='paid';
+    if([...$('invoiceStatus').options].some(o=>o.value==='paid'))$('invoiceStatus').value='paid';
+  }
+
+  $('paymentTerms').value=order.payment_status==='paid'?'Paid with order':'Due within 15 days';
+  $('customerNotes').value=`Created from order ${order.tracking_number||order.id}.`;
+  $('composerTitle').textContent=`Create invoice · ${order.tracking_number||'Order'}`;
+  showOverlay('invoiceComposer');
+  calculate();
+}
+
 async function loadReferenceData(){
   const [c,o]=await Promise.all([
     db.from('client_profiles').select('id,first_name,last_name,email_address,company_name,phone_number,street_address,city,state,zip_code').order('company_name',{ascending:true}),
-    db.from('orders').select('id,user_id,tracking_number,company_name,email_address,selected_service,total_amount,order_status').order('created_at',{ascending:false})
+    db.from('orders').select('id,user_id,tracking_number,company_name,email_address,selected_service,service_key,plan_tier,total_amount,total_paid_amount,service_fee,government_fee,addons_total,order_status,payment_status').order('created_at',{ascending:false})
   ]);
   if(c.error)toast(c.error.message); else clients=c.data||[];
   if(o.error)toast(o.error.message); else orders=o.data||[];
@@ -133,13 +192,9 @@ function calculate(){
   $('calcTotal').textContent=money(t.total);
   $('calcPaid').textContent='− '+money(t.amountPaid);
   $('calcBalance').textContent=money(t.balance);
-  if(t.total>0&&t.amountPaid>=t.total){
-    $('paymentStatus').value='paid';
-  }else if(t.amountPaid>0){
-    $('paymentStatus').value='partially_paid';
-  }else if(['paid','partially_paid'].includes($('paymentStatus').value)){
-    $('paymentStatus').value='unpaid';
-  }
+  if(t.total>0&&t.amountPaid>=t.total)$('paymentStatus').value='paid';
+  else if(t.amountPaid>0)$('paymentStatus').value='partially_paid';
+  else if(['paid','partially_paid'].includes($('paymentStatus').value))$('paymentStatus').value='unpaid';
 }
 function syncClient(){
   const c=clients.find(c=>c.id===$('clientId').value);$('clientEmail').value=c?.email_address||'';
