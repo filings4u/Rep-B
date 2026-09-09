@@ -5,6 +5,52 @@ const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).
 let user,services=[],clients=[],stateFees=[],stripe=null,elements=null,paymentElement=null,paymentIntentId=null,clientSecret=null,trackingNumber=null;
 let toastTimer;
 
+const FILINGS4U_ADMIN_SERVICE_CATALOG=[{"slug":"llc-formation","service_title":"LLC Formation","base_price_starter":99.0,"base_price_compliance":199.0,"base_price_enterprise":399.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"corporations","service_title":"Corporations (C/S-Corp)","base_price_starter":129.0,"base_price_compliance":249.0,"base_price_enterprise":599.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"series-llc","service_title":"Series LLC","base_price_starter":199.0,"base_price_compliance":299.0,"base_price_enterprise":399.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"sole-proprietorship","service_title":"Sole Proprietorship","base_price_starter":79.0,"base_price_compliance":159.0,"base_price_enterprise":239.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"dba-registration","service_title":"DBA Registration","base_price_starter":39.0,"base_price_compliance":99.0,"base_price_enterprise":159.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"nonprofits","service_title":"Nonprofit Organization","base_price_starter":149.0,"base_price_compliance":299.0,"base_price_enterprise":499.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"foreign-qualification","service_title":"Foreign Qualification Certificate","base_price_starter":149.0,"base_price_compliance":249.0,"base_price_enterprise":349.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"llc-reinstatement","service_title":"LLC Reinstatement","base_price_starter":79.0,"base_price_compliance":149.0,"base_price_enterprise":249.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"servicemark-filing","service_title":"Servicemark Filing","base_price_starter":199.0,"base_price_compliance":299.0,"base_price_enterprise":399.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"annual-reports","service_title":"Annual Reports","base_price_starter":89.0,"base_price_compliance":159.0,"base_price_enterprise":249.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"operating-agreement","service_title":"Operating Agreement","base_price_starter":49.0,"base_price_compliance":99.0,"base_price_enterprise":199.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"registered-agent","service_title":"Registered Agent","base_price_starter":99.0,"base_price_compliance":179.0,"base_price_enterprise":299.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"business-licenses","service_title":"Business Licenses","base_price_starter":79.0,"base_price_compliance":149.0,"base_price_enterprise":299.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"dissolution","service_title":"Entity Dissolution","base_price_starter":149.0,"base_price_compliance":249.0,"base_price_enterprise":349.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"certificate-of-good-standing","service_title":"Certificate of Good Standing","base_price_starter":49.0,"base_price_compliance":99.0,"base_price_enterprise":149.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"clia-certificate","service_title":"CLIA Certificate","base_price_starter":199.0,"base_price_compliance":349.0,"base_price_enterprise":499.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"regulatory-consulting","service_title":"Regulatory Consulting","base_price_starter":150.0,"base_price_compliance":1000.0,"base_price_enterprise":1850.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"state-tax","service_title":"State Income Tax","base_price_starter":199.0,"base_price_compliance":349.0,"base_price_enterprise":549.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"franchise-tax","service_title":"Franchise Tax Filing","base_price_starter":149.0,"base_price_compliance":249.0,"base_price_enterprise":399.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"sales-tax-registration","service_title":"Sales Tax Registration","base_price_starter":99.0,"base_price_compliance":199.0,"base_price_enterprise":299.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"payroll-tax-940-941","service_title":"Payroll Tax (940/941)","base_price_starter":199.0,"base_price_compliance":349.0,"base_price_enterprise":499.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"duns-number","service_title":"DUNS Number Procurement","base_price_starter":49.0,"base_price_compliance":99.0,"base_price_enterprise":179.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"minority-certificate","service_title":"Minority Certificate","base_price_starter":99.0,"base_price_compliance":249.0,"base_price_enterprise":399.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"ifta-registration","service_title":"IFTA Registration","base_price_starter":159.0,"base_price_compliance":279.0,"base_price_enterprise":349.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"ifta-quarterly-returns","service_title":"IFTA Quarterly Fuel Tax Filing","base_price_starter":129.0,"base_price_compliance":249.0,"base_price_enterprise":449.0,"catalog_group":"Business & State Services","service_type":"state","requires_jurisdiction":true},{"slug":"web-design-packages","service_title":"Web Design Packages","base_price_starter":699.0,"base_price_compliance":1499.0,"base_price_enterprise":2999.0,"catalog_group":"Design & Operational Specialties","service_type":"specialty","requires_jurisdiction":false},{"slug":"logo-design-packages","service_title":"Logo Design Packages","base_price_starter":149.0,"base_price_compliance":299.0,"base_price_enterprise":499.0,"catalog_group":"Design & Operational Specialties","service_type":"specialty","requires_jurisdiction":false},{"slug":"shipper-packages","service_title":"Shipper Setup Packages","base_price_starter":99.0,"base_price_compliance":199.0,"base_price_enterprise":349.0,"catalog_group":"Design & Operational Specialties","service_type":"specialty","requires_jurisdiction":false},{"slug":"carrier-packages-brokers","service_title":"Carrier Setup Packages for Brokers","base_price_starter":99.0,"base_price_compliance":199.0,"base_price_enterprise":349.0,"catalog_group":"Design & Operational Specialties","service_type":"specialty","requires_jurisdiction":false},{"slug":"carrier-packages-truckers","service_title":"Carrier Packages for Trucking Companies","base_price_starter":79.0,"base_price_compliance":149.0,"base_price_enterprise":249.0,"catalog_group":"Design & Operational Specialties","service_type":"specialty","requires_jurisdiction":false},{"slug":"federal-tax","service_title":"Federal Income Tax","base_price_starter":299.0,"base_price_compliance":499.0,"base_price_enterprise":799.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"employer-id-ein","service_title":"Employer ID (EIN)","base_price_starter":79.0,"base_price_compliance":149.0,"base_price_enterprise":199.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"heavy-use-tax-2290","service_title":"Heavy Use Tax (2290)","base_price_starter":99.0,"base_price_compliance":179.0,"base_price_enterprise":249.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"cage-code","service_title":"CAGE Code","base_price_starter":249.0,"base_price_compliance":349.0,"base_price_enterprise":449.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"owner-operators","service_title":"Owner Operators","base_price_starter":199.0,"base_price_compliance":299.0,"base_price_enterprise":499.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"trucker-authority","service_title":"Trucker Authority","base_price_starter":199.0,"base_price_compliance":299.0,"base_price_enterprise":499.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"broker-authority","service_title":"Broker Authority","base_price_starter":199.0,"base_price_compliance":299.0,"base_price_enterprise":499.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"ucr-registration","service_title":"UCR Registration","base_price_starter":99.0,"base_price_compliance":179.0,"base_price_enterprise":249.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"scac-code","service_title":"SCAC Code Registration","base_price_starter":49.0,"base_price_compliance":99.0,"base_price_enterprise":149.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"dot-consortium","service_title":"DOT Consortium","base_price_starter":149.0,"base_price_compliance":299.0,"base_price_enterprise":499.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"driver-file","service_title":"Driver Qualification File","base_price_starter":279.0,"base_price_compliance":349.0,"base_price_enterprise":449.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"process-agents-boc-3","service_title":"Process Agents (BOC-3)","base_price_starter":49.0,"base_price_compliance":99.0,"base_price_enterprise":149.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"trucker-insurance-quote","service_title":"Trucker Insurance","base_price_starter":99.0,"base_price_compliance":199.0,"base_price_enterprise":299.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"broker-insurance-quote","service_title":"Broker Insurance","base_price_starter":99.0,"base_price_compliance":199.0,"base_price_enterprise":299.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"hazmat-registration","service_title":"DOT HAZMAT Registration","base_price_starter":199.0,"base_price_compliance":349.0,"base_price_enterprise":449.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"new-entrant-audit","service_title":"New Entrant Audit","base_price_starter":199.0,"base_price_compliance":299.0,"base_price_enterprise":499.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"mcs-150-update","service_title":"MCS-150 Biennial Update","base_price_starter":59.0,"base_price_compliance":89.0,"base_price_enterprise":139.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"boc-3-amendment","service_title":"BOC-3 Process Agent Amendment","base_price_starter":39.0,"base_price_compliance":79.0,"base_price_enterprise":119.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"dot-permits","service_title":"DOT Permits","base_price_starter":79.0,"base_price_compliance":149.0,"base_price_enterprise":299.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"apostille-services","service_title":"Apostille Services","base_price_starter":149.0,"base_price_compliance":249.0,"base_price_enterprise":399.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false},{"slug":"trademark-filing","service_title":"Trademark Filing","base_price_starter":299.0,"base_price_compliance":399.0,"base_price_enterprise":499.0,"catalog_group":"Government & Regulatory Services","service_type":"government","requires_jurisdiction":false}];
+
+function normalizeServiceCatalog(dbServices){
+  const registry=FILINGS4U_ADMIN_SERVICE_CATALOG.map(x=>({...x,_catalog_source:'pricing_registry'}));
+  const dbRows=(dbServices||[]).map(x=>({
+    ...x,
+    catalog_group:x.service_type==='government'?'Government & Regulatory Services':
+      x.service_type==='design'?'Design & Operational Specialties':'Additional filings4u Services',
+    _catalog_source:'database'
+  }));
+
+  // Pricing registry wins for canonical slugs/prices; DB-only services are still preserved.
+  const bySlug=new Map();
+  [...dbRows,...registry].forEach(s=>{
+    const slug=String(s.slug||'').trim();
+    if(!slug)return;
+    bySlug.set(slug,{...(bySlug.get(slug)||{}),...s});
+  });
+
+  // Remove accidental duplicate titles while keeping the canonical registry-backed entry.
+  const byTitle=new Map();
+  [...bySlug.values()].forEach(s=>{
+    const key=String(s.service_title||s.slug).trim().toLowerCase().replace(/[^a-z0-9]+/g,' ');
+    const existing=byTitle.get(key);
+    if(!existing || s._catalog_source==='pricing_registry')byTitle.set(key,s);
+  });
+
+  return [...byTitle.values()].sort((a,b)=>{
+    const groups=['Business & State Services','Government & Regulatory Services','Design & Operational Specialties','Additional filings4u Services'];
+    const ga=groups.indexOf(a.catalog_group),gb=groups.indexOf(b.catalog_group);
+    return (ga-gb)||String(a.service_title||'').localeCompare(String(b.service_title||''));
+  });
+}
+
+function renderServiceOptions(){
+  const groups=['Business & State Services','Government & Regulatory Services','Design & Operational Specialties','Additional filings4u Services'];
+  let html='<option value="">Choose a service</option>';
+  groups.forEach(group=>{
+    const rows=services.filter(s=>s.catalog_group===group);
+    if(!rows.length)return;
+    html+=`<optgroup label="${escapeHtml(group)}">${rows.map(s=>`<option value="${escapeHtml(s.slug)}">${escapeHtml(s.service_title)}</option>`).join('')}</optgroup>`;
+  });
+  $('service').innerHTML=html;
+}
+
+
 async function boot(){
   const auth=await window.filings4uRequireAdmin();
   if(!auth)return;
@@ -16,8 +62,8 @@ async function boot(){
   ]);
   const failed=rs.find(r=>r.error);
   if(failed){$('gate').textContent=failed.error.message;$('gate').style.color='#991b1b';return;}
-  services=rs[0].data||[];clients=rs[1].data||[];stateFees=rs[2].data||[];
-  $('service').innerHTML='<option value="">Choose a service</option>'+services.map(s=>`<option value="${escapeHtml(s.slug)}">${escapeHtml(s.service_title)}</option>`).join('');
+  services=normalizeServiceCatalog(rs[0].data||[]);clients=rs[1].data||[];stateFees=rs[2].data||[];
+  renderServiceOptions();
   $('client').innerHTML='<option value="">New / unlinked customer</option>'+clients.map(c=>{
     const name=[c.first_name,c.last_name].filter(Boolean).join(' ')||c.company_name||c.email_address;
     return `<option value="${escapeHtml(c.id)}">${escapeHtml(name)} · ${escapeHtml(c.email_address)}</option>`;
@@ -91,9 +137,8 @@ async function mountStripe(){
   renderSummary();
 }
 
-function buildOrder(paymentStatus,paidAt,customerLink=null){
-  const s=selectedService(),selected=clients.find(c=>String(c.id)===String($('client').value))||null;
-  const linked=customerLink?.user_id?{id:customerLink.user_id}:selected;
+function buildOrder(paymentStatus,paidAt){
+  const s=selectedService(),linked=clients.find(c=>String(c.id)===String($('client').value))||null;
   const now=new Date().toISOString(),t=mode()==='free'?0:total();
   return {
     tracking_number:trackingNumber||makeTracking(),first_name:$('first').value.trim(),last_name:$('last').value.trim(),
@@ -103,37 +148,9 @@ function buildOrder(paymentStatus,paidAt,customerLink=null){
     jurisdiction_state:$('state').value,order_status:$('orderStatus').value,payment_status:paymentStatus,currency:'USD',
     service_fee:mode()==='free'?0:Number($('serviceFee').value||0),government_fee:mode()==='free'?0:Number($('governmentFee').value||0),
     addons_total:mode()==='free'?0:Number($('addons').value||0),subtotal_amount:t,total_amount:t,total_paid_amount:paymentStatus==='paid'?t:0,
-    account_created:!!linked,account_setup_mode:customerLink?.account_setup_mode||(linked?'returning_customer':null),submitted_at:now,paid_at:paidAt,updated_at:now,
+    account_created:!!linked,account_setup_mode:linked?'returning_customer':null,submitted_at:now,paid_at:paidAt,updated_at:now,
     stripe_payment_intent_id:paymentIntentId||null,upsells_payload:[],form_payload:{source:'admin_order_intake',payment_mode:mode(),internal_note:$('note').value.trim()||null}
   };
-}
-
-async function ensureCustomerLink(orderId=null){
-  const selectedUserId=$('client').value||null;
-  const {data,error}=await db.functions.invoke('admin-link-order-customer',{body:{
-    order_id:orderId,
-    user_id:selectedUserId,
-    email_address:$('email').value.trim().toLowerCase(),
-    first_name:$('first').value.trim(),
-    last_name:$('last').value.trim(),
-    phone_number:$('phone').value.trim(),
-    company_name:$('company').value.trim(),
-    redirect_to:new URL('reset-password.html',window.location.href).href
-  }});
-  if(error)throw error;
-  if(data?.error)throw new Error(data.error);
-  if(!data?.user_id)throw new Error('Customer account could not be linked.');
-  if(!clients.some(c=>String(c.id)===String(data.user_id))){
-    clients.push({
-      id:data.user_id,
-      email_address:$('email').value.trim().toLowerCase(),
-      first_name:$('first').value.trim(),
-      last_name:$('last').value.trim(),
-      phone_number:$('phone').value.trim(),
-      company_name:$('company').value.trim()
-    });
-  }
-  return data;
 }
 
 async function createInvoice(order){
@@ -164,21 +181,10 @@ async function submit(event){
     if(mode()==='card'){
       if(!elements){await mountStripe();toast('Secure payment form is ready. Enter payment details, then click Pay & create order.');return;}
       const {error:submitError}=await elements.submit();if(submitError)throw submitError;
-      const returnUrl=new URL('admin-order-intake.html?payment_return=1',window.location.href).href;
-      const {paymentIntent,error}=await stripe.confirmPayment({
-        elements,
-        clientSecret,
-        confirmParams:{return_url:returnUrl},
-        redirect:'if_required'
-      });
-      if(error){
-        const detail=[error.message,error.code,error.decline_code].filter(Boolean).join(' · ');
-        throw new Error(detail||'Stripe could not confirm the payment.');
-      }
-      if(!paymentIntent)throw new Error('Stripe did not return a PaymentIntent.');
+      const {paymentIntent,error}=await stripe.confirmPayment({elements,clientSecret,redirect:'if_required'});
+      if(error)throw error;
       if(paymentIntent.status!=='succeeded')throw new Error(`Payment is ${paymentIntent.status}. The order was not marked paid.`);
-      const customerLink=await ensureCustomerLink();
-      const orderPayload=buildOrder('paid',new Date().toISOString(),customerLink);
+      const orderPayload=buildOrder('paid',new Date().toISOString());
       const {data:order,error:orderError}=await db.from('orders').insert(orderPayload).select().single();if(orderError)throw orderError;
       await createInvoice({...order,payment_status:'paid'});
       const inv=await db.from('invoices').update({status:'paid',payment_status:'paid',paid_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('order_id',order.id);
@@ -188,8 +194,7 @@ async function submit(event){
 
     trackingNumber=trackingNumber||makeTracking();
     const paymentStatus=mode()==='free'?'paid':'pending';
-    const customerLink=mode()==='free'?await ensureCustomerLink():null;
-    const orderPayload=buildOrder(paymentStatus,mode()==='free'?new Date().toISOString():null,customerLink);
+    const orderPayload=buildOrder(paymentStatus,mode()==='free'?new Date().toISOString():null);
     const {data:order,error:orderError}=await db.from('orders').insert(orderPayload).select().single();if(orderError)throw orderError;
     if(mode()==='invoice')await createInvoice(order);
     location.href=`admin-orders.html?order=${encodeURIComponent(order.id)}`;
