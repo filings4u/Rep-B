@@ -46,7 +46,7 @@ async function load(){
 }
 
 function buildFilters(){
-  const list=tab==='active'?tickets:after;
+  const list=tab==='active'?tickets.filter(t=>!t.is_after_hours):tickets.filter(t=>t.is_after_hours);
   const statuses=[...new Set(list.map(x=>x.status).filter(Boolean))].sort();
   const priorities=[...new Set(tickets.map(x=>x.priority).filter(Boolean))].sort();
 
@@ -61,7 +61,7 @@ function filtered(){
   const q=$('q').value.trim().toLowerCase();
   const s=$('status').value;
   const p=$('priority').value;
-  const list=tab==='active'?tickets:after;
+  const list=tab==='active'?tickets.filter(t=>!t.is_after_hours):tickets.filter(t=>t.is_after_hours);
 
   return list.filter(t=>{
     const hay=[
@@ -107,12 +107,12 @@ function render(){
     return `<tr>
       <td><b>${esc(t.ticket_id)}</b><small>${esc(t.tracking_number)}</small></td>
       <td><b>${esc([t.first_name,t.last_name].filter(Boolean).join(' '))}</b><small>${esc(t.email_address)}</small></td>
-      <td>${esc(String(t.ticket_message||t.description||'').slice(0,70))}</td>
-      <td>—</td>
+      <td>${esc(t.subject||String(t.description||'').slice(0,70))}</td>
+      <td>${badge(t.priority)}</td>
       <td>${badge(t.status)}</td>
-      <td>After hours</td>
-      <td>${dt(t.created_at)}</td>
-      <td></td>
+      <td>${esc(t.assigned_agent||'Unassigned')}</td>
+      <td>${dt(t.updated_at||t.created_at)}</td>
+      <td><button class="openTicket" data-id="${esc(t.id)}">Open</button></td>
     </tr>`;
   }).join('')
   :'<tr><td colspan="8" class="empty">No tickets match these filters.</td></tr>';
