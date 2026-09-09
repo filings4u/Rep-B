@@ -196,7 +196,7 @@ async function submitTicket(event){
       description,
       priority:$('priority').value,
       status:'open',
-      assigned_agent:null,
+      assigned_agent:'Unassigned',
       email_address:(profile.email_address||user.email||'').trim().toLowerCase()||null,
       first_name:profile.first_name||null,
       last_name:profile.last_name||null,

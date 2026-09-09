@@ -212,7 +212,7 @@ async function saveCase(){
   const patch={
     status:$('editStatus').value,
     priority:$('editPriority').value,
-    assigned_agent:$('editAgent').value.trim()||null,
+    assigned_agent:$('editAgent').value.trim()||'Unassigned',
     updated_at:new Date().toISOString()
   };
 
