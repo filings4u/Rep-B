@@ -1,6 +1,6 @@
 const db=window.filings4uSupabase;
 
-let clientVault=[],adminVault=[],documents=[],userDocs=[],entities=[],all=[],tab='all';
+let clientVault=[],adminVault=[],documents=[],userDocs=[],entities=[],applicationDocs=[],all=[],tab='all';
 
 const $=x=>document.getElementById(x);
 const esc=x=>String(x??'—').replace(/[&<>"']/g,c=>({
@@ -29,13 +29,17 @@ async function load(){
     db.from('user_documents').select('*').order('created_at',{ascending:false}),
     db.from('client_entities')
       .select('id,entity_name,client_email,user_id,registry_document_url,created_at')
+      .order('created_at',{ascending:false}),
+    db.from('application_documents')
+      .select('id,application_id,order_id,user_id,document_type,document_title,file_name,bucket_id,storage_path,content_type,file_size_bytes,is_official,created_at,applications(business_name,tracking_number)')
+      .eq('is_official',true)
       .order('created_at',{ascending:false})
   ]);
 
   const err=rs.find(x=>x.error);
   if(err)return toast(err.error.message);
 
-  [clientVault,adminVault,documents,userDocs,entities]=rs.map(x=>x.data||[]);
+  [clientVault,adminVault,documents,userDocs,entities,applicationDocs]=rs.map(x=>x.data||[]);
   normalize();
   buildFilters();
   render();
@@ -43,6 +47,21 @@ async function load(){
 
 function normalize(){
   all=[
+    ...applicationDocs.map(x=>({
+      id:x.id,
+      name:x.document_title||x.file_name||'Official filing document',
+      client:x.user_id||'—',
+      category:x.document_type||'official filing',
+      source:'registry',
+      size:normalizeSize(x.file_size_bytes),
+      created:x.created_at,
+      bucket:x.bucket_id||'client_documents_vault',
+      path:cleanStoragePath(x.storage_path,x.bucket_id||'client_documents_vault'),
+      url:null,
+      entity:x.applications?.business_name||null,
+      tracking:x.applications?.tracking_number||null,
+      official:true
+    })),
     ...clientVault.map(x=>({
       id:x.id,
       name:x.file_name||'Client vault document',
@@ -54,7 +73,8 @@ function normalize(){
       bucket:x.bucket_id||'client_documents_vault',
       path:cleanStoragePath(x.storage_path||x.storage_bucket_path,x.bucket_id||'client_documents_vault'),
       url:null,
-      entity:null
+      entity:null,
+      official:false
     })),
     ...adminVault.map(x=>({
       id:x.id,
@@ -67,7 +87,8 @@ function normalize(){
       bucket:x.bucket_id||'client_documents_vault',
       path:cleanStoragePath(x.storage_path||x.storage_bucket_path,x.bucket_id||'client_documents_vault'),
       url:null,
-      entity:null
+      entity:null,
+      official:false
     })),
     ...documents.map(x=>({
       id:x.id,
@@ -80,7 +101,8 @@ function normalize(){
       bucket:extractBucket(x.storage_path,x.bucket_id),
       path:cleanStoragePath(x.storage_path,extractBucket(x.storage_path,x.bucket_id)),
       url:x.file_url||null,
-      entity:null
+      entity:null,
+      official:false
     })),
     ...userDocs.map(x=>({
       id:x.id,
@@ -93,7 +115,8 @@ function normalize(){
       bucket:extractBucket(x.storage_path,x.bucket_id),
       path:cleanStoragePath(x.storage_path,extractBucket(x.storage_path,x.bucket_id)),
       url:x.file_url||null,
-      entity:null
+      entity:null,
+      official:false
     })),
     ...entities.filter(x=>x.registry_document_url).map(x=>({
       id:x.id,
@@ -106,9 +129,23 @@ function normalize(){
       bucket:null,
       path:null,
       url:x.registry_document_url,
-      entity:x.entity_name
+      entity:x.entity_name,
+      official:true
     }))
   ];
+
+  // Prefer official application/registry records over mirrored vault copies.
+  const officialKeys=new Set(
+    all.filter(d=>d.official).map(d=>String(d.path||d.url||d.name||'').toLowerCase()).filter(Boolean)
+  );
+  const seen=new Set();
+  all=all.filter(d=>{
+    const key=String(d.path||d.url||`${d.name}|${d.created}`).toLowerCase();
+    if(!d.official && officialKeys.has(key))return false;
+    if(seen.has(key))return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function extractBucket(path,explicit){
@@ -158,7 +195,7 @@ function filtered(){
 
   return all.filter(d=>{
     const tabOk=tab==='all'||d.source===tab;
-    const hay=[d.name,d.client,d.entity,d.category,d.source].join(' ').toLowerCase();
+    const hay=[d.name,d.client,d.entity,d.tracking,d.category,d.source].join(' ').toLowerCase();
     return tabOk&&hay.includes(q)&&(!cat||d.category===cat)&&(!src||d.source===src);
   });
 }
@@ -170,7 +207,7 @@ function render(){
     ['All documents',all.length],
     ['Client vault',clientVault.length],
     ['Admin vault',adminVault.length],
-    ['Registry documents',entities.filter(x=>x.registry_document_url).length]
+    ['Registry / filing documents',all.filter(x=>x.source==='registry').length]
   ].map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
 
   $('rows').innerHTML=list.length?list.map(d=>`<tr>

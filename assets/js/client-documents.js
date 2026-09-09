@@ -147,7 +147,7 @@ function renderStats(){
   $('filingDocuments').textContent=documents.filter(d=>{
     const source=String(d.source||'').toLowerCase();
     const kind=String(d.kind||'').toLowerCase();
-    return source==='business entity' || source==='filing record' || kind==='filing' || kind.includes('filing');
+    return source==='business entity' || source==='filing record' || source==='registry' || kind==='filing' || kind.includes('filing') || kind.includes('articles') || kind.includes('certificate');
   }).length;
 
   const cutoff=Date.now()-30*86400000;
