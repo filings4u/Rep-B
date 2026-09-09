@@ -136,7 +136,18 @@ function openComposer(invoice=null){
     $('clientId').value=invoice.client_profile_id||'';syncClient();
     setTimeout(()=>{$('orderId').value=invoice.order_id||'';syncOrder()},0);
     $('clientEmail').value=invoice.client_email||'';$('trackingNumber').value=invoice.tracking_number||'';$('dueDate').value=invoice.due_date||'';
-    $('invoiceStatus').value=invoice.status||'draft';$('paymentStatus').value=invoice.payment_status||'unpaid';$('discountType').value=invoice.discount_type||((Number(invoice.discount_amount)||0)>0?'cash':'none');$('discount').value=invoice.discount_value??invoice.discount_amount??0;$('discount').disabled=$('discountType').value==='none';$('taxRate').value=invoice.tax_rate||0;$('shipping').value=invoice.shipping_amount||0;$('paymentTerms').value=invoice.payment_terms||'';$('paymentUrl').value=invoice.payment_url||'';$('customerNotes').value=invoice.customer_notes||'';
+    $('invoiceStatus').value=invoice.status||'draft';
+    $('paymentStatus').value=invoice.payment_status||'unpaid';
+    const storedDiscountType=invoice.discount_type||'amount';
+    const storedDiscountValue=Number(invoice.discount_value??invoice.discount_amount??0);
+    $('discountType').value=storedDiscountType==='percent'?'percent':(storedDiscountValue>0?'cash':'none');
+    $('discount').value=storedDiscountValue;
+    $('discount').disabled=$('discountType').value==='none';
+    $('taxRate').value=invoice.tax_rate||0;
+    $('shipping').value=invoice.shipping_amount||0;
+    $('paymentTerms').value=invoice.payment_terms||'';
+    $('paymentUrl').value=invoice.payment_url||'';
+    $('customerNotes').value=invoice.customer_notes||'';
     lines=[];$('lineItems').innerHTML='';(invoice.invoice_line_items||[]).sort((a,b)=>a.line_number-b.line_number).forEach(addLine);if(!lines.length)addLine({description:invoice.line_item_description||'',quantity:1,unit_price:invoice.subtotal_amount||invoice.total_amount||0});
   }
   showOverlay('invoiceComposer');calculate();
@@ -199,10 +210,13 @@ async function saveInvoice(forceDraft=false){
     try{new URL(paymentUrl);}catch{return toast('Enter a valid payment URL.');}
   }
   const t=totals();const status=forceDraft?'draft':$('invoiceStatus').value;
+  // Database schema accepts only 'amount' or 'percent'.
+  const dbDiscountType=t.discountType==='percent'?'percent':'amount';
+  const dbDiscountValue=t.discountType==='none'?0:t.discountValue;
   const payload={
     document_type:'invoice',client_email:$('clientEmail').value.trim().toLowerCase(),client_profile_id:$('clientId').value,
     order_id:$('orderId').value||null,tracking_number:$('trackingNumber').value||null,line_item_description:lines[0].description,
-    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_type:t.discountType,discount_value:t.discountValue,discount_amount:t.discount,tax_rate:t.rate,tax_amount:t.tax,
+    due_date:$('dueDate').value,status,currency:'USD',subtotal_amount:t.subtotal,discount_type:dbDiscountType,discount_value:dbDiscountValue,discount_amount:t.discount,tax_rate:t.rate,tax_amount:t.tax,
     shipping_amount:t.shipping,total_amount:t.total,payment_status:$('paymentStatus').value,payment_url:paymentUrl||null,
     customer_notes:$('customerNotes').value.trim()||null,payment_terms:$('paymentTerms').value.trim()||null,created_by:user.id,updated_at:new Date().toISOString()
   };
@@ -219,7 +233,13 @@ async function saveInvoice(forceDraft=false){
     }
     const rows=lines.map((l,i)=>({invoice_id:invoiceId,line_number:i+1,description:l.description.trim(),quantity:l.quantity,unit_price:l.unit_price,line_total:l.quantity*l.unit_price}));
     const {error:lineError}=await db.from('invoice_line_items').insert(rows);if(lineError)throw lineError;
-    closeAll();toast(forceDraft?'Draft saved.':'Invoice saved.');await loadInvoices();
+    closeAll();
+    await loadInvoices();
+    toast(forceDraft?'Draft saved.':'Invoice saved.');
+    if(newRecord && invoiceId){
+      const savedInvoice=invoices.find(i=>String(i.id)===String(invoiceId));
+      if(savedInvoice)setTimeout(()=>openDrawer(savedInvoice.id),80);
+    }
   }catch(error){
     if(newRecord&&invoiceId) await db.from('invoices').delete().eq('id',invoiceId);
     toast(error.message||'Unable to save invoice.');
