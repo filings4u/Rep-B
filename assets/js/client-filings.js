@@ -64,6 +64,7 @@ async function boot(){
   buildStatusFilter();
   renderStats();
   applyFilters();
+  renderCompleted();
   renderLegacy();
 }
 
@@ -96,16 +97,28 @@ function progressFor(app){
   return Math.round((steps.filter(s=>s.is_completed).length/steps.length)*100);
 }
 
+function terminalStatus(app){
+  const s=String(app?.current_status||'').trim().toLowerCase().replace(/_/g,' ');
+  return ['completed','complete','finished','cancelled','canceled','rejected'].includes(s)||app?.is_active===false;
+}
+
+function completedStatus(app){
+  const s=String(app?.current_status||'').trim().toLowerCase().replace(/_/g,' ');
+  return ['completed','complete','finished'].includes(s);
+}
+
+function activeApplications(){
+  return applications.filter(a=>!terminalStatus(a));
+}
+
+function completedApplications(){
+  return applications.filter(completedStatus);
+}
+
 function renderStats(){
-  const active=applications.filter(a=>
-    a.is_active!==false&&!['completed','cancelled'].includes((a.current_status||'').toLowerCase())
-  );
-
-  const completed=applications.filter(a=>
-    (a.current_status||'').toLowerCase()==='completed'||a.is_active===false
-  );
-
-  const attention=applications.filter(a=>
+  const active=activeApplications();
+  const completed=completedApplications();
+  const attention=active.filter(a=>
     ['waiting','pending','error','failed','needs attention','needs_attention','on hold','on_hold']
       .includes((a.current_status||'').toLowerCase())
   );
@@ -115,26 +128,23 @@ function renderStats(){
   $('completedFilings').textContent=completed.length;
   $('attentionFilings').textContent=attention.length;
 }
-
 function buildStatusFilter(){
-  const statuses=[...new Set(applications.map(a=>a.current_status).filter(Boolean))].sort();
+  const statuses=[...new Set(activeApplications().map(a=>a.current_status).filter(Boolean))].sort();
 
-  $('statusFilter').innerHTML='<option value="">All statuses</option>'+
+  $('statusFilter').innerHTML='<option value="">All active statuses</option>'+
     statuses.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
 }
-
 function applyFilters(){
   const q=$('search').value.trim().toLowerCase();
   const status=$('statusFilter').value;
 
-  filtered=applications.filter(a=>{
+  filtered=activeApplications().filter(a=>{
     const hay=[a.business_name,a.service_key,a.tracking_number,a.plan_tier,a.jurisdiction_state,a.current_status].join(' ').toLowerCase();
     return (!q||hay.includes(q))&&(!status||a.current_status===status);
   });
 
   renderFilings();
 }
-
 function statusClass(value){
   return String(value||'')
     .trim().toLowerCase()
@@ -229,6 +239,36 @@ function safeHttpUrl(value){
   }catch{
     return null;
   }
+}
+
+function renderCompleted(){
+  const completed=completedApplications().sort((a,b)=>new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
+  const section=$('completedSection');
+  if(!section)return;
+  section.hidden=!completed.length;
+  if(!completed.length){$('completedList').innerHTML='';return;}
+
+  $('completedList').innerHTML=completed.map(app=>`
+    <div class="legacy-row completed-row">
+      <div>
+        <b>${esc(app.business_name||app.service_key||'Completed filing')}</b>
+        <small>${esc(app.service_key||'Service')} · ${esc(app.tracking_number||'No tracking number')}</small>
+      </div>
+      <div><span class="status-pill-page completed">Completed</span></div>
+      <div><small>Finished ${dt(app.updated_at||app.created_at)}</small></div>
+      <div class="completed-actions">
+        <button class="open-filing" type="button" data-completed-id="${esc(app.id)}">View history →</button>
+        ${entityProducingService(app.service_key)?'<a class="open-filing history-link" href="client-entities.html">Entity →</a>':''}
+        <a class="open-filing history-link" href="client-documents.html">Documents →</a>
+      </div>
+    </div>`).join('');
+
+  document.querySelectorAll('[data-completed-id]').forEach(btn=>btn.onclick=()=>openFiling(btn.dataset.completedId));
+}
+
+function entityProducingService(service){
+  return ['llc-formation','series-llc','corporation','corporations','nonprofit-organization','nonprofits','sole-proprietorship','dba-registration','foreign-qualification','llc-reinstatement','dissolution','entity-dissolution']
+    .includes(String(service||'').trim().toLowerCase());
 }
 
 function renderLegacy(){
