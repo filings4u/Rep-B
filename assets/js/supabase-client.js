@@ -1,0 +1,33 @@
+/**
+ * filings4u shared CLIENT Supabase browser client
+ * Load AFTER @supabase/supabase-js v2 and BEFORE client-auth-guard.js.
+ */
+(function () {
+  'use strict';
+
+  const SUPABASE_URL = 'https://lrbimrlbskjweynxlgas.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_RlmqwQM8ATOc7-ML9hvwgw_UljUEavh';
+
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+    console.error('[filings4u] Supabase JS library was not loaded before supabase-client.js');
+    return;
+  }
+
+  if (!window.filings4uSupabase) {
+    window.filings4uSupabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: 'filings4u-client-auth'
+        }
+      }
+    );
+  }
+
+  window.FILINGS4U_SUPABASE_URL = SUPABASE_URL;
+  window.FILINGS4U_SUPABASE_PUBLISHABLE_KEY = SUPABASE_PUBLISHABLE_KEY;
+})();
