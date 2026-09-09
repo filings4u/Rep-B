@@ -103,7 +103,7 @@ function toast(m){$('toast').textContent=m;$('toast').hidden=false;setTimeout(()
 function wireDesignActions(){
   document.addEventListener('click',e=>{
     const intakeButton=e.target.closest('[data-open-intake]');
-    if(intakeButton){e.preventDefault();openIntake(intakeButton.dataset.openIntake);return;}
+    if(intakeButton){e.preventDefault();const type=intakeButton.dataset.openIntake==='web'?'website':'logo';const pending=projects.find(p=>p.project_type===type&&String(p.intake_status||'').toLowerCase()==='required');if(pending)openProjectIntake(pending.id);else openIntake(intakeButton.dataset.openIntake);return;}
     const projectIntake=e.target.closest('[data-project-intake]');
     if(projectIntake){e.preventDefault();openProjectIntake(projectIntake.dataset.projectIntake);return;}
     const projectButton=e.target.closest('[data-project]');
@@ -117,6 +117,7 @@ function wireDesignActions(){
 async function startDesignCenter(){
   wireDesignActions();
   try{
+    if(!window.filings4uSupabase)throw new Error('Client database connection did not initialize.');
     const auth=await window.filings4uRequireClient();
     if(!auth)return;
     ({db,user,profile}=auth);
