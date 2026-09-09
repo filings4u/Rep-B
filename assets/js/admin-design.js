@@ -170,21 +170,70 @@ function openIntake(kind,id){
   show('intakeDrawer');
 }
 
-function openProject(id){current=projects.find(p=>p.id===id);if(!current)return;$('drawerTitle').textContent=current.title;const proofs=(current.design_proofs||[]).sort((a,b)=>b.version_number-a.version_number),comments=(current.design_comments||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));$('drawerBody').innerHTML=`<div class="project-detail"><section class="review-box"><div class="box-head"><h3>Website review link</h3><span class="badge">${current.project_type}</span></div><div class="box-body"><form id="reviewForm" class="review-form"><input id="reviewInput" type="url" value="${esc(current.review_url||'')}" placeholder="Paste staging or review URL"><button class="primary">Save link</button></form>${current.review_url?`<p><a href="${esc(current.review_url)}" target="_blank" rel="noopener">Open current review site →</a></p>`:''}</div></section><section class="proof-box"><div class="box-head"><h3>Logo / design proofs</h3><span>${proofs.length} uploaded</span></div><div class="box-body"><form id="proofForm" class="proof-form"><input id="proofTitle" required placeholder="Proof title / version"><input id="proofFile" required type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"><button class="primary">Upload proof</button></form><div class="proof-list">${proofs.length?proofs.map(x=>`<div class="proof-row"><div><strong>v${x.version_number} · ${esc(x.proof_title)}</strong><small>${esc(x.status.replaceAll('_',' '))}${x.client_decision_note?' · '+esc(x.client_decision_note):''}</small></div><button data-proof="${x.storage_path}">View</button></div>`).join(''):'<div class="empty">No proofs uploaded.</div>'}</div></div></section><section class="comments-box"><div class="box-head"><h3>Revision conversation</h3><span>${comments.length} comments</span></div><div class="box-body"><div>${comments.map(c=>`<div class="comment"><strong>${c.author_type==='admin'?'filings4u':'Client'}</strong><p>${esc(c.message)}</p></div>`).join('')||'<div class="empty">No comments yet.</div>'}</div><form id="commentForm" class="comment-form"><textarea id="commentText" required rows="2" placeholder="Reply to the client…"></textarea><button class="primary">Send</button></form></div></section></div>`;show('projectDrawer');$('reviewForm').onsubmit=saveReview;$('proofForm').onsubmit=uploadProof;$('commentForm').onsubmit=comment;document.querySelectorAll('[data-proof]').forEach(b=>b.onclick=()=>viewProof(b.dataset.proof))}
+function intakeSummary(p){
+  const x=p.intake_payload||{};
+  const entries=p.project_type==='website'
+    ?[['Website type',x.website_type],['Goal',x.main_goal],['Audience',x.target_audience],['Pages',x.estimated_page_count],['Style',x.style_preference],['Features',Array.isArray(x.required_features)?x.required_features.join(', '):x.required_features]]
+    :[['Logo text',x.logo_text],['Style',x.logo_style],['Brand mood',x.brand_mood],['Colors',x.brand_colors],['Description',x.logo_description],['Uses',Array.isArray(x.logo_uses)?x.logo_uses.join(', '):x.logo_uses]];
+  return entries.filter(([,v])=>v).map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
+}
+function openProject(id){
+  current=projects.find(p=>p.id===id);if(!current)return;
+  $('drawerTitle').textContent=current.title;
+  const proofs=(current.design_proofs||[]).sort((a,b)=>b.version_number-a.version_number);
+  const comments=(current.design_comments||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const intakeDone=current.intake_status==='completed'||current.intake_status==='waived';
+  $('drawerBody').innerHTML=`<div class="project-detail">
+    <section class="admin-project-state">
+      <div><span>INTAKE</span><strong class="${intakeDone?'ok':'needs'}">${intakeDone?'Completed':'Waiting on client'}</strong></div>
+      <div><span>PROJECT STATUS</span><strong>${esc(String(current.status||'').replaceAll('_',' '))}</strong></div>
+      <div><span>CLIENT APPROVAL</span><strong>${current.client_approved_at?'Approved '+new Date(current.client_approved_at).toLocaleDateString():'Not approved yet'}</strong></div>
+    </section>
+    ${intakeDone?`<section class="intake-summary-box"><div class="box-head"><h3>Project intake</h3><span>${current.intake_completed_at?new Date(current.intake_completed_at).toLocaleDateString():'Complete'}</span></div><div class="admin-intake-grid">${intakeSummary(current)||'<div class="empty">Intake was completed through the order workflow.</div>'}</div></section>`:`<section class="admin-waiting-intake"><strong>Customer intake required</strong><p>This project came from a manual order. The customer now sees a ${current.project_type==='website'?'website':'logo'} discovery form in their Design Center. Review controls can be prepared now, but production should begin after the intake is submitted.</p></section>`}
+    ${current.project_type==='website'?`<section class="review-box"><div class="box-head"><h3>Private website preview</h3><span class="badge">Portal review</span></div><div class="box-body">
+      <p class="admin-helper">Paste the current build URL here. The customer will view it inside their filings4u Design Center; the URL itself is not presented as their final website address.</p>
+      <form id="reviewForm" class="review-form review-form-v2">
+        <input id="previewLabel" value="${esc(current.preview_label||'Current website build')}" placeholder="Preview label">
+        <input id="reviewInput" type="url" value="${esc(current.review_url||'')}" placeholder="Private/staging build URL">
+        <button class="primary">Publish preview</button>
+      </form>
+      ${current.review_url?`<div class="published-preview"><span>Published ${current.preview_published_at?new Date(current.preview_published_at).toLocaleString():'for client review'}</span><a href="${esc(current.review_url)}" target="_blank" rel="noopener">Admin preview →</a></div>`:''}
+    </div></section>
+    <section class="finalize-box"><div class="box-head"><h3>Final production website</h3><span>${current.finalized_at?'Finalized':'Not released'}</span></div><div class="box-body"><p class="admin-helper">Do not add the production URL until the website is complete. Once finalized, this URL becomes visible to the customer.</p><form id="finalizeForm" class="review-form"><input id="finalUrl" type="url" value="${esc(current.final_url||'')}" placeholder="https://customer-domain.com"><button class="primary">${current.finalized_at?'Update final URL':'Finalize website'}</button></form></div></section>`:''}
+    <section class="proof-box"><div class="box-head"><h3>${current.project_type==='logo'?'Logo / design proofs':'Supporting design proofs'}</h3><span>${proofs.length} uploaded</span></div><div class="box-body"><form id="proofForm" class="proof-form"><input id="proofTitle" required placeholder="Proof title / version"><input id="proofFile" required type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"><button class="primary">Upload proof</button></form><div class="proof-list">${proofs.length?proofs.map(x=>`<div class="proof-row"><div><strong>v${x.version_number} · ${esc(x.proof_title)}</strong><small>${esc(String(x.status||'').replaceAll('_',' '))}${x.client_decision_note?' · '+esc(x.client_decision_note):''}</small></div><button data-proof="${x.storage_path}">View</button></div>`).join(''):'<div class="empty">No proofs uploaded.</div>'}</div></div></section>
+    <section class="comments-box"><div class="box-head"><h3>Revision conversation</h3><span>${comments.length} comments</span></div><div class="box-body"><div>${comments.map(c=>`<div class="comment"><strong>${c.author_type==='admin'?'filings4u':'Client'}</strong><p>${esc(c.message)}</p></div>`).join('')||'<div class="empty">No comments yet.</div>'}</div><form id="commentForm" class="comment-form"><textarea id="commentText" required rows="2" placeholder="Reply to the client…"></textarea><button class="primary">Send</button></form></div></section>
+  </div>`;
+  show('projectDrawer');
+  if($('reviewForm'))$('reviewForm').onsubmit=saveReview;
+  if($('finalizeForm'))$('finalizeForm').onsubmit=finalizeWebsite;
+  $('proofForm').onsubmit=uploadProof;$('commentForm').onsubmit=comment;
+  document.querySelectorAll('[data-proof]').forEach(b=>b.onclick=()=>viewProof(b.dataset.proof));
+}
 async function saveReview(e){
   e.preventDefault();
-  const raw=$('reviewInput').value.trim();
-  let url=raw||null;
-  if(url){
-    try{ new URL(url); }catch{ return toast('Enter a valid review URL.'); }
-  }const {error}=await db.from('design_projects')
-    .update({review_url:url,status:url?'awaiting_feedback':current.status,updated_at:new Date().toISOString()})
-    .eq('id',current.id);
+  const raw=$('reviewInput').value.trim(),label=$('previewLabel').value.trim()||'Current website build';
+  if(!raw)return toast('Enter the website preview URL.');
+  try{const u=new URL(raw);if(!['http:','https:'].includes(u.protocol))throw new Error()}catch{return toast('Enter a valid HTTP or HTTPS preview URL.')}
+  const {error}=await db.from('design_projects').update({
+    review_url:raw,preview_label:label,preview_published_at:new Date().toISOString(),
+    status:'awaiting_feedback',client_approved_at:null,updated_at:new Date().toISOString()
+  }).eq('id',current.id);
   if(error)return toast(error.message);
-  toast('Review link saved.');
-  const id=current.id;
-  await load();
-  openProject(id);
+  toast('Private website preview published to the client portal.');
+  const id=current.id;await load();openProject(id);
+}
+async function finalizeWebsite(e){
+  e.preventDefault();
+  const raw=$('finalUrl').value.trim();
+  if(!raw)return toast('Enter the final production URL.');
+  try{const u=new URL(raw);if(!['http:','https:'].includes(u.protocol))throw new Error()}catch{return toast('Enter a valid final website URL.')}
+  if(!current.client_approved_at&&!confirm('The customer has not approved the current website preview. Finalize anyway?'))return;
+  const {error}=await db.from('design_projects').update({
+    final_url:raw,finalized_at:new Date().toISOString(),status:'completed',updated_at:new Date().toISOString()
+  }).eq('id',current.id);
+  if(error)return toast(error.message);
+  toast('Website finalized. The production URL is now available to the client.');
+  const id=current.id;await load();openProject(id);
 }
 async function uploadProof(e){
   e.preventDefault();
