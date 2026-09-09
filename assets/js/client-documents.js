@@ -144,7 +144,11 @@ function hydrateProfile(){
 function renderStats(){
   $('totalDocuments').textContent=documents.length;
   $('vaultDocuments').textContent=documents.filter(d=>d.source==='Secure vault').length;
-  $('filingDocuments').textContent=documents.filter(d=>['Business entity','Filing record'].includes(d.source)).length;
+  $('filingDocuments').textContent=documents.filter(d=>{
+    const source=String(d.source||'').toLowerCase();
+    const kind=String(d.kind||'').toLowerCase();
+    return source==='business entity' || source==='filing record' || kind==='filing' || kind.includes('filing');
+  }).length;
 
   const cutoff=Date.now()-30*86400000;
   $('recentDocuments').textContent=documents.filter(d=>d.date&&new Date(d.date).getTime()>=cutoff).length;
