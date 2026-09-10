@@ -49,16 +49,16 @@
       label: "Operations",
       items: [
         ["tasks", "✓", "Tasks", "admin-tasks.html"],
-        ["calendar", "□", "Calendar", "admin-management.html#calendar"],
-        ["notifications", "○", "Notifications", "admin-management.html#notifications"],
-        ["activity", "↻", "Activity", "admin-management.html#activity"]
+        ["calendar", "□", "Calendar", "admin-calendar.html"],
+        ["notifications", "○", "Notifications", "admin-notifications.html"],
+        ["activity", "↻", "Activity", "admin-activity.html"]
       ]
     },
     {
       key: "platform",
       label: "Platform",
       items: [
-        ["users", "◎", "Users & Roles", "admin-management.html#users"],
+        ["users", "◎", "Users & Roles", "admin-users.html"],
         ["automations", "◇", "Automations", "admin-management.html#automations"],
         ["integrations", "⌁", "Integrations", "admin-management.html#integrations"],
         ["security", "⌾", "Security", "admin-management.html#security"],
@@ -82,7 +82,11 @@
     "admin-faqs.html": "faqs",
     "admin-knowledge.html": "knowledge",
     "admin-media.html": "media",
-    "admin-tasks.html": "tasks"
+    "admin-tasks.html": "tasks",
+    "admin-calendar.html": "calendar",
+    "admin-notifications.html": "notifications",
+    "admin-activity.html": "activity",
+    "admin-users.html": "users"
   };
 
   function currentKey() {
