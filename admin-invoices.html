@@ -1,144 +1,97 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#10b981">
-<title>Invoices & Billing | filings4u Administration</title>
-<link href="images/fav.png" rel="icon" type="image/png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10b981">
+<title>filings4u Admin | Invoices & Payments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin-invoices.css">
-
+<link rel="stylesheet" href="assets/css/admin-management.css"><link rel="stylesheet" href="assets/css/invoice-manager.css">
 </head>
-<body data-page="invoices">
-<div id="adminNavigationMount"></div>
-<main>
-  <div id="gate" class="gate">Verifying administrator access…</div>
-  <section id="app" hidden>
-    <div class="head invoice-head">
-      <div>
-        <label>BILLING & ACCOUNTS RECEIVABLE</label>
-        <h1>Invoices & Billing</h1>
-        <p>Create itemized filings4u invoices, deliver them to client portals, track balances, and manage payment status.</p>
-      </div>
-      <button id="newInvoice" class="primary">+ Create invoice</button>
+<body class="management-body invoice-manager-body" data-management-page="invoices">
+<header class="management-topbar">
+  <div class="management-topbar__left">
+    <button class="management-icon-button management-mobile-toggle" id="managementMobileToggle" type="button">☰</button>
+    <button class="management-icon-button management-desktop-toggle" id="managementDesktopToggle" type="button">☰</button>
+    <a class="management-brand" href="admin-management.html#home"><img src="images/logo.png" alt="filings4u" class="management-logo"><span class="management-brand-divider"></span><span class="management-brand-copy"><strong>Management</strong><small>Website & Operations</small></span></a>
+  </div>
+  <div class="management-topbar__center"><button class="global-search-trigger" id="invoiceSearchTrigger" type="button"><span>⌕</span><span>Search invoices...</span><kbd>/</kbd></button></div>
+  <div class="management-topbar__right"><button class="management-create-button" id="newInvoiceTop" type="button">+ New invoice</button><div class="management-account"><button class="management-profile-button" id="managementProfileButton" type="button"><span class="management-avatar" data-admin-initials>AD</span><span class="management-profile-copy"><strong data-admin-name>Administrator</strong><small data-admin-email>Admin account</small></span><span>⌄</span></button><div class="management-profile-menu" id="managementProfileMenu" hidden><a href="admin-profile.html">My profile</a><a href="admin-management.html#users">Users & roles</a><button id="managementSignOut" type="button">Sign out</button></div></div></div>
+</header>
+
+<div class="management-shell">
+<aside class="management-sidebar" id="managementSidebar">
+  <div class="management-sidebar__intro"><span><i></i> filings4u</span><strong>Management System</strong><small>Control the website, portals and business operations.</small></div>
+  <nav class="management-nav" id="managementNavigation" data-management-navigation></nav>
+</aside>
+<button class="management-sidebar-backdrop" id="managementSidebarBackdrop" type="button"></button>
+
+<main class="management-main invoice-main" id="invoiceMain">
+<section id="invoiceListView">
+  <header class="management-page-head business-page-head">
+    <div>
+      <span class="management-kicker">Business · Finance</span>
+      <h1>Invoices & Payments Management</h1>
+      <p>Manage invoices, payment status, balances, customer billing, payment history, and Stripe-linked transactions.</p>
+    </div>
+    <div class="management-page-actions"><button class="management-secondary-button" id="refreshInvoices" type="button">Refresh</button><button class="management-primary-button" id="newInvoiceButton" type="button">+ New invoice</button></div>
+  </header>
+
+
+    <div class="invoice-stat-grid">
+      <article><span>$</span><div><small>Total invoiced</small><strong id="statTotalInvoiced">—</strong><em>All invoices</em></div></article>
+      <article><span>✓</span><div><small>Collected</small><strong id="statCollected">—</strong><em>Recorded payments</em></div></article>
+      <article><span>◷</span><div><small>Outstanding</small><strong id="statOutstanding">—</strong><em>Open balance</em></div></article>
+      <article><span>!</span><div><small>Overdue</small><strong id="statOverdue">—</strong><em>Past due invoices</em></div></article>
     </div>
 
-    <section class="invoice-stats">
-      <article><span>Outstanding</span><strong id="statOutstanding">$0.00</strong><small>Unpaid client balance</small></article>
-      <article><span>Overdue</span><strong id="statOverdue">$0.00</strong><small>Past due balance</small></article>
-      <article><span>Paid</span><strong id="statPaid">$0.00</strong><small>Collected invoices</small></article>
-      <article><span>Drafts</span><strong id="statDraft">0</strong><small>Not yet delivered</small></article>
-    </section>
-
-    <section class="panel invoice-panel">
-      <div class="filters invoice-filters">
-        <input id="invoiceSearch" type="search" placeholder="Search invoice #, client, email or tracking #">
-        <select id="statusFilter"><option value="">All invoice statuses</option></select>
-        <select id="paymentFilter"><option value="">All payment statuses</option></select>
-        <button id="clearFilters" type="button">Clear</button>
+    <section class="invoice-table-card">
+      <div class="invoice-toolbar">
+        <label class="invoice-search-field"><span>⌕</span><input id="invoiceSearch" type="search" placeholder="Search invoice, customer, email, order or tracking number"></label>
+        <div><select id="invoiceStatusFilter"><option value="">All invoice statuses</option></select><select id="paymentStatusFilter"><option value="">All payment statuses</option></select><select id="invoiceSort"><option value="created">Newest first</option><option value="due">Due date</option><option value="amount">Highest amount</option><option value="balance">Highest balance</option></select></div>
       </div>
-      <div class="table">
-        <table>
-          <thead><tr><th>Invoice</th><th>Client</th><th>Issued</th><th>Due</th><th>Status</th><th>Payment</th><th>Total</th><th></th></tr></thead>
-          <tbody id="invoiceRows"></tbody>
-        </table>
-      </div>
-      <footer><span id="invoiceCount"></span></footer>
+      <div class="invoice-table-wrap"><table class="invoice-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Status</th><th>Payment</th><th>Total</th><th>Balance</th><th>Due</th><th></th></tr></thead><tbody id="invoiceTableBody"><tr><td colspan="8"><div class="invoice-empty">Loading invoices…</div></td></tr></tbody></table></div>
+      <footer class="invoice-table-footer"><span id="invoiceResultCount">—</span><div><button id="invoicePrev" type="button">Previous</button><span id="invoicePageLabel">Page 1</span><button id="invoiceNext" type="button">Next</button></div></footer>
     </section>
   </section>
+
+  <section id="invoiceRecordView" hidden>
+    <div class="invoice-record-toolbar"><button class="invoice-back-button" id="invoiceBackButton" type="button">← Invoices</button><div><button class="management-secondary-button" id="openCustomerButton" type="button">Open customer</button><button class="management-secondary-button" id="openOrderButton" type="button">Open order</button><button class="management-primary-button" id="editInvoiceButton" type="button">Edit invoice</button></div></div>
+
+    <section class="invoice-record-hero">
+      <div class="invoice-record-identity"><div class="invoice-record-icon">$</div><div><div class="invoice-record-title-line"><h1 id="invoiceRecordNumber">Invoice</h1><span id="invoiceRecordStatus" class="status-pill">—</span></div><p id="invoiceRecordCustomer">—</p><div class="invoice-record-meta"><span id="invoiceRecordEmail">—</span><b>•</b><span id="invoiceRecordCreated">—</span></div></div></div>
+      <div class="invoice-record-summary"><div><small>Total</small><strong id="recordTotal">$0.00</strong></div><div><small>Paid</small><strong id="recordPaid">$0.00</strong></div><div><small>Balance</small><strong id="recordBalance">$0.00</strong></div><div><small>Due date</small><strong id="recordDue">—</strong></div></div>
+    </section>
+
+    <nav class="invoice-record-tabs">
+      <button class="is-active" data-tab="overview">Overview</button>
+      <button data-tab="items">Line items <span id="tabItemCount">0</span></button>
+      <button data-tab="payments">Payments <span id="tabPaymentCount">0</span></button>
+      <button data-tab="activity">Activity</button>
+      <button data-tab="delivery">Delivery</button>
+    </nav>
+
+    <div class="invoice-record-panels">
+      <section class="invoice-record-panel is-active" data-panel="overview">
+        <div class="invoice-overview-grid">
+          <article class="invoice-detail-card"><div class="card-head"><div><span class="management-kicker">Invoice</span><h2>Invoice details</h2></div><button class="text-action" data-edit-invoice type="button">Edit</button></div><dl id="invoiceDetails"></dl></article>
+          <article class="invoice-detail-card"><div class="card-head"><div><span class="management-kicker">Payment</span><h2>Payment summary</h2></div></div><dl id="paymentSummary"></dl></article>
+          <article class="invoice-detail-card wide"><div class="card-head"><div><span class="management-kicker">Recent</span><h2>Payment activity</h2></div></div><div class="activity-list" id="overviewPaymentActivity"></div></article>
+        </div>
+      </section>
+      <section class="invoice-record-panel" data-panel="items"><div class="section-head"><span class="management-kicker">Charges</span><h2>Invoice line items</h2></div><div class="invoice-data-list" id="lineItemsList"></div></section>
+      <section class="invoice-record-panel" data-panel="payments"><div class="section-head"><span class="management-kicker">Payments</span><h2>Payment history</h2></div><div class="invoice-data-list" id="paymentsList"></div></section>
+      <section class="invoice-record-panel" data-panel="activity"><div class="section-head"><span class="management-kicker">Timeline</span><h2>Invoice activity</h2></div><div class="activity-list" id="invoiceActivityList"></div></section>
+      <section class="invoice-record-panel" data-panel="delivery"><div class="section-head"><span class="management-kicker">Customer delivery</span><h2>Delivery & checkout</h2></div><article class="invoice-detail-card"><dl id="deliveryDetails"></dl></article></section>
+    </div>
+  </section>
 </main>
+</div>
 
-<div id="invoiceShade" class="invoice-shade" hidden></div>
+<div class="invoice-modal" id="invoiceEditModal" hidden><div class="invoice-modal__backdrop" data-close-edit></div><section class="invoice-modal__card"><header><div><span class="management-kicker">Invoice</span><h2>Edit invoice</h2></div><button data-close-edit type="button">×</button></header><form id="invoiceEditForm"><div class="invoice-form-grid"><label>Status<select name="status"><option>draft</option><option>open</option><option>sent</option><option>paid</option><option>void</option><option>overdue</option><option>cancelled</option></select></label><label>Payment status<select name="payment_status"><option>unpaid</option><option>pending</option><option>partially_paid</option><option>paid</option><option>failed</option><option>refunded</option><option>cancelled</option></select></label><label>Due date<input name="due_date" type="date"></label><label>Payment terms<input name="payment_terms"></label><label class="full">Customer notes<textarea name="customer_notes" rows="4"></textarea></label><label class="full">Payment URL<input name="payment_url"></label><label>Reminder enabled<select name="reminder_enabled"><option value="true">Yes</option><option value="false">No</option></select></label><label>Partial payments<select name="partial_payments_enabled"><option value="true">Yes</option><option value="false">No</option></select></label></div><footer><button class="management-secondary-button" data-close-edit type="button">Cancel</button><button class="management-primary-button" type="submit">Save invoice</button></footer></form></section></div>
 
-<aside id="invoiceDrawer" class="invoice-drawer" aria-hidden="true">
-  <div class="drawer-top">
-    <div><label>INVOICE RECORD</label><h2 id="drawerInvoiceNumber">Invoice</h2></div>
-    <button id="closeDrawer" class="icon-button" type="button">×</button>
-  </div>
-  <div id="drawerContent" class="drawer-content"></div>
-</aside>
+<div class="invoice-modal" id="newInvoiceModal" hidden><div class="invoice-modal__backdrop" data-close-new></div><section class="invoice-modal__card"><header><div><span class="management-kicker">Finance</span><h2>New invoice</h2></div><button data-close-new type="button">×</button></header><form id="newInvoiceForm"><p class="form-note">Creates a draft administrative invoice. Add line items after creation.</p><div class="invoice-form-grid"><label>Email<input name="client_email" type="email" required></label><label>Due date<input name="due_date" type="date" required></label><label class="full">Description<input name="line_item_description" required></label><label>Total amount<input name="total_amount" type="number" min="0" step="0.01" required></label><label>Order ID<input name="order_id"></label><label>Client profile ID<input name="client_profile_id"></label><label class="full">Customer notes<textarea name="customer_notes" rows="3"></textarea></label></div><footer><button class="management-secondary-button" data-close-new type="button">Cancel</button><button class="management-primary-button" type="submit">Create invoice</button></footer></form></section></div>
 
-<section id="invoiceComposer" class="composer" aria-hidden="true">
-  <div class="composer-head">
-    <div><label>BRANDED INVOICE BUILDER</label><h2 id="composerTitle">Create invoice</h2></div>
-    <button id="closeComposer" class="icon-button" type="button">×</button>
-  </div>
-  <form id="invoiceForm">
-    <div class="composer-scroll">
-      <section class="form-section">
-        <div class="form-section-title"><span>1</span><div><h3>Client & invoice details</h3><p>Select the client, due date, order, and invoice status.</p></div></div>
-        <div class="form-grid">
-          <label>Client<select id="clientId" required><option value="">Select a client</option></select></label>
-          <label>Client email<input id="clientEmail" type="email" required readonly></label>
-          <label>Related order<select id="orderId"><option value="">No related order</option></select></label>
-          <label>Tracking number<input id="trackingNumber" readonly></label>
-          <label>Due date<input id="dueDate" type="date" required></label>
-          <label>Invoice status<select id="invoiceStatus"><option value="draft">Draft</option><option value="open">Open</option><option value="sent">Sent</option><option value="overdue">Overdue</option><option value="paid">Paid</option><option value="void">Void</option><option value="cancelled">Cancelled</option></select></label>
-        </div>
-      </section>
-
-      <section class="form-section">
-        <div class="form-section-title line-title"><span>2</span><div><h3>Itemized charges</h3><p>Add as many products, government fees, filing services, or other billable items as needed.</p></div><button id="addLine" type="button" class="secondary-action">+ Add line</button></div>
-        <div class="line-header"><span>Description</span><span>Qty</span><span>Unit price</span><span>Total</span><span></span></div>
-        <div id="lineItems" class="line-items"></div>
-      </section>
-
-      <section class="form-section">
-        <div class="form-section-title"><span>3</span><div><h3>Adjustments & terms</h3><p>Apply discounts, tax, shipping, customer notes, and payment instructions.</p></div></div>
-        <div class="form-grid">
-          <label>Discount type
-            <select id="discountType">
-              <option value="amount">No discount</option>
-              <option value="percent">Percent (%)</option>
-              <option value="amount">Cash amount ($)</option>
-            </select>
-          </label>
-          <label>Discount value<input id="discountValue" type="number" min="0" step="0.01" value="0"></label>
-          <label>Tax rate (%)<input id="taxRate" type="number" min="0" step="0.01" value="0"></label>
-          <label>Shipping / delivery<input id="shipping" type="number" min="0" step="0.01" value="0"></label>
-          <label>Payment received / deposit<input id="amountPaid" type="number" min="0" step="0.01" value="0" placeholder="0.00"></label>
-          <label>Payment status<select id="paymentStatus">
-            <option value="unpaid">Unpaid</option>
-            <option value="partially_paid">Partially paid</option>
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="failed">Failed</option>
-            <option value="refunded">Refunded</option>
-            <option value="cancelled">Cancelled</option>
-          </select></label>
-          <label class="full">Payment terms<input id="paymentTerms" placeholder="Example: Due upon receipt or Net 15"></label>
-          <label class="full">Payment URL<input id="paymentUrl" type="url" placeholder="Optional secure payment link"></label>
-          <label class="full">Customer notes<textarea id="customerNotes" rows="4" placeholder="Thank you for choosing filings4u."></textarea></label>
-        </div>
-      </section>
-
-      <section class="invoice-totals">
-        <div><span>Subtotal</span><strong id="calcSubtotal">$0.00</strong></div>
-        <div><span>Discount</span><strong id="calcDiscount">− $0.00</strong></div>
-        <div><span>Tax</span><strong id="calcTax">$0.00</strong></div>
-        <div><span>Shipping</span><strong id="calcShipping">$0.00</strong></div>
-        <div><span>Invoice total</span><strong id="calcTotal">$0.00</strong></div>
-        <div><span>Payment received / deposit</span><strong id="calcPaid">− $0.00</strong></div>
-        <div class="grand-total"><span>Balance due</span><strong id="calcBalance">$0.00</strong></div>
-      </section>
-    </div>
-
-    <div class="composer-actions">
-      <button type="button" id="saveDraft" class="button-secondary">Save draft</button>
-      <button type="submit" id="saveInvoice" class="primary">Save invoice</button>
-    </div>
-  </form>
-</section>
-
-<div id="toast" class="toast" hidden></div>
-<!-- ADMIN PROTECTED PAGE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/admin-supabase-client.js"></script>
-<script src="assets/js/admin-auth-guard.js"></script>
-<script src="assets/js/admin-navigation.js"></script>
-<script src="assets/js/admin-invoices.js?v=20260909-discount-save-fix1"></script>
-</body>
-</html>
+<script src="assets/js/navigation.js"></script>
+<script src="assets/js/admin-supabase-client.js"></script><script src="assets/js/admin-auth-guard.js"></script><script src="assets/js/invoice-manager.js"></script>
+</body></html>

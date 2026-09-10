@@ -1,10 +1,97 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10b981"><title>Design Projects | filings4u Administration</title><link href="images/fav.png" rel="icon" type="image/png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/css/admin-design.css?v=20260909-intakescroll2"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/admin-supabase-client.js"></script><script src="assets/js/admin-auth-guard.js"></script><script src="assets/js/admin-navigation.js"></script></head><body data-page="design"><div id="adminNavigationMount"></div><main><div id="gate" class="gate">Verifying administrator access…</div><section id="app" hidden>
-<div class="head"><div><label>CREATIVE SERVICES</label><h1>Design Projects</h1><p>Manage logo proofs, website reviews, client approvals, intake forms, and revision conversations.</p></div><button id="newProject" class="primary">+ New design project</button></div>
-<div class="stats"><article><span>Active projects</span><strong id="activeCount">0</strong><small>Logo and website work</small></article><article><span>Awaiting feedback</span><strong id="feedbackCount">0</strong><small>Client action required</small></article><article><span>Approved</span><strong id="approvedCount">0</strong><small>Client-approved work</small></article><article><span>Intakes received</span><strong id="intakeCount">0</strong><small>Logo + web questionnaires</small></article></div>
-<section class="panel"><div class="toolbar"><input id="search" placeholder="Search client, project, email or tracking #"><select id="typeFilter"><option value="">All project types</option><option value="logo">Logo design</option><option value="website">Website design</option></select><select id="statusFilter"><option value="">All statuses</option></select><button id="refresh">Refresh</button></div><div id="projects" class="project-grid"></div></section>
-<section class="intake-section"><div class="section-head"><div><label>CLIENT DISCOVERY</label><h2>Design intake submissions</h2></div><div class="tabs"><button class="tab is-active" data-tab="logo">Logo intake</button><button class="tab" data-tab="web">Web design intake</button></div></div><div id="intakes" class="intake-grid"></div></section>
-</section></main>
-<div id="shade" class="shade" hidden></div>
-<aside id="projectDrawer" class="drawer" aria-hidden="true"><div class="drawerHead"><div><label>DESIGN WORKSPACE</label><h2 id="drawerTitle">Project</h2></div><button id="closeDrawer">×</button></div><div id="drawerBody"></div></aside><aside id="intakeDrawer" class="drawer intake-detail-drawer" aria-hidden="true"><div class="drawerHead"><div><label>COMPLETED CLIENT INTAKE</label><h2 id="intakeDrawerTitle">Design intake</h2><p id="intakeDrawerMeta"></p></div><button id="closeIntakeDrawer" aria-label="Close intake">×</button></div><div id="intakeDrawerBody"></div></aside>
-<section id="projectModal" class="modal" aria-hidden="true"><div class="modalHead"><div><label>NEW CREATIVE PROJECT</label><h2>Create design project</h2></div><button id="closeModal">×</button></div><form id="projectForm"><label>Client<select id="client" required><option value="">Select client</option></select></label><label>Project type<select id="projectType" required><option value="logo">Logo design</option><option value="website">Website design</option></select></label><label>Project title<input id="projectTitle" required placeholder="Example: Acme Brand Identity"></label><label>Tracking / order reference<input id="tracking" placeholder="Optional"></label><label class="full">Website review link<input id="reviewUrl" type="url" placeholder="https://staging.example.com"></label><label class="full">Internal notes<textarea id="adminNotes" rows="4"></textarea></label><div class="modalActions"><button type="button" id="cancelModal">Cancel</button><button class="primary" type="submit">Create project</button></div></form></section>
-<div id="toast" class="toast" hidden></div><script src="assets/js/admin-design.js?v=20260909-intakescroll2"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10b981">
+<title>filings4u Admin | Design Projects Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/admin-management.css"><link rel="stylesheet" href="assets/css/design-manager.css">
+</head>
+<body class="management-body design-manager-body" data-management-page="design">
+<header class="management-topbar">
+  <div class="management-topbar__left">
+    <button class="management-icon-button management-mobile-toggle" id="managementMobileToggle" type="button">☰</button>
+    <button class="management-icon-button management-desktop-toggle" id="managementDesktopToggle" type="button">☰</button>
+    <a class="management-brand" href="admin-management.html#home"><img src="images/logo.png" alt="filings4u" class="management-logo"><span class="management-brand-divider"></span><span class="management-brand-copy"><strong>Management</strong><small>Website & Operations</small></span></a>
+  </div>
+  <div class="management-topbar__center"><button class="global-search-trigger" id="designSearchTrigger" type="button"><span>⌕</span><span>Search design projects...</span><kbd>/</kbd></button></div>
+  <div class="management-topbar__right"><button class="management-create-button" id="newProjectTop" type="button">+ New project</button><div class="management-account"><button class="management-profile-button" id="managementProfileButton" type="button"><span class="management-avatar" data-admin-initials>AD</span><span class="management-profile-copy"><strong data-admin-name>Administrator</strong><small data-admin-email>Admin account</small></span><span>⌄</span></button><div class="management-profile-menu" id="managementProfileMenu" hidden><a href="admin-profile.html">My profile</a><a href="admin-management.html#users">Users & roles</a><button id="managementSignOut" type="button">Sign out</button></div></div></div>
+</header>
+
+<div class="management-shell">
+<aside class="management-sidebar" id="managementSidebar">
+  <div class="management-sidebar__intro"><span><i></i> filings4u</span><strong>Management System</strong><small>Control the website, portals and business operations.</small></div>
+  <nav class="management-nav" id="managementNavigation" data-management-navigation></nav>
+</aside>
+<button class="management-sidebar-backdrop" id="managementSidebarBackdrop" type="button"></button>
+
+<main class="management-main design-main">
+<section id="designListView">
+  <header class="management-page-head business-page-head">
+    <div>
+      <span class="management-kicker">Business · Creative</span>
+      <h1>Design Projects Management</h1>
+      <p>Manage logo and website projects, creative status, proofs, approvals, client feedback and project delivery.</p>
+    </div>
+    <div class="management-page-actions"><button class="management-secondary-button" id="refreshDesign" type="button">Refresh</button><button class="management-primary-button" id="newProjectButton" type="button">+ New project</button></div>
+  </header>
+
+  <div class="design-stat-grid">
+    <article><span>✦</span><div><small>Total projects</small><strong id="statProjects">—</strong><em>All design work</em></div></article>
+    <article><span>◷</span><div><small>In progress</small><strong id="statActive">—</strong><em>Active creative work</em></div></article>
+    <article><span>◫</span><div><small>Proofs</small><strong id="statProofs">—</strong><em>Uploaded versions</em></div></article>
+    <article><span>✓</span><div><small>Completed</small><strong id="statCompleted">—</strong><em>Delivered projects</em></div></article>
+  </div>
+
+  <section class="design-table-card">
+    <div class="design-toolbar">
+      <label class="design-search-field"><span>⌕</span><input id="designSearch" type="search" placeholder="Search project, customer, tracking number or project type"></label>
+      <div><select id="designTypeFilter"><option value="">All project types</option></select><select id="designStatusFilter"><option value="">All statuses</option></select><select id="designSort"><option value="updated">Recently updated</option><option value="created">Newest created</option><option value="title">Project A–Z</option></select></div>
+    </div>
+    <div class="design-table-wrap"><table class="design-table"><thead><tr><th>Project</th><th>Customer</th><th>Type</th><th>Status</th><th>Tracking</th><th>Updated</th><th></th></tr></thead><tbody id="designTableBody"><tr><td colspan="7"><div class="design-empty">Loading design projects…</div></td></tr></tbody></table></div>
+    <footer class="design-table-footer"><span id="designResultCount">—</span><div><button id="designPrev" type="button">Previous</button><span id="designPageLabel">Page 1</span><button id="designNext" type="button">Next</button></div></footer>
+  </section>
+</section>
+
+<section id="designRecordView" hidden>
+  <div class="design-record-toolbar"><button class="design-back-button" id="designBackButton" type="button">← Design Projects</button><div><button class="management-secondary-button" id="openCustomerButton" type="button">Open customer</button><button class="management-primary-button" id="editProjectButton" type="button">Edit project</button></div></div>
+
+  <section class="design-record-hero">
+    <div class="design-record-identity"><div class="design-record-icon">✦</div><div><div class="design-record-title-line"><h1 id="recordTitle">Design Project</h1><span id="recordStatus" class="status-pill">—</span></div><p id="recordType">—</p><div class="design-record-meta"><span id="recordCustomer">—</span><b>•</b><span id="recordTracking">—</span><b>•</b><span id="recordCreated">—</span></div></div></div>
+    <div class="design-record-summary"><div><small>Proofs</small><strong id="recordProofs">0</strong></div><div><small>Comments</small><strong id="recordComments">0</strong></div><div><small>Approvals</small><strong id="recordApprovals">0</strong></div><div><small>Last update</small><strong id="recordUpdated">—</strong></div></div>
+  </section>
+
+  <nav class="design-record-tabs">
+    <button class="is-active" data-tab="overview">Overview</button>
+    <button data-tab="proofs">Proofs <span id="tabProofCount">0</span></button>
+    <button data-tab="feedback">Feedback <span id="tabFeedbackCount">0</span></button>
+    <button data-tab="approvals">Approvals <span id="tabApprovalCount">0</span></button>
+    <button data-tab="activity">Activity</button>
+  </nav>
+
+  <div class="design-record-panels">
+    <section class="design-record-panel is-active" data-panel="overview">
+      <div class="design-overview-grid">
+        <article class="design-detail-card"><div class="card-head"><div><span class="management-kicker">Project</span><h2>Project details</h2></div><button class="text-action" data-edit-project>Edit</button></div><dl id="projectDetails"></dl></article>
+        <article class="design-detail-card"><div class="card-head"><div><span class="management-kicker">Client</span><h2>Customer details</h2></div></div><dl id="customerDetails"></dl></article>
+        <article class="design-detail-card wide"><div class="card-head"><div><span class="management-kicker">Creative pipeline</span><h2>Project progress</h2></div></div><div id="projectProgress" class="design-progress"></div></article>
+      </div>
+    </section>
+
+    <section class="design-record-panel" data-panel="proofs"><div class="section-head"><span class="management-kicker">Creative review</span><h2>Design proofs</h2></div><div class="design-card-grid" id="proofList"></div></section>
+    <section class="design-record-panel" data-panel="feedback"><div class="section-head"><span class="management-kicker">Client feedback</span><h2>Comments & revisions</h2></div><div class="activity-list" id="feedbackList"></div></section>
+    <section class="design-record-panel" data-panel="approvals"><div class="section-head"><span class="management-kicker">Approval history</span><h2>Approvals</h2></div><div class="design-data-list" id="approvalList"></div></section>
+    <section class="design-record-panel" data-panel="activity"><div class="section-head"><span class="management-kicker">Timeline</span><h2>Project activity</h2></div><div class="activity-list" id="activityList"></div></section>
+  </div>
+</section>
+</main>
+</div>
+
+<div class="design-modal" id="editProjectModal" hidden><div class="design-modal__backdrop" data-close-edit></div><section class="design-modal__card"><header><div><span class="management-kicker">Design project</span><h2>Edit project</h2></div><button data-close-edit type="button">×</button></header><form id="editProjectForm"><div class="design-form-grid"><label class="full">Project title<input name="title" required></label><label>Project type<input name="project_type"></label><label>Status<input name="status" required></label><label>Tracking number<input name="tracking_number"></label><label>Customer profile ID<input name="client_profile_id"></label><label class="full">Description<textarea name="description" rows="5"></textarea></label></div><footer><button class="management-secondary-button" data-close-edit type="button">Cancel</button><button class="management-primary-button" type="submit">Save project</button></footer></form></section></div>
+
+<div class="design-modal" id="newProjectModal" hidden><div class="design-modal__backdrop" data-close-new></div><section class="design-modal__card"><header><div><span class="management-kicker">Creative</span><h2>New design project</h2></div><button data-close-new type="button">×</button></header><form id="newProjectForm"><div class="design-form-grid"><label class="full">Project title<input name="title" required></label><label>Project type<select name="project_type"><option value="logo">Logo</option><option value="website">Website</option><option value="brand">Brand</option><option value="other">Other</option></select></label><label>Status<input name="status" value="New" required></label><label>Tracking number<input name="tracking_number"></label><label>Customer profile ID<input name="client_profile_id"></label><label class="full">Description<textarea name="description" rows="5"></textarea></label></div><footer><button class="management-secondary-button" data-close-new type="button">Cancel</button><button class="management-primary-button" type="submit">Create project</button></footer></form></section></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/navigation.js"></script>
+<script src="assets/js/admin-supabase-client.js"></script><script src="assets/js/admin-auth-guard.js"></script><script src="assets/js/design-manager.js"></script>
+</body></html>
