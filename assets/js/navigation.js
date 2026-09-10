@@ -59,8 +59,8 @@
       label: "Platform",
       items: [
         ["users", "◎", "Users & Roles", "admin-users.html"],
-        ["automations", "◇", "Automations", "admin-management.html#automations"],
-        ["integrations", "⌁", "Integrations", "admin-management.html#integrations"],
+        ["automations", "◇", "Automations", "admin-automations.html"],
+        ["integrations", "⌁", "Integrations", "admin-integrations.html"],
         ["security", "⌾", "Security", "admin-management.html#security"],
         ["logs", "▤", "System Logs", "admin-management.html#logs"],
         ["settings", "⚙", "Settings", "admin-management.html#settings"]
@@ -86,7 +86,9 @@
     "admin-calendar.html": "calendar",
     "admin-notifications.html": "notifications",
     "admin-activity.html": "activity",
-    "admin-users.html": "users"
+    "admin-users.html": "users",
+    "admin-automations.html": "automations",
+    "admin-integrations.html": "integrations"
   };
 
   function currentKey() {
