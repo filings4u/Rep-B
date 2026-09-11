@@ -1,6 +1,6 @@
 const db=window.filings4uClientSupabase,$=id=>document.getElementById(id);
 function msg(t,type='error'){if(!$('message'))return;$('message').textContent=t;$('message').className=`message ${type}`;$('message').hidden=false}
-function nextPage(){const p=new URLSearchParams(location.search),n=p.get('next');return(!n||n.includes('://')||n.startsWith('//'))?'client-dashboard.html':n}
+function nextPage(){const p=new URLSearchParams(location.search),n=p.get('returnTo')||p.get('next');return(!n||n.includes('://')||n.startsWith('//'))?'client-dashboard.html':n}
 async function profile(id){const{data,error}=await db.from('client_profiles').select('id,email_address,first_name,last_name,company_name').eq('id',id).maybeSingle();if(error)throw error;return data}
 async function isAdmin(id){const{data}=await db.from('admin_profiles').select('id,terminated_date').eq('id',id).maybeSingle();return !!(data&&!data.terminated_date)}
 (async()=>{const p=new URLSearchParams(location.search);if(p.get('error')==='admin-account')msg('Administrator accounts must use the Administration sign-in.');if(p.get('error')==='client-profile-required')msg('This login is not linked to a filings4u client profile.');const{data:{user}}=await db.auth.getUser();if(!user)return;if(await isAdmin(user.id)){await db.auth.signOut({scope:'local'});return}const pr=await profile(user.id).catch(()=>null);if(pr){msg(`Already signed in as ${pr.email_address}. Redirecting…`,'ok');setTimeout(()=>location.href=nextPage(),250)}})();

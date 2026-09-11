@@ -28,6 +28,7 @@
     );
   }
 
+  window.filings4uAdminSupabase = window.filings4uSupabase;
   window.supabaseClient = window.filings4uSupabase;
   window.filings4uDb = window.filings4uSupabase;
   window.FILINGS4U_SUPABASE_URL = SUPABASE_URL;
