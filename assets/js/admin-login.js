@@ -24,7 +24,10 @@ async function verifyCurrentSession(){
   if(!db)return null;
   const {data:{session}}=await db.auth.getSession();
   if(!session)return null;
-  const {data,error}=await db.functions.invoke('admin-auth-check',{body:{action:'verify'}});
+  const {data,error}=await db.functions.invoke('admin-auth-check',{
+    body:{action:'verify'},
+    headers:{Authorization:'Bearer '+session.access_token}
+  });
   if(error||data?.ok!==true)return null;
   return {session,admin:data.admin};
 }
@@ -63,14 +66,16 @@ $('loginForm')?.addEventListener('submit',async event=>{
     if(!data?.session?.access_token)throw new Error('A secure session was not created.');
 
     const {data:check,error:checkError}=await db.functions.invoke('admin-auth-check',{
-      body:{action:'verify'}
+      body:{action:'verify'},
+      headers:{Authorization:'Bearer '+data.session.access_token}
     });
 
     if(checkError||check?.ok!==true){
       try{await db.auth.signOut({scope:'local'});}catch(_){}
-      throw new Error(check?.error==='admin_required'
+      const reason=check?.error||checkError?.message||'verification_failed';
+      throw new Error(reason==='admin_required'
         ?'This account is not an active filings4u administrator.'
-        :'Administrator access could not be verified.');
+        :'Administrator access could not be verified: '+reason);
     }
 
     msg('Sign in successful. Opening management…','ok');

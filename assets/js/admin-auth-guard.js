@@ -35,7 +35,8 @@ async function verifyAdmin(){
   if(sessionError||!session?.access_token)return deny('login_required');
 
   const {data,error}=await client.functions.invoke('admin-auth-check',{
-    body:{action:'verify'}
+    body:{action:'verify'},
+    headers:{Authorization:'Bearer '+session.access_token}
   });
 
   if(error||data?.ok!==true){
