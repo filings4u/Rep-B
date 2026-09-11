@@ -16,6 +16,14 @@ function toast(msg){
   clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").hidden=true,3200);
 }
 function getDb(){return window.filings4uSupabase||window.supabaseClient||window.filings4uDb}
+async function invokeEdge(name,body){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session?.access_token)throw new Error("Administrator session expired.");
+  const {data,error}=await db.functions.invoke(name,{body,headers:{Authorization:`Bearer ${session.access_token}`}});
+  if(error)throw error;
+  if(data?.error)throw new Error(data.error);
+  return data;
+}
 function setDirty(v=true){dirty=v;$("modeSubtext").textContent=v?(invoiceId?"Unsaved changes":"Unsaved invoice"):(invoiceId?"All changes saved":"Ready")}
 function currentClient(){return clients.find(c=>String(c.id)===String($("clientId").value))}
 function currentOrder(){return orders.find(o=>String(o.id)===String($("orderId").value))}
@@ -211,15 +219,23 @@ function updateMetadata(){
 }
 async function sendInvoice(){
   if(!invoiceId)return toast("Save the invoice before sending it.");
-  const x=currentInvoice;if(!x?.client_profile_id)return toast("This invoice must be linked to a customer.");
-  const itemized=lines.map(l=>({description:l.description,quantity:Number(l.quantity),unit_price:Number(l.unit_price),line_total:Number(l.quantity)*Number(l.unit_price)})),t=totals();
-  const mirror={invoice_code:x.invoice_number,client_id:x.client_profile_id,email_address:$("clientEmail").value.trim().toLowerCase(),subtotal:t.subtotal,tax_percentage:t.rate,grand_total:t.total,payment_status:$("paymentStatus").value==="paid"?"Paid":$("paymentStatus").value==="partially_paid"?"Partial":"Unpaid",due_date:$("dueDate").value,itemized_lines:itemized};
+  if(dirty){
+    toast("Save your changes before sending the invoice.");
+    return;
+  }
+  const button=$("sendInvoiceButton");
+  const old=button?.textContent||"Send to client portal";
+  if(button){button.disabled=true;button.textContent="Sending…";}
   try{
-    const lookup=await db.from("client_invoices").select("invoice_id").eq("invoice_code",x.invoice_number).eq("client_id",x.client_profile_id).maybeSingle();if(lookup.error)throw lookup.error;
-    const result=lookup.data?await db.from("client_invoices").update(mirror).eq("invoice_id",lookup.data.invoice_id):await db.from("client_invoices").insert(mirror);if(result.error)throw result.error;
-    const now=new Date().toISOString(),u=await db.from("invoices").update({status:"sent",sent_at:now,updated_at:now}).eq("id",invoiceId);if(u.error)throw u.error;
-    toast("Invoice delivered to the client billing flow.");await loadInvoice(invoiceId);
-  }catch(e){toast(e.message||"Unable to send invoice.")}
+    const result=await invokeEdge("send-invoice-checkout",{invoice_id:invoiceId});
+    if(result?.payment_url)$("paymentUrl").value=result.payment_url;
+    toast(`Invoice sent to ${currentInvoice?.client_email||"customer"}.`);
+    await loadInvoice(invoiceId);
+  }catch(e){
+    toast(e.message||"Unable to send invoice.");
+  }finally{
+    if(button){button.disabled=false;button.textContent=old;}
+  }
 }
 async function markPaid(){
   if(!invoiceId)return toast("Save the invoice first.");

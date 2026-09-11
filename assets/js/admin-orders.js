@@ -76,177 +76,6 @@ function render(){
 
 function box(t,a){return `<section class="box"><h3>${esc(t)}</h3><div class="grid">${a.map(x=>`<div class="item"><b>${esc(x[0])}</b>${esc(x[1])}</div>`).join('')}</div></section>`;}
 
-
-function humanLabel(key){
-  return String(key||'')
-    .replace(/([a-z0-9])([A-Z])/g,'$1 $2')
-    .replace(/[_-]+/g,' ')
-    .replace(/\b\w/g,c=>c.toUpperCase())
-    .trim();
-}
-function displayValue(value){
-  if(value===true)return 'Yes';
-  if(value===false)return 'No';
-  if(value===null||value===undefined||value==='')return '—';
-  if(Array.isArray(value))return value.length?value.map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(', '):'—';
-  if(typeof value==='number')return String(value);
-  if(typeof value==='object')return JSON.stringify(value);
-  return String(value);
-}
-function addonRows(payload){
-  let list=payload;
-  if(typeof list==='string'){try{list=JSON.parse(list)}catch{list=[]}}
-  if(!Array.isArray(list)){
-    if(Array.isArray(list?.items))list=list.items;
-    else if(Array.isArray(list?.addons))list=list.addons;
-    else list=[];
-  }
-  if(!list.length)return '<div class="structured-empty">No add-ons were selected for this order.</div>';
-  return `<div class="addon-list">${list.map((item,index)=>{
-    if(typeof item!=='object'||item===null){
-      return `<div class="addon-card"><div><strong>${esc(displayValue(item))}</strong></div></div>`;
-    }
-    const name=item.description||item.name||item.title||item.label||humanLabel(item.item_key||item.addon_key||`Add-on ${index+1}`);
-    const qty=Number(item.quantity||1);
-    const unit=Number(item.unit_amount??item.price??item.amount??0);
-    const line=Number(item.line_total??item.total??unit*qty);
-    const code=item.item_key||item.addon_key||item.key||'';
-    return `<div class="addon-card">
-      <div class="addon-card__main">
-        <strong>${esc(name)}</strong>
-        ${code?`<small>${esc(code)}</small>`:''}
-      </div>
-      <div class="addon-card__meta">
-        <span><b>Qty</b>${esc(qty)}</span>
-        <span><b>Unit</b>${money(unit)}</span>
-        <span><b>Total</b>${money(line)}</span>
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-}
-function primitiveEntries(obj){
-  return Object.entries(obj||{}).filter(([,v])=>v===null||['string','number','boolean'].includes(typeof v));
-}
-function objectEntries(obj){
-  return Object.entries(obj||{}).filter(([,v])=>v&&typeof v==='object'&&!Array.isArray(v));
-}
-function arrayEntries(obj){
-  return Object.entries(obj||{}).filter(([,v])=>Array.isArray(v));
-}
-function fieldGrid(obj){
-  const entries=primitiveEntries(obj).filter(([k])=>!['schema'].includes(k));
-  if(!entries.length)return '';
-  return `<div class="form-field-grid">${entries.map(([k,v])=>`
-    <div class="form-field-row">
-      <b>${esc(humanLabel(k))}</b>
-      <span>${esc(displayValue(v))}</span>
-    </div>`).join('')}</div>`;
-}
-function arrayBlock(key,arr){
-  if(!arr?.length)return '';
-  if(arr.every(v=>v===null||['string','number','boolean'].includes(typeof v))){
-    return `<div class="form-subsection"><h4>${esc(humanLabel(key))}</h4><div class="form-value-list">${arr.map(v=>`<span>${esc(displayValue(v))}</span>`).join('')}</div></div>`;
-  }
-  return `<div class="form-subsection"><h4>${esc(humanLabel(key))}</h4>${arr.map((v,i)=>typeof v==='object'&&v!==null?`<div class="form-repeat"><strong>${esc(humanLabel(key))} ${i+1}</strong>${fieldGrid(v)}</div>`:`<div class="form-repeat">${esc(displayValue(v))}</div>`).join('')}</div>`;
-}
-function objectBlock(key,obj,depth=0){
-  if(!obj||typeof obj!=='object')return '';
-  const direct=fieldGrid(obj);
-  const children=objectEntries(obj).map(([k,v])=>objectBlock(k,v,depth+1)).join('');
-  const arrays=arrayEntries(obj).map(([k,v])=>arrayBlock(k,v)).join('');
-  if(!direct&&!children&&!arrays)return '';
-  const heading=depth===0?'h3':'h4';
-  return `<section class="${depth===0?'form-section':'form-subsection'}">
-    <${heading}>${esc(humanLabel(key))}</${heading}>
-    ${direct}${arrays}${children}
-  </section>`;
-}
-function serviceFormView(payload){
-  let data=payload;
-  if(typeof data==='string'){try{data=JSON.parse(data)}catch{return '<div class="structured-empty">The saved application payload could not be parsed.</div>'}}
-  if(!data||typeof data!=='object'||Array.isArray(data))return '<div class="structured-empty">No completed service form is stored for this order.</div>';
-
-  const metaKeys=['schema','email','phone','company_name','contact_email','contact_phone'];
-  const meta={};
-  for(const k of metaKeys)if(data[k]!==undefined)meta[k]=data[k];
-
-  const sections=[];
-  for(const [k,v] of Object.entries(data)){
-    if(metaKeys.includes(k))continue;
-    if(v&&typeof v==='object'&&!Array.isArray(v))sections.push(objectBlock(k,v,0));
-    else if(Array.isArray(v))sections.push(`<section class="form-section"><h3>${esc(humanLabel(k))}</h3>${arrayBlock(k,v)}</section>`);
-    else sections.push('');
-  }
-  const top=fieldGrid(meta);
-  return `${top?`<div class="form-summary">${top}</div>`:''}${sections.filter(Boolean).join('')||'<div class="structured-empty">No application answers were saved.</div>'}`;
-}
-
-
-function applicationDownloadDocument(order){
-  const customer=[order.first_name,order.last_name].filter(Boolean).join(' ')||'—';
-  const service=order.selected_service||order.service_key||'filings4u service';
-  const plan=order.plan_tier||order.selected_plan||'—';
-  const jurisdiction=order.jurisdiction_state||'—';
-  const applicationHtml=serviceFormView(order.form_payload??{});
-  return `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Application ${esc(order.tracking_number||'')}</title>
-<style>
-  *{box-sizing:border-box}
-  body{margin:0;padding:38px;font-family:Arial,sans-serif;color:#13213a;background:#fff}
-  .top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;border-bottom:4px solid #10b981;padding-bottom:20px;margin-bottom:24px}
-  .brand{font-size:26px;font-weight:900;color:#0a1f44}.brand span{color:#10b981}
-  .muted{color:#64748b;font-size:12px}.meta{text-align:right}
-  h1{margin:0 0 4px;color:#0a1f44;font-size:27px}.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-  .summary div{border:1px solid #e5eaf0;border-radius:10px;padding:12px;background:#f8fafc}
-  .summary small{display:block;color:#64748b;text-transform:uppercase;font-size:9px;font-weight:700;margin-bottom:4px}
-  .form-summary,.form-section{border:1px solid #dce5ed;border-radius:10px;overflow:hidden;margin:0 0 12px}
-  .form-section>h3{margin:0;padding:10px 12px;background:#f2fbf7;color:#047857;font-size:12px;border-bottom:1px solid #d7eee5}
-  .form-subsection{margin:10px;border:1px solid #edf1f5;border-radius:8px;overflow:hidden}
-  .form-subsection>h4{margin:0;padding:8px 10px;background:#f8fafc;color:#0a1f44;font-size:11px}
-  .form-field-grid{display:grid;grid-template-columns:1fr 1fr}
-  .form-field-row{padding:9px 11px;border-top:1px solid #f0f2f5}
-  .form-field-row b{display:block;color:#64748b;font-size:8px;text-transform:uppercase;margin-bottom:3px}
-  .form-field-row span{display:block;font-size:11px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
-  .form-value-list{padding:10px}.form-value-list span{display:inline-block;margin:2px 4px 2px 0;padding:5px 8px;background:#f1f5f9;border-radius:999px;font-size:10px}
-  .form-repeat{margin:8px;padding:9px;border:1px solid #edf1f5;border-radius:8px}
-  .foot{margin-top:26px;padding-top:14px;border-top:1px solid #e5eaf0;color:#64748b;font-size:11px}
-  @media print{body{padding:20px}.form-field-grid{grid-template-columns:1fr 1fr}}
-</style>
-</head>
-<body>
-  <div class="top">
-    <div><div class="brand">filings<span>4u</span></div><div class="muted">filings4u, LLC · A Subsidiary of Roseland Companies, LLC</div></div>
-    <div class="meta"><h1>Completed Application</h1><strong>${esc(order.tracking_number||'')}</strong><div class="muted">${esc(service)}</div></div>
-  </div>
-  <div class="summary">
-    <div><small>Customer</small><strong>${esc(customer)}</strong></div>
-    <div><small>Company</small><strong>${esc(order.company_name||'—')}</strong></div>
-    <div><small>Email</small><strong>${esc(order.email_address||'—')}</strong></div>
-    <div><small>Phone</small><strong>${esc(order.phone_number||'—')}</strong></div>
-    <div><small>Plan</small><strong>${esc(plan)}</strong></div>
-    <div><small>Jurisdiction</small><strong>${esc(jurisdiction)}</strong></div>
-  </div>
-  ${applicationHtml}
-  <div class="foot">Completed service application generated from the secure filings4u Administration system.</div>
-</body>
-</html>`;
-}
-function downloadApplication(order){
-  const html=applicationDownloadDocument(order);
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=`filings4u-application-${order.tracking_number||'order'}.html`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-
 function openOrder(id){
   closeOverlays();
   active=orders.find(o=>String(o.id)===String(id)); if(!active)return toast('Order record could not be found.');
@@ -275,23 +104,16 @@ function openOrder(id){
       <div class="invoice-link-panel">
         ${inv?`
           <div><b>${esc(inv.invoice_number||'Invoice')}</b><small>${esc(title(inv.status))} · ${esc(title(inv.payment_status))} · ${money(inv.total_amount)}</small></div>
-          <a class="primary intake-link" href="admin-invoices.html?invoice=${encodeURIComponent(inv.id)}">Open invoice</a>
+          <a class="primary intake-link" href="admin-invoice-management.html?invoice=${encodeURIComponent(inv.id)}">Open invoice</a>
         `:`
           <div><b>No invoice linked</b><small>Create an invoice from this order and keep both records connected.</small></div>
-          <a class="primary intake-link" href="admin-invoices.html?order=${encodeURIComponent(o.id)}">Create invoice</a>
+          <a class="primary intake-link" href="admin-invoice-management.html?order=${encodeURIComponent(o.id)}">Create invoice</a>
         `}
       </div>
     </section>
-    <section class="box structured-box"><h3>Selected add-ons / upsells</h3>${addonRows(o.upsells_payload??o.selected_upsells??[])}</section>
-    <section class="box structured-box">
-      <div class="structured-box__heading">
-        <h3>Completed service application</h3>
-        <button id="downloadApplication" class="secondary-action" type="button">Download application</button>
-      </div>
-      <div class="completed-form">${serviceFormView(o.form_payload??{})}</div>
-    </section>`;
+    <section class="box"><h3>Selected add-ons / upsells</h3><pre class="json">${esc(JSON.stringify(o.upsells_payload??o.selected_upsells??[],null,2))}</pre></section>
+    <section class="box"><h3>Wizard / service form payload</h3><pre class="json">${esc(JSON.stringify(o.form_payload??{},null,2))}</pre></section>`;
   $('save').onclick=save;
-  $('downloadApplication')?.addEventListener('click',()=>downloadApplication(o));
   $('shade').hidden=false;$('drawer').classList.add('open');$('drawer').setAttribute('aria-hidden','false');
   document.body.classList.add('drawer-open');$('close')?.focus();
 }
