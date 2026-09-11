@@ -205,7 +205,19 @@ async function saveInvoice(forceDraft=false){
     }
     const rows=lines.map((l,i)=>({invoice_id:id,line_number:i+1,description:l.description.trim(),quantity:Number(l.quantity),unit_price:Number(l.unit_price),line_total:Number(l.quantity)*Number(l.unit_price),updated_at:new Date().toISOString()}));
     const li=await db.from("invoice_line_items").insert(rows);if(li.error){if(newRecord)await db.from("invoices").delete().eq("id",id);throw li.error}
-    toast(forceDraft?"Draft saved.":"Invoice saved.");
+    // Generate/reuse the secure checkout URL immediately after every successful save.
+    // This does NOT email the customer; Send to client portal remains a separate action.
+    try{
+      const linkResult=await invokeEdge("admin-invoice-management",{action:"payment_link",id});
+      if(linkResult?.payment_url){
+        $("paymentUrl").value=linkResult.payment_url;
+        payload.payment_url=linkResult.payment_url;
+      }
+    }catch(linkError){
+      console.error("[Invoice payment link]",linkError);
+      toast("Invoice saved, but the payment link could not be generated.");
+    }
+    toast(forceDraft?"Draft saved.":"Invoice saved — payment link ready.");
     history.replaceState({}, "", `admin-invoice-management.html?invoice=${encodeURIComponent(id)}`);
     await loadInvoice(id);
   }catch(e){toast(e.message||"Unable to save invoice.")}
