@@ -40,15 +40,33 @@
     const user = data && data.user;
     if (error || !user) return lockAndRedirect('login_required');
 
-    // Server-backed role check. Database RLS remains the final authorization boundary.
-    const { data: isAdmin, error: adminError } = await client.rpc('is_admin_user');
-    if (adminError || isAdmin !== true) {
+    // Verify the signed-in user through admin_profiles.
+    // The table's RLS policy is backed by the canonical private.is_admin() check.
+    const { data: adminProfile, error: adminError } = await client
+      .from('admin_profiles')
+      .select('id,email_address,role,terminated_date')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (
+      adminError ||
+      !adminProfile ||
+      adminProfile.role !== 'admin' ||
+      adminProfile.terminated_date
+    ) {
       try { await client.auth.signOut({ scope: 'local' }); } catch (_) {}
       return lockAndRedirect('admin_required');
     }
 
     reveal();
-    return { db: client, supabase: client, user, session: { user }, isAdmin: true };
+    return {
+      db: client,
+      supabase: client,
+      user,
+      adminProfile,
+      session: { user },
+      isAdmin: true
+    };
   }
 
   let readyPromise = null;

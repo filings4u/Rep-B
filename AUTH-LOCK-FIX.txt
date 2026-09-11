@@ -1,0 +1,13 @@
+filings4u admin login redirect fix
+
+Cause:
+The protected admin-page guard called public.is_admin_user(), which is SECURITY INVOKER and delegates to private.is_admin().
+The authenticated browser role does not have USAGE on the private schema. That can make the RPC fail for a valid admin.
+The guard then signed the user out and redirected back to admin-login.html, producing a quick page flick and no successful navigation.
+
+Fix:
+- admin-auth-guard.js now verifies the signed-in user through admin_profiles under RLS.
+- The admin_profiles RLS policy still uses private.is_admin(), so backend authorization remains enforced.
+- admin-login.js verifies a real session exists before redirecting.
+- Successful login now uses location.replace().
+- Removed the duplicate Supabase JS CDN load from admin-login.html.
