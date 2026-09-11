@@ -1,0 +1,46 @@
+filings4u Portal Authentication Lock Audit
+Generated: 2026-09-11
+
+Protected admin pages: 35
+- Every admin-*.html page is protected except authentication recovery pages:
+  admin-login.html
+  admin-forgot-password.html
+  admin-reset-password.html
+- Admin pages are hidden before body render.
+- Access is revealed only after Supabase Auth confirms a user AND public.is_admin_user() returns true.
+- Unauthorized/non-admin sessions are redirected with location.replace() to admin-login.html.
+- RLS remains the backend authorization boundary.
+
+Protected customer pages: 13
+- Every client-*.html page is protected, including portal shell/copy files.
+- Client pages are hidden before body render.
+- Access is revealed only after Supabase Auth confirms a signed-in user and a matching client_profiles row.
+- Active admin accounts are rejected from the customer session path.
+- Unauthorized sessions are redirected with location.replace() to customer-login.html.
+
+Intentionally public / token-secured pages:
+- admin-login.html
+- admin-forgot-password.html
+- admin-reset-password.html
+- customer-login.html
+- forgot-password.html
+- reset-password.html
+- checkout.html (secure invoice token flow; requiring login would break emailed payment links)
+
+Shared files updated:
+- assets/js/admin-auth-guard.js
+- assets/js/client-auth-guard.js
+- assets/css/auth-lock.css
+
+Anti-flicker implementation:
+- Inline f4u-auth-pending lock is inserted immediately after <head> on every protected page.
+- The body is visibility:hidden + opacity:0 + pointer-events:none until authorization succeeds.
+- Auth libraries/clients/guards load in <head> for protected pages to minimize verification delay.
+
+Validation completed:
+- 35 admin protected pages checked.
+- 13 customer protected pages checked.
+- Exactly one Supabase CDN, one appropriate browser client, and one guard found on each protected page.
+- HTML parsing checks passed.
+- admin-auth-guard.js passed node --check.
+- client-auth-guard.js passed node --check.

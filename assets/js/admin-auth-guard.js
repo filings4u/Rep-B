@@ -1,48 +1,67 @@
 /**
- * filings4u management authentication guard.
- * Database RLS remains the authorization boundary for management data.
+ * filings4u management authentication + authorization guard.
+ * Protected pages stay invisible until Supabase confirms an authenticated admin.
  */
 (function () {
   'use strict';
 
-  function client() {
-    return window.filings4uSupabase || window.supabaseClient || window.filings4uDb || null;
+  const root = document.documentElement;
+  root.classList.add('f4u-auth-pending');
+
+  const db = () => window.filings4uSupabase || window.supabaseClient || window.filings4uDb || null;
+  const target = () => (location.pathname.split('/').pop() || 'admin-management.html') + location.search + location.hash;
+
+  function loginUrl(reason) {
+    let url = 'admin-login.html?returnTo=' + encodeURIComponent(target());
+    if (reason) url += '&reason=' + encodeURIComponent(reason);
+    return url;
   }
 
-  function loginUrl() {
-    const returnTo =
-      window.location.pathname.split('/').pop() +
-      window.location.search +
-      window.location.hash;
-    return 'admin-login.html?returnTo=' + encodeURIComponent(returnTo);
+  function lockAndRedirect(reason) {
+    root.classList.remove('f4u-auth-ready');
+    root.classList.add('f4u-auth-pending');
+    location.replace(loginUrl(reason || 'login_required'));
+    return null;
   }
 
-  window.filings4uRequireAdmin = async function filings4uRequireAdmin() {
-    const db = client();
+  function reveal() {
+    root.classList.remove('f4u-auth-pending');
+    root.classList.add('f4u-auth-ready');
+  }
 
-    if (!db) {
+  async function verifyAdmin() {
+    const client = db();
+    if (!client) {
       console.error('[filings4u] Management Supabase client is unavailable.');
-      return null;
+      return lockAndRedirect('auth_unavailable');
     }
 
-    const { data, error } = await db.auth.getUser();
+    const { data, error } = await client.auth.getUser();
     const user = data && data.user;
+    if (error || !user) return lockAndRedirect('login_required');
 
-    if (error || !user) {
-      window.location.replace(loginUrl());
-      return null;
+    // Server-backed role check. Database RLS remains the final authorization boundary.
+    const { data: isAdmin, error: adminError } = await client.rpc('is_admin_user');
+    if (adminError || isAdmin !== true) {
+      try { await client.auth.signOut({ scope: 'local' }); } catch (_) {}
+      return lockAndRedirect('admin_required');
     }
 
-    /*
-     * Management tables are protected by Supabase RLS/private.is_admin().
-     * This guard verifies the authenticated browser session; protected
-     * database operations remain denied unless the user is an administrator.
-     */
-    return {
-      db,
-      supabase: db,
-      user,
-      session: { user }
-    };
+    reveal();
+    return { db: client, supabase: client, user, session: { user }, isAdmin: true };
+  }
+
+  let readyPromise = null;
+  window.filings4uRequireAdmin = function filings4uRequireAdmin() {
+    if (!readyPromise) readyPromise = verifyAdmin();
+    return readyPromise;
   };
+  window.filings4uAdminReady = window.filings4uRequireAdmin();
+
+  const client = db();
+  if (client?.auth?.onAuthStateChange) {
+    client.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') lockAndRedirect('session_expired');
+    });
+  }
 })();
