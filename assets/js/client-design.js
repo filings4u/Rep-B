@@ -3,7 +3,7 @@ async function boot(){const a=await window.filings4uRequireClient();if(!a)return
 async function load(){
   const [projectResult,orderResult]=await Promise.all([
     db.from('design_projects')
-      .select('id,order_id,client_profile_id,client_email,project_type,title,status,tracking_number,review_url,intake_status,intake_payload,intake_completed_at,created_at,updated_at')
+      .select('id,order_id,client_profile_id,client_email,project_type,title,status,tracking_number,review_url,preview_label,preview_published_at,client_approved_at,final_url,finalized_at,intake_status,intake_payload,intake_completed_at,created_at,updated_at')
       .eq('client_profile_id',user.id)
       .order('updated_at',{ascending:false}),
     db.from('orders')
@@ -51,6 +51,7 @@ function render(){
       </div>
       <div class="project-actions">
         ${hasReview?`<button class="review-project" data-project="${esc(p.id)}">Review ${p.project_type==='website'?'website':'proof'} →</button>`:''}
+        ${p.project_type==='website'&&safeHttpUrl(p.final_url)?`<a class="live-website-link" href="${esc(safeHttpUrl(p.final_url))}" target="_blank" rel="noopener">Open live website ↗</a>`:''}
         ${needsIntake?`<button class="${hasReview?'secondary-project-action':''}" data-project-intake="${esc(p.id)}">Complete ${p.project_type==='website'?'website':'logo'} intake →</button>`:''}
         ${!hasReview&&!needsIntake?`<button data-project="${esc(p.id)}">Open design workspace →</button>`:''}
       </div>
@@ -108,6 +109,17 @@ async function openProject(id){
   }
 
   $('workspaceTitle').textContent=current.title;
+
+  const finalUrl=safeHttpUrl(current.final_url);
+  const liveWebsitePanel=finalUrl?`
+    <section class="live-website-panel">
+      <div>
+        <small>YOUR LIVE WEBSITE</small>
+        <h3>${esc(current.title||'Website project')}</h3>
+        <p>Your website has been linked to your filings4u Design Center.</p>
+      </div>
+      <a href="${esc(finalUrl)}" target="_blank" rel="noopener">Open live website ↗</a>
+    </section>`:'';
 
   const previewPanel=reviewUrl?`
     <section class="secure-preview-panel">
@@ -214,6 +226,7 @@ async function openProject(id){
   $('workspaceBody').innerHTML=`
     <div class="workspace-content secure-review-workspace">
       ${hasReview?`<section class="review-task-banner"><div><small>DESIGN REVIEW READY</small><h3>Your design team posted a new review.</h3><p>Review the work below, then approve it or request changes without leaving your portal.</p></div></section>`:''}
+      ${liveWebsitePanel}
       ${previewPanel}
       ${proofsPanel}
       ${reviewActions}
