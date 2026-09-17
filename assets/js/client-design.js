@@ -483,7 +483,7 @@ function openIntake(type,project=null){
   f.elements.email_address.value=profile?.email_address||user.email||'';
   f.elements.phone_number.value=profile?.phone_number||'';
   f.elements.business_name.value=project?.title?.replace(/\s+—\s+(Website|Logo) Design$/i,'')||profile?.company_name||'';
-  if(f.elements.tracking_number)f.elements.tracking_number.value=project?.tracking_number||'';
+  if(f.elements.tracking_number){const linkedOrder=orders.find(o=>o.id===project?.order_id);f.elements.tracking_number.value=project?.tracking_number||linkedOrder?.tracking_number||'';}
   const payload=project?.intake_payload||{};
   Object.entries(payload).forEach(([k,v])=>{if(f.elements[k]&&typeof v!=='object')f.elements[k].value=v??''});
   f.onsubmit=submitIntake;

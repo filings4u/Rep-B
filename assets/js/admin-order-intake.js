@@ -75,7 +75,7 @@ function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;',
 function selectedService(){return services.find(s=>s.slug===$('service').value)||null;}
 function mode(){return document.querySelector('input[name="mode"]:checked')?.value||'card';}
 function total(){return Number($('serviceFee').value||0)+Number($('governmentFee').value||0)+Number($('addons').value||0);}
-function makeTracking(){const d=new Date().toISOString().slice(0,10).replaceAll('-','');return `M-${d}-${crypto.randomUUID().replaceAll('-','').slice(0,8).toUpperCase()}`;}
+function makeTracking(){const d=new Date().toISOString().slice(0,10).replaceAll('-','');return `F4U-${d}-${crypto.randomUUID().replaceAll('-','').slice(0,8).toUpperCase()}`;}
 
 function populateClient(){
   const c=clients.find(x=>String(x.id)===String($('client').value));if(!c)return;
