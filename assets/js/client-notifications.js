@@ -14,7 +14,7 @@ async function boot(){
 
   const {data,error}=await db
     .from('portal_notifications')
-    .select('id,title,message,is_read,is_archived,ticket_id,created_at,user_id,order_id,notification_type')
+    .select('id,title,message,is_read,is_archived,ticket_id,created_at,user_id,order_id,notification_type,action_url,action_label')
     .eq('user_id',user.id)
     .eq('is_archived',false)
     .order('created_at',{ascending:false});
@@ -114,6 +114,7 @@ function icon(type){
 
 
 function notificationAction(n){
+  if(n.action_url){return {href:n.action_url,label:n.action_label||'Open update →'};}
   const type=String(n.notification_type||'').toLowerCase();
   const title=String(n.title||'').toLowerCase();
   const hay=`${type} ${title}`;
