@@ -1,6 +1,13 @@
 (() => {
   'use strict';
-  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  const $=(s,r=document)=>{
+    if(typeof r==='string') r=document.querySelector(r);
+    return r&&typeof r.querySelector==='function'?r.querySelector(s):null;
+  };
+  const $$=(s,r=document)=>{
+    if(typeof r==='string') r=document.querySelector(r);
+    return r&&typeof r.querySelectorAll==='function'?[...r.querySelectorAll(s)]:[];
+  };
   const state={db:null,services:[],plans:[],addons:[],serviceAddons:[],forms:[],versions:[],blocks:[],sessions:[],configs:[],flowServiceKey:null,flowSteps:[],flowSelectedKey:null,flowDirty:false};
   const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(v||0));
@@ -96,7 +103,47 @@
   }
   function applyFlowInspector(e){e.preventDefault();const key=$('#wizardFlowStepKey').value,step=state.flowSteps.find(s=>s.key===key);if(!step)return;step.label=$('#wizardFlowStepLabel').value.trim()||step.label;if(!step.locked)step.enabled=$('#wizardFlowStepEnabled').checked;const field=$('#wizardFlowConditionField').value.trim(),value=$('#wizardFlowConditionValue').value.trim();step.condition=field?{field,operator:$('#wizardFlowConditionOperator').value,value}:null;state.flowDirty=true;setFlowStatus('Unsaved changes','dirty');showFlowInspector(key)}
   function bindFlowDrag(){
-    let dragging=null;$$('.wizard-flow-node[draggable="true"]','#wizardFlowCanvas').forEach(node=>{node.addEventListener('dragstart',e=>{dragging=node.dataset.flowStep;e.dataTransfer.effectAllowed='move';node.classList.add('is-dragging')});node.addEventListener('dragend',()=>{node.classList.remove('is-dragging');dragging=null});node.addEventListener('dragover',e=>{if(!dragging||dragging===node.dataset.flowStep)return;e.preventDefault();node.classList.add('is-dragover')});node.addEventListener('dragleave',()=>node.classList.remove('is-dragover'));node.addEventListener('drop',e=>{e.preventDefault();node.classList.remove('is-dragover');const from=state.flowSteps.findIndex(x=>x.key===dragging),to=state.flowSteps.findIndex(x=>x.key===node.dataset.flowStep);if(from<0||to<0)return;const [moved]=state.flowSteps.splice(from,1);state.flowSteps.splice(to,0,moved);state.flowDirty=true;setFlowStatus('Unsaved changes','dirty');renderFlowCanvas()})});
+    const root=$('#wizardFlowCanvas');
+    if(!root)return;
+
+    let dragging=null;
+
+    $$('.wizard-flow-node[draggable="true"]',root).forEach(node=>{
+      node.addEventListener('dragstart',e=>{
+        dragging=node.dataset.flowStep;
+        if(e.dataTransfer)e.dataTransfer.effectAllowed='move';
+        node.classList.add('is-dragging');
+      });
+
+      node.addEventListener('dragend',()=>{
+        node.classList.remove('is-dragging');
+        dragging=null;
+        $$('.wizard-flow-node',root).forEach(item=>item.classList.remove('is-dragover'));
+      });
+
+      node.addEventListener('dragover',e=>{
+        if(!dragging||dragging===node.dataset.flowStep)return;
+        e.preventDefault();
+        node.classList.add('is-dragover');
+      });
+
+      node.addEventListener('dragleave',()=>node.classList.remove('is-dragover'));
+
+      node.addEventListener('drop',e=>{
+        e.preventDefault();
+        node.classList.remove('is-dragover');
+
+        const from=state.flowSteps.findIndex(x=>x.key===dragging);
+        const to=state.flowSteps.findIndex(x=>x.key===node.dataset.flowStep);
+        if(from<0||to<0||from===to)return;
+
+        const [moved]=state.flowSteps.splice(from,1);
+        state.flowSteps.splice(to,0,moved);
+        state.flowDirty=true;
+        setFlowStatus('Unsaved changes','dirty');
+        renderFlowCanvas();
+      });
+    });
   }
   async function resetFlow(){
     if(!state.flowServiceKey)return;const ok=await window.filings4uDialog.confirm('Reset this service to the default filings4u wizard flow? Your changes are not saved until you click Save flow.',{title:'Reset flow',confirmText:'Reset defaults'});if(!ok)return;const service=state.services.find(s=>s.service_key===state.flowServiceKey),c=state.configs.find(x=>x.service_key===state.flowServiceKey)||{};state.flowSteps=flowDefaultsFor(service,c);state.flowSelectedKey=null;state.flowDirty=true;setFlowStatus('Defaults loaded — save to apply','dirty');renderFlowCanvas();showFlowInspector(null)
