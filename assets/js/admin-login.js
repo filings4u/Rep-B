@@ -12,6 +12,12 @@ function msg(text,type='error'){
   el.hidden=false;
 }
 
+
+function resetActivityForUser(userId){
+  if(!userId)return;
+  try{localStorage.setItem('f4u:session:last_activity:'+userId,String(Date.now()));}catch(_){}
+}
+
 function nextPage(){
   const p=new URLSearchParams(location.search);
   const raw=p.get('returnTo')||p.get('next')||'admin-dashboard.html';
@@ -39,6 +45,8 @@ async function verifyCurrentSession(){
   }
   const p=new URLSearchParams(location.search);
   if(p.get('reason')==='admin_required')msg('That account is not an active filings4u administrator.');
+  if(p.get('reason')==='session_timeout')msg('For your security, you were signed out after 10 minutes of inactivity. Please sign in again.','ok');
+  if(p.get('reason')==='signed_out')msg('You have been signed out securely.','ok');
   try{
     const current=await verifyCurrentSession();
     if(current){
@@ -78,6 +86,7 @@ $('loginForm')?.addEventListener('submit',async event=>{
         :'Administrator access could not be verified: '+reason);
     }
 
+    resetActivityForUser(data.user?.id || data.session?.user?.id);
     msg('Sign in successful. Opening management…','ok');
     location.replace(nextPage());
   }catch(error){

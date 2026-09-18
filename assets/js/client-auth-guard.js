@@ -73,6 +73,15 @@
       return lockAndRedirect('client_profile_required');
     }
 
+    window.filings4uSessionSecurity?.start({
+      db: client,
+      user,
+      portal: 'client',
+      loginPage: 'customer-login.html',
+      timeoutMs: 10 * 60 * 1000,
+      warningMs: 60 * 1000
+    });
+
     reveal();
     return { db: client, supabase: client, user, profile: profileResult.data, session: { user } };
   }

@@ -44,6 +44,15 @@ async function verifyAdmin(){
     return deny(data?.error||'admin_required');
   }
 
+  window.filings4uSessionSecurity?.start({
+    db:client,
+    user:session.user,
+    portal:'admin',
+    loginPage:'admin-login.html',
+    timeoutMs:10*60*1000,
+    warningMs:60*1000
+  });
+
   reveal();
   return {
     db:client,
