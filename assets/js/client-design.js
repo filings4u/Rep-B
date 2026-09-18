@@ -427,7 +427,7 @@ async function comment(e){
 }
 
 const logoFields=`<div class="intake-section-title full"><span>01</span><div><strong>Brand basics</strong><small>Tell us what the logo needs to represent.</small></div></div>
-<label>Tracking number<input name="tracking_number" required></label><label>Business name<input name="business_name" required></label><label>Client name<input name="client_name" required></label><label>Email<input name="email_address" type="email" required></label><label>Phone<input name="phone_number" required></label><label>Industry / business type<input name="industry" placeholder="Freight brokerage, consulting, retail…"></label>
+<label>Business name<input name="business_name" required></label><label>Client name<input name="client_name" required></label><label>Email<input name="email_address" type="email" required></label><label>Phone<input name="phone_number" required></label><label>Industry / business type<input name="industry" placeholder="Freight brokerage, consulting, retail…"></label>
 <label>Exact logo text<input name="logo_text" required></label><label>Tagline / slogan<input name="logo_tagline"></label>
 <label class="full">What does your business do?<textarea name="business_description" rows="3"></textarea></label>
 <label class="full">Who is your target audience?<textarea name="target_audience" rows="3"></textarea></label>
@@ -444,7 +444,7 @@ const logoFields=`<div class="intake-section-title full"><span>01</span><div><st
 <button class="submit btn btn-success" type="submit">Submit logo intake</button>`;
 
 const webFields=`<div class="intake-section-title full"><span>01</span><div><strong>Business & website goals</strong><small>Tell us what the website needs to accomplish.</small></div></div>
-<label>Tracking number<input name="tracking_number" required></label><label>Business name<input name="business_name" required></label><label>Client name<input name="client_name" required></label><label>Email<input name="email_address" type="email" required></label><label>Phone<input name="phone_number" required></label><label>Current website<input name="current_url" type="url" placeholder="If you have one"></label>
+<label>Business name<input name="business_name" required></label><label>Client name<input name="client_name" required></label><label>Email<input name="email_address" type="email" required></label><label>Phone<input name="phone_number" required></label><label>Current website<input name="current_url" type="url" placeholder="If you have one"></label>
 <label>Website type<select name="website_type" required><option>Business website</option><option>E-commerce</option><option>Landing page</option><option>Portfolio</option><option>Booking / service site</option><option>Membership / client portal</option><option>Other</option></select></label>
 <label>Estimated page count<select name="estimated_page_count" required><option>1-3</option><option>4-6</option><option>7-10</option><option>11-20</option><option>20+</option></select></label>
 <label class="full">Primary website goal<textarea name="main_goal" rows="3" required></textarea></label><label class="full">Target audience<textarea name="target_audience" rows="3" required></textarea></label>
@@ -483,7 +483,6 @@ function openIntake(type,project=null){
   f.elements.email_address.value=profile?.email_address||user.email||'';
   f.elements.phone_number.value=profile?.phone_number||'';
   f.elements.business_name.value=project?.title?.replace(/\s+—\s+(Website|Logo) Design$/i,'')||profile?.company_name||'';
-  if(f.elements.tracking_number){const linkedOrder=orders.find(o=>o.id===project?.order_id);f.elements.tracking_number.value=project?.tracking_number||linkedOrder?.tracking_number||'';}
   const payload=project?.intake_payload||{};
   Object.entries(payload).forEach(([k,v])=>{if(f.elements[k]&&typeof v!=='object')f.elements[k].value=v??''});
   f.onsubmit=submitIntake;
