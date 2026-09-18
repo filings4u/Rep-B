@@ -16,21 +16,31 @@
         ["website", "▣", "Main Website", "admin-management.html#website"],
         ["client-portal", "◫", "Client Portal", "admin-management.html#client-portal"],
         ["admin-portal", "▦", "Admin Portal", "admin-management.html#admin-portal"],
-        ["wizard", "◇", "Wizard", "admin-management.html#wizard"]
+        ["wizard", "◇", "Wizard", "admin-management.html#wizard"],
+        ["management", "▦", "Management System", "admin-management.html"]
       ]
     },
     {
       key: "business",
       label: "Business",
       items: [
+        // Original navigation — unchanged.
         ["customers", "◎", "Customers", "admin-customers.html"],
         ["orders", "▤", "Orders", "admin-orders.html"],
         ["applications", "▧", "Applications", "admin-applications.html"],
         ["invoices", "$", "Invoices & Payments", "admin-invoices.html"],
-        ["accounting", "▥", "Accounting & Books", "admin-accounting.html"],
         ["support", "◌", "Support", "admin-support.html"],
         ["compliance", "✓", "Compliance", "admin-compliance.html"],
-        ["design", "✦", "Design Projects", "admin-design.html"]
+        ["design", "✦", "Design Projects", "admin-design.html"],
+
+        // Missing business pages added below the originals.
+        ["clients", "◉", "Clients", "admin-clients.html"],
+        ["entities", "◇", "Business Entities", "admin-entities.html"],
+        ["order-intake", "+", "Order Intake", "admin-order-intake.html"],
+        ["invoice-management", "▧", "Invoice Management", "admin-invoice-management.html"],
+        ["documents", "▱", "Documents", "admin-documents.html"],
+        ["messages", "✉", "Messages", "admin-messages.html"],
+        ["accounting", "$", "Accounting & Books", "admin-accounting.html"]
       ]
     },
     {
@@ -64,7 +74,9 @@
         ["integrations", "⌁", "Integrations", "admin-integrations.html"],
         ["security", "⌾", "Security", "admin-security.html"],
         ["logs", "▤", "System Logs", "admin-logs.html"],
-        ["settings", "⚙", "Settings", "admin-settings.html"]
+        ["settings", "⚙", "Settings", "admin-settings.html"],
+        ["staff", "♙", "Staff & Access", "admin-staff.html"],
+        ["audit", "⌁", "Audit & System Logs", "admin-audit.html"]
       ]
     }
   ];
@@ -74,7 +86,6 @@
     "admin-orders.html": "orders",
     "admin-applications.html": "applications",
     "admin-invoices.html": "invoices",
-    "admin-accounting.html": "accounting",
     "admin-support.html": "support",
     "admin-compliance.html": "compliance",
     "admin-design.html": "design",
@@ -93,7 +104,19 @@
     "admin-integrations.html": "integrations",
     "admin-security.html": "security",
     "admin-logs.html": "logs",
-    "admin-settings.html": "settings"
+    "admin-settings.html": "settings",
+
+    // Missing pages added; original mappings above remain intact.
+    "admin-clients.html": "clients",
+    "admin-entities.html": "entities",
+    "admin-order-intake.html": "order-intake",
+    "admin-invoice-management.html": "invoice-management",
+    "admin-documents.html": "documents",
+    "admin-messages.html": "messages",
+    "admin-accounting.html": "accounting",
+    "admin-staff.html": "staff",
+    "admin-audit.html": "audit",
+    "admin-management.html": "management"
   };
 
   function currentKey() {

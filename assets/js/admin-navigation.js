@@ -15,7 +15,29 @@ const TARGETS = Object.freeze({
   messages: 'admin-messages.html',
   staff: 'admin-staff.html',
   audit: 'admin-audit.html',
-  settings: 'admin-settings.html'
+  settings: 'admin-settings.html',
+
+  // Added pages — the original navigation above is intentionally preserved.
+  customers: 'admin-customers.html',
+  orderIntake: 'admin-order-intake.html',
+  invoiceManagement: 'admin-invoice-management.html',
+  compliance: 'admin-compliance.html',
+  accounting: 'admin-accounting.html',
+  tasks: 'admin-tasks.html',
+  calendar: 'admin-calendar.html',
+  notifications: 'admin-notifications.html',
+  activity: 'admin-activity.html',
+  pages: 'admin-pages.html',
+  blog: 'admin-blog.html',
+  faqs: 'admin-faqs.html',
+  knowledge: 'admin-knowledge.html',
+  media: 'admin-media.html',
+  users: 'admin-users.html',
+  automations: 'admin-automations.html',
+  integrations: 'admin-integrations.html',
+  security: 'admin-security.html',
+  logs: 'admin-logs.html',
+  management: 'admin-management.html'
 });
 
 const GROUPS = [
@@ -23,18 +45,31 @@ const GROUPS = [
     key: 'operations',
     label: 'Operations',
     items: [
+      // Original items — unchanged.
       ['overview','Overview','▦'],
       ['orders','Orders','▤'],
       ['invoices','Invoices & Billing','$'],
       ['applications','Applications & Filings','◫'],
       ['clients','Clients','◎'],
-      ['entities','Business Entities','◇']
+      ['entities','Business Entities','◇'],
+
+      // Missing operational pages added below the originals.
+      ['customers','Customers','◉'],
+      ['orderIntake','Order Intake','＋'],
+      ['invoiceManagement','Invoice Management','▧'],
+      ['compliance','Compliance','✓'],
+      ['accounting','Accounting & Books','＄'],
+      ['tasks','Tasks','☑'],
+      ['calendar','Calendar','□'],
+      ['notifications','Notifications','○'],
+      ['activity','Activity','↻']
     ]
   },
   {
     key: 'service',
     label: 'Service Management',
     items: [
+      // Original items — unchanged.
       ['services','Services & Pricing','☷'],
       ['design','Design Projects','✦'],
       ['documents','Documents','▱'],
@@ -43,12 +78,32 @@ const GROUPS = [
     ]
   },
   {
+    key: 'content',
+    label: 'Content Management',
+    items: [
+      ['pages','Pages','▤'],
+      ['blog','Blog','¶'],
+      ['faqs','FAQs','?'],
+      ['knowledge','Knowledge Center','▧'],
+      ['media','Media','▣']
+    ]
+  },
+  {
     key: 'administration',
     label: 'Administration',
     items: [
+      // Original items — unchanged and kept first.
       ['staff','Staff & Access','♙'],
       ['audit','Audit & System Logs','⌁'],
-      ['settings','Platform Settings','⚙']
+      ['settings','Platform Settings','⚙'],
+
+      // Missing administration pages.
+      ['users','Users & Roles','◎'],
+      ['automations','Automations','◇'],
+      ['integrations','Integrations','⌘'],
+      ['security','Security','⌾'],
+      ['logs','System Logs','▤'],
+      ['management','Management System','▦']
     ]
   }
 ];
