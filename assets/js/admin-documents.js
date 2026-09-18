@@ -1,284 +1,221 @@
 const db=window.filings4uSupabase;
-
-let clientVault=[],adminVault=[],documents=[],userDocs=[],entities=[],applicationDocs=[],all=[],tab='all';
-
-const $=x=>document.getElementById(x);
-const esc=x=>String(x??'—').replace(/[&<>"']/g,c=>({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-}[c]));
-const dt=x=>x?new Date(x).toLocaleString():'—';
+const BUCKET='customer-documents';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt=v=>v?new Date(v).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+let clients=[],documents=[],toastTimer;
 
 async function boot(){
   const auth=await window.filings4uRequireAdmin();
   if(!auth)return;
   $('gate').hidden=true;
   $('app').hidden=false;
+  bind();
   await load();
 }
 
-function deny(x){
-  $('gate').textContent=x;
-  $('gate').style.color='#991b1b';
+function bind(){
+  $('openUpload').addEventListener('click',openUpload);
+  $('refresh').addEventListener('click',load);
+  $('clear').addEventListener('click',()=>{$('q').value='';$('category').value='';$('customer').value='';render();});
+  $('q').addEventListener('input',render);
+  $('category').addEventListener('change',render);
+  $('customer').addEventListener('change',render);
+  $('uploadForm').addEventListener('submit',uploadDocument);
+  $('documentFile').addEventListener('change',showSelectedFile);
+  document.querySelectorAll('[data-close-upload]').forEach(x=>x.addEventListener('click',closeUpload));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('uploadModal').hidden)closeUpload();});
 }
 
 async function load(){
-  const rs=await Promise.all([
-    db.from('client_vault').select('*').order('created_at',{ascending:false}),
-    db.from('admin_vault').select('*').order('created_at',{ascending:false}),
-    db.from('documents').select('*').order('created_at',{ascending:false}),
-    db.from('user_documents').select('*').order('created_at',{ascending:false}),
-    db.from('client_entities')
-      .select('id,entity_name,client_email,user_id,registry_document_url,created_at')
-      .order('created_at',{ascending:false}),
-    db.from('application_documents')
-      .select('id,application_id,order_id,user_id,document_type,document_title,file_name,bucket_id,storage_path,content_type,file_size_bytes,is_official,created_at,applications(business_name,tracking_number)')
-      .eq('is_official',true)
-      .order('created_at',{ascending:false})
+  setBusy($('refresh'),true,'Refreshing…');
+  const [c,d]=await Promise.all([
+    db.from('client_profiles').select('id,email_address,first_name,last_name,company_name').order('company_name',{ascending:true}),
+    db.from('customer_documents').select('id,client_profile_id,title,category,description,original_file_name,bucket_id,storage_path,mime_type,file_size_bytes,is_visible,created_at,updated_at,client_profiles(email_address,first_name,last_name,company_name)').order('created_at',{ascending:false})
   ]);
-
-  const err=rs.find(x=>x.error);
-  if(err)return toast(err.error.message);
-
-  [clientVault,adminVault,documents,userDocs,entities,applicationDocs]=rs.map(x=>x.data||[]);
-  normalize();
-  buildFilters();
+  setBusy($('refresh'),false,'Refresh');
+  if(c.error)return toast(c.error.message,'error');
+  if(d.error)return toast(d.error.message,'error');
+  clients=c.data||[];
+  documents=d.data||[];
+  populateCustomerSelectors();
+  populateCategories();
   render();
 }
 
-function normalize(){
-  all=[
-    ...applicationDocs.map(x=>({
-      id:x.id,
-      name:x.document_title||x.file_name||'Official filing document',
-      client:x.user_id||'—',
-      category:x.document_type||'official filing',
-      source:'registry',
-      size:normalizeSize(x.file_size_bytes),
-      created:x.created_at,
-      bucket:x.bucket_id||'client_documents_vault',
-      path:cleanStoragePath(x.storage_path,x.bucket_id||'client_documents_vault'),
-      url:null,
-      entity:x.applications?.business_name||null,
-      tracking:x.applications?.tracking_number||null,
-      official:true
-    })),
-    ...clientVault.map(x=>({
-      id:x.id,
-      name:x.file_name||'Client vault document',
-      client:x.target_client_email||x.email_address||x.user_id||'—',
-      category:x.asset_vault_category||'client vault',
-      source:'client',
-      size:normalizeSize(x.file_size_bytes??x.file_size),
-      created:x.created_at,
-      bucket:x.bucket_id||'client_documents_vault',
-      path:cleanStoragePath(x.storage_path||x.storage_bucket_path,x.bucket_id||'client_documents_vault'),
-      url:null,
-      entity:null,
-      official:false
-    })),
-    ...adminVault.map(x=>({
-      id:x.id,
-      name:x.file_name||'Admin vault document',
-      client:x.target_client_email||x.email_address||x.user_id||'—',
-      category:x.asset_vault_category||'admin vault',
-      source:'admin',
-      size:normalizeSize(x.file_size_bytes??x.file_size),
-      created:x.created_at,
-      bucket:x.bucket_id||'client_documents_vault',
-      path:cleanStoragePath(x.storage_path||x.storage_bucket_path,x.bucket_id||'client_documents_vault'),
-      url:null,
-      entity:null,
-      official:false
-    })),
-    ...documents.map(x=>({
-      id:x.id,
-      name:x.file_name||'Document',
-      client:x.email_address||x.user_id||'—',
-      category:x.category||'general document',
-      source:'general',
-      size:normalizeSize(x.file_size),
-      created:x.created_at,
-      bucket:extractBucket(x.storage_path,x.bucket_id),
-      path:cleanStoragePath(x.storage_path,extractBucket(x.storage_path,x.bucket_id)),
-      url:x.file_url||null,
-      entity:null,
-      official:false
-    })),
-    ...userDocs.map(x=>({
-      id:x.id,
-      name:x.file_name||'User document',
-      client:x.email_address||x.user_id||'—',
-      category:x.category||'user document',
-      source:'general',
-      size:normalizeSize(x.file_size),
-      created:x.created_at,
-      bucket:extractBucket(x.storage_path,x.bucket_id),
-      path:cleanStoragePath(x.storage_path,extractBucket(x.storage_path,x.bucket_id)),
-      url:x.file_url||null,
-      entity:null,
-      official:false
-    })),
-    ...entities.filter(x=>x.registry_document_url).map(x=>({
-      id:x.id,
-      name:'Registry document',
-      client:x.client_email||x.user_id||'—',
-      category:'registry',
-      source:'registry',
-      size:'—',
-      created:x.created_at,
-      bucket:null,
-      path:null,
-      url:x.registry_document_url,
-      entity:x.entity_name,
-      official:true
-    }))
-  ];
-
-  // Prefer official application/registry records over mirrored vault copies.
-  const officialKeys=new Set(
-    all.filter(d=>d.official).map(d=>String(d.path||d.url||d.name||'').toLowerCase()).filter(Boolean)
-  );
-  const seen=new Set();
-  all=all.filter(d=>{
-    const key=String(d.path||d.url||`${d.name}|${d.created}`).toLowerCase();
-    if(!d.official && officialKeys.has(key))return false;
-    if(seen.has(key))return false;
-    seen.add(key);
-    return true;
-  });
+function clientLabel(c){
+  const person=[c?.first_name,c?.last_name].filter(Boolean).join(' ');
+  return c?.company_name&&c.company_name!=='Not Specified'?`${c.company_name}${person?` — ${person}`:''}`:(person||c?.email_address||'Customer');
 }
 
-function extractBucket(path,explicit){
-  if(explicit)return explicit;
-  if(!path)return null;
-  const clean=String(path).replace(/^\/+/,'');
-  const match=clean.match(/^([^/]+)\//);
-  return match?match[1]:null;
+function populateCustomerSelectors(){
+  const options=clients.map(c=>`<option value="${esc(c.id)}">${esc(clientLabel(c))} · ${esc(c.email_address||'')}</option>`).join('');
+  const current=$('customer').value;
+  $('customer').innerHTML='<option value="">All customers</option>'+options;
+  if(clients.some(c=>c.id===current))$('customer').value=current;
+  $('uploadCustomer').innerHTML='<option value="">Select customer…</option>'+options;
 }
 
-function cleanStoragePath(path,bucket){
-  if(!path)return null;
-  let clean=String(path).replace(/^\/+/,'');
-  if(bucket&&clean.startsWith(bucket+'/'))clean=clean.slice(bucket.length+1);
-  return clean||null;
-}
-
-function normalizeSize(value){
-  if(value===null||value===undefined||value==='')return '—';
-  if(typeof value==='string'&&!/^\d+(\.\d+)?$/.test(value.trim()))return value;
-  return fmtBytes(Number(value));
-}
-
-function fmtBytes(n){
-  n=Number(n||0);
-  if(n<1024)return n+' B';
-  if(n<1048576)return (n/1024).toFixed(1)+' KB';
-  if(n<1073741824)return (n/1048576).toFixed(1)+' MB';
-  return (n/1073741824).toFixed(1)+' GB';
-}
-
-function buildFilters(){
-  const cats=[...new Set(all.map(x=>x.category).filter(Boolean))].sort();
-  const srcs=[...new Set(all.map(x=>x.source).filter(Boolean))].sort();
-
-  $('category').innerHTML='<option value="">All categories</option>'+
-    cats.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
-
-  $('source').innerHTML='<option value="">All sources</option>'+
-    srcs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+function populateCategories(){
+  const current=$('category').value;
+  const categories=[...new Set(documents.map(d=>d.category).filter(Boolean))].sort();
+  $('category').innerHTML='<option value="">All categories</option>'+categories.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(categories.includes(current))$('category').value=current;
 }
 
 function filtered(){
   const q=$('q').value.trim().toLowerCase();
-  const cat=$('category').value;
-  const src=$('source').value;
-
-  return all.filter(d=>{
-    const tabOk=tab==='all'||d.source===tab;
-    const hay=[d.name,d.client,d.entity,d.tracking,d.category,d.source].join(' ').toLowerCase();
-    return tabOk&&hay.includes(q)&&(!cat||d.category===cat)&&(!src||d.source===src);
+  const category=$('category').value;
+  const clientId=$('customer').value;
+  return documents.filter(d=>{
+    const c=d.client_profiles||{};
+    const hay=[d.title,d.original_file_name,d.category,d.description,c.company_name,c.first_name,c.last_name,c.email_address].join(' ').toLowerCase();
+    return (!q||hay.includes(q))&&(!category||d.category===category)&&(!clientId||d.client_profile_id===clientId);
   });
 }
 
 function render(){
   const list=filtered();
-
+  const monthAgo=Date.now()-30*86400000;
   $('stats').innerHTML=[
-    ['All documents',all.length],
-    ['Client vault',clientVault.length],
-    ['Admin vault',adminVault.length],
-    ['Registry / filing documents',all.filter(x=>x.source==='registry').length]
-  ].map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
+    ['Delivered documents',documents.length,'All secure customer PDFs'],
+    ['Customers with files',new Set(documents.map(d=>d.client_profile_id)).size,'Unique customer accounts'],
+    ['Added last 30 days',documents.filter(d=>new Date(d.created_at).getTime()>=monthAgo).length,'Recent uploads'],
+    ['Visible to customers',documents.filter(d=>d.is_visible).length,'Available in portal']
+  ].map(([a,b,c])=>`<article class="stat"><span>${esc(a)}</span><strong>${b}</strong><small>${esc(c)}</small></article>`).join('');
 
-  $('rows').innerHTML=list.length?list.map(d=>`<tr>
-    <td><b>${esc(d.name)}</b>${d.entity?`<small>${esc(d.entity)}</small>`:''}</td>
-    <td>${esc(d.client)}</td>
-    <td>${esc(d.category)}</td>
-    <td><span class="source ${esc(d.source)}">${esc(d.source)}</span></td>
-    <td>${esc(d.size)}</td>
-    <td>${dt(d.created)}</td>
-    <td><button class="openDoc" data-id="${esc(d.source+'|'+d.id)}">Open</button></td>
-  </tr>`).join('')
-  :'<tr><td colspan="7" class="empty">No documents match these filters.</td></tr>';
+  $('rows').innerHTML=list.length?list.map(d=>{
+    const c=d.client_profiles||{};
+    return `<tr>
+      <td><div class="doc-cell"><span class="pdf-badge">PDF</span><div><b>${esc(d.title)}</b><small>${esc(d.original_file_name)}</small>${d.description?`<small>${esc(d.description)}</small>`:''}</div></div></td>
+      <td><b>${esc(clientLabel(c))}</b><small>${esc(c.email_address||'')}</small></td>
+      <td><span class="category-pill">${esc(d.category||'General')}</span></td>
+      <td>${esc(formatSize(d.file_size_bytes))}</td>
+      <td>${esc(dt(d.created_at))}</td>
+      <td><button class="visibility-pill ${d.is_visible?'is-visible':'is-hidden'}" data-toggle="${esc(d.id)}" type="button">${d.is_visible?'Visible':'Hidden'}</button></td>
+      <td><div class="row-actions"><button type="button" data-view="${esc(d.id)}">View</button><button type="button" data-download="${esc(d.id)}">Download</button><button class="danger" type="button" data-delete="${esc(d.id)}">Delete</button></div></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty">No customer documents match these filters.</td></tr>';
 
-  document.querySelectorAll('.openDoc').forEach(b=>{
-    b.onclick=()=>openDoc(b.dataset.id);
-  });
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>openFile(b.dataset.view,false,b));
+  document.querySelectorAll('[data-download]').forEach(b=>b.onclick=()=>openFile(b.dataset.download,true,b));
+  document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>toggleVisibility(b.dataset.toggle,b));
+  document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>deleteDocument(b.dataset.delete,b));
 }
 
-async function openDoc(key){
-  const [source,id]=key.split('|');
-  const d=all.find(x=>x.source===source&&String(x.id)===id);
-  if(!d)return;
+function openUpload(){
+  $('uploadForm').reset();
+  $('documentCategory').value='General';
+  $('documentVisibility').value='true';
+  $('selectedFile').hidden=true;
+  $('uploadProgress').hidden=true;
+  $('uploadModal').hidden=false;
+  document.body.classList.add('modal-open');
+  setTimeout(()=>$('uploadCustomer').focus(),20);
+}
+function closeUpload(){
+  if($('uploadSubmit').disabled)return;
+  $('uploadModal').hidden=true;
+  document.body.classList.remove('modal-open');
+}
 
-  if(d.url){
-    try{
-      const url=new URL(d.url,location.href);
-      window.open(url.href,'_blank','noopener,noreferrer');
-    }catch{
-      return toast('This document URL is invalid.');
+function showSelectedFile(){
+  const file=$('documentFile').files?.[0];
+  if(!file){$('selectedFile').hidden=true;return;}
+  $('selectedFile').textContent=`${file.name} · ${formatSize(file.size)}`;
+  $('selectedFile').hidden=false;
+  if(!$('documentTitle').value.trim())$('documentTitle').value=file.name.replace(/\.pdf$/i,'').replace(/[-_]+/g,' ');
+}
+
+async function uploadDocument(e){
+  e.preventDefault();
+  const clientId=$('uploadCustomer').value;
+  const title=$('documentTitle').value.trim();
+  const category=$('documentCategory').value;
+  const description=$('documentDescription').value.trim()||null;
+  const visible=$('documentVisibility').value==='true';
+  const file=$('documentFile').files?.[0];
+
+  if(!clientId||!title||!file)return toast('Select a customer, enter a title, and choose a PDF.','error');
+  if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf'))return toast('Customer documents must be uploaded as an actual PDF file.','error');
+  if(file.size>50*1024*1024)return toast('The PDF exceeds the 50 MB maximum.','error');
+
+  const safeBase=slug(title).slice(0,70)||'document';
+  const storagePath=`${clientId}/${crypto.randomUUID()}-${safeBase}.pdf`;
+  setBusy($('uploadSubmit'),true,'Uploading…');
+  $('uploadProgress').hidden=false;
+
+  try{
+    const up=await db.storage.from(BUCKET).upload(storagePath,file,{contentType:'application/pdf',cacheControl:'3600',upsert:false});
+    if(up.error)throw up.error;
+
+    const ins=await db.from('customer_documents').insert({
+      client_profile_id:clientId,title,category,description,
+      original_file_name:file.name,bucket_id:BUCKET,storage_path:storagePath,
+      mime_type:'application/pdf',file_size_bytes:file.size,is_visible:visible
+    }).select('id').single();
+
+    if(ins.error){
+      await db.storage.from(BUCKET).remove([storagePath]);
+      throw ins.error;
     }
-    return;
+
+    closeUploadForce();
+    toast('Document uploaded to the customer portal.','success');
+    await load();
+  }catch(error){
+    toast(error.message||'Unable to upload the document.','error');
+  }finally{
+    setBusy($('uploadSubmit'),false,'Upload to customer');
+    $('uploadProgress').hidden=true;
   }
-
-  if(!d.bucket||!d.path){
-    return toast('This record does not contain a usable storage location.');
-  }
-
-  const {data,error}=await db.storage.from(d.bucket).createSignedUrl(d.path,300);
-  if(error)return toast(error.message);
-  if(!data?.signedUrl)return toast('Unable to create a secure document link.');
-
-  window.open(data.signedUrl,'_blank','noopener,noreferrer');
 }
 
-function toast(x){
-  $('toast').textContent=x;
-  $('toast').hidden=false;
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>$('toast').hidden=true,2800);
+function closeUploadForce(){
+  $('uploadModal').hidden=true;
+  document.body.classList.remove('modal-open');
 }
 
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  tab=b.dataset.tab;
-  $('source').value='';
-  render();
-});
+async function openFile(id,download,button){
+  const d=documents.find(x=>x.id===id); if(!d)return;
+  setBusy(button,true,download?'Preparing…':'Opening…');
+  try{
+    const options=download?{download:pdfFilename(d.title)}:undefined;
+    const {data,error}=await db.storage.from(d.bucket_id||BUCKET).createSignedUrl(d.storage_path,120,options);
+    if(error)throw error;
+    if(!data?.signedUrl)throw new Error('Secure document link could not be created.');
+    if(download){
+      const a=document.createElement('a');a.href=data.signedUrl;a.download=pdfFilename(d.title);a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+    }else window.open(data.signedUrl,'_blank','noopener,noreferrer');
+  }catch(error){toast(error.message||'Unable to open document.','error');}
+  finally{setBusy(button,false,download?'Download':'View');}
+}
 
-['q','category','source'].forEach(x=>{
-  $(x).addEventListener(x==='q'?'input':'change',render);
-});
+async function toggleVisibility(id,button){
+  const d=documents.find(x=>x.id===id);if(!d)return;
+  setBusy(button,true,'Saving…');
+  const {error}=await db.from('customer_documents').update({is_visible:!d.is_visible,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){setBusy(button,false,d.is_visible?'Visible':'Hidden');return toast(error.message,'error');}
+  d.is_visible=!d.is_visible;render();toast(d.is_visible?'Document is now visible to the customer.':'Document hidden from the customer.','success');
+}
 
-$('clear').onclick=()=>{
-  $('q').value='';
-  $('category').value='';
-  $('source').value='';
-  render();
-};
+async function deleteDocument(id,button){
+  const d=documents.find(x=>x.id===id);if(!d)return;
+  if(!confirm(`Delete “${d.title}”? This removes the PDF from the customer portal and storage.`))return;
+  setBusy(button,true,'Deleting…');
+  try{
+    const rm=await db.storage.from(d.bucket_id||BUCKET).remove([d.storage_path]);
+    if(rm.error)throw rm.error;
+    const del=await db.from('customer_documents').delete().eq('id',id);
+    if(del.error)throw del.error;
+    documents=documents.filter(x=>x.id!==id);populateCategories();render();toast('Document deleted.','success');
+  }catch(error){toast(error.message||'Unable to delete document.','error');setBusy(button,false,'Delete');}
+}
 
-$('refresh').onclick=load;
-document.getElementById('signOut')?.addEventListener('click',window.filings4uSignOut);
+function slug(v){return String(v||'').normalize('NFKD').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase();}
+function pdfFilename(v){return `${String(v||'document').replace(/[\\/:*?"<>|]+/g,'-').trim()||'document'}.pdf`;}
+function formatSize(n){n=Number(n||0);if(n<1024)return `${n} B`;if(n<1048576)return `${(n/1024).toFixed(1)} KB`;return `${(n/1048576).toFixed(1)} MB`;}
+function setBusy(button,busy,text){if(!button)return;button.disabled=busy;button.textContent=text;}
+function toast(message,type='info'){clearTimeout(toastTimer);$('toast').textContent=message;$('toast').className=`toast ${type}`;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,3200);}
 
 boot();

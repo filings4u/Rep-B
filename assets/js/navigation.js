@@ -27,6 +27,7 @@
         ["orders", "▤", "Orders", "admin-orders.html"],
         ["applications", "▧", "Applications", "admin-applications.html"],
         ["invoices", "$", "Invoices & Payments", "admin-invoices.html"],
+        ["accounting", "▥", "Accounting & Books", "admin-accounting.html"],
         ["support", "◌", "Support", "admin-support.html"],
         ["compliance", "✓", "Compliance", "admin-compliance.html"],
         ["design", "✦", "Design Projects", "admin-design.html"]
@@ -73,6 +74,7 @@
     "admin-orders.html": "orders",
     "admin-applications.html": "applications",
     "admin-invoices.html": "invoices",
+    "admin-accounting.html": "accounting",
     "admin-support.html": "support",
     "admin-compliance.html": "compliance",
     "admin-design.html": "design",
