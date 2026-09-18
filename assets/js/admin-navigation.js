@@ -6,6 +6,7 @@ const TARGETS = Object.freeze({
   orders: 'admin-orders.html',
   invoices: 'admin-invoices.html',
   applications: 'admin-applications.html',
+  clientForms: 'admin-client-forms.html',
   clients: 'admin-clients.html',
   entities: 'admin-entities.html',
   services: 'admin-services.html',
@@ -50,6 +51,7 @@ const GROUPS = [
       ['orders','Orders','▤'],
       ['invoices','Invoices & Billing','$'],
       ['applications','Applications & Filings','◫'],
+      ['clientForms','Client Forms','▧'],
       ['clients','Clients','◎'],
       ['entities','Business Entities','◇'],
 
