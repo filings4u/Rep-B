@@ -1,15 +1,17 @@
 /**
- * filings4u shared inactivity/session security manager
- * - 10 minute inactivity timeout
- * - branded 60 second warning
- * - synchronized across same-browser tabs
- * - works for admin and client portals
+ * filings4u shared portal session security
+ *
+ * Security model:
+ * - Every protected page is still gated by its role-specific auth guard.
+ * - 10 minutes of inactivity makes the browser session stale.
+ * - A stale session is NOT signed out in the background just for sitting on a page.
+ * - The next protected-page load or protected-page interaction requires a fresh login.
+ * - Activity is shared across tabs for the same signed-in user.
  */
 (function () {
   'use strict';
 
   const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
-  const DEFAULT_WARNING_MS = 60 * 1000;
   const ACTIVITY_WRITE_THROTTLE_MS = 5000;
   const CHANNEL_NAME = 'filings4u-session-security';
   const KEY_PREFIX = 'f4u:session:last_activity:';
@@ -17,16 +19,13 @@
   const state = {
     started: false,
     expiring: false,
-    warningOpen: false,
     db: null,
     userId: '',
     portal: '',
     loginPage: '',
     timeoutMs: DEFAULT_TIMEOUT_MS,
-    warningMs: DEFAULT_WARNING_MS,
     lastActivity: 0,
     lastWrite: 0,
-    interval: null,
     channel: null,
     listeners: []
   };
@@ -46,16 +45,32 @@
     try { window.localStorage.removeItem(key); } catch (_) {}
   }
 
-  function getStoredActivity() {
-    const value = Number(safeGet(keyFor(state.userId)) || 0);
+  function readActivity(userId) {
+    const value = Number(safeGet(keyFor(userId)) || 0);
     return Number.isFinite(value) && value > 0 ? value : 0;
+  }
+
+  function isExpired(userId, timeoutMs) {
+    const timeout = Number(timeoutMs) > 0 ? Number(timeoutMs) : DEFAULT_TIMEOUT_MS;
+    const last = readActivity(userId);
+
+    // No activity marker means we cannot prove that this persisted session is fresh.
+    // Require a fresh login once, then the login script creates the marker.
+    if (!last) return true;
+
+    return now() - last >= timeout;
+  }
+
+  function currentTarget() {
+    return (location.pathname.split('/').pop() || '') + location.search + location.hash;
   }
 
   function loginUrl(reason) {
     const page = state.loginPage || (state.portal === 'admin' ? 'admin-login.html' : 'customer-login.html');
-    const current = (location.pathname.split('/').pop() || '') + location.search + location.hash;
     const joiner = page.includes('?') ? '&' : '?';
-    return page + joiner + 'reason=' + encodeURIComponent(reason || 'session_timeout') + '&returnTo=' + encodeURIComponent(current);
+    return page + joiner +
+      'reason=' + encodeURIComponent(reason || 'session_timeout') +
+      '&returnTo=' + encodeURIComponent(currentTarget());
   }
 
   function ensureModal() {
@@ -64,77 +79,32 @@
 
     root = document.createElement('div');
     root.id = 'f4uSessionOverlay';
-    root.className = 'f4u-session-overlay';
+    root.className = 'f4u-session-overlay is-expired';
     root.hidden = true;
     root.innerHTML = `
-      <div class="f4u-session-card" role="dialog" aria-modal="true" aria-labelledby="f4uSessionTitle" aria-describedby="f4uSessionMessage">
+      <div class="f4u-session-card" role="alertdialog" aria-modal="true" aria-labelledby="f4uSessionTitle" aria-describedby="f4uSessionMessage">
         <div class="f4u-session-brand">
           <img src="images/logo.png" alt="filings4u">
           <span>Secure session</span>
         </div>
         <div class="f4u-session-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+            <path d="M9 12l2 2 4-4"></path>
           </svg>
         </div>
-        <h2 id="f4uSessionTitle">Your session will expire soon</h2>
-        <p id="f4uSessionMessage">For your security, you will be signed out after 10 minutes of inactivity.</p>
-        <div class="f4u-session-countdown" id="f4uSessionCountdown" aria-live="polite">60 seconds remaining</div>
-        <div class="f4u-session-actions" id="f4uSessionActions">
-          <button type="button" class="f4u-session-secondary" id="f4uSessionSignOut">Sign out now</button>
-          <button type="button" class="f4u-session-primary" id="f4uSessionContinue">Stay signed in</button>
-        </div>
-        <div class="f4u-session-security-note">filings4u automatically protects unattended accounts.</div>
+        <h2 id="f4uSessionTitle">Please sign in again</h2>
+        <p id="f4uSessionMessage">For your security, 10 minutes of inactivity requires a fresh filings4u sign in before you can continue.</p>
+        <div class="f4u-session-countdown" id="f4uSessionCountdown" aria-live="polite">Opening secure sign in…</div>
+        <div class="f4u-session-security-note">Your protected account page remains locked until authentication is completed.</div>
       </div>`;
     document.body.appendChild(root);
-
-    document.getElementById('f4uSessionContinue')?.addEventListener('click', () => markActivity(true));
-    document.getElementById('f4uSessionSignOut')?.addEventListener('click', () => expire('manual_signout', true));
     return root;
-  }
-
-  function showWarning(remainingMs) {
-    if (state.expiring) return;
-    const root = ensureModal();
-    const title = document.getElementById('f4uSessionTitle');
-    const message = document.getElementById('f4uSessionMessage');
-    const actions = document.getElementById('f4uSessionActions');
-    if (title) title.textContent = 'Your session will expire soon';
-    if (message) message.textContent = 'For your security, you will be signed out after 10 minutes of inactivity.';
-    if (actions) actions.hidden = false;
-    root.classList.remove('is-expired');
-    root.hidden = false;
-    state.warningOpen = true;
-    updateCountdown(remainingMs);
-  }
-
-  function hideWarning() {
-    if (state.expiring) return;
-    const root = document.getElementById('f4uSessionOverlay');
-    if (root) root.hidden = true;
-    state.warningOpen = false;
-  }
-
-  function updateCountdown(remainingMs) {
-    const el = document.getElementById('f4uSessionCountdown');
-    if (!el) return;
-    const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-    el.textContent = seconds === 1 ? '1 second remaining' : `${seconds} seconds remaining`;
   }
 
   function showExpired() {
     const root = ensureModal();
-    const title = document.getElementById('f4uSessionTitle');
-    const message = document.getElementById('f4uSessionMessage');
-    const countdown = document.getElementById('f4uSessionCountdown');
-    const actions = document.getElementById('f4uSessionActions');
-    if (title) title.textContent = 'Your secure session has ended';
-    if (message) message.textContent = 'You were automatically signed out after 10 minutes of inactivity. Sign in again to continue.';
-    if (countdown) countdown.textContent = 'Redirecting to secure sign in…';
-    if (actions) actions.hidden = true;
-    root.classList.add('is-expired');
     root.hidden = false;
-    state.warningOpen = false;
   }
 
   function broadcast(message) {
@@ -148,48 +118,25 @@
     if (doBroadcast) broadcast({ type: 'activity', ts });
   }
 
-  function markActivity(force) {
-    if (!state.started || state.expiring) return;
+  function touchActivity(force) {
+    if (!state.started || state.expiring) return false;
 
-    const stored = Math.max(state.lastActivity || 0, getStoredActivity() || 0);
     const current = now();
+    const stored = Math.max(state.lastActivity || 0, readActivity(state.userId) || 0);
 
-    // Never allow a late click/focus to revive a session that has already timed out.
-    if (stored && current - stored >= state.timeoutMs) {
+    // Never let the first action after 10 minutes silently revive the session.
+    if (!stored || current - stored >= state.timeoutMs) {
       expire('session_timeout');
-      return;
+      return false;
     }
 
     if (!force && current - state.lastWrite < ACTIVITY_WRITE_THROTTLE_MS) {
       state.lastActivity = current;
-      if (state.warningOpen) hideWarning();
-      return;
+      return true;
     }
 
     setActivityTimestamp(current, true);
-    if (state.warningOpen) hideWarning();
-  }
-
-  function check() {
-    if (!state.started || state.expiring) return;
-    const current = now();
-    const stored = getStoredActivity();
-    if (stored > state.lastActivity) state.lastActivity = stored;
-
-    const last = state.lastActivity || current;
-    const elapsed = current - last;
-    const remaining = state.timeoutMs - elapsed;
-
-    if (remaining <= 0) {
-      expire('session_timeout');
-      return;
-    }
-
-    if (remaining <= state.warningMs) {
-      showWarning(remaining);
-    } else if (state.warningOpen) {
-      hideWarning();
-    }
+    return true;
   }
 
   async function performSignOut(reason) {
@@ -198,50 +145,62 @@
     } catch (error) {
       console.warn('[filings4u session] sign out returned an error', error);
     } finally {
-      location.replace(loginUrl(reason === 'manual_signout' ? 'signed_out' : 'session_timeout'));
+      location.replace(loginUrl(reason || 'session_timeout'));
     }
   }
 
-  function expire(reason, immediate) {
+  function expire(reason) {
     if (state.expiring) return;
     state.expiring = true;
+    safeRemove(keyFor(state.userId));
     showExpired();
     broadcast({ type: 'logout', reason: reason || 'session_timeout', ts: now() });
-    const delay = immediate ? 350 : 1600;
-    window.setTimeout(() => performSignOut(reason || 'session_timeout'), delay);
+    window.setTimeout(() => performSignOut(reason || 'session_timeout'), 650);
+  }
+
+  function guardEvent(event) {
+    if (!state.started || state.expiring) return;
+
+    const stored = Math.max(state.lastActivity || 0, readActivity(state.userId) || 0);
+    const stale = !stored || now() - stored >= state.timeoutMs;
+
+    if (stale) {
+      if (event?.cancelable) event.preventDefault();
+      if (event?.stopImmediatePropagation) event.stopImmediatePropagation();
+      else if (event?.stopPropagation) event.stopPropagation();
+      expire('session_timeout');
+      return;
+    }
+
+    touchActivity(false);
   }
 
   function bindActivity() {
-    const events = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'];
-    events.forEach((name) => {
-      const fn = () => markActivity(false);
-      window.addEventListener(name, fn, { passive: true, capture: true });
-      state.listeners.push([window, name, fn]);
+    // Explicit user actions. No background timer is used.
+    ['pointerdown', 'click', 'keydown', 'touchstart', 'submit'].forEach((name) => {
+      const fn = (event) => guardEvent(event);
+      window.addEventListener(name, fn, { capture: true, passive: false });
+      state.listeners.push([window, name, fn, true]);
     });
 
-    const focusFn = () => markActivity(false);
-    window.addEventListener('focus', focusFn, true);
-    state.listeners.push([window, 'focus', focusFn]);
-
-    const visibilityFn = () => {
-      if (document.visibilityState === 'visible') {
-        check();
-        if (!state.expiring) markActivity(false);
-      }
-    };
-    document.addEventListener('visibilitychange', visibilityFn, true);
-    state.listeners.push([document, 'visibilitychange', visibilityFn]);
+    // Scrolling counts as activity while the session is still fresh.
+    ['wheel', 'scroll'].forEach((name) => {
+      const fn = () => {
+        if (!state.started || state.expiring) return;
+        const stored = Math.max(state.lastActivity || 0, readActivity(state.userId) || 0);
+        if (stored && now() - stored < state.timeoutMs) touchActivity(false);
+      };
+      window.addEventListener(name, fn, { capture: true, passive: true });
+      state.listeners.push([window, name, fn, true]);
+    });
 
     const storageFn = (event) => {
-      if (event.key !== keyFor(state.userId) || !event.newValue) return;
+      if (event.key !== keyFor(state.userId)) return;
       const ts = Number(event.newValue || 0);
-      if (Number.isFinite(ts) && ts > state.lastActivity) {
-        state.lastActivity = ts;
-        if (state.warningOpen) hideWarning();
-      }
+      if (Number.isFinite(ts) && ts > state.lastActivity) state.lastActivity = ts;
     };
     window.addEventListener('storage', storageFn);
-    state.listeners.push([window, 'storage', storageFn]);
+    state.listeners.push([window, 'storage', storageFn, false]);
 
     if ('BroadcastChannel' in window) {
       try {
@@ -251,9 +210,15 @@
           if (String(data.userId || '') !== state.userId) return;
           if (data.type === 'activity' && Number(data.ts) > state.lastActivity) {
             state.lastActivity = Number(data.ts);
-            if (state.warningOpen) hideWarning();
           }
-          if (data.type === 'logout') expire(data.reason || 'session_timeout');
+          // A logout caused by an explicit stale interaction in another tab should
+          // lock this tab too because Supabase auth storage is shared by the browser.
+          if (data.type === 'logout' && !state.expiring) {
+            state.expiring = true;
+            safeRemove(keyFor(state.userId));
+            showExpired();
+            window.setTimeout(() => performSignOut(data.reason || 'session_timeout'), 650);
+          }
         });
       } catch (_) {}
     }
@@ -265,7 +230,6 @@
     if (!userId || !options.db) return false;
 
     if (state.started) {
-      // Same authenticated identity: keep the existing security monitor.
       if (state.userId === userId) return true;
       stop();
     }
@@ -277,45 +241,30 @@
     state.portal = options.portal === 'admin' ? 'admin' : 'client';
     state.loginPage = options.loginPage || (state.portal === 'admin' ? 'admin-login.html' : 'customer-login.html');
     state.timeoutMs = Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : DEFAULT_TIMEOUT_MS;
-    state.warningMs = Number(options.warningMs) > 0 ? Number(options.warningMs) : DEFAULT_WARNING_MS;
+    state.lastActivity = readActivity(userId);
+    state.lastWrite = state.lastActivity || 0;
 
-    const stored = getStoredActivity();
-    state.lastActivity = stored || now();
-    state.lastWrite = stored || 0;
-    if (!stored) setActivityTimestamp(state.lastActivity, false);
-
-    const beginMonitoring = () => {
-      if (!state.started || state.interval) return;
-      bindActivity();
-      state.interval = window.setInterval(check, 1000);
-      check();
-    };
-
-    if (document.body) beginMonitoring();
-    else document.addEventListener('DOMContentLoaded', beginMonitoring, { once: true });
+    // Guards call isExpired() before reveal. start() only binds activity tracking.
+    bindActivity();
     return true;
   }
 
   function stop() {
-    if (state.interval) clearInterval(state.interval);
-    state.listeners.forEach(([target, name, fn]) => {
-      try { target.removeEventListener(name, fn, true); } catch (_) {
-        try { target.removeEventListener(name, fn); } catch (_) {}
-      }
+    state.listeners.forEach(([target, name, fn, capture]) => {
+      try { target.removeEventListener(name, fn, capture); } catch (_) {}
     });
     state.listeners = [];
     try { state.channel?.close(); } catch (_) {}
     Object.assign(state, {
       started: false,
       expiring: false,
-      warningOpen: false,
       db: null,
       userId: '',
       portal: '',
       loginPage: '',
+      timeoutMs: DEFAULT_TIMEOUT_MS,
       lastActivity: 0,
       lastWrite: 0,
-      interval: null,
       channel: null
     });
   }
@@ -333,7 +282,8 @@
   window.filings4uSessionSecurity = {
     start,
     stop,
-    markActivity: () => markActivity(true),
+    isExpired,
+    markActivity: () => touchActivity(true),
     resetForUser,
     clearForUser,
     expire: () => expire('session_timeout'),

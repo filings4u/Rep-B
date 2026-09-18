@@ -1,11 +1,13 @@
 /**
  * filings4u admin protected-page guard
- * Anti-flicker + authenticated admin authorization.
+ * Every admin page requires a valid Supabase session + active admin authorization.
+ * After 10 minutes of inactivity, the next protected-page access/action requires login again.
  */
 (function(){
 'use strict';
 
 const root=document.documentElement;
+const TIMEOUT_MS=10*60*1000;
 root.classList.add('f4u-auth-pending');
 
 const db=()=>window.filings4uAdminSupabase||window.filings4uSupabase||window.supabaseClient||null;
@@ -26,13 +28,24 @@ function reveal(){
   root.classList.remove('f4u-auth-pending');
   root.classList.add('f4u-auth-ready');
 }
+async function staleSession(client,userId){
+  const security=window.filings4uSessionSecurity;
+  const stale=security?.isExpired ? security.isExpired(userId,TIMEOUT_MS) : true;
+  if(!stale)return false;
+  security?.clearForUser?.(userId);
+  try{await client.auth.signOut({scope:'local'});}catch(_){}
+  return true;
+}
 
 async function verifyAdmin(){
   const client=db();
   if(!client)return deny('auth_unavailable');
 
   const {data:{session},error:sessionError}=await client.auth.getSession();
-  if(sessionError||!session?.access_token)return deny('login_required');
+  if(sessionError||!session?.access_token||!session?.user?.id)return deny('login_required');
+
+  // Do not reveal an admin page if the prior activity is older than 10 minutes.
+  if(await staleSession(client,session.user.id))return deny('session_timeout');
 
   const {data,error}=await client.functions.invoke('admin-auth-check',{
     body:{action:'verify'},
@@ -49,8 +62,7 @@ async function verifyAdmin(){
     user:session.user,
     portal:'admin',
     loginPage:'admin-login.html',
-    timeoutMs:10*60*1000,
-    warningMs:60*1000
+    timeoutMs:TIMEOUT_MS
   });
 
   reveal();
