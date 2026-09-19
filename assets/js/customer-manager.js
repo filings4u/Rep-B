@@ -20,9 +20,26 @@ const pb=$("#managementProfileButton"),pm=$("#managementProfileMenu");pb?.addEve
 $("#managementSignOut")?.addEventListener("click",async()=>{await st.db.auth.signOut();location.href="admin-login.html"});
 async function q(table,fn){try{let x=st.db.from(table).select("*");if(fn)x=fn(x);const {data,error}=await x;if(error){console.warn(table,error);return[]}return data||[]}catch(e){console.warn(table,e);return[]}}
 async function load(){
- const [customers,orders]=await Promise.all([q("client_profiles",x=>x.order("updated_at",{ascending:false}).limit(1000)),q("orders",x=>x.order("created_at",{ascending:false}).limit(2000))]);
+ const [profiles,contacts,orders]=await Promise.all([
+  q("client_profiles",x=>x.order("updated_at",{ascending:false}).limit(1000)),
+  q("crm_contacts",x=>x.limit(2000)),
+  q("orders",x=>x.order("created_at",{ascending:false}).limit(2000))
+ ]);
+ const customers=[],seenEmails=new Set();
+ profiles.forEach(p=>{const e=norm(p.email_address);customers.push({...p,_source:"profile",_record_id:p.id});if(e)seenEmails.add(e)});
+ contacts.filter(c=>norm(c.contact_type)==="customer"||norm(c.lifecycle_stage)==="customer").forEach(c=>{
+  const e=norm(c.email_address);if(e&&seenEmails.has(e))return;
+  customers.push({...c,id:`crm:${c.id}`,_record_id:c.id,_source:"crm",updated_at:c.updated_at||c.created_at});if(e)seenEmails.add(e);
+ });
+ const orderByEmail=new Map();
+ orders.forEach(o=>{const e=norm(o.email_address);if(!e||seenEmails.has(e)||orderByEmail.has(e))return;orderByEmail.set(e,o)});
+ orderByEmail.forEach((o,e)=>{customers.push({
+  id:`order:${e}`,_record_id:null,_source:"order",first_name:o.first_name||"",last_name:o.last_name||"",email_address:e,
+  phone_number:o.phone_number||"",company_name:o.company_name||"",state:o.jurisdiction_state||"",tracking_number:o.tracking_number||"",
+  created_at:o.created_at,updated_at:o.updated_at||o.created_at
+ });seenEmails.add(e)});
  st.customers=customers;st.orders=orders;
- customers.forEach(c=>{const e=norm(c.email_address);const map=new Map();orders.filter(o=>o.user_id===c.id||norm(o.email_address)===e).forEach(o=>map.set(o.id,o));c._orders=[...map.values()];c._spend=c._orders.filter(o=>norm(o.payment_status)==="paid"||Number(o.total_paid_amount)>0).reduce((s,o)=>s+Number(o.total_amount||o.total_paid_amount||0),0)});
+ customers.forEach(c=>{const e=norm(c.email_address),profileId=c._source==="profile"?c._record_id:null,map=new Map();orders.filter(o=>(profileId&&o.user_id===profileId)||(e&&norm(o.email_address)===e)).forEach(o=>map.set(o.id,o));c._orders=[...map.values()];c._spend=c._orders.filter(o=>norm(o.payment_status)==="paid"||Number(o.total_paid_amount)>0).reduce((s,o)=>s+Number(o.total_amount||o.total_paid_amount||0),0)});
  $("#statCustomers").textContent=customers.length;$("#statOrders").textContent=orders.length;$("#statRevenue").textContent=money(orders.filter(o=>norm(o.payment_status)==="paid"||Number(o.total_paid_amount)>0).reduce((s,o)=>s+Number(o.total_amount||o.total_paid_amount||0),0));$("#statRecent").textContent=customers.filter(c=>new Date(c.updated_at||0)>Date.now()-30*86400000).length;
  const sf=$("#customerStateFilter"),cur=sf.value,states=[...new Set(customers.map(c=>String(c.state||"").toUpperCase()).filter(Boolean))].sort();sf.innerHTML='<option value="">All states</option>'+states.map(s=>`<option>${esc(s)}</option>`).join("");sf.value=cur;filter();
 }
@@ -40,9 +57,17 @@ function renderTable(){
 ["customerSearch","customerStateFilter","customerSort"].forEach(id=>$("#"+id)?.addEventListener(id==="customerSearch"?"input":"change",()=>{st.page=1;filter()}));$("#customerPrev")?.addEventListener("click",()=>{if(st.page>1){st.page--;renderTable()}});$("#customerNext")?.addEventListener("click",()=>{if(st.page*st.size<st.filtered.length){st.page++;renderTable()}});$("#refreshCustomers")?.addEventListener("click",load);$("#customerSearchTrigger")?.addEventListener("click",()=>$("#customerSearch").focus());
 document.addEventListener("keydown",e=>{if(e.key==="/"&&!/input|textarea|select/i.test(document.activeElement?.tagName||"")){e.preventDefault();$("#customerSearch").focus()}});
 async function related(c){
- const e=norm(c.email_address),u=c.id;
+ const e=norm(c.email_address),u=c._source==="profile"?c._record_id:null;
  const [apps,entities,vault,invoices,comp,support,projects,docs,notes]=await Promise.all([
- q("applications",x=>x.eq("user_id",u).order("created_at",{ascending:false})),q("client_entities",x=>x.eq("user_id",u).order("created_at",{ascending:false})),q("client_vault",x=>x.eq("target_client_email",e).order("created_at",{ascending:false})),q("invoices",x=>x.or(`client_profile_id.eq.${u},client_email.eq.${e}`).order("created_at",{ascending:false})),q("client_compliance",x=>x.eq("user_email",e).order("renewal_date")),q("support_tickets",x=>x.or(`client_id.eq.${u},email_address.eq.${e}`).order("created_at",{ascending:false})),q("design_projects",x=>x.eq("client_profile_id",u).order("created_at",{ascending:false})),q("application_documents",x=>x.eq("user_id",u).order("created_at",{ascending:false})),q("portal_notifications",x=>x.or(`user_id.eq.${u},recipient_email.eq.${e},email_address.eq.${e}`).order("created_at",{ascending:false}).limit(100))
+  u?q("applications",x=>x.eq("user_id",u).order("created_at",{ascending:false})):Promise.resolve([]),
+  u?q("client_entities",x=>x.eq("user_id",u).order("created_at",{ascending:false})):Promise.resolve([]),
+  e?q("client_vault",x=>x.eq("target_client_email",e).order("created_at",{ascending:false})):Promise.resolve([]),
+  u?q("invoices",x=>x.or(`client_profile_id.eq.${u},client_email.eq.${e}`).order("created_at",{ascending:false})):e?q("invoices",x=>x.eq("client_email",e).order("created_at",{ascending:false})):Promise.resolve([]),
+  e?q("client_compliance",x=>x.eq("user_email",e).order("renewal_date")):Promise.resolve([]),
+  u?q("support_tickets",x=>x.or(`client_id.eq.${u},email_address.eq.${e}`).order("created_at",{ascending:false})):e?q("support_tickets",x=>x.eq("email_address",e).order("created_at",{ascending:false})):Promise.resolve([]),
+  u?q("design_projects",x=>x.eq("client_profile_id",u).order("created_at",{ascending:false})):Promise.resolve([]),
+  u?q("application_documents",x=>x.eq("user_id",u).order("created_at",{ascending:false})):Promise.resolve([]),
+  u?q("portal_notifications",x=>x.or(`user_id.eq.${u},recipient_email.eq.${e},email_address.eq.${e}`).order("created_at",{ascending:false}).limit(100)):e?q("portal_notifications",x=>x.or(`recipient_email.eq.${e},email_address.eq.${e}`).order("created_at",{ascending:false}).limit(100)):Promise.resolve([])
  ]);return{orders:c._orders,apps,entities,vault,invoices,comp,support,projects,docs,notes}
 }
 async function openCustomer(id){
@@ -50,7 +75,10 @@ async function openCustomer(id){
 }
 function renderIdentity(c){
  $("#customerRecordAvatar").textContent=initials(c);$("#customerRecordName").textContent=nm(c);$("#customerRecordCompany").textContent=c.company_name||"No company name";$("#customerRecordEmail").textContent=c.email_address||"No email";$("#customerRecordEmail").href=c.email_address?`mailto:${c.email_address}`:"#";$("#customerRecordPhone").textContent=c.phone_number||"No phone";$("#customerRecordPhone").href=c.phone_number?`tel:${c.phone_number}`:"#";$("#customerRecordLocation").textContent=[c.city,c.state,c.zip_code].filter(Boolean).join(", ")||"No address";
- $("#customerProfileDetails").innerHTML=dl({Email:c.email_address,Phone:c.phone_number,Company:c.company_name,Address:[c.street_address,c.city,c.state,c.zip_code].filter(Boolean).join(", "),Tracking:c.tracking_number,"Last updated":fmtTime(c.updated_at)});$("#customerAccountDetails").innerHTML=dl({"Profile ID":c.id,"Portal email":c.email_address,"Encryption sync":c.sync_encryption_status||"—"});$("#customerExternalDetails").innerHTML=dl({"Stripe customer":c.stripe_customer_id||"Not connected","Tracking number":c.tracking_number||"—"});
+ const source=c._source==="profile"?"Client profile":c._source==="crm"?"CRM customer":"Unlinked order customer";
+ $("#customerProfileDetails").innerHTML=dl({Email:c.email_address,Phone:c.phone_number,Company:c.company_name,Address:[c.street_address,c.city,c.state,c.zip_code].filter(Boolean).join(", "),Tracking:c.tracking_number,"Record source":source,"Last updated":fmtTime(c.updated_at)});
+ $("#customerAccountDetails").innerHTML=dl({"Profile ID":c._source==="profile"?c._record_id:"Not linked","Portal email":c.email_address,"Portal account":c._source==="profile"?"Linked":"Not linked","Encryption sync":c.sync_encryption_status||"—"});
+ $("#customerExternalDetails").innerHTML=dl({"Stripe customer":c.stripe_customer_id||"Not connected","Tracking number":c.tracking_number||"—"});
 }
 const dl=o=>Object.entries(o).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v||"—")}</dd></div>`).join("");
 const cls=v=>/paid|completed|active|approved|verified|succeeded/i.test(v||"")?"green":/failed|cancel|overdue|refunded/i.test(v||"")?"red":/pending|processing|submitted|new|open|awaiting|draft/i.test(v||"")?"yellow":"";
@@ -77,11 +105,11 @@ function renderRelated(){
 function buildActivity(r){const a=[];r.orders.forEach(x=>a.push(["▤",`Order ${x.tracking_number||""}`,`${x.selected_service||x.service_key||"Service"} · ${x.order_status}`,x.updated_at||x.created_at]));r.apps.forEach(x=>a.push(["▧",x.business_name||"Application",`${x.service_key||"Filing"} · ${x.current_status}`,x.updated_at||x.created_at]));r.invoices.forEach(x=>a.push(["$",x.invoice_number||"Invoice",`${x.payment_status} · ${money(x.total_amount)}`,x.updated_at||x.created_at]));r.support.forEach(x=>a.push(["◌",x.subject||x.ticket_id,`${x.status} · ${x.priority}`,x.updated_at||x.created_at]));r.projects.forEach(x=>a.push(["✦",x.title,`${x.project_type} · ${x.status}`,x.updated_at||x.created_at]));r.notes.forEach(x=>a.push(["◉",x.title||"Notification",x.message||x.notification_type,x.created_at]));return a.filter(x=>x[3]).sort((x,y)=>new Date(y[3])-new Date(x[3]))}
 const activityHtml=x=>`<div class="activity-item"><span>${x[0]}</span><div><strong>${esc(x[1])}</strong><p>${esc(x[2])}</p></div><time>${fmtTime(x[3])}</time></div>`;
 function setTab(t){$$("[data-tab]").forEach(b=>b.classList.toggle("is-active",b.dataset.tab===t));$$("[data-panel]").forEach(p=>p.classList.toggle("is-active",p.dataset.panel===t))}
-$$("[data-tab]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));$("#customerBackButton")?.addEventListener("click",()=>{$("#customerRecordView").hidden=true;$("#customerListView").hidden=false;history.replaceState(null,"","admin-customers.html")});$("#customerPortalButton")?.addEventListener("click",()=>open("https://portal.filings4u.com/client-dashboard.html","_blank","noopener"));
-function openEdit(){const c=st.current;if(!c)return;const f=$("#customerEditForm");["first_name","last_name","company_name","email_address","phone_number","street_address","city","state","zip_code","tracking_number"].forEach(k=>f.elements[k].value=c[k]||"");$("#customerEditModal").hidden=false}
+$$("[data-tab]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));$("#customerBackButton")?.addEventListener("click",()=>{$("#customerRecordView").hidden=true;$("#customerListView").hidden=false;history.replaceState(null,"","admin-customers.html")});$("#customerPortalButton")?.addEventListener("click",()=>{if(st.current?._source!=="profile")return toast("This customer does not have a linked portal profile.",true);open("https://portal.filings4u.com/client-dashboard.html","_blank","noopener")});
+function openEdit(){const c=st.current;if(!c)return;if(c._source==="order")return toast("This customer comes from an unlinked order. Link the order to a customer account before editing the profile.",true);const f=$("#customerEditForm");["first_name","last_name","company_name","email_address","phone_number","street_address","city","state","zip_code","tracking_number"].forEach(k=>f.elements[k].value=c[k]||"");$("#customerEditModal").hidden=false}
 $("#editCustomerButton")?.addEventListener("click",openEdit);$$("[data-edit-customer]").forEach(x=>x.addEventListener("click",openEdit));$$("[data-close-edit]").forEach(x=>x.addEventListener("click",()=>$("#customerEditModal").hidden=true));
-$("#customerEditForm")?.addEventListener("submit",async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.currentTarget));d.email_address=norm(d.email_address);d.state=String(d.state||"").toUpperCase();d.updated_at=new Date().toISOString();const {data,error}=await st.db.from("client_profiles").update(d).eq("id",st.current.id).select("*").single();if(error)return toast(error.message,true);Object.assign(st.current,data);renderIdentity(st.current);$("#customerEditModal").hidden=true;toast("Customer updated.");filter()});
+$("#customerEditForm")?.addEventListener("submit",async e=>{e.preventDefault();if(!st.current)return;const raw=Object.fromEntries(new FormData(e.currentTarget));raw.email_address=norm(raw.email_address);raw.state=String(raw.state||"").toUpperCase();let table="client_profiles",id=st.current._record_id,payload=raw;if(st.current._source==="crm"){table="crm_contacts";payload={first_name:raw.first_name,last_name:raw.last_name,company_name:raw.company_name,email_address:raw.email_address,phone_number:raw.phone_number}}else payload.updated_at=new Date().toISOString();const {data,error}=await st.db.from(table).update(payload).eq("id",id).select("*").single();if(error)return toast(error.message,true);Object.assign(st.current,data,{id:st.current.id,_record_id:id,_source:st.current._source});renderIdentity(st.current);$("#customerEditModal").hidden=true;toast("Customer updated.");await load()});
 function openContact(){$("#contactForm").reset();$("#contactModal").hidden=false}$("#addContactTop")?.addEventListener("click",openContact);$("#addContactButton")?.addEventListener("click",openContact);$$("[data-close-contact]").forEach(x=>x.addEventListener("click",()=>$("#contactModal").hidden=true));
-$("#contactForm")?.addEventListener("submit",async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.currentTarget));d.email_address=norm(d.email_address);d.contact_type=d.lifecycle_stage==="customer"?"customer":"contact";d.status="active";const {error}=await st.db.from("crm_contacts").insert(d);if(error)return toast(error.message,true);$("#contactModal").hidden=true;toast("CRM contact created.")});
+$("#contactForm")?.addEventListener("submit",async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.currentTarget));d.email_address=norm(d.email_address);d.contact_type=d.lifecycle_stage==="customer"?"customer":"contact";d.status="active";const {error}=await st.db.from("crm_contacts").insert(d);if(error)return toast(error.message,true);$("#contactModal").hidden=true;await load();toast(d.contact_type==="customer"?"Customer created and added to the customer list.":"CRM contact created.")});
 await load();const initial=new URLSearchParams(location.search).get("client");if(initial)openCustomer(initial);
 })();
